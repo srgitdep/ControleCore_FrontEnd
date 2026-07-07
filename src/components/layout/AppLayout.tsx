@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 
 export function AppLayout() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar fixa à esquerda (240px) */}
-      <Sidebar />
+      {/* Sidebar com estado de colapso */}
+      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-      {/* Área de conteúdo: margem à esquerda da sidebar + padding do header */}
-      <div className="ml-64 flex flex-col min-h-screen">
-        {/* Header fixo no topo */}
-        <Header />
+      {/* Área de conteúdo ajustável */}
+      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'} flex flex-col min-h-screen`}>
+        {/* Header recebe estado para ajustar posição e tamanho */}
+        <Header isCollapsed={isCollapsed} />
 
         {/* Conteúdo principal da página */}
         <main className="flex-1 pt-16 overflow-y-auto">

@@ -1,17 +1,23 @@
-import { Construction } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { SuperAdminDashboard } from './components/SuperAdminDashboard';
+import { AdminDashboard } from './components/AdminDashboard';
 
-// Placeholder — será desenvolvido na Fase 2
 export function DashboardPage() {
-  return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
-        <Construction size={28} className="text-blue-500" />
+  const { user } = useAuth();
+
+  // O componente SuperAdminDashboard só será mostrado se a role for SUPER_ADMIN
+  if (user?.role === 'SUPER_ADMIN') {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <SuperAdminDashboard />
       </div>
-      <h2 className="text-xl font-semibold text-slate-800 mb-1">Dashboard</h2>
-      <p className="text-slate-500 text-sm max-w-xs">
-        Este módulo está a ser desenvolvido na próxima fase. Em breve terá acesso
-        aos KPIs, gráficos de vendas e alertas de stock.
-      </p>
+    );
+  }
+
+  // Caso contrário, mostra o AdminDashboard (acessível para ADMIN e MANAGER)
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      <AdminDashboard />
     </div>
   );
 }

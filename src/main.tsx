@@ -21,21 +21,36 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         {/* Toaster global para notificações react-hot-toast */}
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#1e293b',
-              color: '#f1f5f9',
               fontSize: '14px',
+              fontWeight: 500,
               borderRadius: '8px',
-              border: '1px solid #334155',
+              padding: '12px 16px',
             },
             success: {
-              iconTheme: { primary: '#22c55e', secondary: '#fff' },
+              style: {
+                background: '#16a34a',
+                color: '#ffffff',
+                border: 'none',
+              },
+              iconTheme: {
+                primary: '#ffffff',
+                secondary: '#16a34a',
+              },
             },
             error: {
-              iconTheme: { primary: '#ef4444', secondary: '#fff' },
+              style: {
+                background: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+              },
+              iconTheme: {
+                primary: '#ffffff',
+                secondary: '#dc2626',
+              },
             },
           }}
         />

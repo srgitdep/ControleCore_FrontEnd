@@ -1,11 +1,13 @@
 // ─── Roles (espelho do enum do Backend prisma/schema.prisma) ─────────────────
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'CASHIER' | 'STOCK_KEEPER' | 'USER';
 
 // Mapeamento de roles para exibição em Português (pt-MZ)
 export const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: 'Super Administrador',
-  ADMIN: 'Gestor',
-  MANAGER: 'Supervisor',
+  ADMIN: 'Administrador',
+  MANAGER: 'Gestor / Supervisor',
+  CASHIER: 'Operador de Caixa',
+  STOCK_KEEPER: 'Armazenista',
   USER: 'Funcionário',
 };
 

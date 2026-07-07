@@ -33,7 +33,7 @@ export function ProtectedRoute({ roles }: ProtectedRouteProps) {
       id: 'sem-permissao',
       duration: 4000,
     });
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
