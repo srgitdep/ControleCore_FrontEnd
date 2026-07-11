@@ -1,14 +1,17 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Role } from '@/types/auth.types';
 
 interface ProtectedRouteProps {
   roles?: Role[]; // Se definido, só estas roles podem aceder
+  requiredPermission?: string; // Se definido, só utilizadores com a permissão (action:resource) podem aceder
 }
 
-export function ProtectedRoute({ roles }: ProtectedRouteProps) {
+export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasRole } = useAuth();
+  const { hasPermission } = usePermissions();
 
   // Enquanto o estado carrega do localStorage, mostra loading silencioso
   if (isLoading) {
@@ -30,11 +33,24 @@ export function ProtectedRoute({ roles }: ProtectedRouteProps) {
   // Autenticado mas sem a role necessária → toast + redireciona para dashboard
   if (roles && !hasRole(roles)) {
     toast.error('Sem permissão para aceder a esta página.', {
-      id: 'sem-permissao',
+      id: 'sem-permissao-role',
       duration: 4000,
     });
     return <Navigate to="/" replace />;
   }
 
+  // Validação de Permissão estrita (RBAC - action:resource)
+  if (requiredPermission) {
+    const [action, resource] = requiredPermission.split(':');
+    if (action && resource && !hasPermission(action, resource)) {
+      toast.error('Não tem permissão para essa ação.', {
+        id: 'sem-permissao-action',
+        duration: 4000,
+      });
+      return <Navigate to="/" replace />;
+    }
+  }
+
   return <Outlet />;
 }
+

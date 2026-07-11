@@ -38,6 +38,7 @@ export interface AuthUser {
   code: string;
   email: string;
   role: Role;
+  permissions?: string[];
 }
 
 // Resposta completa do POST /auth/login

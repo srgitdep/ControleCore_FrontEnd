@@ -9,6 +9,7 @@ import { EmpresasPage } from '@/pages/empresas/EmpresasPage';
 import { UsersPage } from '@/pages/users/UsersPage';
 import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
+import { PermissionsPage } from '@/pages/settings/PermissionsPage';
 import { useAuth } from '@/hooks/useAuth';
 
 function HomeRedirect() {
@@ -56,6 +57,11 @@ export const router = createBrowserRouter([
             path: '/utilizadores', 
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,
             children: [{ index: true, element: <UsersPage /> }]
+          },
+          {
+            path: '/permissoes',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} requiredPermission="manage:users" />,
+            children: [{ index: true, element: <PermissionsPage /> }]
           },
 
           // Módulos — em desenvolvimento
