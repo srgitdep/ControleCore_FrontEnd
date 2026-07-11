@@ -7,6 +7,7 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { DashboardPage } from '@/pages/dashboard/DashboardPage';
 import { EmpresasPage } from '@/pages/empresas/EmpresasPage';
 import { UsersPage } from '@/pages/users/UsersPage';
+import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
           { path: '/clientes',      element: <EmDesenvolvimentoPage /> },
           { path: '/rh',            element: <EmDesenvolvimentoPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
+          { path: '/historico',     element: <HistoryPage /> },
         ],
       },
     ],

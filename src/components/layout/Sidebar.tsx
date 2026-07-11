@@ -12,10 +12,10 @@ import {
   ChevronRight,
   ChevronLeft,
   Building2,
-  Plus,
   Mail,
   LogOut,
-  MoreVertical
+  MoreVertical,
+  History
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Configurações', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Histórico no Sistema', icon: History, path: '/historico' },
     ]
   }
 ];

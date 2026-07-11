@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Users, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
 import { getUsers, deleteUser, deactivateUser, activateUser } from '@/api/users.api';
 import type { UserDetail } from '@/types/user.types';
 import { ROLE_LABELS } from '@/types/auth.types';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { UserDialog } from './components/UserDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { UserDetailsModal } from './components/UserDetailsModal';
+import { UserAuditLogModal } from './components/UserAuditLogModal';
 import { useAuth } from '@/hooks/useAuth';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -19,6 +20,7 @@ export function UsersPage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserDetail | null>(null);
   const [userToView, setUserToView] = useState<UserDetail | null>(null);
+  const [userToAudit, setUserToAudit] = useState<UserDetail | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -293,6 +295,13 @@ export function UsersPage() {
                           <Eye size={15} />
                         </button>
                         <button
+                          onClick={() => setUserToAudit(u)}
+                          className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                          title="Histórico no Sistema"
+                        >
+                          <History size={15} />
+                        </button>
+                        <button
                           onClick={() => handleToggleStatus(u)}
                           className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
                           title={u.isActive ? 'Suspender Acesso' : 'Ativar Acesso'}
@@ -368,6 +377,13 @@ export function UsersPage() {
         <UserDetailsModal
           user={userToView}
           onClose={() => setIsDetailsOpen(false)}
+        />
+      )}
+
+      {userToAudit && (
+        <UserAuditLogModal
+          user={userToAudit}
+          onClose={() => setUserToAudit(null)}
         />
       )}
 

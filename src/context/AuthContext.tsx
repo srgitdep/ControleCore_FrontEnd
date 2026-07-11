@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 import { loginApi, logoutApi } from '@/api/auth.api';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AuthContextType, AuthUser, LoginPayload, Role } from '@/types/auth.types';
 
 // ─── Chaves do localStorage ───────────────────────────────────────────────────
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]       = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Inicializa o estado a partir do localStorage (persistência entre sessões)
   useEffect(() => {
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(LS_ACCESS);
       localStorage.removeItem(LS_REFRESH);
       localStorage.removeItem(LS_USER);
+      queryClient.clear();
       setUser(null);
     }
   }, []);
