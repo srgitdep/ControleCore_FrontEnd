@@ -1,4 +1,4 @@
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'SALE_COMPLETED' | 'SALE_CANCELLED';
 
 export interface AuditLogUser {
   id: string;

@@ -52,11 +52,13 @@ const navGroups: NavGroup[] = [
     title: 'Commerce',
     items: [
       { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
+      { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
       { label: 'Clientes', icon: Users, path: '/clientes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Produtos', icon: Package, path: '/produtos' },
       { label: 'Stock', icon: BarChart3, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Fornecedores', icon: Truck, path: '/fornecedores', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },
   {

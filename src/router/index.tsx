@@ -11,6 +11,8 @@ import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
 import { PermissionsPage } from '@/pages/settings/PermissionsPage';
 import { POSPage } from '@/pages/vendas/POSPage';
+import { CaixasHistoricoPage } from '@/pages/vendas/CaixasHistoricoPage';
+import { LojasPage } from '@/pages/lojas/LojasPage';
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockDetailsPage } from '@/pages/stock/StockDetailsPage';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,6 +76,8 @@ export const router = createBrowserRouter([
           { path: '/stock',         element: <StockListPage /> },
           { path: '/stock/:id',     element: <StockDetailsPage /> },
           { path: '/vendas',        element: <POSPage /> },
+          { path: '/sessoes-historico', element: <CaixasHistoricoPage /> },
+          { path: '/lojas',         element: <LojasPage /> },
           { path: '/clientes',      element: <EmDesenvolvimentoPage /> },
           { path: '/rh',            element: <EmDesenvolvimentoPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },

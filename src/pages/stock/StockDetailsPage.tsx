@@ -58,9 +58,12 @@ export function StockDetailsPage() {
     <div className="p-6 max-w-5xl mx-auto h-[calc(100vh-4rem)] overflow-y-auto">
       {/* Header */}
       <div className="mb-6">
-        <Link to="/stock" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors mb-4">
-          <ArrowLeft className="h-4 w-4" /> Voltar à Lista
-        </Link>
+        <button 
+          onClick={() => window.history.back()} 
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 shadow-sm rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
         <div className="flex justify-between items-end">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center shadow-inner overflow-hidden">

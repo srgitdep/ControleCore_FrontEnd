@@ -13,8 +13,10 @@ export function AppLayout() {
     closeMobileMenu();
   }, [location.pathname, closeMobileMenu]);
 
+  const isPOS = location.pathname === '/vendas';
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={isPOS ? "h-screen bg-slate-50 overflow-hidden" : "min-h-screen bg-slate-50"}>
 
       {/* ── DESKTOP (lg+): Sidebar fixo, sempre visível ────────────────────── */}
       <div className="hidden lg:block">
@@ -44,19 +46,25 @@ export function AppLayout() {
       */}
       <div
         className={[
-          'flex flex-col min-h-screen transition-all duration-300',
+          isPOS ? 'flex flex-col h-screen transition-all duration-300' : 'flex flex-col min-h-screen transition-all duration-300',
           // Em desktop, empurra o conteúdo para além do sidebar
           isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
         ].join(' ')}
       >
         <Header isCollapsed={isSidebarCollapsed} />
 
-        <main className="flex-1 pt-16 overflow-y-auto">
-          <div className="p-4 sm:p-6">
+        {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão */}
+        <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
+          {isPOS ? (
             <Outlet />
-          </div>
+          ) : (
+            <div className="p-4 sm:p-6">
+              <Outlet />
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 }
+
