@@ -10,6 +10,9 @@ import { UsersPage } from '@/pages/users/UsersPage';
 import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
 import { PermissionsPage } from '@/pages/settings/PermissionsPage';
+import { POSPage } from '@/pages/vendas/POSPage';
+import { StockListPage } from '@/pages/stock/StockListPage';
+import { StockDetailsPage } from '@/pages/stock/StockDetailsPage';
 import { useAuth } from '@/hooks/useAuth';
 
 function HomeRedirect() {
@@ -68,8 +71,9 @@ export const router = createBrowserRouter([
           { path: '/produtos',      element: <EmDesenvolvimentoPage /> },
           { path: '/fornecedores',  element: <EmDesenvolvimentoPage /> },
           { path: '/compras',       element: <EmDesenvolvimentoPage /> },
-          { path: '/stock',         element: <EmDesenvolvimentoPage /> },
-          { path: '/vendas',        element: <EmDesenvolvimentoPage /> },
+          { path: '/stock',         element: <StockListPage /> },
+          { path: '/stock/:id',     element: <StockDetailsPage /> },
+          { path: '/vendas',        element: <POSPage /> },
           { path: '/clientes',      element: <EmDesenvolvimentoPage /> },
           { path: '/rh',            element: <EmDesenvolvimentoPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
