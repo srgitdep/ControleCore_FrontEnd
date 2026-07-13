@@ -1,5 +1,7 @@
 import { useLocation } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
+import { useUIStore } from '@/store/useUIStore';
+import { cn } from '@/lib/utils';
 
 // Mapeia o path para o título da página
 const PAGE_TITLES: Record<string, string> = {
@@ -12,6 +14,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/clientes':      'Clientes',
   '/rh':            'Recursos Humanos',
   '/configuracoes': 'Configurações',
+  '/empresas':      'Empresas',
+  '/utilizadores':  'Utilizadores',
+  '/historico':     'Histórico no Sistema',
 };
 
 interface HeaderProps {
@@ -20,15 +25,42 @@ interface HeaderProps {
 
 export function Header({ isCollapsed = false }: HeaderProps) {
   const location = useLocation();
-  const pageTitle = PAGE_TITLES[location.pathname] ?? 'ControlCore';
+  const { toggleMobileMenu } = useUIStore();
+
+  // Resolve o título: verifica o pathname exacto ou usa o segmento raiz
+  const pageTitle =
+    PAGE_TITLES[location.pathname] ??
+    PAGE_TITLES[`/${location.pathname.split('/')[1]}`] ??
+    'ControlCore';
 
   return (
-    <header className={`fixed top-0 right-0 z-30 h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200 transition-all duration-300 ${isCollapsed ? 'left-20' : 'left-64'}`}>
+    <header
+      className={cn(
+        'fixed top-0 right-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6',
+        'bg-white/95 backdrop-blur-sm border-b border-slate-200 transition-all duration-300',
+        // Desktop: desloca à direita do sidebar
+        isCollapsed ? 'lg:left-20' : 'lg:left-64',
+        // Mobile: ocupa toda a largura
+        'left-0',
+      )}
+    >
+      {/* ── Lado esquerdo: hamburger (mobile) + título ───────────────────── */}
+      <div className="flex items-center gap-3">
+        {/* Botão hamburger: só visível em telas < lg */}
+        <button
+          onClick={toggleMobileMenu}
+          className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors lg:hidden"
+          aria-label="Abrir menu de navegação"
+        >
+          <Menu size={22} />
+        </button>
 
-      {/* ─── Título da página ──────────────────────────────────────── */}
-      <h1 className="text-lg font-semibold text-slate-800">{pageTitle}</h1>
+        <h1 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
+          {pageTitle}
+        </h1>
+      </div>
 
-      {/* ─── Acções (Apenas Notificações) ─────────────────────────── */}
+      {/* ── Lado direito: Notificações ───────────────────────────────────── */}
       <div className="flex items-center">
         <button
           className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"

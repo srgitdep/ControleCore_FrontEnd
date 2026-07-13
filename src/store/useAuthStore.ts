@@ -1,65 +1,46 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { AuthUser, LoginPayload } from '@/types/auth.types';
 import { loginApi, logoutApi } from '@/api/auth.api';
 
+// Tokens removidos do estado — são geridos exclusivamente pelo browser via HttpOnly cookies.
+// persist removido — guardar tokens em localStorage seria a vulnerabilidade que estamos a eliminar.
+// Apenas user + permissions ficam em memória (dados não-sensíveis, necessários para UI/RBAC).
 interface AuthState {
   user: AuthUser | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   permissions: string[];
-  
-  // Ações
+
   login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
   setPermissions: (permissions: string[]) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      permissions: [],
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  permissions: [],
 
-      login: async (payload: LoginPayload) => {
-        const data = await loginApi(payload);
-        
-        // Assumimos que data.user possa trazer permissions. 
-        // Se a API for modificada para devolver 'permissions' no LoginResponse, 
-        // ajustamos aqui. Por agora, se vier em user.permissions, guardamos.
-        const userPermissions = (data.user as any).permissions || [];
+  login: async (payload: LoginPayload) => {
+    const data = await loginApi(payload);
 
-        set({
-          user: data.user,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          permissions: userPermissions,
-        });
-      },
+    const userPermissions = (data.user as any).permissions ?? [];
 
-      logout: async () => {
-        try {
-          await logoutApi();
-        } catch {
-          // Ignora falhas de rede no logout
-        } finally {
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            permissions: [],
-          });
-        }
-      },
+    set({
+      user: data.user,
+      permissions: userPermissions,
+    });
+  },
 
-      setPermissions: (permissions: string[]) => {
-        set({ permissions });
-      },
-    }),
-    {
-      name: 'auth-storage', // chave no localStorage
+  logout: async () => {
+    try {
+      // Backend apaga os cookies HttpOnly — o frontend não tem acesso para o fazer
+      await logoutApi();
+    } catch {
+      // Ignora falhas de rede — o utilizador é redirecionado para login de qualquer forma
+    } finally {
+      set({ user: null, permissions: [] });
     }
-  )
-);
+  },
+
+  setPermissions: (permissions: string[]) => {
+    set({ permissions });
+  },
+}));

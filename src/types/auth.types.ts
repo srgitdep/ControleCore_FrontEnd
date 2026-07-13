@@ -42,16 +42,14 @@ export interface AuthUser {
 }
 
 // Resposta completa do POST /auth/login
+// Tokens removidos do body — chegam como HttpOnly cookies geridos pelo browser
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }
 
-// Resposta do POST /auth/refresh
+// POST /auth/refresh não retorna tokens no body — os cookies são rotacionados pelo backend
 export interface RefreshResponse {
-  accessToken: string;
-  refreshToken: string;
+  message: string;
 }
 
 // ─── Estado do AuthContext ────────────────────────────────────────────────────

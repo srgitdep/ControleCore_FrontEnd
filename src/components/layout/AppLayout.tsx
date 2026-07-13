@@ -1,24 +1,58 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { useUIStore } from '@/store/useUIStore';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 
 export function AppLayout() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
+  const location = useLocation();
+
+  // Fecha o drawer mobile em cada mudança de rota (UX: evita menu aberto após navegar)
+  useEffect(() => {
+    closeMobileMenu();
+  }, [location.pathname, closeMobileMenu]);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar com estado de colapso */}
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-      {/* Área de conteúdo ajustável */}
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'} flex flex-col min-h-screen`}>
-        {/* Header recebe estado para ajustar posição e tamanho */}
-        <Header isCollapsed={isCollapsed} />
+      {/* ── DESKTOP (lg+): Sidebar fixo, sempre visível ────────────────────── */}
+      <div className="hidden lg:block">
+        <Sidebar isCollapsed={isSidebarCollapsed} />
+      </div>
 
-        {/* Conteúdo principal da página */}
+      {/* ── MOBILE (< lg): Overlay + Drawer ────────────────────────────────── */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop com blur: fecha o menu ao clicar fora */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+            onClick={closeMobileMenu}
+            aria-hidden="true"
+          />
+          {/* Drawer: Sidebar desliza da esquerda */}
+          <div className="fixed inset-y-0 left-0 z-50 lg:hidden animate-in slide-in-from-left duration-200">
+            <Sidebar isCollapsed={false} isMobileDrawer />
+          </div>
+        </>
+      )}
+
+      {/* ── Área de conteúdo ─────────────────────────────────────────────── */}
+      {/*
+        Desktop: margem esquerda responsiva ao estado collapsed do sidebar
+        Mobile:  sem margem (sidebar é overlay)
+      */}
+      <div
+        className={[
+          'flex flex-col min-h-screen transition-all duration-300',
+          // Em desktop, empurra o conteúdo para além do sidebar
+          isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
+        ].join(' ')}
+      >
+        <Header isCollapsed={isSidebarCollapsed} />
+
         <main className="flex-1 pt-16 overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <Outlet />
           </div>
         </main>

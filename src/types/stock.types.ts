@@ -21,7 +21,8 @@ export interface Stock {
     nome: string;
     codigoBarras?: string;
     imagemUrl?: string;
-    precoVenda?: number; // Added since it's relevant for POS
+    precoVenda?: number; // Relevant for POS
+    unidadeMedida?: string; // e.g. 'UN', 'KG', 'L'
   };
 }
 
