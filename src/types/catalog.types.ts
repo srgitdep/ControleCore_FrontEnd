@@ -10,16 +10,22 @@ export interface Category {
 export interface Product {
   id: string;
   empresaId: string;
-  categoryId: string;
+  categoriaId?: string;
   nome: string;
-  codigoBarras?: string; // Usado pelo event listener
-  imagemUrl?: string; // Imagem do produto no POS
-  unidadeMedida?: string;
+  descricao?: string;
+  codigoBarras?: string;
+  sku?: string;
+  imagemUrl?: string;
+  precoCusto: number;
   precoVenda: number;
+  margemLucro: number;
   taxaIva: number;
+  unidadeMedida: string;
+  peso?: number;
+  isWeighable: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   
-  // Relacionamento quando incluído
-  category?: Category;
+  categoria?: Category;
 }

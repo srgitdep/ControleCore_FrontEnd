@@ -17,5 +17,15 @@ export const catalogApi = {
   updateProduct: async (id: string, productData: Partial<Product>) => {
     const { data } = await api.put<Product>(`/produtos/${id}`, productData);
     return data;
+  },
+
+  createProduct: async (productData: Partial<Product>) => {
+    const { data } = await api.post<Product>('/produtos', productData);
+    return data;
+  },
+
+  deleteProduct: async (id: string) => {
+    const { data } = await api.delete(`/produtos/${id}`);
+    return data;
   }
 };

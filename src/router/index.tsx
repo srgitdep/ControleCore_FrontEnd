@@ -9,6 +9,7 @@ import { EmpresasPage } from '@/pages/empresas/EmpresasPage';
 import { UsersPage } from '@/pages/users/UsersPage';
 import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
+import { ProductListPage } from '@/pages/produtos/ProductListPage';
 import { PermissionsPage } from '@/pages/settings/PermissionsPage';
 import { POSPage } from '@/pages/vendas/POSPage';
 import { CaixasHistoricoPage } from '@/pages/vendas/CaixasHistoricoPage';
@@ -72,7 +73,7 @@ export const router = createBrowserRouter([
           },
 
           // Módulos — em desenvolvimento
-          { path: '/produtos',      element: <EmDesenvolvimentoPage /> },
+          { path: '/produtos',      element: <ProductListPage /> },
           { path: '/fornecedores',  element: <EmDesenvolvimentoPage /> },
           { path: '/compras',       element: <EmDesenvolvimentoPage /> },
           { path: '/stock',         element: <StockListPage /> },
