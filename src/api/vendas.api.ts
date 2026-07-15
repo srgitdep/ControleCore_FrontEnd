@@ -1,22 +1,29 @@
 import { api } from './axios';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface VendaItemDto {
   produtoId: string;
   quantidade: number;
   desconto?: number;
 }
 
+export type MetodoPagamento = 'NUMERARIO' | 'CARTAO' | 'MPESA' | 'EMOLA';
+
 export interface PagamentoVendaDto {
-  metodo: 'NUMERARIO' | 'CARTAO' | 'MPESA' | 'EMOLA';
+  metodo: MetodoPagamento;
   valorEntregue: number;
 }
 
 export interface ProcessarVendaDto {
   itens: VendaItemDto[];
-  pagamento: PagamentoVendaDto;
+  // O backend aceita array de pagamentos (split payment)
+  pagamentos: PagamentoVendaDto[];
   clienteId?: string;
   emailCliente?: string;
 }
+
+// ─── API Functions ────────────────────────────────────────────────────────────
 
 export const processarVenda = async (payload: ProcessarVendaDto) => {
   const { data } = await api.post('/vendas/processar', payload);

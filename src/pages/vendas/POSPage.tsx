@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, CreditCard, MonitorSmartphone, Receipt, Download, Mail, RefreshCcw, CheckCircle, TicketPercent, DollarSign, X, Lock } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Download, Mail, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useCatalog';
 import { usePosStore } from '@/store/posStore';
 import { useSocket } from '@/hooks/useSocket';
@@ -11,6 +11,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Product } from '@/types/catalog.types';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
+import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [
   { id: 'NUMERARIO', label: 'Dinheiro', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
@@ -55,7 +56,7 @@ export function POSPage() {
   const categories = categoriesData || [];
 
   // Estado de Checkout
-  const [pagamentos, setPagamentos] = useState<{metodo: string, valorEntregue: number}[]>([]);
+  const [pagamentos, setPagamentos] = useState<{metodo: any, valorEntregue: number}[]>([]);
   const [currentPaymentMethod, setCurrentPaymentMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('NUMERARIO');
   const [currentAmountPaid, setCurrentAmountPaid] = useState<number>(0);
   
@@ -163,7 +164,7 @@ export function POSPage() {
       const sessao = await abrirSessao(selectedCaixaId, saldoInicial);
       setCurrentSessaoId(sessao.id);
       
-      toast.custom((t) => (
+      toast.custom(() => (
         <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-emerald-500 max-w-sm w-full">
           <div className="flex gap-3">
             <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
@@ -197,7 +198,7 @@ export function POSPage() {
         observacoes: observacoesClose 
       });
       
-      toast.custom((t) => (
+      toast.custom(() => (
         <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-blue-500 max-w-sm w-full">
           <div className="flex gap-3">
             <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
@@ -260,7 +261,7 @@ export function POSPage() {
         action: 'SALE_COMPLETED',
         entityName: 'Venda',
         entityId: venda.id || 'N/A',
-        details: { total, method: paymentMethod }
+        details: { total, method: pagamentos.map(p => p.metodo).join(', ') }
       }).catch(() => {});
 
       setVendaResult(venda);
@@ -320,9 +321,11 @@ export function POSPage() {
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Método de Pagamento: ${paymentMethod}`, 14, finalY + 30);
-    doc.text(`Valor Entregue: ${amountPaid.toFixed(2)} MT`, 14, finalY + 36);
-    doc.text(`Troco: ${(amountPaid - total).toFixed(2)} MT`, 14, finalY + 42);
+    const totalEntreguePdf = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
+    const metodosPagamento = pagamentos.map(p => p.metodo).join(', ');
+    doc.text(`Método de Pagamento: ${metodosPagamento || 'N/A'}`, 14, finalY + 30);
+    doc.text(`Valor Entregue: ${totalEntreguePdf.toFixed(2)} MT`, 14, finalY + 36);
+    doc.text(`Troco: ${(totalEntreguePdf - total).toFixed(2)} MT`, 14, finalY + 42);
 
     doc.save(`Recibo_${invoiceNum}.pdf`);
   };
@@ -331,53 +334,91 @@ export function POSPage() {
     clearCart();
     setPagamentos([]);
     setCurrentAmountPaid(0);
-    setPaymentMethod('NUMERARIO');
+    setCurrentPaymentMethod('NUMERARIO');
     setCustomerEmail('');
     setVendaResult(null);
     setShowSuccessModal(false);
   };
 
   return (
-    <div className="flex h-full bg-gray-50 overflow-hidden">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       
-      {/* ─── Main Content (Catalog) ─── */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        
-        {/* Search Header */}
-        <div className="bg-white p-4 shadow-sm z-10">
-          <div className="relative max-w-2xl mx-auto flex items-center gap-4">
-            <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0 shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Vendas</h1>
+            <p className="text-sm text-slate-500">Ponto de Venda e Gestão de Caixas</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {hasSession ? (
+              <>
+                <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                  Sessão Aberta
+                </span>
+              </>
+            ) : (
               <button 
-                onClick={() => setActiveTab('CATALOG')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'CATALOG' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                onClick={() => setShowOpenSessionModal(true)}
+                className="bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                Catálogo
+                Abrir Sessão
               </button>
-              <button 
-                onClick={() => setActiveTab('HISTORY')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'HISTORY' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Histórico
-              </button>
-            </div>
-            {activeTab === 'CATALOG' && (
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar produtos (Nome, SKU, Cód. Barras)..." 
-                  className="w-full pl-12 pr-4 py-3 bg-gray-100/80 border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
             )}
           </div>
         </div>
 
-        {activeTab === 'CATALOG' ? (
-          <>
-            {/* Categories */}
+        <div className="flex gap-1 relative">
+          <button
+            onClick={() => setActiveTab('CATALOG')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-150 -mb-px',
+              activeTab === 'CATALOG'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            <Store size={16} />
+            Ponto de Venda
+          </button>
+          <button
+            onClick={() => setActiveTab('HISTORY')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-150 -mb-px',
+              activeTab === 'HISTORY'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            )}
+          >
+            <History size={16} />
+            Histórico de Sessões
+          </button>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-200" />
+        </div>
+      </div>
+
+      {/* ── Tab Content ─────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-hidden relative">
+        {/* Tab: Ponto de Venda */}
+        {activeTab === 'CATALOG' && (
+          <div className="flex h-full w-full">
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+              
+              {/* Search Header */}
+              <div className="bg-white p-4 shadow-sm z-10 border-b border-gray-100">
+                <div className="relative max-w-2xl mx-auto flex items-center gap-4">
+                  <div className="relative w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input 
+                      type="text" 
+                      placeholder="Pesquisar produtos (Nome, SKU, Cód. Barras)..." 
+                      className="w-full pl-12 pr-4 py-3 bg-gray-100/80 border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+              </div>
+            </div>
             <div className="bg-white border-b border-gray-100 px-6 py-3 flex gap-3 overflow-x-auto hide-scrollbar shrink-0">
               <button
                 onClick={() => setSelectedCategory(null)}
@@ -422,16 +463,10 @@ export function POSPage() {
                 </div>
               )}
             </div>
-          </>
-        ) : (
-          <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-            <CaixasHistoricoPage />
-          </div>
-        )}
-      </div>
+            </div>
 
-      {/* ─── Cart Sidebar ─── */}
-      <div className="w-[420px] bg-white shadow-2xl flex flex-col z-20 border-l border-gray-200 shrink-0">
+            {/* ─── Cart Sidebar ─── */}
+            <div className="w-[420px] bg-white shadow-2xl flex flex-col z-20 border-l border-gray-200 shrink-0">
         {/* Cart Header */}
         <div className="p-5 border-b border-gray-100 bg-white flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -658,6 +693,16 @@ export function POSPage() {
           </div>
         </div>
       )}
+          </div>
+        )}
+
+        {/* Tab: Histórico de Sessões */}
+        {activeTab === 'HISTORY' && (
+          <div className="h-full w-full overflow-y-auto bg-gray-50 p-6 custom-scrollbar">
+            <CaixasHistoricoPage />
+          </div>
+        )}
+      </div>
 
       {/* ─── Open Session Modal ─── */}
       {showOpenSessionModal && (

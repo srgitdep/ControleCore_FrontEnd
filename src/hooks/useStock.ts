@@ -27,6 +27,15 @@ export function useStockMovements(stockId: string, params?: { page?: number; lim
   });
 }
 
+// Movimentos globais da empresa (sem filtro por stockId) para a aba "Movimentos"
+export function useAllMovements(params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ['all-stock-movements', params],
+    queryFn: () => stockApi.getAllMovements(params),
+    placeholderData: (prev) => prev,
+  });
+}
+
 export function useStockMutations() {
   const queryClient = useQueryClient();
 

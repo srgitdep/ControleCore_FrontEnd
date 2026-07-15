@@ -29,6 +29,7 @@ Interface web responsiva que alimenta o sistema **ControlCore** — solução Sa
 | **Estilo** | Tailwind CSS v4 · CVA · clsx · tailwind-merge |
 | **Estado global** | Zustand 5 |
 | **Data fetching** | TanStack Query v5 |
+| **Gráficos** | Recharts |
 | **Tabelas** | @tanstack/react-table v8 |
 | **HTTP** | Axios 1 |
 | **Formulários** | react-hook-form + Zod |
@@ -165,9 +166,13 @@ O `axios.ts` centraliza toda a lógica de autenticação:
 |---|---|---|
 | `/login` | `LoginPage` | Público |
 | `/dashboard` | `DashboardPage` | SUPER_ADMIN, ADMIN, MANAGER |
+| `/financeiro` | `FinanceiroDashboardPage` | SUPER_ADMIN, ADMIN, MANAGER |
 | `/stock` | `StockListPage` | SUPER_ADMIN, ADMIN, MANAGER, STOCK_KEEPER |
 | `/stock/:id` | `StockDetailsPage` | SUPER_ADMIN, ADMIN, MANAGER, STOCK_KEEPER |
 | `/vendas` | `VendasPage` | SUPER_ADMIN, ADMIN, MANAGER, CASHIER |
+| `/sessoes-historico` | `CaixasHistoricoPage` | SUPER_ADMIN, ADMIN, MANAGER, CASHIER |
+| `/lojas` | `LojasPage` | SUPER_ADMIN, ADMIN |
+| `/crm` | `ClientesPage` | SUPER_ADMIN, ADMIN, MANAGER |
 | `/produtos` | `ProdutosPage` | Todos |
 | `/empresas` | `EmpresasPage` | SUPER_ADMIN |
 | `/utilizadores` | `UsersPage` | SUPER_ADMIN, ADMIN |
@@ -195,10 +200,13 @@ npm run lint       # Oxlint
 | Layout responsivo (Desktop / Tablet / Mobile) | ✅ Completo |
 | Dashboard | ✅ Completo |
 | Gestão de Stock (Lista + Ledger + Movimentos) | ✅ Completo |
-| Ponto de Venda (PDV) | 🔄 Em desenvolvimento |
+| Ponto de Venda (PDV + Motor CMV) | ✅ Completo |
+| Módulo Financeiro (DRE, Cashflow, Inadimplência) | ✅ Completo |
+| CRM (Histórico + Risco de Crédito) | ✅ Completo |
+| Gestão de Lojas e Caixas | ✅ Completo |
 | Gestão de Empresas | 🔄 Em desenvolvimento |
 | Gestão de Utilizadores | 🔄 Em desenvolvimento |
-| Catálogo (Produtos, Categorias, Fornecedores) | ⏳ Pendente |
+| Catálogo (Produtos, Categorias, Fornecedores) | 🔄 Em desenvolvimento |
 | Recursos Humanos | ⏳ Pendente |
 | Histórico / Auditoria | ⏳ Pendente |
 | Configurações | ⏳ Pendente |

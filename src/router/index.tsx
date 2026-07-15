@@ -15,6 +15,8 @@ import { CaixasHistoricoPage } from '@/pages/vendas/CaixasHistoricoPage';
 import { LojasPage } from '@/pages/lojas/LojasPage';
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockDetailsPage } from '@/pages/stock/StockDetailsPage';
+import { ClientesPage } from '@/pages/crm/ClientesPage';
+import { FinanceiroDashboardPage } from '@/pages/financeiro/FinanceiroDashboardPage';
 import { useAuth } from '@/hooks/useAuth';
 
 function HomeRedirect() {
@@ -78,7 +80,14 @@ export const router = createBrowserRouter([
           { path: '/vendas',        element: <POSPage /> },
           { path: '/sessoes-historico', element: <CaixasHistoricoPage /> },
           { path: '/lojas',         element: <LojasPage /> },
-          { path: '/clientes',      element: <EmDesenvolvimentoPage /> },
+          { path: '/crm',           element: <ClientesPage /> },
+          { path: '/clientes',      element: <ClientesPage /> },
+          // Módulo Financeiro
+          {
+            path: '/financeiro',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            children: [{ index: true, element: <FinanceiroDashboardPage /> }]
+          },
           { path: '/rh',            element: <EmDesenvolvimentoPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
           { path: '/historico',     element: <HistoryPage /> },

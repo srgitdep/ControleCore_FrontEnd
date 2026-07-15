@@ -5,6 +5,7 @@ import {
   Truck,
   ShoppingCart,
   BarChart3,
+  BarChart2,
   Store,
   Users,
   UserSquare,
@@ -53,7 +54,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
       { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'Clientes', icon: Users, path: '/clientes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'CRM', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'Financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Produtos', icon: Package, path: '/produtos' },
       { label: 'Stock', icon: BarChart3, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },

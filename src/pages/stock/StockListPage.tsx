@@ -6,17 +6,41 @@ import {
   type ColumnDef,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { Package, ArrowRightLeft, Plus, Minus, FileText } from 'lucide-react';
+import {
+  Package,
+  ArrowRightLeft,
+  Plus,
+  Minus,
+  FileText,
+  BarChart3,
+  ClipboardList,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  Settings2,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useStockList } from '@/hooks/useStock';
+import { cn } from '@/lib/utils';
+import { useStockList, useAllMovements } from '@/hooks/useStock';
 import { useSocket } from '@/hooks/useSocket';
 import { ResponsiveTable } from '@/components/common/ResponsiveTable';
 import { Button } from '@/components/common/Button';
 import { MovementModals } from './components/MovementModals';
-import type { Stock } from '@/types/stock.types';
+import { InventoryTab } from './components/InventoryTab';
+import type { Stock, StockMovement } from '@/types/stock.types';
+
+// ─── Tab definition ───────────────────────────────────────────────────────────
+type StockTab = 'estoque' | 'movimentos' | 'inventario';
+
+const TABS: { id: StockTab; label: string; icon: React.ElementType }[] = [
+  { id: 'estoque', label: 'Estoque Atual', icon: Package },
+  { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
+  { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
+];
 
 // ─── Column helper tipado ──────────────────────────────────────────────────────
-const columnHelper = createColumnHelper<Stock>();
+const stockColumnHelper = createColumnHelper<Stock>();
+const movementColumnHelper = createColumnHelper<StockMovement>();
 
 // ─── Modal state type ─────────────────────────────────────────────────────────
 type ModalType = 'IN' | 'OUT' | 'TRANSFER' | 'ADJUST_PLUS' | 'ADJUST_MINUS' | null;
@@ -27,10 +51,8 @@ interface ModalState {
   type: ModalType;
 }
 
-export function StockListPage() {
-  // Conecta ao WebSockets para realtime updates na lista
-  useSocket();
-
+// ─── Aba: Estoque Atual ───────────────────────────────────────────────────────
+function StockCurrentTab() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useStockList({ page, limit: 10 });
 
@@ -49,11 +71,9 @@ export function StockListPage() {
   const closeModal = () =>
     setModalState({ isOpen: false, stockId: null, type: null });
 
-  // ─── Definição de colunas ──────────────────────────────────────────────────
-  // useMemo evita recriação do array em cada render (requisito TanStack Table)
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
-      columnHelper.accessor('product', {
+      stockColumnHelper.accessor('product', {
         id: 'produto',
         header: 'Produto',
         cell: ({ row }) => {
@@ -84,7 +104,7 @@ export function StockListPage() {
         },
       }),
 
-      columnHelper.accessor('currentQuantity', {
+      stockColumnHelper.accessor('currentQuantity', {
         id: 'balanco',
         header: 'Balanço Atual',
         cell: ({ row }) => {
@@ -105,8 +125,7 @@ export function StockListPage() {
         },
       }),
 
-      // Esta coluna fica oculta por default em mobile (veja columnVisibility abaixo)
-      columnHelper.accessor('minQuantity', {
+      stockColumnHelper.accessor('minQuantity', {
         id: 'minimo',
         header: 'Mínimo',
         cell: ({ getValue }) => (
@@ -114,14 +133,13 @@ export function StockListPage() {
         ),
       }),
 
-      columnHelper.display({
+      stockColumnHelper.display({
         id: 'acoes',
         header: 'Ações',
         cell: ({ row }) => {
           const { id } = row.original;
           return (
             <div className="flex items-center justify-end gap-2">
-              {/* Histórico (Ledger) */}
               <Link
                 to={`/stock/${id}`}
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -150,7 +168,6 @@ export function StockListPage() {
                 <Minus className="h-3 w-3" /> OUT
               </Button>
 
-              {/* Mais ações: Transferir / Ajustar */}
               <div className="relative group inline-block">
                 <Button variant="ghost" size="icon" title="Mais opções">
                   <ArrowRightLeft className="h-4 w-4" />
@@ -186,24 +203,19 @@ export function StockListPage() {
     [],
   );
 
-  // ─── Visibilidade de colunas por breakpoint ────────────────────────────────
-  // A coluna "minimo" é irrelevante no card mobile — economiza espaço visual
   const columnVisibility: VisibilityState = {
-    minimo: window.innerWidth >= 640, // sm breakpoint
+    minimo: window.innerWidth >= 640,
   };
 
-  // ─── Instância TanStack Table ─────────────────────────────────────────────
   const table = useReactTable({
     data: stocks,
     columns,
     getCoreRowModel: getCoreRowModel(),
     state: { columnVisibility },
-    // Desativa sort server-side aqui; pode ser activado por coluna se necessário
     manualPagination: true,
     pageCount: totalPages,
   });
 
-  // ─── getRowStatus: linha vermelha se stock crítico ────────────────────────
   const getRowStatus = (stock: Stock): 'default' | 'critical' | 'warning' => {
     if (stock.currentQuantity <= stock.minQuantity) return 'critical';
     if (stock.currentQuantity <= stock.minQuantity * 1.5) return 'warning';
@@ -211,21 +223,7 @@ export function StockListPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* ─── Cabeçalho da Página ──────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-600" />
-            Gestão de Inventário (Ledger)
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Controle de entradas, saídas e balanços de stock em tempo real.
-          </p>
-        </div>
-      </div>
-
-      {/* ─── Tabela / Cards ───────────────────────────────────────────────── */}
+    <>
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <ResponsiveTable
           table={table}
@@ -234,7 +232,6 @@ export function StockListPage() {
           getRowStatus={getRowStatus}
         />
 
-        {/* ─── Paginação ─────────────────────────────────────────────────── */}
         {!isLoading && stocks.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
             <span className="text-slate-500">
@@ -262,7 +259,6 @@ export function StockListPage() {
         )}
       </div>
 
-      {/* ─── Modal de Movimentos ─────────────────────────────────────────── */}
       {modalState.isOpen && (
         <MovementModals
           stockId={modalState.stockId}
@@ -270,6 +266,167 @@ export function StockListPage() {
           onClose={closeModal}
         />
       )}
+    </>
+  );
+}
+
+// ─── Aba: Movimentos ──────────────────────────────────────────────────────────
+function MovementsTab() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useAllMovements({ page, limit: 15 });
+
+  const movements = data?.data ?? [];
+  const totalPages = data?.lastPage ?? 1;
+
+  const TYPE_STYLES: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
+    IN: { label: 'Entrada', icon: <ArrowUp className="h-3 w-3" />, cls: 'bg-emerald-100 text-emerald-700' },
+    OUT: { label: 'Saída', icon: <ArrowDown className="h-3 w-3" />, cls: 'bg-rose-100 text-rose-700' },
+    ADJUSTMENT: { label: 'Ajuste', icon: <Settings2 className="h-3 w-3" />, cls: 'bg-amber-100 text-amber-700' },
+  };
+
+  const columns = useMemo<ColumnDef<StockMovement, any>[]>(
+    () => [
+      movementColumnHelper.accessor('createdAt', {
+        header: 'Data/Hora',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-slate-500 tabular-nums">
+            {new Date(getValue()).toLocaleString('pt-MZ', {
+              day: '2-digit', month: '2-digit', year: '2-digit',
+              hour: '2-digit', minute: '2-digit',
+            })}
+          </span>
+        ),
+      }),
+      movementColumnHelper.accessor('type', {
+        header: 'Tipo',
+        cell: ({ getValue }) => {
+          const type = getValue() as string;
+          const config = TYPE_STYLES[type] ?? { label: type, icon: null, cls: 'bg-slate-100 text-slate-600' };
+          return (
+            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${config.cls}`}>
+              {config.icon}
+              {config.label}
+            </span>
+          );
+        },
+      }),
+      movementColumnHelper.accessor('quantity', {
+        header: 'Qtd',
+        cell: ({ row }) => {
+          const { quantity, type } = row.original;
+          const signed = type === 'OUT' ? -quantity : quantity;
+          return (
+            <span className={`font-bold tabular-nums text-sm ${signed < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+              {signed > 0 ? '+' : ''}{signed}
+            </span>
+          );
+        },
+      }),
+      movementColumnHelper.accessor('balanceAfter', {
+        header: 'Saldo Após',
+        cell: ({ getValue }) => (
+          <span className="tabular-nums text-sm text-slate-700">{getValue()}</span>
+        ),
+      }),
+      movementColumnHelper.accessor('reason', {
+        header: 'Motivo',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-slate-500 truncate max-w-[200px] block">
+            {getValue() ?? '—'}
+          </span>
+        ),
+      }),
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const table = useReactTable({
+    data: movements,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: totalPages,
+  });
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-slate-400" />
+        <span className="text-sm font-medium text-slate-600">Histórico de Movimentos</span>
+      </div>
+      <ResponsiveTable
+        table={table}
+        isLoading={isLoading}
+        emptyMessage="Nenhum movimento registado."
+      />
+      {!isLoading && movements.length > 0 && (
+        <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
+          <span className="text-slate-500">Página {page} de {totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Página Principal ─────────────────────────────────────────────────────────
+export function StockListPage() {
+  useSocket();
+  const [activeTab, setActiveTab] = useState<StockTab>('estoque');
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* ─── Cabeçalho ──────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Package className="h-6 w-6 text-blue-600" />
+            Gestão de Estoque
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Controle de entradas, saídas, balanços e inventário físico.
+          </p>
+        </div>
+      </div>
+
+      {/* ─── Tabs ───────────────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        {/* Tab Bar */}
+        <div className="relative px-4 border-b border-slate-100">
+          <div className="flex gap-1">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all duration-150 -mb-px whitespace-nowrap',
+                    isActive
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                  )}
+                >
+                  <Icon size={15} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-4 sm:p-6">
+          {activeTab === 'estoque' && <StockCurrentTab />}
+          {activeTab === 'movimentos' && <MovementsTab />}
+          {activeTab === 'inventario' && <InventoryTab />}
+        </div>
+      </div>
     </div>
   );
 }

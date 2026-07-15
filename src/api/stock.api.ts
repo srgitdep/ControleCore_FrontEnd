@@ -26,6 +26,11 @@ export const stockApi = {
     return data;
   },
 
+  getAllMovements: async (params?: { page?: number; limit?: number }) => {
+    const { data } = await api.get<PaginatedResponse<StockMovement>>('/stock/movements', { params });
+    return data;
+  },
+
   // ─── Mutações (Ledger) ───────────────────────────────────────────────────
 
   createMovement: async (payload: CreateMovementPayload) => {

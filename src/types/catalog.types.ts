@@ -16,6 +16,7 @@ export interface Product {
   imagemUrl?: string; // Imagem do produto no POS
   unidadeMedida?: string;
   precoVenda: number;
+  taxaIva: number;
   createdAt: string;
   updatedAt: string;
   
