@@ -17,6 +17,18 @@ const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: str
   DELETE: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
   LOGIN: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
   LOGOUT: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' },
+  SALE_COMPLETED: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
+  SALE_CANCELLED: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
+};
+
+const ACTION_LABELS: Record<AuditAction, string> = {
+  CREATE: 'Criação',
+  UPDATE: 'Atualização',
+  DELETE: 'Remoção',
+  LOGIN: 'Login',
+  LOGOUT: 'Logout',
+  SALE_COMPLETED: 'Venda Concluída',
+  SALE_CANCELLED: 'Venda Cancelada',
 };
 
 export function AuditLogTable({ userId }: AuditLogTableProps) {
@@ -41,10 +53,11 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
     
     autoTable(doc, {
       startY: 35,
-      head: [['Utilizador', 'Ação', 'Data & Hora', 'Perfil']],
+      head: [['Utilizador', 'Ação', 'Detalhes', 'Data & Hora', 'Perfil']],
       body: logs.map(l => [
         l.user ? l.user.name : 'Sistema / Desconhecido',
-        l.action,
+        ACTION_LABELS[l.action] || l.action,
+        l.entityName && l.entityName !== 'Auth' ? `${l.entityName}: ${l.newValues?.nome || l.newValues?.name || l.newValues?.numeroFatura || l.newValues?.email || l.newValues?.titulo || l.entityId}` : '-',
         format(new Date(l.createdAt), 'dd MMM, yyyy HH:mm:ss'),
         l.user ? `${l.user.perfil?.nome || 'Padrão'}\n(${l.user.role || 'USER'})` : '-'
       ]),
@@ -81,6 +94,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
               <tr>
                 <th className="px-4 py-4">Utilizador</th>
                 <th className="px-4 py-4">Ação</th>
+                <th className="px-4 py-4">Detalhes</th>
                 <th className="px-4 py-4">Data & Hora</th>
                 <th className="px-4 py-4">Perfil</th>
               </tr>
@@ -103,8 +117,20 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                     <td className="px-4 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${color.bg} ${color.text} ${color.border}`}>
                         <div className={`w-1.5 h-1.5 rounded-full bg-current opacity-75`} />
-                        {log.action}
+                        {ACTION_LABELS[log.action] || log.action}
                       </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      {log.entityName && log.entityName !== 'Auth' ? (
+                        <div>
+                          <p className="text-slate-900 text-sm font-semibold">{log.entityName}</p>
+                          <p className="text-slate-500 text-xs max-w-[200px] truncate" title={log.newValues?.nome || log.newValues?.name || log.newValues?.numeroFatura || log.newValues?.email || log.newValues?.titulo || log.entityId}>
+                            {log.newValues?.nome || log.newValues?.name || log.newValues?.numeroFatura || log.newValues?.email || log.newValues?.titulo || log.entityId}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-slate-500 text-xs italic">-</p>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       <div>
@@ -127,7 +153,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
               })}
               {logs?.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                     Nenhum registo encontrado.
                   </td>
                 </tr>

@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Download, Mail, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useCatalog';
 import { usePosStore } from '@/store/posStore';
 import { useSocket } from '@/hooks/useSocket';
-import { processarVenda, enviarRecibo } from '@/api/vendas.api';
-import { createAuditLog } from '@/api/auditoria.api';
-import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao } from '@/api/caixas.api';
+import { processarVenda } from '@/api/vendas.api';
+import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/api/caixas.api';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import type { Product } from '@/types/catalog.types';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
+import { ReceiptModal } from './components/ReceiptModal';
 import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [
@@ -63,10 +61,7 @@ export function POSPage() {
   // Abas do painel principal (Catálogo vs Histórico)
   const [activeTab, setActiveTab] = useState<'CATALOG' | 'HISTORY'>('CATALOG');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [vendaResult, setVendaResult] = useState<any>(null);
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
 
   // Estado da Sessão de Caixa
   const [hasSession, setHasSession] = useState<boolean>(true);
@@ -78,6 +73,10 @@ export function POSPage() {
 
   // Estado para Fechar Sessão
   const [showCloseSessionModal, setShowCloseSessionModal] = useState<boolean>(false);
+  const [showSangriaModal, setShowSangriaModal] = useState<boolean>(false);
+  const [showReforcoModal, setShowReforcoModal] = useState<boolean>(false);
+  const [movimentoValor, setMovimentoValor] = useState<number>(0);
+  const [movimentoMotivo, setMovimentoMotivo] = useState<string>('');
   const [saldoDeclarado, setSaldoDeclarado] = useState<number>(0);
   const [observacoesClose, setObservacoesClose] = useState('');
   const [isClosingSession, setIsClosingSession] = useState(false);
@@ -101,8 +100,12 @@ export function POSPage() {
         setHasSession(false);
         setShowOpenSessionModal(true);
         obterCaixasDisponiveis().then(data => {
-          setCaixas(data);
-          if (data.length > 0) setSelectedCaixaId(data[0].id);
+          setCaixas(data || []);
+          if (data && data.length > 0) {
+            setSelectedCaixaId(data[0].id);
+          } else {
+            setSelectedCaixaId('');
+          }
         });
       } else {
         setCurrentSessaoId(sessao.id);
@@ -127,7 +130,7 @@ export function POSPage() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || showSuccessModal) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || receiptData) {
         return;
       }
 
@@ -154,7 +157,7 @@ export function POSPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [products, addItem, showSuccessModal]);
+  }, [products, addItem, receiptData]);
 
   // ─── Actions ─────────────────────────────────────────────────────────────
   const handleOpenSession = async () => {
@@ -231,6 +234,38 @@ export function POSPage() {
     }
   };
 
+  const handleSangria = async () => {
+    if (!currentSessaoId || movimentoValor <= 0 || !movimentoMotivo) {
+      toast.error('Preencha o valor e motivo corretamente.');
+      return;
+    }
+    try {
+      await registrarSangria(currentSessaoId, { valor: movimentoValor, motivo: movimentoMotivo });
+      toast.success('Sangria registada com sucesso.');
+      setShowSangriaModal(false);
+      setMovimentoValor(0);
+      setMovimentoMotivo('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao registar sangria.');
+    }
+  };
+
+  const handleReforco = async () => {
+    if (!currentSessaoId || movimentoValor <= 0 || !movimentoMotivo) {
+      toast.error('Preencha o valor e motivo corretamente.');
+      return;
+    }
+    try {
+      await registrarReforco(currentSessaoId, { valor: movimentoValor, motivo: movimentoMotivo });
+      toast.success('Reforço registado com sucesso.');
+      setShowReforcoModal(false);
+      setMovimentoValor(0);
+      setMovimentoMotivo('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao registar reforço.');
+    }
+  };
+
   const handleCheckout = async () => {
     if (!hasSession) {
       toast.error('Não tem nenhuma sessão de caixa aberta.');
@@ -254,18 +289,11 @@ export function POSPage() {
           pagamentos: pagamentos
         };
 
-      const venda = await processarVenda(payload);
-      
-      // Audit log frontend call
-      createAuditLog({
-        action: 'SALE_COMPLETED',
-        entityName: 'Venda',
-        entityId: venda.id || 'N/A',
-        details: { total, method: pagamentos.map(p => p.metodo).join(', ') }
-      }).catch(() => {});
 
-      setVendaResult(venda);
-      setShowSuccessModal(true);
+
+      const venda = await processarVenda(payload);
+
+      setReceiptData(venda);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erro ao processar venda.');
     } finally {
@@ -273,71 +301,16 @@ export function POSPage() {
     }
   };
 
-  const handleSendEmail = async () => {
-    if (!customerEmail || !vendaResult?.id) return;
-    setIsSendingEmail(true);
-    try {
-      await enviarRecibo(vendaResult.id, customerEmail);
-      toast.success('Recibo enviado com sucesso!');
-      setCustomerEmail('');
-    } catch (error: any) {
-      toast.error('Falha ao enviar recibo por email.');
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
-
-  const handleDownloadReceipt = () => {
-    const doc = new jsPDF();
-    const invoiceNum = vendaResult?.numeroFatura || 'N/A';
-    
-    // Header
-    doc.setFontSize(22);
-    doc.text("Recibo de Compra", 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Fatura: ${invoiceNum}`, 14, 30);
-    doc.text(`Data: ${new Date().toLocaleString('pt-PT')}`, 14, 36);
-    
-    autoTable(doc, {
-      startY: 45,
-      head: [['Descrição', 'Qtd', 'Preço Unit.', 'Subtotal']],
-      body: cartItems.map(item => [
-        item.nome, 
-        item.cartQuantity.toString(), 
-        `${item.precoVenda.toFixed(2)} MT`, 
-        `${(item.precoVenda * item.cartQuantity).toFixed(2)} MT`
-      ]),
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [37, 99, 235] }
-    });
-
-    const finalY = (doc as any).lastAutoTable.finalY || 45;
-    
-    doc.setFontSize(11);
-    doc.text(`Subtotal: ${total.toFixed(2)} MT`, 14, finalY + 10);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL FINAL: ${total.toFixed(2)} MT`, 14, finalY + 18);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const totalEntreguePdf = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
-    const metodosPagamento = pagamentos.map(p => p.metodo).join(', ');
-    doc.text(`Método de Pagamento: ${metodosPagamento || 'N/A'}`, 14, finalY + 30);
-    doc.text(`Valor Entregue: ${totalEntreguePdf.toFixed(2)} MT`, 14, finalY + 36);
-    doc.text(`Troco: ${(totalEntreguePdf - total).toFixed(2)} MT`, 14, finalY + 42);
-
-    doc.save(`Recibo_${invoiceNum}.pdf`);
-  };
-
   const handleNewSale = () => {
     clearCart();
     setPagamentos([]);
     setCurrentAmountPaid(0);
     setCurrentPaymentMethod('NUMERARIO');
-    setCustomerEmail('');
-    setVendaResult(null);
-    setShowSuccessModal(false);
+  };
+
+  const handleCloseReceipt = () => {
+    setReceiptData(null);
+    handleNewSale();
   };
 
   return (
@@ -474,14 +447,32 @@ export function POSPage() {
           </h2>
           <div className="flex items-center gap-2">
             {hasSession && (
-              <button 
-                onClick={() => setShowCloseSessionModal(true)}
-                className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                title="Fechar Turno / Sessão"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                Fechar Caixa
-              </button>
+              <>
+                <button 
+                  onClick={() => setShowSangriaModal(true)}
+                  className="bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  title="Sangria (Retirar da Gaveta)"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                  Sangria
+                </button>
+                <button 
+                  onClick={() => setShowReforcoModal(true)}
+                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  title="Reforço (Colocar na Gaveta)"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Reforço
+                </button>
+                <button 
+                  onClick={() => setShowCloseSessionModal(true)}
+                  className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  title="Fechar Turno / Sessão"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Fechar
+                </button>
+              </>
             )}
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center">
               {cartItems.length} Itens
@@ -644,54 +635,9 @@ export function POSPage() {
         </div>
       </div>
 
-      {/* ─── Success Modal ─── */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
-              <CheckCircle className="w-10 h-10" />
-            </div>
-            
-            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Venda Concluída!</h2>
-            <p className="text-slate-500 text-center text-sm font-medium mb-6">Fatura {vendaResult?.numeroFatura} processada.</p>
-            
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-6">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Enviar Recibo (Opcional)</label>
-              <div className="flex gap-2">
-                <input 
-                  type="email" 
-                  placeholder="E-mail do cliente"
-                  className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                  value={customerEmail}
-                  onChange={e => setCustomerEmail(e.target.value)}
-                />
-                <button 
-                  onClick={handleSendEmail}
-                  disabled={isSendingEmail || !customerEmail}
-                  className="bg-blue-600 text-white px-5 rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center transition-colors shadow-sm"
-                  title="Enviar Email"
-                >
-                  {isSendingEmail ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Mail className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button 
-                onClick={handleDownloadReceipt}
-                className="flex items-center justify-center gap-2 border-2 border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors"
-              >
-                <Download className="w-5 h-5" /> PDF
-              </button>
-              <button 
-                onClick={handleNewSale}
-                className="bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition-colors shadow-md"
-              >
-                Nova Venda
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ─── Receipt Modal ─── */}
+      {receiptData && (
+        <ReceiptModal receiptData={receiptData} onClose={handleCloseReceipt} />
       )}
           </div>
         )}
@@ -721,45 +667,49 @@ export function POSPage() {
             <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir Sessão de Caixa</h2>
             <p className="text-slate-500 text-center text-sm font-medium mb-6">É obrigatório abrir uma sessão para começar a vender.</p>
             
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Selecione o Caixa</label>
-                <select 
-                  value={selectedCaixaId}
-                  onChange={(e) => setSelectedCaixaId(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+            {caixas.length === 0 ? (
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 text-sm mb-6">
+                <p className="font-semibold mb-1">Nenhum caixa disponível</p>
+                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessão.</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Selecione o Caixa</label>
+                    <select
+                      value={selectedCaixaId}
+                      onChange={e => setSelectedCaixaId(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                    >
+                      {caixas.map(c => (
+                        <option key={c.id} value={c.id}>{c.nome} ({c.loja?.nome})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fundo de Maneio / Troco Inicial (MT)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      step="0.01"
+                      value={saldoInicial || ''}
+                      onChange={e => setSaldoInicial(parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  disabled={isOpeningSession || !selectedCaixaId}
+                  onClick={handleOpenSession}
+                  className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                 >
-                  <option value="" disabled>Escolha um caixa...</option>
-                  {caixas.map(c => (
-                    <option key={c.id} value={c.id}>{c.nome} ({c.loja?.nome})</option>
-                  ))}
-                </select>
-                {caixas.length === 0 && (
-                  <p className="text-xs text-red-500 mt-2">Atenção: Não existem caixas configurados no sistema. Vá ao menu Lojas para criar um.</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fundo de Maneio / Troco Inicial (MT)</label>
-                <input 
-                  type="number" 
-                  min="0"
-                  step="0.01"
-                  value={saldoInicial || ''}
-                  onChange={e => setSaldoInicial(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <button 
-              disabled={isOpeningSession || !selectedCaixaId}
-              onClick={handleOpenSession}
-              className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
-            >
-              {isOpeningSession ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Confirmar Abertura'}
-            </button>
+                  {isOpeningSession ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Confirmar Abertura'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -814,7 +764,89 @@ export function POSPage() {
           </div>
         </div>
       )}
-    </div>
+
+      {/* ▪️▪️▪️ Sangria Modal ▪️▪️▪️ */}
+        {showSangriaModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
+              <button 
+                onClick={() => setShowSangriaModal(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Sangria</h2>
+              <p className="text-slate-500 text-center text-sm font-medium mb-6">Retirada de valor do caixa.</p>
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor MT</label>
+                  <input 
+                    type="number" min="0" step="0.01"
+                    value={movimentoValor || ''}
+                    onChange={e => setMovimentoValor(parseFloat(e.target.value) || 0)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm font-bold text-slate-800"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Motivo</label>
+                  <textarea 
+                    value={movimentoMotivo}
+                    onChange={e => setMovimentoMotivo(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm text-slate-700 min-h-[100px]"
+                    placeholder="Ex: Pagamento a fornecedor..."
+                  />
+                </div>
+              </div>
+              <button onClick={handleSangria} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98]">
+                Confirmar Sangria
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ▪️▪️▪️ Reforço Modal ▪️▪️▪️ */}
+        {showReforcoModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
+              <button 
+                onClick={() => setShowReforcoModal(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Reforço</h2>
+              <p className="text-slate-500 text-center text-sm font-medium mb-6">Entrada de valor (ex: trocos) no caixa.</p>
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor MT</label>
+                  <input 
+                    type="number" min="0" step="0.01"
+                    value={movimentoValor || ''}
+                    onChange={e => setMovimentoValor(parseFloat(e.target.value) || 0)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-slate-800"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Motivo</label>
+                  <textarea 
+                    value={movimentoMotivo}
+                    onChange={e => setMovimentoMotivo(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 min-h-[100px]"
+                    placeholder="Ex: Reforço de moedas para troco..."
+                  />
+                </div>
+              </div>
+              <button onClick={handleReforco} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
+                Confirmar Reforço
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
   );
 }
 

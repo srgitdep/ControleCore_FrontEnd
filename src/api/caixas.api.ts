@@ -29,6 +29,16 @@ export const fecharSessao = async (sessaoId: string, payload: { saldoDeclarado: 
   return data;
 };
 
+export const registrarSangria = async (sessaoId: string, payload: { valor: number; motivo: string }) => {
+  const { data } = await api.post(`/caixas/sessoes/${sessaoId}/sangria`, payload);
+  return data;
+};
+
+export const registrarReforco = async (sessaoId: string, payload: { valor: number; motivo: string }) => {
+  const { data } = await api.post(`/caixas/sessoes/${sessaoId}/reforco`, payload);
+  return data;
+};
+
 // ─── GESTÃO FÍSICA DOS CAIXAS ───────────────────────────────────────────
 export const getAllCaixas = async () => {
   const { data } = await api.get('/caixas');

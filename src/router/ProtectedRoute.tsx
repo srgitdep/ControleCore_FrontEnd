@@ -13,8 +13,10 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
   const { isAuthenticated, isLoading, hasRole } = useAuth();
   const { hasPermission } = usePermissions();
 
-  // Enquanto o estado carrega do localStorage, mostra loading silencioso
-  if (isLoading) {
+  const isAuthInitialized = !isLoading;
+
+  // Enquanto o estado carrega do localStorage ou da API, mostra loading silencioso
+  if (!isAuthInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-3">

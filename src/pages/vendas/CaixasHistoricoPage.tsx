@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw } from 'lucide-react';
+import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw, Eye } from 'lucide-react';
 import { obterHistoricoSessoes } from '@/api/caixas.api';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
+import { ReceiptModal } from './components/ReceiptModal';
 
 export function CaixasHistoricoPage() {
   const [sessoes, setSessoes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
   useEffect(() => {
     fetchHistorico();
@@ -121,12 +123,19 @@ export function CaixasHistoricoPage() {
                     {sessao.estado === 'FECHADA' && (
                       <div className="text-right">
                         <p className="text-xs font-bold text-slate-400 uppercase">Quebra/Sobra</p>
-                        <p className={`font-black text-lg ${
-                          sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado < 0 ? 'text-rose-600' :
-                          sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado > 0 ? 'text-emerald-600' : 'text-slate-500'
-                        }`}>
-                          {(sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado).toFixed(2)} MT
-                        </p>
+                        <div className="flex items-center gap-2 justify-end">
+                          <p className={`font-black text-lg ${
+                            (sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) < 0 ? 'text-rose-600' :
+                            (sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) > 0 ? 'text-emerald-600' : 'text-slate-500'
+                          }`}>
+                            {(sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)).toFixed(2)} MT
+                          </p>
+                          {(sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) < 0 && (
+                            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" title="Quebra Negativa de Caixa">
+                              Alerta
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                     <div className="text-slate-400">
@@ -161,7 +170,17 @@ export function CaixasHistoricoPage() {
                                 <td className="px-4 py-3 font-medium text-slate-800">{venda.numeroFatura}</td>
                                 <td className="px-4 py-3 font-mono text-xs">{new Date(venda.createdAt).toLocaleString('pt-PT')}</td>
                                 <td className="px-4 py-3 font-bold text-blue-600">{venda.totalFinal.toFixed(2)} MT</td>
-                                <td className="px-4 py-3 text-right">
+                                <td className="px-4 py-3 text-right flex justify-end gap-2">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedReceipt({ ...venda, caixeiro: sessao.operador });
+                                    }}
+                                    className="text-slate-500 hover:text-emerald-600 p-1 rounded transition-colors"
+                                    title="Visualizar Recibo"
+                                  >
+                                    <Eye size={18} />
+                                  </button>
                                   <button 
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -186,6 +205,14 @@ export function CaixasHistoricoPage() {
           </div>
         )}
       </div>
+
+      {selectedReceipt && (
+        <ReceiptModal 
+          receiptData={selectedReceipt} 
+          onClose={() => setSelectedReceipt(null)} 
+          viewOnly={true} 
+        />
+      )}
     </div>
   );
 }

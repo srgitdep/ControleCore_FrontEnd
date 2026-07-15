@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User } from 'lucide-react';
+import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { criarCaixa, removerCaixa } from '@/api/caixas.api';
 import { createArmazem, deleteArmazem, updateLoja } from '@/api/lojas.api';
 import toast from 'react-hot-toast';
@@ -12,10 +12,12 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   const [novoArmazem, setNovoArmazem] = useState('');
   const [gestorId, setGestorId] = useState(loja.gestorId || '');
   const [isSavingGestor, setIsSavingGestor] = useState(false);
+  const [isCreatingCaixa, setIsCreatingCaixa] = useState(false);
 
   const handleCreateCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoCaixa.trim()) return;
+    setIsCreatingCaixa(true);
     try {
       await criarCaixa({ lojaId: loja.id, nome: novoCaixa });
       toast.success('Caixa adicionado');
@@ -23,6 +25,8 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
       onUpdate();
     } catch {
       toast.error('Erro ao adicionar caixa');
+    } finally {
+      setIsCreatingCaixa(false);
     }
   };
 
@@ -124,8 +128,8 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   placeholder="Ex: Caixa 01 (Balcão Principal)" 
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
-                <button type="submit" disabled={!novoCaixa.trim()} className="px-5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
-                  <Plus size={18} /> Adicionar
+                <button type="submit" disabled={!novoCaixa.trim() || isCreatingCaixa} className="px-5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
+                  {isCreatingCaixa ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Adicionar
                 </button>
               </form>
 
