@@ -18,6 +18,7 @@ import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockDetailsPage } from '@/pages/stock/StockDetailsPage';
 import { ClientesPage } from '@/pages/crm/ClientesPage';
 import { FinanceiroDashboardPage } from '@/pages/financeiro/FinanceiroDashboardPage';
+import { PurchasesPage } from '@/pages/compras/PurchasesPage';
 import { useAuth } from '@/hooks/useAuth';
 
 function HomeRedirect() {
@@ -74,8 +75,8 @@ export const router = createBrowserRouter([
 
           // Módulos — em desenvolvimento
           { path: '/produtos',      element: <ProductListPage /> },
-          { path: '/fornecedores',  element: <EmDesenvolvimentoPage /> },
-          { path: '/compras',       element: <EmDesenvolvimentoPage /> },
+          { path: '/fornecedores',  element: <PurchasesPage /> },
+          { path: '/compras',       element: <PurchasesPage /> },
           { path: '/stock',         element: <StockListPage /> },
           { path: '/stock/:id',     element: <StockDetailsPage /> },
           { path: '/vendas',        element: <POSPage /> },
