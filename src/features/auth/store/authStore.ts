@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { AuthUser, LoginPayload } from '@/types/auth.types';
-import { loginApi, logoutApi } from '@/api/auth.api';
+import { loginApi, logoutApi } from '@/features/auth/api/auth.api';
 
 // Tokens removidos do estado — são geridos exclusivamente pelo browser via HttpOnly cookies.
 // persist removido — guardar tokens em localStorage seria a vulnerabilidade que estamos a eliminar.

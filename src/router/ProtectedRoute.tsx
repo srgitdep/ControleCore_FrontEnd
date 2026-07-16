@@ -34,10 +34,12 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
 
   // Autenticado mas sem a role necessária → toast + redireciona para dashboard
   if (roles && !hasRole(roles)) {
-    toast.error('Sem permissão para aceder a esta página.', {
-      id: 'sem-permissao-role',
-      duration: 4000,
-    });
+    setTimeout(() => {
+      toast.error('Sem permissão para aceder a esta página.', {
+        id: 'sem-permissao-role',
+        duration: 4000,
+      });
+    }, 0);
     return <Navigate to="/" replace />;
   }
 
@@ -45,10 +47,12 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
   if (requiredPermission) {
     const [action, resource] = requiredPermission.split(':');
     if (action && resource && !hasPermission(action, resource)) {
-      toast.error('Não tem permissão para essa ação.', {
-        id: 'sem-permissao-action',
-        duration: 4000,
-      });
+      setTimeout(() => {
+        toast.error('Não tem permissão para essa ação.', {
+          id: 'sem-permissao-action',
+          duration: 4000,
+        });
+      }, 0);
       return <Navigate to="/" replace />;
     }
   }

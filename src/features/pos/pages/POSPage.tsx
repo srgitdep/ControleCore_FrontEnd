@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useCatalog';
-import { usePosStore } from '@/store/posStore';
+import { usePosStore } from '@/features/pos';
 import { useSocket } from '@/hooks/useSocket';
-import { processarVenda } from '@/api/vendas.api';
-import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/api/caixas.api';
+import { processarVenda } from '@/features/pos';
+import { obterCaixasDisponiveis, obterMinhaSessao, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/features/finance';
 import toast from 'react-hot-toast';
 import type { Product } from '@/types/catalog.types';
-import { CaixasHistoricoPage } from './CaixasHistoricoPage';
-import { ReceiptModal } from './components/ReceiptModal';
+import { CaixasHistoricoPage } from '@/features/finance';
+import { ReceiptModal } from '../components/ReceiptModal';
 import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [
@@ -39,7 +39,7 @@ export function POSPage() {
     cartItems, addItem, removeItem, updateQuantity, clearCart
   } = usePosStore();
 
-  const total = cartItems.reduce((acc, item) => {
+  const total = cartItems.reduce((acc: number, item: any) => {
     const subtotalLinha = item.precoVenda * item.cartQuantity;
     const taxaIva = item.taxaIva || 0;
     const valorIva = subtotalLinha * (taxaIva / 100);
@@ -286,11 +286,11 @@ export function POSPage() {
       setIsProcessing(true);
       try {
         const payload = {
-          itens: cartItems.map(item => ({
+          itens: cartItems.map((item: any) => ({
             produtoId: item.id,
             quantidade: item.cartQuantity,
           })),
-          pagamentos: pagamentos
+          pagamentos: pagamentos.map(p => ({ metodo: p.metodo, valorEntregue: p.valorEntregue })),
         };
 
 
@@ -493,7 +493,7 @@ export function POSPage() {
               <p className="text-sm mt-1">Adicione produtos para iniciar a venda.</p>
             </div>
           ) : (
-            cartItems.map((item) => (
+            cartItems.map((item: any) => (
               <div key={item.id} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-2xl shadow-sm relative group">
                 <div className="w-16 h-16 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
                   {item.imagemUrl ? (

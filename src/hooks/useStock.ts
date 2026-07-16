@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { stockApi } from '@/api/stock.api';
+import { stockApi } from '@/features/inventory';
 import toast from 'react-hot-toast';
 
 export function useStockList(params?: { page?: number; limit?: number; search?: string }) {

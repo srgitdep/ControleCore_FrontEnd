@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { loginApi, logoutApi } from '@/api/auth.api';
+import { loginApi, logoutApi } from '@/features/auth/api/auth.api';
 import { useQueryClient } from '@tanstack/react-query';
 import type { AuthContextType, AuthUser, LoginPayload, Role } from '@/types/auth.types';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
-import { criarCaixa, removerCaixa } from '@/api/caixas.api';
+import { criarCaixa, atualizarCaixa, removerCaixa } from '@/features/finance';
 import { createArmazem, deleteArmazem, updateLoja } from '@/api/lojas.api';
 import toast from 'react-hot-toast';
 

@@ -25,8 +25,8 @@ import { useStockList, useAllMovements } from '@/hooks/useStock';
 import { useSocket } from '@/hooks/useSocket';
 import { ResponsiveTable } from '@/components/common/ResponsiveTable';
 import { Button } from '@/components/common/Button';
-import { MovementModals } from './components/MovementModals';
-import { InventoryTab } from './components/InventoryTab';
+import { MovementModals } from '../components/MovementModals';
+import { InventoryTab } from '../components/InventoryTab';
 import type { Stock, StockMovement } from '@/types/stock.types';
 
 // ─── Tab definition ───────────────────────────────────────────────────────────

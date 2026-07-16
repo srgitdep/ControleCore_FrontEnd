@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Mail, ArrowLeft, SendHorizonal } from 'lucide-react';
-import { forgotPasswordApi } from '@/api/auth.api';
+import { forgotPasswordApi } from '@/features/auth/api/auth.api';
 import { cn } from '@/lib/utils';
 
 const schema = z.object({

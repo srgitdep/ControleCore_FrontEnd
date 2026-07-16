@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
-import { resetPasswordApi } from '@/api/auth.api';
+import { resetPasswordApi } from '@/features/auth/api/auth.api';
 import { cn } from '@/lib/utils';
 
 const schema = z

@@ -28,13 +28,7 @@ import {
   RefreshCw,
   PlusCircle,
 } from 'lucide-react';
-import {
-  getDreSummary,
-  getCashFlowProjection,
-  getContasReceber,
-  getContasPagar,
-  processarPagamento,
-} from '@/api/finance';
+import { getDreSummary, getCashFlowProjection, getContasReceber, getContasPagar, processarPagamento } from '@/features/finance';
 import type { EstadoLancamento, RegistroFinanceiro } from '@/types/finance.types';
 import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';

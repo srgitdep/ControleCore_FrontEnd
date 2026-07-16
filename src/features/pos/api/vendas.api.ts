@@ -1,4 +1,4 @@
-import { api } from './axios';
+import { api } from '@/api/axios';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,6 @@ export interface PagamentoVendaDto {
 
 export interface ProcessarVendaDto {
   itens: VendaItemDto[];
-  // O backend aceita array de pagamentos (split payment)
   pagamentos: PagamentoVendaDto[];
   clienteId?: string;
   emailCliente?: string;
@@ -31,6 +30,6 @@ export const processarVenda = async (payload: ProcessarVendaDto) => {
 };
 
 export const enviarRecibo = async (vendaId: string, email: string) => {
-  const { data } = await api.post('/vendas/enviar-recibo', { vendaId, email });
+  const { data } = await api.post(`/vendas/${vendaId}/send-receipt`, { email });
   return data;
 };
