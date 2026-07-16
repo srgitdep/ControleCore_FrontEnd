@@ -39,8 +39,12 @@ export function POSPage() {
     cartItems, addItem, removeItem, updateQuantity, clearCart
   } = usePosStore();
 
-  const total = cartItems.reduce((acc, item) => acc + (item.precoVenda * item.cartQuantity), 0);
-
+  const total = cartItems.reduce((acc, item) => {
+    const subtotalLinha = item.precoVenda * item.cartQuantity;
+    const taxaIva = item.taxaIva || 0;
+    const valorIva = subtotalLinha * (taxaIva / 100);
+    return acc + subtotalLinha + valorIva;
+  }, 0);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const { data: categoriesData } = useCategories();
