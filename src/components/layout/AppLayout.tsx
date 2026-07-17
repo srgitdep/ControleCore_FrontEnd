@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useUIStore } from '@/store/useUIStore';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { CopilotWidget } from '@/features/ai-copilot';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
@@ -64,6 +65,9 @@ export function AppLayout() {
           )}
         </main>
       </div>
+
+      {/* ── Widget AI Global ────────────────────────────────────────────── */}
+      <CopilotWidget />
     </div>
   );
 }

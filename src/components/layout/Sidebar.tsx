@@ -17,12 +17,14 @@ import {
   MoreVertical,
   History,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth';
 import { useUIStore } from '@/store/useUIStore';
+import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
 
 interface NavItem {
@@ -81,6 +83,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const { user, hasRole, logout } = useAuth();
   const { toggleSidebarCollapse, closeMobileMenu } = useUIStore();
+  const { toggleOpen: toggleCopilot } = useCopilotStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -209,9 +212,30 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
             </div>
           );
         })}
+        
+        {/* ── Assistente IA ──────────────────────────────────────────────── */}
+        <div className="mt-4 pt-4 border-t border-slate-100 mb-2">
+          <button
+            onClick={toggleCopilot}
+            className={cn(
+              'w-full flex items-center rounded-lg text-sm font-medium transition-all duration-150 group',
+              (isCollapsed && !isMobileDrawer) ? 'justify-center py-3' : 'justify-between px-3 py-2',
+              'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 shadow-sm'
+            )}
+            title={(isCollapsed && !isMobileDrawer) ? 'Assistente Mayra' : undefined}
+          >
+            <div className={cn('flex items-center', (isCollapsed && !isMobileDrawer) ? 'gap-0' : 'gap-3')}>
+              <Sparkles
+                size={(isCollapsed && !isMobileDrawer) ? 20 : 18}
+                className="flex-shrink-0 text-indigo-600 group-hover:scale-110 transition-transform"
+              />
+              {(!isCollapsed || isMobileDrawer) && <span className="truncate font-semibold">Assistente Mayra</span>}
+            </div>
+          </button>
+        </div>
       </nav>
 
-      {/* ──â”€ Utilizador (Rodapé) ──────────────────────────────────────── */}
+      {/* ── Utilizador (Rodapé) ──────────────────────────────────────── */}
       {user && (
         <div className="relative p-4 border-t border-slate-200 bg-white">
 
