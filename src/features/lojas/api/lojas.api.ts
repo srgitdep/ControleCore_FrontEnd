@@ -1,4 +1,4 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 
 export const getLojas = async () => {
   const { data } = await api.get('/lojas');
@@ -16,7 +16,7 @@ export const createLoja = async (loja: { nome: string; endereco?: string; cidade
 };
 
 export const updateLoja = async (id: string, loja: { nome?: string; endereco?: string; cidade?: string; gestorId?: string; isActive?: boolean }) => {
-  const { data } = await api.put(`/lojas/${id}`, loja);
+  const { data } = await api.patch(`/lojas/${id}`, loja);
   return data;
 };
 
@@ -25,9 +25,9 @@ export const deleteLoja = async (id: string) => {
   return data;
 };
 
-// ArmazÃ©ns (associados Ã  Loja)
+// Armazéns (associados à Loja)
 export const getArmazensByLoja = async (lojaId: string) => {
-  const { data } = await api.get(`/lojas/${lojaId}/armazens`);
+  const { data } = await api.get(`/armazens/loja/${lojaId}`);
   return data;
 };
 

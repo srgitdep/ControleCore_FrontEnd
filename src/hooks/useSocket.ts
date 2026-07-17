@@ -30,14 +30,14 @@ export function useSocket() {
       console.log('[WebSockets] Connected:', socketInstance.id);
     });
 
-    // Evento de atualizaÃ§Ã£o de stock (Ledger)
+    // Evento de atualização de stock (Ledger)
     socketInstance.on('stock_updated', (data) => {
       // Invalida a query de produtos para buscar as quantidades atualizadas no POS
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      // Invalida a query de stocks para atualizar as tabelas do dashboard de gestÃ£o
+      // Invalida a query de stocks para atualizar as tabelas do dashboard de gestão
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
       
-      // Se houver necessidade de invalidar um produto em especÃ­fico
+      // Se houver necessidade de invalidar um produto em especÍfico
       if (data?.productId) {
         queryClient.invalidateQueries({ queryKey: ['stock', data.productId] });
       }

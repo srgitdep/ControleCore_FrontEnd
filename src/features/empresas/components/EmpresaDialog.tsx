@@ -1,30 +1,28 @@
-﻿import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Building2, UserCircle, Info } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { createEmpresa, updateEmpresa } from '@/features/empresas';
+import { useCreateEmpresa, useUpdateEmpresa } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 
-// â”€â”€ Esquema para CRIAÃ‡ÃƒO (onboarding completo) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Esquema para CRIAÇÃO (onboarding completo) ────────────────────────────────
 const criarEmpresaSchema = z.object({
   // Dados da Empresa
   empresaNome:      z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
   empresaNuit:      z.string().min(9, 'O NUIT deve ter pelo menos 9 caracteres'),
-  empresaEmail:     z.string().email('E-mail da empresa invÃ¡lido'),
-  empresaTelefone:  z.string().regex(/^\+?[0-9]{9,15}$/, 'Telefone invÃ¡lido (deve conter 9 a 15 nÃºmeros, sem espaÃ§os ou letras)'),
+  empresaEmail:     z.string().email('E-mail da empresa inválido'),
+  empresaTelefone:  z.string().regex(/^\+?[0-9]{9,15}$/, 'Telefone inválido (deve conter 9 a 15 números, sem espaços ou letras)'),
   // Dados do Gestor Principal
-  gestorNome:       z.string().min(2, 'O nome do gestor Ã© obrigatÃ³rio'),
-  gestorEmail:      z.string().email('E-mail do gestor invÃ¡lido'),
+  gestorNome:       z.string().min(2, 'O nome do gestor é obrigatório'),
+  gestorEmail:      z.string().email('E-mail do gestor inválido'),
 });
 
-// â”€â”€ Esquema para EDIÃ‡ÃƒO (apenas dados base da empresa) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Esquema para EDIÇÃO (apenas dados base da empresa) ────────────────────────
 const editarEmpresaSchema = z.object({
   nome:     z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
   nuit:     z.string().min(9, 'O NUIT deve ter pelo menos 9 caracteres'),
-  email:    z.string().email('E-mail invÃ¡lido'),
-  telefone: z.string().regex(/^\+?[0-9]{9,15}$/, 'Telefone invÃ¡lido').optional().or(z.literal('')),
+  email:    z.string().email('E-mail inválido'),
+  telefone: z.string().regex(/^\+?[0-9]{9,15}$/, 'Telefone inválido').optional().or(z.literal('')),
   endereco: z.string().optional(),
   cidade:   z.string().optional(),
   pais:     z.string(),
@@ -40,13 +38,11 @@ interface EmpresaDialogProps {
   onClose: () => void;
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// FormulÃ¡rio de EDIÃ‡ÃƒO (simples)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────â”€
+// Formulário de EDIÇÃO (simples)
+// ────────────────────────────────────────────────────────────────────────────â”€
 function EditarEmpresaForm({ empresa, onClose }: { empresa: Empresa; onClose: () => void }) {
-  const queryClient = useQueryClient();
-
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditarFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<EditarFormData>({
     resolver: zodResolver(editarEmpresaSchema),
     defaultValues: {
       nome:     empresa.nome,
@@ -61,21 +57,16 @@ function EditarEmpresaForm({ empresa, onClose }: { empresa: Empresa; onClose: ()
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data: EditarFormData) => updateEmpresa(empresa.id, data),
-    onSuccess: () => {
-      toast.success('Empresa atualizada com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
-      onClose();
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Erro ao atualizar a empresa.';
-      toast.error(Array.isArray(message) ? message[0] : message);
-    },
+  const mutation = useUpdateEmpresa();
+  const onSubmit = handleSubmit((data) => {
+    mutation.mutate(
+      { id: empresa.id, data },
+      { onSuccess: onClose }
+    );
   });
 
   return (
-    <form id="empresa-form" onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 p-6 overflow-y-auto">
+    <form id="empresa-form" onSubmit={onSubmit} className="space-y-4 p-6 overflow-y-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Empresa *</label>
@@ -97,11 +88,11 @@ function EditarEmpresaForm({ empresa, onClose }: { empresa: Empresa; onClose: ()
           <input {...register('telefone')} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">EndereÃ§o</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
           <input {...register('endereco')} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">PaÃ­s</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">PaÍs</label>
           <input {...register('pais')} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
         </div>
         <div>
@@ -120,20 +111,18 @@ function EditarEmpresaForm({ empresa, onClose }: { empresa: Empresa; onClose: ()
           Cancelar
         </button>
         <button type="submit" disabled={mutation.isPending} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-          {mutation.isPending ? 'A guardar...' : 'Guardar AlteraÃ§Ãµes'}
+          {mutation.isPending ? 'A guardar...' : 'Guardar Alterações'}
         </button>
       </div>
     </form>
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// FormulÃ¡rio de CRIAÃ‡ÃƒO (onboarding completo)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────â”€
+// Formulário de CRIAÇÃO (onboarding completo)
+// ────────────────────────────────────────────────────────────────────────────â”€
 function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
-  const queryClient = useQueryClient();
-
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CriarFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<CriarFormData>({
     resolver: zodResolver(criarEmpresaSchema),
     defaultValues: {
       empresaNome:     '',
@@ -145,21 +134,12 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data: CriarFormData) =>
-      createEmpresa({
-        ...data,
-        modulos: [], // Por agora sem mÃ³dulos â€” serÃ¡ expandido na fase de mÃ³dulos
-      }),
-    onSuccess: (result) => {
-      toast.success(result.message || 'Empresa criada com sucesso! E-mail enviado ao gestor.');
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
-      onClose();
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Erro ao criar a empresa.';
-      toast.error(Array.isArray(message) ? message[0] : message);
-    },
+  const mutation = useCreateEmpresa();
+  const onSubmit = handleSubmit((data) => {
+    mutation.mutate(
+      { ...data, modulos: [] },
+      { onSuccess: onClose }
+    );
   });
 
   const fieldClass = "w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all";
@@ -167,9 +147,9 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
   const errorClass = "text-xs text-rose-500 mt-1";
 
   return (
-    <form id="empresa-form" onSubmit={handleSubmit((d) => mutation.mutate(d))} className="overflow-y-auto">
+    <form id="empresa-form" onSubmit={onSubmit} className="overflow-y-auto">
       
-      {/* â”€â”€ SecÃ§Ã£o 1: Dados da Empresa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Secção 1: Dados da Empresa ──────────────────────────────────â”€ */}
       <div className="px-6 pt-5 pb-4">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -177,7 +157,7 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800">Dados da Empresa</h3>
-            <p className="text-xs text-slate-500">InformaÃ§Ãµes de identificaÃ§Ã£o da empresa cliente</p>
+            <p className="text-xs text-slate-500">Informações de identificação da empresa cliente</p>
           </div>
         </div>
 
@@ -205,10 +185,10 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* â”€â”€ Divisor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Divisor ────────────────────────────────────────────────────â”€ */}
       <div className="mx-6 border-t border-dashed border-slate-200" />
 
-      {/* â”€â”€ SecÃ§Ã£o 2: Dados do Gestor Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Secção 2: Dados do Gestor Principal ────────────────────────── */}
       <div className="px-6 pt-4 pb-5">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -216,14 +196,14 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800">Gestor Principal</h3>
-            <p className="text-xs text-slate-500">Utilizador responsÃ¡vel que vai gerir a empresa no sistema</p>
+            <p className="text-xs text-slate-500">Utilizador responsável que vai gerir a empresa no sistema</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Nome Completo do Gestor *</label>
-            <input {...register('gestorNome')} className={fieldClass} placeholder="Ex: AntÃ³nio Mambo" />
+            <input {...register('gestorNome')} className={fieldClass} placeholder="Ex: António Mambo" />
             {errors.gestorNome && <p className={errorClass}>{errors.gestorNome.message}</p>}
           </div>
           <div>
@@ -237,12 +217,12 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
         <div className="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
           <Info size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-700 leading-relaxed">
-            O sistema irÃ¡ gerar automaticamente um <strong>cÃ³digo de acesso</strong> e uma <strong>senha provisÃ³ria</strong> para o gestor, que serÃ£o enviados para o e-mail indicado assim que a empresa for registada. Um perÃ­odo de <strong>TRIAL de 14 dias</strong> serÃ¡ ativado automaticamente.
+            O sistema irá gerar automaticamente um <strong>código de acesso</strong> e uma <strong>senha provisória</strong> para o gestor, que serão enviados para o e-mail indicado assim que a empresa for registada. Um perÍodo de <strong>TRIAL de 14 dias</strong> será ativado automaticamente.
           </p>
         </div>
       </div>
 
-      {/* â”€â”€ Footer / BotÃµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Footer / Botões ──────────────────────────────────────────────â”€ */}
       <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
         <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
           Cancelar
@@ -262,9 +242,9 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Componente Principal (escolhe qual formulÃ¡rio renderizar)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────────────────â”€
+// Componente Principal (escolhe qual formulário renderizar)
+// ────────────────────────────────────────────────────────────────────────────â”€
 export function EmpresaDialog({ empresa, onClose }: EmpresaDialogProps) {
   const isEditing = !!empresa;
 
@@ -280,8 +260,8 @@ export function EmpresaDialog({ empresa, onClose }: EmpresaDialogProps) {
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {isEditing
-                ? 'Atualize os dados de identificaÃ§Ã£o da empresa'
-                : 'Preencha os dados da empresa e do gestor responsÃ¡vel'}
+                ? 'Atualize os dados de identificação da empresa'
+                : 'Preencha os dados da empresa e do gestor responsável'}
             </p>
           </div>
           <button
@@ -292,7 +272,7 @@ export function EmpresaDialog({ empresa, onClose }: EmpresaDialogProps) {
           </button>
         </div>
 
-        {/* Body â€” renderiza o formulÃ¡rio correto */}
+        {/* Body — renderiza o formulário correto */}
         {isEditing ? (
           <EditarEmpresaForm empresa={empresa} onClose={onClose} />
         ) : (

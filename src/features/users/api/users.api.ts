@@ -1,4 +1,4 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 import type { UserDetail, CreateUserPayload, UpdateUserPayload, UserStatusActionPayload } from '@/features/users';
 
 export const getUsers = async (): Promise<UserDetail[]> => {
@@ -22,15 +22,15 @@ export const updateUser = async (id: string, payload: UpdateUserPayload): Promis
 };
 
 export const deactivateUser = async (id: string, payload: UserStatusActionPayload): Promise<void> => {
-  await api.delete(`/users/${id}`, { data: payload });
+  await api.patch(`/users/${id}/status`, payload);
 };
 
 export const activateUser = async (id: string, payload: UserStatusActionPayload): Promise<void> => {
-  await api.patch(`/users/${id}/activate`, payload);
+  await api.patch(`/users/${id}/status`, payload);
 };
 
 export const deleteUser = async (id: string): Promise<void> => {
-  await api.delete(`/users/${id}/delete`);
+  await api.delete(`/users/${id}`);
 };
 
 export const resendPassword = async (id: string): Promise<{ message: string }> => {

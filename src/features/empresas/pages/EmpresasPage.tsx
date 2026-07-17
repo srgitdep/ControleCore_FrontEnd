@@ -1,7 +1,7 @@
-﻿import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
-import { getEmpresas, deleteEmpresa } from '@/features/empresas';
+import { useState } from 'react';
+
+import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
+import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
 import { EmpresaDialog } from '../components/EmpresaDialog';
@@ -11,7 +11,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export function EmpresasPage() {
-  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [empresaToEdit, setEmpresaToEdit] = useState<Empresa | null>(null);
@@ -34,23 +33,9 @@ export function EmpresasPage() {
 
   const closeConfirmDialog = () => setConfirmDialog(prev => ({ ...prev, isOpen: false }));
 
-  const { data: empresas, isLoading } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: getEmpresas,
-  });
+  const { data: empresas, isLoading } = useEmpresas();
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteEmpresa,
-    onSuccess: () => {
-      toast.success('Empresa eliminada com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
-      closeConfirmDialog();
-    },
-    onError: () => {
-      toast.error('Erro ao eliminar a empresa.');
-      closeConfirmDialog();
-    },
-  });
+  const deleteMutation = useDeleteEmpresa();
 
   const filteredEmpresas = empresas?.filter(emp => 
     emp.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,9 +50,9 @@ export function EmpresasPage() {
     }
     const doc = new jsPDF();
     
-    // TÃ­tulo e Data
+    // TÍtulo e Data
     doc.setFontSize(16);
-    doc.text('RelatÃ³rio de Empresas', 14, 20);
+    doc.text('Relatório de Empresas', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     const dateStr = new Date().toLocaleString('pt-PT');
@@ -98,9 +83,14 @@ export function EmpresasPage() {
     setConfirmDialog({
       isOpen: true,
       title: 'Eliminar Empresa',
-      message: 'Tem a certeza que deseja eliminar esta empresa? Esta acÃ§Ã£o Ã© irreversÃ­vel e removerÃ¡ o acesso a todos os utilizadores associados.',
+      message: 'Tem a certeza que deseja eliminar esta empresa? Esta acção é irreversÍvel e removerá o acesso a todos os utilizadores associados.',
       variant: 'danger',
-      onConfirm: () => deleteMutation.mutate(id),
+      onConfirm: () => {
+        deleteMutation.mutate(id, {
+          onSuccess: closeConfirmDialog,
+          onError: closeConfirmDialog
+        });
+      },
     });
   };
 
@@ -179,7 +169,7 @@ export function EmpresasPage() {
                     <div className="flex items-center gap-2">Email <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
                   <th className="px-4 py-4 text-right">Estado</th>
-                  <th className="px-4 py-4 text-center">AÃ§Ãµes</th>
+                  <th className="px-4 py-4 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

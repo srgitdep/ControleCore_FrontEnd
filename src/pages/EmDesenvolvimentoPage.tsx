@@ -6,7 +6,7 @@ export function EmDesenvolvimentoPage() {
       <Hammer size={48} className="mb-4 text-blue-500 opacity-50" />
       <h2 className="text-2xl font-bold text-slate-700">Em Desenvolvimento</h2>
       <p className="mt-2 text-center text-sm">
-        Esta secÃ§Ã£o ainda estÃ¡ a ser construÃ­da e estarÃ¡ disponÃ­vel nas prÃ³ximas fases.
+        Esta secção ainda está a ser construída e estará disponível nas próximas fases.
       </p>
     </div>
   );

@@ -28,7 +28,7 @@ export function useUpdateProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('NÃ£o tem permissÃ£o para atualizar produtos.');
+        toast.error('Não tem permissão para atualizar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao atualizar produto.');
       }
@@ -47,7 +47,7 @@ export function useCreateProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('NÃ£o tem permissÃ£o para criar produtos.');
+        toast.error('Não tem permissão para criar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao criar produto.');
       }
@@ -66,7 +66,7 @@ export function useDeleteProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('NÃ£o tem permissÃ£o para eliminar produtos.');
+        toast.error('Não tem permissão para eliminar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao eliminar produto.');
       }

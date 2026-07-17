@@ -1,4 +1,4 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 import type { Product, Category } from '@/features/produtos';
 
 export const catalogApi = {
@@ -15,7 +15,7 @@ export const catalogApi = {
   },
 
   updateProduct: async (id: string, productData: Partial<Product>) => {
-    const { data } = await api.put<Product>(`/produtos/${id}`, productData);
+    const { data } = await api.patch<Product>(`/produtos/${id}`, productData);
     return data;
   },
 

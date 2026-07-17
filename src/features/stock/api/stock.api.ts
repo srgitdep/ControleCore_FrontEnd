@@ -1,4 +1,4 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/features/stock';
 
 export interface PaginatedResponse<T> {
@@ -9,7 +9,7 @@ export interface PaginatedResponse<T> {
 }
 
 export const stockApi = {
-  // â”€â”€â”€ Consultas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──â”€ Consultas ────────────────────────────────────────────────────────────
 
   getStocks: async (params?: { page?: number; limit?: number; search?: string }) => {
     const { data } = await api.get<PaginatedResponse<Stock>>('/stock', { params });
@@ -22,7 +22,9 @@ export const stockApi = {
   },
 
   getStockMovements: async (stockId: string, params?: { page?: number; limit?: number }) => {
-    const { data } = await api.get<PaginatedResponse<StockMovement>>(`/stock/${stockId}/movements`, { params });
+    const { data } = await api.get<PaginatedResponse<StockMovement>>(`/stock/movements`, { 
+      params: { ...params, stockId } 
+    });
     return data;
   },
 
@@ -31,15 +33,15 @@ export const stockApi = {
     return data;
   },
 
-  // â”€â”€â”€ MutaÃ§Ãµes (Ledger) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
+  // ─── Mutações (Ledger) ────────────────────────────────────────────────
+  
   createMovement: async (payload: CreateMovementPayload) => {
     const { data } = await api.post<StockMovement>('/stock/movement', payload);
     return data;
   },
 
   createTransfer: async (payload: CreateTransferPayload) => {
-    const { data } = await api.post<StockMovement>('/stock/transfer', payload);
+    const { data } = await api.post<StockMovement>('/stock/transferencia', payload);
     return data;
   },
 

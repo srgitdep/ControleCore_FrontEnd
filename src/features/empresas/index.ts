@@ -1,5 +1,8 @@
-﻿// Export API
+// Export API
 export * from './api/empresa.api';
+
+// Export Hooks
+export * from './hooks/useEmpresas';
 
 // Export Types
 export * from './types';

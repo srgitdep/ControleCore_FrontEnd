@@ -1,6 +1,6 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Types ────────────────────────────────────────────────────────────────────
 
 export interface Cliente {
   id: string;
@@ -50,7 +50,7 @@ export interface CriarClienteDto {
   nuit?: string;
 }
 
-// â”€â”€â”€ API Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ API Functions ────────────────────────────────────────────────────────────
 
 export const listarClientes = async (params: {
   page?: number;
@@ -75,7 +75,7 @@ export const atualizarCliente = async (
   id: string,
   payload: Partial<CriarClienteDto>,
 ): Promise<Cliente> => {
-  const { data } = await api.put(`/clientes/${id}`, payload);
+  const { data } = await api.patch(`/clientes/${id}`, payload);
   return data;
 };
 
@@ -84,7 +84,7 @@ export const apagarCliente = async (id: string): Promise<void> => {
 };
 
 export const buscarClientesCRM = async (search: string): Promise<Cliente[]> => {
-  // Utilizado no POS para identificar cliente rapidamente â€” retorna atÃ© 5 resultados
+  // Utilizado no POS para identificar cliente rapidamente — retorna até 5 resultados
   const { data } = await api.get('/clientes', { params: { search, limit: 5 } });
   return data.data;
 };

@@ -29,20 +29,20 @@ import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
-// â”€â”€â”€ Tab definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
 type StockTab = 'estoque' | 'movimentos' | 'inventario';
 
 const TABS: { id: StockTab; label: string; icon: React.ElementType }[] = [
   { id: 'estoque', label: 'Estoque Atual', icon: Package },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
-  { id: 'inventario', label: 'BalanÃ§o / InventÃ¡rio', icon: ClipboardList },
+  { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
 ];
 
-// â”€â”€â”€ Column helper tipado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Column helper tipado ──────────────────────────────────────────────────────
 const stockColumnHelper = createColumnHelper<Stock>();
 const movementColumnHelper = createColumnHelper<StockMovement>();
 
-// â”€â”€â”€ Modal state type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Modal state type ────────────────────────────────────────────────────────â”€
 type ModalType = 'IN' | 'OUT' | 'TRANSFER' | 'ADJUST_PLUS' | 'ADJUST_MINUS' | null;
 
 interface ModalState {
@@ -51,7 +51,7 @@ interface ModalState {
   type: ModalType;
 }
 
-// â”€â”€â”€ Aba: Estoque Atual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Aba: Estoque Atual ──────────────────────────────────────────────────────â”€
 function StockCurrentTab() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useStockList({ page, limit: 10 });
@@ -96,7 +96,7 @@ function StockCurrentTab() {
                   {stock.product?.nome ?? 'Produto Desconhecido'}
                 </p>
                 <p className="text-xs text-slate-500">
-                  CÃ³d: {stock.product?.codigoBarras ?? 'N/A'}
+                  Cód: {stock.product?.codigoBarras ?? 'N/A'}
                 </p>
               </div>
             </div>
@@ -106,7 +106,7 @@ function StockCurrentTab() {
 
       stockColumnHelper.accessor('currentQuantity', {
         id: 'balanco',
-        header: 'BalanÃ§o Atual',
+        header: 'Balanço Atual',
         cell: ({ row }) => {
           const { currentQuantity, minQuantity, product } = row.original;
           const isCritical = currentQuantity <= minQuantity;
@@ -127,7 +127,7 @@ function StockCurrentTab() {
 
       stockColumnHelper.accessor('minQuantity', {
         id: 'minimo',
-        header: 'MÃ­nimo',
+        header: 'MÍnimo',
         cell: ({ getValue }) => (
           <span className="text-slate-500 text-sm">{getValue()}</span>
         ),
@@ -135,7 +135,7 @@ function StockCurrentTab() {
 
       stockColumnHelper.display({
         id: 'acoes',
-        header: 'AÃ§Ãµes',
+        header: 'Ações',
         cell: ({ row }) => {
           const { id } = row.original;
           return (
@@ -143,7 +143,7 @@ function StockCurrentTab() {
               <Link
                 to={`/stock/${id}`}
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Ver Ledger / HistÃ³rico"
+                title="Ver Ledger / Histórico"
               >
                 <FileText className="h-4 w-4" />
               </Link>
@@ -169,7 +169,7 @@ function StockCurrentTab() {
               </Button>
 
               <div className="relative group inline-block">
-                <Button variant="ghost" size="icon" title="Mais opÃ§Ãµes">
+                <Button variant="ghost" size="icon" title="Mais opções">
                   <ArrowRightLeft className="h-4 w-4" />
                 </Button>
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 shadow-xl rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
@@ -177,7 +177,7 @@ function StockCurrentTab() {
                     onClick={() => openModal(id, 'TRANSFER')}
                     className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
                   >
-                    Transferir para ArmazÃ©m
+                    Transferir para Armazém
                   </button>
                   <div className="h-px bg-slate-100 my-1" />
                   <button
@@ -235,7 +235,7 @@ function StockCurrentTab() {
         {!isLoading && stocks.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
             <span className="text-slate-500">
-              PÃ¡gina {page} de {totalPages}
+              Página {page} de {totalPages}
             </span>
             <div className="flex gap-2">
               <Button
@@ -252,7 +252,7 @@ function StockCurrentTab() {
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                PrÃ³xima
+                Próxima
               </Button>
             </div>
           </div>
@@ -270,7 +270,7 @@ function StockCurrentTab() {
   );
 }
 
-// â”€â”€â”€ Aba: Movimentos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Aba: Movimentos ──────────────────────────────────────────────────────────
 function MovementsTab() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useAllMovements({ page, limit: 15 });
@@ -280,7 +280,7 @@ function MovementsTab() {
 
   const TYPE_STYLES: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
     IN: { label: 'Entrada', icon: <ArrowUp className="h-3 w-3" />, cls: 'bg-emerald-100 text-emerald-700' },
-    OUT: { label: 'SaÃ­da', icon: <ArrowDown className="h-3 w-3" />, cls: 'bg-rose-100 text-rose-700' },
+    OUT: { label: 'SaÍda', icon: <ArrowDown className="h-3 w-3" />, cls: 'bg-rose-100 text-rose-700' },
     ADJUSTMENT: { label: 'Ajuste', icon: <Settings2 className="h-3 w-3" />, cls: 'bg-amber-100 text-amber-700' },
   };
 
@@ -323,7 +323,7 @@ function MovementsTab() {
         },
       }),
       movementColumnHelper.accessor('balanceAfter', {
-        header: 'Saldo ApÃ³s',
+        header: 'Saldo Após',
         cell: ({ getValue }) => (
           <span className="tabular-nums text-sm text-slate-700">{getValue()}</span>
         ),
@@ -332,7 +332,7 @@ function MovementsTab() {
         header: 'Motivo',
         cell: ({ getValue }) => (
           <span className="text-xs text-slate-500 truncate max-w-[200px] block">
-            {getValue() ?? 'â€”'}
+            {getValue() ?? '—'}
           </span>
         ),
       }),
@@ -353,7 +353,7 @@ function MovementsTab() {
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
         <Clock className="h-4 w-4 text-slate-400" />
-        <span className="text-sm font-medium text-slate-600">HistÃ³rico de Movimentos</span>
+        <span className="text-sm font-medium text-slate-600">Histórico de Movimentos</span>
       </div>
       <ResponsiveTable
         table={table}
@@ -362,10 +362,10 @@ function MovementsTab() {
       />
       {!isLoading && movements.length > 0 && (
         <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
-          <span className="text-slate-500">PÃ¡gina {page} de {totalPages}</span>
+          <span className="text-slate-500">Página {page} de {totalPages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>PrÃ³xima</Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
           </div>
         </div>
       )}
@@ -373,27 +373,27 @@ function MovementsTab() {
   );
 }
 
-// â”€â”€â”€ PÃ¡gina Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Página Principal ────────────────────────────────────────────────────────â”€
 export function StockListPage() {
   useSocket();
   const [activeTab, setActiveTab] = useState<StockTab>('estoque');
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* â”€â”€â”€ CabeÃ§alho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ Cabeçalho ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Package className="h-6 w-6 text-blue-600" />
-            GestÃ£o de Estoque
+            Gestão de Estoque
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Controle de entradas, saÃ­das, balanÃ§os e inventÃ¡rio fÃ­sico.
+            Controle de entradas, saÍdas, balanços e inventário fÍsico.
           </p>
         </div>
       </div>
 
-      {/* â”€â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ Tabs ────────────────────────────────────────────────────────────â”€ */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         {/* Tab Bar */}
         <div className="relative px-4 border-b border-slate-100">

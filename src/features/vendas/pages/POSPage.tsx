@@ -1,10 +1,10 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/features/produtos';
 import { usePosStore } from '@/features/vendas';
 import { useSocket } from '@/hooks/useSocket';
-import { processarVenda } from '@/features/vendas';
-import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/features/vendas';
+import { useProcessarVenda } from '@/features/vendas';
+import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
 import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [
   { id: 'NUMERARIO', label: 'Dinheiro', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
-  { id: 'CARTAO', label: 'CartÃ£o', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
+  { id: 'CARTAO', label: 'Cartão', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
   { id: 'MPESA', label: 'M-Pesa', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuVGSOSpXTlLYNFnoBgJbrad3KiF3UhfJwh6NZvmDcMA&s=10' },
   { id: 'EMOLA', label: 'e-Mola', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWArdpolsdD7Hcb0-MsWf4R2PtrceSQTA5HF3wpIkfNw&s=10' }
 ] as const;
@@ -62,20 +62,20 @@ export function POSPage() {
   const [currentPaymentMethod, setCurrentPaymentMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('NUMERARIO');
   const [currentAmountPaid, setCurrentAmountPaid] = useState<number>(0);
   
-  // Abas do painel principal (CatÃ¡logo vs HistÃ³rico)
+  // Abas do painel principal (Catálogo vs Histórico)
   const [activeTab, setActiveTab] = useState<'CATALOG' | 'HISTORY'>('CATALOG');
-  const [isProcessing, setIsProcessing] = useState(false);
+
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  // Estado da SessÃ£o de Caixa
+  // Estado da Sessão de Caixa
   const [hasSession, setHasSession] = useState<boolean>(true);
   const [showOpenSessionModal, setShowOpenSessionModal] = useState<boolean>(false);
   const [caixas, setCaixas] = useState<any[]>([]);
   const [selectedCaixaId, setSelectedCaixaId] = useState<string>('');
   const [saldoInicial, setSaldoInicial] = useState<number>(0);
-  const [isOpeningSession, setIsOpeningSession] = useState(false);
 
-  // Estado para Fechar SessÃ£o
+
+  // Estado para Fechar Sessão
   const [showCloseSessionModal, setShowCloseSessionModal] = useState<boolean>(false);
   const [showSangriaModal, setShowSangriaModal] = useState<boolean>(false);
   const [showReforcoModal, setShowReforcoModal] = useState<boolean>(false);
@@ -83,7 +83,7 @@ export function POSPage() {
   const [movimentoMotivo, setMovimentoMotivo] = useState<string>('');
   const [saldoDeclarado, setSaldoDeclarado] = useState<number>(0);
   const [observacoesClose, setObservacoesClose] = useState('');
-  const [isClosingSession, setIsClosingSession] = useState(false);
+
   const [currentSessaoId, setCurrentSessaoId] = useState<string | null>(null);
 
   // Esc key handler para fechar o modal
@@ -97,25 +97,33 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showOpenSessionModal]);
 
-  // Verifica a sessÃ£o ao montar
+  const { data: minhaSessao, isLoading: isSessaoLoading } = useMinhaSessao();
+  const { data: caixasDisponiveis } = useCaixasDisponiveis();
+
+  const abrirSessaoMutation = useAbrirSessao();
+  const fecharSessaoMutation = useFecharSessao();
+  const sangriaMutation = useRegistrarSangria();
+  const reforcoMutation = useRegistrarReforco();
+  const processarVendaMutation = useProcessarVenda();
+
+  // Verifica a sessão ao montar
   useEffect(() => {
-    obterMinhaSessao().then(sessao => {
-      if (!sessao) {
+    if (!isSessaoLoading) {
+      if (!minhaSessao) {
         setHasSession(false);
         setShowOpenSessionModal(true);
-        obterCaixasDisponiveis().then(data => {
-          setCaixas(data || []);
-          if (data && data.length > 0) {
-            setSelectedCaixaId(data[0].id);
-          } else {
-            setSelectedCaixaId('');
-          }
-        });
+        setCaixas(caixasDisponiveis || []);
+        if (caixasDisponiveis && caixasDisponiveis.length > 0) {
+          setSelectedCaixaId(caixasDisponiveis[0].id);
+        } else {
+          setSelectedCaixaId('');
+        }
       } else {
-        setCurrentSessaoId(sessao.id);
+        setHasSession(true);
+        setCurrentSessaoId(minhaSessao.id);
       }
-    });
-  }, []);
+    }
+  }, [minhaSessao, isSessaoLoading, caixasDisponiveis]);
 
   // Sincroniza o valor a pagar com o total por defeito
   useEffect(() => {
@@ -128,7 +136,7 @@ export function POSPage() {
     }
   }, [total, pagamentos]);
 
-  // â”€â”€â”€ Barcode Listener â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -147,7 +155,7 @@ export function POSPage() {
           if (foundProduct) {
             addItem(foundProduct);
           } else {
-            toast.error('Produto nÃ£o encontrado.');
+            toast.error('Produto não encontrado.');
           }
         }
       } else if (e.key.length === 1) {
@@ -163,79 +171,71 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [products, addItem, receiptData]);
 
-  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──â”€ Actions ────────────────────────────────────────────────────────────â”€
   const handleOpenSession = async () => {
     if (!selectedCaixaId) return toast.error('Selecione um caixa.');
-    setIsOpeningSession(true);
-    try {
-      const sessao = await abrirSessao(selectedCaixaId, saldoInicial);
-      setCurrentSessaoId(sessao.id);
-      
-      toast.custom(() => (
-        <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-emerald-500 max-w-sm w-full">
-          <div className="flex gap-3">
-            <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
-            <div>
-              <p className="font-bold text-slate-800">SessÃ£o Iniciada</p>
-              <p className="text-sm text-slate-500">Caixa pronto a operar.</p>
-              <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600">
-                Data: {new Date().toLocaleString('pt-PT')}<br/>
-                Fundo de Maneio: {saldoInicial.toFixed(2)} MT
+    abrirSessaoMutation.mutate(
+      { caixaId: selectedCaixaId, saldoInicial },
+      {
+        onSuccess: (sessao) => {
+          setCurrentSessaoId(sessao.id);
+          setHasSession(true);
+          setShowOpenSessionModal(false);
+          toast.custom(() => (
+            <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-emerald-500 max-w-sm w-full">
+              <div className="flex gap-3">
+                <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
+                <div>
+                  <p className="font-bold text-slate-800">Sessão Iniciada</p>
+                  <p className="text-sm text-slate-500">Caixa pronto a operar.</p>
+                  <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600">
+                    Data: {new Date().toLocaleString('pt-PT')}<br/>
+                    Fundo de Maneio: {saldoInicial.toFixed(2)} MT
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      ), { duration: 5000 });
-
-      setHasSession(true);
-      setShowOpenSessionModal(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao abrir caixa.');
-    } finally {
-      setIsOpeningSession(false);
-    }
+          ), { duration: 5000 });
+        }
+      }
+    );
   };
 
   const handleCloseSession = async () => {
     if (!currentSessaoId) return;
-    setIsClosingSession(true);
-    try {
-      const result = await fecharSessao(currentSessaoId, { 
-        saldoDeclarado, 
-        observacoes: observacoesClose 
-      });
-      
-      toast.custom(() => (
-        <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-blue-500 max-w-sm w-full">
-          <div className="flex gap-3">
-            <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
-            <div>
-              <p className="font-bold text-slate-800">SessÃ£o Fechada</p>
-              <p className="text-sm text-slate-500">O seu turno foi encerrado.</p>
-              <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600 space-y-1">
-                <p>Data: {new Date(result.dataFecho).toLocaleString('pt-PT')}</p>
-                <p>Total Faturado: <span className="font-bold">{(result.saldoFinalCalculado - result.saldoInicial).toFixed(2)} MT</span></p>
-                <p>Saldo Gaveta: <span className="font-bold text-slate-900">{result.saldoFinalCalculado.toFixed(2)} MT</span></p>
-                <p>Saldo Declarado: <span className="font-bold">{result.saldoFinalDeclarado.toFixed(2)} MT</span></p>
-                <p>Quebra/Sobras: <span className={`font-bold ${result.quebra < 0 ? 'text-rose-600' : result.quebra > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>{result.quebra.toFixed(2)} MT</span></p>
+    fecharSessaoMutation.mutate(
+      { sessaoId: currentSessaoId, payload: { saldoDeclarado, observacoes: observacoesClose } },
+      {
+        onSuccess: (result) => {
+          toast.custom(() => (
+            <div className="bg-white p-4 rounded-xl shadow-lg border-l-4 border-blue-500 max-w-sm w-full">
+              <div className="flex gap-3">
+                <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
+                <div>
+                  <p className="font-bold text-slate-800">Sessão Fechada</p>
+                  <p className="text-sm text-slate-500">O seu turno foi encerrado.</p>
+                  <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600 space-y-1">
+                    <p>Data: {new Date(result.dataFecho).toLocaleString('pt-PT')}</p>
+                    <p>Total Faturado: <span className="font-bold">{(result.saldoFinalCalculado - result.saldoInicial).toFixed(2)} MT</span></p>
+                    <p>Saldo Gaveta: <span className="font-bold text-slate-900">{result.saldoFinalCalculado.toFixed(2)} MT</span></p>
+                    <p>Saldo Declarado: <span className="font-bold">{result.saldoFinalDeclarado.toFixed(2)} MT</span></p>
+                    <p>Quebra/Sobras: <span className={`font-bold ${result.quebra < 0 ? 'text-rose-600' : result.quebra > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>{result.quebra.toFixed(2)} MT</span></p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      ), { duration: 10000 });
-
-      setHasSession(false);
-      setShowCloseSessionModal(false);
-      setCurrentSessaoId(null);
-      setSaldoDeclarado(0);
-      setObservacoesClose('');
-      // Force user to open a new one if they want
-      setShowOpenSessionModal(true);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao fechar caixa.');
-    } finally {
-      setIsClosingSession(false);
-    }
+          ), { duration: 10000 });
+    
+          setHasSession(false);
+          setShowCloseSessionModal(false);
+          setCurrentSessaoId(null);
+          setSaldoDeclarado(0);
+          setObservacoesClose('');
+          // Force user to open a new one if they want
+          setShowOpenSessionModal(true);
+        }
+      }
+    );
   };
 
   const handleSangria = async () => {
@@ -243,15 +243,16 @@ export function POSPage() {
       toast.error('Preencha o valor e motivo corretamente.');
       return;
     }
-    try {
-      await registrarSangria(currentSessaoId, { valor: movimentoValor, motivo: movimentoMotivo });
-      toast.success('Sangria registada com sucesso.');
-      setShowSangriaModal(false);
-      setMovimentoValor(0);
-      setMovimentoMotivo('');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao registar sangria.');
-    }
+    sangriaMutation.mutate(
+      { sessaoId: currentSessaoId, payload: { valor: movimentoValor, motivo: movimentoMotivo } },
+      {
+        onSuccess: () => {
+          setShowSangriaModal(false);
+          setMovimentoValor(0);
+          setMovimentoMotivo('');
+        }
+      }
+    );
   };
 
   const handleReforco = async () => {
@@ -259,50 +260,44 @@ export function POSPage() {
       toast.error('Preencha o valor e motivo corretamente.');
       return;
     }
-    try {
-      await registrarReforco(currentSessaoId, { valor: movimentoValor, motivo: movimentoMotivo });
-      toast.success('ReforÃ§o registado com sucesso.');
-      setShowReforcoModal(false);
-      setMovimentoValor(0);
-      setMovimentoMotivo('');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao registar reforÃ§o.');
-    }
+    reforcoMutation.mutate(
+      { sessaoId: currentSessaoId, payload: { valor: movimentoValor, motivo: movimentoMotivo } },
+      {
+        onSuccess: () => {
+          setShowReforcoModal(false);
+          setMovimentoValor(0);
+          setMovimentoMotivo('');
+        }
+      }
+    );
   };
 
   const handleCheckout = async () => {
     if (!hasSession) {
-      toast.error('NÃ£o tem nenhuma sessÃ£o de caixa aberta.');
+      toast.error('Não tem nenhuma sessão de caixa aberta.');
       setShowOpenSessionModal(true);
       return;
     }
     if (cartItems.length === 0) return;
-      const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
-      if (totalEntregue < total) {
-        toast.error('O valor entregue total nÃ£o pode ser inferior ao total.');
-        return;
-      }
-
-      setIsProcessing(true);
-      try {
-        const payload = {
-          itens: cartItems.map(item => ({
-            produtoId: item.id,
-            quantidade: item.cartQuantity,
-          })),
-          pagamentos: pagamentos
-        };
-
-
-
-      const venda = await processarVenda(payload);
-
-      setReceiptData(venda);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao processar venda.');
-    } finally {
-      setIsProcessing(false);
+    const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
+    if (totalEntregue < total) {
+      toast.error('O valor entregue total não pode ser inferior ao total.');
+      return;
     }
+
+    const payload = {
+      itens: cartItems.map(item => ({
+        produtoId: item.id,
+        quantidade: item.cartQuantity,
+      })),
+      pagamentos: pagamentos
+    };
+
+    processarVendaMutation.mutate(payload, {
+      onSuccess: (venda) => {
+        setReceiptData(venda);
+      }
+    });
   };
 
   const handleNewSale = () => {
@@ -320,18 +315,18 @@ export function POSPage() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       
-      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Vendas</h1>
-            <p className="text-sm text-slate-500">Ponto de Venda e GestÃ£o de Caixas</p>
+            <p className="text-sm text-slate-500">Ponto de Venda e Gestão de Caixas</p>
           </div>
           <div className="flex items-center gap-3">
             {hasSession ? (
               <>
                 <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                  SessÃ£o Aberta
+                  Sessão Aberta
                 </span>
               </>
             ) : (
@@ -339,7 +334,7 @@ export function POSPage() {
                 onClick={() => setShowOpenSessionModal(true)}
                 className="bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                Abrir SessÃ£o
+                Abrir Sessão
               </button>
             )}
           </div>
@@ -368,13 +363,13 @@ export function POSPage() {
             )}
           >
             <History size={16} />
-            HistÃ³rico de SessÃµes
+            Histórico de Sessões
           </button>
           <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-200" />
         </div>
       </div>
 
-      {/* â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Tab Content ──────────────────────────────────────────────────────â”€ */}
       <div className="flex-1 overflow-hidden relative">
         {/* Tab: Ponto de Venda */}
         {activeTab === 'CATALOG' && (
@@ -388,7 +383,7 @@ export function POSPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <input 
                       type="text" 
-                      placeholder="Pesquisar produtos (Nome, SKU, CÃ³d. Barras)..." 
+                      placeholder="Pesquisar produtos (Nome, SKU, Cód. Barras)..." 
                       className="w-full pl-12 pr-4 py-3 bg-gray-100/80 border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -442,7 +437,7 @@ export function POSPage() {
             </div>
             </div>
 
-            {/* â”€â”€â”€ Cart Sidebar â”€â”€â”€ */}
+            {/* ──â”€ Cart Sidebar ──â”€ */}
             <div className="w-[420px] bg-white shadow-2xl flex flex-col z-20 border-l border-gray-200 shrink-0">
         {/* Cart Header */}
         <div className="p-5 border-b border-gray-100 bg-white flex items-center justify-between">
@@ -463,15 +458,15 @@ export function POSPage() {
                 <button 
                   onClick={() => setShowReforcoModal(true)}
                   className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                  title="ReforÃ§o (Colocar na Gaveta)"
+                  title="Reforço (Colocar na Gaveta)"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  ReforÃ§o
+                  Reforço
                 </button>
                 <button 
                   onClick={() => setShowCloseSessionModal(true)}
                   className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                  title="Fechar Turno / SessÃ£o"
+                  title="Fechar Turno / Sessão"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   Fechar
@@ -489,7 +484,7 @@ export function POSPage() {
           {cartItems.length === 0 ? (
             <div className="text-center text-gray-400 mt-20">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <p className="font-medium text-gray-500">O carrinho estÃ¡ vazio.</p>
+              <p className="font-medium text-gray-500">O carrinho está vazio.</p>
               <p className="text-sm mt-1">Adicione produtos para iniciar a venda.</p>
             </div>
           ) : (
@@ -539,7 +534,7 @@ export function POSPage() {
         <div className="p-5 bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
           
           <div className="mb-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">MÃ©todo de Pagamento</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
             <div className="grid grid-cols-4 gap-2 mb-3">
               {PAYMENT_METHODS.map(pm => (
                 <button
@@ -626,11 +621,11 @@ export function POSPage() {
           </div>
 
           <button 
-            disabled={cartItems.length === 0 || pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0) < total || isProcessing}
+            disabled={cartItems.length === 0 || pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0) < total || processarVendaMutation.isPending}
             onClick={handleCheckout}
             className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center gap-2"
           >
-            {isProcessing ? (
+            {processarVendaMutation.isPending ? (
               <RefreshCcw className="w-5 h-5 animate-spin" />
             ) : (
               <>Finalizar Compra</>
@@ -639,14 +634,14 @@ export function POSPage() {
         </div>
       </div>
 
-      {/* â”€â”€â”€ Receipt Modal â”€â”€â”€ */}
+      {/* ──â”€ Receipt Modal ──â”€ */}
       {receiptData && (
         <ReceiptModal receiptData={receiptData} onClose={handleCloseReceipt} />
       )}
           </div>
         )}
 
-        {/* Tab: HistÃ³rico de SessÃµes */}
+        {/* Tab: Histórico de Sessões */}
         {activeTab === 'HISTORY' && (
           <div className="h-full w-full overflow-y-auto bg-gray-50 p-6 custom-scrollbar">
             <CaixasHistoricoPage />
@@ -654,7 +649,7 @@ export function POSPage() {
         )}
       </div>
 
-      {/* â”€â”€â”€ Open Session Modal â”€â”€â”€ */}
+      {/* ──â”€ Open Session Modal ──â”€ */}
       {showOpenSessionModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -668,13 +663,13 @@ export function POSPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir SessÃ£o de Caixa</h2>
-            <p className="text-slate-500 text-center text-sm font-medium mb-6">Ã‰ obrigatÃ³rio abrir uma sessÃ£o para comeÃ§ar a vender.</p>
+            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir Sessão de Caixa</h2>
+            <p className="text-slate-500 text-center text-sm font-medium mb-6">É obrigatório abrir uma sessão para começar a vender.</p>
             
             {caixas.length === 0 ? (
               <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 text-sm mb-6">
-                <p className="font-semibold mb-1">Nenhum caixa disponÃ­vel</p>
-                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessÃ£o.</p>
+                <p className="font-semibold mb-1">Nenhum caixa disponível</p>
+                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessão.</p>
               </div>
             ) : (
               <>
@@ -706,11 +701,11 @@ export function POSPage() {
                 </div>
 
                 <button 
-                  disabled={isOpeningSession || !selectedCaixaId}
+                  disabled={abrirSessaoMutation.isPending || !selectedCaixaId}
                   onClick={handleOpenSession}
                   className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                 >
-                  {isOpeningSession ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Confirmar Abertura'}
+                  {abrirSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Confirmar Abertura'}
                 </button>
               </>
             )}
@@ -718,7 +713,7 @@ export function POSPage() {
         </div>
       )}
 
-      {/* â”€â”€â”€ Close Session Modal â”€â”€â”€ */}
+      {/* ──â”€ Close Session Modal ──â”€ */}
       {showCloseSessionModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -735,7 +730,7 @@ export function POSPage() {
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor FÃ­sico (Gaveta) MT</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor FÍsico (Gaveta) MT</label>
                 <input 
                   type="number" 
                   min="0"
@@ -748,22 +743,22 @@ export function POSPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">ObservaÃ§Ãµes (Opcional)</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observações (Opcional)</label>
                 <textarea 
                   value={observacoesClose}
                   onChange={e => setObservacoesClose(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-medium resize-none h-20"
-                  placeholder="JustificaÃ§Ã£o de quebras/sobras..."
+                  placeholder="Justificação de quebras/sobras..."
                 />
               </div>
             </div>
 
             <button 
-              disabled={isClosingSession}
+              disabled={fecharSessaoMutation.isPending}
               onClick={handleCloseSession}
               className="w-full bg-rose-600 text-white font-black py-4 rounded-xl hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-rose-600/20"
             >
-              {isClosingSession ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Encerrar Caixa'}
+              {fecharSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Encerrar Caixa'}
             </button>
           </div>
         </div>
@@ -810,7 +805,7 @@ export function POSPage() {
           </div>
         )}
 
-        {/* â–ªï¸â–ªï¸â–ªï¸ ReforÃ§o Modal â–ªï¸â–ªï¸â–ªï¸ */}
+        {/* â–ªï¸â–ªï¸â–ªï¸ Reforço Modal â–ªï¸â–ªï¸â–ªï¸ */}
         {showReforcoModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -820,7 +815,7 @@ export function POSPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar ReforÃ§o</h2>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Reforço</h2>
               <p className="text-slate-500 text-center text-sm font-medium mb-6">Entrada de valor (ex: trocos) no caixa.</p>
               
               <div className="space-y-4 mb-6">
@@ -840,12 +835,12 @@ export function POSPage() {
                     value={movimentoMotivo}
                     onChange={e => setMovimentoMotivo(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 min-h-[100px]"
-                    placeholder="Ex: ReforÃ§o de moedas para troco..."
+                    placeholder="Ex: Reforço de moedas para troco..."
                   />
                 </div>
               </div>
               <button onClick={handleReforco} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                Confirmar ReforÃ§o
+                Confirmar Reforço
               </button>
             </div>
           </div>
@@ -854,7 +849,7 @@ export function POSPage() {
   );
 }
 
-// â”€â”€â”€ Componente Interno: ProductCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Componente Interno: ProductCard ────────────────────────────────────────
 function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }) {
   return (
     <button 

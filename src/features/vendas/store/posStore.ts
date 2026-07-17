@@ -2,7 +2,7 @@
 import type { Product } from '@/features/produtos';
 import type { Cliente } from '@/features/crm';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Types ────────────────────────────────────────────────────────────────â”€
 
 export interface CartItem {
   id: string;
@@ -15,7 +15,7 @@ export interface CartItem {
 }
 
 interface POSState {
-  // â”€â”€ Carrinho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Carrinho ──────────────────────────────────────────────────────────────
   cartItems: CartItem[];
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: string) => void;
@@ -23,22 +23,22 @@ interface POSState {
   updateLineDiscount: (productId: string, discount: number) => void;
   clearCart: () => void;
 
-  // â”€â”€ Cliente Identificado (CRM) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cliente Identificado (CRM) ────────────────────────────────────────â”€
   clienteIdentificado: Cliente | null;
   associarCliente: (cliente: Cliente | null) => void;
 
-  // â”€â”€ Desconto Global na Venda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Desconto Global na Venda ──────────────────────────────────────────â”€
   descontoGlobal: number;
   setDescontoGlobal: (value: number) => void;
 
-  // â”€â”€ Filtros do CatÃ¡logo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Filtros do Catálogo ────────────────────────────────────────────────
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   selectedCategoryId: string | null;
   setSelectedCategory: (categoryId: string | null) => void;
 
-  // â”€â”€ Computed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Nota: usamos funÃ§Ãµes (nÃ£o getters) para compatibilidade com Zustand devtools
+  // ── Computed ──────────────────────────────────────────────────────────â”€
+  // Nota: usamos funções (não getters) para compatibilidade com Zustand devtools
   getSubtotal: () => number;
   getTotalDesconto: () => number;
   getTotalIva: () => number;
@@ -46,7 +46,7 @@ interface POSState {
 }
 
 export const usePosStore = create<POSState>((set, get) => ({
-  // â”€â”€ Carrinho â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Carrinho ──────────────────────────────────────────────────────────────
 
   cartItems: [],
 
@@ -110,24 +110,24 @@ export const usePosStore = create<POSState>((set, get) => ({
   clearCart: () =>
     set({ cartItems: [], clienteIdentificado: null, descontoGlobal: 0 }),
 
-  // â”€â”€ Cliente Identificado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cliente Identificado ────────────────────────────────────────────────â”€
 
   clienteIdentificado: null,
   associarCliente: (cliente) => set({ clienteIdentificado: cliente }),
 
-  // â”€â”€ Desconto Global â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Desconto Global ──────────────────────────────────────────────────────
 
   descontoGlobal: 0,
   setDescontoGlobal: (value) => set({ descontoGlobal: Math.max(0, value) }),
 
-  // â”€â”€ Filtros do CatÃ¡logo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Filtros do Catálogo ──────────────────────────────────────────────────
 
   searchTerm: '',
   setSearchTerm: (term) => set({ searchTerm: term }),
   selectedCategoryId: null,
   setSelectedCategory: (categoryId) => set({ selectedCategoryId: categoryId }),
 
-  // â”€â”€ Computed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Computed ────────────────────────────────────────────────────────────â”€
 
   getSubtotal: () =>
     get().cartItems.reduce(

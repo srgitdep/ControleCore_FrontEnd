@@ -1,12 +1,12 @@
 ﻿export const AVAILABLE_RESOURCES = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'empresa', label: 'Empresa / ConfiguraÃ§Ãµes' },
+  { id: 'empresa', label: 'Empresa / Configurações' },
   { id: 'users', label: 'Utilizadores' },
   { id: 'lojas', label: 'Lojas' },
-  { id: 'armazens', label: 'ArmazÃ©ns' },
+  { id: 'armazens', label: 'Armazéns' },
   { id: 'caixas', label: 'Caixas / POS' },
   { id: 'stock', label: 'Stock' },
-  { id: 'catalogo', label: 'CatÃ¡logo' },
+  { id: 'catalogo', label: 'Catálogo' },
   { id: 'compras', label: 'Compras' },
   { id: 'rh', label: 'Recursos Humanos' },
   { id: 'vendas', label: 'Vendas' },
@@ -20,7 +20,7 @@ export const AVAILABLE_ACTIONS = [
   { id: 'manage', label: 'Gerir Tudo' },
 ];
 
-// Pode-se definir exceÃ§Ãµes se alguma aÃ§Ã£o nÃ£o fizer sentido para um recurso
+// Pode-se definir exceções se alguma ação não fizer sentido para um recurso
 export const IGNORED_PERMISSIONS = [
   'write:dashboard',
   'delete:dashboard',

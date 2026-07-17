@@ -15,7 +15,7 @@ export interface Stock {
   createdAt: string;
   updatedAt: string;
   
-  // RelaÃ§Ãµes opcionais (quando o backend faz include)
+  // Relações opcionais (quando o backend faz include)
   product?: {
     id: string;
     nome: string;
@@ -37,14 +37,14 @@ export interface StockMovement {
   reason?: string;
   createdAt: string;
   
-  // RelaÃ§Ãµes opcionais
+  // Relações opcionais
   user?: {
     id: string;
     nome: string;
   };
 }
 
-// â”€â”€â”€ Interfaces para MutaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Interfaces para Mutações ────────────────────────────────────────────────
 
 export interface CreateMovementPayload {
   stockId: string;

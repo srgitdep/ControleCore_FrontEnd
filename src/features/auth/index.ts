@@ -1,12 +1,16 @@
-﻿// Export API
+// Export API
 export * from './api/auth.api';
 
 // Export Types
 export * from './types';
 
 // Export Store/Context
-export * from './store/AuthContext';
+import { useAuthStore } from './store/useAuthStore';
+import toast from 'react-hot-toast';
+
 export * from './store/useAuthStore';
+export const useAuth = () => useAuthStore();
+export { toast };
 
 // Export Pages
 export * from './pages/LoginPage';

@@ -1,4 +1,4 @@
-﻿import { X, User, Mail, Shield, Building2, Calendar, CheckCircle2, Ban, Hash } from 'lucide-react';
+import { X, User, Shield, Building2, CheckCircle2, Ban, Hash } from 'lucide-react';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
 
@@ -8,7 +8,7 @@ interface UserDetailsModalProps {
 }
 
 export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
-  // Se tivÃ©ssemos createdAt vindo da API para os users:
+  // Se tivéssemos createdAt vindo da API para os users:
   // const formatDate = (dateString: string) => { ... };
 
   return (
@@ -60,14 +60,14 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* InformaÃ§Ãµes Base */}
+            {/* Informações Base */}
             <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">IdentificaÃ§Ã£o</h4>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Identificação</h4>
               
               <div className="flex items-start gap-3">
                 <Hash size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-500">CÃ³digo de Acesso</p>
+                  <p className="text-xs text-slate-500">Código de Acesso</p>
                   <p className="text-sm font-mono font-medium text-slate-800">{user.code}</p>
                 </div>
               </div>
@@ -75,15 +75,15 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
               <div className="flex items-start gap-3">
                 <Shield size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-500">NÃ­vel de Acesso (Role)</p>
+                  <p className="text-xs text-slate-500">NÍvel de Acesso (Role)</p>
                   <p className="text-sm font-medium text-slate-800">{ROLE_LABELS[user.role]}</p>
                 </div>
               </div>
             </div>
 
-            {/* VÃ­nculos */}
+            {/* VÍnculos */}
             <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">VÃ­nculos Institucionais</h4>
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">VÍnculos Institucionais</h4>
               
               <div className="flex items-start gap-3">
                 <Building2 size={16} className="text-slate-400 mt-0.5" />

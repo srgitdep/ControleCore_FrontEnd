@@ -22,12 +22,12 @@ const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: str
 };
 
 const ACTION_LABELS: Record<AuditAction, string> = {
-  CREATE: 'CriaÃ§Ã£o',
-  UPDATE: 'AtualizaÃ§Ã£o',
-  DELETE: 'RemoÃ§Ã£o',
+  CREATE: 'Criação',
+  UPDATE: 'Atualização',
+  DELETE: 'Remoção',
   LOGIN: 'Login',
   LOGOUT: 'Logout',
-  SALE_COMPLETED: 'Venda ConcluÃ­da',
+  SALE_COMPLETED: 'Venda ConcluÍda',
   SALE_CANCELLED: 'Venda Cancelada',
 };
 
@@ -45,7 +45,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
     const doc = new jsPDF();
     
     doc.setFontSize(16);
-    doc.text('HistÃ³rico no Sistema', 14, 20);
+    doc.text('Histórico no Sistema', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     const dateStr = new Date().toLocaleString('pt-PT');
@@ -53,13 +53,13 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
     
     autoTable(doc, {
       startY: 35,
-      head: [['Utilizador', 'AÃ§Ã£o', 'Detalhes', 'Data & Hora', 'Perfil']],
+      head: [['Utilizador', 'Ação', 'Detalhes', 'Data & Hora', 'Perfil']],
       body: logs.map(l => [
         l.user ? l.user.name : 'Sistema / Desconhecido',
         ACTION_LABELS[l.action] || l.action,
         l.entityName && l.entityName !== 'Auth' ? `${l.entityName}: ${l.newValues?.nome || l.newValues?.name || l.newValues?.numeroFatura || l.newValues?.email || l.newValues?.titulo || l.entityId}` : '-',
         format(new Date(l.createdAt), 'dd MMM, yyyy HH:mm:ss'),
-        l.user ? `${l.user.perfil?.nome || 'PadrÃ£o'}\n(${l.user.role || 'USER'})` : '-'
+        l.user ? `${l.user.perfil?.nome || 'Padrão'}\n(${l.user.role || 'USER'})` : '-'
       ]),
       theme: 'grid',
       headStyles: { fillColor: [16, 185, 129] }, // emerald-500
@@ -93,7 +93,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium text-xs">
               <tr>
                 <th className="px-4 py-4">Utilizador</th>
-                <th className="px-4 py-4">AÃ§Ã£o</th>
+                <th className="px-4 py-4">Ação</th>
                 <th className="px-4 py-4">Detalhes</th>
                 <th className="px-4 py-4">Data & Hora</th>
                 <th className="px-4 py-4">Perfil</th>
@@ -141,7 +141,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                     <td className="px-4 py-4 text-slate-700">
                       {log.user ? (
                         <div>
-                          <p className="font-medium text-slate-900">{log.user.perfil?.nome || 'PadrÃ£o'}</p>
+                          <p className="font-medium text-slate-900">{log.user.perfil?.nome || 'Padrão'}</p>
                           <p className="text-slate-500 text-xs font-semibold">{log.user.role || 'USER'}</p>
                         </div>
                       ) : (

@@ -1,14 +1,10 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useAdminDashboard } from '@/features/dashboard';
 import { DollarSign, FileText, Package, Users } from 'lucide-react';
 import { KpiCard } from './KpiCard';
 import { SalesChart } from './SalesChart';
-import { getAdminDashboard } from '@/features/dashboard';
 
 export function AdminDashboard() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['dashboard', 'admin'],
-    queryFn: getAdminDashboard,
-  });
+  const { data, isLoading } = useAdminDashboard();
 
   if (isLoading) {
     return (

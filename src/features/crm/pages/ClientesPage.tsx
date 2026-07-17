@@ -1,5 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -19,18 +18,17 @@ import {
   CreditCard,
 } from 'lucide-react';
 import {
-  listarClientes,
-  obterCliente,
-  criarCliente,
-  atualizarCliente,
-  apagarCliente,
+  useClientes,
+  useCliente,
+  useCreateCliente,
+  useUpdateCliente,
+  useDeleteCliente,
   type Cliente,
-  type ClienteDetalhe,
 } from '@/features/crm';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-// â”€â”€â”€ Debounce hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Debounce hook ────────────────────────────────────────────────────────────
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
   useEffect(() => {
@@ -40,10 +38,10 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-// â”€â”€â”€ Tab Definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
 type Tab = 'clientes' | 'detalhes';
 
-// â”€â”€â”€ Metric Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Metric Card ──────────────────────────────────────────────────────────────
 function MetricCard({
   icon: Icon,
   label,
@@ -71,7 +69,7 @@ function MetricCard({
   );
 }
 
-// â”€â”€â”€ Create/Edit Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
   cliente?: Cliente | null;
   onClose: () => void;
@@ -89,7 +87,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim()) return toast.error('O nome Ã© obrigatÃ³rio.');
+    if (!form.nome.trim()) return toast.error('O nome é obrigatório.');
     onSave(form);
   };
 
@@ -106,7 +104,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {[
-            { key: 'nome', label: 'Nome Completo *', type: 'text', placeholder: 'Ex: JoÃ£o Silva' },
+            { key: 'nome', label: 'Nome Completo *', type: 'text', placeholder: 'Ex: João Silva' },
             { key: 'telefone', label: 'Telefone', type: 'tel', placeholder: '+258 84 000 0000' },
             { key: 'email', label: 'Email', type: 'email', placeholder: 'cliente@email.com' },
             { key: 'nuit', label: 'NUIT', type: 'text', placeholder: '000000000' },
@@ -144,7 +142,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
   );
 }
 
-// â”€â”€â”€ Details Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Details Panel ────────────────────────────────────────────────────────────
 function ClienteDetails({
   clienteId,
   onBack,
@@ -152,10 +150,7 @@ function ClienteDetails({
   clienteId: string;
   onBack: () => void;
 }) {
-  const { data: cliente, isLoading } = useQuery<ClienteDetalhe>({
-    queryKey: ['cliente-detalhe', clienteId],
-    queryFn: () => obterCliente(clienteId),
-  });
+  const { data: cliente, isLoading } = useCliente(clienteId);
 
   if (isLoading || !cliente) {
     return (
@@ -191,7 +186,7 @@ function ClienteDetails({
               : 'bg-slate-100 text-slate-500',
           )}
         >
-          {cliente.consentimentoMarketing ? 'LGPD: Consente' : 'LGPD: NÃ£o Consente'}
+          {cliente.consentimentoMarketing ? 'LGPD: Consente' : 'LGPD: Não Consente'}
         </span>
       </div>
 
@@ -238,20 +233,20 @@ function ClienteDetails({
           />
           <MetricCard
             icon={Calendar}
-            label="Ticket MÃ©dio"
+            label="Ticket Médio"
             value={`${ticketMedio.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`}
             sub={
               cliente.dataUltimaCompra
-                ? `Ãšltima: ${new Date(cliente.dataUltimaCompra).toLocaleDateString('pt-PT')}`
+                ? `Última: ${new Date(cliente.dataUltimaCompra).toLocaleDateString('pt-PT')}`
                 : 'Sem compras ainda'
             }
             color="bg-violet-500"
           />
         </div>
 
-        {/* HistÃ³rico de Compras */}
+        {/* Histórico de Compras */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Ãšltimas Compras</h3>
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Últimas Compras</h3>
           {cliente.vendas?.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 rounded-xl border border-slate-200">
               Nenhuma compra registada.
@@ -300,9 +295,8 @@ function ClienteDetails({
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Main Page ────────────────────────────────────────────────────────────────
 export function ClientesPage() {
-  const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -314,38 +308,38 @@ export function ClientesPage() {
   // Reset page when search changes
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['clientes', page, debouncedSearch],
-    queryFn: () => listarClientes({ page, limit: 15, search: debouncedSearch || undefined }),
-    placeholderData: (prev) => prev,
-  });
+  const { data, isLoading } = useClientes({ page, limit: 15, search: debouncedSearch || undefined });
 
   const clientes = data?.data ?? [];
   const lastPage = data?.lastPage ?? 1;
   const total = data?.total ?? 0;
 
-  const { mutate: criar, isPending: isCreating } = useMutation({
-    mutationFn: (payload: any) =>
-      editingCliente
-        ? atualizarCliente(editingCliente.id, payload)
-        : criarCliente(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['clientes'] });
-      toast.success(editingCliente ? 'Cliente atualizado!' : 'Cliente criado!');
-      setShowModal(false);
-      setEditingCliente(null);
-    },
-    onError: () => toast.error('Erro ao guardar cliente.'),
-  });
+  const { mutate: criarMutate, isPending: isCreatingMutate } = useCreateCliente();
+  const { mutate: atualizarMutate, isPending: isUpdatingMutate } = useUpdateCliente();
+  const { mutate: apagar } = useDeleteCliente();
 
-  const { mutate: apagar } = useMutation({
-    mutationFn: apagarCliente,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['clientes'] });
-      toast.success('Cliente removido.');
-    },
-    onError: () => toast.error('Erro ao remover cliente.'),
-  });
+  const isCreating = isCreatingMutate || isUpdatingMutate;
+
+  const criar = (payload: any) => {
+    if (editingCliente) {
+      atualizarMutate(
+        { id: editingCliente.id, data: payload },
+        {
+          onSuccess: () => {
+            setShowModal(false);
+            setEditingCliente(null);
+          },
+        }
+      );
+    } else {
+      criarMutate(payload, {
+        onSuccess: () => {
+          setShowModal(false);
+          setEditingCliente(null);
+        },
+      });
+    }
+  };
 
   const handleSelectCliente = (id: string) => {
     setSelectedClienteId(id);
@@ -359,11 +353,11 @@ export function ClientesPage() {
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
-      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-slate-500">GestÃ£o de Clientes e FidelizaÃ§Ã£o</p>
+            <p className="text-sm text-slate-500">Gestão de Clientes e Fidelização</p>
           </div>
           <button
             onClick={() => { setEditingCliente(null); setShowModal(true); }}
@@ -374,7 +368,7 @@ export function ClientesPage() {
           </button>
         </div>
 
-        {/* â”€â”€ Tabs (Anatomia conforme imagem referÃªncia) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── Tabs (Anatomia conforme imagem referência) ──────────────────── */}
         <div className="flex gap-1 relative">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -410,7 +404,7 @@ export function ClientesPage() {
         </div>
       </div>
 
-      {/* â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Tab Content ──────────────────────────────────────────────────────â”€ */}
       <div className="flex-1 overflow-hidden">
         {/* Tab: Clientes */}
         {activeTab === 'clientes' && (
@@ -445,7 +439,7 @@ export function ClientesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50">
-                        {['Nome', 'Contacto', 'NUIT', 'Pontos', 'Total Gasto', 'Ãšltima Compra', ''].map((h) => (
+                        {['Nome', 'Contacto', 'NUIT', 'Pontos', 'Total Gasto', 'Última Compra', ''].map((h) => (
                           <th
                             key={h}
                             className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
@@ -464,9 +458,9 @@ export function ClientesPage() {
                         >
                           <td className="px-4 py-3 font-semibold text-slate-900">{c.nome}</td>
                           <td className="px-4 py-3 text-slate-500">
-                            {c.telefone || c.email || 'â€”'}
+                            {c.telefone || c.email || '—'}
                           </td>
-                          <td className="px-4 py-3 text-slate-500">{c.nuit || 'â€”'}</td>
+                          <td className="px-4 py-3 text-slate-500">{c.nuit || '—'}</td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-xs font-semibold">
                               {c.pontos} pts
@@ -478,7 +472,7 @@ export function ClientesPage() {
                           <td className="px-4 py-3 text-slate-400 text-xs">
                             {c.dataUltimaCompra
                               ? new Date(c.dataUltimaCompra).toLocaleDateString('pt-PT')
-                              : 'â€”'}
+                              : '—'}
                           </td>
                           <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-1 justify-end">
@@ -509,7 +503,7 @@ export function ClientesPage() {
               {lastPage > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
                   <p className="text-sm text-slate-500">
-                    PÃ¡gina {page} de {lastPage} Â· {total} clientes
+                    Página {page} de {lastPage} Â· {total} clientes
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -542,7 +536,7 @@ export function ClientesPage() {
         )}
       </div>
 
-      {/* â”€â”€ Modal Create/Edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Modal Create/Edit ────────────────────────────────────────────────── */}
       {showModal && (
         <ClienteModal
           cliente={editingCliente}

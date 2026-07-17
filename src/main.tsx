@@ -1,12 +1,12 @@
-﻿import { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './features/auth';
+
 import './index.css';
 import App from './App';
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
@@ -18,8 +18,8 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {/* Toaster global para notificaÃƒÂ§ÃƒÂµes react-hot-toast */}
+
+        {/* Toaster global para notificaçíµes react-hot-toast */}
         <Toaster
           position="top-center"
           toastOptions={{
@@ -55,7 +55,7 @@ createRoot(document.getElementById('root')!).render(
           }}
         />
         <App />
-      </AuthProvider>
+
     </QueryClientProvider>
   </StrictMode>,
 );

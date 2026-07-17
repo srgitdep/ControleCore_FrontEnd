@@ -1,10 +1,10 @@
-﻿// â”€â”€â”€ Enums â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+﻿// ──â”€ Enums ────────────────────────────────────────────────────────────────────
 
 export type TipoLancamento = 'RECEITA' | 'DESPESA';
 
 export type EstadoLancamento = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
-// â”€â”€â”€ DRE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ DRE ──────────────────────────────────────────────────────────────────────
 
 export interface TopProduto {
   produtoId: string;
@@ -23,7 +23,7 @@ export interface DreSummary {
   // Despesas
   despesasPagas: number;
   despesasPendentes: number;
-  // RecebÃ­veis
+  // RecebÍveis
   receitasReceber: number;
   // Resultado
   lucroOperacionalEstimado: number;
@@ -33,7 +33,7 @@ export interface DreSummary {
   topProdutos: TopProduto[];
 }
 
-// â”€â”€â”€ Fluxo de Caixa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Fluxo de Caixa ──────────────────────────────────────────────────────────â”€
 
 export interface CashFlowPoint {
   data: string; // ISO date: "2026-07-15"
@@ -47,7 +47,7 @@ export interface CashFlowProjection {
   serie: CashFlowPoint[];
 }
 
-// â”€â”€â”€ Registros Financeiros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Registros Financeiros ────────────────────────────────────────────────────
 
 export interface FornecedorInfo {
   id: string;

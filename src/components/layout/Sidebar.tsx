@@ -1,4 +1,4 @@
-﻿import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth';
 import { useUIStore } from '@/store/useUIStore';
 import type { Role } from '@/features/auth';
-import { ROLE_LABELS } from '@/features/auth';
 
 interface NavItem {
   label: string;
@@ -46,14 +45,14 @@ const navGroups: NavGroup[] = [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'PermissÃµes', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },
   {
     title: 'Commerce',
     items: [
       { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'HistÃ³rico de SessÃµes', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
+      { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
       { label: 'CRM', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Produtos', icon: Package, path: '/produtos' },
@@ -67,15 +66,15 @@ const navGroups: NavGroup[] = [
     title: 'Company',
     items: [
       { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'ConfiguraÃ§Ãµes', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'HistÃ³rico no Sistema', icon: History, path: '/historico' },
+      { label: 'Configurações', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Histórico no Sistema', icon: History, path: '/historico' },
     ]
   }
 ];
 
 interface SidebarProps {
   isCollapsed: boolean;
-  /** Quando true, o Sidebar estÃ¡ a ser renderizado como drawer mobile (sem botÃ£o collapse) */
+  /** Quando true, o Sidebar está a ser renderizado como drawer mobile (sem botão collapse) */
   isMobileDrawer?: boolean;
 }
 
@@ -87,13 +86,13 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleLogout = async () => {
-    const toastId = toast.loading('A terminar sessÃ£o...');
+    const toastId = toast.loading('A terminar sessão...');
     try {
       await logout();
-      toast.success('SessÃ£o encerrada.', { id: toastId });
+      toast.success('Sessão encerrada.', { id: toastId });
       navigate('/login', { replace: true });
     } catch {
-      toast.error('Erro ao terminar sessÃ£o.', { id: toastId });
+      toast.error('Erro ao terminar sessão.', { id: toastId });
     }
   };
 
@@ -105,7 +104,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         isMobileDrawer ? 'w-72' : isCollapsed ? 'w-20' : 'w-64',
       )}
     >
-      {/* â”€â”€â”€ Logo / Marca â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ Logo / Marca ──────────────────────────────────────────────â”€ */}
       <div
         className={cn(
           'flex items-center pt-6 pb-4',
@@ -126,7 +125,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           </div>
         </div>
 
-        {/* Desktop: botÃ£o de colapso. Mobile drawer: botÃ£o de fechar */}
+        {/* Desktop: botão de colapso. Mobile drawer: botão de fechar */}
         {isMobileDrawer ? (
           <button
             onClick={closeMobileMenu}
@@ -146,7 +145,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         )}
       </div>
 
-      {/* â”€â”€â”€ NavegaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ Navegação ────────────────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-3 pb-6 custom-scrollbar">
         {navGroups.map((group, idx) => {
           const visibleItems = group.items.filter(
@@ -155,7 +154,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
 
           if (visibleItems.length === 0) return null;
 
-          // Em modo colapsado (desktop), mostramos apenas o Ã­cone sem label de grupo
+          // Em modo colapsado (desktop), mostramos apenas o Ícone sem label de grupo
           const showLabel = !isCollapsed || isMobileDrawer;
 
           return (
@@ -212,7 +211,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         })}
       </nav>
 
-      {/* â”€â”€â”€ Utilizador (RodapÃ©) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ Utilizador (Rodapé) ──────────────────────────────────────── */}
       {user && (
         <div className="relative p-4 border-t border-slate-200 bg-white">
 
@@ -223,7 +222,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition-colors text-left"
               >
-                <LogOut size={16} /> Terminar SessÃ£o
+                <LogOut size={16} /> Terminar Sessão
               </button>
             </div>
           )}

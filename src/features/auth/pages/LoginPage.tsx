@@ -1,30 +1,30 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, LogIn, Lock, UserCircle, BarChart3, Package, Users, Store } from 'lucide-react';
-import { useAuth } from '../store/AuthContext';
+import { useAuth } from '../index';
 import { cn } from '@/lib/utils';
 
-// â”€â”€â”€ Schema de validaÃ§Ã£o (espelha as regras do backend LoginDto) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Schema de validação (espelha as regras do backend LoginDto) ──────────────â”€
 const loginSchema = z.object({
-  code: z.string().min(1, 'O cÃ³digo de acesso Ã© obrigatÃ³rio'),
+  code: z.string().min(1, 'O código de acesso é obrigatório'),
   password: z.string().min(6, 'A password deve ter pelo menos 6 caracteres'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-// â”€â”€â”€ Destaques do sistema (painel da marca) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Destaques do sistema (painel da marca) ──────────────────────────────────â”€
 const features = [
-  { icon: BarChart3, label: 'GestÃ£o de Stock em tempo real' },
+  { icon: BarChart3, label: 'Gestão de Stock em tempo real' },
   { icon: Store,     label: 'Ponto de Venda integrado' },
-  { icon: Users,     label: 'CRM & Programa de FidelizaÃ§Ã£o' },
+  { icon: Users,     label: 'CRM & Programa de Fidelização' },
   { icon: Package,   label: 'Controlo de Compras e Fornecedores' },
 ];
 
-// â”€â”€â”€ Componente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Componente ──────────────────────────────────────────────────────────────â”€
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -58,13 +58,13 @@ export function LoginPage() {
     <div className="min-h-screen flex">
 
       {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          PAINEL DA MARCA (esquerda) â€” visÃ­vel apenas em ecrÃ£s grandes
+          PAINEL DA MARCA (esquerda) — visÍvel apenas em ecrãs grandes
           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Fundo gradiente */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
 
-        {/* PadrÃ£o de pontos subtil */}
+        {/* Padrão de pontos subtil */}
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -73,11 +73,11 @@ export function LoginPage() {
           }}
         />
 
-        {/* CÃ­rculos decorativos */}
+        {/* CÍrculos decorativos */}
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl" />
 
-        {/* ConteÃºdo do painel */}
+        {/* Conteúdo do painel */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -93,12 +93,12 @@ export function LoginPage() {
           {/* Texto central */}
           <div>
             <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-              GestÃ£o Industrial<br />
+              Gestão Industrial<br />
               <span className="text-blue-400">Inteligente</span>
             </h2>
             <p className="text-slate-400 text-base mb-10 leading-relaxed">
-              A plataforma SaaS completa para gerir o seu negÃ³cio â€” stock,
-              vendas, clientes e muito mais, num Ãºnico lugar.
+              A plataforma SaaS completa para gerir o seu negócio — stock,
+              vendas, clientes e muito mais, num único lugar.
             </p>
 
             {/* Features */}
@@ -114,19 +114,19 @@ export function LoginPage() {
             </ul>
           </div>
 
-          {/* RodapÃ© do painel */}
+          {/* Rodapé do painel */}
           <p className="text-slate-600 text-xs">
             Â© {new Date().getFullYear()} SRG ControlCore. Todos os direitos reservados.
           </p>
         </div>
       </div>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          PAINEL DO FORMULÃRIO (direita)
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
+          PAINEL DO FORMULÁRIO (direita)
+          â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white">
 
-        {/* Logo visÃ­vel apenas em mobile */}
+        {/* Logo visÍvel apenas em mobile */}
         <div className="lg:hidden flex items-center gap-3 mb-10">
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">CC</span>
@@ -135,22 +135,22 @@ export function LoginPage() {
         </div>
 
         <div className="w-full max-w-sm">
-          {/* CabeÃ§alho do formulÃ¡rio */}
+          {/* Cabeçalho do formulário */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Iniciar SessÃ£o</h1>
-            <p className="text-slate-500 text-sm">Aceda ao painel de gestÃ£o</p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-1">Iniciar Sessão</h1>
+            <p className="text-slate-500 text-sm">Aceda ao painel de gestão</p>
           </div>
 
-          {/* FormulÃ¡rio */}
+          {/* Formulário */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
 
-            {/* â”€â”€â”€ Campo: CÃ³digo de Acesso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ──â”€ Campo: Código de Acesso ──────────────────────────── */}
             <div className="space-y-1.5">
               <label
                 htmlFor="code"
                 className="block text-sm font-medium text-slate-700"
               >
-                CÃ³digo de Acesso
+                Código de Acesso
               </label>
               <div className="relative">
                 <UserCircle
@@ -181,7 +181,7 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* â”€â”€â”€ Campo: Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ──â”€ Campo: Password ──────────────────────────────────── */}
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
@@ -198,7 +198,7 @@ export function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="MÃ­nimo 6 caracteres"
+                  placeholder="MÍnimo 6 caracteres"
                   {...register('password')}
                   className={cn(
                     'w-full pl-10 pr-12 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
@@ -224,7 +224,7 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* â”€â”€â”€ Link Esqueceu a senha â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ──â”€ Link Esqueceu a senha ────────────────────────────── */}
             <div className="flex justify-end">
               <Link
                 to="/recuperar-senha"
@@ -234,7 +234,7 @@ export function LoginPage() {
               </Link>
             </div>
 
-            {/* â”€â”€â”€ BotÃ£o de submissÃ£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* ──â”€ Botão de submissão ────────────────────────────────â”€ */}
             <button
               type="submit"
               disabled={isSubmitting}

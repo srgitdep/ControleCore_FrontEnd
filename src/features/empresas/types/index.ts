@@ -23,7 +23,7 @@ export interface OnboardingPayload {
   // Dados do Gestor Principal
   gestorNome: string;
   gestorEmail: string;
-  // MÃ³dulos subscritos (IDs)
+  // Módulos subscritos (IDs)
   modulos: string[];
 }
 

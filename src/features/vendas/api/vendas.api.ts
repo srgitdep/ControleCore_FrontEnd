@@ -1,6 +1,6 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/api/axios';
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Types ────────────────────────────────────────────────────────────────────
 
 export interface VendaItemDto {
   produtoId: string;
@@ -23,7 +23,7 @@ export interface ProcessarVendaDto {
   emailCliente?: string;
 }
 
-// â”€â”€â”€ API Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ API Functions ────────────────────────────────────────────────────────────
 
 export const processarVenda = async (payload: ProcessarVendaDto) => {
   const { data } = await api.post('/vendas/processar', payload);
@@ -31,6 +31,6 @@ export const processarVenda = async (payload: ProcessarVendaDto) => {
 };
 
 export const enviarRecibo = async (vendaId: string, email: string) => {
-  const { data } = await api.post('/vendas/enviar-recibo', { vendaId, email });
+  const { data } = await api.post(`/vendas/${vendaId}/send-receipt`, { email });
   return data;
 };

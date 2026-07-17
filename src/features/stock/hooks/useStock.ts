@@ -47,7 +47,7 @@ export function useStockMutations() {
   };
 
   const handleError = (error: any) => {
-    const message = error.response?.data?.message || 'Ocorreu um erro na operaÃ§Ã£o.';
+    const message = error.response?.data?.message || 'Ocorreu um erro na operação.';
     toast.error(message);
   };
 
@@ -59,7 +59,7 @@ export function useStockMutations() {
 
   const createTransfer = useMutation({
     mutationFn: stockApi.createTransfer,
-    onSuccess: () => handleSuccess('TransferÃªncia realizada com sucesso.'),
+    onSuccess: () => handleSuccess('Transferência realizada com sucesso.'),
     onError: handleError,
   });
 

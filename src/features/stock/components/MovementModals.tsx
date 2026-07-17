@@ -54,8 +54,8 @@ export function MovementModals({ stockId, type, onClose }: MovementModalsProps) 
   const getTitle = () => {
     switch(type) {
       case 'IN': return 'Entrada de Mercadoria';
-      case 'OUT': return 'SaÃ­da de Mercadoria';
-      case 'TRANSFER': return 'TransferÃªncia de ArmazÃ©m';
+      case 'OUT': return 'SaÍda de Mercadoria';
+      case 'TRANSFER': return 'Transferência de Armazém';
       case 'ADJUST_PLUS': return 'Ajuste Positivo (Sobra)';
       case 'ADJUST_MINUS': return 'Ajuste Negativo (Quebra/Furto)';
       default: return '';

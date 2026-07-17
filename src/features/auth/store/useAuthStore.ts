@@ -1,46 +1,76 @@
-﻿import { create } from 'zustand';
-import type { AuthUser, LoginPayload } from '../types';
+import { create } from 'zustand';
+import type { AuthUser, LoginPayload, Role } from '../types';
 import { loginApi, logoutApi } from '../api/auth.api';
+import { queryClient } from '@/main';
 
-// Tokens removidos do estado â€” sÃ£o geridos exclusivamente pelo browser via HttpOnly cookies.
-// persist removido â€” guardar tokens em localStorage seria a vulnerabilidade que estamos a eliminar.
-// Apenas user + permissions ficam em memÃ³ria (dados nÃ£o-sensÃ­veis, necessÃ¡rios para UI/RBAC).
 interface AuthState {
   user: AuthUser | null;
   permissions: string[];
+  isAuthenticated: boolean;
+  isLoading: boolean;
 
   login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
   setPermissions: (permissions: string[]) => void;
+  hasRole: (roles: Role[]) => boolean;
+  initialize: () => void;
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   permissions: [],
+  isAuthenticated: false,
+  isLoading: true,
 
   login: async (payload: LoginPayload) => {
     const data = await loginApi(payload);
-
     const userPermissions = (data.user as any).permissions ?? [];
+
+    sessionStorage.setItem('authUser', JSON.stringify(data.user));
 
     set({
       user: data.user,
       permissions: userPermissions,
+      isAuthenticated: true,
     });
   },
 
   logout: async () => {
     try {
-      // Backend apaga os cookies HttpOnly â€” o frontend nÃ£o tem acesso para o fazer
       await logoutApi();
     } catch {
-      // Ignora falhas de rede â€” o utilizador Ã© redirecionado para login de qualquer forma
+      // Ignora falhas de rede — o utilizador é redirecionado para login de qualquer forma
     } finally {
-      set({ user: null, permissions: [] });
+      sessionStorage.removeItem('authUser');
+      queryClient.clear();
+      set({ user: null, permissions: [], isAuthenticated: false });
     }
   },
 
   setPermissions: (permissions: string[]) => {
     set({ permissions });
   },
+
+  hasRole: (roles: Role[]) => {
+    const { user } = get();
+    return !!user && roles.includes(user.role);
+  },
+
+  initialize: () => {
+    try {
+      const raw = sessionStorage.getItem('authUser');
+      if (raw) {
+        const parsedUser = JSON.parse(raw) as AuthUser;
+        set({ user: parsedUser, isAuthenticated: true, permissions: parsedUser.permissions || [] });
+      }
+    } catch {
+      sessionStorage.removeItem('authUser');
+    } finally {
+      set({ isLoading: false });
+    }
+  }
 }));
+
+// Initialize store immediately (runs once when module is imported)
+useAuthStore.getState().initialize();
+

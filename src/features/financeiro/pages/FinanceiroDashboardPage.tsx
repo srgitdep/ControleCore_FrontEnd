@@ -1,5 +1,4 @@
-﻿import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   ComposedChart,
   Bar,
@@ -29,18 +28,17 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import {
-  getDreSummary,
-  getCashFlowProjection,
-  getContasReceber,
-  getContasPagar,
-  processarPagamento,
-} from '@/api/finance';
+  useDreSummary,
+  useCashFlowProjection,
+  useContasReceber,
+  useContasPagar,
+  useProcessarPagamento,
+} from '@/features/financeiro';
 import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
-import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Helpers ────────────────────────────────────────────────────────────────â”€
 
 const fmt = (v: number | string) =>
   Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,11 +52,11 @@ const fmtDate = (iso: string) => {
 };
 
 const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Sub-components ──────────────────────────────────────────────────────────â”€
 
 function KpiCard({
   label,
@@ -127,12 +125,12 @@ function CreditBlockBadge() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">
       <AlertTriangle className="h-3 w-3" />
-      CrÃ©dito Bloqueado
+      Crédito Bloqueado
     </span>
   );
 }
 
-// â”€â”€â”€ Tooltips personalizados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Tooltips personalizados ──────────────────────────────────────────────────
 
 function CustomCashFlowTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -149,7 +147,7 @@ function CustomCashFlowTooltip({ active, payload, label }: any) {
   );
 }
 
-// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Main Page ────────────────────────────────────────────────────────────────
 
 type Tab = 'dre' | 'cashflow' | 'receber' | 'pagar';
 
@@ -161,39 +159,13 @@ export function FinanceiroDashboardPage() {
   const [pageReceber, setPageReceber] = useState(1);
   const [pagePagar, setPagePagar] = useState(1);
 
-  const queryClient = useQueryClient();
+  const dreQuery = useDreSummary(mes, ano);
+  const cashFlowQuery = useCashFlowProjection(30);
+  const contasReceberQuery = useContasReceber(pageReceber);
+  const contasPagarQuery = useContasPagar(pagePagar);
+  const pagarMutation = useProcessarPagamento();
 
-  const dreQuery = useQuery({
-    queryKey: ['finance', 'dre', mes, ano],
-    queryFn: () => getDreSummary(mes, ano),
-  });
-
-  const cashFlowQuery = useQuery({
-    queryKey: ['finance', 'cashflow'],
-    queryFn: () => getCashFlowProjection(30),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const contasReceberQuery = useQuery({
-    queryKey: ['finance', 'contas-receber', pageReceber],
-    queryFn: () => getContasReceber(pageReceber),
-  });
-
-  const contasPagarQuery = useQuery({
-    queryKey: ['finance', 'contas-pagar', pagePagar],
-    queryFn: () => getContasPagar(pagePagar),
-  });
-
-  const pagarMutation = useMutation({
-    mutationFn: processarPagamento,
-    onSuccess: () => {
-      toast.success('Pagamento registado com sucesso!');
-      queryClient.invalidateQueries({ queryKey: ['finance'] });
-    },
-    onError: () => toast.error('Falha ao processar pagamento.'),
-  });
-
-  // NavegaÃ§Ã£o de mÃªs
+  // Navegação de mês
   const prevMonth = () => {
     if (mes === 1) { setMes(12); setAno(a => a - 1); }
     else setMes(m => m - 1);
@@ -207,7 +179,7 @@ export function FinanceiroDashboardPage() {
   const cf = cashFlowQuery.data;
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'dre', label: 'DRE â€” Resultados' },
+    { id: 'dre', label: 'DRE — Resultados' },
     { id: 'cashflow', label: 'Fluxo de Caixa' },
     { id: 'receber', label: 'Contas a Receber' },
     { id: 'pagar', label: 'Contas a Pagar' },
@@ -243,7 +215,7 @@ export function FinanceiroDashboardPage() {
         ))}
       </div>
 
-      {/* â”€â”€â”€ TAB: DRE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ TAB: DRE ────────────────────────────────────────────────────────â”€ */}
       {tab === 'dre' && (
         <div className="space-y-6">
           {/* Period selector */}
@@ -282,7 +254,7 @@ export function FinanceiroDashboardPage() {
               {/* DRE: Linha Principal */}
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  Demonstrativo de Resultados â€” {MONTH_NAMES[mes - 1]} {ano}
+                  Demonstrativo de Resultados — {MONTH_NAMES[mes - 1]} {ano}
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -292,7 +264,7 @@ export function FinanceiroDashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) CMV â€” Custo da Mercadoria Vendida</span>
+                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) CMV — Custo da Mercadoria Vendida</span>
                     <span className="font-mono text-lg font-semibold text-red-400">
                       MZN {fmt(dre.cmv)}
                     </span>
@@ -306,7 +278,7 @@ export function FinanceiroDashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) Despesas Pagas no PerÃ­odo</span>
+                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) Despesas Pagas no PerÍodo</span>
                     <span className="font-mono text-lg font-semibold text-amber-400">
                       MZN {fmt(dre.despesasPagas)}
                     </span>
@@ -329,13 +301,13 @@ export function FinanceiroDashboardPage() {
                   accent="blue"
                 />
                 <KpiCard
-                  label="Ticket MÃ©dio"
+                  label="Ticket Médio"
                   value={`MZN ${fmt(dre.ticketMedioVenda)}`}
                   icon={DollarSign}
                   accent="purple"
                 />
                 <KpiCard
-                  label="RecebÃ­veis Pendentes"
+                  label="RecebÍveis Pendentes"
                   value={`MZN ${fmt(dre.receitasReceber)}`}
                   icon={TrendingUp}
                   accent="green"
@@ -385,7 +357,7 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* â”€â”€â”€ TAB: CASH FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ TAB: CASH FLOW ──────────────────────────────────────────────────â”€ */}
       {tab === 'cashflow' && (
         <div className="space-y-6">
           {cashFlowQuery.isLoading && (
@@ -403,13 +375,13 @@ export function FinanceiroDashboardPage() {
                   accent={cf.saldoAtual >= 0 ? 'green' : 'red'}
                 />
                 <KpiCard
-                  label="RecebÃ­veis nos PrÃ³x. 30d"
+                  label="RecebÍveis nos Próx. 30d"
                   value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.receber, 0))}`}
                   icon={TrendingUp}
                   accent="blue"
                 />
                 <KpiCard
-                  label="PagÃ¡veis nos PrÃ³x. 30d"
+                  label="Pagáveis nos Próx. 30d"
                   value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.pagar, 0))}`}
                   icon={TrendingDown}
                   accent="red"
@@ -418,10 +390,10 @@ export function FinanceiroDashboardPage() {
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                  ProjeÃ§Ã£o de Fluxo de Caixa â€” PrÃ³ximos 30 dias
+                  Projeção de Fluxo de Caixa — Próximos 30 dias
                 </h2>
                 <p className="mb-6 text-xs text-slate-500">
-                  Barras: entradas (azul) e saÃ­das (vermelho) diÃ¡rias. Linha: saldo projetado acumulado.
+                  Barras: entradas (azul) e saÍdas (vermelho) diárias. Linha: saldo projetado acumulado.
                 </p>
                 <ResponsiveContainer width="100%" height={340}>
                   <ComposedChart data={cf.serie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -464,7 +436,7 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* â”€â”€â”€ TAB: CONTAS A RECEBER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ TAB: CONTAS A RECEBER ──────────────────────────────────────────── */}
       {tab === 'receber' && (
         <RegistrosTable
           query={contasReceberQuery}
@@ -476,7 +448,7 @@ export function FinanceiroDashboardPage() {
         />
       )}
 
-      {/* â”€â”€â”€ TAB: CONTAS A PAGAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ──â”€ TAB: CONTAS A PAGAR ────────────────────────────────────────────── */}
       {tab === 'pagar' && (
         <RegistrosTable
           query={contasPagarQuery}
@@ -491,7 +463,7 @@ export function FinanceiroDashboardPage() {
   );
 }
 
-// â”€â”€â”€ Registros Table Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──â”€ Registros Table Component ────────────────────────────────────────────────
 
 function RegistrosTable({
   query,
@@ -501,7 +473,7 @@ function RegistrosTable({
   onPagar,
   isPayingId,
 }: {
-  query: ReturnType<typeof useQuery<any>>;
+  query: ReturnType<typeof useContasReceber>;
   page: number;
   onPageChange: (p: number) => void;
   tipo: 'RECEITA' | 'DESPESA';
@@ -548,14 +520,14 @@ function RegistrosTable({
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">DescriÃ§Ã£o</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Descrição</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {tipo === 'RECEITA' ? 'Cliente' : 'Fornecedor'}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Vencimento</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Valor</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Estado</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">AÃ§Ãµes</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-900/40">
@@ -594,7 +566,7 @@ function RegistrosTable({
                         </div>
                       )}
                       {!r.cliente && !r.fornecedor && (
-                        <span className="text-slate-500">â€”</span>
+                        <span className="text-slate-500">—</span>
                       )}
                     </div>
                   </td>
@@ -648,7 +620,7 @@ function RegistrosTable({
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-4 py-3">
             <span className="text-xs text-slate-500">
-              PÃ¡gina {page} de {lastPage} Â· {data?.total ?? 0} registros
+              Página {page} de {lastPage} Â· {data?.total ?? 0} registros
             </span>
             <div className="flex gap-2">
               <button

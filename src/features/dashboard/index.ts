@@ -1,6 +1,9 @@
 // Export API
 export * from './api/dashboard.api';
 
+// Export Hooks
+export * from './hooks/useDashboard';
+
 // Export Types
 export * from './types';
 

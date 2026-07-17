@@ -1,6 +1,6 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Users, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
+import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
 import { getUsers, deleteUser, deactivateUser, activateUser } from '@/features/users';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
@@ -84,7 +84,7 @@ export function UsersPage() {
   });
 
   const filteredUsers = users?.filter(u => {
-    // 1. Regra de NegÃ³cio: Esconder SUPER_ADMIN se o utilizador atual nÃ£o for SUPER_ADMIN
+    // 1. Regra de Negócio: Esconder SUPER_ADMIN se o utilizador atual não for SUPER_ADMIN
     if (currentUser?.role !== 'SUPER_ADMIN' && u.role === 'SUPER_ADMIN') return false;
     
     // 2. Filtro de pesquisa visual
@@ -104,7 +104,7 @@ export function UsersPage() {
     const doc = new jsPDF();
     
     doc.setFontSize(16);
-    doc.text('RelatÃ³rio de Utilizadores', 14, 20);
+    doc.text('Relatório de Utilizadores', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     const dateStr = new Date().toLocaleString('pt-PT');
@@ -112,7 +112,7 @@ export function UsersPage() {
     
     autoTable(doc, {
       startY: 35,
-      head: [['CÃ³digo', 'Nome', 'Email', 'Perfil', 'Empresa', 'Estado']],
+      head: [['Código', 'Nome', 'Email', 'Perfil', 'Empresa', 'Estado']],
       body: filteredUsers.map(u => [
         u.code,
         u.name,
@@ -137,7 +137,7 @@ export function UsersPage() {
     setConfirmDialog({
       isOpen: true,
       title: 'Eliminar Utilizador',
-      message: 'AtenÃ§Ã£o: Eliminar definitivamente este utilizador nÃ£o pode ser desfeito. Continuar?',
+      message: 'Atenção: Eliminar definitivamente este utilizador não pode ser desfeito. Continuar?',
       variant: 'danger',
       onConfirm: () => deleteMutation.mutate(id),
     });
@@ -148,7 +148,7 @@ export function UsersPage() {
       setConfirmDialog({
         isOpen: true,
         title: 'Suspender Acesso',
-        message: `Pretende suspender o acesso do utilizador ${u.name}? O utilizador serÃ¡ notificado por e-mail.`,
+        message: `Pretende suspender o acesso do utilizador ${u.name}? O utilizador será notificado por e-mail.`,
         variant: 'warning',
         onConfirm: () => deactivateMutation.mutate(u.id),
       });
@@ -156,7 +156,7 @@ export function UsersPage() {
       setConfirmDialog({
         isOpen: true,
         title: 'Ativar Acesso',
-        message: `Pretende ativar o acesso do utilizador ${u.name}? O utilizador serÃ¡ notificado por e-mail.`,
+        message: `Pretende ativar o acesso do utilizador ${u.name}? O utilizador será notificado por e-mail.`,
         variant: 'info',
         onConfirm: () => activateMutation.mutate(u.id),
       });
@@ -229,7 +229,7 @@ export function UsersPage() {
                     <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                   </th>
                   <th className="px-4 py-4 cursor-pointer hover:text-slate-800">
-                    <div className="flex items-center gap-2">CÃ³digo <SlidersHorizontal size={12} className="opacity-50" /></div>
+                    <div className="flex items-center gap-2">Código <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
                   <th className="px-4 py-4 cursor-pointer hover:text-slate-800">
                     <div className="flex items-center gap-2">Nome <SlidersHorizontal size={12} className="opacity-50" /></div>
@@ -246,7 +246,7 @@ export function UsersPage() {
                     </th>
                   )}
                   <th className="px-4 py-4 text-right">Estado</th>
-                  <th className="px-4 py-4 text-center">AÃ§Ãµes</th>
+                  <th className="px-4 py-4 text-center">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -297,7 +297,7 @@ export function UsersPage() {
                         <button
                           onClick={() => setUserToAudit(u)}
                           className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
-                          title="HistÃ³rico no Sistema"
+                          title="Histórico no Sistema"
                         >
                           <History size={15} />
                         </button>

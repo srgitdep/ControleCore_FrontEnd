@@ -1,7 +1,7 @@
 ﻿import { create } from 'zustand';
 
 interface UIState {
-  // Estado do drawer de navegaÃ§Ã£o em telas mobile (< lg)
+  // Estado do drawer de navegação em telas mobile (< lg)
   isMobileMenuOpen: boolean;
   toggleMobileMenu: () => void;
   closeMobileMenu: () => void;

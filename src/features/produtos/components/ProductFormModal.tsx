@@ -11,13 +11,13 @@ const productSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   codigoBarras: z.string().optional(),
   sku: z.string().optional(),
-  imagemUrl: z.string().url('O URL da imagem Ã© invÃ¡lido').optional().or(z.literal('')),
+  imagemUrl: z.string().url('O URL da imagem é inválido').optional().or(z.literal('')),
   categoriaId: z.string().optional(),
   descricao: z.string().optional(),
-  precoCusto: z.coerce.number().min(0, 'PreÃ§o de custo nÃ£o pode ser negativo'),
-  precoVenda: z.coerce.number().min(0, 'PreÃ§o de venda nÃ£o pode ser negativo'),
+  precoCusto: z.coerce.number().min(0, 'Preço de custo não pode ser negativo'),
+  precoVenda: z.coerce.number().min(0, 'Preço de venda não pode ser negativo'),
   taxaIva: z.coerce.number().min(0).max(100),
-  unidadeMedida: z.string().min(1, 'Unidade de medida Ã© obrigatÃ³ria'),
+  unidadeMedida: z.string().min(1, 'Unidade de medida é obrigatória'),
   peso: z.coerce.number().optional(),
   isWeighable: z.boolean().default(false),
   isActive: z.boolean().default(true),
@@ -157,13 +157,13 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 <input
                   {...register('nome')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Ex: Arroz Tio JoÃ£o 5kg"
+                  placeholder="Ex: Arroz Tio João 5kg"
                 />
                 {errors.nome && <p className="text-xs text-rose-500 mt-1">{errors.nome.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">CÃ³digo de Barras (EAN)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Código de Barras (EAN)</label>
                 <input
                   {...register('codigoBarras')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -185,7 +185,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL da Imagem (Para visualizaÃ§Ã£o no POS)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">URL da Imagem (Para visualização no POS)</label>
                 <input
                   type="url"
                   {...register('imagemUrl')}
@@ -196,7 +196,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">PreÃ§o de Custo (MZN) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Custo (MZN) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -207,7 +207,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">PreÃ§o de Venda (MZN) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda (MZN) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -258,9 +258,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                 />
                 <label htmlFor="isWeighable" className={`text-sm font-medium ${unidadeMedida !== 'KG' ? 'text-slate-400' : 'text-slate-700'}`}>
-                  Produto PesÃ¡vel (BalanÃ§a no PDV)
+                  Produto Pesável (Balança no PDV)
                   <p className="text-xs font-normal text-slate-500 mt-0.5">
-                    Se marcado, o PDV solicitarÃ¡ o peso ou lerÃ¡ a etiqueta da balanÃ§a. Requer unidade KG.
+                    Se marcado, o PDV solicitará o peso ou lerá a etiqueta da balança. Requer unidade KG.
                   </p>
                 </label>
               </div>

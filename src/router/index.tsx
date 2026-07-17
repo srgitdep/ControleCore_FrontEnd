@@ -32,12 +32,12 @@ function HomeRedirect() {
 }
 
 export const router = createBrowserRouter([
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rotas PÃƒÂºblicas (nÃƒÂ£o requerem autenticaÃƒÂ§ÃƒÂ£o) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ââ€€ââ€€ââ€€ Rotas Públicas (não requerem autenticação) ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€
   { path: '/login',            element: <LoginPage /> },
   { path: '/recuperar-senha',  element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha',  element: <ResetPasswordPage /> },
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rotas Protegidas (requerem autenticaÃƒÂ§ÃƒÂ£o) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ââ€€ââ€€ââ€€ Rotas Protegidas (requerem autenticação) ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€
   {
     element: <ProtectedRoute />,
     children: [
@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
             children: [{ index: true, element: <DashboardPage /> }]
           },
 
-          // GestÃƒÂ£o do Sistema
+          // Gestão do Sistema
           { 
             path: '/empresas', 
             element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
             children: [{ index: true, element: <PermissionsPage /> }]
           },
 
-          // MÃƒÂ³dulos Ã¢â‚¬â€ em desenvolvimento
+          // Módulos â€â€ em desenvolvimento
           { path: '/produtos',      element: <ProductListPage /> },
           { path: '/fornecedores',  element: <PurchasesPage /> },
           { path: '/compras',       element: <PurchasesPage /> },
@@ -82,7 +82,7 @@ export const router = createBrowserRouter([
           { path: '/lojas',         element: <LojasPage /> },
           { path: '/crm',           element: <ClientesPage /> },
           { path: '/clientes',      element: <ClientesPage /> },
-          // MÃƒÂ³dulo Financeiro
+          // Módulo Financeiro
           {
             path: '/financeiro',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,

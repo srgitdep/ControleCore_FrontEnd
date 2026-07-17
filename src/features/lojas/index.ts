@@ -1,4 +1,4 @@
-// Export API
+﻿// Export API
 export * from './api/lojas.api';
 
 // Export Pages & Components
