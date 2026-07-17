@@ -8,7 +8,7 @@ import type {
   UpdateCycleStatusPayload,
   InventoryCount,
   CloseCycleResponse,
-} from '@/types/inventory.types';
+} from '@/features/stock';
 
 export const inventoryApi = {
   // â”€â”€â”€ Ciclos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

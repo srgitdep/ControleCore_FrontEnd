@@ -3,8 +3,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, PackagePlus } from 'lucide-react';
-import type { Product } from '@/types/catalog.types';
-import { useCreateProduct, useUpdateProduct, useCategories } from '@/hooks/useCatalog';
+import type { Product } from '@/features/produtos';
+import { useCreateProduct, useUpdateProduct, useCategories } from '@/features/produtos';
 import { Button } from '@/components/common/Button';
 
 const productSchema = z.object({

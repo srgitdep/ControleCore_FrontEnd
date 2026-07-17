@@ -1,5 +1,5 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { catalogApi } from '@/api/catalog.api';
+import { catalogApi } from '@/features/produtos';
 import toast from 'react-hot-toast';
 
 export function useCategories() {

@@ -20,10 +20,10 @@ import {
   useUpdateCycleStatus,
   useCloseCycle,
   useRegisterCountByBarcode,
-} from '@/hooks/useInventory';
+} from '@/features/stock';
 import { Button } from '@/components/common/Button';
 import { CreateCycleModal } from './CreateCycleModal';
-import type { InventoryCycle, InventoryCycleStatus } from '@/types/inventory.types';
+import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
 
 // â”€â”€â”€ Status badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const STATUS_CONFIG: Record<

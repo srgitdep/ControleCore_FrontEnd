@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+﻿import { api } from '@/api/axios';
 import type { Supplier } from '@/features/fornecedores';
 
 export const EstadoPedidoCompra = {

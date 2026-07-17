@@ -1,12 +1,12 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
-import { useProducts, useCategories } from '@/hooks/useCatalog';
+import { useProducts, useCategories } from '@/features/produtos';
 import { usePosStore } from '@/store/posStore';
 import { useSocket } from '@/hooks/useSocket';
 import { processarVenda } from '@/api/vendas.api';
 import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/api/caixas.api';
 import toast from 'react-hot-toast';
-import type { Product } from '@/types/catalog.types';
+import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from './components/ReceiptModal';
 import { cn } from '@/lib/utils';

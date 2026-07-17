@@ -1,14 +1,14 @@
 ﻿import { useState, useMemo, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
-import { useProducts, useDeleteProduct } from '@/hooks/useCatalog';
+import { useProducts, useDeleteProduct } from '@/features/produtos';
 import { useAuth } from '@/features/auth';
-import type { Product } from '@/types/catalog.types';
+import type { Product } from '@/features/produtos';
 import { Button } from '@/components/common/Button';
 import { ResponsiveTable } from '@/components/common/ResponsiveTable';
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { createColumnHelper } from '@tanstack/react-table';
-import { ProductFormModal } from './components/ProductFormModal';
+import { ProductFormModal } from '../components/ProductFormModal';
 import { usePermissions } from '@/hooks/usePermissions';
 
 const columnHelper = createColumnHelper<Product>();

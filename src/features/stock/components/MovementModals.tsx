@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { useStockMutations } from '@/hooks/useStock';
+import { useStockMutations } from '@/features/stock';
 
 interface MovementModalsProps {
   stockId: string | null;

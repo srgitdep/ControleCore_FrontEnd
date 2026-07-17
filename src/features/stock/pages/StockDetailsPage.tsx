@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useStockDetails, useStockMovements } from '@/hooks/useStock';
+import { useStockDetails, useStockMovements } from '@/features/stock';
 import { useSocket } from '@/hooks/useSocket';
 import { ArrowLeft, Package, Clock, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 import { format } from 'date-fns';

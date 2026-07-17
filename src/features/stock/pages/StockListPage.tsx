@@ -21,13 +21,13 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useStockList, useAllMovements } from '@/hooks/useStock';
+import { useStockList, useAllMovements } from '@/features/stock';
 import { useSocket } from '@/hooks/useSocket';
 import { ResponsiveTable } from '@/components/common/ResponsiveTable';
 import { Button } from '@/components/common/Button';
-import { MovementModals } from './components/MovementModals';
-import { InventoryTab } from './components/InventoryTab';
-import type { Stock, StockMovement } from '@/types/stock.types';
+import { MovementModals } from '../components/MovementModals';
+import { InventoryTab } from '../components/InventoryTab';
+import type { Stock, StockMovement } from '@/features/stock';
 
 // â”€â”€â”€ Tab definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type StockTab = 'estoque' | 'movimentos' | 'inventario';

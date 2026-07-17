@@ -5,7 +5,7 @@ import type {
   RegisterCountPayload,
   RegisterCountByBarcodePayload,
   UpdateCycleStatusPayload,
-} from '@/types/inventory.types';
+} from '@/features/stock';
 
 // â”€â”€â”€ Query Keys â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Centralizados para invalidaÃ§Ã£o consistente entre hooks

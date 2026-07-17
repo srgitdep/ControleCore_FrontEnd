@@ -1,5 +1,5 @@
-﻿import { api } from './axios';
-import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/types/stock.types';
+﻿import { api } from '@/api/axios';
+import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/features/stock';
 
 export interface PaginatedResponse<T> {
   data: T[];

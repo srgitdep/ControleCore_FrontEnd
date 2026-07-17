@@ -1,5 +1,5 @@
-﻿import { api } from './axios';
-import type { Product, Category } from '@/types/catalog.types';
+﻿import { api } from '@/api/axios';
+import type { Product, Category } from '@/features/produtos';
 
 export const catalogApi = {
   getCategories: async () => {

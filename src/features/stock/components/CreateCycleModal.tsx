@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { X, ClipboardList } from 'lucide-react';
-import { useCreateCycle } from '@/hooks/useInventory';
+import { useCreateCycle } from '@/features/stock';
 import { Button } from '@/components/common/Button';
 
 interface CreateCycleModalProps {
