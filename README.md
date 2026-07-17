@@ -70,7 +70,8 @@ src/
 │   ├── empresas/
 │   ├── users/
 │   ├── history/
-│   └── settings/
+│   ├── settings/
+│   └── ai-copilot/           # Chatbot Widget da Mayra
 ├── store/
 │   ├── useAuthStore.ts       # JWT, user, permissões (Zustand + persist)
 │   └── useUIStore.ts         # isMobileMenuOpen + isSidebarCollapsed
@@ -207,6 +208,7 @@ npm run lint       # Oxlint
 | Gestão de Empresas | 🔄 Em desenvolvimento |
 | Gestão de Utilizadores | 🔄 Em desenvolvimento |
 | Catálogo (Produtos, Categorias, Fornecedores) | 🔄 Em desenvolvimento |
+| Assistente IA (Mayra) - Chat Widget com Markdown | ✅ Completo |
 | Recursos Humanos | ⏳ Pendente |
 | Histórico / Auditoria | ⏳ Pendente |
 | Configurações | ⏳ Pendente |
