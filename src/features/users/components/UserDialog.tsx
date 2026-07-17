@@ -4,9 +4,9 @@ import * as z from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createUser, updateUser, resendPassword } from '@/api/users.api';
+import { createUser, updateUser, resendPassword } from '@/features/users';
 import { getEmpresas } from '@/features/empresas';
-import type { UserDetail } from '@/types/user.types';
+import type { UserDetail } from '@/features/users';
 import { useAuth } from '@/features/auth';
 
 const baseSchema = z.object({

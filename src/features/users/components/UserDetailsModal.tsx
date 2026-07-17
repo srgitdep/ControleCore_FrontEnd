@@ -1,5 +1,5 @@
 ﻿import { X, User, Mail, Shield, Building2, Calendar, CheckCircle2, Ban, Hash } from 'lucide-react';
-import type { UserDetail } from '@/types/user.types';
+import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
 
 interface UserDetailsModalProps {

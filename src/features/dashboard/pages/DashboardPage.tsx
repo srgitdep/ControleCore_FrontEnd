@@ -1,6 +1,6 @@
 ﻿import { useAuth } from '@/features/auth';
-import { SuperAdminDashboard } from './components/SuperAdminDashboard';
-import { AdminDashboard } from './components/AdminDashboard';
+import { SuperAdminDashboard } from '../components/SuperAdminDashboard';
+import { AdminDashboard } from '../components/AdminDashboard';
 
 export function DashboardPage() {
   const { user } = useAuth();

@@ -1,10 +1,10 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Store, Plus, MapPin, Search, Edit2, Trash2, Box, MonitorSmartphone, User, X } from 'lucide-react';
-import { getLojas, createLoja, updateLoja, deleteLoja } from '@/api/lojas.api';
+import { getLojas, createLoja, updateLoja, deleteLoja } from '@/features/lojas';
 import { getAllCaixas, removerCaixa } from '@/features/vendas';
-import { getUsers } from '@/api/users.api';
+import { getUsers } from '@/features/users';
 import toast from 'react-hot-toast';
-import { LojaDetailsModal } from './LojaDetailsModal';
+import { LojaDetailsModal } from '../components/LojaDetailsModal';
 
 export function LojasPage() {
   const [activeTab, setActiveTab] = useState<'LOJAS' | 'CAIXAS'>('LOJAS');

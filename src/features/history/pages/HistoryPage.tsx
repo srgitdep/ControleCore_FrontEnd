@@ -1,5 +1,5 @@
 ﻿import { useAuth } from '@/features/auth';
-import { AuditLogTable } from './components/AuditLogTable';
+import { AuditLogTable } from '../components/AuditLogTable';
 import { History } from 'lucide-react';
 
 export function HistoryPage() {

@@ -2,7 +2,7 @@
 import { DollarSign, FileText, Package, Users } from 'lucide-react';
 import { KpiCard } from './KpiCard';
 import { SalesChart } from './SalesChart';
-import { getAdminDashboard } from '@/api/dashboard.api';
+import { getAdminDashboard } from '@/features/dashboard';
 
 export function AdminDashboard() {
   const { data, isLoading } = useQuery({

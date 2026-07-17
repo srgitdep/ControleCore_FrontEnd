@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { criarCaixa, removerCaixa } from '@/features/vendas';
-import { createArmazem, deleteArmazem, updateLoja } from '@/api/lojas.api';
+import { createArmazem, deleteArmazem, updateLoja } from '@/features/lojas';
 import toast from 'react-hot-toast';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void }) {

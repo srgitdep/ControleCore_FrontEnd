@@ -1,5 +1,5 @@
-﻿import { api } from './axios';
-import type { AuditLog, GetAuditLogsParams } from '@/types/auditoria.types';
+﻿import { api } from '@/api/axios';
+import type { AuditLog, GetAuditLogsParams } from '@/features/history';
 
 export const getAuditLogs = async (params?: GetAuditLogsParams): Promise<AuditLog[]> => {
   const { data } = await api.get<AuditLog[]>('/auditoria/logs', { params });

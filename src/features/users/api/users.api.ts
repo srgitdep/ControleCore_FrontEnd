@@ -1,5 +1,5 @@
-﻿import { api } from './axios';
-import type { UserDetail, CreateUserPayload, UpdateUserPayload, UserStatusActionPayload } from '@/types/user.types';
+﻿import { api } from '@/api/axios';
+import type { UserDetail, CreateUserPayload, UpdateUserPayload, UserStatusActionPayload } from '@/features/users';
 
 export const getUsers = async (): Promise<UserDetail[]> => {
   const { data } = await api.get<UserDetail[]>('/users');

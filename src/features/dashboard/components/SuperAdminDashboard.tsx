@@ -1,7 +1,7 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import { Building2, Users, Store, ShieldCheck } from 'lucide-react';
 import { KpiCard } from './KpiCard';
-import { getSuperAdminDashboard } from '@/api/dashboard.api';
+import { getSuperAdminDashboard } from '@/features/dashboard';
 
 export function SuperAdminDashboard() {
   const { data, isLoading } = useQuery({

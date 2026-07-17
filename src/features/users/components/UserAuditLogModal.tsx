@@ -1,5 +1,5 @@
 ﻿import { X } from 'lucide-react';
-import type { UserDetail } from '@/types/user.types';
+import type { UserDetail } from '@/features/users';
 import { AuditLogTable } from '../../history/components/AuditLogTable';
 
 interface UserAuditLogModalProps {

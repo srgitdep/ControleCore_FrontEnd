@@ -1,10 +1,10 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
-import { getAuditLogs } from '@/api/auditoria.api';
+import { getAuditLogs } from '@/features/history';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { AuditAction } from '@/types/auditoria.types';
+import type { AuditAction } from '@/features/history';
 import { format } from 'date-fns';
 
 interface AuditLogTableProps {
