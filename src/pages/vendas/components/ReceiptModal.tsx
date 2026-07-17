@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { CheckCircle2, Mail, Share2, X, Printer } from 'lucide-react';
 import { api } from '@/api/axios';
 import toast from 'react-hot-toast';
@@ -44,7 +44,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
     
     autoTable(doc, {
       startY: 50,
-      head: [['Descrição', 'Qtd', 'Preço Unit.', 'Subtotal']],
+      head: [['DescriÃ§Ã£o', 'Qtd', 'PreÃ§o Unit.', 'Subtotal']],
       body: _items.map((item: any) => [
         item.nomeProduto || item.produto?.nome || 'N/A', 
         item.quantidade?.toString(), 
@@ -75,7 +75,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
     const metodosPagamento = _pagamentos.map((p: any) => p.metodo).join(', ');
     const totalEntreguePdf = _pagamentos.reduce((acc: number, p: any) => acc + (p.valorPago || p.valorEntregue || 0), 0);
 
-    doc.text(`Método de Pagamento: ${metodosPagamento || 'N/A'}`, 14, totalY + 12);
+    doc.text(`MÃ©todo de Pagamento: ${metodosPagamento || 'N/A'}`, 14, totalY + 12);
     doc.text(`Valor Entregue: ${totalEntreguePdf.toFixed(2)} MT`, 14, totalY + 18);
     doc.text(`Troco: ${_trocoGlobal?.toFixed(2)} MT`, 14, totalY + 24);
 
@@ -122,7 +122,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
         console.log('Error sharing', error);
       }
     } else {
-      toast.error('Partilha não suportada neste dispositivo.');
+      toast.error('Partilha nÃ£o suportada neste dispositivo.');
     }
   };
 
@@ -136,9 +136,9 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold uppercase tracking-widest mb-1">Supermercado SPAR</h2>
             <p className="text-xs text-slate-500">NIF: 123456789</p>
-            <p className="text-xs text-slate-500">Maputo, Moçambique</p>
+            <p className="text-xs text-slate-500">Maputo, MoÃ§ambique</p>
             <div className="border-b-2 border-dashed border-slate-300 my-4"></div>
-            <p className="text-xs font-semibold">Talão de Venda</p>
+            <p className="text-xs font-semibold">TalÃ£o de Venda</p>
             <p className="text-xs">{new Date().toLocaleString('pt-PT')}</p>
             <p className="text-xs mt-1">Doc: {invoiceNum}</p>
             {caixeiro?.name && <p className="text-xs mt-1">Op: {caixeiro.name}</p>}
@@ -201,7 +201,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
           </div>
           
           <div className="mt-8 text-center">
-            <p className="text-xs font-semibold mb-1">Obrigado pela preferência!</p>
+            <p className="text-xs font-semibold mb-1">Obrigado pela preferÃªncia!</p>
             <p className="text-[10px] text-slate-400">Processado por ControlCore PDV</p>
           </div>
         </div>

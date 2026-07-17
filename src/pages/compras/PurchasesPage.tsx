@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { ShoppingBag, Package, ArrowRight } from 'lucide-react';
 import { purchasesApi, EstadoPedidoCompra } from '@/api/purchases.api';
 import type { PurchaseOrder } from '@/api/purchases.api';
@@ -41,14 +41,14 @@ export function PurchasesPage() {
   };
 
   const handleSuggestPurchases = async () => {
-    toast.loading('Gerando sugestão de compras...', { id: 'sugestao' });
+    toast.loading('Gerando sugestÃ£o de compras...', { id: 'sugestao' });
     try {
       // Simplification for MVP: get all products, filter if stock < min
       // Wait, we don't have stock data easily available in getProducts here.
       // But we can just show a toast for the MVP.
-      toast.success('Sugestão gerada. (Simulação MVP)', { id: 'sugestao' });
+      toast.success('SugestÃ£o gerada. (SimulaÃ§Ã£o MVP)', { id: 'sugestao' });
     } catch (error) {
-      toast.error('Erro ao gerar sugestão', { id: 'sugestao' });
+      toast.error('Erro ao gerar sugestÃ£o', { id: 'sugestao' });
     }
   };
 
@@ -71,7 +71,7 @@ export function PurchasesPage() {
     if (order.estado === EstadoPedidoCompra.ENVIADO || order.estado === EstadoPedidoCompra.PARCIAL) {
       setSelectedOrder(order);
     } else {
-      toast('Este pedido está ' + order.estado, { icon: 'ℹ️' });
+      toast('Este pedido estÃ¡ ' + order.estado, { icon: 'â„¹ï¸' });
     }
   };
 
@@ -79,8 +79,8 @@ export function PurchasesPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Módulo de Compras</h1>
-          <p className="text-gray-500">Gestão de fornecedores e pedidos de compra</p>
+          <h1 className="text-2xl font-bold text-gray-900">MÃ³dulo de Compras</h1>
+          <p className="text-gray-500">GestÃ£o de fornecedores e pedidos de compra</p>
         </div>
         <div className="flex gap-2">
           <button 
@@ -88,7 +88,7 @@ export function PurchasesPage() {
             className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2"
           >
             <Package className="w-4 h-4" />
-            Sugestão de Compras
+            SugestÃ£o de Compras
           </button>
           <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" />
@@ -136,8 +136,8 @@ export function PurchasesPage() {
                 <th className="px-6 py-4 font-medium">Data</th>
                 <th className="px-6 py-4 font-medium">Fornecedor</th>
                 <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium">Responsável</th>
-                <th className="px-6 py-4 font-medium text-right">Ações</th>
+                <th className="px-6 py-4 font-medium">ResponsÃ¡vel</th>
+                <th className="px-6 py-4 font-medium text-right">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

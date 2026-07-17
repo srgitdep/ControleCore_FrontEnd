@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+﻿import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,11 +7,11 @@ import toast from 'react-hot-toast';
 import { createUser, updateUser, resendPassword } from '@/api/users.api';
 import { getEmpresas } from '@/api/empresa.api';
 import type { UserDetail } from '@/types/user.types';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth';
 
 const baseSchema = z.object({
   name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('E-mail inválido'),
+  email: z.string().email('E-mail invÃ¡lido'),
   role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER', 'USER']),
   empresaId: z.string().optional(),
   isActive: z.boolean(),
@@ -29,7 +29,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
   const isEditing = !!userToEdit;
   const queryClient = useQueryClient();
 
-  // Só carregar empresas se for SUPER_ADMIN
+  // SÃ³ carregar empresas se for SUPER_ADMIN
   const { data: empresas } = useQuery({
     queryKey: ['empresas'],
     queryFn: getEmpresas,
@@ -63,7 +63,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
 
   const mutation = useMutation({
     mutationFn: (data: UserFormData) => {
-      // Se for string vazia, converte para undefined para não quebrar a FK do Prisma
+      // Se for string vazia, converte para undefined para nÃ£o quebrar a FK do Prisma
       const payload = {
         ...data,
         empresaId: data.empresaId === '' ? undefined : data.empresaId,
@@ -115,7 +115,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
               <input
                 {...register('name')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ex: João Silva"
+                placeholder="Ex: JoÃ£o Silva"
               />
               {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name.message}</p>}
             </div>
@@ -139,7 +139,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
                 {...register('role')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
-                <option value="USER">Funcionário Geral</option>
+                <option value="USER">FuncionÃ¡rio Geral</option>
                 <option value="CASHIER">Operador de Caixa</option>
                 <option value="STOCK_KEEPER">Armazenista</option>
                 <option value="MANAGER">Supervisor / Gerente</option>
@@ -152,7 +152,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
               </select>
             </div>
 
-            {/* Apenas o Super Admin pode atribuir empresas manualmente. O Admin cria sempre para a sua própria empresa (forçado no backend). */}
+            {/* Apenas o Super Admin pode atribuir empresas manualmente. O Admin cria sempre para a sua prÃ³pria empresa (forÃ§ado no backend). */}
             {currentUser?.role === 'SUPER_ADMIN' && selectedRole !== 'SUPER_ADMIN' && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Associar a Empresa</label>

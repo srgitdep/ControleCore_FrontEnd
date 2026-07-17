@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { DollarSign, FileText, Package, Users } from 'lucide-react';
 import { KpiCard } from './KpiCard';
 import { SalesChart } from './SalesChart';

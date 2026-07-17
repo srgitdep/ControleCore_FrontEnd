@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { criarCaixa, removerCaixa } from '@/api/caixas.api';
 import { createArmazem, deleteArmazem, updateLoja } from '@/api/lojas.api';
@@ -35,11 +35,11 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
     if (!novoArmazem.trim()) return;
     try {
       await createArmazem({ lojaId: loja.id, nome: novoArmazem, tipo: 'Venda' });
-      toast.success('Armazém adicionado');
+      toast.success('ArmazÃ©m adicionado');
       setNovoArmazem('');
       onUpdate();
     } catch {
-      toast.error('Erro ao adicionar armazém');
+      toast.error('Erro ao adicionar armazÃ©m');
     }
   };
 
@@ -55,13 +55,13 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   };
 
   const handleDeleteArmazem = async (id: string) => {
-    if (!confirm('Apagar armazém?')) return;
+    if (!confirm('Apagar armazÃ©m?')) return;
     try {
       await deleteArmazem(id);
-      toast.success('Armazém removido');
+      toast.success('ArmazÃ©m removido');
       onUpdate();
     } catch {
-      toast.error('Erro ao remover armazém');
+      toast.error('Erro ao remover armazÃ©m');
     }
   };
 
@@ -86,7 +86,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
           <div>
             <h2 className="text-xl font-bold text-slate-900">{loja.nome}</h2>
-            <p className="text-sm text-slate-500">Gestão de Infraestrutura e Pessoal</p>
+            <p className="text-sm text-slate-500">GestÃ£o de Infraestrutura e Pessoal</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
             <X size={20} />
@@ -105,7 +105,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
             onClick={() => setActiveTab('ARMAZENS')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'ARMAZENS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
-            <Box size={16} /> Armazéns
+            <Box size={16} /> ArmazÃ©ns
           </button>
           <button 
             onClick={() => setActiveTab('INFO')}
@@ -125,7 +125,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   type="text" 
                   value={novoCaixa}
                   onChange={e => setNovoCaixa(e.target.value)}
-                  placeholder="Ex: Caixa 01 (Balcão Principal)" 
+                  placeholder="Ex: Caixa 01 (BalcÃ£o Principal)" 
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
                 <button type="submit" disabled={!novoCaixa.trim() || isCreatingCaixa} className="px-5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
@@ -174,7 +174,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   type="text" 
                   value={novoArmazem}
                   onChange={e => setNovoArmazem(e.target.value)}
-                  placeholder="Ex: Armazém Retaguarda" 
+                  placeholder="Ex: ArmazÃ©m Retaguarda" 
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
                 <button type="submit" disabled={!novoArmazem.trim()} className="px-5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
@@ -205,7 +205,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                 ) : (
                   <div className="p-8 text-center text-slate-500">
                     <Box className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                    <p>Nenhum armazém registado nesta loja.</p>
+                    <p>Nenhum armazÃ©m registado nesta loja.</p>
                   </div>
                 )}
               </div>
@@ -215,7 +215,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
           {activeTab === 'INFO' && (
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Responsável / Gestor de Loja</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">ResponsÃ¡vel / Gestor de Loja</label>
                 <select 
                   value={gestorId} 
                   onChange={e => setGestorId(e.target.value)} 
@@ -224,7 +224,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   <option value="">-- Sem Gestor --</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
                 </select>
-                <p className="text-xs text-slate-500 mt-2">Apenas utilizadores com o nível ADMIN ou MANAGER podem ser gestores de loja.</p>
+                <p className="text-xs text-slate-500 mt-2">Apenas utilizadores com o nÃ­vel ADMIN ou MANAGER podem ser gestores de loja.</p>
               </div>
               <div className="flex justify-end pt-2">
                 <button 

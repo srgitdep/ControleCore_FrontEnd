@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 
 export const obterCaixasDisponiveis = async () => {
   const { data } = await api.get('/caixas/sessoes/disponiveis');
@@ -39,7 +39,7 @@ export const registrarReforco = async (sessaoId: string, payload: { valor: numbe
   return data;
 };
 
-// ─── GESTÃO FÍSICA DOS CAIXAS ───────────────────────────────────────────
+// â”€â”€â”€ GESTÃƒO FÃSICA DOS CAIXAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getAllCaixas = async () => {
   const { data } = await api.get('/caixas');
   return data;

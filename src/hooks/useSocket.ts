@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -30,14 +30,14 @@ export function useSocket() {
       console.log('[WebSockets] Connected:', socketInstance.id);
     });
 
-    // Evento de atualização de stock (Ledger)
+    // Evento de atualizaÃ§Ã£o de stock (Ledger)
     socketInstance.on('stock_updated', (data) => {
       // Invalida a query de produtos para buscar as quantidades atualizadas no POS
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      // Invalida a query de stocks para atualizar as tabelas do dashboard de gestão
+      // Invalida a query de stocks para atualizar as tabelas do dashboard de gestÃ£o
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
       
-      // Se houver necessidade de invalidar um produto em específico
+      // Se houver necessidade de invalidar um produto em especÃ­fico
       if (data?.productId) {
         queryClient.invalidateQueries({ queryKey: ['stock', data.productId] });
       }

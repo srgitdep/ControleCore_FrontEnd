@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+﻿import { X } from 'lucide-react';
 import type { UserDetail } from '@/types/user.types';
 import { AuditLogTable } from '../../history/components/AuditLogTable';
 
@@ -14,7 +14,7 @@ export function UserAuditLogModal({ user, onClose }: UserAuditLogModalProps) {
         
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Histórico de Auditoria</h2>
+            <h2 className="text-xl font-bold text-slate-900">HistÃ³rico de Auditoria</h2>
             <p className="text-sm text-slate-500 mt-1">
               Visualizando logs de <span className="font-medium text-slate-700">{user.name}</span> ({user.email})
             </p>

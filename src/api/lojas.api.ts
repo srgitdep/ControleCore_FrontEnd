@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 
 export const getLojas = async () => {
   const { data } = await api.get('/lojas');
@@ -25,7 +25,7 @@ export const deleteLoja = async (id: string) => {
   return data;
 };
 
-// Armazéns (associados à Loja)
+// ArmazÃ©ns (associados Ã  Loja)
 export const getArmazensByLoja = async (lojaId: string) => {
   const { data } = await api.get(`/lojas/${lojaId}/armazens`);
   return data;

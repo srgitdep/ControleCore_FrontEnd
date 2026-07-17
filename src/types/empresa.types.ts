@@ -1,4 +1,4 @@
-export interface Empresa {
+﻿export interface Empresa {
   id: string;
   nome: string;
   nuit: string;
@@ -23,7 +23,7 @@ export interface OnboardingPayload {
   // Dados do Gestor Principal
   gestorNome: string;
   gestorEmail: string;
-  // Módulos subscritos (IDs)
+  // MÃ³dulos subscritos (IDs)
   modulos: string[];
 }
 

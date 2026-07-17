@@ -1,11 +1,11 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
-import { resetPasswordApi } from '@/api/auth.api';
+import { resetPasswordApi } from '../api/auth.api';
 import { cn } from '@/lib/utils';
 
 const schema = z
@@ -14,7 +14,7 @@ const schema = z
     confirmPassword: z.string().min(1, 'Confirme a nova password'),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'As passwords não coincidem',
+    message: 'As passwords nÃ£o coincidem',
     path: ['confirmPassword'],
   });
 
@@ -35,7 +35,7 @@ export function ResetPasswordPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!token) {
-      toast.error('Token inválido ou em falta. Solicite uma nova recuperação.');
+      toast.error('Token invÃ¡lido ou em falta. Solicite uma nova recuperaÃ§Ã£o.');
       return;
     }
     try {
@@ -44,7 +44,7 @@ export function ResetPasswordPage() {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? 'Código inválido ou expirado.';
+        ?? 'CÃ³digo invÃ¡lido ou expirado.';
       toast.error(message);
     }
   };
@@ -79,7 +79,7 @@ export function ResetPasswordPage() {
                     id="newPassword"
                     type={showPw ? 'text' : 'password'}
                     autoFocus
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="MÃ­nimo 6 caracteres"
                     {...register('newPassword')}
                     className={cn(
                       'w-full pl-10 pr-12 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
@@ -144,7 +144,7 @@ export function ResetPasswordPage() {
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Password redefinida!</h2>
             <p className="text-slate-500 text-sm mb-6">
-              A sua password foi alterada com sucesso. Pode agora iniciar sessão.
+              A sua password foi alterada com sucesso. Pode agora iniciar sessÃ£o.
             </p>
             <button
               onClick={() => navigate('/login', { replace: true })}

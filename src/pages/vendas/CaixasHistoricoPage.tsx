@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw, Eye } from 'lucide-react';
 import { obterHistoricoSessoes } from '@/api/caixas.api';
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ export function CaixasHistoricoPage() {
       const data = await obterHistoricoSessoes();
       setSessoes(data);
     } catch (error) {
-      toast.error('Erro ao carregar histórico de sessões');
+      toast.error('Erro ao carregar histÃ³rico de sessÃµes');
     } finally {
       setIsLoading(false);
     }
@@ -36,19 +36,19 @@ export function CaixasHistoricoPage() {
     const invoiceNum = venda.numeroFatura || 'N/A';
     
     doc.setFontSize(22);
-    doc.text("Recibo de Compra (Via Histórico)", 14, 20);
+    doc.text("Recibo de Compra (Via HistÃ³rico)", 14, 20);
     doc.setFontSize(12);
     doc.text(`Fatura: ${invoiceNum}`, 14, 30);
     doc.text(`Data: ${new Date(venda.createdAt).toLocaleString('pt-PT')}`, 14, 36);
     
-    // Na API de histórico, as vendas não trazem os itens por defeito no plano atual, 
+    // Na API de histÃ³rico, as vendas nÃ£o trazem os itens por defeito no plano atual, 
     // mas trazem os totais e pagamentos. Vamos mostrar os totais gerais.
     doc.setFontSize(11);
     doc.text(`Total Faturado: ${venda.totalFinal.toFixed(2)} MT`, 14, 50);
     
     if (venda.pagamentos && venda.pagamentos.length > 0) {
       const pag = venda.pagamentos[0];
-      doc.text(`Método: ${pag.metodo}`, 14, 60);
+      doc.text(`MÃ©todo: ${pag.metodo}`, 14, 60);
       doc.text(`Valor Pago: ${pag.valorPago.toFixed(2)} MT`, 14, 66);
       doc.text(`Troco: ${pag.troco.toFixed(2)} MT`, 14, 72);
     }
@@ -62,9 +62,9 @@ export function CaixasHistoricoPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <MonitorSmartphone className="w-6 h-6 text-blue-600" />
-            Histórico de Sessões de Caixa
+            HistÃ³rico de SessÃµes de Caixa
           </h1>
-          <p className="text-slate-500 mt-1">Consulte os turnos fechados e vendas associadas a cada sessão.</p>
+          <p className="text-slate-500 mt-1">Consulte os turnos fechados e vendas associadas a cada sessÃ£o.</p>
         </div>
         <button 
           onClick={fetchHistorico}
@@ -79,11 +79,11 @@ export function CaixasHistoricoPage() {
         {isLoading ? (
           <div className="p-8 text-center text-slate-400 flex flex-col items-center">
             <RefreshCcw className="w-8 h-8 animate-spin mb-4" />
-            A carregar histórico...
+            A carregar histÃ³rico...
           </div>
         ) : sessoes.length === 0 ? (
           <div className="p-8 text-center text-slate-400">
-            Nenhuma sessão encontrada.
+            Nenhuma sessÃ£o encontrada.
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -152,7 +152,7 @@ export function CaixasHistoricoPage() {
                     </h4>
                     
                     {(!sessao.vendas || sessao.vendas.length === 0) ? (
-                      <p className="text-sm text-slate-500 italic">Nenhuma venda registada nesta sessão.</p>
+                      <p className="text-sm text-slate-500 italic">Nenhuma venda registada nesta sessÃ£o.</p>
                     ) : (
                       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                         <table className="w-full text-left text-sm text-slate-600">
@@ -161,7 +161,7 @@ export function CaixasHistoricoPage() {
                               <th className="px-4 py-3">Fatura / Recibo</th>
                               <th className="px-4 py-3">Data Hora</th>
                               <th className="px-4 py-3">Valor</th>
-                              <th className="px-4 py-3 text-right">Ação</th>
+                              <th className="px-4 py-3 text-right">AÃ§Ã£o</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">

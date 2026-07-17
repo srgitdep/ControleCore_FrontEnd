@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ComposedChart,
@@ -40,7 +40,7 @@ import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const fmt = (v: number | string) =>
   Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,11 +54,11 @@ const fmtDate = (iso: string) => {
 };
 
 const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function KpiCard({
   label,
@@ -127,12 +127,12 @@ function CreditBlockBadge() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">
       <AlertTriangle className="h-3 w-3" />
-      Crédito Bloqueado
+      CrÃ©dito Bloqueado
     </span>
   );
 }
 
-// ─── Tooltips personalizados ──────────────────────────────────────────────────
+// â”€â”€â”€ Tooltips personalizados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CustomCashFlowTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -149,7 +149,7 @@ function CustomCashFlowTooltip({ active, payload, label }: any) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type Tab = 'dre' | 'cashflow' | 'receber' | 'pagar';
 
@@ -193,7 +193,7 @@ export function FinanceiroDashboardPage() {
     onError: () => toast.error('Falha ao processar pagamento.'),
   });
 
-  // Navegação de mês
+  // NavegaÃ§Ã£o de mÃªs
   const prevMonth = () => {
     if (mes === 1) { setMes(12); setAno(a => a - 1); }
     else setMes(m => m - 1);
@@ -207,7 +207,7 @@ export function FinanceiroDashboardPage() {
   const cf = cashFlowQuery.data;
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'dre', label: 'DRE — Resultados' },
+    { id: 'dre', label: 'DRE â€” Resultados' },
     { id: 'cashflow', label: 'Fluxo de Caixa' },
     { id: 'receber', label: 'Contas a Receber' },
     { id: 'pagar', label: 'Contas a Pagar' },
@@ -221,7 +221,7 @@ export function FinanceiroDashboardPage() {
           Dashboard <span className="text-violet-400">Financeiro</span>
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          DRE · Fluxo de Caixa · Contas a Pagar / Receber
+          DRE Â· Fluxo de Caixa Â· Contas a Pagar / Receber
         </p>
       </div>
 
@@ -243,7 +243,7 @@ export function FinanceiroDashboardPage() {
         ))}
       </div>
 
-      {/* ─── TAB: DRE ───────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€ TAB: DRE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {tab === 'dre' && (
         <div className="space-y-6">
           {/* Period selector */}
@@ -282,7 +282,7 @@ export function FinanceiroDashboardPage() {
               {/* DRE: Linha Principal */}
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  Demonstrativo de Resultados — {MONTH_NAMES[mes - 1]} {ano}
+                  Demonstrativo de Resultados â€” {MONTH_NAMES[mes - 1]} {ano}
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -292,7 +292,7 @@ export function FinanceiroDashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( − ) CMV — Custo da Mercadoria Vendida</span>
+                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) CMV â€” Custo da Mercadoria Vendida</span>
                     <span className="font-mono text-lg font-semibold text-red-400">
                       MZN {fmt(dre.cmv)}
                     </span>
@@ -306,7 +306,7 @@ export function FinanceiroDashboardPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( − ) Despesas Pagas no Período</span>
+                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) Despesas Pagas no PerÃ­odo</span>
                     <span className="font-mono text-lg font-semibold text-amber-400">
                       MZN {fmt(dre.despesasPagas)}
                     </span>
@@ -329,13 +329,13 @@ export function FinanceiroDashboardPage() {
                   accent="blue"
                 />
                 <KpiCard
-                  label="Ticket Médio"
+                  label="Ticket MÃ©dio"
                   value={`MZN ${fmt(dre.ticketMedioVenda)}`}
                   icon={DollarSign}
                   accent="purple"
                 />
                 <KpiCard
-                  label="Recebíveis Pendentes"
+                  label="RecebÃ­veis Pendentes"
                   value={`MZN ${fmt(dre.receitasReceber)}`}
                   icon={TrendingUp}
                   accent="green"
@@ -385,7 +385,7 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* ─── TAB: CASH FLOW ─────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€ TAB: CASH FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {tab === 'cashflow' && (
         <div className="space-y-6">
           {cashFlowQuery.isLoading && (
@@ -403,13 +403,13 @@ export function FinanceiroDashboardPage() {
                   accent={cf.saldoAtual >= 0 ? 'green' : 'red'}
                 />
                 <KpiCard
-                  label="Recebíveis nos Próx. 30d"
+                  label="RecebÃ­veis nos PrÃ³x. 30d"
                   value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.receber, 0))}`}
                   icon={TrendingUp}
                   accent="blue"
                 />
                 <KpiCard
-                  label="Pagáveis nos Próx. 30d"
+                  label="PagÃ¡veis nos PrÃ³x. 30d"
                   value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.pagar, 0))}`}
                   icon={TrendingDown}
                   accent="red"
@@ -418,10 +418,10 @@ export function FinanceiroDashboardPage() {
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                  Projeção de Fluxo de Caixa — Próximos 30 dias
+                  ProjeÃ§Ã£o de Fluxo de Caixa â€” PrÃ³ximos 30 dias
                 </h2>
                 <p className="mb-6 text-xs text-slate-500">
-                  Barras: entradas (azul) e saídas (vermelho) diárias. Linha: saldo projetado acumulado.
+                  Barras: entradas (azul) e saÃ­das (vermelho) diÃ¡rias. Linha: saldo projetado acumulado.
                 </p>
                 <ResponsiveContainer width="100%" height={340}>
                   <ComposedChart data={cf.serie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -464,7 +464,7 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* ─── TAB: CONTAS A RECEBER ──────────────────────────────────────────── */}
+      {/* â”€â”€â”€ TAB: CONTAS A RECEBER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {tab === 'receber' && (
         <RegistrosTable
           query={contasReceberQuery}
@@ -476,7 +476,7 @@ export function FinanceiroDashboardPage() {
         />
       )}
 
-      {/* ─── TAB: CONTAS A PAGAR ────────────────────────────────────────────── */}
+      {/* â”€â”€â”€ TAB: CONTAS A PAGAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {tab === 'pagar' && (
         <RegistrosTable
           query={contasPagarQuery}
@@ -491,7 +491,7 @@ export function FinanceiroDashboardPage() {
   );
 }
 
-// ─── Registros Table Component ────────────────────────────────────────────────
+// â”€â”€â”€ Registros Table Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function RegistrosTable({
   query,
@@ -548,14 +548,14 @@ function RegistrosTable({
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Descrição</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">DescriÃ§Ã£o</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {tipo === 'RECEITA' ? 'Cliente' : 'Fornecedor'}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Vencimento</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Valor</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Estado</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ações</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-900/40">
@@ -568,7 +568,7 @@ function RegistrosTable({
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-slate-800 dark:text-slate-200">{r.descricao}</span>
                       {r.createdBySystem && (
-                        <span className="text-xs text-slate-500 italic">🤖 Criado automaticamente</span>
+                        <span className="text-xs text-slate-500 italic">ðŸ¤– Criado automaticamente</span>
                       )}
                       {r.venda && (
                         <span className="text-xs text-slate-500">Fatura: {r.venda.numeroFatura}</span>
@@ -594,7 +594,7 @@ function RegistrosTable({
                         </div>
                       )}
                       {!r.cliente && !r.fornecedor && (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-slate-500">â€”</span>
                       )}
                     </div>
                   </td>
@@ -648,7 +648,7 @@ function RegistrosTable({
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-4 py-3">
             <span className="text-xs text-slate-500">
-              Página {page} de {lastPage} · {data?.total ?? 0} registros
+              PÃ¡gina {page} de {lastPage} Â· {data?.total ?? 0} registros
             </span>
             <div className="flex gap-2">
               <button

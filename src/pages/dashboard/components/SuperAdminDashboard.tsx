@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import { Building2, Users, Store, ShieldCheck } from 'lucide-react';
 import { KpiCard } from './KpiCard';
 import { getSuperAdminDashboard } from '@/api/dashboard.api';
@@ -22,8 +22,8 @@ export function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Visão Geral do Sistema</h2>
-        <p className="text-sm text-slate-500 mt-1">Estatísticas globais para todas as instâncias ativas.</p>
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">VisÃ£o Geral do Sistema</h2>
+        <p className="text-sm text-slate-500 mt-1">EstatÃ­sticas globais para todas as instÃ¢ncias ativas.</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -46,7 +46,7 @@ export function SuperAdminDashboard() {
           trendLabel="Pontos de venda"
         />
         <KpiCard
-          title="Subscrições Ativas"
+          title="SubscriÃ§Ãµes Ativas"
           value={data.kpis.subscricoesAtivas.toLocaleString()}
           icon={ShieldCheck}
           trendLabel="Planos regulares"
@@ -59,7 +59,7 @@ export function SuperAdminDashboard() {
              <h3 className="text-[15px] font-medium text-slate-900">Atividade Recente do Sistema</h3>
           </div>
           <div className="flex items-center justify-center h-40 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-             <p className="text-sm text-slate-400">Os logs detalhados do sistema irão aparecer aqui</p>
+             <p className="text-sm text-slate-400">Os logs detalhados do sistema irÃ£o aparecer aqui</p>
           </div>
         </div>
       </div>

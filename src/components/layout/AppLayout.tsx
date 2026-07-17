@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useUIStore } from '@/store/useUIStore';
 import { Sidebar } from './Sidebar';
@@ -8,7 +8,7 @@ export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const location = useLocation();
 
-  // Fecha o drawer mobile em cada mudança de rota (UX: evita menu aberto após navegar)
+  // Fecha o drawer mobile em cada mudanÃ§a de rota (UX: evita menu aberto apÃ³s navegar)
   useEffect(() => {
     closeMobileMenu();
   }, [location.pathname, closeMobileMenu]);
@@ -18,12 +18,12 @@ export function AppLayout() {
   return (
     <div className={isPOS ? "h-screen bg-slate-50 overflow-hidden" : "min-h-screen bg-slate-50"}>
 
-      {/* ── DESKTOP (lg+): Sidebar fixo, sempre visível ────────────────────── */}
+      {/* â”€â”€ DESKTOP (lg+): Sidebar fixo, sempre visÃ­vel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="hidden lg:block">
         <Sidebar isCollapsed={isSidebarCollapsed} />
       </div>
 
-      {/* ── MOBILE (< lg): Overlay + Drawer ────────────────────────────────── */}
+      {/* â”€â”€ MOBILE (< lg): Overlay + Drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isMobileMenuOpen && (
         <>
           {/* Backdrop com blur: fecha o menu ao clicar fora */}
@@ -39,21 +39,21 @@ export function AppLayout() {
         </>
       )}
 
-      {/* ── Área de conteúdo ─────────────────────────────────────────────── */}
+      {/* â”€â”€ Ãrea de conteÃºdo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/*
         Desktop: margem esquerda responsiva ao estado collapsed do sidebar
-        Mobile:  sem margem (sidebar é overlay)
+        Mobile:  sem margem (sidebar Ã© overlay)
       */}
       <div
         className={[
           isPOS ? 'flex flex-col h-screen transition-all duration-300' : 'flex flex-col min-h-screen transition-all duration-300',
-          // Em desktop, empurra o conteúdo para além do sidebar
+          // Em desktop, empurra o conteÃºdo para alÃ©m do sidebar
           isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
         ].join(' ')}
       >
         <Header isCollapsed={isSidebarCollapsed} />
 
-        {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão */}
+        {/* O POS ocupa ecrÃ£ completo sem padding extra â€” todas as outras pÃ¡ginas tÃªm o padding padrÃ£o */}
         <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
           {isPOS ? (
             <Outlet />

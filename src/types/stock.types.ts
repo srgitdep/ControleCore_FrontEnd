@@ -1,4 +1,4 @@
-export type StockMovementType = 
+﻿export type StockMovementType = 
   | 'IN'
   | 'OUT'
   | 'TRANSFER_IN'
@@ -15,7 +15,7 @@ export interface Stock {
   createdAt: string;
   updatedAt: string;
   
-  // Relações opcionais (quando o backend faz include)
+  // RelaÃ§Ãµes opcionais (quando o backend faz include)
   product?: {
     id: string;
     nome: string;
@@ -37,14 +37,14 @@ export interface StockMovement {
   reason?: string;
   createdAt: string;
   
-  // Relações opcionais
+  // RelaÃ§Ãµes opcionais
   user?: {
     id: string;
     nome: string;
   };
 }
 
-// ─── Interfaces para Mutações ────────────────────────────────────────────────
+// â”€â”€â”€ Interfaces para MutaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CreateMovementPayload {
   stockId: string;

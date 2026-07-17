@@ -1,8 +1,8 @@
-export interface Category {
+﻿export interface Category {
   id: string;
   empresaId: string;
   nome: string;
-  imagemUrl?: string; // Usado para os botões do POS
+  imagemUrl?: string; // Usado para os botÃµes do POS
   createdAt: string;
   updatedAt: string;
 }

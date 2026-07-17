@@ -1,12 +1,12 @@
-import { Navigate, Outlet } from 'react-router-dom';
+﻿import { Navigate, Outlet } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth';
 import { usePermissions } from '@/hooks/usePermissions';
-import type { Role } from '@/types/auth.types';
+import type { Role } from '@/features/auth';
 
 interface ProtectedRouteProps {
-  roles?: Role[]; // Se definido, só estas roles podem aceder
-  requiredPermission?: string; // Se definido, só utilizadores com a permissão (action:resource) podem aceder
+  roles?: Role[]; // Se definido, sÃ³ estas roles podem aceder
+  requiredPermission?: string; // Se definido, sÃ³ utilizadores com a permissÃ£o (action:resource) podem aceder
 }
 
 export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
@@ -27,25 +27,25 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
     );
   }
 
-  // Não autenticado → redireciona para login
+  // NÃ£o autenticado â†’ redireciona para login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Autenticado mas sem a role necessária → toast + redireciona para dashboard
+  // Autenticado mas sem a role necessÃ¡ria â†’ toast + redireciona para dashboard
   if (roles && !hasRole(roles)) {
-    toast.error('Sem permissão para aceder a esta página.', {
+    toast.error('Sem permissÃ£o para aceder a esta pÃ¡gina.', {
       id: 'sem-permissao-role',
       duration: 4000,
     });
     return <Navigate to="/" replace />;
   }
 
-  // Validação de Permissão estrita (RBAC - action:resource)
+  // ValidaÃ§Ã£o de PermissÃ£o estrita (RBAC - action:resource)
   if (requiredPermission) {
     const [action, resource] = requiredPermission.split(':');
     if (action && resource && !hasPermission(action, resource)) {
-      toast.error('Não tem permissão para essa ação.', {
+      toast.error('NÃ£o tem permissÃ£o para essa aÃ§Ã£o.', {
         id: 'sem-permissao-action',
         duration: 4000,
       });

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { stockApi } from '@/api/stock.api';
 import toast from 'react-hot-toast';
 
@@ -47,7 +47,7 @@ export function useStockMutations() {
   };
 
   const handleError = (error: any) => {
-    const message = error.response?.data?.message || 'Ocorreu um erro na operação.';
+    const message = error.response?.data?.message || 'Ocorreu um erro na operaÃ§Ã£o.';
     toast.error(message);
   };
 
@@ -59,7 +59,7 @@ export function useStockMutations() {
 
   const createTransfer = useMutation({
     mutationFn: stockApi.createTransfer,
-    onSuccess: () => handleSuccess('Transferência realizada com sucesso.'),
+    onSuccess: () => handleSuccess('TransferÃªncia realizada com sucesso.'),
     onError: handleError,
   });
 

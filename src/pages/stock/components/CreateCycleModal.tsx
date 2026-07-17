@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { X, ClipboardList } from 'lucide-react';
 import { useCreateCycle } from '@/hooks/useInventory';
 import { Button } from '@/components/common/Button';
@@ -26,7 +26,7 @@ export function CreateCycleModal({ onClose }: CreateCycleModalProps) {
             <div className="p-2 bg-blue-100 rounded-lg">
               <ClipboardList className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="text-lg font-bold text-slate-800">Novo Ciclo de Inventário</h2>
+            <h2 className="text-lg font-bold text-slate-800">Novo Ciclo de InventÃ¡rio</h2>
           </div>
           <button
             onClick={onClose}
@@ -51,13 +51,13 @@ export function CreateCycleModal({ onClose }: CreateCycleModalProps) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Balanço Mensal — Bebidas (Jul/2026)"
+                placeholder="Ex: BalanÃ§o Mensal â€” Bebidas (Jul/2026)"
                 required
                 autoFocus
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="mt-1.5 text-xs text-slate-400">
-                Será visível para os operadores durante a contagem.
+                SerÃ¡ visÃ­vel para os operadores durante a contagem.
               </p>
             </div>
 

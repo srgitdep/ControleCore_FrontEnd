@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useCatalog';
 import { usePosStore } from '@/store/posStore';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [
   { id: 'NUMERARIO', label: 'Dinheiro', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
-  { id: 'CARTAO', label: 'Cartão', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
+  { id: 'CARTAO', label: 'CartÃ£o', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
   { id: 'MPESA', label: 'M-Pesa', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuVGSOSpXTlLYNFnoBgJbrad3KiF3UhfJwh6NZvmDcMA&s=10' },
   { id: 'EMOLA', label: 'e-Mola', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWArdpolsdD7Hcb0-MsWf4R2PtrceSQTA5HF3wpIkfNw&s=10' }
 ] as const;
@@ -62,12 +62,12 @@ export function POSPage() {
   const [currentPaymentMethod, setCurrentPaymentMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('NUMERARIO');
   const [currentAmountPaid, setCurrentAmountPaid] = useState<number>(0);
   
-  // Abas do painel principal (Catálogo vs Histórico)
+  // Abas do painel principal (CatÃ¡logo vs HistÃ³rico)
   const [activeTab, setActiveTab] = useState<'CATALOG' | 'HISTORY'>('CATALOG');
   const [isProcessing, setIsProcessing] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  // Estado da Sessão de Caixa
+  // Estado da SessÃ£o de Caixa
   const [hasSession, setHasSession] = useState<boolean>(true);
   const [showOpenSessionModal, setShowOpenSessionModal] = useState<boolean>(false);
   const [caixas, setCaixas] = useState<any[]>([]);
@@ -75,7 +75,7 @@ export function POSPage() {
   const [saldoInicial, setSaldoInicial] = useState<number>(0);
   const [isOpeningSession, setIsOpeningSession] = useState(false);
 
-  // Estado para Fechar Sessão
+  // Estado para Fechar SessÃ£o
   const [showCloseSessionModal, setShowCloseSessionModal] = useState<boolean>(false);
   const [showSangriaModal, setShowSangriaModal] = useState<boolean>(false);
   const [showReforcoModal, setShowReforcoModal] = useState<boolean>(false);
@@ -97,7 +97,7 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showOpenSessionModal]);
 
-  // Verifica a sessão ao montar
+  // Verifica a sessÃ£o ao montar
   useEffect(() => {
     obterMinhaSessao().then(sessao => {
       if (!sessao) {
@@ -128,7 +128,7 @@ export function POSPage() {
     }
   }, [total, pagamentos]);
 
-  // ─── Barcode Listener ───────────────────────────────────────────────────
+  // â”€â”€â”€ Barcode Listener â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const barcodeBuffer = useRef('');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -147,7 +147,7 @@ export function POSPage() {
           if (foundProduct) {
             addItem(foundProduct);
           } else {
-            toast.error('Produto não encontrado.');
+            toast.error('Produto nÃ£o encontrado.');
           }
         }
       } else if (e.key.length === 1) {
@@ -163,7 +163,7 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [products, addItem, receiptData]);
 
-  // ─── Actions ─────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleOpenSession = async () => {
     if (!selectedCaixaId) return toast.error('Selecione um caixa.');
     setIsOpeningSession(true);
@@ -176,7 +176,7 @@ export function POSPage() {
           <div className="flex gap-3">
             <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
             <div>
-              <p className="font-bold text-slate-800">Sessão Iniciada</p>
+              <p className="font-bold text-slate-800">SessÃ£o Iniciada</p>
               <p className="text-sm text-slate-500">Caixa pronto a operar.</p>
               <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600">
                 Data: {new Date().toLocaleString('pt-PT')}<br/>
@@ -210,7 +210,7 @@ export function POSPage() {
           <div className="flex gap-3">
             <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
             <div>
-              <p className="font-bold text-slate-800">Sessão Fechada</p>
+              <p className="font-bold text-slate-800">SessÃ£o Fechada</p>
               <p className="text-sm text-slate-500">O seu turno foi encerrado.</p>
               <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600 space-y-1">
                 <p>Data: {new Date(result.dataFecho).toLocaleString('pt-PT')}</p>
@@ -261,25 +261,25 @@ export function POSPage() {
     }
     try {
       await registrarReforco(currentSessaoId, { valor: movimentoValor, motivo: movimentoMotivo });
-      toast.success('Reforço registado com sucesso.');
+      toast.success('ReforÃ§o registado com sucesso.');
       setShowReforcoModal(false);
       setMovimentoValor(0);
       setMovimentoMotivo('');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao registar reforço.');
+      toast.error(error.response?.data?.message || 'Erro ao registar reforÃ§o.');
     }
   };
 
   const handleCheckout = async () => {
     if (!hasSession) {
-      toast.error('Não tem nenhuma sessão de caixa aberta.');
+      toast.error('NÃ£o tem nenhuma sessÃ£o de caixa aberta.');
       setShowOpenSessionModal(true);
       return;
     }
     if (cartItems.length === 0) return;
       const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
       if (totalEntregue < total) {
-        toast.error('O valor entregue total não pode ser inferior ao total.');
+        toast.error('O valor entregue total nÃ£o pode ser inferior ao total.');
         return;
       }
 
@@ -320,18 +320,18 @@ export function POSPage() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Vendas</h1>
-            <p className="text-sm text-slate-500">Ponto de Venda e Gestão de Caixas</p>
+            <p className="text-sm text-slate-500">Ponto de Venda e GestÃ£o de Caixas</p>
           </div>
           <div className="flex items-center gap-3">
             {hasSession ? (
               <>
                 <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                  Sessão Aberta
+                  SessÃ£o Aberta
                 </span>
               </>
             ) : (
@@ -339,7 +339,7 @@ export function POSPage() {
                 onClick={() => setShowOpenSessionModal(true)}
                 className="bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                Abrir Sessão
+                Abrir SessÃ£o
               </button>
             )}
           </div>
@@ -368,13 +368,13 @@ export function POSPage() {
             )}
           >
             <History size={16} />
-            Histórico de Sessões
+            HistÃ³rico de SessÃµes
           </button>
           <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-200" />
         </div>
       </div>
 
-      {/* ── Tab Content ─────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex-1 overflow-hidden relative">
         {/* Tab: Ponto de Venda */}
         {activeTab === 'CATALOG' && (
@@ -388,7 +388,7 @@ export function POSPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <input 
                       type="text" 
-                      placeholder="Pesquisar produtos (Nome, SKU, Cód. Barras)..." 
+                      placeholder="Pesquisar produtos (Nome, SKU, CÃ³d. Barras)..." 
                       className="w-full pl-12 pr-4 py-3 bg-gray-100/80 border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -442,7 +442,7 @@ export function POSPage() {
             </div>
             </div>
 
-            {/* ─── Cart Sidebar ─── */}
+            {/* â”€â”€â”€ Cart Sidebar â”€â”€â”€ */}
             <div className="w-[420px] bg-white shadow-2xl flex flex-col z-20 border-l border-gray-200 shrink-0">
         {/* Cart Header */}
         <div className="p-5 border-b border-gray-100 bg-white flex items-center justify-between">
@@ -463,15 +463,15 @@ export function POSPage() {
                 <button 
                   onClick={() => setShowReforcoModal(true)}
                   className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                  title="Reforço (Colocar na Gaveta)"
+                  title="ReforÃ§o (Colocar na Gaveta)"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Reforço
+                  ReforÃ§o
                 </button>
                 <button 
                   onClick={() => setShowCloseSessionModal(true)}
                   className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                  title="Fechar Turno / Sessão"
+                  title="Fechar Turno / SessÃ£o"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   Fechar
@@ -489,7 +489,7 @@ export function POSPage() {
           {cartItems.length === 0 ? (
             <div className="text-center text-gray-400 mt-20">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <p className="font-medium text-gray-500">O carrinho está vazio.</p>
+              <p className="font-medium text-gray-500">O carrinho estÃ¡ vazio.</p>
               <p className="text-sm mt-1">Adicione produtos para iniciar a venda.</p>
             </div>
           ) : (
@@ -539,7 +539,7 @@ export function POSPage() {
         <div className="p-5 bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
           
           <div className="mb-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">MÃ©todo de Pagamento</p>
             <div className="grid grid-cols-4 gap-2 mb-3">
               {PAYMENT_METHODS.map(pm => (
                 <button
@@ -639,14 +639,14 @@ export function POSPage() {
         </div>
       </div>
 
-      {/* ─── Receipt Modal ─── */}
+      {/* â”€â”€â”€ Receipt Modal â”€â”€â”€ */}
       {receiptData && (
         <ReceiptModal receiptData={receiptData} onClose={handleCloseReceipt} />
       )}
           </div>
         )}
 
-        {/* Tab: Histórico de Sessões */}
+        {/* Tab: HistÃ³rico de SessÃµes */}
         {activeTab === 'HISTORY' && (
           <div className="h-full w-full overflow-y-auto bg-gray-50 p-6 custom-scrollbar">
             <CaixasHistoricoPage />
@@ -654,7 +654,7 @@ export function POSPage() {
         )}
       </div>
 
-      {/* ─── Open Session Modal ─── */}
+      {/* â”€â”€â”€ Open Session Modal â”€â”€â”€ */}
       {showOpenSessionModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -668,13 +668,13 @@ export function POSPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir Sessão de Caixa</h2>
-            <p className="text-slate-500 text-center text-sm font-medium mb-6">É obrigatório abrir uma sessão para começar a vender.</p>
+            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir SessÃ£o de Caixa</h2>
+            <p className="text-slate-500 text-center text-sm font-medium mb-6">Ã‰ obrigatÃ³rio abrir uma sessÃ£o para comeÃ§ar a vender.</p>
             
             {caixas.length === 0 ? (
               <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 text-sm mb-6">
-                <p className="font-semibold mb-1">Nenhum caixa disponível</p>
-                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessão.</p>
+                <p className="font-semibold mb-1">Nenhum caixa disponÃ­vel</p>
+                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessÃ£o.</p>
               </div>
             ) : (
               <>
@@ -718,7 +718,7 @@ export function POSPage() {
         </div>
       )}
 
-      {/* ─── Close Session Modal ─── */}
+      {/* â”€â”€â”€ Close Session Modal â”€â”€â”€ */}
       {showCloseSessionModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -735,7 +735,7 @@ export function POSPage() {
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor Físico (Gaveta) MT</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor FÃ­sico (Gaveta) MT</label>
                 <input 
                   type="number" 
                   min="0"
@@ -748,12 +748,12 @@ export function POSPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observações (Opcional)</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">ObservaÃ§Ãµes (Opcional)</label>
                 <textarea 
                   value={observacoesClose}
                   onChange={e => setObservacoesClose(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-medium resize-none h-20"
-                  placeholder="Justificação de quebras/sobras..."
+                  placeholder="JustificaÃ§Ã£o de quebras/sobras..."
                 />
               </div>
             </div>
@@ -769,7 +769,7 @@ export function POSPage() {
         </div>
       )}
 
-      {/* ▪️▪️▪️ Sangria Modal ▪️▪️▪️ */}
+      {/* â–ªï¸â–ªï¸â–ªï¸ Sangria Modal â–ªï¸â–ªï¸â–ªï¸ */}
         {showSangriaModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -810,7 +810,7 @@ export function POSPage() {
           </div>
         )}
 
-        {/* ▪️▪️▪️ Reforço Modal ▪️▪️▪️ */}
+        {/* â–ªï¸â–ªï¸â–ªï¸ ReforÃ§o Modal â–ªï¸â–ªï¸â–ªï¸ */}
         {showReforcoModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 relative">
@@ -820,7 +820,7 @@ export function POSPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Reforço</h2>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar ReforÃ§o</h2>
               <p className="text-slate-500 text-center text-sm font-medium mb-6">Entrada de valor (ex: trocos) no caixa.</p>
               
               <div className="space-y-4 mb-6">
@@ -840,12 +840,12 @@ export function POSPage() {
                     value={movimentoMotivo}
                     onChange={e => setMovimentoMotivo(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 min-h-[100px]"
-                    placeholder="Ex: Reforço de moedas para troco..."
+                    placeholder="Ex: ReforÃ§o de moedas para troco..."
                   />
                 </div>
               </div>
               <button onClick={handleReforco} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                Confirmar Reforço
+                Confirmar ReforÃ§o
               </button>
             </div>
           </div>
@@ -854,7 +854,7 @@ export function POSPage() {
   );
 }
 
-// ─── Componente Interno: ProductCard ────────────────────────────────────────
+// â”€â”€â”€ Componente Interno: ProductCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }) {
   return (
     <button 

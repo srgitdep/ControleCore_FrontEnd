@@ -1,15 +1,15 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Mail, ArrowLeft, SendHorizonal } from 'lucide-react';
-import { forgotPasswordApi } from '@/api/auth.api';
+import { forgotPasswordApi } from '../api/auth.api';
 import { cn } from '@/lib/utils';
 
 const schema = z.object({
-  email: z.string().email('Introduza um endereço de e-mail válido'),
+  email: z.string().email('Introduza um endereÃ§o de e-mail vÃ¡lido'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -48,14 +48,14 @@ export function ForgotPasswordPage() {
             <div className="mb-6 text-center">
               <h1 className="text-2xl font-bold text-slate-900 mb-1">Recuperar Password</h1>
               <p className="text-slate-500 text-sm">
-                Introduza o e-mail associado à sua conta e enviaremos um código de verificação.
+                Introduza o e-mail associado Ã  sua conta e enviaremos um cÃ³digo de verificaÃ§Ã£o.
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                  Endereço de E-mail
+                  EndereÃ§o de E-mail
                 </label>
                 <div className="relative">
                   <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -88,7 +88,7 @@ export function ForgotPasswordPage() {
                 ) : (
                   <>
                     <SendHorizonal size={16} />
-                    Enviar Código
+                    Enviar CÃ³digo
                   </>
                 )}
               </button>
@@ -102,7 +102,7 @@ export function ForgotPasswordPage() {
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Verifique o seu e-mail</h2>
             <p className="text-slate-500 text-sm">
-              Se o endereço existir na nossa base, um código de verificação foi enviado.
+              Se o endereÃ§o existir na nossa base, um cÃ³digo de verificaÃ§Ã£o foi enviado.
               Verifique a sua caixa de entrada.
             </p>
           </div>

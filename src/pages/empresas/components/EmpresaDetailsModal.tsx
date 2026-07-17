@@ -1,4 +1,4 @@
-import { X, Building2, MapPin, Phone, Mail, Calendar, CheckCircle2, Ban, CreditCard, Users, Store, ShieldCheck, Box } from 'lucide-react';
+﻿import { X, Building2, MapPin, Phone, Mail, Calendar, CheckCircle2, Ban, CreditCard, Users, Store, ShieldCheck, Box } from 'lucide-react';
 import type { Empresa } from '@/types/empresa.types';
 import { useQuery } from '@tanstack/react-query';
 import { getEmpresaDetails } from '@/api/empresa.api';
@@ -49,7 +49,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800 tracking-tight">Detalhes da Empresa</h2>
-              <p className="text-xs text-slate-500">Visualização completa do registo</p>
+              <p className="text-xs text-slate-500">VisualizaÃ§Ã£o completa do registo</p>
             </div>
           </div>
           <button
@@ -92,9 +92,9 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
               {/* Coluna Esquerda */}
               <div className="space-y-6">
                 
-                {/* Contactos e Localização */}
+                {/* Contactos e LocalizaÃ§Ã£o */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Contactos & Localização</h4>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Contactos & LocalizaÃ§Ã£o</h4>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <Mail size={16} className="text-slate-400 mt-0.5" />
@@ -107,15 +107,15 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                       <Phone size={16} className="text-slate-400 mt-0.5" />
                       <div>
                         <p className="text-xs text-slate-500">Telefone</p>
-                        <p className="text-sm font-medium text-slate-800">{empresa.telefone || 'Não informado'}</p>
+                        <p className="text-sm font-medium text-slate-800">{empresa.telefone || 'NÃ£o informado'}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <MapPin size={16} className="text-slate-400 mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500">Localização</p>
+                        <p className="text-xs text-slate-500">LocalizaÃ§Ã£o</p>
                         <p className="text-sm font-medium text-slate-800">
-                          {empresa.endereco ? `${empresa.endereco}, ${empresa.cidade || ''}` : 'Endereço não informado'}
+                          {empresa.endereco ? `${empresa.endereco}, ${empresa.cidade || ''}` : 'EndereÃ§o nÃ£o informado'}
                           <br />
                           <span className="text-slate-500">{empresa.pais}</span>
                         </p>
@@ -127,7 +127,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 {/* Recursos Humanos */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Users size={16} /> Equipa e Gestão
+                    <Users size={16} /> Equipa e GestÃ£o
                   </h4>
                   <div className="space-y-4">
                     <div>
@@ -143,12 +143,12 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 italic">Sem informação</p>
+                        <p className="text-sm text-slate-500 italic">Sem informaÃ§Ã£o</p>
                       )}
                     </div>
                     
                     <div className="pt-3 border-t border-slate-100">
-                      <p className="text-xs text-slate-500">Total de Funcionários (Utilizadores)</p>
+                      <p className="text-xs text-slate-500">Total de FuncionÃ¡rios (Utilizadores)</p>
                       <p className="text-lg font-bold text-slate-800">{totalFuncionarios}</p>
                     </div>
                   </div>
@@ -159,10 +159,10 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
               {/* Coluna Direita */}
               <div className="space-y-6">
                 
-                {/* Plano e Faturação */}
+                {/* Plano e FaturaÃ§Ã£o */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <ShieldCheck size={16} /> Plano e Faturação
+                    <ShieldCheck size={16} /> Plano e FaturaÃ§Ã£o
                   </h4>
                   
                   {assinaturaAtiva ? (
@@ -184,7 +184,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Ciclo de Faturação:</span>
+                        <span className="text-slate-500">Ciclo de FaturaÃ§Ã£o:</span>
                         <span className="font-medium text-slate-800">{assinaturaAtiva.ciclo}</span>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -202,10 +202,10 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                     </div>
                   )}
                   
-                  {/* Histórico Resumido */}
+                  {/* HistÃ³rico Resumido */}
                   {details?.assinaturas && details.assinaturas.length > 1 && (
                     <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs text-slate-500 mb-2">Histórico de Assinaturas ({details.assinaturas.length})</p>
+                      <p className="text-xs text-slate-500 mb-2">HistÃ³rico de Assinaturas ({details.assinaturas.length})</p>
                       <div className="space-y-2 max-h-24 overflow-y-auto pr-1">
                         {details.assinaturas.map(ass => (
                           <div key={ass.id} className="flex justify-between text-xs border border-slate-100 p-2 rounded">
@@ -218,10 +218,10 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                   )}
                 </div>
 
-                {/* Lojas e Operações */}
+                {/* Lojas e OperaÃ§Ãµes */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Store size={16} /> Lojas e Operações
+                    <Store size={16} /> Lojas e OperaÃ§Ãµes
                   </h4>
                   
                   {details?.lojas && details.lojas.length > 0 ? (
@@ -234,7 +234,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                             </div>
                             <div>
                               <p className="text-sm font-medium text-slate-800">{loja.nome}</p>
-                              <p className="text-xs text-slate-500">{loja.cidade || 'Local não definido'}</p>
+                              <p className="text-xs text-slate-500">{loja.cidade || 'Local nÃ£o definido'}</p>
                             </div>
                           </div>
                           <span className={`w-2 h-2 rounded-full ${loja.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
@@ -243,7 +243,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                     </div>
                   ) : (
                     <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                      <p className="text-sm text-slate-500 italic mb-1">Sem informação</p>
+                      <p className="text-sm text-slate-500 italic mb-1">Sem informaÃ§Ã£o</p>
                       <p className="text-xs text-slate-400">Nenhuma loja registada para esta empresa.</p>
                     </div>
                   )}
@@ -254,7 +254,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
             </div>
           )}
 
-          {/* Rodapé informativo (Criado em) */}
+          {/* RodapÃ© informativo (Criado em) */}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-400">
               Registada no sistema a {formatDateTime(empresa.createdAt)}

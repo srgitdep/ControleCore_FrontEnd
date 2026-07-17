@@ -1,7 +1,7 @@
-// ─── Enums (espelha o schema Prisma — sem importação direta) ──────────────────
+﻿// â”€â”€â”€ Enums (espelha o schema Prisma â€” sem importaÃ§Ã£o direta) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export type InventoryCycleStatus = 'OPEN' | 'COUNTING' | 'RECONCILING' | 'CLOSED';
 
-// ─── Entidades base ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Entidades base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface InventoryCount {
   id: string;
@@ -9,14 +9,14 @@ export interface InventoryCount {
   stockId: string;
   operatorId: string;
 
-  // Dados calculados no momento da contagem (snapshot imutável)
+  // Dados calculados no momento da contagem (snapshot imutÃ¡vel)
   systemQuantity: number;
   physicalQuantity: number;
   difference: number; // positivo = sobra, negativo = falta
 
   createdAt: string;
 
-  // Relações opcionais (incluídas no getCycleDetail)
+  // RelaÃ§Ãµes opcionais (incluÃ­das no getCycleDetail)
   stock?: {
     id: string;
     currentQuantity: number;
@@ -46,7 +46,7 @@ export interface InventoryCycle {
   createdAt: string;
   updatedAt: string;
 
-  // Relações opcionais
+  // RelaÃ§Ãµes opcionais
   createdBy?: { id: string; name: string };
   _count?: { counts: number };
 }
@@ -55,7 +55,7 @@ export interface InventoryCycleDetail extends InventoryCycle {
   counts: InventoryCount[];
 }
 
-// ─── Payloads de mutação ──────────────────────────────────────────────────────
+// â”€â”€â”€ Payloads de mutaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CreateCyclePayload {
   name: string;
@@ -76,7 +76,7 @@ export interface UpdateCycleStatusPayload {
   status: InventoryCycleStatus;
 }
 
-// ─── Resposta do fecho de ciclo ───────────────────────────────────────────────
+// â”€â”€â”€ Resposta do fecho de ciclo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CloseCycleResponse {
   cycleId: string;

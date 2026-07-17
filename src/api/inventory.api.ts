@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 import type {
   InventoryCycle,
   InventoryCycleDetail,
@@ -11,7 +11,7 @@ import type {
 } from '@/types/inventory.types';
 
 export const inventoryApi = {
-  // ─── Ciclos ────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Ciclos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   listCycles: async (): Promise<InventoryCycle[]> => {
     const { data } = await api.get<InventoryCycle[]>('/inventory/cycles');
@@ -46,7 +46,7 @@ export const inventoryApi = {
     return data;
   },
 
-  // ─── Contagem ──────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Contagem â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   registerCount: async (
     cycleId: string,

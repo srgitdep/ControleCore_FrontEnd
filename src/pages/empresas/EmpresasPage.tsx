@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
 import { getEmpresas, deleteEmpresa } from '@/api/empresa.api';
@@ -65,9 +65,9 @@ export function EmpresasPage() {
     }
     const doc = new jsPDF();
     
-    // Título e Data
+    // TÃ­tulo e Data
     doc.setFontSize(16);
-    doc.text('Relatório de Empresas', 14, 20);
+    doc.text('RelatÃ³rio de Empresas', 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     const dateStr = new Date().toLocaleString('pt-PT');
@@ -98,7 +98,7 @@ export function EmpresasPage() {
     setConfirmDialog({
       isOpen: true,
       title: 'Eliminar Empresa',
-      message: 'Tem a certeza que deseja eliminar esta empresa? Esta acção é irreversível e removerá o acesso a todos os utilizadores associados.',
+      message: 'Tem a certeza que deseja eliminar esta empresa? Esta acÃ§Ã£o Ã© irreversÃ­vel e removerÃ¡ o acesso a todos os utilizadores associados.',
       variant: 'danger',
       onConfirm: () => deleteMutation.mutate(id),
     });
@@ -179,7 +179,7 @@ export function EmpresasPage() {
                     <div className="flex items-center gap-2">Email <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
                   <th className="px-4 py-4 text-right">Estado</th>
-                  <th className="px-4 py-4 text-center">Ações</th>
+                  <th className="px-4 py-4 text-center">AÃ§Ãµes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

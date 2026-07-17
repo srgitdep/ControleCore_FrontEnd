@@ -1,4 +1,4 @@
-export interface DashboardKpis {
+﻿export interface DashboardKpis {
   vendasTotalMeticais: number;
   vendasTotalFaturas: number;
   produtosBaixoStock: number;

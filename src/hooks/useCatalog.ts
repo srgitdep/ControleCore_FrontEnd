@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { catalogApi } from '@/api/catalog.api';
 import toast from 'react-hot-toast';
 
@@ -28,7 +28,7 @@ export function useUpdateProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para atualizar produtos.');
+        toast.error('NÃ£o tem permissÃ£o para atualizar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao atualizar produto.');
       }
@@ -47,7 +47,7 @@ export function useCreateProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para criar produtos.');
+        toast.error('NÃ£o tem permissÃ£o para criar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao criar produto.');
       }
@@ -66,7 +66,7 @@ export function useDeleteProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para eliminar produtos.');
+        toast.error('NÃ£o tem permissÃ£o para eliminar produtos.');
       } else {
         toast.error(error.response?.data?.message || 'Erro ao eliminar produto.');
       }

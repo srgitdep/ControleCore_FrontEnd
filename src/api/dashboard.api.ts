@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 import type { AdminDashboardResponse, SuperAdminDashboardResponse } from '@/types/dashboard.types';
 
 export const getAdminDashboard = async (): Promise<AdminDashboardResponse> => {

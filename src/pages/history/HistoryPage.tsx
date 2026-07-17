@@ -1,12 +1,12 @@
-import { useAuth } from '@/hooks/useAuth';
+﻿import { useAuth } from '@/features/auth';
 import { AuditLogTable } from './components/AuditLogTable';
 import { History } from 'lucide-react';
 
 export function HistoryPage() {
   const { user } = useAuth();
   
-  // Se for nível gerencial ou superior, vamos não enviar userId por padrão para carregar o histórico global
-  // Caso contrário, enviamos o próprio id (embora o backend já faça este enforce de segurança)
+  // Se for nÃ­vel gerencial ou superior, vamos nÃ£o enviar userId por padrÃ£o para carregar o histÃ³rico global
+  // Caso contrÃ¡rio, enviamos o prÃ³prio id (embora o backend jÃ¡ faÃ§a este enforce de seguranÃ§a)
   const isManagerial = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role || '');
   const targetUserId = isManagerial ? undefined : user?.id;
 
@@ -18,12 +18,12 @@ export function HistoryPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            {isManagerial ? 'Histórico Global do Sistema' : 'Meu Histórico no Sistema'}
+            {isManagerial ? 'HistÃ³rico Global do Sistema' : 'Meu HistÃ³rico no Sistema'}
           </h1>
           <p className="text-sm text-slate-500">
             {isManagerial 
-              ? 'Visualize as ações de todos os utilizadores da empresa.' 
-              : 'Visualize o registo das suas ações no sistema.'}
+              ? 'Visualize as aÃ§Ãµes de todos os utilizadores da empresa.' 
+              : 'Visualize o registo das suas aÃ§Ãµes no sistema.'}
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { X, CheckCircle, Truck, PackageCheck } from 'lucide-react';
 import { purchasesApi } from '@/api/purchases.api';
 import type { PurchaseOrder } from '@/api/purchases.api';
@@ -23,8 +23,8 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
     
     // In a perfect MVP we should have a select for armazens, but let's assume a default or require it.
     if (!armazemId) {
-       // Just a fallback for testing without loading armazéns
-       toast('Por favor, informe o ID do armazém (MVP: digite qualquer ID válido se souber).', { icon: '⚠️' });
+       // Just a fallback for testing without loading armazÃ©ns
+       toast('Por favor, informe o ID do armazÃ©m (MVP: digite qualquer ID vÃ¡lido se souber).', { icon: 'âš ï¸' });
        // We'll proceed if they at least try, but let's just make it required in UI.
     }
 
@@ -33,7 +33,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
       await purchasesApi.receiveOrder(order.id, {
         armazemId: armazemId || 'default-armazem-id', // Fallback for MVP if not provided
         documentoRef,
-        observacoes: 'Recebido via Módulo de Compras (FrontEnd)',
+        observacoes: 'Recebido via MÃ³dulo de Compras (FrontEnd)',
         itens: (order.itens || []).map(item => ({
           produtoId: item.produtoId,
           quantidade: item.quantidadePedida, // Assumindo quantidade total para MVP
@@ -43,7 +43,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
       
       toast.success('Estoque e Contas a Pagar foram atualizados', {
         duration: 4000,
-        icon: '✅'
+        icon: 'âœ…'
       });
       
       onSuccess();
@@ -102,7 +102,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Armazém de Destino (ID)
+                ArmazÃ©m de Destino (ID)
               </label>
               <input 
                 type="text" 
@@ -114,7 +114,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Doc. Referência (Fatura/Guia)
+                Doc. ReferÃªncia (Fatura/Guia)
               </label>
               <input 
                 type="text" 
@@ -169,7 +169,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
           <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm flex items-start gap-2">
             <PackageCheck className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p>
-              Ao confirmar o recebimento, o sistema irá automaticamente registar a entrada destes produtos no stock selecionado e gerará uma Conta a Pagar associada a este fornecedor no módulo financeiro.
+              Ao confirmar o recebimento, o sistema irÃ¡ automaticamente registar a entrada destes produtos no stock selecionado e gerarÃ¡ uma Conta a Pagar associada a este fornecedor no mÃ³dulo financeiro.
             </p>
           </div>
         </div>

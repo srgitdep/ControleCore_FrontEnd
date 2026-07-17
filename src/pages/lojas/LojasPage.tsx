@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Store, Plus, MapPin, Search, Edit2, Trash2, Box, MonitorSmartphone, User, X } from 'lucide-react';
 import { getLojas, createLoja, updateLoja, deleteLoja } from '@/api/lojas.api';
 import { getAllCaixas, removerCaixa } from '@/api/caixas.api';
@@ -121,7 +121,7 @@ export function LojasPage() {
         await removerCaixa(caixa.id);
         toast.success('Caixa desativado');
       } else {
-        toast.error('Reativação a ser implementada na API'); // Caso precise de um updateCaixa só para estado
+        toast.error('ReativaÃ§Ã£o a ser implementada na API'); // Caso precise de um updateCaixa sÃ³ para estado
       }
       fetchData();
     } catch {
@@ -137,7 +137,7 @@ export function LojasPage() {
             <Store className="w-6 h-6 text-blue-600" />
             Lojas & Caixas
           </h1>
-          <p className="text-slate-500 mt-1">Gira as lojas físicas, armazéns e terminais de caixa.</p>
+          <p className="text-slate-500 mt-1">Gira as lojas fÃ­sicas, armazÃ©ns e terminais de caixa.</p>
         </div>
         
         <div className="flex gap-2">
@@ -167,7 +167,7 @@ export function LojasPage() {
           onClick={() => setActiveTab('LOJAS')}
           className={`px-6 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'LOJAS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
-          <Store size={18} /> Gestão de Lojas
+          <Store size={18} /> GestÃ£o de Lojas
         </button>
         <button 
           onClick={() => setActiveTab('CAIXAS')}
@@ -197,10 +197,10 @@ export function LojasPage() {
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-semibold">
                 <tr>
                 <th className="px-6 py-4">Nome da Loja</th>
-                <th className="px-6 py-4">Localização</th>
+                <th className="px-6 py-4">LocalizaÃ§Ã£o</th>
                 <th className="px-6 py-4">Gestor</th>
                 <th className="px-6 py-4">Infraestrutura</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4 text-right">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -239,10 +239,10 @@ export function LojasPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-4">
-                        <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-medium" title="Armazéns">
+                        <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-medium" title="ArmazÃ©ns">
                           <Box size={14} /> {loja.armazens?.length || 0}
                         </div>
-                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-medium" title="Caixas Físicos">
+                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-medium" title="Caixas FÃ­sicos">
                           <MonitorSmartphone size={14} /> {loja.caixas?.length || 0}
                         </div>
                       </div>
@@ -276,7 +276,7 @@ export function LojasPage() {
                 <th className="px-6 py-4">Terminal (Caixa)</th>
                 <th className="px-6 py-4">Loja Associada</th>
                 <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4 text-right">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -339,7 +339,7 @@ export function LojasPage() {
                   <input type="text" value={newLoja.cidade} onChange={e => setNewLoja({...newLoja, cidade: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">EndereÃ§o</label>
                   <input type="text" value={newLoja.endereco} onChange={e => setNewLoja({...newLoja, endereco: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
@@ -378,7 +378,7 @@ export function LojasPage() {
                   <input type="text" value={editingLoja.cidade} onChange={e => setEditingLoja({...editingLoja, cidade: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">EndereÃ§o</label>
                   <input type="text" value={editingLoja.endereco} onChange={e => setEditingLoja({...editingLoja, endereco: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
@@ -399,7 +399,7 @@ export function LojasPage() {
         </div>
       )}
 
-      {/* Modal Gerir Infraestrutura (Caixas / Armazéns) */}
+      {/* Modal Gerir Infraestrutura (Caixas / ArmazÃ©ns) */}
       {selectedLoja && (
         <LojaDetailsModal 
           loja={selectedLoja} 

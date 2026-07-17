@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
 import { useProducts, useDeleteProduct } from '@/hooks/useCatalog';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth';
 import type { Product } from '@/types/catalog.types';
 import { Button } from '@/components/common/Button';
 import { ResponsiveTable } from '@/components/common/ResponsiveTable';
@@ -37,7 +37,7 @@ export function ProductListPage() {
   const { user } = useAuth();
   const { permissions } = usePermissions();
   
-  // Verificação robusta de permissões (suporta vários formatos vindos do Backend e Roles diretas)
+  // VerificaÃ§Ã£o robusta de permissÃµes (suporta vÃ¡rios formatos vindos do Backend e Roles diretas)
   const canManage = 
     user?.role === 'SUPER_ADMIN' || 
     user?.role === 'ADMIN' || 
@@ -92,7 +92,7 @@ export function ProductListPage() {
         cell: (info) => info.getValue() || <span className="text-slate-400">Sem categoria</span>,
       }),
       columnHelper.accessor('precoCusto', {
-        header: 'Preço de Custo',
+        header: 'PreÃ§o de Custo',
         cell: (info) => (
           <div className="text-slate-700">
             {(info.getValue() || 0).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
@@ -100,7 +100,7 @@ export function ProductListPage() {
         ),
       }),
       columnHelper.accessor('precoVenda', {
-        header: 'Preço de Venda',
+        header: 'PreÃ§o de Venda',
         cell: (info) => (
           <div className="font-semibold text-slate-900">
             {(info.getValue() || 0).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
@@ -133,8 +133,8 @@ export function ProductListPage() {
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium">{um}</span>
               {isWeighable && (
-                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md font-medium" title="Produto Pesável na Balança">
-                  Balança
+                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md font-medium" title="Produto PesÃ¡vel na BalanÃ§a">
+                  BalanÃ§a
                 </span>
               )}
             </div>
@@ -143,7 +143,7 @@ export function ProductListPage() {
       }),
       canManage && columnHelper.display({
         id: 'actions',
-        header: 'Ações',
+        header: 'AÃ§Ãµes',
         cell: (info) => {
           const product = info.row.original;
           return (
@@ -195,10 +195,10 @@ export function ProductListPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Package className="h-6 w-6 text-indigo-600" />
-            Catálogo de Produtos
+            CatÃ¡logo de Produtos
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Faça a gestão dos produtos, preços e configurações de balança.
+            FaÃ§a a gestÃ£o dos produtos, preÃ§os e configuraÃ§Ãµes de balanÃ§a.
           </p>
         </div>
 
@@ -219,7 +219,7 @@ export function ProductListPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Pesquisar por nome, SKU ou Código de Barras..."
+              placeholder="Pesquisar por nome, SKU ou CÃ³digo de Barras..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -233,13 +233,13 @@ export function ProductListPage() {
         <ResponsiveTable
           table={table}
           isLoading={isLoading}
-          emptyMessage={debouncedSearch ? "Nenhum produto encontrado para sua pesquisa." : "Ainda não existem produtos registados."}
+          emptyMessage={debouncedSearch ? "Nenhum produto encontrado para sua pesquisa." : "Ainda nÃ£o existem produtos registados."}
         />
 
         {!isLoading && products.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm bg-white">
             <span className="text-slate-500">
-              Página {page} de {totalPages}
+              PÃ¡gina {page} de {totalPages}
             </span>
             <div className="flex gap-2">
               <Button
@@ -256,7 +256,7 @@ export function ProductListPage() {
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Próxima
+                PrÃ³xima
               </Button>
             </div>
           </div>

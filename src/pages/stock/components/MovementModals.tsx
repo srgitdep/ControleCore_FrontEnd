@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useStockMutations } from '@/hooks/useStock';
 
 interface MovementModalsProps {
@@ -54,8 +54,8 @@ export function MovementModals({ stockId, type, onClose }: MovementModalsProps) 
   const getTitle = () => {
     switch(type) {
       case 'IN': return 'Entrada de Mercadoria';
-      case 'OUT': return 'Saída de Mercadoria';
-      case 'TRANSFER': return 'Transferência de Armazém';
+      case 'OUT': return 'SaÃ­da de Mercadoria';
+      case 'TRANSFER': return 'TransferÃªncia de ArmazÃ©m';
       case 'ADJUST_PLUS': return 'Ajuste Positivo (Sobra)';
       case 'ADJUST_MINUS': return 'Ajuste Negativo (Quebra/Furto)';
       default: return '';
@@ -67,7 +67,7 @@ export function MovementModals({ stockId, type, onClose }: MovementModalsProps) 
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h2 className="font-bold text-lg text-gray-800">{getTitle()}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">âœ•</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">

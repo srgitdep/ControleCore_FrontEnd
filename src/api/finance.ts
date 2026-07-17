@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 import type {
   DreSummary,
   CashFlowProjection,
@@ -7,7 +7,7 @@ import type {
   TipoLancamento,
 } from '@/types/finance.types';
 
-// ─── DRE Summary ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ DRE Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const getDreSummary = async (mes: number, ano: number): Promise<DreSummary> => {
   const { data } = await api.get<DreSummary>('/finance/dre-summary', {
@@ -16,7 +16,7 @@ export const getDreSummary = async (mes: number, ano: number): Promise<DreSummar
   return data;
 };
 
-// ─── Cash Flow Projection ────────────────────────────────────────────────────
+// â”€â”€â”€ Cash Flow Projection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const getCashFlowProjection = async (
   dias = 30,
@@ -27,7 +27,7 @@ export const getCashFlowProjection = async (
   return data;
 };
 
-// ─── Contas a Receber ────────────────────────────────────────────────────────
+// â”€â”€â”€ Contas a Receber â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const getContasReceber = async (
   page = 1,
@@ -39,7 +39,7 @@ export const getContasReceber = async (
   return data;
 };
 
-// ─── Contas a Pagar ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Contas a Pagar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const getContasPagar = async (
   page = 1,
@@ -51,14 +51,14 @@ export const getContasPagar = async (
   return data;
 };
 
-// ─── Processar Pagamento ─────────────────────────────────────────────────────
+// â”€â”€â”€ Processar Pagamento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const processarPagamento = async (id: string): Promise<RegistroFinanceiro> => {
   const { data } = await api.patch<RegistroFinanceiro>(`/finance/contas/${id}/pagar`);
   return data;
 };
 
-// ─── Criar Registro Manual ───────────────────────────────────────────────────
+// â”€â”€â”€ Criar Registro Manual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CriarRegistroDto {
   tipo: TipoLancamento;

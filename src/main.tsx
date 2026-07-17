@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './features/auth';
 import './index.css';
 import App from './App';
 
@@ -19,7 +19,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {/* Toaster global para notificações react-hot-toast */}
+        {/* Toaster global para notificaÃ§Ãµes react-hot-toast */}
         <Toaster
           position="top-center"
           toastOptions={{

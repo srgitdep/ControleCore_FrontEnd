@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStockDetails, useStockMovements } from '@/hooks/useStock';
 import { useSocket } from '@/hooks/useSocket';
@@ -24,7 +24,7 @@ export function StockDetailsPage() {
   }
 
   if (!stock) {
-    return <div className="p-8 text-center text-red-500">Stock não encontrado.</div>;
+    return <div className="p-8 text-center text-red-500">Stock nÃ£o encontrado.</div>;
   }
 
   const getMovementIcon = (type: string) => {
@@ -44,10 +44,10 @@ export function StockDetailsPage() {
 
   const formatMovementType = (type: string) => {
     switch (type) {
-      case 'IN': return 'Entrada (Compra/Receção)';
-      case 'OUT': return 'Saída (Venda/Expedição)';
-      case 'TRANSFER_IN': return 'Transferência (Entrada)';
-      case 'TRANSFER_OUT': return 'Transferência (Saída)';
+      case 'IN': return 'Entrada (Compra/ReceÃ§Ã£o)';
+      case 'OUT': return 'SaÃ­da (Venda/ExpediÃ§Ã£o)';
+      case 'TRANSFER_IN': return 'TransferÃªncia (Entrada)';
+      case 'TRANSFER_OUT': return 'TransferÃªncia (SaÃ­da)';
       case 'ADJUSTMENT_PLUS': return 'Ajuste Positivo';
       case 'ADJUSTMENT_MINUS': return 'Ajuste Negativo';
       default: return type;
@@ -75,11 +75,11 @@ export function StockDetailsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{stock.product?.nome || 'Produto Desconhecido'}</h1>
-              <p className="text-gray-500 text-sm">Cód: {stock.product?.codigoBarras || 'N/A'}</p>
+              <p className="text-gray-500 text-sm">CÃ³d: {stock.product?.codigoBarras || 'N/A'}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-gray-500 mb-1">Balanço Atual</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">BalanÃ§o Atual</p>
             <span className={`text-4xl font-black ${stock.currentQuantity <= stock.minQuantity ? 'text-red-600' : 'text-gray-900'}`}>
               {stock.currentQuantity}
             </span>
@@ -91,7 +91,7 @@ export function StockDetailsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <Clock className="h-5 w-5 text-gray-400" />
-          <h2 className="font-bold text-gray-800">Histórico de Movimentos (Ledger)</h2>
+          <h2 className="font-bold text-gray-800">HistÃ³rico de Movimentos (Ledger)</h2>
         </div>
         
         <div className="overflow-x-auto">
@@ -101,7 +101,7 @@ export function StockDetailsPage() {
                 <th className="p-4 font-semibold w-48">Data/Hora</th>
                 <th className="p-4 font-semibold">Tipo</th>
                 <th className="p-4 font-semibold text-center">Qtd</th>
-                <th className="p-4 font-semibold text-center text-blue-600">Balanço Após</th>
+                <th className="p-4 font-semibold text-center text-blue-600">BalanÃ§o ApÃ³s</th>
                 <th className="p-4 font-semibold">Motivo / Operador</th>
               </tr>
             </thead>
@@ -152,7 +152,7 @@ export function StockDetailsPage() {
           </table>
         </div>
 
-        {/* Paginação */}
+        {/* PaginaÃ§Ã£o */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2 text-sm">
             <button 
@@ -168,7 +168,7 @@ export function StockDetailsPage() {
               onClick={() => setPage(p => p + 1)}
               className="px-3 py-1 border border-gray-200 rounded-md text-gray-600 disabled:opacity-50 hover:bg-gray-50"
             >
-              Próxima
+              PrÃ³xima
             </button>
           </div>
         )}

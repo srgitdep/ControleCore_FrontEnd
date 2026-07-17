@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/types/stock.types';
 
 export interface PaginatedResponse<T> {
@@ -9,7 +9,7 @@ export interface PaginatedResponse<T> {
 }
 
 export const stockApi = {
-  // ─── Consultas ────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Consultas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   getStocks: async (params?: { page?: number; limit?: number; search?: string }) => {
     const { data } = await api.get<PaginatedResponse<Stock>>('/stock', { params });
@@ -31,7 +31,7 @@ export const stockApi = {
     return data;
   },
 
-  // ─── Mutações (Ledger) ───────────────────────────────────────────────────
+  // â”€â”€â”€ MutaÃ§Ãµes (Ledger) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   createMovement: async (payload: CreateMovementPayload) => {
     const { data } = await api.post<StockMovement>('/stock/movement', payload);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -12,7 +12,7 @@ import {
   Search,
   Package,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth';
 import {
   useInventoryCycles,
   useInventoryCycleDetail,
@@ -25,7 +25,7 @@ import { Button } from '@/components/common/Button';
 import { CreateCycleModal } from './CreateCycleModal';
 import type { InventoryCycle, InventoryCycleStatus } from '@/types/inventory.types';
 
-// ─── Status badges ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Status badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const STATUS_CONFIG: Record<
   InventoryCycleStatus,
   { label: string; className: string; icon: React.ReactNode }
@@ -52,7 +52,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-// ─── Operador: Contagem Cega ──────────────────────────────────────────────────
+// â”€â”€â”€ Operador: Contagem Cega â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
   const [barcode, setBarcode] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -88,9 +88,9 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
         <div className="p-4 bg-amber-50 rounded-full mb-4">
           <Clock className="h-8 w-8 text-amber-500" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">Ciclo não está em Contagem</h3>
+        <h3 className="text-lg font-semibold text-slate-700 mb-2">Ciclo nÃ£o estÃ¡ em Contagem</h3>
         <p className="text-slate-500 text-sm max-w-sm">
-          O ciclo "{activeCycle.name}" está em status{' '}
+          O ciclo "{activeCycle.name}" estÃ¡ em status{' '}
           <span className="font-medium">{STATUS_CONFIG[activeCycle.status].label}</span>.
           Aguarde o gerente iniciar a contagem.
         </p>
@@ -108,7 +108,7 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
         <p className="text-slate-500 text-sm mt-1">
           Ciclo: <span className="font-medium">{activeCycle.name}</span>
         </p>
-        {/* Intencionalmente omitimos stock atual — princípio da Contagem Cega */}
+        {/* Intencionalmente omitimos stock atual â€” princÃ­pio da Contagem Cega */}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +117,7 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
             htmlFor="inv-barcode"
             className="block text-sm font-medium text-slate-700 mb-1.5"
           >
-            Código de Barras
+            CÃ³digo de Barras
           </label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -126,7 +126,7 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
               type="text"
               value={barcode}
               onChange={(e) => setBarcode(e.target.value)}
-              placeholder="Bipe ou digite o código de barras"
+              placeholder="Bipe ou digite o cÃ³digo de barras"
               autoFocus
               className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
             />
@@ -177,7 +177,7 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
   );
 }
 
-// ─── Gerente: Painel de Conciliação ───────────────────────────────────────────
+// â”€â”€â”€ Gerente: Painel de ConciliaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CycleDetailPanel({
   cycleId,
   onBack,
@@ -244,17 +244,17 @@ function CycleDetailPanel({
         </span>
       </div>
 
-      {/* Ações de gestão */}
+      {/* AÃ§Ãµes de gestÃ£o */}
       {cycle.status !== 'CLOSED' && (
         <div className="flex flex-wrap gap-3">
           {canAdvance && (
             <Button variant="outline" onClick={handleAdvanceStatus} disabled={isUpdating}>
-              {isUpdating ? 'A atualizar...' : `Avançar para ${cycle.status === 'OPEN' ? 'COUNTING' : 'RECONCILING'}`}
+              {isUpdating ? 'A atualizar...' : `AvanÃ§ar para ${cycle.status === 'OPEN' ? 'COUNTING' : 'RECONCILING'}`}
             </Button>
           )}
           {canClose && (
             <Button variant="warning" onClick={handleClose} disabled={isClosing}>
-              {isClosing ? 'A fechar ciclo...' : '⚠ Fechar Ciclo e Gerar Ajustes'}
+              {isClosing ? 'A fechar ciclo...' : 'âš  Fechar Ciclo e Gerar Ajustes'}
             </Button>
           )}
         </div>
@@ -267,14 +267,14 @@ function CycleDetailPanel({
         </div>
       )}
 
-      {/* Tabela de divergências */}
+      {/* Tabela de divergÃªncias */}
       {cycle.counts.length === 0 ? (
         <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl">
           <BarChart3 className="h-8 w-8 mx-auto mb-3 opacity-40" />
           <p className="text-sm">Nenhuma contagem registada ainda.</p>
           <p className="text-xs mt-1">
             {cycle.status === 'COUNTING'
-              ? 'Peça aos operadores para iniciarem a contagem.'
+              ? 'PeÃ§a aos operadores para iniciarem a contagem.'
               : 'Avance o ciclo para COUNTING para habilitar contagens.'}
           </p>
         </div>
@@ -286,8 +286,8 @@ function CycleDetailPanel({
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-slate-600">Produto</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-600">Qtd Sistema</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-600">Qtd Física</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-600">Divergência</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-600">Qtd FÃ­sica</th>
+                  <th className="px-4 py-3 text-right font-semibold text-slate-600">DivergÃªncia</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-600 hidden sm:table-cell">
                     Operador
                   </th>
@@ -312,7 +312,7 @@ function CycleDetailPanel({
                     >
                       <td className="px-4 py-3">
                         <p className="font-medium text-slate-800">
-                          {count.stock?.product?.nome ?? '—'}
+                          {count.stock?.product?.nome ?? 'â€”'}
                         </p>
                         {count.stock?.product?.codigoBarras && (
                           <p className="text-xs text-slate-400">
@@ -347,7 +347,7 @@ function CycleDetailPanel({
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs hidden sm:table-cell">
-                        {count.operator?.name ?? '—'}
+                        {count.operator?.name ?? 'â€”'}
                       </td>
                     </tr>
                   );
@@ -361,7 +361,7 @@ function CycleDetailPanel({
   );
 }
 
-// ─── Gerente: Lista de Ciclos ──────────────────────────────────────────────────
+// â”€â”€â”€ Gerente: Lista de Ciclos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ManagerCycleList({
   cycles,
   isLoading,
@@ -384,7 +384,7 @@ function ManagerCycleList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-slate-700">Ciclos de Inventário</h3>
+        <h3 className="font-semibold text-slate-700">Ciclos de InventÃ¡rio</h3>
         <Button onClick={onCreateCycle} className="gap-2">
           <Plus className="h-4 w-4" />
           Novo Ciclo
@@ -394,9 +394,9 @@ function ManagerCycleList({
       {cycles.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 rounded-xl">
           <ClipboardList className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 text-sm font-medium">Nenhum ciclo de inventário</p>
+          <p className="text-slate-500 text-sm font-medium">Nenhum ciclo de inventÃ¡rio</p>
           <p className="text-slate-400 text-xs mt-1">
-            Crie um novo ciclo para iniciar o balanço de estoque.
+            Crie um novo ciclo para iniciar o balanÃ§o de estoque.
           </p>
         </div>
       ) : (
@@ -438,20 +438,20 @@ function ManagerCycleList({
   );
 }
 
-// ─── Componente Principal ─────────────────────────────────────────────────────
+// â”€â”€â”€ Componente Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function InventoryTab() {
   const { user } = useAuth();
   const { data: cycles = [], isLoading } = useInventoryCycles();
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Manager roles — ADMIN e MANAGER têm visão de conciliação
+  // Manager roles â€” ADMIN e MANAGER tÃªm visÃ£o de conciliaÃ§Ã£o
   const isManager = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'SUPER_ADMIN';
 
-  // Ciclo ativo para operadores (o único não-fechado)
+  // Ciclo ativo para operadores (o Ãºnico nÃ£o-fechado)
   const activeCycle = cycles.find((c) => c.status !== 'CLOSED');
 
-  // ── Visão Operador: Contagem Cega ──
+  // â”€â”€ VisÃ£o Operador: Contagem Cega â”€â”€
   if (!isManager) {
     if (!activeCycle) {
       return (
@@ -463,7 +463,7 @@ export function InventoryTab() {
             Nenhum Ciclo Ativo
           </h3>
           <p className="text-slate-500 text-sm max-w-sm">
-            Não há um ciclo de inventário em andamento. Aguarde o gerente abrir um ciclo.
+            NÃ£o hÃ¡ um ciclo de inventÃ¡rio em andamento. Aguarde o gerente abrir um ciclo.
           </p>
         </div>
       );
@@ -471,7 +471,7 @@ export function InventoryTab() {
     return <OperatorCountView activeCycle={activeCycle} />;
   }
 
-  // ── Visão Gerente ──
+  // â”€â”€ VisÃ£o Gerente â”€â”€
   return (
     <div>
       {selectedCycleId ? (

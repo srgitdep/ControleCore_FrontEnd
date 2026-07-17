@@ -1,4 +1,4 @@
-import { api } from './axios';
+﻿import { api } from './axios';
 import type { Product, Category } from '@/types/catalog.types';
 
 export const catalogApi = {

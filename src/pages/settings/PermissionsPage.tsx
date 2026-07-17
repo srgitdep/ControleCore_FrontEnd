@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
@@ -39,7 +39,7 @@ export function PermissionsPage() {
     loadRoles();
   }, []);
 
-  // 2. Carregar Permissões quando um Role for selecionado
+  // 2. Carregar PermissÃµes quando um Role for selecionado
   useEffect(() => {
     async function loadPermissions() {
       if (!selectedRoleId) return;
@@ -53,7 +53,7 @@ export function PermissionsPage() {
           : [];
         setSelectedPermissions(new Set(flat));
       } catch (error) {
-        toast.error('Erro ao carregar permissões deste perfil.');
+        toast.error('Erro ao carregar permissÃµes deste perfil.');
       } finally {
         setIsLoadingPerms(false);
       }
@@ -68,18 +68,18 @@ export function PermissionsPage() {
     setSelectedPermissions((prev) => {
       const next = new Set(prev);
       if (next.has(permission)) {
-        // Desmarcar a permissão
+        // Desmarcar a permissÃ£o
         next.delete(permission);
         
-        // Se desmarcou 'manage', desmarca também as restantes do recurso
+        // Se desmarcou 'manage', desmarca tambÃ©m as restantes do recurso
         if (actionId === 'manage') {
           AVAILABLE_ACTIONS.forEach(a => next.delete(`${a.id}:${resourceId}`));
         }
       } else {
-        // Marcar a permissão
+        // Marcar a permissÃ£o
         next.add(permission);
         
-        // Se marcou 'manage', seleciona automaticamente as restantes opções (read, write, delete)
+        // Se marcou 'manage', seleciona automaticamente as restantes opÃ§Ãµes (read, write, delete)
         if (actionId === 'manage') {
           AVAILABLE_ACTIONS.forEach(a => {
             const permKey = `${a.id}:${resourceId}`;
@@ -101,9 +101,9 @@ export function PermissionsPage() {
 
     try {
       await api.post(`/perfis/${selectedRoleId}/permissions`, { permissionIds: flatPermissions });
-      toast.success('Permissões atualizadas com sucesso!');
+      toast.success('PermissÃµes atualizadas com sucesso!');
     } catch (error) {
-      toast.error('Erro ao atualizar permissões.');
+      toast.error('Erro ao atualizar permissÃµes.');
     } finally {
       setIsSaving(false);
     }
@@ -121,7 +121,7 @@ export function PermissionsPage() {
             <Users className="w-5 h-5 text-emerald-600" />
             Perfis de Acesso
           </h2>
-          <p className="text-xs text-slate-500 mt-1">Selecione o perfil para configurar as permissões.</p>
+          <p className="text-xs text-slate-500 mt-1">Selecione o perfil para configurar as permissÃµes.</p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -151,14 +151,14 @@ export function PermissionsPage() {
         </div>
       </div>
 
-      {/* MAIN: Matriz de Permissões */}
+      {/* MAIN: Matriz de PermissÃµes */}
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {selectedRole ? (
           <>
             <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div>
                 <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                  Matriz de Permissões
+                  Matriz de PermissÃµes
                   <span className="text-emerald-600 text-sm font-normal bg-emerald-100 px-2 py-0.5 rounded-full">
                     {selectedRole.nome}
                   </span>
@@ -171,18 +171,18 @@ export function PermissionsPage() {
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-70 flex items-center gap-2 shadow-sm"
               >
                 <Save className="w-4 h-4" />
-                {isSaving ? 'A guardar...' : 'Guardar Alterações'}
+                {isSaving ? 'A guardar...' : 'Guardar AlteraÃ§Ãµes'}
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {isLoadingPerms ? (
-                <div className="flex justify-center p-12 text-slate-500">A carregar permissões do servidor...</div>
+                <div className="flex justify-center p-12 text-slate-500">A carregar permissÃµes do servidor...</div>
               ) : (
                 <table className="w-full text-left text-sm text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
                     <tr>
-                      <th className="px-6 py-4 font-medium w-1/4">Módulo / Recurso</th>
+                      <th className="px-6 py-4 font-medium w-1/4">MÃ³dulo / Recurso</th>
                       {AVAILABLE_ACTIONS.map((action) => (
                         <th key={action.id} className="px-6 py-4 font-medium text-center">
                           {action.label}
@@ -230,7 +230,7 @@ export function PermissionsPage() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
             <Shield className="w-12 h-12 mb-4 text-slate-300" />
-            <p>Selecione um perfil à esquerda para configurar.</p>
+            <p>Selecione um perfil Ã  esquerda para configurar.</p>
           </div>
         )}
       </div>

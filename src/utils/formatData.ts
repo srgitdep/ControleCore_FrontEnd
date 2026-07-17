@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Formata uma data para o formato curto pt-MZ.
  * Exemplo: "06/07/2026"
  */
@@ -25,15 +25,15 @@ export function formatDataHora(date: string | Date): string {
 }
 
 /**
- * Formata a data de forma relativa (ex: "há 2 horas").
+ * Formata a data de forma relativa (ex: "hÃ¡ 2 horas").
  */
 export function formatDataRelativa(date: string | Date): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutos = Math.floor(diff / 60_000);
   if (minutos < 1) return 'agora';
-  if (minutos < 60) return `há ${minutos} min`;
+  if (minutos < 60) return `hÃ¡ ${minutos} min`;
   const horas = Math.floor(minutos / 60);
-  if (horas < 24) return `há ${horas}h`;
+  if (horas < 24) return `hÃ¡ ${horas}h`;
   const dias = Math.floor(horas / 24);
-  return `há ${dias} dia${dias > 1 ? 's' : ''}`;
+  return `hÃ¡ ${dias} dia${dias > 1 ? 's' : ''}`;
 }

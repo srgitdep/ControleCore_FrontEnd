@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi } from '@/api/inventory.api';
 import type {
   CreateCyclePayload,
@@ -7,21 +7,21 @@ import type {
   UpdateCycleStatusPayload,
 } from '@/types/inventory.types';
 
-// ─── Query Keys ──────────────────────────────────────────────────────────────
-// Centralizados para invalidação consistente entre hooks
+// â”€â”€â”€ Query Keys â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Centralizados para invalidaÃ§Ã£o consistente entre hooks
 export const inventoryKeys = {
   all: ['inventory'] as const,
   cycles: () => [...inventoryKeys.all, 'cycles'] as const,
   cycleDetail: (id: string) => [...inventoryKeys.cycles(), id] as const,
 };
 
-// ─── Queries ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const useInventoryCycles = () =>
   useQuery({
     queryKey: inventoryKeys.cycles(),
     queryFn: inventoryApi.listCycles,
-    staleTime: 30_000, // 30s — ciclos mudam com pouca frequência
+    staleTime: 30_000, // 30s â€” ciclos mudam com pouca frequÃªncia
   });
 
 export const useInventoryCycleDetail = (cycleId: string | null) =>
@@ -32,7 +32,7 @@ export const useInventoryCycleDetail = (cycleId: string | null) =>
     staleTime: 10_000,
   });
 
-// ─── Mutations ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Mutations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const useCreateCycle = () => {
   const qc = useQueryClient();
