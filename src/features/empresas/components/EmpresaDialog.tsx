@@ -4,8 +4,8 @@ import * as z from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Building2, UserCircle, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createEmpresa, updateEmpresa } from '@/api/empresa.api';
-import type { Empresa } from '@/types/empresa.types';
+import { createEmpresa, updateEmpresa } from '@/features/empresas';
+import type { Empresa } from '@/features/empresas';
 
 // â”€â”€ Esquema para CRIAÃ‡ÃƒO (onboarding completo) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const criarEmpresaSchema = z.object({

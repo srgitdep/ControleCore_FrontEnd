@@ -1,12 +1,12 @@
 ﻿import { useState, useEffect } from 'react';
 import { ShoppingBag, Package, ArrowRight } from 'lucide-react';
-import { purchasesApi, EstadoPedidoCompra } from '@/api/purchases.api';
-import type { PurchaseOrder } from '@/api/purchases.api';
-import { suppliersApi } from '@/api/suppliers.api';
-import type { Supplier } from '@/api/suppliers.api';
+import { purchasesApi, EstadoPedidoCompra } from '@/features/compras';
+import type { PurchaseOrder } from '@/features/compras';
+import { suppliersApi } from '@/features/fornecedores';
+import type { Supplier } from '@/features/fornecedores';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { RecebimentoModal } from './RecebimentoModal';
+import { RecebimentoModal } from '../components/RecebimentoModal';
 
 export function PurchasesPage() {
   const [activeTab, setActiveTab] = useState<'PEDIDOS' | 'FORNECEDORES'>('PEDIDOS');

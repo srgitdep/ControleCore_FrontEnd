@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createUser, updateUser, resendPassword } from '@/api/users.api';
-import { getEmpresas } from '@/api/empresa.api';
+import { getEmpresas } from '@/features/empresas';
 import type { UserDetail } from '@/types/user.types';
 import { useAuth } from '@/features/auth';
 

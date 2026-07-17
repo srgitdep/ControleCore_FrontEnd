@@ -1,14 +1,16 @@
-﻿import { api } from './axios';
-import type { Supplier } from './suppliers.api';
+import { api } from '@/api/axios';
+import type { Supplier } from '@/features/fornecedores';
 
-export enum EstadoPedidoCompra {
-  RASCUNHO = 'RASCUNHO',
-  ENVIADO = 'ENVIADO',
-  PENDENTE = 'PENDENTE',
-  PARCIAL = 'PARCIAL',
-  RECEBIDO = 'RECEBIDO',
-  CANCELADO = 'CANCELADO',
-}
+export const EstadoPedidoCompra = {
+  RASCUNHO: 'RASCUNHO',
+  ENVIADO: 'ENVIADO',
+  PENDENTE: 'PENDENTE',
+  PARCIAL: 'PARCIAL',
+  RECEBIDO: 'RECEBIDO',
+  CANCELADO: 'CANCELADO',
+} as const;
+
+export type EstadoPedidoCompra = (typeof EstadoPedidoCompra)[keyof typeof EstadoPedidoCompra];
 
 export interface PurchaseOrderItem {
   id: string;

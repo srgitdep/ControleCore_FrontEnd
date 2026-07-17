@@ -1,7 +1,7 @@
 ﻿import { X, Building2, MapPin, Phone, Mail, Calendar, CheckCircle2, Ban, CreditCard, Users, Store, ShieldCheck, Box } from 'lucide-react';
-import type { Empresa } from '@/types/empresa.types';
+import type { Empresa } from '@/features/empresas';
 import { useQuery } from '@tanstack/react-query';
-import { getEmpresaDetails } from '@/api/empresa.api';
+import { getEmpresaDetails } from '@/features/empresas';
 
 interface EmpresaDetailsModalProps {
   empresa: Empresa;

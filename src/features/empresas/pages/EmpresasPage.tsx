@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
-import { getEmpresas, deleteEmpresa } from '@/api/empresa.api';
-import type { Empresa } from '@/types/empresa.types';
+import { getEmpresas, deleteEmpresa } from '@/features/empresas';
+import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
-import { EmpresaDialog } from './components/EmpresaDialog';
+import { EmpresaDialog } from '../components/EmpresaDialog';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { EmpresaDetailsModal } from './components/EmpresaDetailsModal';
+import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 

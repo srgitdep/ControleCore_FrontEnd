@@ -1,9 +1,9 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+﻿import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
 import { DashboardPage } from '@/pages/dashboard/DashboardPage';
-import { EmpresasPage } from '@/pages/empresas/EmpresasPage';
+import { EmpresasPage } from '@/features/empresas';
 import { UsersPage } from '@/pages/users/UsersPage';
 import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
@@ -14,9 +14,9 @@ import { CaixasHistoricoPage } from '@/pages/vendas/CaixasHistoricoPage';
 import { LojasPage } from '@/pages/lojas/LojasPage';
 import { StockListPage } from '@/pages/stock/StockListPage';
 import { StockDetailsPage } from '@/pages/stock/StockDetailsPage';
-import { ClientesPage } from '@/pages/crm/ClientesPage';
+import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/pages/financeiro/FinanceiroDashboardPage';
-import { PurchasesPage } from '@/pages/compras/PurchasesPage';
+import { PurchasesPage } from '@/features/compras';
 import { useAuth } from '@/features/auth';
 
 function HomeRedirect() {
@@ -32,12 +32,12 @@ function HomeRedirect() {
 }
 
 export const router = createBrowserRouter([
-  // â”€â”€â”€ Rotas PÃºblicas (nÃ£o requerem autenticaÃ§Ã£o) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rotas PÃƒÂºblicas (nÃƒÂ£o requerem autenticaÃƒÂ§ÃƒÂ£o) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   { path: '/login',            element: <LoginPage /> },
   { path: '/recuperar-senha',  element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha',  element: <ResetPasswordPage /> },
 
-  // â”€â”€â”€ Rotas Protegidas (requerem autenticaÃ§Ã£o) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Rotas Protegidas (requerem autenticaÃƒÂ§ÃƒÂ£o) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   {
     element: <ProtectedRoute />,
     children: [
@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
             children: [{ index: true, element: <DashboardPage /> }]
           },
 
-          // GestÃ£o do Sistema
+          // GestÃƒÂ£o do Sistema
           { 
             path: '/empresas', 
             element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
@@ -71,7 +71,7 @@ export const router = createBrowserRouter([
             children: [{ index: true, element: <PermissionsPage /> }]
           },
 
-          // MÃ³dulos â€” em desenvolvimento
+          // MÃƒÂ³dulos Ã¢â‚¬â€ em desenvolvimento
           { path: '/produtos',      element: <ProductListPage /> },
           { path: '/fornecedores',  element: <PurchasesPage /> },
           { path: '/compras',       element: <PurchasesPage /> },
@@ -82,7 +82,7 @@ export const router = createBrowserRouter([
           { path: '/lojas',         element: <LojasPage /> },
           { path: '/crm',           element: <ClientesPage /> },
           { path: '/clientes',      element: <ClientesPage /> },
-          // MÃ³dulo Financeiro
+          // MÃƒÂ³dulo Financeiro
           {
             path: '/financeiro',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,

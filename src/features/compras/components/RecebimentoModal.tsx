@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { X, CheckCircle, Truck, PackageCheck } from 'lucide-react';
-import { purchasesApi } from '@/api/purchases.api';
-import type { PurchaseOrder } from '@/api/purchases.api';
+import { purchasesApi } from '@/features/compras';
+import type { PurchaseOrder } from '@/features/compras';
 import toast from 'react-hot-toast';
 
 interface RecebimentoModalProps {
