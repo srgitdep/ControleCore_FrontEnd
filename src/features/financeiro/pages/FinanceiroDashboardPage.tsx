@@ -35,7 +35,7 @@ import {
   getContasPagar,
   processarPagamento,
 } from '@/api/finance';
-import type { EstadoLancamento, RegistroFinanceiro } from '@/types/finance.types';
+import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
 import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

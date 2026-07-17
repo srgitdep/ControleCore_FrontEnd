@@ -1,9 +1,9 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw, Eye } from 'lucide-react';
-import { obterHistoricoSessoes } from '@/api/caixas.api';
+import { obterHistoricoSessoes } from '@/features/vendas';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
-import { ReceiptModal } from './components/ReceiptModal';
+import { ReceiptModal } from '../components/ReceiptModal';
 
 export function CaixasHistoricoPage() {
   const [sessoes, setSessoes] = useState<any[]>([]);

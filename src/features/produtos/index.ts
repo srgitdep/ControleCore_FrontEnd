@@ -1,4 +1,4 @@
-// Export API
+﻿// Export API
 export * from './api/catalog.api';
 
 // Export Types

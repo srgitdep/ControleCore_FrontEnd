@@ -1,14 +1,14 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/features/produtos';
-import { usePosStore } from '@/store/posStore';
+import { usePosStore } from '@/features/vendas';
 import { useSocket } from '@/hooks/useSocket';
-import { processarVenda } from '@/api/vendas.api';
-import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/api/caixas.api';
+import { processarVenda } from '@/features/vendas';
+import { obterMinhaSessao, obterCaixasDisponiveis, abrirSessao, fecharSessao, registrarSangria, registrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
 import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
-import { ReceiptModal } from './components/ReceiptModal';
+import { ReceiptModal } from '../components/ReceiptModal';
 import { cn } from '@/lib/utils';
 
 const PAYMENT_METHODS = [

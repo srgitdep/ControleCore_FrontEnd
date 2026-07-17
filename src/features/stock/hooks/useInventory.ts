@@ -1,5 +1,5 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi } from '@/api/inventory.api';
+import { inventoryApi } from '@/features/stock';
 import type {
   CreateCyclePayload,
   RegisterCountPayload,

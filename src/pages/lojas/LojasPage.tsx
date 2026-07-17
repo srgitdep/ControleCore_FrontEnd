@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Store, Plus, MapPin, Search, Edit2, Trash2, Box, MonitorSmartphone, User, X } from 'lucide-react';
 import { getLojas, createLoja, updateLoja, deleteLoja } from '@/api/lojas.api';
-import { getAllCaixas, removerCaixa } from '@/api/caixas.api';
+import { getAllCaixas, removerCaixa } from '@/features/vendas';
 import { getUsers } from '@/api/users.api';
 import toast from 'react-hot-toast';
 import { LojaDetailsModal } from './LojaDetailsModal';
@@ -65,7 +65,7 @@ export function LojasPage() {
     if (!newCaixa.lojaId) return toast.error('Selecione uma loja para o caixa.');
     try {
       // Assuming criarCaixa is imported from @/api/caixas.api
-      const { criarCaixa } = await import('@/api/caixas.api');
+      const { criarCaixa } = await import('@/features/vendas');
       await criarCaixa(newCaixa);
       toast.success('Caixa criado com sucesso!');
       setShowCreateCaixaModal(false);

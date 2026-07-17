@@ -9,13 +9,13 @@ import { HistoryPage } from '@/pages/history/HistoryPage';
 import { EmDesenvolvimentoPage } from '@/pages/EmDesenvolvimentoPage';
 import { ProductListPage } from '@/features/produtos';
 import { PermissionsPage } from '@/pages/settings/PermissionsPage';
-import { POSPage } from '@/pages/vendas/POSPage';
-import { CaixasHistoricoPage } from '@/pages/vendas/CaixasHistoricoPage';
+import { POSPage } from '@/features/vendas';
+import { CaixasHistoricoPage } from '@/features/vendas';
 import { LojasPage } from '@/pages/lojas/LojasPage';
 import { StockListPage } from '@/features/stock';
 import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
-import { FinanceiroDashboardPage } from '@/pages/financeiro/FinanceiroDashboardPage';
+import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { useAuth } from '@/features/auth';
 

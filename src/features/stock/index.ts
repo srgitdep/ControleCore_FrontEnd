@@ -1,5 +1,6 @@
-// Export API
+﻿// Export API
 export * from './api/stock.api';
+export * from './api/inventory.api';
 
 // Export Types
 export * from './types/stock.types';
