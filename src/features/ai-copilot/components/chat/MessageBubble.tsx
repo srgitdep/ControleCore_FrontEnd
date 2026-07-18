@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Sparkles, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Link } from 'react-router-dom';
 import { HitlActionCard } from './HitlActionCard';
 
 interface MessageBubbleProps {
@@ -42,7 +43,19 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
         ) : (
           <div className="relative group">
             <div className="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed prose-th:bg-slate-50 prose-th:p-2 prose-td:p-2 prose-table:border prose-table:rounded-lg prose-table:overflow-hidden prose-tr:border-b pr-6">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ node, ...props }) => {
+                    const href = props.href || '#';
+                    // External links open in new tab, internal links use react-router-dom
+                    if (href.startsWith('http') || href.startsWith('mailto')) {
+                      return <a {...props} className="text-indigo-600 hover:underline font-medium" target="_blank" rel="noopener noreferrer" />;
+                    }
+                    return <Link to={href} className="text-indigo-600 hover:underline font-medium">{props.children}</Link>;
+                  }
+                }}
+              >
                 {msg.content}
               </ReactMarkdown>
             </div>

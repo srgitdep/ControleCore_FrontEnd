@@ -27,7 +27,15 @@ const getSuggestionsByRole = (role?: string) => {
     { icon: '📉', title: 'Auditar Margens', description: 'Analisar produtos com margem de lucro baixa', prompt: 'Analisar produtos com margem de lucro baixa ou negativa' },
     { icon: '🛡️', title: 'Anti-fraude', description: 'Auditoria de ocorrências suspeitas', prompt: 'Auditoria Anti-fraude (Ocorrências suspeitas da semana)' },
     { icon: '🏪', title: 'Fecho de Caixas', description: 'Resumir fechamentos de todos os turnos', prompt: 'Resumir fechamentos de caixa de hoje' },
-    { icon: '📦', title: 'Capital Congelado', description: 'Analisar estoque sem saídas', prompt: 'Analisar estoque parado (capital congelado)' }
+    { icon: '📦', title: 'Capital Congelado', description: 'Analisar estoque sem saídas', prompt: 'Analisar estoque parado (capital congelado)' },
+    { icon: '🎯', title: 'Marketing + Estoque', description: 'Como escoar itens perto da validade', prompt: 'Marketing + Estoque: Como escoar itens perto da validade?' },
+    { icon: '💰', title: 'Finanças', description: 'Resumo de quebras de caixa', prompt: 'Finanças: Resumo de quebras de caixa desta semana.' },
+    { icon: '👥', title: 'RH + Vendas', description: 'Melhor desempenho de caixa', prompt: 'RH + Vendas: Qual operador teve o melhor desempenho hoje?' },
+    { icon: '🚚', title: 'Entregas', description: 'Tempo real de entrega', prompt: 'Compras: Qual é o tempo real de entrega do Fornecedor X?' },
+    { icon: '⚖️', title: 'Melhor Preço', description: 'Quem tem o melhor preço histórico?', prompt: 'Compras: Quem tem o melhor preço histórico para o Arroz 5kg?' },
+    { icon: '📝', title: 'Rascunho Pedido', description: 'Gerar pedido de ruptura', prompt: 'Compras: Crie um rascunho de pedido para os itens críticos de ruptura.' },
+    { icon: '👥', title: 'Melhores Clientes', description: 'Top 5 clientes do mês', prompt: 'CRM: Quais são os nossos 5 melhores clientes este mês?' },
+    { icon: '🔍', title: 'Histórico Cliente', description: 'Buscar compras do cliente', prompt: 'CRM: Mostre o histórico de compras do cliente NUIT 123456789' }
   ];
 };
 
@@ -43,7 +51,7 @@ export function WelcomeScreen() {
       <h3 className="text-lg font-bold text-slate-800 mb-1">Olá, {user?.name || 'Gestor'}!</h3>
       <p className="text-sm text-slate-500 mb-6 max-w-sm">Eu sou a Mayra, a sua assistente de IA. Selecione uma sugestão abaixo ou faça uma pergunta livre.</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl overflow-y-auto pb-4 px-2 custom-scrollbar" style={{ maxHeight: '50vh' }}>
         {getSuggestionsByRole(user?.role).map((sug, idx) => (
            <button
              key={idx}
@@ -52,8 +60,8 @@ export function WelcomeScreen() {
              className="flex flex-col items-start text-left p-3.5 bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 rounded-xl transition-all cursor-pointer group disabled:opacity-50"
            >
              <span className="text-2xl mb-2">{sug.icon}</span>
-             <span className="font-semibold text-slate-700 text-[13px] mb-0.5 group-hover:text-indigo-700">{sug.title}</span>
-             <span className="text-[11px] text-slate-500 line-clamp-2 leading-snug">{sug.description}</span>
+             <span className="font-semibold text-slate-700 text-[13px] mb-0.5 group-hover:text-indigo-700 whitespace-normal line-clamp-2 leading-tight">{sug.title}</span>
+             <span className="text-[11px] text-slate-500 line-clamp-2 leading-snug mt-1">{sug.description}</span>
            </button>
         ))}
       </div>

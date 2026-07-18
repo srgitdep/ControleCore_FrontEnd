@@ -21,8 +21,8 @@ export interface ChatResponse {
  * Envia o histórico do chat para o assistente de IA.
  * POST /copilot/chat
  */
-export const sendChatMessageApi = async (messages: ChatMessage[], sessionId?: string) => {
-  const { data } = await api.post('/copilot/chat', { messages, sessionId });
+export const sendChatMessageApi = async (messages: ChatMessage[], sessionId?: string, currentModule?: string) => {
+  const { data } = await api.post('/copilot/chat', { messages, sessionId, currentModule });
   return data;
 };
 

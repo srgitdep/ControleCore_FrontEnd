@@ -96,7 +96,13 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
          return true;
       });
 
-      const response = await sendChatMessageApi(historyToAPI, get().currentSessionId || undefined);
+      let currentModule = typeof window !== 'undefined' ? window.location.pathname : 'Geral';
+      if (currentModule.includes('/compras') || currentModule.includes('/fornecedores')) {
+        currentModule = 'purchasing';
+      } else if (currentModule.includes('/clientes') || currentModule.includes('/crm')) {
+        currentModule = 'crm';
+      }
+      const response = await sendChatMessageApi(historyToAPI, get().currentSessionId || undefined, currentModule);
 
       if (response.sessionId && !get().currentSessionId) {
         set({ currentSessionId: response.sessionId });
