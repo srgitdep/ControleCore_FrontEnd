@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { AuthUser, LoginPayload, Role } from '../types';
-import { loginApi, logoutApi } from '../api/auth.api';
+import { logoutApi, loginApi } from '../api/auth.api';
 import { queryClient } from '@/main';
+import { useCopilotStore } from '../../ai-copilot/store/copilotStore';
 
 interface AuthState {
   user: AuthUser | null;
@@ -43,6 +44,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } finally {
       sessionStorage.removeItem('authUser');
       queryClient.clear();
+      useCopilotStore.getState().clearMessages();
       set({ user: null, permissions: [], isAuthenticated: false });
     }
   },

@@ -20,40 +20,40 @@ export function AdminDashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Total Revenue"
-          value={`$${(data.kpis.vendasTotalMeticais || 0).toLocaleString()}`}
+          title="Faturação (Mês Atual)"
+          value={`${(data.kpis.vendasTotalMeticais || 0).toLocaleString()} MT`}
           icon={DollarSign}
           trend={12.5}
-          trendLabel="Visitors for the last 6 months"
+          trendLabel="Comparado ao mês passado"
         />
         <KpiCard
-          title="Total Invoices"
+          title="Nº de Vendas (Mês Atual)"
           value={data.kpis.vendasTotalFaturas.toLocaleString()}
           icon={FileText}
           trend={-5.2}
-          trendLabel="Acquisition needs attention"
+          trendLabel="Requer atenção"
         />
         <KpiCard
-          title="Low Stock Products"
+          title="Produtos (Baixo Stock)"
           value={data.kpis.produtosBaixoStock.toLocaleString()}
           icon={Package}
           trend={0}
-          trendLabel="Engagement exceeds targets"
+          trendLabel="Acima do mínimo estabelecido"
         />
         <KpiCard
-          title="Active Employees"
+          title="Funcionários Presentes Hoje"
           value={data.kpis.funcionariosPresentes.toLocaleString()}
           icon={Users}
           trend={4.5}
-          trendLabel="Meets growth projections"
+          trendLabel="Em relação ao normal"
         />
       </div>
 
       <div className="mt-8">
         <SalesChart 
           data={data.graficoVendasSemana} 
-          title="Customer Activity"
-          subtitle="Customer activity for the last 3 months"
+          title="Atividade de Vendas"
+          subtitle="Atividade de vendas nos últimos 7 dias"
         />
       </div>
     </div>

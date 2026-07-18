@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { sendChatMessageApi } from '../api/copilot.api';
-import type { ChatMessage } from '../api/copilot.api';
+import { sendChatMessageApi, executeHitlActionApi, getCopilotSessionsApi, getCopilotSessionMessagesApi } from '../api/copilot.api';
+import type { ChatMessage, HitlActionPayload } from '../api/copilot.api';
 
 interface CopilotState {
   isOpen: boolean;
@@ -8,12 +8,20 @@ interface CopilotState {
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
+  currentSessionId: string | null;
+  sessions: any[];
+  isHistoryOpen: boolean;
 
   toggleOpen: () => void;
   setOpen: (isOpen: boolean) => void;
   toggleExpanded: () => void;
   sendMessage: (content: string) => Promise<void>;
+  executeAction: (action: string, payload: any) => Promise<void>;
   clearMessages: () => void;
+  startNewSession: () => void;
+  loadSessions: () => Promise<void>;
+  loadSessionMessages: (sessionId: string) => Promise<void>;
+  toggleHistory: () => void;
 }
 
 // Mensagem de boas-vindas padrão (não enviada para o backend como histórico real)
@@ -28,10 +36,43 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
   messages: [WELCOME_MESSAGE],
   isLoading: false,
   error: null,
+  currentSessionId: null,
+  sessions: [],
+  isHistoryOpen: false,
 
-  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen, isExpanded: false })),
-  setOpen: (isOpen) => set({ isOpen, isExpanded: false }),
+  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen, isExpanded: false, isHistoryOpen: false })),
+  setOpen: (isOpen) => set({ isOpen, isExpanded: false, isHistoryOpen: false }),
   toggleExpanded: () => set((state) => ({ isExpanded: !state.isExpanded })),
+  toggleHistory: () => set((state) => ({ isHistoryOpen: !state.isHistoryOpen })),
+
+  startNewSession: () => {
+    set({ messages: [WELCOME_MESSAGE], currentSessionId: null, error: null, isHistoryOpen: false });
+  },
+
+  loadSessions: async () => {
+    try {
+      const data = await getCopilotSessionsApi();
+      set({ sessions: data });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  loadSessionMessages: async (sessionId: string) => {
+    set({ isLoading: true, isHistoryOpen: false });
+    try {
+      const msgs = await getCopilotSessionMessagesApi(sessionId);
+      const mappedMsgs = msgs.map((m: any) => ({
+        role: m.role === 'ai' ? 'model' : 'user',
+        content: m.content,
+        hitlAction: m.hitlAction
+      }));
+      set({ messages: mappedMsgs, currentSessionId: sessionId, isLoading: false, error: null });
+    } catch (e) {
+      console.error(e);
+      set({ isLoading: false, error: 'Erro ao carregar sessão.' });
+    }
+  },
 
   sendMessage: async (content: string) => {
     if (!content.trim()) return;
@@ -55,11 +96,29 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
          return true;
       });
 
-      const response = await sendChatMessageApi(historyToAPI);
+      const response = await sendChatMessageApi(historyToAPI, get().currentSessionId || undefined);
+
+      if (response.sessionId && !get().currentSessionId) {
+        set({ currentSessionId: response.sessionId });
+        get().loadSessions(); // Reload sessions to show the new one
+      }
+
+      let parsedHitlAction: HitlActionPayload | undefined;
+      let finalContent = response.reply;
+      try {
+        const data = JSON.parse(response.reply);
+        if (data && data.type === 'HITL_ACTION') {
+          parsedHitlAction = data;
+          finalContent = data.message;
+        }
+      } catch (e) {
+        // É texto normal, ignorar parse
+      }
 
       const modelMessage: ChatMessage = {
         role: 'model',
-        content: response.reply,
+        content: finalContent,
+        hitlAction: parsedHitlAction,
       };
 
       set((state) => ({
@@ -69,6 +128,31 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
     } catch (error: any) {
       set({
         error: error.response?.data?.message || 'Ocorreu um erro de comunicação com a IA.',
+        isLoading: false,
+      });
+    }
+  },
+
+  executeAction: async (action: string, payload: any) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await executeHitlActionApi(action, payload);
+      
+      const successMessage: ChatMessage = {
+        role: 'model',
+        content: `✅ Sucesso: ${response.reply}`,
+      };
+
+      set((state) => ({
+        messages: state.messages.map(m => 
+          // Limpar a ação do cartão anterior para não aparecerem os botões novamente
+          m.hitlAction?.action === action ? { ...m, hitlAction: undefined } : m
+        ).concat(successMessage),
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || 'Erro ao executar a ação solicitada.',
         isLoading: false,
       });
     }
