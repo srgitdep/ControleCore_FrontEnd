@@ -47,7 +47,7 @@ const navGroups: NavGroup[] = [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ]
   },
   {

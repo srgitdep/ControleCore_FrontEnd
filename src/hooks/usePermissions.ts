@@ -6,8 +6,8 @@ export function usePermissions() {
 
   const hasPermission = useCallback(
     (action: string, resource: string): boolean => {
-      // 1. O SUPER_ADMIN tem acesso absoluto a tudo, ignorando a tabela de permissões.
-      if (user?.role === 'SUPER_ADMIN') return true;
+      // 1. O SUPER_ADMIN e o ADMIN têm acesso absoluto a tudo, ignorando a tabela de permissões.
+      if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') return true;
 
       // 2. Busca as permissões do utilizador (seja do novo AuthUser.permissions ou da Store)
       const permissions = user?.permissions || storePermissions;

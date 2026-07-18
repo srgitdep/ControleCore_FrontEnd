@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
@@ -45,7 +45,7 @@ export function PermissionsPage() {
       if (!selectedRoleId) return;
       try {
         setIsLoadingPerms(true);
-        const { data } = await api.get(`/perfis/${selectedRoleId}/permissions`);
+        const { data } = await api.get(`/perfis/${selectedRoleId}/permissoes`);
         
         // data deve ser um array de strings ["read:users", "write:lojas"]
         const flat = Array.isArray(data) 
@@ -100,7 +100,7 @@ export function PermissionsPage() {
     const flatPermissions = Array.from(selectedPermissions);
 
     try {
-      await api.post(`/perfis/${selectedRoleId}/permissions`, { permissionIds: flatPermissions });
+      await api.post(`/perfis/${selectedRoleId}/permissoes`, { permissionIds: flatPermissions });
       toast.success('Permissões atualizadas com sucesso!');
     } catch (error) {
       toast.error('Erro ao atualizar permissões.');

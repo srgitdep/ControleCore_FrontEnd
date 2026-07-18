@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
@@ -67,7 +67,7 @@ export const router = createBrowserRouter([
           },
           {
             path: '/permissoes',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} requiredPermission="manage:users" />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} requiredPermission="manage:users" />,
             children: [{ index: true, element: <PermissionsPage /> }]
           },
 
