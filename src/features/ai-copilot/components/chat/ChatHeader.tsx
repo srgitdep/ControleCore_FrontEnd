@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Sparkles, Trash2, Maximize2, Minimize2, History } from 'lucide-react';
 import { useCopilotStore } from '../../store/copilotStore';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCopilotStore } from '../../store/copilotStore';
 
 interface HitlActionCardProps {

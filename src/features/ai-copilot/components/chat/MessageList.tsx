@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useCopilotStore } from '../../store/copilotStore';
 import { MessageBubble } from './MessageBubble';

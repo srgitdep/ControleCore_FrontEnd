@@ -101,6 +101,8 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
         currentModule = 'purchasing';
       } else if (currentModule.includes('/clientes') || currentModule.includes('/crm')) {
         currentModule = 'crm';
+      } else if (currentModule.includes('/rh') || currentModule.includes('/funcionarios')) {
+        currentModule = 'hr';
       }
       const response = await sendChatMessageApi(historyToAPI, get().currentSessionId || undefined, currentModule);
 

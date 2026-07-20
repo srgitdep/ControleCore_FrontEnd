@@ -1,4 +1,3 @@
-import React from 'react';
 import { History, Plus, X } from 'lucide-react';
 import { useCopilotStore } from '../../store/copilotStore';
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 
 interface ChatInputProps {
@@ -8,6 +8,11 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, isLoading }: ChatInputProps) {
   const [inputMessage, setInputMessage] = useState('');
+  const [currentPath, setCurrentPath] = useState('');
+
+  useEffect(() => {
+    setCurrentPath(typeof window !== 'undefined' ? window.location.pathname : '');
+  }, []);
 
   const handleSend = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -25,6 +30,22 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
 
   return (
     <div className="p-4 bg-white border-t border-slate-100 shrink-0">
+      {(currentPath.includes('/rh') || currentPath.includes('/funcionarios')) && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            onClick={() => onSend('RH: Quem está escalado para o turno de amanhã na Loja Principal?')}
+            className="text-xs bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          >
+            👥 Escala de amanhã
+          </button>
+          <button
+            onClick={() => onSend('RH: Resuma as anomalias de ponto (atrasos/faltas) desta semana.')}
+            className="text-xs bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          >
+            ⏱️ Resumo de anomalias (esta semana)
+          </button>
+        </div>
+      )}
       <form
         onSubmit={handleSend}
         className="flex items-center gap-2 relative bg-slate-50 p-1.5 rounded-full border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-sm"

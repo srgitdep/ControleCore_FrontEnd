@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useCopilotStore } from '../store/copilotStore';
 import { useUIStore } from '@/store/useUIStore';
 

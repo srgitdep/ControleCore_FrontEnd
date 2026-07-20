@@ -17,6 +17,7 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
+import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
 
 function HomeRedirect() {
@@ -88,7 +89,8 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
             children: [{ index: true, element: <FinanceiroDashboardPage /> }]
           },
-          { path: '/rh',            element: <EmDesenvolvimentoPage /> },
+          { path: '/rh',            element: <EmployeeListPage /> },
+          { path: '/rh/escalas',    element: <ShiftManagementPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
           { path: '/historico',     element: <HistoryPage /> },
         ],

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/features/auth';
 import { useCopilotStore } from '../../store/copilotStore';
