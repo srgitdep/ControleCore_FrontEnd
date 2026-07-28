@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Sparkles, Copy, Check } from 'lucide-react';
+import { User, Sparkles, Copy, Check, Volume2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
@@ -18,6 +18,17 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
     navigator.clipboard.writeText(content);
     setCopiedId(idx);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSpeak = (text: string) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const cleaned = text.replace(/[*#`]/g, '').trim();
+      const utterance = new SpeechSynthesisUtterance(cleaned);
+      utterance.lang = 'pt-PT';
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   return (
@@ -42,7 +53,7 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
           <p className="whitespace-pre-wrap">{msg.content}</p>
         ) : (
           <div className="relative group">
-            <div className="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed prose-th:bg-slate-50 prose-th:p-2 prose-td:p-2 prose-table:border prose-table:rounded-lg prose-table:overflow-hidden prose-tr:border-b pr-6">
+            <div className="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed prose-th:bg-slate-50 prose-th:p-2 prose-td:p-2 prose-table:border prose-table:rounded-lg prose-table:overflow-hidden prose-tr:border-b pr-12">
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -59,13 +70,22 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
                 {msg.content}
               </ReactMarkdown>
             </div>
-            <button
-              onClick={() => handleCopy(msg.content, idx)}
-              className="absolute top-0 right-0 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-              title="Copiar texto"
-            >
-              {copiedId === idx ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-            </button>
+            <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => handleSpeak(msg.content)}
+                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                title="Ouvir em voz alta"
+              >
+                <Volume2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleCopy(msg.content, idx)}
+                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                title="Copiar texto"
+              >
+                {copiedId === idx ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
         )}
         

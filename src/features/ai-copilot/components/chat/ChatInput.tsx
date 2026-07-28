@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Mic } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   isLoading: boolean;
+  onOpenVoice?: () => void;
 }
 
-export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
   const [inputMessage, setInputMessage] = useState('');
   const [currentPath, setCurrentPath] = useState('');
 
@@ -59,6 +60,16 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
           className="flex-1 bg-transparent border-0 focus:ring-0 px-4 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
           disabled={isLoading}
         />
+        {onOpenVoice && (
+          <button
+            type="button"
+            onClick={onOpenVoice}
+            title="Ativar Modo Voz (Gemini Live)"
+            className="p-2.5 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors"
+          >
+            <Mic className="w-4 h-4" />
+          </button>
+        )}
         <button
           type="submit"
           disabled={!inputMessage.trim() || isLoading}

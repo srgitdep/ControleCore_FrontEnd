@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useCopilotStore } from '../store/copilotStore';
 import { useUIStore } from '@/store/useUIStore';
 
@@ -7,8 +7,11 @@ import { HistoryPanel } from './history/HistoryPanel';
 import { ChatHeader } from './chat/ChatHeader';
 import { MessageList } from './chat/MessageList';
 import { ChatInput } from './chat/ChatInput';
+import { MayraVoiceWidget } from './voice/MayraVoiceWidget';
 
 export function CopilotWidget() {
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+
   const { 
     isOpen, 
     isExpanded, 
@@ -60,10 +63,13 @@ export function CopilotWidget() {
             </div>
           )}
 
-          <ChatInput onSend={sendMessage} isLoading={isLoading} />
+          <ChatInput onSend={sendMessage} isLoading={isLoading} onOpenVoice={() => setIsVoiceOpen(true)} />
         </div>
       </div>
       
+      {/* Widget de Voz (Gemini Live Overlay) */}
+      <MayraVoiceWidget isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
+
       {/* Backdrop (Mobile) - Mantido para foco em ecrãs pequenos */}
       {isOpen && (
         <div 
