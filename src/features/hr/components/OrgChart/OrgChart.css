@@ -1,0 +1,64 @@
+/* OrgChart.css */
+.org-tree ul {
+  padding-top: 24px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.org-tree li {
+  text-align: center;
+  list-style-type: none;
+  position: relative;
+  padding: 24px 12px 0 12px;
+}
+
+.org-tree li::before, .org-tree li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  border-top: 2px solid #94a3b8;
+  width: 50%;
+  height: 24px;
+}
+
+.org-tree li::after {
+  right: auto;
+  left: 50%;
+  border-left: 2px solid #94a3b8;
+}
+
+.org-tree li:only-child::after, .org-tree li:only-child::before {
+  display: none;
+}
+.org-tree li:only-child {
+  padding-top: 0;
+}
+
+.org-tree li:first-child::before, .org-tree li:last-child::after {
+  border: 0 none;
+}
+
+.org-tree li:last-child::before {
+  border-right: 2px solid #94a3b8;
+  border-radius: 0 6px 0 0;
+}
+.org-tree li:first-child::after {
+  border-radius: 6px 0 0 0;
+}
+
+.org-tree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  border-left: 2px solid #94a3b8;
+  width: 0;
+  height: 24px;
+  transform: translateX(-50%);
+}
+
+.org-tree li:first-child:last-child::before {
+  display: none;
+}
