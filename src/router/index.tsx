@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
+import { LandingPage } from '@/pages/LandingPage';
 import { DashboardPage } from '@/features/dashboard';
 import { EmpresasPage } from '@/features/empresas';
 import { UsersPage } from '@/features/users';
@@ -20,9 +21,9 @@ import { PurchasesPage } from '@/features/compras';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
 
-function HomeRedirect() {
+function RootRedirectOrLanding() {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <LandingPage />;
   
   switch(user.role) {
     case 'CASHIER': return <Navigate to="/vendas" replace />;
@@ -33,20 +34,20 @@ function HomeRedirect() {
 }
 
 export const router = createBrowserRouter([
-  // ââ€€ââ€€ââ€€ Rotas Públicas (não requerem autenticação) ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€
+  // ──────────────── Rotas Públicas (não requerem autenticação) ───────────────────────────
+  { path: '/',                 element: <RootRedirectOrLanding /> },
+  { path: '/landing',          element: <LandingPage /> },
   { path: '/login',            element: <LoginPage /> },
   { path: '/recuperar-senha',  element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha',  element: <ResetPasswordPage /> },
 
-  // ââ€€ââ€€ââ€€ Rotas Protegidas (requerem autenticação) ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€ââ€€
+  // ──────────────── Rotas Protegidas (requerem autenticação) ─────────────────────────────
   {
     element: <ProtectedRoute />,
     children: [
       {
         element: <AppLayout />,
         children: [
-          // Redireciona raiz dinamicamente conforme o papel
-          { path: '/', element: <HomeRedirect /> },
 
           // Dashboard
           { 
