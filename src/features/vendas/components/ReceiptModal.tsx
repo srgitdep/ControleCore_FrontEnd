@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Mail, Share2, X, Printer } from 'lucide-react';
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

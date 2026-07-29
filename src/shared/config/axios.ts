@@ -1,8 +1,8 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-// ──â”€ Instância base do Axios ──────────────────────────────────────────────────
+// ── Instância base do Axios ──────────────────────────────────────────────────
 // withCredentials: true é obrigatório para que o browser envie os cookies
 // HttpOnly automaticamente em cada request (incluindo cross-origin para a API).
 export const api = axios.create({
@@ -11,7 +11,7 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ──â”€ Lógica de fila para pedidos que falham durante o refresh ────────────────â”€
+// ── Lógica de fila para pedidos que falham durante o refresh ────────────────
 let isRefreshing = false;
 type QueueItem = { resolve: () => void; reject: (reason?: unknown) => void };
 let failedQueue: QueueItem[] = [];
@@ -24,7 +24,7 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
-// ──â”€ Response Interceptor: refresh automático em caso de 401 ────────────────â”€
+// ── Response Interceptor: refresh automático em caso de 401 ────────────────
 // Com cookies HttpOnly, o browser gere os tokens de forma transparente.
 // O interceptor apenas precisa de disparar o refresh quando o accessToken expirar.
 api.interceptors.response.use(

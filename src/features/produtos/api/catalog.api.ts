@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { Product, Category } from '@/features/produtos';
 
 export const catalogApi = {

@@ -1,9 +1,9 @@
-﻿import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Bell, Menu } from 'lucide-react';
-import { useUIStore } from '@/store/useUIStore';
-import { cn } from '@/lib/utils';
+import { useUIStore } from '@/shared/hooks';
+import { cn } from '@/shared/utils';
 
-// Mapeia o path para o tÍtulo da página
+// Mapeia o path para o título da página
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':     'Dashboard',
   '/produtos':      'Produtos',
@@ -28,7 +28,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const location = useLocation();
   const { toggleMobileMenu } = useUIStore();
 
-  // Resolve o tÍtulo: verifica o pathname exacto ou usa o segmento raiz
+  // Resolve o título: verifica o pathname exacto ou usa o segmento raiz
   const pageTitle =
     PAGE_TITLES[location.pathname] ??
     PAGE_TITLES[`/${location.pathname.split('/')[1]}`] ??
@@ -45,9 +45,9 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         'left-0',
       )}
     >
-      {/* ── Lado esquerdo: hamburger (mobile) + tÍtulo ────────────────────â”€ */}
+      {/* ── Lado esquerdo: hamburger (mobile) + título ──────────────────── */}
       <div className="flex items-center gap-3">
-        {/* Botão hamburger: só visÍvel em telas < lg */}
+        {/* Botão hamburger: só visível em telas < lg */}
         <button
           onClick={toggleMobileMenu}
           className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors lg:hidden"
@@ -61,7 +61,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         </h1>
       </div>
 
-      {/* ── Lado direito: Notificações ────────────────────────────────────â”€ */}
+      {/* ── Lado direito: Notificações ──────────────────────────────────── */}
       <div className="flex items-center">
         <button
           className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"

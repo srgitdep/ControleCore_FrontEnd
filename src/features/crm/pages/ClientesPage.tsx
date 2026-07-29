@@ -25,7 +25,7 @@ import {
   useDeleteCliente,
   type Cliente,
 } from '@/features/crm';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
 
 // ──â”€ Debounce hook ────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
-﻿import type { ReactNode } from 'react';
-import { usePermissions } from '@/hooks/usePermissions';
+import type { ReactNode } from 'react';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface CanProps {
   action: string;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStockDetails, useStockMovements } from '@/features/stock';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocket } from '@/shared/hooks';
 import { ArrowLeft, Package, Clock, TrendingUp, TrendingDown, RefreshCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';

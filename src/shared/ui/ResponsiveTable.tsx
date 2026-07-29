@@ -1,8 +1,8 @@
-﻿import { type Table, flexRender } from '@tanstack/react-table';
+import { type Table, flexRender } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 
-// ──â”€ CVA: variantes de linha para destacar estados crÍticos ──────────────────
+// ── CVA: variantes de linha para destacar estados críticos ──────────────────
 const rowVariants = cva('transition-colors', {
   variants: {
     status: {
@@ -14,7 +14,7 @@ const rowVariants = cva('transition-colors', {
   defaultVariants: { status: 'default' },
 });
 
-// ──â”€ Types ────────────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
 interface ResponsiveTableProps<TData> {
   table: Table<TData>;
   isLoading?: boolean;
@@ -23,7 +23,7 @@ interface ResponsiveTableProps<TData> {
   getRowStatus?: (row: TData) => 'default' | 'critical' | 'warning';
 }
 
-// ──â”€ Component ────────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 export function ResponsiveTable<TData>({
   table,
   isLoading = false,
@@ -33,7 +33,7 @@ export function ResponsiveTable<TData>({
   const rows = table.getRowModel().rows;
   const headerGroups = table.getHeaderGroups();
 
-  // ──â”€ Loading state ────────────────────────────────────────────────────────
+  // ── Loading state ────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
@@ -43,7 +43,7 @@ export function ResponsiveTable<TData>({
     );
   }
 
-  // ──â”€ Empty state ──────────────────────────────────────────────────────────
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (rows.length === 0) {
     return (
       <div className="py-16 text-center text-sm text-slate-400">{emptyMessage}</div>
@@ -52,9 +52,7 @@ export function ResponsiveTable<TData>({
 
   return (
     <>
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          DESKTOP (sm+): Tabela semântica tradicional
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* DESKTOP (sm+): Tabela semântica tradicional */}
       <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -95,11 +93,7 @@ export function ResponsiveTable<TData>({
         </table>
       </div>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          MOBILE (max-sm): Card layout vertical
-          Cada linha vira um card; o thead é ocultado via CSS.
-          O header da coluna é exibido via data-label em cada célula.
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* MOBILE (max-sm): Card layout vertical */}
       <div className="flex flex-col gap-3 p-3 sm:hidden">
         {rows.map((row) => {
           const status = getRowStatus ? getRowStatus(row.original) : 'default';

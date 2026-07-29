@@ -1,8 +1,8 @@
-﻿import { type ButtonHTMLAttributes, forwardRef } from 'react';
+import { type ButtonHTMLAttributes, forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 
-// ──â”€ CVA Variants ────────────────────────────────────────────────────────────â”€
+// ── CVA Variants ────────────────────────────────────────────────────────────
 const buttonVariants = cva(
   // Base: inclui transition, font, focus ring e disabled state
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none',
@@ -42,14 +42,14 @@ const buttonVariants = cva(
   },
 );
 
-// ──â”€ Types ────────────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
-// ──â”€ Component ────────────────────────────────────────────────────────────────
+// ── Component ────────────────────────────────────────────────────────────────
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
     return (

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/config/permissions.config';
+import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/shared/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 
 interface Role {
   id: string;

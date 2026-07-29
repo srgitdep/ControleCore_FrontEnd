@@ -6,7 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, LogIn, Lock, UserCircle, BarChart3, Package, Users, Store } from 'lucide-react';
 import { useAuth } from '../index';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 
 // ──â”€ Schema de validação (espelha as regras do backend LoginDto) ──────────────â”€
 const loginSchema = z.object({

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Formata uma data para o formato curto pt-MZ.
  * Exemplo: "06/07/2026"
  */

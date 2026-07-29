@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { Empresa, OnboardingPayload, UpdateEmpresaPayload, EmpresaDetails } from '@/features/empresas';
 
 export const getEmpresas = async (): Promise<Empresa[]> => {

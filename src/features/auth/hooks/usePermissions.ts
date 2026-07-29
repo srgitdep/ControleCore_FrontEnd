@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '../store/useAuthStore';
 
 export function usePermissions() {
   const { user, permissions: storePermissions } = useAuthStore();

@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 import { useAuth } from '@/features/auth';
-import { useUIStore } from '@/store/useUIStore';
+import { useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
 
@@ -107,7 +107,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         isMobileDrawer ? 'w-72' : isCollapsed ? 'w-20' : 'w-64',
       )}
     >
-      {/* ──â”€ Logo / Marca ──────────────────────────────────────────────â”€ */}
+      {/* Logo / Marca ────────────────────────────────────────────── */}
       <div
         className={cn(
           'flex items-center pt-6 pb-4',
@@ -148,7 +148,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         )}
       </div>
 
-      {/* ──â”€ Navegação ────────────────────────────────────────────────── */}
+      {/* Navegação ────────────────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-3 pb-6 custom-scrollbar">
         {navGroups.map((group, idx) => {
           const visibleItems = group.items.filter(
@@ -178,15 +178,15 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                   return (
                     <li key={item.path}>
                       <NavLink
-                        to={item.path}
-                        title={collapsed ? item.label : undefined}
-                        className={cn(
-                          'flex items-center rounded-lg text-sm font-medium transition-all duration-150 group',
-                          collapsed ? 'justify-center py-3' : 'justify-between px-3 py-2',
-                          isActive
-                            ? 'bg-slate-100 text-slate-900'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
-                        )}
+                         to={item.path}
+                         title={collapsed ? item.label : undefined}
+                         className={cn(
+                           'flex items-center rounded-lg text-sm font-medium transition-all duration-150 group',
+                           collapsed ? 'justify-center py-3' : 'justify-between px-3 py-2',
+                           isActive
+                             ? 'bg-slate-100 text-slate-900'
+                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                         )}
                       >
                         <div className={cn('flex items-center', collapsed ? 'gap-0' : 'gap-3')}>
                           <Icon
@@ -213,7 +213,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           );
         })}
         
-        {/* ── Assistente IA ──────────────────────────────────────────────── */}
+        {/* Assistente IA ──────────────────────────────────────────────── */}
         <div className="mt-4 pt-4 border-t border-slate-100 mb-2">
           <button
             onClick={toggleCopilot}
@@ -235,7 +235,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
         </div>
       </nav>
 
-      {/* ── Utilizador (Rodapé) ──────────────────────────────────────── */}
+      {/* Utilizador (Rodapé) ──────────────────────────────────────── */}
       {user && (
         <div className="relative p-4 border-t border-slate-200 bg-white">
 

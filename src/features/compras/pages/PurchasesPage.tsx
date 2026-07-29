@@ -1,11 +1,11 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, Package, ArrowRight } from 'lucide-react';
 import { purchasesApi, EstadoPedidoCompra } from '@/features/compras';
 import type { PurchaseOrder } from '@/features/compras';
 import { suppliersApi } from '@/features/fornecedores';
 import type { Supplier } from '@/features/fornecedores';
 import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
 
 export function PurchasesPage() {

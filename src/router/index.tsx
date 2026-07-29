@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
-import { AppLayout } from '@/components/layout/AppLayout';
+import { AppLayout } from '@/app/layout/AppLayout';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
 import { DashboardPage } from '@/features/dashboard';
 import { EmpresasPage } from '@/features/empresas';

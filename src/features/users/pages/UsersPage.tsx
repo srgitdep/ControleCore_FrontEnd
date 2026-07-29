@@ -6,7 +6,7 @@ import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
 import toast from 'react-hot-toast';
 import { UserDialog } from '../components/UserDialog';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@/shared/ui';
 import { UserDetailsModal } from '../components/UserDetailsModal';
 import { UserAuditLogModal } from '../components/UserAuditLogModal';
 import { useAuth } from '@/features/auth';

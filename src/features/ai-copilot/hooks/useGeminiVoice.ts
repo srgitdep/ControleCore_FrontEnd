@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { PCMPlayer } from '../../../utils/pcm-player';
-import { api } from '@/api/axios';
+import { PCMPlayer } from '@/shared/utils';
+import { api } from '@/shared/config';
 
 export type VoiceState =
   | 'DISCONNECTED'

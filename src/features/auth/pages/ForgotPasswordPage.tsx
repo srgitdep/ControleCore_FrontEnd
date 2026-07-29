@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Mail, ArrowLeft, SendHorizonal } from 'lucide-react';
 import { forgotPasswordApi } from '../api/auth.api';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 
 const schema = z.object({
   email: z.string().email('Introduza um endereço de e-mail válido'),

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCopilotStore } from '../store/copilotStore';
-import { useUIStore } from '@/store/useUIStore';
+import { useUIStore } from '@/shared/hooks';
 
 // Modulares Components
 import { HistoryPanel } from './history/HistoryPanel';

@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/features/produtos';
 import { usePosStore } from '@/features/vendas';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocket } from '@/shared/hooks';
 import { useProcessarVenda } from '@/features/vendas';
 import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
 import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from '../components/ReceiptModal';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 
 const PAYMENT_METHODS = [
   { id: 'NUMERARIO', label: 'Dinheiro', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },

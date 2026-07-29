@@ -20,7 +20,7 @@ import {
   useCloseCycle,
   useRegisterCountByBarcode,
 } from '@/features/stock';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/shared/ui';
 import { CreateCycleModal } from './CreateCycleModal';
 import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
 

@@ -1,7 +1,6 @@
-﻿import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/features/auth';
-import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth, usePermissions } from '@/features/auth';
 import type { Role } from '@/features/auth';
 
 interface ProtectedRouteProps {

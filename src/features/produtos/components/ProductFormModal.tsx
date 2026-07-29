@@ -1,11 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, PackagePlus } from 'lucide-react';
 import type { Product } from '@/features/produtos';
 import { useCreateProduct, useUpdateProduct, useCategories } from '@/features/produtos';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/shared/ui';
 
 const productSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),

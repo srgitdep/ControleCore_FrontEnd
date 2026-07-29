@@ -1,4 +1,4 @@
-﻿export const AVAILABLE_RESOURCES = [
+export const AVAILABLE_RESOURCES = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'empresa', label: 'Empresa / Configurações' },
   { id: 'users', label: 'Utilizadores' },

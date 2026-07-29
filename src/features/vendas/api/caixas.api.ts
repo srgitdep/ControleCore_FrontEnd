@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 
 export const obterCaixasDisponiveis = async () => {
   const { data } = await api.get('/caixas/disponiveis');

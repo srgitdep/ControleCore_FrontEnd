@@ -1,6 +1,6 @@
-﻿/**
+/**
  * Formata um valor numérico para o formato monetário Moçambicano.
- * Exemplo: 1234567.5 â†’ "1.234.567,50 MT"
+ * Exemplo: 1234567.5 → "1.234.567,50 MT"
  */
 export function formatMoeda(value: number): string {
   return new Intl.NumberFormat('pt-MZ', {
@@ -11,7 +11,7 @@ export function formatMoeda(value: number): string {
 
 /**
  * Formata um valor numérico de forma compacta (ex: para KPIs).
- * Exemplo: 1234567 â†’ "1,23M MT"
+ * Exemplo: 1234567 → "1,23M MT"
  */
 export function formatMoedaCompacta(value: number): string {
   if (value >= 1_000_000) {

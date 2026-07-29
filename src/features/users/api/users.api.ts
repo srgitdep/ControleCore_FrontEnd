@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { UserDetail, CreateUserPayload, UpdateUserPayload, UserStatusActionPayload } from '@/features/users';
 
 export const getUsers = async (): Promise<UserDetail[]> => {

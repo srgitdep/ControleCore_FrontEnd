@@ -5,7 +5,7 @@ import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
 import { EmpresaDialog } from '../components/EmpresaDialog';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@/shared/ui';
 import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

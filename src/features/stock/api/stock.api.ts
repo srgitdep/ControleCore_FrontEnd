@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/features/stock';
 
 export interface PaginatedResponse<T> {

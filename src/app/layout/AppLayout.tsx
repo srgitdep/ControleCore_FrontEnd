@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useUIStore } from '@/store/useUIStore';
+import { useUIStore } from '@/shared/hooks';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
@@ -19,7 +19,7 @@ export function AppLayout() {
   return (
     <div className={isPOS ? "h-screen bg-slate-50 overflow-hidden" : "min-h-screen bg-slate-50"}>
 
-      {/* ── DESKTOP (lg+): Sidebar fixo, sempre visÍvel ────────────────────── */}
+      {/* ── DESKTOP (lg+): Sidebar fixo, sempre visível ────────────────────── */}
       <div className="hidden lg:block">
         <Sidebar isCollapsed={isSidebarCollapsed} />
       </div>
@@ -41,10 +41,6 @@ export function AppLayout() {
       )}
 
       {/* ── Área de conteúdo ─────────────────────────────────────────────── */}
-      {/*
-        Desktop: margem esquerda responsiva ao estado collapsed do sidebar
-        Mobile:  sem margem (sidebar é overlay)
-      */}
       <div
         className={[
           isPOS ? 'flex flex-col h-screen transition-all duration-300' : 'flex flex-col min-h-screen transition-all duration-300',
@@ -71,4 +67,3 @@ export function AppLayout() {
     </div>
   );
 }
-

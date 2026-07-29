@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -37,7 +37,7 @@ export function useSocket() {
       // Invalida a query de stocks para atualizar as tabelas do dashboard de gestão
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
       
-      // Se houver necessidade de invalidar um produto em especÍfico
+      // Se houver necessidade de invalidar um produto em específico
       if (data?.productId) {
         queryClient.invalidateQueries({ queryKey: ['stock', data.productId] });
       }

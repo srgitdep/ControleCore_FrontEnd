@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { Employee, WeeklySchedule, Employee360Profile } from '../types';
 
 /**

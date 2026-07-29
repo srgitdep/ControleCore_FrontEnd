@@ -1,4 +1,4 @@
-import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 
 export interface HitlActionPayload {
   type: 'HITL_ACTION';

@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -20,11 +20,10 @@ import {
   Settings2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils';
 import { useStockList, useAllMovements } from '@/features/stock';
-import { useSocket } from '@/hooks/useSocket';
-import { ResponsiveTable } from '@/components/common/ResponsiveTable';
-import { Button } from '@/components/common/Button';
+import { useSocket } from '@/shared/hooks';
+import { ResponsiveTable, Button } from '@/shared/ui';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
 import type { Stock, StockMovement } from '@/features/stock';

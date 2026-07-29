@@ -1,4 +1,4 @@
-﻿import { api } from '@/api/axios';
+import { api } from '@/shared/config';
 import type { AuditLog, GetAuditLogsParams } from '@/features/history';
 
 export const getAuditLogs = async (params?: GetAuditLogsParams): Promise<AuditLog[]> => {
