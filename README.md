@@ -227,14 +227,14 @@ npm run lint       # Oxlint
 ### Mapa de progresso
 
 ```
-TOTAL     █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~1%
+TOTAL     ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~3%
 ```
 
 | Plano | Branch | Estado |
 |---|---|---|
 | **00** Mapa | `plano/00-plano` | ✅ concluído |
-| **01** Dicionário | `plano/01-dicionario` | 🔵 seguinte |
-| **02** Plataforma / Hub FE | `plano/02-plataforma` | ⚪ |
+| **01** Dicionário | `plano/01-dicionario` | ✅ concluído |
+| **02** Plataforma / Hub FE | `plano/02-plataforma` | 🔵 seguinte |
 | **03–07** Mínimo vendável (Catálogo → POS) | `plano/03-…` … `plano/07-…` | ⚪ |
 | **08–13** Preços → Administração | `plano/08-…` … `plano/13-…` | ⚪ |
 | Hub / Mayra / SAAS | `plano/hub` · `plano/mayra` · `plano/saas` | ⚪ |
