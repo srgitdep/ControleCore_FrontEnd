@@ -2,20 +2,32 @@ import { Navigate, Outlet } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth, usePermissions } from '@/features/auth';
 import type { Role } from '@/features/auth';
+import { useEstadoSubscricao } from '@/features/plataforma';
+import type { CodigoModulo } from '@/features/plataforma';
 
 interface ProtectedRouteProps {
   roles?: Role[]; // Se definido, só estas roles podem aceder
-  requiredPermission?: string; // Se definido, só utilizadores com a permissão (action:resource) podem aceder
+  requiredPermission?: string;
+  requiredModule?: CodigoModulo;
 }
 
-export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  roles,
+  requiredPermission,
+  requiredModule,
+}: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasRole } = useAuth();
-  const { hasPermission } = usePermissions();
+  const permissions = usePermissions();
+  const subscricao = useEstadoSubscricao(isAuthenticated && Boolean(requiredModule));
 
   const isAuthInitialized = !isLoading;
 
   // Enquanto o estado carrega do localStorage ou da API, mostra loading silencioso
-  if (!isAuthInitialized) {
+  if (
+    !isAuthInitialized ||
+    (requiredPermission && permissions.isLoading) ||
+    (requiredModule && subscricao.isLoading)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-3">
@@ -40,16 +52,20 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
     return <Navigate to="/" replace />;
   }
 
-  // Validação de Permissão estrita (RBAC - action:resource)
-  if (requiredPermission) {
-    const [action, resource] = requiredPermission.split(':');
-    if (action && resource && !hasPermission(action, resource)) {
-      toast.error('Não tem permissão para essa ação.', {
-        id: 'sem-permissao-action',
-        duration: 4000,
-      });
-      return <Navigate to="/" replace />;
-    }
+  if (requiredModule && !subscricao.data?.modulos.includes(requiredModule)) {
+    toast.error('Este módulo não está incluído na subscrição.', {
+      id: 'modulo-nao-contratado',
+      duration: 4000,
+    });
+    return <Navigate to="/subscricao" replace />;
+  }
+
+  if (requiredPermission && !permissions.hasPermission(requiredPermission)) {
+    toast.error('Não tem permissão para essa acção.', {
+      id: 'sem-permissao-action',
+      duration: 4000,
+    });
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

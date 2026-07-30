@@ -20,6 +20,7 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
+import { AcessoPage, SubscricaoPage } from '@/features/plataforma';
 
 function RootRedirectOrLanding() {
   const { user } = useAuth();
@@ -69,29 +70,66 @@ export const router = createBrowserRouter([
           },
           {
             path: '/permissoes',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} requiredPermission="manage:users" />,
+            element: <ProtectedRoute requiredPermission="administracao.perfil.gerir" />,
             children: [{ index: true, element: <PermissionsPage /> }]
           },
+          { path: '/acesso', element: <AcessoPage /> },
+          { path: '/subscricao', element: <SubscricaoPage /> },
 
-          // Módulos â€â€ em desenvolvimento
-          { path: '/produtos',      element: <ProductListPage /> },
-          { path: '/fornecedores',  element: <PurchasesPage /> },
-          { path: '/compras',       element: <PurchasesPage /> },
-          { path: '/stock',         element: <StockListPage /> },
-          { path: '/stock/:id',     element: <StockDetailsPage /> },
-          { path: '/vendas',        element: <POSPage /> },
-          { path: '/sessoes-historico', element: <CaixasHistoricoPage /> },
-          { path: '/lojas',         element: <LojasPage /> },
-          { path: '/crm',           element: <ClientesPage /> },
-          { path: '/clientes',      element: <ClientesPage /> },
+          {
+            element: <ProtectedRoute requiredModule="catalogo" />,
+            children: [{ path: '/produtos', element: <ProductListPage /> }],
+          },
+          {
+            element: <ProtectedRoute requiredModule="compras" />,
+            children: [
+              { path: '/fornecedores', element: <PurchasesPage /> },
+              { path: '/compras', element: <PurchasesPage /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute requiredModule="armazem" />,
+            children: [
+              { path: '/stock', element: <StockListPage /> },
+              { path: '/stock/:id', element: <StockDetailsPage /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute requiredModule="pos" />,
+            children: [
+              { path: '/vendas', element: <POSPage /> },
+              { path: '/sessoes-historico', element: <CaixasHistoricoPage /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute requiredModule="loja" />,
+            children: [{ path: '/lojas', element: <LojasPage /> }],
+          },
+          {
+            element: <ProtectedRoute requiredModule="clientes" />,
+            children: [
+              { path: '/crm', element: <ClientesPage /> },
+              { path: '/clientes', element: <ClientesPage /> },
+            ],
+          },
           // Módulo Financeiro
           {
             path: '/financeiro',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            element: (
+              <ProtectedRoute
+                roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}
+                requiredModule="financeiro"
+              />
+            ),
             children: [{ index: true, element: <FinanceiroDashboardPage /> }]
           },
-          { path: '/rh',            element: <EmployeeListPage /> },
-          { path: '/rh/escalas',    element: <ShiftManagementPage /> },
+          {
+            element: <ProtectedRoute requiredModule="pessoas" />,
+            children: [
+              { path: '/rh', element: <EmployeeListPage /> },
+              { path: '/rh/escalas', element: <ShiftManagementPage /> },
+            ],
+          },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
           { path: '/historico',     element: <HistoryPage /> },
         ],

@@ -1,4 +1,3 @@
-import React from 'react';
 import './OrgChart.css';
 
 export interface DepartmentNode {

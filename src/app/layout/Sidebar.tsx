@@ -18,20 +18,26 @@ import {
   History,
   X,
   Sparkles,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
-import { useAuth } from '@/features/auth';
+import { useAuth, usePermissions } from '@/features/auth';
 import { useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
+import { useEstadoSubscricao } from '@/features/plataforma';
+import type { CodigoModulo } from '@/features/plataforma';
 
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
   roles?: Role[];
+  permission?: string;
+  module?: CodigoModulo;
   badge?: string;
 }
 
@@ -47,27 +53,29 @@ const navGroups: NavGroup[] = [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'O meu acesso', icon: ShieldCheck, path: '/acesso' },
+      { label: 'Permissões', icon: Settings, path: '/permissoes', permission: 'administracao.perfil.gerir' },
+      { label: 'Subscrição', icon: CreditCard, path: '/subscricao' },
     ]
   },
   {
     title: 'Commerce',
     items: [
-      { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'CRM', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Produtos', icon: Package, path: '/produtos' },
-      { label: 'Stock', icon: BarChart3, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Fornecedores', icon: Truck, path: '/fornecedores', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Ponto de Venda', icon: Store, path: '/vendas', module: 'pos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
+      { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', module: 'pos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
+      { label: 'CRM', icon: UserSquare, path: '/crm', module: 'clientes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'Financeiro', icon: BarChart2, path: '/financeiro', module: 'financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'Produtos', icon: Package, path: '/produtos', module: 'catalogo' },
+      { label: 'Stock', icon: BarChart3, path: '/stock', module: 'armazem', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { label: 'Compras', icon: ShoppingCart, path: '/compras', module: 'compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { label: 'Fornecedores', icon: Truck, path: '/fornecedores', module: 'compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { label: 'Lojas & Caixas', icon: Store, path: '/lojas', module: 'loja', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },
   {
     title: 'Company',
     items: [
-      { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', module: 'pessoas', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Configurações', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Histórico no Sistema', icon: History, path: '/historico' },
     ]
@@ -82,6 +90,8 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const { user, hasRole, logout } = useAuth();
+  const { hasPermission } = usePermissions();
+  const subscricao = useEstadoSubscricao(Boolean(user));
   const { toggleSidebarCollapse, closeMobileMenu } = useUIStore();
   const { toggleOpen: toggleCopilot } = useCopilotStore();
   const location = useLocation();
@@ -152,7 +162,10 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3 pb-6 custom-scrollbar">
         {navGroups.map((group, idx) => {
           const visibleItems = group.items.filter(
-            (item) => !item.roles || hasRole(item.roles),
+            (item) =>
+              (!item.roles || hasRole(item.roles)) &&
+              (!item.permission || hasPermission(item.permission)) &&
+              (!item.module || Boolean(subscricao.data?.modulos.includes(item.module))),
           );
 
           if (visibleItems.length === 0) return null;

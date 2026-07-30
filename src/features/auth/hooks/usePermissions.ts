@@ -1,36 +1,42 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
+import { useContextoAcesso } from '@/features/plataforma';
 
 export function usePermissions() {
   const { user, permissions: storePermissions } = useAuthStore();
+  const contexto = useContextoAcesso(Boolean(user));
+  const effectivePermissions =
+    contexto.data?.permissoes.map((permissao) => permissao.codigo) ??
+    user?.permissions ??
+    storePermissions;
 
   const hasPermission = useCallback(
-    (action: string, resource: string): boolean => {
-      // 1. O SUPER_ADMIN e o ADMIN têm acesso absoluto a tudo, ignorando a tabela de permissões.
-      if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') return true;
-
-      // 2. Busca as permissões do utilizador (seja do novo AuthUser.permissions ou da Store)
-      const permissions = user?.permissions || storePermissions;
-
-      if (!permissions || permissions.length === 0) return false;
-
-      // 3. Se tiver a permissão global manage:all
-      if (permissions.includes('manage:all')) return true;
-
-      // 4. Se tiver a permissão exata para a ação e recurso
-      const requiredPermission = `${action}:${resource}`;
-      if (permissions.includes(requiredPermission)) return true;
-
-      // 5. Se tiver permissão "manage" no recurso, geralmente implica poder fazer "read", "create", etc.
-      const manageResourcePermission = `manage:${resource}`;
-      if (action !== 'manage' && permissions.includes(manageResourcePermission)) {
-        return true; 
-      }
-
-      return false;
+    (codigoOuAccao: string, recurso?: string): boolean => {
+      const exigida = normalizarPermissao(codigoOuAccao, recurso);
+      return effectivePermissions.includes(exigida);
     },
-    [user, storePermissions]
+    [effectivePermissions],
   );
 
-  return { hasPermission, permissions: user?.permissions || storePermissions };
+  return {
+    hasPermission,
+    permissions: effectivePermissions,
+    isLoading: contexto.isLoading,
+  };
+}
+
+const ALIASES_LEGADOS: Record<string, string> = {
+  'read:users': 'pessoas.utilizador.ler',
+  'manage:users': 'administracao.perfil.gerir',
+  'manage:empresa': 'administracao.empresa.gerir',
+  'manage:all': 'administracao.empresa.gerir',
+  'read:produto': 'catalogo.artigo.ler',
+  'create:produto': 'catalogo.artigo.criar',
+  'write:produto': 'catalogo.artigo.editar',
+  'delete:produto': 'catalogo.artigo.apagar',
+};
+
+function normalizarPermissao(codigoOuAccao: string, recurso?: string): string {
+  const codigo = recurso ? `${codigoOuAccao}:${recurso}` : codigoOuAccao;
+  return ALIASES_LEGADOS[codigo] ?? codigo.toLowerCase().replaceAll(':', '.');
 }

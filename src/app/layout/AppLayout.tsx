@@ -4,6 +4,7 @@ import { useUIStore } from '@/shared/hooks';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
+import { SubscricaoBanner } from '@/features/plataforma';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
@@ -52,6 +53,7 @@ export function AppLayout() {
 
         {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão */}
         <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
+          {!isPOS && <SubscricaoBanner />}
           {isPOS ? (
             <Outlet />
           ) : (
