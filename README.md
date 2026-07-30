@@ -193,7 +193,11 @@ npm run lint       # Oxlint
 
 ---
 
-## 🗂️ Estado de Desenvolvimento
+## 🗂️ Estado de Desenvolvimento (legado)
+
+> O MVP actual permanece durante a transição. A remodelação segue o plano do
+> backend em `SRGControleCore/controlcore-refact-plan/` — Feature-Sliced Design
+> com **um directório por módulo do plano** (`00-PLANO.md` §6).
 
 | Módulo | Estado |
 |---|---|
@@ -212,6 +216,35 @@ npm run lint       # Oxlint
 | Recursos Humanos | ⏳ Pendente |
 | Histórico / Auditoria | ⏳ Pendente |
 | Configurações | ⏳ Pendente |
+
+---
+
+## 🏗️ Remodelação (TO BE)
+
+**Branch de integração:** `Dev`  
+**Branches de plano:** alinhadas com o backend (`plano/00-plano` … `plano/13-d2-administracao`)
+
+### Mapa de progresso
+
+```
+TOTAL     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%
+```
+
+| Plano | Branch | Estado |
+|---|---|---|
+| **00** Mapa | `plano/00-plano` | 🔵 em curso |
+| **01** Dicionário | `plano/01-dicionario` | ⚪ |
+| **02** Plataforma / Hub FE | `plano/02-plataforma` | ⚪ |
+| **03–07** Mínimo vendável (Catálogo → POS) | `plano/03-…` … `plano/07-…` | ⚪ |
+| **08–13** Preços → Administração | `plano/08-…` … `plano/13-…` | ⚪ |
+| Hub / Mayra / SAAS | `plano/hub` · `plano/mayra` · `plano/saas` | ⚪ |
+
+Estrutura alvo por módulo (`00-PLANO.md` §6):
+
+```
+src/features/<modulo>/
+  components/   charts/   hooks/   api/   store/   types/   pages/
+```
 
 ---
 
