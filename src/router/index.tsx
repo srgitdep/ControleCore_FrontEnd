@@ -20,7 +20,7 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
-import { AcessoPage, SubscricaoPage } from '@/features/plataforma';
+import { AcessoPage, EventosPage, SubscricaoPage } from '@/features/plataforma';
 
 function RootRedirectOrLanding() {
   const { user } = useAuth();
@@ -75,6 +75,11 @@ export const router = createBrowserRouter([
           },
           { path: '/acesso', element: <AcessoPage /> },
           { path: '/subscricao', element: <SubscricaoPage /> },
+          {
+            path: '/eventos',
+            element: <ProtectedRoute requiredPermission="administracao.empresa.gerir" />,
+            children: [{ index: true, element: <EventosPage /> }],
+          },
 
           {
             element: <ProtectedRoute requiredModule="catalogo" />,

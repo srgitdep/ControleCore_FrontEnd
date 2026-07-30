@@ -20,6 +20,7 @@ import {
   Sparkles,
   CreditCard,
   ShieldCheck,
+  Radio,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -56,6 +57,7 @@ const navGroups: NavGroup[] = [
       { label: 'O meu acesso', icon: ShieldCheck, path: '/acesso' },
       { label: 'Permissões', icon: Settings, path: '/permissoes', permission: 'administracao.perfil.gerir' },
       { label: 'Subscrição', icon: CreditCard, path: '/subscricao' },
+      { label: 'Eventos', icon: Radio, path: '/eventos', permission: 'administracao.empresa.gerir' },
     ]
   },
   {

@@ -3,7 +3,9 @@ import {
   obterConsumoPlano,
   obterContextoAcesso,
   obterEstadoSubscricao,
+  obterMapaEventos,
   obterPlanos,
+  obterRegistoEventos,
 } from '../api/plataforma.api';
 
 export function useContextoAcesso(enabled = true) {
@@ -39,5 +41,23 @@ export function usePlanos(enabled = true) {
     queryFn: obterPlanos,
     enabled,
     staleTime: 5 * 60_000,
+  });
+}
+
+export function useMapaEventos(enabled = true) {
+  return useQuery({
+    queryKey: ['plataforma', 'eventos', 'mapa'],
+    queryFn: obterMapaEventos,
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useRegistoEventos(enabled = true) {
+  return useQuery({
+    queryKey: ['plataforma', 'eventos', 'registo'],
+    queryFn: () => obterRegistoEventos(50),
+    enabled,
+    staleTime: 15_000,
   });
 }
