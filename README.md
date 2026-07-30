@@ -227,14 +227,14 @@ npm run lint       # Oxlint
 ### Mapa de progresso
 
 ```
-TOTAL     ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~12%
+TOTAL     ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~14%
 ```
 
 | Plano | Branch | Estado |
 |---|---|---|
 | **00** Mapa | `plano/00-plano` | ✅ concluído |
 | **01** Dicionário | `plano/01-dicionario` | ✅ concluído |
-| **02** Plataforma / Hub FE | `plano/02-plataforma` | 🔵 em curso (blocos FE 2, 6 e 7 ✅) |
+| **02** Plataforma / Hub FE | `plano/02-plataforma` | 🔵 em curso (blocos FE 2, 6–8 ✅) |
 | **03–07** Mínimo vendável (Catálogo → POS) | `plano/03-…` … `plano/07-…` | ⚪ |
 | **08–13** Preços → Administração | `plano/08-…` … `plano/13-…` | ⚪ |
 | Hub / Mayra / SAAS | `plano/hub` · `plano/mayra` · `plano/saas` | ⚪ |
@@ -254,6 +254,7 @@ src/features/<modulo>/
 - **Bloco 7:** ecrã de subscrição, planos, consumo/limites, módulos contratados,
   bloqueio de rotas por módulo e aviso de escrita bloqueada em subscrição
   expirada ou suspensa.
+- **Bloco 8:** diagnóstico de eventos (`/eventos`) — mapa activo e registo recente.
 
 ---
 
