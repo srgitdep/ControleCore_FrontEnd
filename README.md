@@ -227,14 +227,14 @@ npm run lint       # Oxlint
 ### Mapa de progresso
 
 ```
-TOTAL     ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~14%
+TOTAL     ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~18%
 ```
 
 | Plano | Branch | Estado |
 |---|---|---|
 | **00** Mapa | `plano/00-plano` | ✅ concluído |
 | **01** Dicionário | `plano/01-dicionario` | ✅ concluído |
-| **02** Plataforma / Hub FE | `plano/02-plataforma` | 🔵 em curso (blocos FE 2, 6–8 ✅) |
+| **02** Plataforma / Hub FE | `plano/02-plataforma` | 🔵 em curso (blocos FE 2, 6–10, 13 ✅) |
 | **03–07** Mínimo vendável (Catálogo → POS) | `plano/03-…` … `plano/07-…` | ⚪ |
 | **08–13** Preços → Administração | `plano/08-…` … `plano/13-…` | ⚪ |
 | Hub / Mayra / SAAS | `plano/hub` · `plano/mayra` · `plano/saas` | ⚪ |
@@ -255,6 +255,14 @@ src/features/<modulo>/
   bloqueio de rotas por módulo e aviso de escrita bloqueada em subscrição
   expirada ou suspensa.
 - **Bloco 8:** diagnóstico de eventos (`/eventos`) — mapa activo e registo recente.
+- **Bloco 9:** `/historico` com timeline por entidade e validação da cadeia de hash.
+- **Bloco 10:** `/unidades` — simulador de conversão ("10 caixas = quanto em stock?")
+  e catálogo de unidades, com erro explícito quando falta o factor.
+- **Bloco 13 (Hub):** `/hub` em quatro camadas — Pulso do retalho em canvas ligado
+  ao WebSocket, saudação, até três cartões de acção e cartões verticais 10:16 por
+  família. A raiz da aplicação deixou de ser um `switch` sobre `user.role`; quem
+  tem um só módulo entra directamente nele. O branding do inquilino (cores,
+  tipografia, favicon) é aplicado antes da primeira pintura.
 
 ---
 

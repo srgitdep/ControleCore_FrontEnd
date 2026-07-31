@@ -2,8 +2,10 @@ import { api } from '@/shared/config';
 import type {
   ConsumoPlano,
   ContextoAcesso,
+  ConversaoCalculada,
   EstadoDaSubscricao,
   Plano,
+  UnidadeMedida,
 } from '../types';
 
 export const obterContextoAcesso = () =>
@@ -38,4 +40,18 @@ export const obterRegistoEventos = (limite = 50) =>
         consumidor?: string;
       }>
     >('/eventos/registo', { params: { limite } })
+    .then((response) => response.data);
+
+export const obterUnidades = () =>
+  api.get<UnidadeMedida[]>('/unidades').then((response) => response.data);
+
+/** PLT-35 — simulador: "10 caixas = quanto em stock?" */
+export const converterUnidade = (pedido: {
+  de: string;
+  para: string;
+  quantidade: string;
+  artigoId?: string;
+}) =>
+  api
+    .get<ConversaoCalculada>('/unidades/converter', { params: pedido })
     .then((response) => response.data);

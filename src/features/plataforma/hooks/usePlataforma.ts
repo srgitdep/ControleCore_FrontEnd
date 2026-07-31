@@ -6,6 +6,7 @@ import {
   obterMapaEventos,
   obterPlanos,
   obterRegistoEventos,
+  obterUnidades,
 } from '../api/plataforma.api';
 
 export function useContextoAcesso(enabled = true) {
@@ -59,5 +60,14 @@ export function useRegistoEventos(enabled = true) {
     queryFn: () => obterRegistoEventos(50),
     enabled,
     staleTime: 15_000,
+  });
+}
+
+export function useUnidades(enabled = true) {
+  return useQuery({
+    queryKey: ['plataforma', 'unidades'],
+    queryFn: obterUnidades,
+    enabled,
+    staleTime: 5 * 60_000,
   });
 }

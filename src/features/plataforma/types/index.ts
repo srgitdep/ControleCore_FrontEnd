@@ -55,6 +55,24 @@ export interface ConsumoPlano {
   comportamento: string | null;
 }
 
+export type TipoUnidade = 'DISCRETA' | 'CONTINUA';
+
+export interface UnidadeMedida {
+  codigo: string;
+  nome: string;
+  simbolo: string;
+  tipo: TipoUnidade;
+  casasDecimais: number;
+}
+
+export interface ConversaoCalculada {
+  de: string;
+  para: string;
+  quantidade: string;
+  factor: string;
+  resultado: string;
+}
+
 export interface Plano {
   codigo: string;
   nome: string;

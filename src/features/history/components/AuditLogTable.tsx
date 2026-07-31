@@ -17,6 +17,7 @@ const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: str
   DELETE: { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200' },
   LOGIN: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
   LOGOUT: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' },
+  SYSTEM_ACTION: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200' },
   SALE_COMPLETED: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
   SALE_CANCELLED: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
 };
@@ -27,7 +28,8 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   DELETE: 'Remoção',
   LOGIN: 'Login',
   LOGOUT: 'Logout',
-  SALE_COMPLETED: 'Venda ConcluÍda',
+  SYSTEM_ACTION: 'Sistema',
+  SALE_COMPLETED: 'Venda Concluída',
   SALE_CANCELLED: 'Venda Cancelada',
 };
 

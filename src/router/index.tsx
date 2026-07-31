@@ -20,13 +20,13 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
-import { AcessoPage, EventosPage, SubscricaoPage } from '@/features/plataforma';
+import { AcessoPage, EventosPage, SubscricaoPage, UnidadesPage } from '@/features/plataforma';
 
 function RootRedirectOrLanding() {
   const { user } = useAuth();
   if (!user) return <LandingPage />;
-  
-  switch(user.role) {
+
+  switch (user.role) {
     case 'CASHIER': return <Navigate to="/vendas" replace />;
     case 'STOCK_KEEPER': return <Navigate to="/produtos" replace />;
     case 'USER': return <Navigate to="/produtos" replace />;
@@ -83,7 +83,10 @@ export const router = createBrowserRouter([
 
           {
             element: <ProtectedRoute requiredModule="catalogo" />,
-            children: [{ path: '/produtos', element: <ProductListPage /> }],
+            children: [
+              { path: '/produtos', element: <ProductListPage /> },
+              { path: '/unidades', element: <UnidadesPage /> },
+            ],
           },
           {
             element: <ProtectedRoute requiredModule="compras" />,

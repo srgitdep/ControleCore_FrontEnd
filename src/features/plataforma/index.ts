@@ -4,3 +4,4 @@ export * from './components/SubscricaoBanner';
 export * from './pages/AcessoPage';
 export * from './pages/SubscricaoPage';
 export * from './pages/EventosPage';
+export * from './pages/UnidadesPage';
