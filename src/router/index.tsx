@@ -21,6 +21,15 @@ import { PurchasesPage } from '@/features/compras';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
 import { AcessoPage, EventosPage, SubscricaoPage, UnidadesPage } from '@/features/plataforma';
+import {
+  ArtigoDetalhePage,
+  ArtigosPage,
+  CatalogoSaudePage,
+  FamiliasPage,
+  MarcasPage,
+  SortidosPage,
+  UnidadesCatalogoPage,
+} from '@/features/catalogo';
 
 function RootRedirectOrLanding() {
   const { user } = useAuth();
@@ -86,6 +95,13 @@ export const router = createBrowserRouter([
             children: [
               { path: '/produtos', element: <ProductListPage /> },
               { path: '/unidades', element: <UnidadesPage /> },
+              { path: '/catalogo', element: <CatalogoSaudePage /> },
+              { path: '/catalogo/artigos', element: <ArtigosPage /> },
+              { path: '/catalogo/artigos/:id', element: <ArtigoDetalhePage /> },
+              { path: '/catalogo/unidades', element: <UnidadesCatalogoPage /> },
+              { path: '/catalogo/familias', element: <FamiliasPage /> },
+              { path: '/catalogo/marcas', element: <MarcasPage /> },
+              { path: '/catalogo/sortidos', element: <SortidosPage /> },
             ],
           },
           {

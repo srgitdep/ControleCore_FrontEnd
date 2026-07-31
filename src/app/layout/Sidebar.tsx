@@ -22,6 +22,10 @@ import {
   ShieldCheck,
   Radio,
   Ruler,
+  Tags,
+  FolderTree,
+  Award,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -69,7 +73,12 @@ const navGroups: NavGroup[] = [
       { label: 'CRM', icon: UserSquare, path: '/crm', module: 'clientes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Financeiro', icon: BarChart2, path: '/financeiro', module: 'financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Produtos', icon: Package, path: '/produtos', module: 'catalogo' },
-      { label: 'Unidades', icon: Ruler, path: '/unidades', module: 'catalogo', permission: 'catalogo.artigo.ler' },
+      { label: 'Saúde catálogo', icon: Activity, path: '/catalogo', module: 'catalogo', permission: 'catalogo.artigo.ler' },
+      { label: 'Artigos', icon: Tags, path: '/catalogo/artigos', module: 'catalogo', permission: 'catalogo.artigo.ler' },
+      { label: 'Famílias', icon: FolderTree, path: '/catalogo/familias', module: 'catalogo', permission: 'catalogo.familia.ler' },
+      { label: 'Marcas', icon: Award, path: '/catalogo/marcas', module: 'catalogo', permission: 'catalogo.marca.ler' },
+      { label: 'Sortido', icon: Store, path: '/catalogo/sortidos', module: 'catalogo', permission: 'catalogo.sortido.ler' },
+      { label: 'Unidades', icon: Ruler, path: '/catalogo/unidades', module: 'catalogo', permission: 'catalogo.artigo.ler' },
       { label: 'Stock', icon: BarChart3, path: '/stock', module: 'armazem', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Compras', icon: ShoppingCart, path: '/compras', module: 'compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Fornecedores', icon: Truck, path: '/fornecedores', module: 'compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },

@@ -227,7 +227,7 @@ npm run lint       # Oxlint
 ### Mapa de progresso
 
 ```
-TOTAL     █████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~16%
+TOTAL     ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ~18%
 ```
 
 | Plano | Branch | Estado |
@@ -235,7 +235,8 @@ TOTAL     █████████░░░░░░░░░░░░░░�
 | **00** Mapa | `plano/00-plano` | ✅ concluído |
 | **01** Dicionário | `plano/01-dicionario` | ✅ concluído |
 | **02** Plataforma FE | `plano/02-plataforma` | 🔵 em curso (blocos FE 2, 6–10 ✅ · Hub removido) |
-| **03–07** Mínimo vendável (Catálogo → POS) | `plano/03-…` … `plano/07-…` | ⚪ |
+| **03** A1 Catálogo FE | `plano/03-a1-catalogo` | 🔵 5.º corte (atributos família + ficha) |
+| **04–07** Mínimo vendável (Compras → POS) | `plano/04-…` … `plano/07-…` | ⚪ |
 | **08–13** Preços → Administração | `plano/08-…` … `plano/13-…` | ⚪ |
 | Hub / Mayra / SAAS | `plano/hub` · `plano/mayra` · `plano/saas` | ⚪ |
 
@@ -260,6 +261,18 @@ src/features/<modulo>/
   e catálogo de unidades, com erro explícito quando falta o factor.
 - **Blocos 12–13 (Hub):** código removido em 31 Jul 2026; a especificação fica
   para `plano/hub`. A raiz volta a redireccionar por `user.role`.
+
+### Plano 03 — frontend (5.º corte)
+
+- `/catalogo` — painel de saúde do catálogo (CAT-43).
+- `/catalogo/artigos` — lista, criação com marca, activar (CAT-01/03/24).
+- `/catalogo/artigos/:id` — ficha, códigos, estados, herança, completude e atributos (CAT-04/09/10/22/23/25).
+- `/catalogo/unidades` — gestão de unidades e conversões (CAT-15/16).
+- `/catalogo/familias` — árvore + definição de atributos tipados (CAT-21/25).
+- `/catalogo/marcas` — marcas e marca própria (CAT-24).
+- `/catalogo/sortidos` — sortido por loja (CAT-27).
+- Legado `/produtos` mantém-se.
+- Legado `/produtos` mantém-se em paralelo.
 
 ---
 
