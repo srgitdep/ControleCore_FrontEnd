@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
 import { useProducts, useCategories } from '@/features/produtos';
-import { usePosStore } from '@/features/vendas';
+import { usePosStore, getStockDisponivel } from '@/features/vendas';
+import type { CartResult } from '@/features/vendas';
 import { useSocket } from '@/shared/hooks';
 import { useProcessarVenda } from '@/features/vendas';
 import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
@@ -151,7 +152,14 @@ export function POSPage() {
           
           const foundProduct = products.find(p => p.codigoBarras === barcode);
           if (foundProduct) {
-            addItem(foundProduct);
+            const r = addItem(foundProduct);
+            if (!r.ok) {
+              toast.error(
+                r.disponivel > 0
+                  ? `${r.nome}: apenas ${r.disponivel} em stock.`
+                  : `${r.nome} está esgotado.`,
+              );
+            }
           } else {
             toast.error('Produto não encontrado.');
           }
@@ -170,6 +178,19 @@ export function POSPage() {
   }, [products, addItem, receiptData]);
 
   // ──â”€ Actions ────────────────────────────────────────────────────────────â”€
+
+  /** Avisa o operador quando o carrinho recusa a alteração por falta de stock. */
+  const avisarSeRecusado = (resultado: CartResult) => {
+    if (!resultado.ok) {
+      toast.error(
+        resultado.disponivel > 0
+          ? `${resultado.nome}: apenas ${resultado.disponivel} em stock.`
+          : `${resultado.nome} está esgotado.`,
+      );
+    }
+    return resultado.ok;
+  };
+
   const handleOpenSession = async () => {
     if (!selectedCaixaId) return toast.error('Selecione um caixa.');
     abrirSessaoMutation.mutate(
@@ -426,10 +447,10 @@ export function POSPage() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 auto-rows-max">
                   {products.map((product) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      onAdd={() => addItem(product)} 
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={() => avisarSeRecusado(addItem(product))}
                     />
                   ))}
                 </div>
@@ -504,19 +525,30 @@ export function POSPage() {
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.cartQuantity - 1)}
+                        onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity - 1))}
                         className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="text-xs font-bold w-6 text-center text-gray-800">{item.cartQuantity}</span>
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.cartQuantity + 1)}
-                        className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors"
+                      <button
+                        onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity + 1))}
+                        disabled={item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel}
+                        title={
+                          item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel
+                            ? `Apenas ${item.stockDisponivel} em stock`
+                            : undefined
+                        }
+                        className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-600"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
+                    {item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel && (
+                      <span className="text-[10px] font-semibold text-amber-600">
+                        Máx. em stock
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button 
@@ -851,14 +883,34 @@ export function POSPage() {
 
 // ──â”€ Componente Interno: ProductCard ────────────────────────────────────────
 function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }) {
+  const disponivel = getStockDisponivel(product);
+  const esgotado = disponivel !== undefined && disponivel <= 0;
+
   return (
-    <button 
+    <button
       onClick={onAdd}
-      className="group bg-white rounded-2xl p-3 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 relative text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+      disabled={esgotado}
+      className={cn(
+        'group bg-white rounded-2xl p-3 border border-gray-100 shadow-sm transition-all duration-300 flex flex-col h-full relative text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500',
+        esgotado
+          ? 'opacity-60 cursor-not-allowed'
+          : 'hover:shadow-xl transform hover:-translate-y-1',
+      )}
     >
-      
+
       <div className="relative bg-gray-50 rounded-xl aspect-square mb-3 overflow-hidden flex items-center justify-center p-4">
-        
+
+        {esgotado && (
+          <span className="absolute top-2 left-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            Esgotado
+          </span>
+        )}
+        {!esgotado && disponivel !== undefined && disponivel <= 5 && (
+          <span className="absolute top-2 left-2 z-10 rounded-md bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            Restam {disponivel}
+          </span>
+        )}
+
         {product.imagemUrl ? (
           <img 
             src={product.imagemUrl} 

@@ -28,4 +28,16 @@ export interface Product {
   updatedAt: string;
   
   categoria?: Category;
+
+  /** Saldos por armazém, devolvidos na listagem para o POS aferir disponibilidade. */
+  stocks?: ProductStock[];
+}
+
+export interface ProductStock {
+  armazemId: string;
+  currentQuantity: number;
+  armazem?: {
+    tipo: string;
+    isActive: boolean;
+  };
 }

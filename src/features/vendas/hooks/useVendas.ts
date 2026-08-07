@@ -10,10 +10,15 @@ export function useProcessarVenda() {
     mutationFn: (data: ProcessarVendaDto) => processarVenda(data),
     onSuccess: () => {
       toast.success('Venda processada com sucesso!');
-      // Invalidate relevant queries (e.g. caixas, finance, products)
       queryClient.invalidateQueries({ queryKey: ['minha-sessao'] });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       queryClient.invalidateQueries({ queryKey: ['finance'] });
+      // A venda abate stock e cria movimentos: sem isto, quem tenha o módulo de
+      // Stock aberto continuaria a ver saldos anteriores à venda.
+      queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['all-stock-movements'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao processar venda.');

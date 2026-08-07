@@ -44,6 +44,10 @@ export function useStockMutations() {
     queryClient.invalidateQueries({ queryKey: ['stocks'] });
     queryClient.invalidateQueries({ queryKey: ['stock'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    queryClient.invalidateQueries({ queryKey: ['all-stock-movements'] });
+    // O POS lê disponibilidade a partir desta chave: um ajuste ou transferência tem
+    // de se reflectir no catálogo do caixa.
+    queryClient.invalidateQueries({ queryKey: ['produtos'] });
   };
 
   const handleError = (error: any) => {
