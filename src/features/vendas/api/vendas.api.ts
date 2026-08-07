@@ -19,6 +19,8 @@ export interface ProcessarVendaDto {
   itens: VendaItemDto[];
   // O backend aceita array de pagamentos (split payment)
   pagamentos: PagamentoVendaDto[];
+  // Desconto aplicado ao total da venda, para além dos descontos por linha
+  descontoGlobal?: number;
   clienteId?: string;
   emailCliente?: string;
 }

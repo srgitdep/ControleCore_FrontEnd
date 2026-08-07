@@ -12,14 +12,42 @@ export interface CartItem {
   taxaIva: number;
   cartQuantity: number;
   desconto: number; // Desconto por linha, em MZN
+  /** Saldo disponível no ponto de venda quando o item foi adicionado. */
+  stockDisponivel?: number;
 }
+
+/**
+ * Saldo do produto no armazém que serve de ponto de venda, seguindo a mesma regra
+ * do backend: o armazém activo do tipo "Venda"; se a loja tiver um só armazém
+ * activo, é esse. Devolve `undefined` quando a informação não veio na resposta,
+ * caso em que a validação de disponibilidade é deixada ao backend.
+ */
+export function getStockDisponivel(product: Product): number | undefined {
+  if (!product.stocks) return undefined;
+
+  const activos = product.stocks.filter((s) => s.armazem?.isActive !== false);
+  if (activos.length === 0) return 0;
+
+  const deVenda = activos.filter((s) => s.armazem?.tipo?.toUpperCase() === 'VENDA');
+  if (deVenda.length === 1) return deVenda[0].currentQuantity;
+  if (activos.length === 1) return activos[0].currentQuantity;
+
+  // Loja ambígua (vários armazéns, nenhum ou mais do que um de venda): o backend
+  // recusa a venda com erro explícito, por isso não se antecipa aqui um valor.
+  return undefined;
+}
+
+/** Resultado de uma alteração ao carrinho, para a UI poder informar o operador. */
+export type CartResult =
+  | { ok: true }
+  | { ok: false; motivo: 'SEM_STOCK'; disponivel: number; nome: string };
 
 interface POSState {
   // ── Carrinho ──────────────────────────────────────────────────────────────
   cartItems: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number) => CartResult;
   removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  updateQuantity: (productId: string, quantity: number) => CartResult;
   updateLineDiscount: (productId: string, discount: number) => void;
   clearCart: () => void;
 
@@ -51,13 +79,22 @@ export const usePosStore = create<POSState>((set, get) => ({
   cartItems: [],
 
   addItem: (product, quantity = 1) => {
+    const disponivel = getStockDisponivel(product);
+    const existing = get().cartItems.find(item => item.id === product.id);
+    const totalPretendido = (existing?.cartQuantity ?? 0) + quantity;
+
+    // Só bloqueia quando a disponibilidade é conhecida. O backend continua a ser a
+    // autoridade — isto evita ao operador montar um carrinho que iria falhar.
+    if (disponivel !== undefined && totalPretendido > disponivel) {
+      return { ok: false, motivo: 'SEM_STOCK', disponivel, nome: product.nome };
+    }
+
     set((state) => {
-      const existing = state.cartItems.find(item => item.id === product.id);
       if (existing) {
         return {
           cartItems: state.cartItems.map(item =>
             item.id === product.id
-              ? { ...item, cartQuantity: item.cartQuantity + quantity }
+              ? { ...item, cartQuantity: totalPretendido, stockDisponivel: disponivel }
               : item,
           ),
         };
@@ -73,10 +110,13 @@ export const usePosStore = create<POSState>((set, get) => ({
             taxaIva: product.taxaIva,
             cartQuantity: quantity,
             desconto: 0,
+            stockDisponivel: disponivel,
           },
         ],
       };
     });
+
+    return { ok: true };
   },
 
   removeItem: (productId) => {
@@ -88,13 +128,21 @@ export const usePosStore = create<POSState>((set, get) => ({
   updateQuantity: (productId, quantity) => {
     if (quantity <= 0) {
       get().removeItem(productId);
-      return;
+      return { ok: true };
     }
+
+    const item = get().cartItems.find(i => i.id === productId);
+    if (item?.stockDisponivel !== undefined && quantity > item.stockDisponivel) {
+      return { ok: false, motivo: 'SEM_STOCK', disponivel: item.stockDisponivel, nome: item.nome };
+    }
+
     set((state) => ({
-      cartItems: state.cartItems.map(item =>
-        item.id === productId ? { ...item, cartQuantity: quantity } : item,
+      cartItems: state.cartItems.map(i =>
+        i.id === productId ? { ...i, cartQuantity: quantity } : i,
       ),
     }));
+
+    return { ok: true };
   },
 
   updateLineDiscount: (productId, discount) => {
