@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Mail, ArrowLeft, SendHorizonal } from 'lucide-react';
+import { Mail, ArrowLeft, SendHorizonal, ShieldAlert } from 'lucide-react';
 import { forgotPasswordApi } from '../api/auth.api';
 import { cn } from '@/shared/utils';
 
@@ -16,6 +16,7 @@ type FormData = z.infer<typeof schema>;
 
 export function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   const {
     register,
@@ -25,7 +26,8 @@ export function ForgotPasswordPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await forgotPasswordApi({ email: data.email });
+      const res = await forgotPasswordApi({ email: data.email });
+      setFeedback(res.message);
       setSent(true);
     } catch {
       toast.error('Ocorreu um erro. Tente novamente.');
@@ -48,7 +50,7 @@ export function ForgotPasswordPage() {
             <div className="mb-6 text-center">
               <h1 className="text-2xl font-bold text-slate-900 mb-1">Recuperar Password</h1>
               <p className="text-slate-500 text-sm">
-                Introduza o e-mail associado à sua conta e enviaremos um código de verificação.
+                Introduza o e-mail associado à sua conta e enviaremos os novos dados de acesso.
               </p>
             </div>
 
@@ -88,7 +90,7 @@ export function ForgotPasswordPage() {
                 ) : (
                   <>
                     <SendHorizonal size={16} />
-                    Enviar Código
+                    Recuperar Senha
                   </>
                 )}
               </button>
@@ -102,9 +104,16 @@ export function ForgotPasswordPage() {
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Verifique o seu e-mail</h2>
             <p className="text-slate-500 text-sm">
-              Se o endereço existir na nossa base, um código de verificação foi enviado.
-              Verifique a sua caixa de entrada.
+              {feedback}
             </p>
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-left">
+              <ShieldAlert size={16} className="mt-0.5 shrink-0 text-amber-600" />
+              <p className="text-xs text-amber-800">
+                Por segurança, a recuperação por conta própria é limitada a 3 vezes.
+                Depois disso, terá de contactar o administrador da sua empresa para
+                repor o acesso.
+              </p>
+            </div>
           </div>
         )}
 
