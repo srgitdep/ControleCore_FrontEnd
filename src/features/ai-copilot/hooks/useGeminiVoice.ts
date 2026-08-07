@@ -316,7 +316,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
 
     // Derivar URL do Socket.io a partir da VITE_API_URL
-    const baseUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3000/api/v1';
+    const baseUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3100/api/v1';
     const socketHost = baseUrl.replace(/\/api\/v1\/?$/, '');
 
     const socket = io(`${socketHost}/ai-copilot/voice`, {

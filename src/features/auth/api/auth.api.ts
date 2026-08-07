@@ -14,7 +14,7 @@ export const loginApi = (payload: LoginPayload) =>
 export const logoutApi = () =>
   api.post('/auth/logout').then((r) => r.data);
 
-// POST /auth/forgot-password — envia código de 6 dÍgitos por email
+// POST /auth/forgot-password — redefine a senha e envia nome, código de acesso e nova senha por email
 export const forgotPasswordApi = (payload: ForgotPasswordPayload) =>
   api.post<{ message: string }>('/auth/forgot-password', payload).then((r) => r.data);
 
