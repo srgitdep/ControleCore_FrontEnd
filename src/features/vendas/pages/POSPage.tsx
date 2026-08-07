@@ -33,18 +33,16 @@ function useDebounce<T>(value: T, delay: number): T {
 export function POSPage() {
   useSocket();
 
-  const { 
-    searchTerm, setSearchTerm, 
+  const {
+    searchTerm, setSearchTerm,
     selectedCategoryId, setSelectedCategory,
-    cartItems, addItem, removeItem, updateQuantity, clearCart
+    cartItems, addItem, removeItem, updateQuantity, clearCart,
+    descontoGlobal, getTotal
   } = usePosStore();
 
-  const total = cartItems.reduce((acc, item) => {
-    const subtotalLinha = item.precoVenda * item.cartQuantity;
-    const taxaIva = item.taxaIva || 0;
-    const valorIva = subtotalLinha * (taxaIva / 100);
-    return acc + subtotalLinha + valorIva;
-  }, 0);
+  // O store é a fonte única do total: aplica descontos de linha e desconto global,
+  // que este ecrã antes ignorava ao recalcular por si.
+  const total = getTotal();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const { data: categoriesData } = useCategories();
@@ -289,8 +287,10 @@ export function POSPage() {
       itens: cartItems.map(item => ({
         produtoId: item.id,
         quantidade: item.cartQuantity,
+        desconto: item.desconto,
       })),
-      pagamentos: pagamentos
+      pagamentos: pagamentos,
+      descontoGlobal,
     };
 
     processarVendaMutation.mutate(payload, {
