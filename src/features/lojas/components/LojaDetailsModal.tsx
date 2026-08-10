@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
 import { criarCaixa, removerCaixa } from '@/features/vendas';
-import { createArmazem, deleteArmazem, updateLoja } from '@/features/lojas';
+import { createArmazem, deleteArmazem, updateLoja, TIPOS_ARMAZEM } from '@/features/lojas';
 import toast from 'react-hot-toast';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void }) {
@@ -10,6 +10,10 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   // States para novos
   const [novoCaixa, setNovoCaixa] = useState('');
   const [novoArmazem, setNovoArmazem] = useState('');
+  // O tipo era fixo em 'Venda', o que impedia criar reservas e colide com a regra
+  // de um único ponto de venda por loja.
+  const [novoArmazemTipo, setNovoArmazemTipo] = useState<string>('Reserva');
+  const [isCreatingArmazem, setIsCreatingArmazem] = useState(false);
   const [gestorId, setGestorId] = useState(loja.gestorId || '');
   const [isSavingGestor, setIsSavingGestor] = useState(false);
   const [isCreatingCaixa, setIsCreatingCaixa] = useState(false);
@@ -33,13 +37,18 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   const handleCreateArmazem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoArmazem.trim()) return;
+    setIsCreatingArmazem(true);
     try {
-      await createArmazem({ lojaId: loja.id, nome: novoArmazem, tipo: 'Venda' });
+      await createArmazem({ lojaId: loja.id, nome: novoArmazem, tipo: novoArmazemTipo });
       toast.success('Armazém adicionado');
       setNovoArmazem('');
       onUpdate();
-    } catch {
-      toast.error('Erro ao adicionar armazém');
+    } catch (error: any) {
+      // O backend recusa um segundo armazém de venda com mensagem explícita —
+      // mostrá-la é mais útil do que um erro genérico.
+      toast.error(error?.response?.data?.message || 'Erro ao adicionar armazém');
+    } finally {
+      setIsCreatingArmazem(false);
     }
   };
 
@@ -55,13 +64,15 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   };
 
   const handleDeleteArmazem = async (id: string) => {
-    if (!confirm('Apagar armazém?')) return;
+    // Desactivação lógica: o stock e os movimentos mantêm-se, por isso o texto não
+    // deve prometer que o armazém é apagado.
+    if (!confirm('Desactivar este armazém? Deixa de aceitar recepções, mas o histórico de stock mantém-se.')) return;
     try {
       await deleteArmazem(id);
-      toast.success('Armazém removido');
+      toast.success('Armazém desactivado');
       onUpdate();
-    } catch {
-      toast.error('Erro ao remover armazém');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao desactivar armazém');
     }
   };
 
@@ -170,35 +181,67 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
           {activeTab === 'ARMAZENS' && (
             <div className="space-y-6">
               <form onSubmit={handleCreateArmazem} className="flex gap-3">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={novoArmazem}
                   onChange={e => setNovoArmazem(e.target.value)}
-                  placeholder="Ex: Armazém Retaguarda" 
+                  placeholder="Ex: Armazém Retaguarda"
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
-                <button type="submit" disabled={!novoArmazem.trim()} className="px-5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
-                  <Plus size={18} /> Adicionar
+                <select
+                  value={novoArmazemTipo}
+                  onChange={e => setNovoArmazemTipo(e.target.value)}
+                  title="O POS abate stock do armazém de Venda — só pode existir um por loja"
+                  className="px-3 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
+                >
+                  {TIPOS_ARMAZEM.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <button type="submit" disabled={!novoArmazem.trim() || isCreatingArmazem} className="px-5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
+                  {isCreatingArmazem ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Adicionar
                 </button>
               </form>
+              <p className="text-xs text-slate-500 -mt-1">
+                O <strong>ponto de venda</strong> é o armazém de tipo <em>Venda</em>, de onde o POS
+                abate stock. Só pode existir um por loja.
+              </p>
 
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 {loja.armazens?.length > 0 ? (
                   <ul className="divide-y divide-slate-100">
                     {loja.armazens.map((a: any) => (
-                      <li key={a.id} className="flex items-center justify-between p-4">
+                      <li key={a.id} className={`flex items-center justify-between p-4 ${a.isActive === false ? 'opacity-60' : ''}`}>
                         <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                          <div className={`p-2 rounded-lg ${a.tipo?.toUpperCase() === 'VENDA' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
                             <Box size={18} />
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{a.nome}</p>
-                            <p className="text-xs text-slate-500">Tipo: {a.tipo}</p>
+                            <p className="font-medium text-slate-900 flex items-center gap-2">
+                              {a.nome}
+                              {a.tipo?.toUpperCase() === 'VENDA' && (
+                                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                                  Ponto de venda
+                                </span>
+                              )}
+                              {a.isActive === false && (
+                                <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                                  Inactivo
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-slate-500">Tipo: {a.tipo || '—'}</p>
                           </div>
                         </div>
-                        <button onClick={() => handleDeleteArmazem(a.id)} className="text-slate-400 hover:text-rose-500 p-2 transition-colors">
-                          <Trash2 size={18} />
-                        </button>
+                        {a.isActive !== false && (
+                          <button
+                            onClick={() => handleDeleteArmazem(a.id)}
+                            title="Desactivar armazém"
+                            className="text-slate-400 hover:text-rose-500 p-2 transition-colors"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
