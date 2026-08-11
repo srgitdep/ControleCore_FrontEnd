@@ -18,6 +18,8 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
+import { FornecedoresPage } from '@/features/fornecedores';
+import { ArmazensPage } from '@/features/armazens';
 import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
 
@@ -75,10 +77,11 @@ export const router = createBrowserRouter([
 
           // Módulos â€â€ em desenvolvimento
           { path: '/produtos',      element: <ProductListPage /> },
-          { path: '/fornecedores',  element: <PurchasesPage /> },
+          { path: '/fornecedores',  element: <FornecedoresPage /> },
           { path: '/compras',       element: <PurchasesPage /> },
           { path: '/stock',         element: <StockListPage /> },
           { path: '/stock/:id',     element: <StockDetailsPage /> },
+          { path: '/armazens',      element: <ArmazensPage /> },
           { path: '/vendas',        element: <POSPage /> },
           { path: '/sessoes-historico', element: <CaixasHistoricoPage /> },
           { path: '/lojas',         element: <LojasPage /> },
