@@ -64,7 +64,9 @@ export function ShiftManagementPage() {
   const today = formatDate(new Date());
 
   return (
-    <div className="p-6 space-y-6">
+    // Ver a nota em `EmployeeListPage`: sem padding próprio e com `<h2>`, por passar a
+    // ser um separador dentro do RH.
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
@@ -72,7 +74,7 @@ export function ShiftManagementPage() {
             <CalendarDays className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Gestão de Escalas</h1>
+            <h2 className="text-xl font-semibold text-slate-900">Gestão de Escalas</h2>
             <p className="text-sm text-slate-500">
               Semana de{' '}
               {monday.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })} a{' '}

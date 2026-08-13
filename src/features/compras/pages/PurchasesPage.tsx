@@ -1,265 +1,338 @@
-import { useState, useEffect } from 'react';
-import { ShoppingBag, Package, ArrowRight, PackageCheck } from 'lucide-react';
-import { purchasesApi, EstadoPedidoCompra } from '@/features/compras';
-import type { PurchaseOrder } from '@/features/compras';
-import { suppliersApi } from '@/features/fornecedores';
-import type { Supplier } from '@/features/fornecedores';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
+import { ShoppingBag, ShoppingCart, Truck, Sparkles, PackageCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { purchasesApi, EstadoPedidoCompra } from '../api/purchases.api';
+import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
+import { FornecedoresTab } from '@/features/fornecedores';
+import { Tabs, type TabDefinition } from '@/shared/ui';
+import { usePermissions } from '@/features/auth';
 import { cn } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
 import { RececoesModal } from '../components/RececoesModal';
+import { SugestaoComprasModal } from '../components/SugestaoComprasModal';
+import { CriarPedidoModal } from '../components/CriarPedidoModal';
 
+type Aba = 'pedidos' | 'fornecedores';
+
+const moeda = (valor: number) =>
+  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
+
+/**
+ * A secção Compras: pedidos e fornecedores.
+ *
+ * ## Porque Fornecedores vive aqui
+ *
+ * Fornecedores estava em dois lugares — uma entrada no menu com CRUD completo, e um
+ * separador aqui que era uma tabela de quatro colunas só de leitura. Duas vistas dos
+ * mesmos dados, uma delas incompleta, e a incompleta era a que aparecia no contexto em
+ * que os fornecedores importam: a fazer uma compra.
+ *
+ * Fica só aqui, com o CRUD completo mais o desempenho e o histórico.
+ *
+ * ## O que passou a funcionar
+ *
+ * O botão «Sugestão de Compras» mostrava um toast que dizia «(Simulação MVP)» sem fazer
+ * nenhuma chamada de rede. O botão «Novo Pedido» não tinha `onClick` — criar um pedido
+ * pela interface era impossível.
+ */
 export function PurchasesPage() {
-  const [activeTab, setActiveTab] = useState<'PEDIDOS' | 'FORNECEDORES'>('PEDIDOS');
-  
-  // Data States
-  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { hasPermission } = usePermissions();
 
-  // Modal State
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
-  const [orderRececoes, setOrderRececoes] = useState<PurchaseOrder | null>(null);
+  // As rotas de fornecedor exigem `VER_FORNECEDOR`, as de compras `GERIR_COMPRAS`. Um
+  // perfil com uma e não a outra veria o separador falhar com 403 — melhor não o
+  // mostrar do que mostrar um erro.
+  const podeVerFornecedores = hasPermission('read', 'fornecedor');
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
+  const ABAS: TabDefinition<Aba>[] = [
+    { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
+    ...(podeVerFornecedores
+      ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck }]
+      : []),
+  ];
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      if (activeTab === 'PEDIDOS') {
-        const data = await purchasesApi.getOrders();
-        setOrders(data);
-      } else {
-        const data = await suppliersApi.getSuppliers();
-        setSuppliers(data);
-      }
-    } catch (err) {
-      toast.error('Erro ao carregar dados');
-    } finally {
-      setLoading(false);
-    }
+  const doUrl = searchParams.get('tab');
+  const aba: Aba = ABAS.some((a) => a.id === doUrl) ? (doUrl as Aba) : 'pedidos';
+
+  const [aReceber, setAReceber] = useState<PurchaseOrder | null>(null);
+  const [aVerRececoes, setAVerRececoes] = useState<PurchaseOrder | null>(null);
+  const [mostrarSugestao, setMostrarSugestao] = useState(false);
+  const [aCriar, setACriar] = useState<{
+    linhas?: { produtoId: string; nome: string; quantidade: number; custoUnitario: number }[];
+    fornecedorId?: string;
+  } | null>(null);
+
+  const { data: pedidos = [], isLoading } = useQuery({
+    queryKey: ['compras-pedidos'],
+    queryFn: () => purchasesApi.getOrders(),
+    enabled: aba === 'pedidos',
+  });
+
+  const recarregar = () => queryClient.invalidateQueries({ queryKey: ['compras-pedidos'] });
+
+  /** Da sugestão para o pedido: as linhas escolhidas viram um rascunho. */
+  const daSugestaoParaPedido = (linhas: SugestaoCompra[]) => {
+    if (linhas.length === 0) return;
+
+    // O fornecedor do primeiro; um pedido é a um fornecedor só, e o modal da sugestão
+    // já avisa quando as linhas escolhidas são de fornecedores diferentes.
+    const fornecedorId = linhas[0].fornecedorSugerido?.id;
+
+    setMostrarSugestao(false);
+    setACriar({
+      fornecedorId,
+      linhas: linhas.map((l) => ({
+        produtoId: l.produtoId,
+        nome: l.nome,
+        quantidade: l.quantidadeSugerida,
+        custoUnitario: l.fornecedorSugerido?.custoCompra ?? 0,
+      })),
+    });
   };
 
-  const handleSuggestPurchases = async () => {
-    toast.loading('Gerando sugestão de compras...', { id: 'sugestao' });
-    try {
-      // Simplification for MVP: get all products, filter if stock < min
-      // Wait, we don't have stock data easily available in getProducts here.
-      // But we can just show a toast for the MVP.
-      toast.success('Sugestão gerada. (Simulação MVP)', { id: 'sugestao' });
-    } catch (error) {
-      toast.error('Erro ao gerar sugestão', { id: 'sugestao' });
-    }
-  };
-
-  const getStatusBadge = (status: EstadoPedidoCompra) => {
-    switch (status) {
-      case EstadoPedidoCompra.RASCUNHO:
-        return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Rascunho</span>;
-      case EstadoPedidoCompra.ENVIADO:
-        return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Enviado</span>;
-      case EstadoPedidoCompra.RECEBIDO:
-        return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Recebido</span>;
-      case EstadoPedidoCompra.CANCELADO:
-        return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Cancelado</span>;
-      default:
-        return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">{status}</span>;
-    }
-  };
-
-  const handleOrderClick = (order: PurchaseOrder) => {
-    if (order.estado === EstadoPedidoCompra.ENVIADO || order.estado === EstadoPedidoCompra.PARCIAL) {
-      setSelectedOrder(order);
+  const aoClicarNoPedido = (pedido: PurchaseOrder) => {
+    if (pedido.estado === EstadoPedidoCompra.ENVIADO || pedido.estado === EstadoPedidoCompra.PARCIAL) {
+      setAReceber(pedido);
+    } else if (pedido.estado === EstadoPedidoCompra.RECEBIDO) {
+      // Um pedido recebido não aceita mais mercadoria, mas as suas recepções
+      // interessam — antes, clicar nele só dava um toast a dizer o estado.
+      setAVerRececoes(pedido);
     } else {
-      toast('Este pedido está ' + order.estado, { icon: 'â„¹ï¸' });
+      toast(`Este pedido está em ${pedido.estado.toLowerCase()}.`, { icon: 'ℹ️' });
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Módulo de Compras</h1>
-          <p className="text-gray-500">Gestão de fornecedores e pedidos de compra</p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+            <ShoppingCart className="h-6 w-6 text-blue-600" />
+            Compras
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Pedidos, recepções de mercadoria e fornecedores.
+          </p>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleSuggestPurchases}
-            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2"
-          >
-            <Package className="w-4 h-4" />
-            Sugestão de Compras
-          </button>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2">
-            <ShoppingBag className="w-4 h-4" />
-            Novo Pedido
-          </button>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('PEDIDOS')}
-          className={cn(
-            "pb-4 px-2 font-medium text-sm transition-colors relative",
-            activeTab === 'PEDIDOS' ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"
-          )}
-        >
-          Pedidos de Compra
-          {activeTab === 'PEDIDOS' && (
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('FORNECEDORES')}
-          className={cn(
-            "pb-4 px-2 font-medium text-sm transition-colors relative",
-            activeTab === 'FORNECEDORES' ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"
-          )}
-        >
-          Fornecedores
-          {activeTab === 'FORNECEDORES' && (
-            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />
-          )}
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">Carregando...</div>
-        ) : activeTab === 'PEDIDOS' ? (
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 font-medium">Data</th>
-                <th className="px-6 py-4 font-medium">Fornecedor</th>
-                <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium">Responsável</th>
-                <th className="px-6 py-4 font-medium text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Nenhum pedido de compra encontrado.
-                  </td>
-                </tr>
-              ) : (
-                orders.map(order => (
-                  <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(order.dataPedido).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {order.fornecedor?.nome || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4">
-                      {getStatusBadge(order.estado)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {order.criadoPor?.name || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        {/* Disponível em qualquer estado: anular faz mais sentido justamente
-                            num pedido já RECEBIDO, em que a entrada foi errada. */}
-                        {order.estado !== EstadoPedidoCompra.PENDENTE &&
-                          order.estado !== EstadoPedidoCompra.RASCUNHO && (
-                          <button
-                            onClick={() => setOrderRececoes(order)}
-                            className="text-slate-500 hover:text-emerald-600 text-sm font-medium flex items-center gap-1"
-                            title="Ver e anular recepções"
-                          >
-                            <PackageCheck className="w-4 h-4" /> Recepções
-                          </button>
-                        )}
-                        {order.estado === EstadoPedidoCompra.ENVIADO ||
-                         order.estado === EstadoPedidoCompra.PARCIAL ? (
-                          <button
-                            onClick={() => handleOrderClick(order)}
-                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
-                          >
-                            Receber <ArrowRight className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleOrderClick(order)}
-                            className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-                          >
-                            Detalhes
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        ) : (
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 font-medium">Nome</th>
-                <th className="px-6 py-4 font-medium">NUIT</th>
-                <th className="px-6 py-4 font-medium">Contacto</th>
-                <th className="px-6 py-4 font-medium">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {suppliers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                    Nenhum fornecedor encontrado.
-                  </td>
-                </tr>
-              ) : (
-                suppliers.map(supplier => (
-                  <tr key={supplier.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{supplier.nome}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{supplier.nuit || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {supplier.email && <div>{supplier.email}</div>}
-                      {supplier.telefone && <div>{supplier.telefone}</div>}
-                    </td>
-                    <td className="px-6 py-4">
-                      {supplier.isActive ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Ativo</span>
-                      ) : (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Inativo</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {aba === 'pedidos' && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setMostrarSugestao(true)}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Sparkles className="h-4 w-4 text-indigo-600" />
+              Sugestão de Compras
+            </button>
+            <button
+              onClick={() => setACriar({})}
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Novo Pedido
+            </button>
+          </div>
         )}
       </div>
 
-      {selectedOrder && (
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <Tabs
+          tabs={ABAS}
+          active={aba}
+          onChange={(id) => setSearchParams({ tab: id }, { replace: true })}
+          label="Compras"
+          className="px-4"
+        />
+
+        <div className="p-4 sm:p-6">
+          {aba === 'pedidos' && (
+            <ListaDePedidos
+              pedidos={pedidos}
+              isLoading={isLoading}
+              onClicar={aoClicarNoPedido}
+              onVerRececoes={setAVerRececoes}
+            />
+          )}
+          {aba === 'fornecedores' && <FornecedoresTab />}
+        </div>
+      </div>
+
+      {aReceber && (
         <RecebimentoModal
-          order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-          onSuccess={() => {
-            setSelectedOrder(null);
-            fetchData();
-          }}
+          order={aReceber}
+          onClose={() => setAReceber(null)}
+          onSuccess={recarregar}
         />
       )}
 
-      {orderRececoes && (
+      {aVerRececoes && (
         <RececoesModal
-          order={orderRececoes}
-          onClose={() => setOrderRececoes(null)}
-          onSuccess={fetchData}
+          order={aVerRececoes}
+          onClose={() => setAVerRececoes(null)}
+          onSuccess={recarregar}
+        />
+      )}
+
+      {mostrarSugestao && (
+        <SugestaoComprasModal
+          onClose={() => setMostrarSugestao(false)}
+          onCriarPedido={daSugestaoParaPedido}
+        />
+      )}
+
+      {aCriar && (
+        <CriarPedidoModal
+          linhasIniciais={aCriar.linhas}
+          fornecedorIdInicial={aCriar.fornecedorId}
+          onClose={() => setACriar(null)}
+          onCreated={recarregar}
         />
       )}
     </div>
+  );
+}
+
+// ── A lista de pedidos ───────────────────────────────────────────────────────
+
+function ListaDePedidos({
+  pedidos,
+  isLoading,
+  onClicar,
+  onVerRececoes,
+}: {
+  pedidos: PurchaseOrder[];
+  isLoading: boolean;
+  onClicar: (p: PurchaseOrder) => void;
+  onVerRececoes: (p: PurchaseOrder) => void;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        A carregar pedidos...
+      </div>
+    );
+  }
+
+  if (pedidos.length === 0) {
+    return (
+      <div className="py-16 text-center">
+        <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-slate-300" />
+        <p className="text-sm font-medium text-slate-700">Ainda não há pedidos de compra.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Use a sugestão de compras para saber o que repor, ou crie um pedido directamente.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-2.5 font-medium">Pedido</th>
+            <th className="px-3 py-2.5 font-medium">Fornecedor</th>
+            <th className="hidden px-3 py-2.5 font-medium sm:table-cell">Data</th>
+            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Linhas</th>
+            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Valor</th>
+            <th className="px-3 py-2.5 font-medium">Estado</th>
+            <th className="px-4 py-2.5" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {pedidos.map((p) => {
+            // O total sai dos itens, que a listagem não inclui — mostra-se «—» em vez
+            // de zero, que se leria como um pedido sem valor.
+            const total = p.itens?.reduce(
+              (soma, i) => soma + i.quantidadePedida * i.custoUnitario - (i.desconto ?? 0),
+              0,
+            );
+
+            const recebivel =
+              p.estado === EstadoPedidoCompra.ENVIADO || p.estado === EstadoPedidoCompra.PARCIAL;
+
+            return (
+              <tr key={p.id} className="hover:bg-slate-50/60">
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => onClicar(p)}
+                    className="font-mono text-xs text-slate-600 hover:text-blue-600 hover:underline"
+                  >
+                    #{p.id.slice(0, 8)}
+                  </button>
+                </td>
+                <td className="px-3 py-3 font-medium text-slate-900">
+                  {p.fornecedor?.nome ?? '—'}
+                </td>
+                <td className="hidden px-3 py-3 text-slate-500 sm:table-cell">
+                  {new Date(p.dataPedido).toLocaleDateString('pt-MZ', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </td>
+                <td className="hidden px-3 py-3 text-right text-slate-500 md:table-cell">
+                  {p.itens?.length ?? '—'}
+                </td>
+                <td className="hidden px-3 py-3 text-right text-slate-700 md:table-cell">
+                  {total !== undefined ? moeda(total) : '—'}
+                </td>
+                <td className="px-3 py-3">
+                  <EstadoBadge estado={p.estado} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    {recebivel && (
+                      <button
+                        onClick={() => onClicar(p)}
+                        title="Dar entrada de mercadoria"
+                        className="p-2 text-slate-400 transition-colors hover:text-emerald-600"
+                      >
+                        <PackageCheck size={16} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onVerRececoes(p)}
+                      title="Ver recepções"
+                      className="p-2 text-slate-400 transition-colors hover:text-blue-600"
+                    >
+                      <Truck size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EstadoBadge({ estado }: { estado: string }) {
+  // `PARCIAL` e `PENDENTE` caíam no ramo por omissão e apareciam em azul, como se
+  // fossem estados neutros — mas são pedidos à espera de mercadoria.
+  const cores: Record<string, string> = {
+    RASCUNHO: 'bg-slate-100 text-slate-700',
+    ENVIADO: 'bg-blue-100 text-blue-700',
+    PENDENTE: 'bg-amber-100 text-amber-800',
+    PARCIAL: 'bg-amber-100 text-amber-800',
+    RECEBIDO: 'bg-emerald-100 text-emerald-700',
+    CANCELADO: 'bg-rose-100 text-rose-700',
+  };
+
+  return (
+    <span
+      className={cn(
+        'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+        cores[estado] ?? 'bg-slate-100 text-slate-700',
+      )}
+    >
+      {estado}
+    </span>
   );
 }

@@ -45,9 +45,14 @@ export function useStockMutations() {
     queryClient.invalidateQueries({ queryKey: ['stock'] });
     queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     queryClient.invalidateQueries({ queryKey: ['all-stock-movements'] });
-    // O POS lê disponibilidade a partir desta chave: um ajuste ou transferência tem
-    // de se reflectir no catálogo do caixa.
-    queryClient.invalidateQueries({ queryKey: ['produtos'] });
+    // O POS e o catálogo lêem disponibilidade a partir desta chave: um ajuste ou
+    // transferência tem de se reflectir no que o caixa vê.
+    //
+    // A chave era `'produtos'`, em português, mas a que `useProducts` usa é
+    // `'products'` (`useCatalog.ts`) — a invalidação não correspondia a nada e o
+    // catálogo mostrava saldos desactualizados até um recarregamento da página. Fica
+    // visível agora que o catálogo é um separador ao lado dos saldos.
+    queryClient.invalidateQueries({ queryKey: ['products'] });
   };
 
   const handleError = (error: any) => {

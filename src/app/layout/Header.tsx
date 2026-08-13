@@ -3,20 +3,29 @@ import { Bell, Menu } from 'lucide-react';
 import { useUIStore } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
 
-// Mapeia o path para o título da página
+/**
+ * Título por rota. A resolução tenta o caminho exacto e depois o primeiro segmento,
+ * pelo que `/stock/:id` herda o de `/stock`.
+ *
+ * `/configuracoes` e `/fornecedores` saíram — a primeira era um placeholder, a segunda
+ * passou a separador das Compras. `/armazens`, `/lojas`, `/financeiro` e `/permissoes`
+ * estavam a faltar e mostravam «ControlCore».
+ */
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':     'Dashboard',
-  '/produtos':      'Produtos',
-  '/fornecedores':  'Fornecedores',
+  '/produtos':      'Produtos & Stock',
+  '/stock':         'Produtos & Stock',
+  '/armazens':      'Armazéns',
   '/compras':       'Compras',
-  '/stock':         'Stock',
   '/vendas':        'Ponto de Venda',
+  '/lojas':         'Lojas & Caixas',
   '/clientes':      'CRM',
   '/crm':           'CRM',
+  '/financeiro':    'Financeiro',
   '/rh':            'Recursos Humanos',
-  '/configuracoes': 'Configurações',
   '/empresas':      'Empresas',
   '/utilizadores':  'Utilizadores',
+  '/permissoes':    'Permissões',
   '/historico':     'Histórico no Sistema',
 };
 

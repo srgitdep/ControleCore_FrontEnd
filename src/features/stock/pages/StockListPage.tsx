@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table';
 import {
   Package,
+  Boxes,
   ArrowRightLeft,
   Plus,
   Minus,
@@ -19,20 +20,23 @@ import {
   ArrowDown,
   Settings2,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { cn } from '@/shared/utils';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
 import { useSocket } from '@/shared/hooks';
-import { ResponsiveTable, Button } from '@/shared/ui';
+import { ResponsiveTable, Button, Tabs, type TabDefinition } from '@/shared/ui';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
+import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'estoque' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
 
-const TABS: { id: StockTab; label: string; icon: React.ElementType }[] = [
-  { id: 'estoque', label: 'Estoque Atual', icon: Package },
+// O catálogo vem primeiro: é por onde se começa (criar o produto) e para onde se volta
+// mais vezes. Os saldos só existem depois de haver produtos.
+const TABS: TabDefinition<StockTab>[] = [
+  { id: 'produtos', label: 'Catálogo', icon: Boxes },
+  { id: 'estoque', label: 'Saldos', icon: Package },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
   { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
 ];
@@ -373,9 +377,27 @@ function MovementsTab() {
 }
 
 // ──â”€ Página Principal ────────────────────────────────────────────────────────â”€
+/**
+ * A secção Stock, com o catálogo de produtos como primeiro separador.
+ *
+ * O separador activo vive no URL (`?tab=produtos`) e não apenas no estado local, por
+ * três razões: a rota `/produtos` redirecciona para cá e precisa de dizer para onde;
+ * um link partilhado abre no separador certo; e o botão «voltar» do browser funciona
+ * entre separadores. É a primeira tab-bar do projecto a fazê-lo — as outras oito
+ * guardam o estado só em memória.
+ */
 export function StockListPage() {
   useSocket();
-  const [activeTab, setActiveTab] = useState<StockTab>('estoque');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const doUrl = searchParams.get('tab');
+  const activeTab: StockTab = TABS.some((t) => t.id === doUrl) ? (doUrl as StockTab) : 'produtos';
+
+  const mudarTab = (id: StockTab) => {
+    // `replace` para não encher o histórico: dez cliques em separadores exigiriam dez
+    // «voltar» para sair da página.
+    setSearchParams({ tab: id }, { replace: true });
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -384,43 +406,20 @@ export function StockListPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Package className="h-6 w-6 text-blue-600" />
-            Gestão de Estoque
+            Produtos e Stock
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Controle de entradas, saÍdas, balanços e inventário fÍsico.
+            Catálogo, saldos por armazém, movimentos e inventário físico.
           </p>
         </div>
       </div>
 
       {/* ──â”€ Tabs ────────────────────────────────────────────────────────────â”€ */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        {/* Tab Bar */}
-        <div className="relative px-4 border-b border-slate-100">
-          <div className="flex gap-1">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all duration-150 -mb-px whitespace-nowrap',
-                    isActive
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
-                  )}
-                >
-                  <Icon size={15} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Tabs tabs={TABS} active={activeTab} onChange={mudarTab} label="Produtos e stock" className="px-4" />
 
-        {/* Tab Content */}
         <div className="p-4 sm:p-6">
+          {activeTab === 'produtos' && <ProductsTab />}
           {activeTab === 'estoque' && <StockCurrentTab />}
           {activeTab === 'movimentos' && <MovementsTab />}
           {activeTab === 'inventario' && <InventoryTab />}

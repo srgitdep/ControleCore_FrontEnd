@@ -2,12 +2,9 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
-  Truck,
   ShoppingCart,
-  BarChart3,
   BarChart2,
   Box,
-  Wallet,
   Store,
   Users,
   UserSquare,
@@ -42,9 +39,22 @@ interface NavGroup {
   items: NavItem[];
 }
 
+/**
+ * O menu.
+ *
+ * Tinha quinze entradas, três delas duplicadas ou vazias: **Fornecedores** aparecia
+ * aqui e como separador das Compras, **Histórico de Sessões** aqui e como separador do
+ * POS (nos dois casos era o mesmo componente montado em dois sítios), e
+ * **Configurações** apontava para um placeholder que nunca foi construído. **Produtos**
+ * e **Stock** eram a mesma matéria vista de dois ângulos, e **Salários** vivia fora do
+ * RH quando é RH.
+ *
+ * Ficam onze, sem duplicados. O que saiu continua alcançável: as rotas antigas
+ * redireccionam para o separador respectivo.
+ */
 const navGroups: NavGroup[] = [
   {
-    title: 'Dashboards',
+    title: 'Gestão',
     items: [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
@@ -53,26 +63,25 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    title: 'Commerce',
+    title: 'Operação',
     items: [
       { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'Histórico de Sessões', icon: History, path: '/sessoes-historico', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
       { label: 'CRM', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Produtos', icon: Package, path: '/produtos' },
-      { label: 'Stock', icon: BarChart3, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
+      { label: 'Produtos & Stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // Compras leva Fornecedores como separador.
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Fornecedores', icon: Truck, path: '/fornecedores', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },
   {
-    title: 'Company',
+    title: 'Empresa',
     items: [
-      { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'Salários', icon: Wallet, path: '/rh/salarios', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Configurações', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      // `MANAGER` entrou porque tinha acesso a Salários (que era entrada própria) e não
+      // a RH. Dentro da secção, o separador de colaboradores é condicionado.
+      { label: 'Recursos Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Histórico no Sistema', icon: History, path: '/historico' },
     ]
   }

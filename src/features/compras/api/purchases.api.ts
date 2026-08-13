@@ -84,9 +84,60 @@ export interface ReceiveMercadoriaDto {
   }[];
 }
 
+// ─── Sugestão de compras ─────────────────────────────────────────────────────
+
+export type MotivoSugestao = 'RUPTURA' | 'ABAIXO_MINIMO' | 'VELOCIDADE';
+export type UrgenciaSugestao = 'CRITICA' | 'ALTA' | 'MEDIA';
+
+export interface SugestaoCompra {
+  produtoId: string;
+  nome: string;
+  stockActual: number;
+  stockMinimo: number;
+  /** Unidades vendidas por dia na janela observada. */
+  mediaDiaria: number;
+  /** Dias até o saldo acabar. `null` quando não houve venda na janela. */
+  diasRestantes: number | null;
+  quantidadeSugerida: number;
+  valorEstimado: number;
+  motivo: MotivoSugestao;
+  urgencia: UrgenciaSugestao;
+  fornecedorSugerido: { id: string; nome: string; custoCompra: number } | null;
+}
+
+export interface ResultadoSugestao {
+  sugestoes: SugestaoCompra[];
+  resumo: {
+    total: number;
+    emRuptura: number;
+    abaixoDoMinimo: number;
+    valorEstimado: number;
+    janelaDias: number;
+    diasCobertura: number;
+    /** Linhas que ficaram fora do limite — não truncar em silêncio. */
+    omitidas: number;
+  };
+}
+
 export const purchasesApi = {
   getOrders: async () => {
     const { data } = await api.get<PurchaseOrder[]>('/compras/pedidos');
+    return data;
+  },
+
+  /**
+   * O que repor e quanto.
+   *
+   * Substitui o `toast.success('Sugestão gerada. (Simulação MVP)')` que não fazia
+   * nenhuma chamada de rede. Cruza o ponto de reposição de cada armazém com a
+   * velocidade de venda.
+   */
+  getSugestoes: async (params?: {
+    janelaDias?: number;
+    diasCobertura?: number;
+    fornecedorId?: string;
+  }) => {
+    const { data } = await api.get<ResultadoSugestao>('/compras/sugestoes', { params });
     return data;
   },
   getOrderById: async (id: string) => {

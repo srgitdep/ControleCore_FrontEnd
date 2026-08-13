@@ -8,6 +8,7 @@ import {
 } from '@/features/lojas';
 import type { Armazem } from '@/features/lojas';
 import { cn } from '@/shared/utils';
+import { ArmazemDetailsModal } from '../components/ArmazemDetailsModal';
 
 /** O armazém deste tipo é o ponto de venda da loja — só pode existir um. */
 const TIPO_VENDA = 'VENDA';
@@ -27,6 +28,10 @@ export function ArmazensPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ lojaId: '', nome: '', tipo: 'Reserva' });
+
+  /** O armazém cujo conteúdo se está a ver. O nome da loja vai junto porque o nome
+   *  do armazém sozinho é ambíguo entre lojas ("Reserva" existe em várias). */
+  const [aVer, setAVer] = useState<{ armazem: Armazem; lojaNome: string } | null>(null);
 
   const carregar = async () => {
     setIsLoading(true);
@@ -230,7 +235,16 @@ export function ArmazensPage() {
                           inactivo && 'opacity-60',
                         )}
                       >
-                        <div className="flex items-center gap-3">
+                        {/* Um `<button>` só nesta zona, e não a envolver o `<li>`
+                            inteiro: os três botões de acção à direita ficariam
+                            aninhados dentro dele, o que é HTML inválido e faz o
+                            clique disparar as duas acções. */}
+                        <button
+                          type="button"
+                          onClick={() => setAVer({ armazem: a, lojaNome: loja.nome })}
+                          title="Ver os produtos deste armazém"
+                          className="flex flex-1 items-center gap-3 rounded-lg p-1 -m-1 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        >
                           <div
                             className={cn(
                               'p-2 rounded-lg',
@@ -255,9 +269,11 @@ export function ArmazensPage() {
                                 </span>
                               )}
                             </p>
-                            <p className="text-xs text-slate-500">Tipo: {a.tipo || '—'}</p>
+                            <p className="text-xs text-slate-500">
+                              Tipo: {a.tipo || '—'} · <span className="text-blue-600">ver produtos</span>
+                            </p>
                           </div>
-                        </div>
+                        </button>
 
                         <div className="flex items-center gap-1">
                           <button
@@ -300,6 +316,17 @@ export function ArmazensPage() {
         stock nas vendas. Só pode existir um por loja. As recepções de mercadoria e as
         transferências usam qualquer armazém activo.
       </p>
+
+      {/* O que está dentro do armazém. Chega-se aqui clicando no armazém, que antes
+          não fazia nada — saber o que lá estava obrigava a ir à secção Stock, onde as
+          posições de todos os armazéns apareciam misturadas e sem filtro. */}
+      {aVer && (
+        <ArmazemDetailsModal
+          armazem={aVer.armazem}
+          lojaNome={aVer.lojaNome}
+          onClose={() => setAVer(null)}
+        />
+      )}
 
       {/* Modal de criação/edição */}
       {showModal && (
