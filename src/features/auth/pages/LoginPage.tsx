@@ -1,267 +1,385 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, LogIn, Lock, UserCircle, BarChart3, Package, Users, Store } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+
 import { useAuth } from '../index';
 import { cn } from '@/shared/utils';
+import { COPY } from '@/shared/constants/copywriting';
+import { Marca } from '@/features/landing';
 
-// ──â”€ Schema de validação (espelha as regras do backend LoginDto) ──────────────â”€
+import '@/features/landing/site.css';
+
+/**
+ * O ecrã de entrada.
+ *
+ * ## O que mudou, e porquê
+ *
+ * A versão anterior era um cartão claro à direita e um painel decorativo à
+ * esquerda com quatro linhas de funcionalidades. Dois problemas:
+ *
+ * 1. **Não parecia o sítio.** A landing tem uma identidade — o jogo de azuis, a
+ *    marca, a tipografia — e o login não a partilhava. Quem clicava em «Entrar»
+ *    aterrava noutro produto.
+ * 2. **Dizia «Gestão Industrial Inteligente».** O produto é de retalho. O texto
+ *    vinha de quando o ecrã foi copiado de outro projecto, e ninguém reparou porque
+ *    estava escrito à mão dentro do JSX, sem passar por sítio nenhum onde se lesse.
+ *
+ * Agora o painel da esquerda é o **mesmo escuro** das secções invertidas da landing,
+ * com a marca em cima, e roda entre as quatro promessas de `COPY.AUTH.SLIDES` — que
+ * são as quatro dores da landing ditas em duas linhas. O formulário fica à direita,
+ * em branco, porque um campo de texto sobre fundo escuro custa a ler.
+ *
+ * ## A ligação de volta
+ *
+ * O `Voltar ao início` existe porque não existia: chegado aqui por engano, o único
+ * caminho de regresso era o botão do browser. É a mesma razão do `Link` na marca.
+ */
+
 const loginSchema = z.object({
-  code: z.string().min(1, 'O código de acesso é obrigatório'),
-  password: z.string().min(6, 'A password deve ter pelo menos 6 caracteres'),
+  code: z.string().trim().min(1, 'O código de acesso é obrigatório'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-// ──â”€ Destaques do sistema (painel da marca) ──────────────────────────────────â”€
-const features = [
-  { icon: BarChart3, label: 'Gestão de Stock em tempo real' },
-  { icon: Store,     label: 'Ponto de Venda integrado' },
-  { icon: Users,     label: 'CRM & Programa de Fidelização' },
-  { icon: Package,   label: 'Controlo de Compras e Fornecedores' },
-];
-
-// ──â”€ Componente ──────────────────────────────────────────────────────────────â”€
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const copy = COPY.AUTH;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-  });
+  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginForm) => {
     try {
       await login(data);
-      toast.success('Bem-vindo de volta!', { duration: 2000 });
+      toast.success(copy.SUCESSO, { duration: 2000 });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
       let message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      
-      if (Array.isArray(message)) {
-        message = message[0];
-      }
-
-      toast.error(message || 'Erro ao comunicar com o servidor. Tente novamente.');
+      if (Array.isArray(message)) message = message[0];
+      toast.error(message || copy.ERRO_GENERICO);
     }
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="cc-sitio cc-entrada">
+      <PainelDaMarca />
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          PAINEL DA MARCA (esquerda) — visÍvel apenas em ecrãs grandes
-          â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Fundo gradiente */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
-
-        {/* Padrão de pontos subtil */}
+        {/* ── O formulário ───────────────────────────────────────────────── */}
         <div
-          className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(148 163 184) 1px, transparent 0)',
-            backgroundSize: '28px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 'clamp(28px, 5vw, 56px) 24px',
+            background: '#fff',
           }}
-        />
+        >
+          <div style={{ width: '100%', maxWidth: 380 }}>
+            {/* A marca repete-se aqui, e só aparece quando o painel escuro
+                desaparece — em telemóvel, sem isto, o ecrã não diz onde se está. */}
+            <Link
+              to="/"
+              className="cc-entrada-marca-movel"
+              style={{ display: 'none', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 32 }}
+            >
+              <Marca tamanho={30} />
+              <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--tinta)' }}>
+                {COPY.MARCA.NOME}
+              </span>
+            </Link>
 
-        {/* CÍrculos decorativos */}
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl" />
-
-        {/* Conteúdo do painel */}
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
-              <span className="text-white font-bold text-sm">CC</span>
-            </div>
-            <div>
-              <span className="text-white font-semibold text-lg leading-none block">ControlCore</span>
-              <span className="text-slate-400 text-xs">by SRG</span>
-            </div>
-          </div>
-
-          {/* Texto central */}
-          <div>
-            <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-              Gestão Industrial<br />
-              <span className="text-blue-400">Inteligente</span>
-            </h2>
-            <p className="text-slate-400 text-base mb-10 leading-relaxed">
-              A plataforma SaaS completa para gerir o seu negócio — stock,
-              vendas, clientes e muito mais, num único lugar.
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 26,
+                fontWeight: 700,
+                letterSpacing: '-0.03em',
+                color: 'var(--tinta)',
+              }}
+            >
+              {copy.TITULO}
+            </h1>
+            <p style={{ margin: '8px 0 0', fontSize: 14.5, lineHeight: 1.55, color: 'var(--tinta-suave)' }}>
+              {copy.SUBTITULO}
             </p>
 
-            {/* Features */}
-            <ul className="space-y-4">
-              {features.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-900/50 border border-blue-800 flex items-center justify-center flex-shrink-0">
-                    <Icon size={16} className="text-blue-400" />
-                  </div>
-                  <span className="text-slate-300 text-sm">{label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Rodapé do painel */}
-          <p className="text-slate-600 text-xs">
-            Â© {new Date().getFullYear()} SRG ControlCore. Todos os direitos reservados.
-          </p>
-        </div>
-      </div>
-
-      {/* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
-          PAINEL DO FORMULÁRIO (direita)
-          â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-white">
-
-        {/* Logo visÍvel apenas em mobile */}
-        <div className="lg:hidden flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CC</span>
-          </div>
-          <span className="text-slate-800 font-semibold text-xl">ControlCore</span>
-        </div>
-
-        <div className="w-full max-w-sm">
-          {/* Cabeçalho do formulário */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Iniciar Sessão</h1>
-            <p className="text-slate-500 text-sm">Aceda ao painel de gestão</p>
-          </div>
-
-          {/* Formulário */}
-          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-
-            {/* ──â”€ Campo: Código de Acesso ──────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="code"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Código de Acesso
-              </label>
-              <div className="relative">
-                <UserCircle
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                />
+            <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: 'grid', gap: 18, marginTop: 30 }}>
+              <div style={{ display: 'grid', gap: 7 }}>
+                <label htmlFor="code" style={etiquetaCampo}>
+                  {copy.CAMPO_CODIGO}
+                </label>
                 <input
                   id="code"
                   type="text"
                   autoComplete="username"
                   autoFocus
-                  placeholder="Ex: S001"
+                  placeholder={copy.CAMPO_CODIGO_DICA}
+                  aria-invalid={!!errors.code}
                   {...register('code')}
-                  className={cn(
-                    'w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
-                    'transition-colors outline-none',
-                    'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                    errors.code
-                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
-                      : 'border-slate-300',
-                  )}
+                  className={cn('cc-campo', errors.code && 'cc-campo--erro')}
                 />
+                {errors.code && <p style={erroCampo}>{errors.code.message}</p>}
               </div>
-              {errors.code && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
-                  {errors.code.message}
-                </p>
-              )}
-            </div>
 
-            {/* ──â”€ Campo: Password ──────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="MÍnimo 6 caracteres"
-                  {...register('password')}
-                  className={cn(
-                    'w-full pl-10 pr-12 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
-                    'transition-colors outline-none',
-                    'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                    errors.password
-                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
-                      : 'border-slate-300',
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                  tabIndex={-1}
-                  aria-label={showPassword ? 'Ocultar password' : 'Mostrar password'}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              <div style={{ display: 'grid', gap: 7 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <label htmlFor="password" style={etiquetaCampo}>
+                    {copy.CAMPO_SENHA}
+                  </label>
+                  <Link
+                    to="/recuperar-senha"
+                    style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--azul-fundo)', textDecoration: 'none' }}
+                  >
+                    {copy.ESQUECEU}
+                  </Link>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder={copy.CAMPO_SENHA_DICA}
+                    aria-invalid={!!errors.password}
+                    {...register('password')}
+                    className={cn('cc-campo', 'cc-campo--com-botao', errors.password && 'cc-campo--erro')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? copy.OCULTAR_SENHA : copy.MOSTRAR_SENHA}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: 'none',
+                      border: 0,
+                      cursor: 'pointer',
+                      color: 'var(--tinta-tenue)',
+                      padding: 2,
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {errors.password && <p style={erroCampo}>{errors.password.message}</p>}
               </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
 
-            {/* ──â”€ Link Esqueceu a senha ────────────────────────────── */}
-            <div className="flex justify-end">
-              <Link
-                to="/recuperar-senha"
-                className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="cc-botao cc-botao--cheio"
+                style={{ width: '100%', marginTop: 4, opacity: isSubmitting ? 0.65 : 1 }}
               >
-                Esqueceu a senha?
-              </Link>
-            </div>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="cc-gira" />
+                    {copy.A_SUBMETER}
+                  </>
+                ) : (
+                  copy.SUBMETER
+                )}
+              </button>
+            </form>
 
-            {/* ──â”€ Botão de submissão ────────────────────────────────â”€ */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={cn(
-                'w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg',
-                'text-sm font-semibold text-white',
-                'bg-blue-600 hover:bg-blue-700 active:bg-blue-800',
-                'transition-colors shadow-sm',
-                'disabled:opacity-60 disabled:cursor-not-allowed',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-              )}
+            <Link
+              to="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 26,
+                fontSize: 13,
+                color: 'var(--tinta-tenue)',
+                textDecoration: 'none',
+              }}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  A autenticar...
-                </>
-              ) : (
-                <>
-                  <LogIn size={16} />
-                  Entrar
-                </>
-              )}
-            </button>
-          </form>
+              <ArrowLeft size={14} />
+              {copy.VOLTAR}
+            </Link>
+          </div>
         </div>
-      </div>
     </div>
   );
 }
+
+/**
+ * O painel escuro da esquerda.
+ *
+ * Roda entre os slides a cada 5 segundos. O texto muda com uma transição de
+ * opacidade em vez de aparecer de golpe, e a altura é reservada — sem isso, slides
+ * de comprimentos diferentes fazem os pontos saltar de posição.
+ */
+function PainelDaMarca() {
+  const slides = COPY.AUTH.SLIDES;
+  const [actual, setActual] = useState(0);
+
+  useEffect(() => {
+    // `prefers-reduced-motion` desliga a rotação por completo: aqui o movimento não
+    // transporta informação que se perca — os quatro slides dizem o mesmo de quatro
+    // maneiras, e ficar no primeiro não priva ninguém de nada.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setActual((a) => (a + 1) % slides.length), 5000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
+  return (
+    <div
+      className="cc-entrada-painel"
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        gap: 40,
+        padding: 'clamp(32px, 4vw, 56px)',
+        background: 'linear-gradient(160deg, var(--escuro) 0%, var(--escuro-alt) 100%)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Duas manchas de azul e uma grelha de pontos. É o que dá profundidade a um
+          fundo liso sem meter uma fotografia que não diz nada. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.16,
+          backgroundImage: 'radial-gradient(circle at 1px 1px, #93c5fd 1px, transparent 0)',
+          backgroundSize: '30px 30px',
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: -140,
+          right: -140,
+          width: 420,
+          height: 420,
+          borderRadius: 999,
+          background: 'rgb(37 99 235 / 0.28)',
+          filter: 'blur(90px)',
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          bottom: -160,
+          left: -120,
+          width: 400,
+          height: 400,
+          borderRadius: 999,
+          background: 'rgb(96 165 250 / 0.16)',
+          filter: 'blur(90px)',
+        }}
+      />
+
+      <Link
+        to="/"
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 11, textDecoration: 'none' }}
+      >
+        <Marca tamanho={34} />
+        <span style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-0.025em', color: '#f4f8ff' }}>
+          {COPY.MARCA.NOME}
+        </span>
+      </Link>
+
+      <div style={{ position: 'relative' }}>
+        {/* Altura reservada para o slide mais alto. */}
+        <div style={{ minHeight: 148 }}>
+          {slides.map((s, i) => (
+            <div
+              key={s.titulo}
+              aria-hidden={i !== actual}
+              style={{
+                display: i === actual ? 'block' : 'none',
+                animation: 'cc-aparece 520ms ease-out',
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  maxWidth: '20ch',
+                  fontSize: 'clamp(26px, 3vw, 34px)',
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.03em',
+                  color: '#f4f8ff',
+                }}
+              >
+                {s.titulo}
+              </h2>
+              <p
+                style={{
+                  margin: '14px 0 0',
+                  maxWidth: '44ch',
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  color: '#9fb3cf',
+                }}
+              >
+                {s.descricao}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div role="tablist" aria-label="Destaques" style={{ display: 'flex', gap: 7, marginTop: 26 }}>
+          {slides.map((s, i) => (
+            <button
+              key={s.titulo}
+              type="button"
+              role="tab"
+              aria-selected={i === actual}
+              aria-label={s.titulo}
+              onClick={() => setActual(i)}
+              style={{
+                width: i === actual ? 26 : 8,
+                height: 4,
+                padding: 0,
+                borderRadius: 999,
+                border: 0,
+                cursor: 'pointer',
+                background: i === actual ? 'var(--azul-claro)' : 'rgb(148 197 253 / 0.28)',
+                transition: 'width 300ms, background-color 300ms',
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <p style={{ position: 'relative', margin: 0, fontSize: 12, color: '#617ea6' }}>
+        © {new Date().getFullYear()} {COPY.MARCA.EMPRESA}. {COPY.SITIO.RODAPE.DIREITOS}
+      </p>
+    </div>
+  );
+}
+
+const etiquetaCampo: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 600,
+  color: 'var(--tinta)',
+};
+
+const erroCampo: React.CSSProperties = {
+  margin: 0,
+  fontSize: 12,
+  fontWeight: 500,
+  color: '#dc2626',
+};
