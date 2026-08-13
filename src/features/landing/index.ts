@@ -1,9 +1,14 @@
-export { LandingHeader } from './components/LandingHeader';
-export { HeroSection } from './components/HeroSection';
-export { PlatformFeaturesSection } from './components/PlatformFeaturesSection';
-export { CustomSolutionsSection } from './components/CustomSolutionsSection';
-export { EnterpriseBannerSection } from './components/EnterpriseBannerSection';
-export { LandingFooter } from './components/LandingFooter';
+export { BarraDoSitio, RodapeDoSitio, Marca } from './components/Cromo';
+export {
+  Heroi,
+  FaixaDeContexto,
+  OProblema,
+  CadeiaViva,
+  Modulos,
+  AMayra,
+  Seguranca,
+  ComoComeca,
+  Fecho,
+} from './components/LandingSections';
 
-export { LANDING_COPYWRITING, LANDING_IMAGES } from './constants/landingCopywriting';
-export * from './constants/landingAnimations';
+export { LANDING_IMAGES } from './constants/landingImages';
