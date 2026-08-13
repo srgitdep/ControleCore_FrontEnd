@@ -7,6 +7,7 @@ import {
   BarChart3,
   BarChart2,
   Box,
+  Wallet,
   Store,
   Users,
   UserSquare,
@@ -70,6 +71,7 @@ const navGroups: NavGroup[] = [
     title: 'Company',
     items: [
       { label: 'Rec. Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { label: 'Salários', icon: Wallet, path: '/rh/salarios', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Configurações', icon: Settings, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Histórico no Sistema', icon: History, path: '/historico' },
     ]

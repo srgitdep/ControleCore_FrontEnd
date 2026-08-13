@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw, Eye } from 'lucide-react';
-import { useHistoricoSessoes } from '@/features/vendas';
+import { MonitorSmartphone, ChevronDown, ChevronUp, Receipt, Download, RefreshCcw, Eye, Ban, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useHistoricoSessoes, anularVenda } from '@/features/vendas';
+import toast from 'react-hot-toast';
 
 import jsPDF from 'jspdf';
 import { ReceiptModal } from '../components/ReceiptModal';
@@ -10,6 +11,32 @@ export function CaixasHistoricoPage() {
   const sessoes = data || [];
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [vendaParaAnular, setVendaParaAnular] = useState<any>(null);
+  const [motivoAnulacao, setMotivoAnulacao] = useState('');
+  const [isAnulando, setIsAnulando] = useState(false);
+
+  const confirmarAnulacao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vendaParaAnular) return;
+
+    setIsAnulando(true);
+    try {
+      const r = await anularVenda(vendaParaAnular.id, motivoAnulacao);
+      toast.success(
+        `${r.message} Stock devolvido: ${r.stockDevolvido} item(ns).` +
+        (r.numerarioDevolvido > 0 ? ` Retirado da gaveta: ${r.numerarioDevolvido.toFixed(2)} MT.` : ''),
+      );
+      setVendaParaAnular(null);
+      setMotivoAnulacao('');
+      refetch();
+    } catch (error: any) {
+      // O backend recusa venda já anulada, sessão fechada e perfil sem permissão,
+      // cada um com mensagem própria.
+      toast.error(error?.response?.data?.message || 'Erro ao anular a venda.');
+    } finally {
+      setIsAnulando(false);
+    }
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -149,13 +176,27 @@ export function CaixasHistoricoPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
-                            {sessao.vendas.map((venda: any) => (
-                              <tr key={venda.id} className="hover:bg-slate-50">
-                                <td className="px-4 py-3 font-medium text-slate-800">{venda.numeroFatura}</td>
+                            {sessao.vendas.map((venda: any) => {
+                              const anulada = venda.estado === 'CANCELADA';
+                              // A anulação devolve stock e retira numerário da gaveta, por
+                              // isso exige a sessão aberta: uma sessão fechada já teve a
+                              // quebra apurada e mexer nela invalidaria o fecho.
+                              const podeAnular = !anulada && sessao.estado === 'ABERTA';
+
+                              return (
+                              <tr key={venda.id} className={`hover:bg-slate-50 ${anulada ? 'opacity-60' : ''}`}>
+                                <td className="px-4 py-3 font-medium text-slate-800">
+                                  <span className={anulada ? 'line-through' : ''}>{venda.numeroFatura}</span>
+                                  {anulada && (
+                                    <span className="ml-2 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+                                      Anulada
+                                    </span>
+                                  )}
+                                </td>
                                 <td className="px-4 py-3 font-mono text-xs">{new Date(venda.createdAt).toLocaleString('pt-PT')}</td>
-                                <td className="px-4 py-3 font-bold text-blue-600">{venda.totalFinal.toFixed(2)} MT</td>
+                                <td className={`px-4 py-3 font-bold ${anulada ? 'text-slate-400' : 'text-blue-600'}`}>{venda.totalFinal.toFixed(2)} MT</td>
                                 <td className="px-4 py-3 text-right flex justify-end gap-2">
-                                  <button 
+                                  <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedReceipt({ ...venda, caixeiro: sessao.operador });
@@ -165,7 +206,7 @@ export function CaixasHistoricoPage() {
                                   >
                                     <Eye size={18} />
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDownloadReceipt(venda);
@@ -175,9 +216,22 @@ export function CaixasHistoricoPage() {
                                   >
                                     <Download size={18} />
                                   </button>
+                                  {podeAnular && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVendaParaAnular(venda);
+                                      }}
+                                      className="text-slate-500 hover:text-rose-600 p-1 rounded transition-colors"
+                                      title="Anular venda (devolve stock e numerário)"
+                                    >
+                                      <Ban size={18} />
+                                    </button>
+                                  )}
                                 </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -191,11 +245,80 @@ export function CaixasHistoricoPage() {
       </div>
 
       {selectedReceipt && (
-        <ReceiptModal 
-          receiptData={selectedReceipt} 
-          onClose={() => setSelectedReceipt(null)} 
-          viewOnly={true} 
+        <ReceiptModal
+          receiptData={selectedReceipt}
+          onClose={() => setSelectedReceipt(null)}
+          viewOnly={true}
         />
+      )}
+
+      {vendaParaAnular && (
+        <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-rose-50/50">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Anular Venda</h2>
+                <p className="text-xs text-slate-500">
+                  {vendaParaAnular.numeroFatura} · {vendaParaAnular.totalFinal.toFixed(2)} MT
+                </p>
+              </div>
+              <button
+                onClick={() => { setVendaParaAnular(null); setMotivoAnulacao(''); }}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={confirmarAnulacao} className="p-6 space-y-4">
+              <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
+                <p className="text-xs text-amber-800">
+                  O stock vendido volta ao armazém e o numerário sai da gaveta. A venda fica
+                  marcada como <strong>anulada</strong> — não é apagada, para a numeração de
+                  facturas não ter buracos.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Motivo <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={motivoAnulacao}
+                  onChange={(e) => setMotivoAnulacao(e.target.value)}
+                  placeholder="Ex.: cliente desistiu da compra"
+                  minLength={5}
+                  maxLength={255}
+                  autoFocus
+                  className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-rose-500"
+                />
+                <p className="text-xs text-slate-500 mt-1.5">
+                  Fica registado na auditoria e no movimento de stock.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setVendaParaAnular(null); setMotivoAnulacao(''); }}
+                  className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={motivoAnulacao.trim().length < 5 || isAnulando}
+                  className="px-5 py-2.5 bg-rose-600 text-white font-medium rounded-xl hover:bg-rose-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isAnulando && <Loader2 size={16} className="animate-spin" />}
+                  Anular venda
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
