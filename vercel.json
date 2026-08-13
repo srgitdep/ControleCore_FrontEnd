@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "rewrites": [
+    {
+      "//": "SPA routing: qualquer caminho sem extensão de ficheiro serve o index.html, para que recarregar /produtos ou /rh/salarios não devolva 404. Caminhos com extensão (favicon.svg, icons.svg, assets/*) são servidos como ficheiros.",
+      "source": "/((?!.*\\.).*)",
+      "destination": "/index.html"
+    }
+  ],
+
+  "headers": [
+    {
+      "//": "Os nomes em assets/ incluem hash do conteúdo (index-Ab12Cd.js), pelo que nunca mudam sem mudar de nome — podem ser cacheados indefinidamente.",
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "//": "O index.html não pode ser cacheado: é ele que aponta para os assets com hash novo depois de cada deploy.",
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}
