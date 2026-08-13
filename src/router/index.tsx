@@ -20,7 +20,7 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { FornecedoresPage } from '@/features/fornecedores';
 import { ArmazensPage } from '@/features/armazens';
-import { EmployeeListPage, ShiftManagementPage } from '@/features/hr';
+import { EmployeeListPage, ShiftManagementPage, SalariosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
 
 function RootRedirectOrLanding() {
@@ -95,6 +95,7 @@ export const router = createBrowserRouter([
           },
           { path: '/rh',            element: <EmployeeListPage /> },
           { path: '/rh/escalas',    element: <ShiftManagementPage /> },
+          { path: '/rh/salarios',   element: <SalariosPage /> },
           { path: '/configuracoes', element: <EmDesenvolvimentoPage /> },
           { path: '/historico',     element: <HistoryPage /> },
         ],

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Package, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Package, ArrowRight, PackageCheck } from 'lucide-react';
 import { purchasesApi, EstadoPedidoCompra } from '@/features/compras';
 import type { PurchaseOrder } from '@/features/compras';
 import { suppliersApi } from '@/features/fornecedores';
@@ -7,6 +7,7 @@ import type { Supplier } from '@/features/fornecedores';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
+import { RececoesModal } from '../components/RececoesModal';
 
 export function PurchasesPage() {
   const [activeTab, setActiveTab] = useState<'PEDIDOS' | 'FORNECEDORES'>('PEDIDOS');
@@ -18,6 +19,7 @@ export function PurchasesPage() {
 
   // Modal State
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [orderRececoes, setOrderRececoes] = useState<PurchaseOrder | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -163,21 +165,36 @@ export function PurchasesPage() {
                       {order.criadoPor?.name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {order.estado === EstadoPedidoCompra.ENVIADO ? (
-                        <button 
-                          onClick={() => handleOrderClick(order)}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center justify-end gap-1"
-                        >
-                          Receber <ArrowRight className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleOrderClick(order)}
-                          className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-                        >
-                          Detalhes
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-3">
+                        {/* Disponível em qualquer estado: anular faz mais sentido justamente
+                            num pedido já RECEBIDO, em que a entrada foi errada. */}
+                        {order.estado !== EstadoPedidoCompra.PENDENTE &&
+                          order.estado !== EstadoPedidoCompra.RASCUNHO && (
+                          <button
+                            onClick={() => setOrderRececoes(order)}
+                            className="text-slate-500 hover:text-emerald-600 text-sm font-medium flex items-center gap-1"
+                            title="Ver e anular recepções"
+                          >
+                            <PackageCheck className="w-4 h-4" /> Recepções
+                          </button>
+                        )}
+                        {order.estado === EstadoPedidoCompra.ENVIADO ||
+                         order.estado === EstadoPedidoCompra.PARCIAL ? (
+                          <button
+                            onClick={() => handleOrderClick(order)}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1"
+                          >
+                            Receber <ArrowRight className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleOrderClick(order)}
+                            className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                          >
+                            Detalhes
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -226,13 +243,21 @@ export function PurchasesPage() {
       </div>
 
       {selectedOrder && (
-        <RecebimentoModal 
-          order={selectedOrder} 
-          onClose={() => setSelectedOrder(null)} 
+        <RecebimentoModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
           onSuccess={() => {
             setSelectedOrder(null);
             fetchData();
           }}
+        />
+      )}
+
+      {orderRececoes && (
+        <RececoesModal
+          order={orderRececoes}
+          onClose={() => setOrderRececoes(null)}
+          onSuccess={fetchData}
         />
       )}
     </div>
