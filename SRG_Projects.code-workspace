@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../SRGControleCore-main"
+		},
+		{
+			"path": "../../IndustryCore/IndustryCore_BackEnd"
+		},
+		{
+			"path": "../../IndustryCore/IndustryCore_FrontEnd"
+		}
+	]
+}
