@@ -55,7 +55,10 @@ export function EmployeeListPage() {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    // Sem padding próprio: esta página passou a ser um separador dentro do RH, e o
+    // `AppLayout` já aplica `p-4 sm:p-6`. O `<h1>` passou a `<h2>` pela mesma razão —
+    // o título da página é agora «Recursos Humanos», e dois `<h1>` são ambíguos.
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -63,7 +66,7 @@ export function EmployeeListPage() {
             <Users className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Funcionários</h1>
+            <h2 className="text-xl font-semibold text-slate-900">Funcionários</h2>
             <p className="text-sm text-slate-500">
               {isLoading ? 'A carregar...' : `${employees.length} colaboradores activos`}
             </p>

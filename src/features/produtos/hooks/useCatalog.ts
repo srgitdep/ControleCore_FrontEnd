@@ -1,5 +1,5 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { catalogApi } from '@/features/produtos';
+import { catalogApi, type CreateProductPayload } from '../api/catalog.api';
 import toast from 'react-hot-toast';
 
 export function useCategories() {
@@ -40,10 +40,24 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => catalogApi.createProduct(data),
-    onSuccess: () => {
-      toast.success('Produto criado com sucesso!');
+    mutationFn: (data: CreateProductPayload) => catalogApi.createProduct(data),
+    onSuccess: (_produto, variaveis) => {
+      const comStock = (variaveis.quantidadeInicial ?? 0) > 0;
+
+      toast.success(
+        comStock
+          ? `Produto criado com ${variaveis.quantidadeInicial} unidades em stock.`
+          : 'Produto criado com sucesso!',
+      );
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
+
+      // A criação abre posições de stock em todos os armazéns (e dá entrada num deles,
+      // se pedido), pelo que o separador dos saldos ao lado ficaria desactualizado.
+      queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      if (comStock) {
+        queryClient.invalidateQueries({ queryKey: ['all-stock-movements'] });
+      }
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {

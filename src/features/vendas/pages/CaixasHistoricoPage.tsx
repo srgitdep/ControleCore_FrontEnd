@@ -68,13 +68,17 @@ export function CaixasHistoricoPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    // Este componente é montado dentro do separador «Histórico» do POS, que já tem o
+    // seu `<h1>Vendas</h1>` — dois `<h1>` na mesma página são ambíguos para um leitor
+    // de ecrã. A rota `/sessoes-historico`, que o mostrava como página autónoma, saiu:
+    // era a mesma vista em dois lugares, alcançável só pelo menu.
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <MonitorSmartphone className="w-6 h-6 text-blue-600" />
+          <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+            <MonitorSmartphone className="w-5 h-5 text-blue-600" />
             Histórico de Sessões de Caixa
-          </h1>
+          </h2>
           <p className="text-slate-500 mt-1">Consulte os turnos fechados e vendas associadas a cada sessão.</p>
         </div>
         <button 

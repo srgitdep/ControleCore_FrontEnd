@@ -10,3 +10,4 @@ export * from './hooks/useCatalog';
 // Export Pages & Components
 export * from './pages/ProductListPage';
 export * from './components/ProductFormModal';
+export * from './components/ProductsTab';

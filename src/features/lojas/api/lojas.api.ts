@@ -31,6 +31,49 @@ export const getArmazensByLoja = async (lojaId: string) => {
   return data;
 };
 
+/** Uma posição de stock dentro de um armazém. */
+export interface PosicaoDeArmazem {
+  stockId: string;
+  produtoId: string;
+  nome: string;
+  codigoBarras: string | null;
+  sku: string | null;
+  unidadeMedida: string;
+  imagemUrl: string | null;
+  quantidade: number;
+  minimo: number;
+  custoMedio: number;
+  precoVenda: number;
+  /** `quantidade × custoMedio` — o capital que este produto tem parado aqui. */
+  valorImobilizado: number;
+  abaixoDoMinimo: boolean;
+}
+
+export interface StockDeArmazem {
+  armazem: { id: string; nome: string; tipo: string; isActive: boolean; lojaId: string };
+  posicoes: PosicaoDeArmazem[];
+  resumo: {
+    totalProdutos: number;
+    totalUnidades: number;
+    valorImobilizado: number;
+    abaixoDoMinimo: number;
+  };
+}
+
+/**
+ * O que está dentro de um armazém.
+ *
+ * `incluirSemSaldo` está desligado por omissão: criar um produto abre uma posição a
+ * zero em **todos** os armazéns da empresa, pelo que sem o filtro um armazém de
+ * quebras com três artigos apareceria com o catálogo inteiro.
+ */
+export const getStockDoArmazem = async (armazemId: string, incluirSemSaldo = false) => {
+  const { data } = await api.get<StockDeArmazem>(`/armazens/${armazemId}/stock`, {
+    params: incluirSemSaldo ? { incluirSemSaldo: 'true' } : undefined,
+  });
+  return data;
+};
+
 /** Tipos de armazém. Só pode existir um do tipo Venda (ponto de venda) por loja. */
 export const TIPOS_ARMAZEM = ['Venda', 'Reserva', 'Quebras'] as const;
 export type TipoArmazem = (typeof TIPOS_ARMAZEM)[number];

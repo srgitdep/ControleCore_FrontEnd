@@ -139,14 +139,19 @@ export function SalariosPage() {
     : funcionarios;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Wallet className="text-emerald-600" size={26} /> Salários
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Processamento de vencimentos a partir da assiduidade registada
-        </p>
+    // Ver a nota em `EmployeeListPage`: sem `max-w` nem padding próprios, e com `<h2>`,
+    // por passar a ser um separador dentro do RH.
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-emerald-600 p-2.5">
+          <Wallet className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">Salários</h2>
+          <p className="text-sm text-slate-500">
+            Processamento de vencimentos a partir da assiduidade registada
+          </p>
+        </div>
       </div>
 
       <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">

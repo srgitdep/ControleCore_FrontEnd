@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, PackagePlus } from 'lucide-react';
-import type { Product } from '@/features/produtos';
-import { useCreateProduct, useUpdateProduct, useCategories } from '@/features/produtos';
+import { X, PackagePlus, Warehouse } from 'lucide-react';
+import type { Product } from '../types';
+import { useCreateProduct, useUpdateProduct, useCategories } from '../hooks/useCatalog';
+import { useArmazens } from '@/features/lojas';
 import { Button } from '@/shared/ui';
 
 const productSchema = z.object({
@@ -21,7 +22,21 @@ const productSchema = z.object({
   peso: z.coerce.number().optional(),
   isWeighable: z.boolean().default(false),
   isActive: z.boolean().default(true),
-});
+
+  // ─── Stock inicial ────────────────────────────────────────────────────────
+  //
+  // Só aparece na criação. Ao editar não se mostra: alterar existências por um
+  // formulário de catálogo esconderia um movimento de inventário, que tem de ter
+  // autor e motivo próprios — para isso há os ajustes na secção Stock.
+  armazemId: z.string().optional(),
+  quantidadeInicial: z.coerce.number().min(0, 'A quantidade não pode ser negativa').optional(),
+  stockMinimo: z.coerce.number().min(0, 'O mínimo não pode ser negativo').optional(),
+}).refine(
+  // Dar entrada de 50 unidades sem dizer onde é ambíguo, e o backend recusa. Validar
+  // aqui evita a ida ao servidor e diz onde está o problema.
+  (dados) => !((dados.quantidadeInicial ?? 0) > 0 || (dados.stockMinimo ?? 0) > 0) || !!dados.armazemId,
+  { message: 'Escolha o armazém a que a quantidade ou o mínimo se referem.', path: ['armazemId'] },
+);
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -76,12 +91,20 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           peso: 0,
           isWeighable: false,
           isActive: true,
+          armazemId: '',
+          quantidadeInicial: 0,
+          stockMinimo: 0,
         },
   });
 
   const precoCusto = useWatch({ control, name: 'precoCusto' });
   const precoVenda = useWatch({ control, name: 'precoVenda' });
   const unidadeMedida = useWatch({ control, name: 'unidadeMedida' });
+  const quantidadeInicial = useWatch({ control, name: 'quantidadeInicial' });
+
+  const { armazens, isLoading: isLoadingArmazens } = useArmazens();
+
+  const valorEntrada = (Number(quantidadeInicial) || 0) * (Number(precoCusto) || 0);
 
   const [projectedMargin, setProjectedMargin] = useState(0);
 
@@ -106,19 +129,37 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
   const onSubmit = async (data: ProductFormData) => {
     try {
-      // Cleanup optional string fields if empty
+      // Strings vazias fora: gravar `""` num campo opcional é diferente de não o
+      // gravar, e faria falhar a unicidade do código de barras entre dois produtos
+      // sem código.
+      const { armazemId, quantidadeInicial, stockMinimo, ...produto } = data;
+
       const payload = {
-        ...data,
-        codigoBarras: data.codigoBarras?.trim() || undefined,
-        sku: data.sku?.trim() || undefined,
-        imagemUrl: data.imagemUrl?.trim() || undefined,
-        categoriaId: data.categoriaId || undefined,
+        ...produto,
+        codigoBarras: produto.codigoBarras?.trim() || undefined,
+        sku: produto.sku?.trim() || undefined,
+        imagemUrl: produto.imagemUrl?.trim() || undefined,
+        categoriaId: produto.categoriaId || undefined,
       };
 
       if (productToEdit) {
+        // A edição nunca leva stock: o backend recusaria os campos desconhecidos
+        // (`forbidNonWhitelisted` está ligado no ValidationPipe global), e mesmo que
+        // não recusasse, mexer em existências aqui esconderia um movimento.
         await updateProduct({ id: productToEdit.id, data: payload });
       } else {
-        await createProduct(payload);
+        await createProduct({
+          ...payload,
+          // Só se houver armazém escolhido — enviar `armazemId: ''` falharia a
+          // validação de UUID no servidor.
+          ...(armazemId
+            ? {
+                armazemId,
+                quantidadeInicial: Number(quantidadeInicial) || 0,
+                stockMinimo: Number(stockMinimo) || 0,
+              }
+            : {}),
+        });
       }
       onClose();
     } catch (error) {
@@ -265,6 +306,106 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 </label>
               </div>
             </div>
+
+            {/* ── Stock inicial ──────────────────────────────────────────────
+                Só na criação: alterar existências por um formulário de catálogo
+                esconderia um movimento de inventário, que tem de ter autor e
+                motivo próprios. Para isso há os ajustes na secção Stock. */}
+            {!productToEdit && (
+              <div className="mt-6 pt-5 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Warehouse className="h-4 w-4 text-slate-400" />
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    Stock inicial <span className="font-normal text-slate-400">(opcional)</span>
+                  </h3>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Dá entrada da mercadoria que já tem, sem passar pela secção Stock. A entrada
+                  fica registada no histórico e é valorizada ao preço de custo indicado acima.
+                </p>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="md:col-span-3">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Armazém</label>
+                    <select
+                      {...register('armazemId')}
+                      disabled={isLoadingArmazens}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
+                    >
+                      <option value="">
+                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Não dar entrada agora'}
+                      </option>
+                      {armazens.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.etiqueta}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.armazemId && (
+                      <p className="mt-1 text-xs text-rose-600">{errors.armazemId.message}</p>
+                    )}
+                    {!isLoadingArmazens && armazens.length === 0 && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        Não há armazéns activos. Crie um em Armazéns antes de dar entrada de stock.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Quantidade
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...register('quantidadeInicial')}
+                      placeholder="0"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    {errors.quantidadeInicial && (
+                      <p className="mt-1 text-xs text-rose-600">{errors.quantidadeInicial.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Stock mínimo
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...register('stockMinimo')}
+                      placeholder="0"
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    {errors.stockMinimo && (
+                      <p className="mt-1 text-xs text-rose-600">{errors.stockMinimo.message}</p>
+                    )}
+                    <p className="mt-1 text-xs text-slate-400">
+                      Abaixo dele o produto entra nos alertas e nas sugestões de compra.
+                    </p>
+                  </div>
+
+                  {/* O valor da entrada, à vista: uma quantidade errada num campo
+                      numérico é fácil de não ver, um total de milhões não é. */}
+                  {valorEntrada > 0 && (
+                    <div className="flex items-end md:col-span-1">
+                      <div className="w-full rounded-lg bg-slate-50 px-3 py-2">
+                        <p className="text-xs text-slate-500">Valor da entrada</p>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {valorEntrada.toLocaleString('pt-MZ', {
+                            style: 'currency',
+                            currency: 'MZN',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
