@@ -500,7 +500,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
   const [emEdicao, setEmEdicao] = useState<Record<string, string>>({});
   const [aGuardar, setAGuardar] = useState<string | null>(null);
 
-  const { data: posicoes = [], isLoading } = useQuery({
+  const { data: posicoes = [], isLoading, error } = useQuery({
     queryKey: ['stock-posicoes', produtoId],
     queryFn: () => stockApi.getPosicoesDoProduto(produtoId),
   });
@@ -541,7 +541,37 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
     );
   }
 
-  if (posicoes.length === 0) return null;
+  // Um erro tem de ser visível. Devolver `null` aqui — como estava — fazia a secção
+  // desaparecer sem explicação: quem abria o modal via um formulário sem os mínimos e
+  // concluía que a funcionalidade não existia. Foi o que aconteceu.
+  if (error) {
+    return (
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-2">
+          <Warehouse className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+        </div>
+        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Não foi possível carregar os saldos por armazém. Se o servidor foi actualizado
+          há pouco, reinicie-o — esta secção usa um endpoint novo.
+        </p>
+      </div>
+    );
+  }
+
+  if (posicoes.length === 0) {
+    return (
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-2">
+          <Warehouse className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Este produto não tem posições de stock. Crie um armazém na secção Armazéns.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 border-t border-slate-100 pt-5">
