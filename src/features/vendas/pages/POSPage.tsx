@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History } from 'lucide-react';
-import { useProducts, useCategories } from '@/features/produtos';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine } from 'lucide-react';
+import { useProducts, useCategories, catalogApi } from '@/features/produtos';
 import { usePosStore, getStockDisponivel } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
 import { useSocket } from '@/shared/hooks';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from '../components/ReceiptModal';
+import { LeitorCameraModal } from '../components/LeitorCameraModal';
 import { cn } from '@/shared/utils';
 
 const PAYMENT_METHODS = [
@@ -135,34 +136,56 @@ export function POSPage() {
     }
   }, [total, pagamentos]);
 
+  // Declarado antes do ouvinte de teclado, que o consulta para se calar enquanto o
+  // leitor da câmara está aberto.
+  const [leitorAberto, setLeitorAberto] = useState(false);
+
   // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || receiptData) {
+      // Com o leitor da câmara aberto, este ouvinte fica calado: senão, escrever a
+      // quantidade no painel acrescentaria produtos ao carrinho a cada `Enter`.
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        receiptData ||
+        leitorAberto
+      ) {
         return;
       }
 
       if (e.key === 'Enter') {
         if (barcodeBuffer.current.length > 0) {
           const barcode = barcodeBuffer.current;
-          barcodeBuffer.current = ''; 
-          
-          const foundProduct = products.find(p => p.codigoBarras === barcode);
-          if (foundProduct) {
-            const r = addItem(foundProduct);
-            if (!r.ok) {
-              toast.error(
-                r.disponivel > 0
-                  ? `${r.nome}: apenas ${r.disponivel} em stock.`
-                  : `${r.nome} está esgotado.`,
-              );
-            }
-          } else {
-            toast.error('Produto não encontrado.');
-          }
+          barcodeBuffer.current = '';
+
+          // Procura-se no servidor, não na lista da grelha: essa está filtrada pela
+          // pesquisa e limitada a 50 linhas, pelo que um código válido de um produto
+          // fora dessa fatia dava «produto não encontrado» — com uma pesquisa activa,
+          // falhava quase sempre.
+          catalogApi
+            .getProductByBarcode(barcode)
+            .then((foundProduct) => {
+              if (!foundProduct) {
+                toast.error('Produto não encontrado.');
+                return;
+              }
+
+              const r = addItem(foundProduct);
+              if (!r.ok) {
+                toast.error(
+                  r.disponivel > 0
+                    ? `${r.nome}: apenas ${r.disponivel} em stock.`
+                    : `${r.nome} está esgotado.`,
+                );
+              }
+            })
+            .catch(() => {
+              toast.error('Não foi possível consultar o produto. Verifique a ligação.');
+            });
         }
       } else if (e.key.length === 1) {
         barcodeBuffer.current += e.key;
@@ -175,7 +198,55 @@ export function POSPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [products, addItem, receiptData]);
+    // `products` saiu das dependências: a busca é feita no servidor e já não depende da
+    // lista da grelha.
+  }, [addItem, receiptData, leitorAberto]);
+
+  // ─── Leitura pela câmara ──────────────────────────────────────────────────
+
+  /**
+   * Se este dispositivo tem alguma câmara.
+   *
+   * `mediaDevices` existe em todos os browsers modernos, incluindo os de máquinas sem
+   * câmara nenhuma — pelo que a sua presença não basta. `enumerateDevices` responde pela
+   * lista real. Antes de dada a permissão os nomes vêm vazios, mas o `kind` já diz que o
+   * dispositivo existe, que é tudo o que aqui se pergunta.
+   */
+  const [temCamara, setTemCamara] = useState(false);
+
+  useEffect(() => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((dispositivos) => {
+        setTemCamara(dispositivos.some((d) => d.kind === 'videoinput'));
+      })
+      .catch(() => setTemCamara(false));
+  }, []);
+
+  /**
+   * Acrescenta ao carrinho o produto lido, na quantidade indicada.
+   *
+   * Devolve a mensagem de erro, ou `null` se entrou. O leitor usa isso para decidir se
+   * limpa o painel: com stock insuficiente, o produto fica à vista para o operador
+   * corrigir a quantidade em vez de reler o código.
+   */
+  const adicionarLido = (produto: Product, quantidade: number): string | null => {
+    const r = addItem(produto, quantidade);
+
+    if (!r.ok) {
+      const mensagem =
+        r.disponivel > 0
+          ? `${r.nome}: apenas ${r.disponivel} em stock.`
+          : `${r.nome} está esgotado.`;
+      toast.error(mensagem);
+      return mensagem;
+    }
+
+    toast.success(`${quantidade}× ${produto.nome}`);
+    return null;
+  };
 
   // ──â”€ Actions ────────────────────────────────────────────────────────────â”€
 
@@ -410,6 +481,19 @@ export function POSPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
+
+                  {/* Ler com a câmara. Só aparece onde há câmara: num posto de caixa
+                      fixo, um botão que abre e falha é pior do que botão nenhum. */}
+                  {temCamara && (
+                    <button
+                      onClick={() => setLeitorAberto(true)}
+                      className="flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700"
+                      title="Ler código de barras com a câmara"
+                    >
+                      <ScanLine className="h-5 w-5" />
+                      <span className="hidden sm:inline">Ler código</span>
+                    </button>
+                  )}
               </div>
             </div>
             <div className="bg-white border-b border-gray-100 px-6 py-3 flex gap-3 overflow-x-auto hide-scrollbar shrink-0">
@@ -669,6 +753,14 @@ export function POSPage() {
       {/* ──â”€ Receipt Modal ──â”€ */}
       {receiptData && (
         <ReceiptModal receiptData={receiptData} onClose={handleCloseReceipt} />
+      )}
+
+      {/* ─── Leitor de código de barras pela câmara ─── */}
+      {leitorAberto && (
+        <LeitorCameraModal
+          onConfirmar={adicionarLido}
+          onFechar={() => setLeitorAberto(false)}
+        />
       )}
           </div>
         )}

@@ -47,6 +47,34 @@ export const catalogApi = {
     };
   },
 
+  /**
+   * Um produto pelo código de barras exacto.
+   *
+   * ## Porque não procurar na lista já carregada
+   *
+   * O POS tem uma lista de produtos em memória, mas está filtrada pela pesquisa e
+   * limitada a 50 linhas — é a grelha que o operador vê. Procurar aí falha sempre que o
+   * produto lido não estiver nessa fatia: com uma pesquisa activa, ou num catálogo com
+   * mais de 50 produtos, um código válido dava «produto não encontrado».
+   *
+   * O `search` do backend compara com nome, SKU **e** código de barras, mas por
+   * `contains` — pelo que devolve também produtos cujo código apenas *contém* o lido.
+   * A igualdade exacta é verificada aqui, porque um código lido é um código completo, e
+   * acrescentar ao carrinho o produto errado é pior do que não encontrar nenhum.
+   */
+  getProductByBarcode: async (codigo: string): Promise<Product | null> => {
+    const { data } = await api.get<{ data: Product[] }>('/produtos', {
+      params: { search: codigo, limit: 10 },
+    });
+
+    const candidatos = data.data ?? [];
+    return (
+      candidatos.find((p) => p.codigoBarras === codigo) ??
+      candidatos.find((p) => p.sku === codigo) ??
+      null
+    );
+  },
+
   updateProduct: async (id: string, productData: Partial<Product>) => {
     const { data } = await api.patch<Product>(`/produtos/${id}`, productData);
     return data;
