@@ -94,3 +94,40 @@ export interface CloseCycleResponse {
     }>;
   };
 }
+
+// ──â”€ Previsão do fecho ────────────────────────────────────────────────────────
+
+/**
+ * O que o fecho vai fazer, antes de o fazer.
+ *
+ * `semDivergencia` é a resposta a «a contagem bate com o sistema?»: são as linhas em
+ * que o que se contou é exactamente o que o sistema tinha.
+ */
+export interface PrevisaoDeFechoResponse {
+  cycleId: string;
+  cycleName: string;
+  status: InventoryCycleStatus;
+  podeFechar: boolean;
+  resumo: {
+    totalContado: number;
+    semDivergencia: number;
+    comDivergencia: number;
+    faltas: number;
+    sobras: number;
+    /** Entra como despesa no financeiro ao fechar. */
+    valorFaltas: number;
+    valorSobras: number;
+  };
+  divergencias: Array<{
+    stockId: string;
+    produtoId: string | null;
+    produto: string;
+    armazem: string | null;
+    sistema: number;
+    contado: number;
+    diferenca: number;
+    valor: number;
+    operador: string | null;
+    contadoEm: string;
+  }>;
+}

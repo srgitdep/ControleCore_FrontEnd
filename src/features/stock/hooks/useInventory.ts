@@ -72,6 +72,12 @@ export const useRegisterCount = (cycleId: string) => {
       inventoryApi.registerCount(cycleId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: inventoryKeys.cycleDetail(cycleId) });
+      // A lista de ciclos mostra o número de contagens (`_count.counts`); sem esta
+      // invalidação, o operador registava dez contagens e a lista continuava a dizer
+      // «0 contagem(ns)» até a cache expirar.
+      qc.invalidateQueries({ queryKey: inventoryKeys.cycles() });
+      // A previsão do fecho é calculada a partir das contagens.
+      qc.invalidateQueries({ queryKey: ['inventory', 'previsao-fecho', cycleId] });
     },
   });
 };
@@ -83,6 +89,12 @@ export const useRegisterCountByBarcode = (cycleId: string) => {
       inventoryApi.registerCountByBarcode(cycleId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: inventoryKeys.cycleDetail(cycleId) });
+      // A lista de ciclos mostra o número de contagens (`_count.counts`); sem esta
+      // invalidação, o operador registava dez contagens e a lista continuava a dizer
+      // «0 contagem(ns)» até a cache expirar.
+      qc.invalidateQueries({ queryKey: inventoryKeys.cycles() });
+      // A previsão do fecho é calculada a partir das contagens.
+      qc.invalidateQueries({ queryKey: ['inventory', 'previsao-fecho', cycleId] });
     },
   });
 };

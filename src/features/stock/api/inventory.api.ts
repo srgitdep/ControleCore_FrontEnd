@@ -8,6 +8,7 @@ import type {
   UpdateCycleStatusPayload,
   InventoryCount,
   CloseCycleResponse,
+  PrevisaoDeFechoResponse,
 } from '@/features/stock';
 
 export const inventoryApi = {
@@ -35,6 +36,20 @@ export const inventoryApi = {
     const { data } = await api.patch<InventoryCycle>(
       `/inventory/cycles/${cycleId}/status`,
       payload,
+    );
+    return data;
+  },
+
+  /**
+   * O que o fecho vai fazer, sem o fazer.
+   *
+   * O resumo — quantas contagens batem, quantas divergem, e quanto valem as faltas —
+   * só era conhecido depois de fechar, quando a operação já é irreversível: escreve
+   * movimentos de stock e cria uma despesa financeira por cada falta.
+   */
+  preverFecho: async (cycleId: string): Promise<PrevisaoDeFechoResponse> => {
+    const { data } = await api.get<PrevisaoDeFechoResponse>(
+      `/inventory/cycles/${cycleId}/previsao-fecho`,
     );
     return data;
   },

@@ -11,7 +11,10 @@ import {
   BarChart3,
   Search,
   Package,
+  X,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/features/auth';
 import {
   useInventoryCycles,
@@ -19,6 +22,7 @@ import {
   useUpdateCycleStatus,
   useCloseCycle,
   useRegisterCountByBarcode,
+  inventoryApi,
 } from '@/features/stock';
 import { Button } from '@/shared/ui';
 import { CreateCycleModal } from './CreateCycleModal';
@@ -64,7 +68,9 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
     setSuccessMsg(null);
     setErrorMsg(null);
 
-    if (!barcode.trim() || !quantity) return;
+    // `!quantity` seria verdadeiro para `"0"`, porque `"0"` é falsy em JavaScript:
+    // contar uma prateleira vazia — a maior divergência possível — era impossível.
+    if (!barcode.trim() || quantity.trim() === '') return;
 
     registerCount(
       { codigoBarras: barcode.trim(), physicalQuantity: parseFloat(quantity) },
@@ -167,10 +173,17 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
         <Button
           type="submit"
           className="w-full py-3 text-base"
-          disabled={!barcode.trim() || !quantity || isPending}
+          // Ver a nota no `handleSubmit`: `!quantity` bloqueava o botão quando a
+          // quantidade era zero.
+          disabled={!barcode.trim() || quantity.trim() === '' || isPending}
         >
           {isPending ? 'A registar...' : 'Registar Contagem'}
         </Button>
+
+        <p className="text-center text-xs text-slate-400">
+          Conte o que está na prateleira, incluindo zero. O saldo do sistema não é
+          mostrado de propósito — é uma contagem cega, para o número não ser influenciado.
+        </p>
       </form>
     </div>
   );
@@ -188,6 +201,7 @@ function CycleDetailPanel({
   const { mutate: closeCycle, isPending: isClosing } = useCloseCycle();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateCycleStatus();
   const [closeResult, setCloseResult] = useState<string | null>(null);
+  const [mostrarPrevisao, setMostrarPrevisao] = useState(false);
 
   if (isLoading) {
     return (
@@ -205,21 +219,45 @@ function CycleDetailPanel({
       COUNTING: 'RECONCILING',
     };
     const next = nextStatus[cycle.status];
-    if (next) updateStatus({ cycleId, payload: { status: next } });
+    if (!next) return;
+
+    updateStatus(
+      { cycleId, payload: { status: next } },
+      {
+        // Sem isto, o `BadRequestException("Transição inválida...")` do servidor era
+        // engolido: o spinner parava e nada acontecia.
+        onError: (err: any) =>
+          toast.error(err?.response?.data?.message ?? 'Não foi possível avançar o ciclo.'),
+      },
+    );
   };
 
   const handleClose = () => {
     closeCycle(cycleId, {
       onSuccess: (result) => {
         setCloseResult(
-          `Ciclo fechado! ${result.summary.totalAdjustments} ajuste(s) gerado(s). Total de perdas: ${result.summary.totalLosses.toFixed(2)}`,
+          `Ciclo fechado. ${result.summary.totalAdjustments} ajuste(s) de stock gerado(s). ` +
+            `Perdas lançadas no financeiro: ${result.summary.totalLosses.toLocaleString('pt-MZ', {
+              style: 'currency',
+              currency: 'MZN',
+            })}.`,
         );
+        setMostrarPrevisao(false);
       },
+      // O fecho pode falhar por saldo insuficiente, se houve vendas entre a contagem e
+      // o fecho. Sem tratamento, o utilizador não sabia o que aconteceu.
+      onError: (err: any) =>
+        toast.error(err?.response?.data?.message ?? 'Não foi possível fechar o ciclo.'),
     });
   };
 
   const canAdvance = cycle.status === 'OPEN' || cycle.status === 'COUNTING';
   const canClose = cycle.status === 'RECONCILING';
+
+  // O nome do próximo passo em português. O botão mostrava o valor cru do enum
+  // («Avançar para RECONCILING»), o que não diz nada a quem faz o balanço — e as
+  // traduções já existiam no `STATUS_CONFIG` logo acima.
+  const proximoPasso = cycle.status === 'OPEN' ? 'iniciar a contagem' : 'terminar a contagem';
 
   return (
     <div className="space-y-6">
@@ -245,24 +283,69 @@ function CycleDetailPanel({
 
       {/* Ações de gestão */}
       {cycle.status !== 'CLOSED' && (
-        <div className="flex flex-wrap gap-3">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 flex flex-wrap items-center justify-between gap-3">
+          {/* Cada estado diz qual é o passo seguinte. Antes havia só um botão com o
+              nome cru do enum («Avançar para RECONCILING»), e nada explicava que isso
+              significa «terminar a contagem e revisar antes de fechar». */}
+          <p className="text-sm text-slate-600 max-w-lg">
+            {cycle.status === 'OPEN' &&
+              'O ciclo está aberto. Inicie a contagem para que se possam registar produtos.'}
+            {cycle.status === 'COUNTING' &&
+              'Contagem a decorrer. Registe os produtos abaixo e termine quando estiver completa.'}
+            {cycle.status === 'RECONCILING' &&
+              'Contagem terminada. Reveja as divergências antes de fechar — o fecho ajusta o stock e lança as faltas no financeiro.'}
+          </p>
+
+          <div className="flex flex-wrap gap-2">
           {canAdvance && (
-            <Button variant="outline" onClick={handleAdvanceStatus} disabled={isUpdating}>
-              {isUpdating ? 'A atualizar...' : `Avançar para ${cycle.status === 'OPEN' ? 'COUNTING' : 'RECONCILING'}`}
+            <Button onClick={handleAdvanceStatus} disabled={isUpdating}>
+              {isUpdating ? 'A actualizar...' : `Avançar: ${proximoPasso}`}
+            </Button>
+          )}
+          {canClose && (
+            <Button variant="outline" onClick={() => setMostrarPrevisao(true)}>
+              Ver o que vai mudar
             </Button>
           )}
           {canClose && (
             <Button variant="warning" onClick={handleClose} disabled={isClosing}>
-              {isClosing ? 'A fechar ciclo...' : 'âš  Fechar Ciclo e Gerar Ajustes'}
+              {isClosing ? 'A fechar...' : 'Fechar ciclo e gerar ajustes'}
             </Button>
           )}
+          </div>
         </div>
+      )}
+
+      {/* A conta antes de a confirmar: o fecho escreve movimentos de stock e cria
+          uma despesa por cada falta, e e irreversivel. O resumo do que ia mudar so
+          era conhecido DEPOIS de fechar. */}
+      {mostrarPrevisao && (
+        <PrevisaoDeFecho cycleId={cycleId} onFechar={() => setMostrarPrevisao(false)} />
       )}
 
       {closeResult && (
         <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-4 py-3 rounded-xl text-sm font-medium">
           <CheckCircle className="h-4 w-4 shrink-0" />
           {closeResult}
+        </div>
+      )}
+
+      {/* ── Registar contagem, também para quem gere ──────────────────────────
+          O formulário de contagem existia, mas só era mostrado a quem **não** era
+          gestor (`if (!isManager) return <OperatorCountView/>`) — um ADMIN ou MANAGER
+          nunca conseguia registar uma contagem pela interface, apesar de o servidor
+          lho permitir (a rota exige `VER_STOCK`, que qualquer gestor tem).
+          Era a causa de «inicia mas não tem onde preencher os dados». */}
+      {cycle.status === 'COUNTING' && (
+        <div className="rounded-xl border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h4 className="text-sm font-semibold text-slate-800">Registar contagem</h4>
+            <p className="text-xs text-slate-500">
+              Conte a prateleira e registe aqui, ou peça aos operadores para o fazerem nos
+              seus terminais.
+            </p>
+          </div>
+          <OperatorCountView activeCycle={cycle} />
         </div>
       )}
 
@@ -273,8 +356,8 @@ function CycleDetailPanel({
           <p className="text-sm">Nenhuma contagem registada ainda.</p>
           <p className="text-xs mt-1">
             {cycle.status === 'COUNTING'
-              ? 'Peça aos operadores para iniciarem a contagem.'
-              : 'Avance o ciclo para COUNTING para habilitar contagens.'}
+              ? 'Registe a primeira contagem acima, ou peça aos operadores para começarem.'
+              : 'Avance o ciclo para começar a contagem.'}
           </p>
         </div>
       ) : (
@@ -287,7 +370,7 @@ function CycleDetailPanel({
                   <th className="px-4 py-3 text-right font-semibold text-slate-600">Qtd Sistema</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-600">Qtd FÍsica</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-600">Divergência</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-600 hidden sm:table-cell">
+                  <th className="px-4 py-3 text-left font-semibold text-slate-600">
                     Operador
                   </th>
                 </tr>
@@ -345,7 +428,7 @@ function CycleDetailPanel({
                           {diff}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500 text-xs hidden sm:table-cell">
+                      <td className="px-4 py-3 text-slate-500 text-xs">
                         {count.operator?.name ?? '—'}
                       </td>
                     </tr>
@@ -489,6 +572,143 @@ export function InventoryTab() {
 
       {showCreateModal && (
         <CreateCycleModal onClose={() => setShowCreateModal(false)} />
+      )}
+    </div>
+  );
+}
+
+// ── Previsão do fecho ────────────────────────────────────────────────────────
+
+/**
+ * O que o fecho vai fazer, antes de o fazer.
+ *
+ * O resumo do fecho — quantos ajustes, quanto vale a perda — só era conhecido **depois**
+ * de fechar, e o fecho é irreversível: escreve movimentos de stock e cria uma despesa
+ * financeira por cada falta. Quem assina um balanço tem de poder ver a conta antes de a
+ * confirmar.
+ *
+ * Responde também à pergunta directa «a contagem bate com o sistema?»: é o número de
+ * linhas sem divergência nenhuma.
+ */
+function PrevisaoDeFecho({ cycleId, onFechar }: { cycleId: string; onFechar: () => void }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['inventory', 'previsao-fecho', cycleId],
+    queryFn: () => inventoryApi.preverFecho(cycleId),
+  });
+
+  const moeda = (v: number) => v.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <h4 className="text-sm font-semibold text-slate-800">O que vai mudar ao fechar</h4>
+        <button
+          onClick={onFechar}
+          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          aria-label="Fechar previsão"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p className="px-4 py-8 text-center text-sm text-slate-500">A calcular...</p>
+      ) : error || !data ? (
+        <p className="px-4 py-8 text-center text-sm text-slate-500">
+          Não foi possível calcular a previsão.
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-px bg-slate-100 sm:grid-cols-4">
+            {[
+              { rotulo: 'Contado', valor: String(data.resumo.totalContado) },
+              {
+                rotulo: 'Bate com o sistema',
+                valor: String(data.resumo.semDivergencia),
+                bom: data.resumo.semDivergencia === data.resumo.totalContado,
+              },
+              {
+                rotulo: 'Faltas',
+                valor: `${data.resumo.faltas} · ${moeda(data.resumo.valorFaltas)}`,
+                alerta: data.resumo.faltas > 0,
+              },
+              {
+                rotulo: 'Sobras',
+                valor: `${data.resumo.sobras} · ${moeda(data.resumo.valorSobras)}`,
+                alerta: data.resumo.sobras > 0,
+              },
+            ].map((m) => (
+              <div key={m.rotulo} className="bg-white px-4 py-3">
+                <p className="text-xs text-slate-500">{m.rotulo}</p>
+                <p
+                  className={`mt-0.5 text-sm font-semibold ${
+                    m.alerta ? 'text-amber-600' : m.bom ? 'text-emerald-600' : 'text-slate-900'
+                  }`}
+                >
+                  {m.valor}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {data.resumo.comDivergencia === 0 ? (
+            <p className="flex items-center gap-2 px-4 py-4 text-sm text-emerald-700">
+              <CheckCircle className="h-4 w-4 shrink-0" />
+              A contagem bate com o sistema em todas as {data.resumo.totalContado} linhas. O
+              fecho não vai gerar ajustes.
+            </p>
+          ) : (
+            <>
+              <p className="px-4 pt-3 text-xs text-slate-500">
+                Estas {data.resumo.comDivergencia} linhas vão gerar ajustes de stock. As faltas
+                entram como despesa no financeiro.
+              </p>
+              <div className="max-h-64 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Produto</th>
+                      <th className="px-3 py-2 text-right font-medium">Sistema</th>
+                      <th className="px-3 py-2 text-right font-medium">Contado</th>
+                      <th className="px-3 py-2 text-right font-medium">Diferença</th>
+                      <th className="px-3 py-2 text-right font-medium">Valor</th>
+                      <th className="px-4 py-2 font-medium">Contado por</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {data.divergencias.map((d) => (
+                      <tr key={d.stockId}>
+                        <td className="px-4 py-2">
+                          <span className="text-slate-800">{d.produto}</span>
+                          {d.armazem && <p className="text-xs text-slate-400">{d.armazem}</p>}
+                        </td>
+                        <td className="px-3 py-2 text-right text-slate-500">{d.sistema}</td>
+                        <td className="px-3 py-2 text-right font-medium text-slate-800">
+                          {d.contado}
+                        </td>
+                        <td
+                          className={`px-3 py-2 text-right font-semibold ${
+                            d.diferenca < 0 ? 'text-rose-600' : 'text-emerald-600'
+                          }`}
+                        >
+                          {d.diferenca > 0 ? '+' : ''}
+                          {d.diferenca}
+                        </td>
+                        <td className="px-3 py-2 text-right text-slate-600">{moeda(d.valor)}</td>
+                        <td className="px-4 py-2 text-xs text-slate-500">
+                          {/* Quem contou. Estava na tabela de divergências mas escondido
+                              em ecrãs pequenos (`hidden sm:table-cell`) — num tablet, que
+                              é onde se faz a contagem, não se via. */}
+                          {d.operador ?? '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

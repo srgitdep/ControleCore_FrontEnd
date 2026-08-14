@@ -27,29 +27,32 @@ export function StockDetailsPage() {
     return <div className="p-8 text-center text-red-500">Stock não encontrado.</div>;
   }
 
-  const getMovementIcon = (type: string) => {
-    switch (type) {
-      case 'IN':
-      case 'TRANSFER_IN':
-      case 'ADJUSTMENT_PLUS':
-        return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'OUT':
-      case 'TRANSFER_OUT':
-      case 'ADJUSTMENT_MINUS':
-        return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default:
-        return <RefreshCcw className="h-4 w-4 text-blue-600" />;
+  /**
+   * O enum do servidor tem três valores: `IN`, `OUT` e `ADJUSTMENT`.
+   *
+   * Este código tratava seis, com casos para `TRANSFER_IN`, `TRANSFER_OUT`,
+   * `ADJUSTMENT_PLUS` e `ADJUSTMENT_MINUS` — que nunca chegam. O efeito prático era
+   * que um ajuste, o único tipo que sobrava, caía no `default` e aparecia como
+   * «ADJUSTMENT» cru, com um ícone de recarregar.
+   *
+   * Um ajuste positivo distingue-se de um negativo pelo **sinal da quantidade**, não
+   * pelo tipo — é assim que o backend os grava.
+   */
+  const getMovementIcon = (type: string, quantity: number) => {
+    if (type === 'IN' || (type === 'ADJUSTMENT' && quantity >= 0)) {
+      return <TrendingUp className="h-4 w-4 text-green-600" />;
     }
+    if (type === 'OUT' || (type === 'ADJUSTMENT' && quantity < 0)) {
+      return <TrendingDown className="h-4 w-4 text-red-600" />;
+    }
+    return <RefreshCcw className="h-4 w-4 text-blue-600" />;
   };
 
-  const formatMovementType = (type: string) => {
+  const formatMovementType = (type: string, quantity: number) => {
     switch (type) {
-      case 'IN': return 'Entrada (Compra/Receção)';
-      case 'OUT': return 'SaÍda (Venda/Expedição)';
-      case 'TRANSFER_IN': return 'Transferência (Entrada)';
-      case 'TRANSFER_OUT': return 'Transferência (SaÍda)';
-      case 'ADJUSTMENT_PLUS': return 'Ajuste Positivo';
-      case 'ADJUSTMENT_MINUS': return 'Ajuste Negativo';
+      case 'IN': return 'Entrada (compra ou recepção)';
+      case 'OUT': return 'Saída (venda ou expedição)';
+      case 'ADJUSTMENT': return quantity >= 0 ? 'Ajuste positivo' : 'Ajuste negativo';
       default: return type;
     }
   };
@@ -116,7 +119,10 @@ export function StockDetailsPage() {
                 </tr>
               ) : (
                 movements.map((mov) => {
-                  const isPositive = ['IN', 'TRANSFER_IN', 'ADJUSTMENT_PLUS'].includes(mov.type);
+                  // Um ajuste é positivo ou negativo pelo sinal da quantidade — o tipo
+                  // é `ADJUSTMENT` nos dois casos.
+                  const isPositive =
+                    mov.type === 'IN' || (mov.type === 'ADJUSTMENT' && mov.quantity >= 0);
                   return (
                     <tr key={mov.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="p-4 whitespace-nowrap text-gray-600">
@@ -125,9 +131,11 @@ export function StockDetailsPage() {
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <div className={`p-1.5 rounded-full ${isPositive ? 'bg-green-50' : 'bg-red-50'}`}>
-                            {getMovementIcon(mov.type)}
+                            {getMovementIcon(mov.type, mov.quantity)}
                           </div>
-                          <span className="font-medium text-gray-700">{formatMovementType(mov.type)}</span>
+                          <span className="font-medium text-gray-700">
+                            {formatMovementType(mov.type, mov.quantity)}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-center">
@@ -142,7 +150,10 @@ export function StockDetailsPage() {
                       </td>
                       <td className="p-4 text-gray-600">
                         <p className="line-clamp-1">{mov.reason || '-'}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{mov.user?.nome || 'Sistema'}</p>
+                        {/* Era `mov.user?.nome`, mas o backend devolve `name` — pelo
+                            que o histórico dizia «Sistema» em todos os movimentos,
+                            inclusive nos feitos por pessoas. */}
+                        <p className="text-xs text-gray-400 mt-0.5">{mov.user?.name || 'Sistema'}</p>
                       </td>
                     </tr>
                   );

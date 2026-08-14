@@ -32,11 +32,12 @@ import type { Stock, StockMovement } from '@/features/stock';
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
 type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
 
-// O catálogo vem primeiro: é por onde se começa (criar o produto) e para onde se volta
-// mais vezes. Os saldos só existem depois de haver produtos.
+// «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
+// por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
+// existem depois de haver produtos.
 const TABS: TabDefinition<StockTab>[] = [
-  { id: 'produtos', label: 'Catálogo', icon: Boxes },
-  { id: 'estoque', label: 'Saldos', icon: Package },
+  { id: 'produtos', label: 'Produtos', icon: Boxes },
+  { id: 'estoque', label: 'Stock', icon: Package },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
   { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
 ];
@@ -300,6 +301,35 @@ function MovementsTab() {
           </span>
         ),
       }),
+      // Sem esta coluna, o histórico geral mostrava «Entrada +1000» sem dizer de que
+      // produto — a informação vinha do backend (`stock.product`) e era descartada.
+      // Num histórico geral, é a primeira coisa que se quer saber.
+      movementColumnHelper.display({
+        id: 'produto',
+        header: 'Produto',
+        cell: ({ row }) => {
+          const { stock, stockId } = row.original;
+          const produto = stock?.product;
+
+          return (
+            <div className="min-w-[140px]">
+              {produto ? (
+                <Link
+                  to={`/stock/${stockId}`}
+                  className="text-sm font-medium text-slate-900 hover:text-blue-600 hover:underline"
+                >
+                  {produto.nome}
+                </Link>
+              ) : (
+                <span className="text-sm text-slate-400">Produto removido</span>
+              )}
+              {stock?.armazem?.nome && (
+                <p className="text-xs text-slate-400">{stock.armazem.nome}</p>
+              )}
+            </div>
+          );
+        },
+      }),
       movementColumnHelper.accessor('type', {
         header: 'Tipo',
         cell: ({ getValue }) => {
@@ -331,10 +361,28 @@ function MovementsTab() {
           <span className="tabular-nums text-sm text-slate-700">{getValue()}</span>
         ),
       }),
+      // Quem fez o movimento. O backend enviava-o desde sempre, mas o tipo do frontend
+      // declarava `user.nome` e o backend devolve `user.name` — pelo que o valor era
+      // sempre `undefined`. Um ajuste de stock sem autor não se pode contestar.
+      movementColumnHelper.display({
+        id: 'operador',
+        header: 'Por',
+        cell: ({ row }) => {
+          const autor = row.original.user;
+
+          return autor?.name ? (
+            <span className="text-xs text-slate-600" title={autor.email}>
+              {autor.name}
+            </span>
+          ) : (
+            <span className="text-xs text-slate-400">Sistema</span>
+          );
+        },
+      }),
       movementColumnHelper.accessor('reason', {
         header: 'Motivo',
         cell: ({ getValue }) => (
-          <span className="text-xs text-slate-500 truncate max-w-[200px] block">
+          <span className="text-xs text-slate-500 truncate max-w-[200px] block" title={getValue() ?? ''}>
             {getValue() ?? '—'}
           </span>
         ),

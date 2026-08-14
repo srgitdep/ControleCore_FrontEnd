@@ -6,6 +6,9 @@ import { X, PackagePlus, Warehouse } from 'lucide-react';
 import type { Product } from '../types';
 import { useCreateProduct, useUpdateProduct, useCategories } from '../hooks/useCatalog';
 import { useArmazens } from '@/features/lojas';
+import { stockApi } from '@/features/stock';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui';
 
 const productSchema = z.object({
@@ -307,10 +310,19 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
             </div>
 
-            {/* ── Stock inicial ──────────────────────────────────────────────
-                Só na criação: alterar existências por um formulário de catálogo
-                esconderia um movimento de inventário, que tem de ter autor e
-                motivo próprios. Para isso há os ajustes na secção Stock. */}
+            {/* ── Ao editar: os mínimos por armazém ───────────────────────────
+                O ponto de reposição só era gravado na criação — depois disso não
+                havia nenhuma via para o alterar, pelo que um produto criado sem
+                mínimo ficava fora dos alertas e das sugestões de compra para
+                sempre.
+
+                A quantidade **não** se edita aqui: alterar existências por um
+                formulário de catálogo esconderia um movimento de inventário, que
+                tem de ter autor e motivo próprios. Para isso há os ajustes na
+                secção Stock. */}
+            {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
+
+            {/* ── Stock inicial, só na criação ──────────────────────────────── */}
             {!productToEdit && (
               <div className="mt-6 pt-5 border-t border-slate-100">
                 <div className="flex items-center gap-2">
@@ -418,6 +430,141 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
             </Button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Os pontos de reposição do produto, um por armazém.
+ *
+ * O mínimo vive em `Stock.minQuantity` — é por armazém, não do produto: o mesmo artigo
+ * pode precisar de 50 unidades no ponto de venda e de 5 na reserva.
+ *
+ * Grava-se separadamente do resto do formulário, por linha, e não no «Guardar
+ * Produto»: são registos diferentes (`Stock`, não `Produto`) e endpoints diferentes.
+ * Juntá-los faria um botão gravar duas coisas, com a possibilidade de uma passar e a
+ * outra falhar sem o utilizador saber qual.
+ */
+function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
+  const queryClient = useQueryClient();
+  const [emEdicao, setEmEdicao] = useState<Record<string, string>>({});
+  const [aGuardar, setAGuardar] = useState<string | null>(null);
+
+  const { data: posicoes = [], isLoading } = useQuery({
+    queryKey: ['stock-posicoes', produtoId],
+    queryFn: () => stockApi.getPosicoesDoProduto(produtoId),
+  });
+
+  const guardar = async (stockId: string, valor: string) => {
+    const minimo = Number(valor);
+
+    if (!Number.isFinite(minimo) || minimo < 0) {
+      return toast.error('O stock mínimo não pode ser negativo.');
+    }
+
+    setAGuardar(stockId);
+    try {
+      await stockApi.definirMinimo(stockId, minimo);
+      toast.success('Stock mínimo actualizado.');
+
+      // Os alertas e a listagem de saldos leem este valor.
+      queryClient.invalidateQueries({ queryKey: ['stock-posicoes', produtoId] });
+      queryClient.invalidateQueries({ queryKey: ['stocks'] });
+
+      setEmEdicao((antes) => {
+        const novo = { ...antes };
+        delete novo[stockId];
+        return novo;
+      });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao guardar o stock mínimo.');
+    } finally {
+      setAGuardar(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <p className="text-sm text-slate-500">A carregar os saldos por armazém...</p>
+      </div>
+    );
+  }
+
+  if (posicoes.length === 0) return null;
+
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="flex items-center gap-2">
+        <Warehouse className="h-4 w-4 text-slate-400" />
+        <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        O ponto de reposição é por armazém. Abaixo dele o produto entra nos alertas e nas
+        sugestões de compra. Zero significa «sem mínimo definido».
+      </p>
+
+      <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-3 py-2 font-medium">Armazém</th>
+              <th className="px-3 py-2 text-right font-medium">Saldo</th>
+              <th className="w-40 px-3 py-2 font-medium">Mínimo</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {posicoes.map((p) => {
+              const valor = emEdicao[p.id] ?? String(p.minQuantity);
+              const alterado = Number(valor) !== p.minQuantity;
+              const emFalta = p.minQuantity > 0 && p.currentQuantity <= p.minQuantity;
+
+              return (
+                <tr key={p.id}>
+                  <td className="px-3 py-2">
+                    <span className="text-slate-800">{p.armazem.nome}</span>
+                    {!p.armazem.isActive && (
+                      <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                        inactivo
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span className={emFalta ? 'font-semibold text-amber-600' : 'text-slate-700'}>
+                      {p.currentQuantity}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={valor}
+                        onChange={(e) => setEmEdicao((antes) => ({ ...antes, [p.id]: e.target.value }))}
+                        className="w-20 rounded border border-slate-200 px-2 py-1 text-sm"
+                      />
+                      {/* O botão só aparece quando há algo a gravar: sem isto, cada
+                          linha teria um botão permanentemente activo e seria difícil
+                          saber qual alteração ficou por confirmar. */}
+                      {alterado && (
+                        <button
+                          type="button"
+                          onClick={() => guardar(p.id, valor)}
+                          disabled={aGuardar === p.id}
+                          className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          {aGuardar === p.id ? '...' : 'Guardar'}
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

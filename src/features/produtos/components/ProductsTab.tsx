@@ -24,7 +24,9 @@ import { ProductFormModal } from './ProductFormModal';
  */
 export function ProductsTab() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch] = useDebounce(searchTerm, 500);
+  // `useDebounce` devolve o valor, não um par — ver a nota em `CriarPedidoModal`. Com
+  // destructuring, a pesquisa filtrava pelo primeiro carácter escrito.
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
 

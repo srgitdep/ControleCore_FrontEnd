@@ -54,7 +54,10 @@ export function CriarPedidoModal({
   const [isSaving, setIsSaving] = useState(false);
 
   const [pesquisa, setPesquisa] = useState('');
-  const [pesquisaAdiada] = useDebounce(pesquisa, 350);
+  // `useDebounce` devolve o valor, não um par: com destructuring de array sobre uma
+  // string, isto ficava com o primeiro carácter — e `undefined` quando vazia, que era
+  // o que rebentava em `.trim()` ao abrir o modal.
+  const pesquisaAdiada = useDebounce(pesquisa, 350);
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
