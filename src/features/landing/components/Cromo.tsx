@@ -198,8 +198,11 @@ export function RodapeDoSitio() {
 
   return (
     <footer style={{ borderTop: '1px solid var(--linha)', background: 'var(--fundo-alt)' }}>
+      {/* `auto-fit minmax(190px)` colapsa numa coluna em telemóvel e o rodapé passava a
+          787px — mais um ecrã inteiro só para ligações. A classe põe-o em duas colunas
+          abaixo de 700px; ver `site.css`. */}
       <div
-        className="cc-caixa"
+        className="cc-caixa cc-rodape-colunas"
         style={{
           display: 'grid',
           gap: 40,
