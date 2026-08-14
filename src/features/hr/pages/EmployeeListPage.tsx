@@ -3,6 +3,7 @@ import { Users, Search, Shield, UserCheck, UserX, Eye } from 'lucide-react';
 import { getEmployees } from '../api/hr.api';
 import type { Employee, EmployeeRole } from '../types';
 import { EmployeeProfileDrawer } from '../components/EmployeeProfileDrawer';
+import { TableScroll } from '@/shared/ui';
 
 const ROLE_LABEL: Record<EmployeeRole, string> = {
   SUPER_ADMIN: 'Super Admin',
@@ -99,8 +100,63 @@ export function EmployeeListPage() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* ── Cartões, em telemóvel ──────────────────────────────────────────────
+          Cinco colunas com nome, email e dois badges não cabem em 343px (os 375 de um
+          telemóvel menos o padding do layout). Deslizar na horizontal para ler um email
+          é pior do que ler o registo inteiro de uma vez. */}
+      <div className="space-y-2 sm:hidden">
+        {isLoading ? (
+          [...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
+          ))
+        ) : filtered.length === 0 ? (
+          <p className="rounded-xl border border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400">
+            {search ? `Nenhum funcionário encontrado para "${search}"` : 'Sem funcionários registados.'}
+          </p>
+        ) : (
+          filtered.map((emp) => (
+            <button
+              key={emp.id}
+              type="button"
+              onClick={() => setSelectedEmployeeId(emp.id)}
+              className="flex w-full items-start gap-3 rounded-xl border border-l-[3px] border-slate-200 border-l-indigo-500 bg-white p-4 text-left transition-colors active:bg-slate-50"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-600">
+                {emp.nome.charAt(0).toUpperCase()}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-slate-800">{emp.nome}</p>
+                {/* `break-all` porque um email longo sem espaços não envolve e alarga
+                    o cartão para fora do ecrã. */}
+                <p className="break-all text-xs text-slate-500">{emp.email}</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_COLOR[emp.cargo]}`}
+                  >
+                    {ROLE_LABEL[emp.cargo]}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 text-xs font-medium ${
+                      emp.isActive ? 'text-emerald-600' : 'text-slate-400'
+                    }`}
+                  >
+                    {emp.isActive ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
+                    {emp.isActive ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+              </div>
+
+              <Eye className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* ── Tabela, a partir de sm ─────────────────────────────────────────── */}
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:block">
+        <TableScroll>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50">
@@ -126,7 +182,9 @@ export function EmployeeListPage() {
               [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-slate-400 text-sm">
+                {/* Cinco colunas, não quatro: com `colSpan` a menos, a mensagem de
+                    lista vazia não ficava centrada na largura da tabela. */}
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-sm">
                   {search
                     ? `Nenhum funcionário encontrado para "${search}"`
                     : 'Sem funcionários registados.'}
@@ -182,6 +240,7 @@ export function EmployeeListPage() {
             )}
           </tbody>
         </table>
+        </TableScroll>
       </div>
 
       <EmployeeProfileDrawer

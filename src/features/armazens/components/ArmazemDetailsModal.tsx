@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { X, Box, Search, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
 import { getStockDoArmazem, type Armazem } from '@/features/lojas';
 import { cn } from '@/shared/utils';
+import { TableScroll } from '@/shared/ui';
 
 /**
  * O que está dentro de um armazém.
@@ -187,6 +188,7 @@ export function ArmazemDetailsModal({
                 : 'Este armazém não tem existências. Dê entrada de mercadoria por uma recepção de compra ou por um ajuste de stock.'}
             </div>
           ) : (
+            <TableScroll>
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
@@ -250,6 +252,7 @@ export function ArmazemDetailsModal({
                 ))}
               </tbody>
             </table>
+            </TableScroll>
           )}
         </div>
 

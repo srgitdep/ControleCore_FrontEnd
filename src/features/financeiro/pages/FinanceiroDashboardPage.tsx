@@ -35,6 +35,7 @@ import {
   useProcessarPagamento,
 } from '@/features/financeiro';
 import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
+import { CardCarousel, KpiCard as SharedKpiCard, TableScroll } from '@/shared/ui';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -58,50 +59,50 @@ const MONTH_NAMES = [
 
 // ──â”€ Sub-components ──────────────────────────────────────────────────────────â”€
 
+/**
+ * Adaptador para o `KpiCard` partilhado.
+ *
+ * O cartão local usava gradiente colorido com borda translúcida — um dos oito estilos
+ * de cartão que existiam no sistema, e o único com fundo em degradê. Colorir o fundo
+ * inteiro baixava o contraste do texto por cima; a cor passa para a barra à esquerda,
+ * onde continua a distinguir receita de despesa sem prejudicar a leitura.
+ *
+ * Fica como adaptador em vez de substituição directa nos sete pontos de uso: as
+ * chamadas mantêm-se legíveis com o vocabulário desta página (`label`, `sub`, cores),
+ * e o mapeamento de cor→significado está num só lugar.
+ */
 function KpiCard({
   label,
   value,
   sub,
-  icon: Icon,
+  icon,
   accent,
-  trend,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: React.ElementType;
   accent: 'green' | 'blue' | 'red' | 'yellow' | 'purple';
+  /** Aceito e ignoro: a seta indicava direcção sem dizer de quanto, e o valor da
+   *  variação não existe nestes dados. */
   trend?: 'up' | 'down';
 }) {
-  const accents = {
-    green:  'from-emerald-500/20 to-emerald-600/5 border-emerald-500/30 text-emerald-400',
-    blue:   'from-blue-500/20 to-blue-600/5 border-blue-500/30 text-blue-400',
-    red:    'from-red-500/20 to-red-600/5 border-red-500/30 text-red-400',
-    yellow: 'from-amber-500/20 to-amber-600/5 border-amber-500/30 text-amber-400',
-    purple: 'from-violet-500/20 to-violet-600/5 border-violet-500/30 text-violet-400',
-  };
+  const paraAcento = {
+    green: 'success',
+    blue: 'primary',
+    red: 'danger',
+    yellow: 'warning',
+    purple: 'primary',
+  } as const;
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br p-5 backdrop-blur-sm ${accents[accent]}`}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-          {sub && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
-        </div>
-        <div className={`rounded-xl p-2.5 bg-white/5 ${accents[accent].split(' ')[3]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-      {trend && (
-        <div className="absolute bottom-3 right-4 flex items-center gap-1 text-xs">
-          {trend === 'up'
-            ? <TrendingUp className="h-3 w-3 text-emerald-400" />
-            : <TrendingDown className="h-3 w-3 text-red-400" />}
-        </div>
-      )}
-    </div>
+    <SharedKpiCard
+      title={label}
+      value={value}
+      description={sub}
+      icon={icon}
+      accent={paraAcento[accent]}
+    />
   );
 }
 
@@ -186,10 +187,14 @@ export function FinanceiroDashboardPage() {
   ];
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
+    // Sem padding próprio: o `AppLayout` já aplica `p-4 sm:p-6` ao `<main>`. Num
+    // telemóvel de 375px, o padding a dobrar comia 64px dos 375 — quase um quinto da
+    // largura, antes de a tabela começar.
+    <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+        {/* `text-3xl` fixo (30px) transbordava em telemóvel; cresce com o ecrã. */}
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
           Dashboard <span className="text-violet-400">Financeiro</span>
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -292,8 +297,10 @@ export function FinanceiroDashboardPage() {
                 </div>
               </div>
 
-              {/* KPI Grid */}
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {/* Os indicadores deslizam na horizontal abaixo de `lg`, em vez de
+                  empilharem: eram `grid-cols-2` em telemóvel, o que dava dois cartões
+                  de largura mínima por linha e texto a partir. */}
+              <CardCarousel label="Indicadores do período" colunas={4}>
                 <KpiCard
                   label="Vendas Realizadas"
                   value={String(dre.totalVendasRealizadas)}
@@ -318,7 +325,7 @@ export function FinanceiroDashboardPage() {
                   icon={TrendingDown}
                   accent="red"
                 />
-              </div>
+              </CardCarousel>
 
               {/* Top Produtos */}
               {dre.topProdutos.length > 0 && (
@@ -367,7 +374,9 @@ export function FinanceiroDashboardPage() {
           )}
           {cf && (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Três colunas, não quatro: com três indicadores, uma grelha de quatro
+                  deixaria uma lacuna à direita. */}
+              <CardCarousel label="Fluxo de caixa" colunas={3}>
                 <KpiCard
                   label="Saldo Atual (Caixa Real)"
                   value={`MZN ${fmt(cf.saldoAtual)}`}
@@ -386,7 +395,7 @@ export function FinanceiroDashboardPage() {
                   icon={TrendingDown}
                   accent="red"
                 />
-              </div>
+              </CardCarousel>
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -517,6 +526,15 @@ function RegistrosTable({
 
       {registros.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+          {/* Era `overflow-hidden`: as seis colunas eram cortadas num telemóvel, sem
+              forma de as alcançar. O `TableScroll` permite deslizar e mostra um degradê
+              na margem quando há colunas escondidas — num telemóvel a barra de
+              deslocamento não se vê até se tocar, pelo que uma tabela cortada parece
+              uma tabela completa.
+
+              Envolve só a tabela, não a paginação: os controlos de página têm de ficar
+              parados enquanto se desliza as colunas. */}
+          <TableScroll>
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
               <tr>
@@ -616,6 +634,7 @@ function RegistrosTable({
               ))}
             </tbody>
           </table>
+          </TableScroll>
 
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-4 py-3">

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import jsPDF from 'jspdf';
 import { ReceiptModal } from '../components/ReceiptModal';
+import { TableScroll } from '@/shared/ui';
 
 export function CaixasHistoricoPage() {
   const { data, isLoading, refetch } = useHistoricoSessoes();
@@ -170,6 +171,7 @@ export function CaixasHistoricoPage() {
                       <p className="text-sm text-slate-500 italic">Nenhuma venda registada nesta sessão.</p>
                     ) : (
                       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <TableScroll>
                         <table className="w-full text-left text-sm text-slate-600">
                           <thead className="bg-slate-100/50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold">
                             <tr>
@@ -238,6 +240,7 @@ export function CaixasHistoricoPage() {
                             })}
                           </tbody>
                         </table>
+                        </TableScroll>
                       </div>
                     )}
                   </div>

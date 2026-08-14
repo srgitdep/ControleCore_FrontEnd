@@ -146,14 +146,79 @@ export function EmpresasPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto min-h-[400px]">
+        {/* ── Cartões, em telemóvel ────────────────────────────────────────── */}
+        {isLoading ? (
+          <div className="space-y-2 p-3 sm:hidden">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-xl border border-slate-200 bg-white" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2 p-3 sm:hidden">
+            {filteredEmpresas?.map((empresa) => (
+              <div
+                key={empresa.id}
+                className={`rounded-xl border border-l-[3px] border-slate-200 bg-white p-4 ${
+                  empresa.isActive ? 'border-l-emerald-500' : 'border-l-slate-300'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">{empresa.nome}</p>
+                    <p className="break-all text-xs text-slate-500">{empresa.email}</p>
+                    <p className="mt-1 font-mono text-xs text-slate-400">NUIT {empresa.nuit}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                      empresa.isActive
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                        : 'border-slate-200 bg-slate-50 text-slate-600'
+                    }`}
+                  >
+                    {empresa.isActive ? 'Ativa' : 'Inativa'}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center gap-1 border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => { setEmpresaToView(empresa); setIsDetailsOpen(true); }}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                    aria-label={`Detalhes de ${empresa.nome}`}
+                  >
+                    <Eye size={17} />
+                  </button>
+                  <button
+                    onClick={() => handleEdit(empresa)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                    aria-label={`Editar ${empresa.nome}`}
+                  >
+                    <Edit2 size={17} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(empresa.id)}
+                    className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    aria-label={`Eliminar ${empresa.nome}`}
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {empresas?.length === 0 && (
+              <p className="py-12 text-center text-sm text-slate-500">Nenhuma empresa registada.</p>
+            )}
+          </div>
+        )}
+
+        {/* ── Tabela, a partir de sm ──────────────────────────────────────── */}
+        <div className="hidden min-h-[400px] overflow-x-auto custom-scrollbar sm:block">
           {isLoading ? (
             <div className="p-8 flex justify-center">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <table className="w-full text-sm text-left whitespace-nowrap">
+            <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium text-xs">
                 <tr>
                   <th className="px-4 py-4 w-12 text-center">

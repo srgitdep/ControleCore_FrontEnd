@@ -83,13 +83,78 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
         </button>
       </div>
 
-      <div className="overflow-x-auto min-h-[400px]">
+      {/* ── Cartões, em telemóvel ──────────────────────────────────────────────
+          Cinco colunas com duas linhas de texto cada — a tabela mais densa em
+          conteúdo do sistema. Como é só leitura, sem botões, o formato de cartão
+          encaixa naturalmente: o registo lê-se de uma vez, sem deslizar. */}
+      {isLoading ? (
+        <div className="space-y-2 p-3 sm:hidden">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-24 animate-pulse rounded-xl border border-slate-200 bg-white" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2 p-3 sm:hidden">
+          {logs?.map((log) => {
+            const color = ACTION_COLORS[log.action] || ACTION_COLORS.LOGOUT;
+            const detalhe =
+              log.newValues?.nome ||
+              log.newValues?.name ||
+              log.newValues?.numeroFatura ||
+              log.newValues?.email ||
+              log.newValues?.titulo ||
+              log.entityId;
+
+            return (
+              <div key={log.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <span
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${color.bg} ${color.text} ${color.border}`}
+                  >
+                    <div className="h-1.5 w-1.5 rounded-full bg-current opacity-75" />
+                    {ACTION_LABELS[log.action] || log.action}
+                  </span>
+                  <span className="shrink-0 text-right text-xs text-slate-400">
+                    {format(new Date(log.createdAt), 'dd MMM, HH:mm')}
+                  </span>
+                </div>
+
+                {log.entityName && log.entityName !== 'Auth' && (
+                  <p className="mt-2 text-sm text-slate-800">
+                    <span className="font-semibold">{log.entityName}</span>
+                    {detalhe && <span className="text-slate-500"> · {detalhe}</span>}
+                  </p>
+                )}
+
+                <p className="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-500">
+                  {log.user ? (
+                    <>
+                      <span className="font-medium text-slate-700">{log.user.name}</span>
+                      {' · '}
+                      {log.user.perfil?.nome || log.user.role || 'USER'}
+                    </>
+                  ) : (
+                    <span className="italic">Utilizador desconhecido</span>
+                  )}
+                </p>
+              </div>
+            );
+          })}
+
+          {logs?.length === 0 && (
+            <p className="py-12 text-center text-sm text-slate-500">Nenhum registo encontrado.</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Tabela, a partir de sm ────────────────────────────────────────── */}
+      <div className="hidden min-h-[400px] overflow-x-auto custom-scrollbar sm:block">
         {isLoading ? (
           <div className="p-8 flex justify-center">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <table className="w-full text-sm text-left whitespace-nowrap">
+          <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium text-xs">
               <tr>
                 <th className="px-4 py-4">Utilizador</th>
