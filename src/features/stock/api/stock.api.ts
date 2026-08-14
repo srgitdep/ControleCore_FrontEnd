@@ -21,7 +21,7 @@ export interface PosicaoDoProduto {
 export const stockApi = {
   // ──â”€ Consultas ────────────────────────────────────────────────────────────
 
-  getStocks: async (params?: { page?: number; limit?: number; search?: string }) => {
+  getStocks: async (params?: { page?: number; limit?: number; search?: string; armazemId?: string; incluirSemSaldo?: boolean }) => {
     const { data } = await api.get<PaginatedResponse<Stock>>('/stock', { params });
     return data;
   },

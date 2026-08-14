@@ -30,16 +30,60 @@ const productSchema = z.object({
   //
   // Só aparece na criação. Ao editar não se mostra: alterar existências por um
   // formulário de catálogo esconderia um movimento de inventário, que tem de ter
-  // autor e motivo próprios — para isso há os ajustes na secção Stock.
+  // autor e motivo próprios — para isso há os ajustes na secção Stock (e os mínimos
+  // por armazém, que se editam numa tabela própria).
   armazemId: z.string().optional(),
   quantidadeInicial: z.coerce.number().min(0, 'A quantidade não pode ser negativa').optional(),
   stockMinimo: z.coerce.number().min(0, 'O mínimo não pode ser negativo').optional(),
-}).refine(
-  // Dar entrada de 50 unidades sem dizer onde é ambíguo, e o backend recusa. Validar
-  // aqui evita a ida ao servidor e diz onde está o problema.
-  (dados) => !((dados.quantidadeInicial ?? 0) > 0 || (dados.stockMinimo ?? 0) > 0) || !!dados.armazemId,
-  { message: 'Escolha o armazém a que a quantidade ou o mínimo se referem.', path: ['armazemId'] },
-);
+});
+
+/**
+ * O schema, com o stock mínimo obrigatório **só na criação**.
+ *
+ * ## Porque é obrigatório
+ *
+ * Sem mínimo, um produto nunca entra nos alertas de ruptura nem nas sugestões de
+ * compra: ambos comparam o saldo com `minQuantity`, e um mínimo de zero significa «sem
+ * mínimo definido», não «alerta quando chegar a zero». O produto ficava invisível para
+ * o sistema de reposição, e só se descobria a falta quando o cliente perguntava.
+ *
+ * Torná-lo obrigatório aqui é mais barato do que descobrir depois quais dos produtos
+ * ficaram sem — que era o que acontecia.
+ *
+ * ## Porque não na edição
+ *
+ * O mínimo é por armazém, e um produto pode ter três. O formulário de edição mostra-os
+ * numa tabela própria (`MinimosPorArmazem`), com uma linha por armazém; exigir um valor
+ * único aqui contradiria isso.
+ */
+const construirSchema = (aCriar: boolean) =>
+  productSchema.superRefine((dados, ctx) => {
+    if (!aCriar) return;
+
+    if (!dados.armazemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['armazemId'],
+        message: 'Escolha o armazém a que o stock deste produto se refere.',
+      });
+    }
+
+    // `undefined` e `0` são casos diferentes: o primeiro é «não preenchi», o segundo é
+    // «sem mínimo». Ambos são recusados, mas a mensagem distingue-os.
+    if (dados.stockMinimo === undefined || dados.stockMinimo === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stockMinimo'],
+        message: 'Indique o stock mínimo.',
+      });
+    } else if (dados.stockMinimo <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stockMinimo'],
+        message: 'O mínimo tem de ser maior que zero — abaixo dele o produto entra nos alertas.',
+      });
+    }
+  });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -63,7 +107,8 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
     setValue,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
-    resolver: zodResolver(productSchema),
+    // O mínimo é obrigatório ao criar e não ao editar — ver `construirSchema`.
+    resolver: zodResolver(construirSchema(!productToEdit)),
     defaultValues: productToEdit
       ? {
           nome: productToEdit.nome,
@@ -96,7 +141,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           isActive: true,
           armazemId: '',
           quantidadeInicial: 0,
-          stockMinimo: 0,
+          // Sem valor inicial: um zero por omissão mostraria um erro de validação num
+          // campo que o utilizador ainda não tocou — o mínimo tem de ser maior que
+          // zero. Vazio é o estado honesto de «ainda não preenchi».
+          stockMinimo: undefined,
         },
   });
 
@@ -327,25 +375,26 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               <div className="mt-6 pt-5 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                   <Warehouse className="h-4 w-4 text-slate-400" />
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    Stock inicial <span className="font-normal text-slate-400">(opcional)</span>
-                  </h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Stock</h3>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Dá entrada da mercadoria que já tem, sem passar pela secção Stock. A entrada
-                  fica registada no histórico e é valorizada ao preço de custo indicado acima.
+                  O armazém e o stock mínimo são obrigatórios: sem mínimo definido, o produto
+                  não entra nos alertas de ruptura nem nas sugestões de compra. A quantidade é
+                  opcional — deixe a zero se a mercadoria ainda não chegou.
                 </p>
 
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-3">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Armazém</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Armazém <span className="text-rose-500">*</span>
+                    </label>
                     <select
                       {...register('armazemId')}
                       disabled={isLoadingArmazens}
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
                     >
                       <option value="">
-                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Não dar entrada agora'}
+                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Escolher armazém...'}
                       </option>
                       {armazens.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -382,14 +431,14 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Stock mínimo
+                      Stock mínimo <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
                       step="any"
                       min="0"
                       {...register('stockMinimo')}
-                      placeholder="0"
+                      placeholder="Ex: 10"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     {errors.stockMinimo && (
