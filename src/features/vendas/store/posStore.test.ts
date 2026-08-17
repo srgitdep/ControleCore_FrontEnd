@@ -194,6 +194,16 @@ describe('carrinho do POS', () => {
       expect(usePosStore.getState().getTotal()).toBeCloseTo(174);
     });
 
+    it('trata IVA ausente como zero em vez de contaminar o total', () => {
+      // O campo é obrigatório no tipo e tem `@default(0)` no schema, mas basta uma
+      // resposta sem ele para `taxaIva / 100` dar `NaN` — e o `NaN` propaga-se ao total,
+      // pelo que o operador via «NaN MT» no lugar do valor a cobrar.
+      usePosStore.getState().addItem(produto({ taxaIva: undefined as any }), 3);
+
+      expect(usePosStore.getState().getTotalIva()).toBe(0);
+      expect(usePosStore.getState().getTotal()).toBe(300);
+    });
+
     it('subtrai o desconto global do total', () => {
       usePosStore.getState().addItem(produto(), 2);
       usePosStore.getState().setDescontoGlobal(20);

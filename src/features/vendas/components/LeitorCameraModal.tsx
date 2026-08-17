@@ -106,6 +106,12 @@ export function LeitorCameraModal({
     setLido(encontrado);
     setQuantidade('1');
 
+    // Sai do modo manual ao encontrar o produto. Sem isto o formulário de escrita
+    // continuava à frente do painel de quantidade — o operador via o produto na lista
+    // mas não tinha onde indicar quantas unidades nem como confirmar, e a entrada manual
+    // ficava sem saída.
+    setModoManual(false);
+
     // Vibra ao reconhecer: num telemóvel ao sol, a confirmação táctil chega antes de o
     // operador conseguir ler o ecrã. Não existe em iOS, e o `?.` cobre isso.
     navigator.vibrate?.(60);
@@ -322,6 +328,7 @@ export function LeitorCameraModal({
                 ref={campoQuantidade}
                 type="number"
                 inputMode="decimal"
+                aria-label="Quantidade"
                 min="0"
                 step="any"
                 value={quantidade}

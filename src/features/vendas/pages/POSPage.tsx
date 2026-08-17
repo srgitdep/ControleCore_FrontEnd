@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp } from 'lucide-react';
 import { useProducts, useCategories, catalogApi } from '@/features/produtos';
 import { usePosStore, getStockDisponivel } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
-import { useSocket } from '@/shared/hooks';
+import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { useProcessarVenda } from '@/features/vendas';
 import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
@@ -139,6 +139,18 @@ export function POSPage() {
   // Declarado antes do ouvinte de teclado, que o consulta para se calar enquanto o
   // leitor da câmara está aberto.
   const [leitorAberto, setLeitorAberto] = useState(false);
+
+  /**
+   * O carrinho como painel de baixo, no telemóvel.
+   *
+   * No computador o carrinho é a coluna da direita e está sempre à vista. Num ecrã de
+   * 375 px não cabem 420 px de carrinho e a grelha de produtos ao mesmo tempo, pelo que
+   * o carrinho passa a subir de baixo quando o operador o quer ver.
+   */
+  const [carrinhoAberto, setCarrinhoAberto] = useState(false);
+
+  /** `lg` é onde o carrinho volta a ser coluna fixa e este estado deixa de contar. */
+  const ecraGrande = useBreakpoint('lg');
 
   // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
@@ -408,16 +420,21 @@ export function POSPage() {
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0 shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Vendas</h1>
-            <p className="text-sm text-slate-500">Ponto de Venda e Gestão de Caixas</p>
+      {/* No telemóvel o cabeçalho é comprimido: com o tamanho de computador sobravam
+          menos de 200 px dos 667 para os produtos, e não cabia uma linha inteira. O
+          subtítulo desaparece — a barra de navegação já diz «Ponto de Venda». */}
+      <div className="bg-white border-b border-slate-200 px-4 pt-3 pb-0 shrink-0 sm:px-6 sm:pt-5">
+        <div className="flex items-center justify-between gap-2 mb-2 sm:mb-4">
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-slate-900 sm:text-2xl">Vendas</h1>
+            <p className="hidden text-sm text-slate-500 sm:block">Ponto de Venda e Gestão de Caixas</p>
           </div>
           <div className="flex items-center gap-3">
             {hasSession ? (
               <>
-                <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                {/* `whitespace-nowrap`: sem isto quebrava em «Sessão / Aberta» e o
+                    cabeçalho crescia uma linha no telemóvel. */}
+                <span className="whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 sm:px-3 sm:text-sm">
                   Sessão Aberta
                 </span>
               </>
@@ -436,7 +453,9 @@ export function POSPage() {
           <button
             onClick={() => setActiveTab('CATALOG')}
             className={cn(
-              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-150 -mb-px',
+              // `whitespace-nowrap`: «Ponto de Venda» quebrava em duas linhas e os
+              // separadores ficavam com o dobro da altura.
+              'flex items-center gap-2 whitespace-nowrap px-3 py-2.5 text-sm font-medium border-b-2 transition-all duration-150 -mb-px sm:px-4 sm:py-3',
               activeTab === 'CATALOG'
                 ? 'border-slate-900 text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -448,7 +467,9 @@ export function POSPage() {
           <button
             onClick={() => setActiveTab('HISTORY')}
             className={cn(
-              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-150 -mb-px',
+              // `whitespace-nowrap`: «Ponto de Venda» quebrava em duas linhas e os
+              // separadores ficavam com o dobro da altura.
+              'flex items-center gap-2 whitespace-nowrap px-3 py-2.5 text-sm font-medium border-b-2 transition-all duration-150 -mb-px sm:px-4 sm:py-3',
               activeTab === 'HISTORY'
                 ? 'border-slate-900 text-slate-900'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -465,7 +486,8 @@ export function POSPage() {
       <div className="flex-1 overflow-hidden relative">
         {/* Tab: Ponto de Venda */}
         {activeTab === 'CATALOG' && (
-          <div className="flex h-full w-full">
+          // `relative` ancora o carrinho, que abaixo de `lg` é posicionado por cima.
+          <div className="relative flex h-full w-full overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden relative">
               
               {/* Search Header */}
@@ -523,7 +545,9 @@ export function POSPage() {
             </div>
 
             {/* Product Grid */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* `pb-24` no telemóvel: a barra do carrinho é sobreposta e taparia a última
+                linha de produtos, que ficaria inalcançável no fim da lista. */}
+            <div className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:pb-6">
               {isLoadingProducts ? (
                 <div className="flex justify-center items-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -542,19 +566,48 @@ export function POSPage() {
             </div>
             </div>
 
-            {/* ──â”€ Cart Sidebar ──â”€ */}
-            <div className="w-[420px] bg-white shadow-2xl flex flex-col z-20 border-l border-gray-200 shrink-0">
+            {/* ──â”€ Cart Sidebar ──â”€
+                No computador é a coluna da direita, sempre visível. No telemóvel passa a
+                painel que sobe de baixo: 420 px fixos não cabem num ecrã de 375 px, e
+                deixavam a grelha de produtos e o botão de leitura fora do ecrã.
+
+                Fica montado nos dois casos — só muda de sítio. Desmontá-lo perderia o
+                estado do pagamento a cada vez que o operador voltasse aos produtos. */}
+            <div
+              className={cn(
+                'bg-white shadow-2xl flex flex-col z-20 border-gray-200',
+                'lg:w-[420px] lg:border-l lg:shrink-0 lg:relative lg:translate-y-0',
+                // Abaixo de lg: painel sobreposto, com transição para o gesto ser legível.
+                'absolute inset-x-0 bottom-0 top-0 transition-transform duration-300 lg:transition-none',
+                carrinhoAberto ? 'translate-y-0' : 'translate-y-full lg:translate-y-0',
+              )}
+              // Escondido dos leitores de ecrã quando fechado no telemóvel, para o foco
+              // não entrar num painel que não se vê.
+              aria-hidden={!carrinhoAberto && !ecraGrande}
+            >
         {/* Cart Header */}
-        <div className="p-5 border-b border-gray-100 bg-white flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <ShoppingCart className="h-6 w-6 text-blue-600" /> Carrinho
+        <div className="flex items-center justify-between gap-2 border-b border-gray-100 bg-white p-3 sm:p-5">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 shrink-0">
+            {/* Voltar aos produtos, no telemóvel. No computador não é preciso: o
+                carrinho e a grelha estão lado a lado. */}
+            <button
+              onClick={() => setCarrinhoAberto(false)}
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 lg:hidden"
+              aria-label="Voltar aos produtos"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <ShoppingCart className="h-6 w-6 text-blue-600" />
+            <span className="hidden sm:inline">Carrinho</span>
           </h2>
-          <div className="flex items-center gap-2">
+          {/* Deslizável no telemóvel: os três botões de sessão mais o contador não cabem
+              em 375 px, e sem isto o «Fechar» ficava cortado no bordo do ecrã. */}
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto hide-scrollbar">
             {hasSession && (
               <>
                 <button 
                   onClick={() => setShowSangriaModal(true)}
-                  className="bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  className="bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
                   title="Sangria (Retirar da Gaveta)"
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -562,7 +615,7 @@ export function POSPage() {
                 </button>
                 <button 
                   onClick={() => setShowReforcoModal(true)}
-                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
                   title="Reforço (Colocar na Gaveta)"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -570,7 +623,7 @@ export function POSPage() {
                 </button>
                 <button 
                   onClick={() => setShowCloseSessionModal(true)}
-                  className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                  className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
                   title="Fechar Turno / Sessão"
                 >
                   <Lock className="w-3.5 h-3.5" />
@@ -646,8 +699,11 @@ export function POSPage() {
           )}
         </div>
 
-        {/* Payment Section */}
-        <div className="p-5 bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+        {/* Payment Section
+            `overflow-y-auto` e `shrink-0` ausente: num ecrã de 667 px a secção de
+            pagamento não cabe inteira, e sem scroll próprio o botão «Finalizar Compra»
+            ficava abaixo do bordo do ecrã, inalcançável — a venda não se podia fechar. */}
+        <div className="max-h-[65%] shrink-0 overflow-y-auto border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] sm:p-5 lg:max-h-none">
           
           <div className="mb-4">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
@@ -749,6 +805,27 @@ export function POSPage() {
           </button>
         </div>
       </div>
+
+      {/* ─── Barra do carrinho, no telemóvel ───────────────────────────────────
+          Com o carrinho fechado não haveria nada a indicar o que já foi lido nem como
+          chegar ao pagamento. Mostra a conta e abre o painel.
+
+          Só no separador de vendas: no histórico de sessões não há carrinho. */}
+      {activeTab === 'CATALOG' && !carrinhoAberto && (
+        <button
+          onClick={() => setCarrinhoAberto(true)}
+          className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-blue-700 bg-blue-600 px-5 py-4 text-white shadow-2xl lg:hidden"
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <ShoppingCart className="h-5 w-5" />
+            {cartItems.length} {cartItems.length === 1 ? 'artigo' : 'artigos'}
+          </span>
+          <span className="flex items-center gap-2 font-black">
+            {total.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
+            <ChevronUp className="h-5 w-5" />
+          </span>
+        </button>
+      )}
 
       {/* ──â”€ Receipt Modal ──â”€ */}
       {receiptData && (

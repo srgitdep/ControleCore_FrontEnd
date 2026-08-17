@@ -1,6 +1,38 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL as string;
+/**
+ * O endereço da API.
+ *
+ * `VITE_API_URL` continua a mandar quando está definido — é assim que produção e os
+ * ambientes de teste apontam para o seu servidor.
+ *
+ * Quando **não** está definido, deduz-se do endereço que serve a página em vez de fixar
+ * `localhost`. É o que permite ao operador de caixa abrir o sistema no telemóvel: um
+ * `localhost` gravado no pacote significaria, no telemóvel, o próprio telemóvel — que não
+ * tem API a correr. Deduzido, o telemóvel chama o mesmo computador de onde carregou a
+ * página.
+ */
+function resolverEnderecoDaApi(): string {
+  const configurado = import.meta.env.VITE_API_URL as string | undefined;
+  if (configurado) return configurado;
+
+  // Sem `window` (testes, ou renderização fora do browser) não há de onde deduzir.
+  if (typeof window === 'undefined') return '/api/v1';
+
+  const { protocol, hostname } = window.location;
+  const porta = (import.meta.env.VITE_API_PORT as string | undefined) ?? '3100';
+
+  // O protocolo acompanha o da página, e não é uma escolha estética: uma página servida
+  // em HTTPS não pode chamar um endereço em HTTP — o browser bloqueia como conteúdo
+  // misto, sem pedir nada ao servidor.
+  //
+  // Consequência prática: com `VITE_HTTPS=true` (necessário para a câmara funcionar num
+  // endereço de rede), a API também tem de responder em HTTPS. Ver a secção de acesso
+  // móvel no README.
+  return `${protocol}//${hostname}:${porta}/api/v1`;
+}
+
+const BASE_URL = resolverEnderecoDaApi();
 
 // ── Instância base do Axios ──────────────────────────────────────────────────
 // withCredentials: true é obrigatório para que o browser envie os cookies

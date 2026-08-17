@@ -187,12 +187,16 @@ export const usePosStore = create<POSState>((set, get) => ({
     get().cartItems.reduce((acc, item) => acc + item.desconto, 0) +
     get().descontoGlobal,
 
+  // `taxaIva ?? 0`: o campo é obrigatório no tipo e tem `@default(0)` no schema, mas
+  // basta uma resposta sem ele — um produto antigo, um payload parcial — para o IVA dar
+  // `NaN`, e o `NaN` contamina o total inteiro: o operador via «NaN MT» em vez do valor
+  // a cobrar. Um IVA ausente vale zero; um total ilegível não vale nada.
   getTotalIva: () =>
     get().cartItems.reduce(
       (acc, item) =>
         acc +
         (item.precoVenda * item.cartQuantity - item.desconto) *
-          (item.taxaIva / 100),
+          ((item.taxaIva ?? 0) / 100),
       0,
     ),
 

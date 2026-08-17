@@ -89,7 +89,7 @@ src/
 
 ### Pré-requisitos
 - Node.js v20+
-- Backend ControlCore API a correr em `http://localhost:3000`
+- Backend ControlCore API a correr em `http://localhost:3100`
 
 ### 1. Instalar dependências
 ```bash
@@ -101,16 +101,78 @@ npm install
 cp .env.example .env
 ```
 
-```env
-VITE_API_URL=http://localhost:3000/api/v1
-```
+Em desenvolvimento não é preciso definir `VITE_API_URL`: sem ela, o endereço da API é
+deduzido do anfitrião que serve a página (ver `resolverEnderecoDaApi` em
+[src/shared/config/axios.ts](src/shared/config/axios.ts)). Defina-a em produção, ou para
+apontar para outro servidor.
 
 ### 3. Iniciar servidor de desenvolvimento
 ```bash
 npm run dev
 ```
 
-Aplicação disponível em: **http://localhost:5173**
+Aplicação disponível em: **http://localhost:5273**
+
+---
+
+## 📱 Usar no telemóvel (operador de caixa)
+
+O POS é feito para ser usado no telemóvel, incluindo a leitura de códigos de barras com a
+câmara. Para isso, o telemóvel tem de chegar ao servidor de desenvolvimento **e** o
+navegador tem de considerar a página um contexto seguro.
+
+### O essencial
+
+Os navegadores só dão acesso à câmara em **HTTPS** ou em `localhost`. Num endereço de rede
+em `http://192.168.x.x`, `navigator.mediaDevices` **não existe** — o leitor não arranca, e
+não há código que resolva isso. Daí o HTTPS ser obrigatório para a câmara, e opcional para
+todo o resto.
+
+### Passos
+
+**1.** Ligue o HTTPS e encaminhe a API pelo próprio servidor, em `.env.local`:
+
+```env
+VITE_HTTPS=true
+VITE_API_URL=/api/v1
+```
+
+O `VITE_API_URL=/api/v1` faz os pedidos passarem pelo proxy do Vite
+(ver `server.proxy` em [vite.config.ts](vite.config.ts)). Sem isso, uma página em HTTPS a
+chamar uma API em HTTP seria bloqueada pelo browser como conteúdo misto.
+
+**2.** Arranque o backend e o frontend:
+
+```bash
+# no repositório do backend
+npm run start:dev
+
+# aqui
+npm run dev
+```
+
+**3.** O Vite mostra o endereço de rede ao arrancar:
+
+```
+➜  Local:   https://localhost:5273/
+➜  Network: https://192.168.18.17:5273/    ← este, no telemóvel
+```
+
+**4.** Abra esse endereço no telemóvel, na **mesma rede Wi-Fi**. O certificado é
+auto-assinado, pelo que o navegador mostra um aviso — aceite-o uma vez («Avançadas» →
+«Prosseguir»).
+
+**5.** No POS, o botão de leitura aparece ao lado da pesquisa. Ler → ver o produto →
+indicar a quantidade → *Adicionar*. Ao ler outro código, o painel troca de produto.
+
+### Notas
+
+- O CORS do backend aceita endereços de rede privados nas portas de desenvolvimento, e só
+  fora de produção — ver [`cors-rede-local.ts`](../SRGControleCore-main/src/shared/cors-rede-local.ts)
+  no backend, com testes.
+- Sem câmara, ou com a permissão recusada, o leitor oferece escrever o código à mão.
+- O botão de leitura só aparece em dispositivos com câmara: num posto de caixa fixo, um
+  botão que abre e falha é pior do que botão nenhum.
 
 ---
 
