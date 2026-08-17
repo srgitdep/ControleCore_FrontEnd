@@ -4,10 +4,20 @@ import { useUIStore } from '@/shared/hooks';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
+import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
+import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const location = useLocation();
+
+  // A Mayra é uma coluna encostada à direita, não uma janela a flutuar por cima. O
+  // conteúdo encolhe para lhe dar espaço, como já fazia com o menu lateral — antes,
+  // numa tabela larga, ela tapava as últimas colunas e os botões de acção.
+  //
+  // Só a partir de `md`: abaixo disso a Mayra ocupa o ecrã inteiro, e reservar-lhe
+  // margem deixaria o conteúdo sem largura nenhuma.
+  const margemDaMayra = classeMargemDaMayra(useCopilotStore());
 
   // Fecha o drawer mobile em cada mudança de rota (UX: evita menu aberto após navegar)
   useEffect(() => {
@@ -46,6 +56,8 @@ export function AppLayout() {
           isPOS ? 'flex flex-col h-screen transition-all duration-300' : 'flex flex-col min-h-screen transition-all duration-300',
           // Em desktop, empurra o conteúdo para além do sidebar
           isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
+          // ... e encolhe-o à direita quando a Mayra está aberta.
+          margemDaMayra,
         ].join(' ')}
       >
         <Header isCollapsed={isSidebarCollapsed} />

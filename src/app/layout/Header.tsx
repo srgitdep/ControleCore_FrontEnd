@@ -2,6 +2,8 @@ import { useLocation } from 'react-router-dom';
 import { Bell, Menu } from 'lucide-react';
 import { useUIStore } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
+import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
+import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 
 /**
  * Título por rota. A resolução tenta o caminho exacto e depois o primeiro segmento,
@@ -37,6 +39,11 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const location = useLocation();
   const { toggleMobileMenu } = useUIStore();
 
+  // O cabeçalho é `fixed`, pelo que não herda a margem do contentor de conteúdo. Sem
+  // isto passava por baixo do painel da Mayra, e o sino de notificações ficava
+  // inalcançável.
+  const margemDaMayra = classeMargemDaMayra(useCopilotStore());
+
   // Resolve o título: verifica o pathname exacto ou usa o segmento raiz
   const pageTitle =
     PAGE_TITLES[location.pathname] ??
@@ -52,6 +59,10 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         isCollapsed ? 'lg:left-20' : 'lg:left-64',
         // Mobile: ocupa toda a largura
         'left-0',
+        // Encolhe à direita com a Mayra aberta. O cabeçalho é `fixed`, pelo que não
+        // herda a margem do contentor de conteúdo — sem isto passava por baixo do
+        // painel, e o sino de notificações ficava inalcançável.
+        margemDaMayra,
       )}
     >
       {/* ── Lado esquerdo: hamburger (mobile) + título ──────────────────── */}
