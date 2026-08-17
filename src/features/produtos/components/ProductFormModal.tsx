@@ -10,6 +10,8 @@ import { stockApi } from '@/features/stock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui';
+import { CapturaPorFoto } from './CapturaPorFoto';
+import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
 const productSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -105,6 +107,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
     handleSubmit,
     control,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
     // O mínimo é obrigatório ao criar e não ao editar — ver `construirSchema`.
@@ -178,6 +181,49 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
     }
   }, [unidadeMedida, setValue]);
 
+  /**
+   * Aplica ao formulário o que a IA leu nas fotografias.
+   *
+   * ## Não sobrescreve o que já está escrito
+   *
+   * Se a pessoa já escreveu o nome à mão, uma leitura posterior não o substitui: o que
+   * alguém escreveu vale mais do que o que a IA adivinhou. Isto importa porque as
+   * fotografias podem ser analisadas várias vezes, e à segunda vez o formulário já tem
+   * conteúdo.
+   *
+   * ## O nome junta a marca
+   *
+   * A IA devolve «Azeite Extra Virgem» e «Oliveira da Serra» em campos separados, mas o
+   * catálogo tem um só campo de nome — e é por ele que se procura no ponto de venda.
+   * Juntar dá «Oliveira da Serra Azeite Extra Virgem», que é como o produto se identifica
+   * na prateleira.
+   *
+   * `shouldValidate` fica desligado: validar campos que a pessoa ainda não tocou enche o
+   * formulário de erros vermelhos por causa dos preços, que a foto nunca preenche.
+   */
+  const preencherDaFoto = (dados: DadosExtraidosDeFoto) => {
+    const vazio = (campo: keyof ProductFormData) => {
+      const actual = getValues(campo as any);
+      return actual === undefined || actual === null || actual === '' || actual === 0;
+    };
+
+    const nomeCompleto = [dados.marca, dados.nome].filter(Boolean).join(' ').trim();
+    if (nomeCompleto && vazio('nome')) setValue('nome', nomeCompleto);
+
+    if (dados.codigoBarras && vazio('codigoBarras')) {
+      setValue('codigoBarras', dados.codigoBarras);
+    }
+    if (dados.descricao && vazio('descricao')) setValue('descricao', dados.descricao);
+    if (dados.categoriaId && vazio('categoriaId')) setValue('categoriaId', dados.categoriaId);
+    if (dados.peso !== undefined && vazio('peso')) setValue('peso', dados.peso);
+
+    // A unidade tem valor por omissão (`UN`), pelo que `vazio` nunca dá verdadeiro. Só se
+    // substitui quando a foto diz outra coisa — um produto em litros ou quilos.
+    if (dados.unidadeMedida && dados.unidadeMedida !== getValues('unidadeMedida')) {
+      setValue('unidadeMedida', dados.unidadeMedida);
+    }
+  };
+
   const onSubmit = async (data: ProductFormData) => {
     try {
       // Strings vazias fora: gravar `""` num campo opcional é diferente de não o
@@ -242,7 +288,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
         {/* Body */}
         <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col flex-1 overflow-hidden">
           <div className="p-6 overflow-y-auto flex-1 space-y-6">
-            
+
+            {/* Só ao criar: ao editar, os campos já estão preenchidos, e deixar a IA
+                sobrescrever o que alguém corrigiu à mão perderia trabalho feito. */}
+            {!productToEdit && <CapturaPorFoto onExtraido={preencherDaFoto} />}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto *</label>
@@ -335,10 +385,36 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 >
                   <option value="UN">Unidade (UN)</option>
                   <option value="KG">Quilograma (KG)</option>
+                  <option value="G">Grama (G)</option>
                   <option value="L">Litro (L)</option>
+                  <option value="ML">Mililitro (ML)</option>
                   <option value="CX">Caixa (CX)</option>
-                  <option value="PACK">Pack</option>
+                  <option value="PCT">Pacote (PCT)</option>
                 </select>
+              </div>
+
+              {/* O peso/volume estava no schema e era enviado ao servidor, mas não tinha
+                  campo no formulário: não havia como o preencher nem como o corrigir. A
+                  leitura por fotografia tornou isso visível — a IA lê «750ml» da
+                  embalagem e o valor ia para um campo que ninguém via. */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Peso / Volume
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  {...register('peso')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Ex: 0.75 para 750ml"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Na unidade escolhida acima. Deixe zero se não se aplicar.
+                </p>
+                {errors.peso && (
+                  <p className="text-xs text-rose-500 mt-1">{errors.peso.message}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-6 md:col-span-2">

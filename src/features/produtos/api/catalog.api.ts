@@ -2,6 +2,36 @@ import { api } from '@/shared/config';
 import type { Product, Category } from '@/features/produtos';
 
 /**
+ * Os campos que se conseguem ler de uma fotografia de produto.
+ *
+ * Todos opcionais, e é o ponto: o servidor devolve **só** o que passou a validação. Um
+ * campo ausente significa que a IA não o leu, ou leu mal — nos dois casos fica em branco
+ * para a pessoa preencher, em vez de entrar no catálogo com um valor que ninguém viu.
+ *
+ * Não há preços aqui de propósito. Uma fotografia não sabe quanto custou o produto.
+ */
+export interface DadosExtraidosDeFoto {
+  nome?: string;
+  marca?: string;
+  codigoBarras?: string;
+  peso?: number;
+  unidadeMedida?: string;
+  descricao?: string;
+  /** Já casada com as categorias da empresa; ausente se nenhuma correspondeu. */
+  categoriaId?: string;
+  categoriaSugerida?: string;
+}
+
+export interface RespostaExtracaoFoto {
+  dados: DadosExtraidosDeFoto;
+  /** O que a IA leu mas foi recusado, com a razão — para a UI poder explicar. */
+  recusados: { campo: string; valor: string; motivo: string }[];
+  imagensAnalisadas: number;
+  /** `true` quando nenhuma fotografia deu resultado aproveitável. */
+  semResultado: boolean;
+}
+
+/**
  * O que se envia ao criar um produto.
  *
  * Explícito em vez de `Partial<Product>` porque a criação aceita três campos que o
@@ -45,6 +75,32 @@ export const catalogApi = {
       total: data.meta?.total ?? data.total ?? 0,
       totalPages: data.meta?.totalPages ?? 1,
     };
+  },
+
+  /**
+   * Lê os dados de um produto a partir de fotografias da embalagem.
+   *
+   * Não grava nada: devolve o que a IA conseguiu ler, já validado no servidor, para
+   * preencher o formulário. Aceita várias imagens porque a informação está repartida pela
+   * embalagem — o nome na frente, o código de barras na face de trás.
+   *
+   * `FormData` e não JSON: são ficheiros binários, e convertê-los para base64 no cliente
+   * aumentaria o corpo do pedido em cerca de um terço sem ganho nenhum.
+   */
+  extrairDeFoto: async (imagens: File[]): Promise<RespostaExtracaoFoto> => {
+    const form = new FormData();
+    for (const img of imagens) form.append('imagens', img);
+
+    const { data } = await api.post<RespostaExtracaoFoto>('/produtos/extrair-de-foto', form, {
+      // O `Content-Type` fica ao browser: ele acrescenta o `boundary` que o multipart
+      // exige, e defini-lo à mão sem o `boundary` faz o servidor recusar o corpo.
+      headers: { 'Content-Type': undefined as unknown as string },
+      // A leitura de quatro imagens por um modelo de visão passa dos 10 s por defeito do
+      // axios; o pedido era cancelado antes de a resposta chegar.
+      timeout: 90_000,
+    });
+
+    return data;
   },
 
   /**
