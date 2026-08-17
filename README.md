@@ -115,64 +115,69 @@ Aplicação disponível em: **http://localhost:5273**
 
 ---
 
-## 📱 Usar no telemóvel (operador de caixa)
+## 📱 Vender pelo telemóvel
 
-O POS é feito para ser usado no telemóvel, incluindo a leitura de códigos de barras com a
-câmara. Para isso, o telemóvel tem de chegar ao servidor de desenvolvimento **e** o
-navegador tem de considerar a página um contexto seguro.
+### Em produção — o que o operador de caixa faz
 
-### O essencial
+1. Abre o endereço do sistema no navegador do telemóvel
+2. Entra com o seu código de acesso
+3. No POS, toca em **Ler código** e aponta a câmara ao produto
+4. Confirma a quantidade e toca em **Adicionar**
 
-Os navegadores só dão acesso à câmara em **HTTPS** ou em `localhost`. Num endereço de rede
-em `http://192.168.x.x`, `navigator.mediaDevices` **não existe** — o leitor não arranca, e
-não há código que resolva isso. Daí o HTTPS ser obrigatório para a câmara, e opcional para
-todo o resto.
+É tudo. Não há aplicação para instalar, nem configuração, nem avisos para aceitar.
 
-### Passos
+Funciona porque produção é servida em **HTTPS** (Vercel no frontend, Render na API), e o
+HTTPS é a única condição que a câmara exige. Nada de especial é preciso fazer: já está
+satisfeita.
 
-**1.** Ligue o HTTPS e encaminhe a API pelo próprio servidor, em `.env.local`:
+### Em desenvolvimento — porque é que aqui dá trabalho
+
+Os navegadores só dão acesso à câmara em **contextos seguros**: HTTPS, ou `localhost`. O
+servidor de desenvolvimento serve em `http://`, pelo que num endereço de rede como
+`http://192.168.1.20:5273` o `navigator.mediaDevices` **nem existe** — não é uma permissão
+recusada, é a API ausente. Nenhuma alteração ao código resolve isto.
+
+Daí os passos abaixo existirem: são andaime para *testar* o leitor na máquina de
+desenvolvimento. **Não** são o que o operador de caixa faz.
+
+<details>
+<summary>Passos para testar o leitor num telemóvel, em desenvolvimento</summary>
+
+**1.** Em `.env.local` (que não é versionado):
 
 ```env
 VITE_HTTPS=true
 VITE_API_URL=/api/v1
 ```
 
-O `VITE_API_URL=/api/v1` faz os pedidos passarem pelo proxy do Vite
-(ver `server.proxy` em [vite.config.ts](vite.config.ts)). Sem isso, uma página em HTTPS a
-chamar uma API em HTTP seria bloqueada pelo browser como conteúdo misto.
+O `VITE_API_URL=/api/v1` encaminha os pedidos pelo proxy do Vite
+(ver `server.proxy` em [vite.config.ts](vite.config.ts)), para a página e a API
+partilharem origem. Sem isso, uma página em HTTPS a chamar uma API em HTTP seria bloqueada
+pelo navegador como conteúdo misto.
 
-**2.** Arranque o backend e o frontend:
+**2.** Arranque o backend (`npm run start:dev`) e o frontend (`npm run dev`).
 
-```bash
-# no repositório do backend
-npm run start:dev
-
-# aqui
-npm run dev
-```
-
-**3.** O Vite mostra o endereço de rede ao arrancar:
+**3.** O Vite anuncia o endereço de rede:
 
 ```
 ➜  Local:   https://localhost:5273/
 ➜  Network: https://192.168.18.17:5273/    ← este, no telemóvel
 ```
 
-**4.** Abra esse endereço no telemóvel, na **mesma rede Wi-Fi**. O certificado é
-auto-assinado, pelo que o navegador mostra um aviso — aceite-o uma vez («Avançadas» →
-«Prosseguir»).
+**4.** Abra-o no telemóvel, na mesma rede Wi-Fi. O certificado é auto-assinado, pelo que o
+navegador avisa — aceite uma vez («Avançadas» → «Prosseguir»). Em produção isto não
+acontece: o certificado é real.
 
-**5.** No POS, o botão de leitura aparece ao lado da pesquisa. Ler → ver o produto →
-indicar a quantidade → *Adicionar*. Ao ler outro código, o painel troca de produto.
+</details>
 
 ### Notas
 
-- O CORS do backend aceita endereços de rede privados nas portas de desenvolvimento, e só
-  fora de produção — ver [`cors-rede-local.ts`](../SRGControleCore-main/src/shared/cors-rede-local.ts)
-  no backend, com testes.
 - Sem câmara, ou com a permissão recusada, o leitor oferece escrever o código à mão.
 - O botão de leitura só aparece em dispositivos com câmara: num posto de caixa fixo, um
   botão que abre e falha é pior do que botão nenhum.
+- O CORS do backend aceita endereços de rede privados, mas só nas portas de
+  desenvolvimento e só fora de produção — ver
+  [`cors-rede-local.ts`](../SRGControleCore-main/src/shared/cors-rede-local.ts), com testes.
 
 ---
 
