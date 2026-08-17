@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { usePosStore, getStockDisponivel } from './posStore';
+import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from './posStore';
 import type { Product } from '@/features/produtos';
 
 /** Produto mínimo para os testes; os campos não usados ficam com valores neutros. */
@@ -106,7 +106,16 @@ describe('carrinho do POS', () => {
     it('recusa adicionar acima do disponível', () => {
       const r = usePosStore.getState().addItem(produto({ stocks: [venda(2)] }), 5);
 
-      expect(r).toEqual({ ok: false, motivo: 'SEM_STOCK', disponivel: 2, nome: 'Refrigerante' });
+      // `noutrosArmazens: 0` — este produto só tem armazém de venda, pelo que não há
+      // nada para transferir. O campo existe para a mensagem poder distinguir «acabou»
+      // de «está no armazém».
+      expect(r).toEqual({
+        ok: false,
+        motivo: 'SEM_STOCK',
+        disponivel: 2,
+        nome: 'Refrigerante',
+        noutrosArmazens: 0,
+      });
       expect(usePosStore.getState().cartItems).toHaveLength(0);
     });
 
@@ -241,5 +250,60 @@ describe('carrinho do POS', () => {
     expect(usePosStore.getState().cartItems).toHaveLength(0);
     expect(usePosStore.getState().descontoGlobal).toBe(0);
     expect(usePosStore.getState().clienteIdentificado).toBeNull();
+  });
+});
+
+describe('getStockNoutrosArmazens', () => {
+  // O caso real que motivou isto: o Queijo tinha 1500 unidades no Armazém Reserva e 0 na
+  // Sala de Vendas. O POS dizia «ESGOTADO» e a listagem de Stock mostrava 1500 — os dois
+  // ecrãs diziam a verdade sobre coisas diferentes, e parecia uma discrepância de dados.
+  const posicao = (qtd: number, tipo: string, isActive = true) => ({
+    currentQuantity: qtd,
+    armazem: { tipo, isActive },
+  });
+
+  it('soma o que existe fora do ponto de venda', () => {
+    const p = produto({
+      stocks: [posicao(0, 'Venda'), posicao(1500, 'Reserva')],
+    } as any);
+
+    expect(getStockNoutrosArmazens(p)).toBe(1500);
+  });
+
+  it('não conta o armazém de venda', () => {
+    const p = produto({ stocks: [posicao(148, 'Venda')] } as any);
+    expect(getStockNoutrosArmazens(p)).toBe(0);
+  });
+
+  it('ignora armazéns inactivos', () => {
+    // Um armazém desactivado não serve para transferir, pelo que prometer stock que lá
+    // está seria pior do que não dizer nada.
+    const p = produto({
+      stocks: [posicao(0, 'Venda'), posicao(90, 'Reserva', false)],
+    } as any);
+
+    expect(getStockNoutrosArmazens(p)).toBe(0);
+  });
+
+  it('devolve 0 quando não há informação de stocks', () => {
+    expect(getStockNoutrosArmazens(produto({ stocks: undefined } as any))).toBe(0);
+  });
+});
+
+describe('mensagemDeRecusa', () => {
+  it('distingue esgotado de está-no-armazém', () => {
+    expect(
+      mensagemDeRecusa({ ok: false, motivo: 'SEM_STOCK', disponivel: 0, nome: 'Queijo', noutrosArmazens: 1500 }),
+    ).toBe('Queijo: 0 na sala de vendas, 1500 em armazém. Faça uma transferência.');
+
+    expect(
+      mensagemDeRecusa({ ok: false, motivo: 'SEM_STOCK', disponivel: 0, nome: 'Queijo', noutrosArmazens: 0 }),
+    ).toBe('Queijo está esgotado.');
+  });
+
+  it('indica o saldo quando há alguma coisa, mas não o suficiente', () => {
+    expect(
+      mensagemDeRecusa({ ok: false, motivo: 'SEM_STOCK', disponivel: 3, nome: 'Pão', noutrosArmazens: 500 }),
+    ).toBe('Pão: apenas 3 em stock.');
   });
 });

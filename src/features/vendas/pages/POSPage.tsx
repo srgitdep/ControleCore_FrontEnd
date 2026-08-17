@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp } from 'lucide-react';
 import { useProducts, useCategories, catalogApi } from '@/features/produtos';
-import { usePosStore, getStockDisponivel } from '@/features/vendas';
+import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
 import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { useProcessarVenda } from '@/features/vendas';
@@ -188,11 +188,7 @@ export function POSPage() {
 
               const r = addItem(foundProduct);
               if (!r.ok) {
-                toast.error(
-                  r.disponivel > 0
-                    ? `${r.nome}: apenas ${r.disponivel} em stock.`
-                    : `${r.nome} está esgotado.`,
-                );
+                toast.error(mensagemDeRecusa(r));
               }
             })
             .catch(() => {
@@ -248,10 +244,7 @@ export function POSPage() {
     const r = addItem(produto, quantidade);
 
     if (!r.ok) {
-      const mensagem =
-        r.disponivel > 0
-          ? `${r.nome}: apenas ${r.disponivel} em stock.`
-          : `${r.nome} está esgotado.`;
+      const mensagem = mensagemDeRecusa(r);
       toast.error(mensagem);
       return mensagem;
     }
@@ -265,11 +258,7 @@ export function POSPage() {
   /** Avisa o operador quando o carrinho recusa a alteração por falta de stock. */
   const avisarSeRecusado = (resultado: CartResult) => {
     if (!resultado.ok) {
-      toast.error(
-        resultado.disponivel > 0
-          ? `${resultado.nome}: apenas ${resultado.disponivel} em stock.`
-          : `${resultado.nome} está esgotado.`,
-      );
+      toast.error(mensagemDeRecusa(resultado));
     }
     return resultado.ok;
   };
@@ -1053,7 +1042,18 @@ export function POSPage() {
 // ──â”€ Componente Interno: ProductCard ────────────────────────────────────────
 function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }) {
   const disponivel = getStockDisponivel(product);
-  const esgotado = disponivel !== undefined && disponivel <= 0;
+  const semSaldoNaLoja = disponivel !== undefined && disponivel <= 0;
+
+  // Há quanto do produto fora do ponto de venda. Distingue duas situações que antes se
+  // liam as duas como «ESGOTADO»: o produto acabou de facto, ou está no Armazém Reserva
+  // e falta transferi-lo. Dizer «esgotado» quando existem 1500 unidades a um armazém de
+  // distância mandava o operador recusar uma venda que podia fazer, e fazia a listagem
+  // de Stock — que mostra o total da empresa — parecer contraditória.
+  const noutrosArmazens = semSaldoNaLoja ? getStockNoutrosArmazens(product) : 0;
+  const soEmArmazem = semSaldoNaLoja && noutrosArmazens > 0;
+
+  // Em qualquer dos casos não se pode vender daqui: o backend recusa, e com razão.
+  const esgotado = semSaldoNaLoja;
 
   return (
     <button
@@ -1069,7 +1069,17 @@ function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }
 
       <div className="relative bg-gray-50 rounded-xl aspect-square mb-3 overflow-hidden flex items-center justify-center p-4">
 
-        {esgotado && (
+        {/* Âmbar e não vermelho: o produto existe, só não está aqui. O vermelho fica
+            reservado para o que acabou de verdade. */}
+        {soEmArmazem && (
+          <span
+            className="absolute top-2 left-2 z-10 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+            title={`${noutrosArmazens} unidades em armazém. Transfira para a sala de vendas para poder vender.`}
+          >
+            Só em armazém
+          </span>
+        )}
+        {esgotado && !soEmArmazem && (
           <span className="absolute top-2 left-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
             Esgotado
           </span>

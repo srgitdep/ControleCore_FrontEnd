@@ -37,10 +37,65 @@ export function getStockDisponivel(product: Product): number | undefined {
   return undefined;
 }
 
+/**
+ * Quanto existe do produto **fora** do ponto de venda, em armazéns activos.
+ *
+ * ## Porquê
+ *
+ * O POS só vende do armazém de venda, e com razão. Mas dizer «ESGOTADO» a um operador
+ * quando existem 1500 unidades no Armazém Reserva descreve mal a situação: o produto não
+ * acabou, está no sítio errado. O operador ficava sem saber se devia recusar a venda ou
+ * pedir uma transferência — e a listagem de Stock, que mostra o total da empresa,
+ * parecia contradizer o POS.
+ *
+ * Os dois ecrãs sempre disseram a verdade sobre coisas diferentes. Isto dá ao POS a
+ * segunda metade da informação, para que a diferença deixe de parecer um erro de dados.
+ */
+export function getStockNoutrosArmazens(product: Product): number {
+  if (!product.stocks) return 0;
+
+  return product.stocks
+    .filter((s) => s.armazem?.isActive !== false)
+    .filter((s) => s.armazem?.tipo?.toUpperCase() !== 'VENDA')
+    .reduce((total, s) => total + s.currentQuantity, 0);
+}
+
 /** Resultado de uma alteração ao carrinho, para a UI poder informar o operador. */
 export type CartResult =
   | { ok: true }
-  | { ok: false; motivo: 'SEM_STOCK'; disponivel: number; nome: string };
+  | {
+      ok: false;
+      motivo: 'SEM_STOCK';
+      disponivel: number;
+      nome: string;
+      /**
+       * Quanto existe em armazéns que não são o ponto de venda.
+       *
+       * Permite à mensagem distinguir «acabou» de «está no armazém, falta transferir» —
+       * duas situações com respostas diferentes, que antes se liam as duas como esgotado.
+       */
+      noutrosArmazens?: number;
+    };
+
+/**
+ * A mensagem a mostrar ao operador quando o carrinho recusa a alteração.
+ *
+ * Numa função só porque estava escrita à mão em três sítios do POS, e as três tinham de
+ * passar a distinguir «acabou» de «está no armazém».
+ */
+export function mensagemDeRecusa(r: Extract<CartResult, { ok: false }>): string {
+  if (r.disponivel > 0) {
+    return `${r.nome}: apenas ${r.disponivel} em stock.`;
+  }
+
+  if (r.noutrosArmazens && r.noutrosArmazens > 0) {
+    // Diz onde está e o que fazer. «Esgotado» sozinho levava o operador a recusar uma
+    // venda que podia fazer depois de uma transferência.
+    return `${r.nome}: 0 na sala de vendas, ${r.noutrosArmazens} em armazém. Faça uma transferência.`;
+  }
+
+  return `${r.nome} está esgotado.`;
+}
 
 interface POSState {
   // ── Carrinho ──────────────────────────────────────────────────────────────
@@ -86,7 +141,13 @@ export const usePosStore = create<POSState>((set, get) => ({
     // Só bloqueia quando a disponibilidade é conhecida. O backend continua a ser a
     // autoridade — isto evita ao operador montar um carrinho que iria falhar.
     if (disponivel !== undefined && totalPretendido > disponivel) {
-      return { ok: false, motivo: 'SEM_STOCK', disponivel, nome: product.nome };
+      return {
+        ok: false,
+        motivo: 'SEM_STOCK',
+        disponivel,
+        nome: product.nome,
+        noutrosArmazens: getStockNoutrosArmazens(product),
+      };
     }
 
     set((state) => {
