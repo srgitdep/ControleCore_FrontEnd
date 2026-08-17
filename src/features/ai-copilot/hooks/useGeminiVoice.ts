@@ -336,9 +336,19 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       console.warn('Aviso: Não foi possível obter token de voz via REST API:', e);
     }
 
-    // Derivar URL do Socket.io a partir da VITE_API_URL
-    const baseUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3100/api/v1';
-    const socketHost = baseUrl.replace(/\/api\/v1\/?$/, '');
+    // Derivar URL do Socket.io a partir da VITE_API_URL.
+    //
+    // Sem a variável, deduz-se do anfitrião que serve a página em vez de fixar
+    // `localhost`: num telemóvel, `localhost` é o próprio telemóvel, e a voz da Mayra
+    // ficava sem servidor onde ligar.
+    const configurado = import.meta.env.VITE_API_URL as string | undefined;
+    const socketHost = configurado
+      ? configurado.startsWith('/')
+        ? window.location.origin // Caminho relativo (proxy): vale a origem da página.
+        : configurado.replace(/\/api\/v1\/?$/, '')
+      : `${window.location.protocol}//${window.location.hostname}:${
+          (import.meta.env.VITE_API_PORT as string | undefined) ?? '3100'
+        }`;
 
     const socket = io(`${socketHost}/ai-copilot/voice`, {
       auth: { token: voiceToken },
