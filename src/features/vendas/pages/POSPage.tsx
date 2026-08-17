@@ -219,6 +219,16 @@ export function POSPage() {
    * câmara nenhuma — pelo que a sua presença não basta. `enumerateDevices` responde pela
    * lista real. Antes de dada a permissão os nomes vêm vazios, mas o `kind` já diz que o
    * dispositivo existe, que é tudo o que aqui se pergunta.
+   *
+   * ## Serve para rotular o botão, não para o esconder
+   *
+   * Ao início escondia o botão quando não havia câmara, com o argumento de que um botão
+   * que abre e falha é pior do que botão nenhum. Estava errado por uma razão que só se vê
+   * ao usar: num computador sem webcam a funcionalidade ficava **invisível**, e
+   * indistinguível de nunca ter sido feita — foi exactamente o que aconteceu.
+   *
+   * O botão fica sempre. Sem câmara, o leitor abre na entrada manual do código, que é
+   * útil por si (embalagem rasgada, código gasto) e não depende de hardware nenhum.
    */
   const [temCamara, setTemCamara] = useState(false);
 
@@ -493,18 +503,22 @@ export function POSPage() {
                     />
                   </div>
 
-                  {/* Ler com a câmara. Só aparece onde há câmara: num posto de caixa
-                      fixo, um botão que abre e falha é pior do que botão nenhum. */}
-                  {temCamara && (
-                    <button
-                      onClick={() => setLeitorAberto(true)}
-                      className="flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700"
-                      title="Ler código de barras com a câmara"
-                    >
-                      <ScanLine className="h-5 w-5" />
-                      <span className="hidden sm:inline">Ler código</span>
-                    </button>
-                  )}
+                  {/* Sempre visível, mesmo sem câmara: escondê-lo tornava a
+                      funcionalidade invisível num computador sem webcam, e
+                      indistinguível de não existir. Sem câmara abre na entrada manual do
+                      código, que serve para embalagens rasgadas e códigos gastos. */}
+                  <button
+                    onClick={() => setLeitorAberto(true)}
+                    className="flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700"
+                    title={
+                      temCamara
+                        ? 'Ler código de barras com a câmara'
+                        : 'Introduzir código de barras (sem câmara neste dispositivo)'
+                    }
+                  >
+                    <ScanLine className="h-5 w-5" />
+                    <span className="hidden sm:inline">Ler código</span>
+                  </button>
               </div>
             </div>
             <div className="bg-white border-b border-gray-100 px-6 py-3 flex gap-3 overflow-x-auto hide-scrollbar shrink-0">

@@ -144,6 +144,13 @@ export function LeitorCameraModal({
   const aCarregar = estado === 'a-pedir-permissao';
   const semCamara = estado === 'sem-camara' || estado === 'sem-permissao' || estado === 'erro';
 
+  // Sem câmara, abre logo na entrada manual em vez de mostrar só o aviso e obrigar a um
+  // clique extra: num computador de secretária sem webcam, escrever o código é a única
+  // via, e é a que o operador quer imediatamente.
+  useEffect(() => {
+    if (semCamara) setModoManual(true);
+  }, [semCamara]);
+
   return (
     <div className="fixed inset-0 z-[80] flex flex-col bg-slate-900">
       {/* ── Cabeçalho ────────────────────────────────────────────────────────── */}
@@ -198,18 +205,19 @@ export function LeitorCameraModal({
           </div>
         )}
 
+        {/* Sem câmara isto é uma nota, não um erro: a entrada manual já está aberta em
+            baixo e o operador pode trabalhar. Antes era um ecrã de erro com um botão
+            «Escrever o código» — um passo a mais para chegar ao único caminho possível. */}
         {semCamara && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <CameraOff className="h-8 w-8 text-amber-400" />
-            <p className="text-sm font-medium text-white">Câmara indisponível</p>
-            <p className="text-xs text-slate-400">{detalheDoErro}</p>
-            <button
-              onClick={() => setModoManual(true)}
-              className="mt-2 flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
-            >
-              <Keyboard size={16} />
-              Escrever o código
-            </button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
+            <CameraOff className="h-7 w-7 text-slate-500" />
+            <p className="text-sm font-medium text-slate-300">
+              Sem câmara neste dispositivo
+            </p>
+            <p className="max-w-xs text-xs text-slate-500">
+              {detalheDoErro ??
+                'Escreva o código de barras no campo abaixo. Num telemóvel, a leitura pela câmara fica disponível.'}
+            </p>
           </div>
         )}
 

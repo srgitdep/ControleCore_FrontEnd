@@ -53,6 +53,15 @@ interface ModalState {
   isOpen: boolean;
   stockId: string | null;
   type: ModalType;
+  /**
+   * O produto da linha, para a transferência poder oferecer os armazéns onde ele existe.
+   *
+   * Sem isto, o modal pedia o **UUID do stock de destino escrito à mão** — ninguém sabe
+   * um UUID de cor, pelo que o botão de transferir era decorativo.
+   */
+  produtoId: string | null;
+  /** Nome do armazém de origem, para o modal dizer de onde sai a mercadoria. */
+  armazemOrigem: string | null;
 }
 
 // ──â”€ Aba: Estoque Atual ──────────────────────────────────────────────────────â”€
@@ -78,16 +87,35 @@ function StockCurrentTab() {
     isOpen: false,
     stockId: null,
     type: null,
+    produtoId: null,
+    armazemOrigem: null,
   });
 
   const stocks = data?.data ?? [];
   const totalPages = data?.lastPage ?? 1;
 
-  const openModal = (stockId: string, type: ModalType) =>
-    setModalState({ isOpen: true, stockId, type });
+  const openModal = (
+    stockId: string,
+    type: ModalType,
+    produtoId?: string,
+    armazemOrigem?: string,
+  ) =>
+    setModalState({
+      isOpen: true,
+      stockId,
+      type,
+      produtoId: produtoId ?? null,
+      armazemOrigem: armazemOrigem ?? null,
+    });
 
   const closeModal = () =>
-    setModalState({ isOpen: false, stockId: null, type: null });
+    setModalState({
+      isOpen: false,
+      stockId: null,
+      type: null,
+      produtoId: null,
+      armazemOrigem: null,
+    });
 
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
@@ -179,7 +207,7 @@ function StockCurrentTab() {
         id: 'acoes',
         header: 'Ações',
         cell: ({ row }) => {
-          const { id } = row.original;
+          const { id, product, armazem } = row.original;
           return (
             <div className="flex items-center justify-end gap-2">
               <Link
@@ -216,7 +244,7 @@ function StockCurrentTab() {
                 </Button>
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 shadow-xl rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                   <button
-                    onClick={() => openModal(id, 'TRANSFER')}
+                    onClick={() => openModal(id, 'TRANSFER', product?.id, armazem?.nome)}
                     className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
                   >
                     Transferir para Armazém
@@ -335,6 +363,8 @@ function StockCurrentTab() {
         <MovementModals
           stockId={modalState.stockId}
           type={modalState.type}
+          produtoId={modalState.produtoId}
+          armazemOrigem={modalState.armazemOrigem}
           onClose={closeModal}
         />
       )}

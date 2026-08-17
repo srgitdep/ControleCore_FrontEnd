@@ -1,18 +1,43 @@
 ﻿import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { stockApi } from '@/features/stock';
 import { useStockMutations } from '@/features/stock';
 
 interface MovementModalsProps {
   stockId: string | null;
   type: 'IN' | 'OUT' | 'TRANSFER' | 'ADJUST_PLUS' | 'ADJUST_MINUS' | null;
   onClose: () => void;
+  /** O produto, para a transferência listar os armazéns onde ele existe. */
+  produtoId?: string | null;
+  /** Nome do armazém de origem, para o modal dizer de onde sai a mercadoria. */
+  armazemOrigem?: string | null;
 }
 
-export function MovementModals({ stockId, type, onClose }: MovementModalsProps) {
+export function MovementModals({
+  stockId,
+  type,
+  onClose,
+  produtoId,
+  armazemOrigem,
+}: MovementModalsProps) {
   const [quantity, setQuantity] = useState<number | ''>('');
   const [reason, setReason] = useState('');
   const [destinationStockId, setDestinationStockId] = useState('');
 
   const mutations = useStockMutations();
+
+  // As posições do produto, para o selector de destino. Só se busca numa transferência —
+  // as outras operações não precisam, e pedir sempre seria uma chamada por cada abertura
+  // de modal.
+  const { data: posicoes, isLoading: aCarregarPosicoes } = useQuery({
+    queryKey: ['stock', 'posicoes', produtoId],
+    queryFn: () => stockApi.getPosicoesDoProduto(produtoId!),
+    enabled: type === 'TRANSFER' && !!produtoId,
+  });
+
+  // Todos os armazéns menos o de origem: transferir para o próprio armazém não é
+  // operação nenhuma, e o backend recusaria.
+  const destinosPossiveis = (posicoes ?? []).filter((p) => p.id !== stockId);
 
   if (!stockId || !type) return null;
 
@@ -54,7 +79,7 @@ export function MovementModals({ stockId, type, onClose }: MovementModalsProps) 
   const getTitle = () => {
     switch(type) {
       case 'IN': return 'Entrada de Mercadoria';
-      case 'OUT': return 'SaÍda de Mercadoria';
+      case 'OUT': return 'Saída de Mercadoria';
       case 'TRANSFER': return 'Transferência de Armazém';
       case 'ADJUST_PLUS': return 'Ajuste Positivo (Sobra)';
       case 'ADJUST_MINUS': return 'Ajuste Negativo (Quebra/Furto)';
@@ -67,21 +92,50 @@ export function MovementModals({ stockId, type, onClose }: MovementModalsProps) 
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h2 className="font-bold text-lg text-gray-800">{getTitle()}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">âœ•</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {type === 'TRANSFER' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ID do Stock Destino *</label>
-              <input
-                type="text"
-                required
-                value={destinationStockId}
-                onChange={e => setDestinationStockId(e.target.value)}
-                placeholder="Ex: UUID-do-stock"
-                className="w-full border-gray-300 rounded-lg p-2 border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destino *
+              </label>
+
+              {/* Um selector dos armazéns onde o produto existe, em vez do UUID escrito à
+                  mão que aqui estava («Ex: UUID-do-stock»). Ninguém sabe um UUID de cor,
+                  pelo que o botão de transferir não tinha uso prático — e transferir é
+                  precisamente como se põe à venda o stock que está em armazém. */}
+              {aCarregarPosicoes ? (
+                <p className="text-sm text-slate-500">A carregar armazéns...</p>
+              ) : destinosPossiveis.length === 0 ? (
+                <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                  Este produto só tem posição neste armazém. Crie o produto noutro armazém
+                  para poder transferir.
+                </p>
+              ) : (
+                <select
+                  required
+                  value={destinationStockId}
+                  onChange={(e) => setDestinationStockId(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg p-2 border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                >
+                  <option value="">Escolha o armazém de destino</option>
+                  {destinosPossiveis.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.armazem.nome}
+                      {p.armazem.tipo?.toUpperCase() === 'VENDA' ? ' (ponto de venda)' : ''}
+                      {` — tem ${p.currentQuantity}`}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {armazemOrigem && (
+                <p className="mt-1.5 text-xs text-slate-500">
+                  Sai de <strong>{armazemOrigem}</strong>.
+                </p>
+              )}
             </div>
           )}
 
