@@ -75,11 +75,13 @@ export function CopilotWidget() {
           )}
 
           <ChatInput onSend={sendMessage} isLoading={isLoading} onOpenVoice={() => setIsVoiceOpen(true)} />
+
+          {/* O modo de voz cobre este painel por dentro, em vez de abrir uma segunda
+              janela. Fica montado dentro do contentor do chat de propósito: sair do modo
+              de voz devolve a conversa escrita onde estava, porque nada foi desmontado. */}
+          <MayraVoiceWidget isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
         </div>
       </div>
-      
-      {/* Widget de Voz (Gemini Live Overlay) */}
-      <MayraVoiceWidget isOpen={isVoiceOpen} onClose={() => setIsVoiceOpen(false)} />
 
       {/* Backdrop (Mobile) - Mantido para foco em ecrãs pequenos */}
       {isOpen && (
