@@ -115,12 +115,14 @@ export function FornecedorFormModal({
         <form onSubmit={guardar} className="space-y-4 overflow-y-auto p-6">
           {campo('Nome', 'nome', { obrigatorio: true, autoFocus: true })}
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Empilhado abaixo de `sm`: dois campos lado a lado num telemóvel dão
+              ~150px cada, e "Tipo de fornecimento" não cabe no rótulo nem no valor. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {campo('NUIT', 'nuit')}
             {campo('Tipo de fornecimento', 'tipoFornecimento', { placeholder: 'Ex: Bebidas' })}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {campo('Email', 'email', { tipo: 'email' })}
             {campo('Telefone', 'telefone')}
           </div>

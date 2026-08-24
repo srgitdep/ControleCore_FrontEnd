@@ -6,7 +6,7 @@ import { useProducts, useDeleteProduct } from '../hooks/useCatalog';
 import type { Product } from '../types';
 import { useAuth, usePermissions } from '@/features/auth';
 import { Button, ResponsiveTable, ConfirmDialog } from '@/shared/ui';
-import { useDebounce } from '@/shared/hooks';
+import { useDebounce, useBreakpoint } from '@/shared/hooks';
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable, createColumnHelper } from '@tanstack/react-table';
 import { ProductFormModal } from './ProductFormModal';
@@ -169,10 +169,18 @@ export function ProductsTab() {
     ].filter(Boolean) as ColumnDef<Product, any>[];
   }, [canManage]);
 
+  // Lido por `useBreakpoint`, e não por `window.innerWidth`: este era medido uma
+  // única vez na primeira renderização, pelo que rodar o telemóvel de retrato para
+  // paisagem não recalculava nada — as colunas continuavam escondidas num ecrã que
+  // já tinha espaço para elas.
+  const cabeCategoria = useBreakpoint('sm');
+  const cabePrecoCusto = useBreakpoint('md');
+  const cabeUnidadeMedida = useBreakpoint('lg');
+
   const columnVisibility: VisibilityState = {
-    categoria: window.innerWidth >= 640,
-    precoCusto: window.innerWidth >= 768,
-    unidadeMedida: window.innerWidth >= 1024,
+    categoria: cabeCategoria,
+    precoCusto: cabePrecoCusto,
+    unidadeMedida: cabeUnidadeMedida,
   };
 
   const table = useReactTable({

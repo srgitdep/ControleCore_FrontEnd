@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
-import { useSocket } from '@/shared/hooks';
+import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { ResponsiveTable, Button, Tabs, type TabDefinition } from '@/shared/ui';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
@@ -273,8 +273,13 @@ function StockCurrentTab() {
     [],
   );
 
+  // Ver a nota em `ProductsTab`: `window.innerWidth` não reage à rotação do
+  // aparelho, e é neste ecrã que isso mais se nota — o stock mínimo é a coluna
+  // que decide se há de repor, e ficava escondida em paisagem.
+  const cabeMinimo = useBreakpoint('sm');
+
   const columnVisibility: VisibilityState = {
-    minimo: window.innerWidth >= 640,
+    minimo: cabeMinimo,
   };
 
   const table = useReactTable({

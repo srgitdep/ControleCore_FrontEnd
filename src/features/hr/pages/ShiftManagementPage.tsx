@@ -114,8 +114,17 @@ export function ShiftManagementPage() {
         </div>
       )}
 
-      {/* Grade semanal */}
-      <div className="grid grid-cols-7 gap-3">
+      {/* Grade semanal.
+
+          `grid-cols-7` só entra a partir de `lg`. Em 375px de largura, sete colunas
+          deixam ~40px úteis por dia: o nome do funcionário — que é a informação que
+          se vem cá buscar — ficava truncado nos primeiros três caracteres, e a hora
+          do turno não cabia. Empilhado, cada dia recebe a largura toda.
+
+          A altura mínima também é condicional: `min-h-[220px]` em sete cartões
+          empilhados dava uma página de 1540px a percorrer, quase toda vazia. Em
+          telemóvel o cartão encolhe ao conteúdo. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
         {weekDays.map((day, idx) => {
           const key = formatDate(day);
           const isToday = key === today;
@@ -124,7 +133,7 @@ export function ShiftManagementPage() {
           return (
             <div
               key={key}
-              className={`rounded-xl border flex flex-col min-h-[220px] overflow-hidden transition-shadow ${
+              className={`rounded-xl border flex flex-col overflow-hidden transition-shadow lg:min-h-[220px] ${
                 isToday
                   ? 'border-indigo-400 shadow-md shadow-indigo-100'
                   : 'border-slate-200'
@@ -132,7 +141,7 @@ export function ShiftManagementPage() {
             >
               {/* Cabeçalho do dia */}
               <div
-                className={`px-3 py-2.5 text-center ${
+                className={`flex items-baseline justify-between gap-2 px-3 py-2.5 lg:block lg:text-center ${
                   isToday ? 'bg-indigo-600' : 'bg-slate-50'
                 }`}
               >
