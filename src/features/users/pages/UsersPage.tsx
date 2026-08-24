@@ -215,14 +215,109 @@ export function UsersPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto min-h-[400px]">
+        {/* ── Cartões, em telemóvel ────────────────────────────────────────────
+            Oito colunas e cinco botões por linha — a tabela mais densa do sistema.
+            Num telefone, os botões de 15px ficariam a 4px de distância uns dos
+            outros; aqui têm área de toque própria. */}
+        {isLoading ? (
+          <div className="space-y-2 p-3 sm:hidden">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-32 animate-pulse rounded-xl border border-slate-200 bg-white" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2 p-3 sm:hidden">
+            {filteredUsers?.map((u) => (
+              <div
+                key={u.id}
+                className={`rounded-xl border border-l-[3px] border-slate-200 bg-white p-4 ${
+                  u.isActive ? 'border-l-emerald-500' : 'border-l-rose-400'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">{u.name}</p>
+                    <p className="break-all text-xs text-slate-500">{u.email}</p>
+                    <p className="mt-1 font-mono text-xs text-slate-400">{u.code}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                      u.isActive
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                        : 'border-rose-200 bg-rose-50 text-rose-600'
+                    }`}
+                  >
+                    {u.isActive ? 'Ativo' : 'Suspenso'}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                  <span>{ROLE_LABELS[u.role]}</span>
+                  {currentUser?.role === 'SUPER_ADMIN' && (
+                    <span className="text-slate-400">{u.empresa?.nome || 'Global'}</span>
+                  )}
+                </div>
+
+                {/* Alvos de toque de 36px, com rótulo acessível: num telemóvel um
+                    ícone sem `aria-label` não tem nome nenhum para o leitor de ecrã. */}
+                <div className="mt-3 flex items-center gap-1 border-t border-slate-100 pt-3">
+                  <button
+                    onClick={() => { setUserToView(u); setIsDetailsOpen(true); }}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                    aria-label={`Detalhes de ${u.name}`}
+                  >
+                    <Eye size={17} />
+                  </button>
+                  <button
+                    onClick={() => setUserToAudit(u)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-purple-50 hover:text-purple-600"
+                    aria-label={`Histórico de ${u.name}`}
+                  >
+                    <History size={17} />
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(u)}
+                    disabled={u.id === currentUser?.id}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
+                    aria-label={u.isActive ? `Suspender ${u.name}` : `Activar ${u.name}`}
+                  >
+                    {u.isActive ? <Ban size={17} /> : <CheckCircle2 size={17} />}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(u)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                    aria-label={`Editar ${u.name}`}
+                  >
+                    <Edit2 size={17} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(u.id)}
+                    disabled={u.id === currentUser?.id}
+                    className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30"
+                    aria-label={`Eliminar ${u.name}`}
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {users?.length === 0 && (
+              <p className="py-12 text-center text-sm text-slate-500">
+                Nenhum utilizador registado.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── Tabela, a partir de sm ──────────────────────────────────────── */}
+        <div className="hidden min-h-[400px] overflow-x-auto custom-scrollbar sm:block">
           {isLoading ? (
             <div className="p-8 flex justify-center">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <table className="w-full text-sm text-left whitespace-nowrap">
+            <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium text-xs">
                 <tr>
                   <th className="px-4 py-4 w-12 text-center">

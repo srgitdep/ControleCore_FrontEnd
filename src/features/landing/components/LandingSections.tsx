@@ -130,6 +130,7 @@ export function Heroi() {
 function JanelaDoProduto({ imagem, alt }: { imagem: string; alt: string }) {
   return (
     <div
+      className="cc-janela-produto"
       style={{
         borderRadius: 18,
         overflow: 'hidden',
@@ -196,6 +197,7 @@ export function OProblema() {
         <p className="cc-subtitulo">{copy.SUBTITULO}</p>
 
         <div
+          className="cc-desliza"
           style={{
             display: 'grid',
             gap: 20,
@@ -304,17 +306,16 @@ export function CadeiaViva() {
           {copy.SUBTITULO}
         </p>
 
-        <div style={{ marginTop: 48 }}>
-          <ol
-            style={{
-              listStyle: 'none',
-              margin: 0,
-              padding: 0,
-              display: 'grid',
-              gap: 10,
-              gridTemplateColumns: `repeat(${copy.NOS.length}, minmax(0, 1fr))`,
-            }}
-          >
+        {/* ── A cadeia ────────────────────────────────────────────────────────
+            Sete nós em sete colunas iguais davam **38px cada** num telemóvel de
+            375px — «RECEPÇÃO» e «EXPEDIÇÃO» ficavam ilegíveis, cortados a meio de
+            uma palavra.
+
+            Abaixo de 700px a cadeia passa a vertical, que é como uma sequência se lê
+            num ecrã estreito: cada passo com o seu rótulo e a sua frase ao lado, sem
+            precisar de tocar para descobrir o que diz. A regra está em `site.css`. */}
+        <div style={{ marginTop: 40 }}>
+          <ol className="cc-cadeia">
             {copy.NOS.map((no, i) => {
               const estaActivo = i === activo;
               return (
@@ -325,8 +326,8 @@ export function CadeiaViva() {
                     onFocus={() => setActivo(i)}
                     onClick={() => setActivo(i)}
                     aria-current={estaActivo}
+                    className="cc-cadeia-no"
                     style={{
-                      width: '100%',
                       background: 'none',
                       border: 0,
                       padding: 0,
@@ -336,21 +337,15 @@ export function CadeiaViva() {
                     }}
                   >
                     <span
+                      className="cc-cadeia-barra"
                       style={{
-                        display: 'block',
-                        height: 3,
-                        borderRadius: 3,
                         background: estaActivo ? 'var(--azul-claro)' : 'rgb(96 165 250 / 0.22)',
                         transition: 'background-color 320ms',
                       }}
                     />
                     <span
+                      className="cc-cadeia-rotulo"
                       style={{
-                        display: 'block',
-                        marginTop: 12,
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
                         color: estaActivo ? '#f4f8ff' : '#6b83a6',
                         transition: 'color 320ms',
                       }}
@@ -363,10 +358,12 @@ export function CadeiaViva() {
             })}
           </ol>
 
-          {/* Altura mínima fixa: sem ela, frases de comprimentos diferentes fazem a
+          {/* A frase que roda, só em ecrã largo — em telemóvel cada nó já a mostra.
+              Altura mínima fixa: sem ela, frases de comprimentos diferentes fazem a
               secção saltar a cada 2,6 segundos. */}
           <p
             aria-live="polite"
+            className="cc-cadeia-activa"
             style={{
               margin: '30px 0 0',
               minHeight: 54,
@@ -544,6 +541,7 @@ function ConversaDaMayra() {
 
   return (
     <div
+      className="cc-conversa-mayra"
       style={{
         borderRadius: 18,
         overflow: 'hidden',
@@ -711,6 +709,7 @@ export function Seguranca() {
         <p className="cc-subtitulo">{copy.SUBTITULO}</p>
 
         <div
+          className="cc-desliza"
           style={{
             display: 'grid',
             gap: 20,
@@ -763,6 +762,7 @@ export function ComoComeca() {
         <p className="cc-subtitulo">{copy.SUBTITULO}</p>
 
         <ol
+          className="cc-desliza"
           style={{
             listStyle: 'none',
             margin: '44px 0 0',

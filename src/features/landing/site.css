@@ -266,6 +266,165 @@
   .cc-barra-cta { display: none !important; }
 }
 
+/* ── A cadeia de sete passos ────────────────────────────────────────────────
+ *
+ * Em ecrã largo é uma linha horizontal: sete barras lado a lado, com a frase do passo
+ * activo por baixo. A relação espacial é o significado — vê-se o percurso.
+ *
+ * Num telemóvel, sete colunas iguais dão **38px cada**: «RECEPÇÃO» e «EXPEDIÇÃO» ficam
+ * cortadas a meio de uma palavra, e a barra de 3px de altura torna-se um risco sem
+ * sentido. Abaixo de 700px passa a lista vertical, com a barra à esquerda e o texto
+ * ao lado — e cada nó mostra a sua própria frase, em vez de esperar pela rotação.
+ */
+
+.cc-cadeia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.cc-cadeia-no {
+  width: 100%;
+}
+
+.cc-cadeia-barra {
+  display: block;
+  height: 3px;
+  border-radius: 3px;
+}
+
+.cc-cadeia-rotulo {
+  display: block;
+  margin-top: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 900px) {
+  /* Desliza na horizontal, em vez de empilhar.
+   *
+   * A primeira tentativa foi vertical, com a frase de cada passo ao lado do rótulo —
+   * e a secção passou de 555px para **2608px**: sete frases empilhadas são mais
+   * altura do que os sete nós comprimidos custavam. Trocava um problema por outro.
+   *
+   * Deslizando, os sete nós mantêm a leitura de sequência (é o significado da
+   * secção) com a altura de um, e cada rótulo ganha largura para se ler. */
+  .cc-cadeia {
+    display: flex;
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    margin-inline: -24px;
+    padding-inline: 24px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .cc-cadeia::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cc-cadeia > li {
+    flex: 0 0 34%;
+    scroll-snap-align: start;
+  }
+}
+
+/* ── Grelhas de cartões que deslizam ───────────────────────────────────────
+ *
+ * As três grelhas de cartões da página — as quatro dores, as quatro garantias de
+ * segurança e os quatro passos de implementação — usavam `auto-fit` com `minmax`, o
+ * que em telemóvel colapsa numa coluna e empilha tudo. Só essas três secções somavam
+ * **4400px** de altura num aparelho de 375px, e a página inteira 9762px: doze ecrãs
+ * de deslocamento para chegar ao fim.
+ *
+ * Abaixo de 700px passam a deslizar na horizontal, com o cartão seguinte meio visível
+ * a indicar que há mais. A barra é escondida — quem desliza sente o movimento, e uma
+ * barra debaixo de cada secção seria ruído repetido quatro vezes.
+ */
+
+@media (max-width: 900px) {
+  .cc-desliza {
+    display: flex !important;
+    grid-template-columns: none !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    /* Sangra até à margem para o último cartão não encostar ao bordo do ecrã e
+     * parecer cortado, mantendo o primeiro alinhado com o resto da página. */
+    margin-inline: -24px;
+    padding-inline: 24px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .cc-desliza::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cc-desliza > * {
+    flex: 0 0 80%;
+    scroll-snap-align: start;
+  }
+}
+
+/* ── Densidade em telemóvel ────────────────────────────────────────────────
+ *
+ * `--secao` é `clamp(72px, 10vw, 132px)` — em 375px dá 72px acima e 72px abaixo de
+ * cada uma das nove secções, ou seja **1300px só de espaço em branco**. O respiro que
+ * faz sentido num monitor de 27 polegadas é desperdício num ecrã de 6.
+ *
+ * O rodapé tinha quatro colunas em `auto-fit minmax(190px)`, que num telemóvel
+ * colapsam numa e somam 787px — mais um ecrã inteiro só para ligações.
+ */
+
+@media (max-width: 900px) {
+  :root {
+    --secao: 48px;
+  }
+
+  /* Duas colunas em vez de uma: os blocos do rodapé são listas curtas de três a
+   * quatro ligações, e lado a lado ocupam metade da altura. */
+  .cc-rodape-colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 28px !important;
+    padding-block: 36px !important;
+  }
+
+  /* A marca e a promessa ficam a toda a largura, acima das colunas. */
+  .cc-rodape-colunas > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Os títulos de secção e o subtítulo apertam: `--titulo-secao` já desce com o
+   * `clamp`, mas o `line-height: 1.6` do subtítulo sobre 62 caracteres dá cinco ou
+   * seis linhas em 375px. */
+  .cc-subtitulo {
+    font-size: 15px;
+    line-height: 1.55;
+    margin-top: 12px;
+  }
+
+  .cc-cartao {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  /* As capturas do produto eram o que restava de mais alto: a secção da Mayra tinha
+   * 1332px e a dos módulos 940px, quase tudo imagem. Limitar a altura e recortar pelo
+   * topo mostra o suficiente para se reconhecer o ecrã — que é o objectivo — sem gastar
+   * um ecrã e meio por imagem. */
+  .cc-janela-produto img,
+  .cc-conversa-mayra {
+    max-height: 340px;
+    object-fit: cover;
+    object-position: top;
+  }
+}
+
 /* ── O ecrã de entrada ──────────────────────────────────────────────────────
  *
  * Dois painéis: o escuro com a marca, o branco com o formulário. Um campo de texto
@@ -277,6 +436,24 @@
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* O formulário: alinhado ao topo em telemóvel, centrado a partir de `sm`.
+ *
+ * `justify-content: center` num contentor de altura total deixava a metade de cima do
+ * ecrã vazia e o formulário a flutuar no meio. Num telemóvel o polegar chega mais
+ * facilmente ao terço superior, e o teclado virtual ocupa metade de baixo quando se
+ * toca num campo — centrar empurra o formulário para debaixo do teclado. */
+.cc-entrada-form {
+  justify-content: flex-start;
+  padding: 32px 24px 48px;
+}
+
+@media (min-width: 640px) {
+  .cc-entrada-form {
+    justify-content: center;
+    padding: clamp(28px, 5vw, 56px) 24px;
+  }
 }
 
 /* Abaixo dos 960 px o painel da marca sai por completo. Reduzido a metade da

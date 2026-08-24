@@ -112,10 +112,38 @@ export function PermissionsPage() {
   const selectedRole = roles.find(r => r.id === selectedRoleId);
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-120px)] flex gap-6">
-      
-      {/* SIDEBAR: Lista de Perfis */}
-      <div className="w-80 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    /* O layout era `flex gap-6` com a barra de perfis em `w-80` **fixo, sem `lg:`** —
+     * 320px dos 375 de um telemóvel, sem colapsar. A matriz ficava com 55px. E a altura
+     * `h-[calc(100vh-120px)]` assumia um cabeçalho que em mobile tem outra medida.
+     *
+     * Abaixo de `lg`, a barra dá lugar a um selector e a altura passa a natural. */
+    <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:h-[calc(100vh-120px)] lg:flex-row lg:gap-6">
+
+      {/* ── Escolha do perfil, em ecrã estreito ──────────────────────────────
+          Um `<select>` em vez da lista: doze perfis numa lista vertical seriam mais
+          um ecrã de deslocamento antes de a matriz aparecer. */}
+      <div className="lg:hidden">
+        <label htmlFor="perfil" className="mb-1.5 block text-sm font-medium text-slate-700">
+          Perfil de acesso
+        </label>
+        <select
+          id="perfil"
+          value={selectedRoleId ?? ''}
+          onChange={(e) => setSelectedRoleId(e.target.value)}
+          disabled={isLoadingRoles}
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-50"
+        >
+          {isLoadingRoles && <option>A carregar...</option>}
+          {roles.map((role) => (
+            <option key={role.id} value={role.id}>
+              {role.nome}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* SIDEBAR: Lista de Perfis — a partir de lg */}
+      <div className="hidden w-80 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:flex">
         <div className="p-5 border-b border-slate-200 bg-slate-50">
           <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <Users className="w-5 h-5 text-emerald-600" />
@@ -123,8 +151,8 @@ export function PermissionsPage() {
           </h2>
           <p className="text-xs text-slate-500 mt-1">Selecione o perfil para configurar as permissões.</p>
         </div>
-        
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
           {isLoadingRoles ? (
             <p className="text-center text-sm text-slate-400 py-4">A carregar...</p>
           ) : roles.map((role) => (
@@ -132,8 +160,8 @@ export function PermissionsPage() {
               key={role.id}
               onClick={() => setSelectedRoleId(role.id)}
               className={`w-full text-left p-3 rounded-lg transition-all duration-150 flex items-start gap-3 ${
-                selectedRoleId === role.id 
-                  ? 'bg-emerald-50 border border-emerald-200/60 shadow-sm' 
+                selectedRoleId === role.id
+                  ? 'bg-emerald-50 border border-emerald-200/60 shadow-sm'
                   : 'hover:bg-slate-50 border border-transparent'
               }`}
             >
@@ -155,36 +183,47 @@ export function PermissionsPage() {
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {selectedRole ? (
           <>
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+            {/* Empilha em telemóvel: o título com o badge do perfil e um botão de
+                «Guardar Alterações» lado a lado não cabem em 343px. */}
+            <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="min-w-0">
+                <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-slate-800 sm:text-lg">
                   Matriz de Permissões
-                  <span className="text-emerald-600 text-sm font-normal bg-emerald-100 px-2 py-0.5 rounded-full">
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-normal text-emerald-600">
                     {selectedRole.nome}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">Assinale o que este perfil pode ver e fazer.</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Assinale o que este perfil pode ver e fazer.
+                </p>
               </div>
               <button
                 onClick={handleSave}
                 disabled={isSaving || isLoadingPerms}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-70 flex items-center gap-2 shadow-sm"
+                className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-70"
               >
-                <Save className="w-4 h-4" />
+                <Save className="h-4 w-4" />
                 {isSaving ? 'A guardar...' : 'Guardar Alterações'}
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {/* Deslocamento nos dois eixos. A matriz não vira cartões: o que a torna
+                útil é comparar colunas de relance, e um cartão por recurso com quatro
+                caixas empilhadas perde exactamente isso.
+                A primeira coluna fica fixa (`sticky left-0`) — sem ela, ao deslizar
+                para a direita deixa de se saber de que recurso é cada caixa. */}
+            <div className="flex-1 overflow-auto custom-scrollbar">
               {isLoadingPerms ? (
                 <div className="flex justify-center p-12 text-slate-500">A carregar permissões do servidor...</div>
               ) : (
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+                <table className="w-full min-w-[560px] text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-20 shadow-sm">
                     <tr>
-                      <th className="px-6 py-4 font-medium w-1/4">Módulo / Recurso</th>
+                      <th className="sticky left-0 z-30 w-1/4 min-w-[140px] bg-slate-50 px-4 py-4 font-medium sm:px-6">
+                        Módulo / Recurso
+                      </th>
                       {AVAILABLE_ACTIONS.map((action) => (
-                        <th key={action.id} className="px-6 py-4 font-medium text-center">
+                        <th key={action.id} className="px-3 py-4 text-center font-medium sm:px-6">
                           {action.label}
                         </th>
                       ))}
@@ -192,18 +231,21 @@ export function PermissionsPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {AVAILABLE_RESOURCES.map((resource) => (
-                      <tr key={resource.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-slate-800">
+                      <tr key={resource.id} className="group transition-colors hover:bg-slate-50/50">
+                        {/* `bg-white` explícito: uma célula fixa transparente deixaria
+                            ver as colunas a passar por baixo dela. */}
+                        <td className="sticky left-0 z-10 min-w-[140px] bg-white px-4 py-4 font-medium text-slate-800 group-hover:bg-slate-50 sm:px-6">
                           {resource.label}
                         </td>
-                        
+
+
                         {AVAILABLE_ACTIONS.map((action) => {
                           const permKey = `${action.id}:${resource.id}`;
                           const isIgnored = IGNORED_PERMISSIONS.includes(permKey);
                           const isChecked = selectedPermissions.has(permKey);
 
                           return (
-                            <td key={action.id} className="px-6 py-4 text-center">
+                            <td key={action.id} className="px-3 py-4 text-center sm:px-6">
                               {!isIgnored ? (
                                 <div className="inline-flex items-center justify-center">
                                   <input

@@ -11,5 +11,6 @@ export * from './types';
 export * from './pages/DashboardPage';
 export * from './components/AdminDashboard';
 export * from './components/SuperAdminDashboard';
-export * from './components/KpiCard';
+// O KpiCard local foi substituído pelo de `shared/ui`, que unifica os oito estilos
+// de cartão que existiam no sistema. Ver `shared/ui/Card.tsx`.
 export * from './components/SalesChart';

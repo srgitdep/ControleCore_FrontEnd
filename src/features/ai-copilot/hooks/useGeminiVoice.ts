@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { PCMPlayer } from '@/shared/utils';
 import { api } from '@/shared/config';
+import { detectarIdioma, escolherVoz } from '../utils/idioma';
 
 export type VoiceState =
   | 'DISCONNECTED'
@@ -38,6 +39,17 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const recognitionRef = useRef<any>(null);
   const fallbackModeRef = useRef<boolean>(false);
+
+  /**
+   * O idioma da conversa em curso, deduzido da última resposta da Mayra.
+   *
+   * Numa `ref` e não em `state`: é lido dentro dos handlers do `SpeechRecognition` e do
+   * socket, que são criados uma vez e capturariam um valor obsoleto de `state`. E
+   * mudá-lo não deve provocar re-renderização — só afecta a próxima chamada.
+   *
+   * Começa em português, que é o idioma por omissão do sistema.
+   */
+  const idiomaDaConversaRef = useRef<'pt-PT' | 'en-US'>('pt-PT');
   const isRefreshingTokenRef = useRef<boolean>(false);
 
   // Inicializar PCMPlayer (24kHz para Gemini Live Audio)
@@ -171,7 +183,16 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
 
     const recognition = new SpeechRecognitionClass();
-    recognition.lang = 'pt-PT';
+
+    // O `SpeechRecognition` só aceita um idioma de cada vez — não há forma de lhe
+    // pedir «português ou inglês». Usa-se o da última resposta da Mayra, que é o da
+    // conversa em curso: se ela respondeu em inglês, é porque se falou inglês, e o
+    // turno seguinte será provavelmente também em inglês.
+    //
+    // Começa em português (o valor inicial de `idiomaDaConversaRef`), o que é o certo
+    // para Moçambique. Um utilizador que fale inglês na primeira frase é reconhecido
+    // pior nesse turno, mas a partir da resposta a conversa passa para inglês.
+    recognition.lang = idiomaDaConversaRef.current;
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 3;
@@ -315,9 +336,19 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       console.warn('Aviso: Não foi possível obter token de voz via REST API:', e);
     }
 
-    // Derivar URL do Socket.io a partir da VITE_API_URL
-    const baseUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3100/api/v1';
-    const socketHost = baseUrl.replace(/\/api\/v1\/?$/, '');
+    // Derivar URL do Socket.io a partir da VITE_API_URL.
+    //
+    // Sem a variável, deduz-se do anfitrião que serve a página em vez de fixar
+    // `localhost`: num telemóvel, `localhost` é o próprio telemóvel, e a voz da Mayra
+    // ficava sem servidor onde ligar.
+    const configurado = import.meta.env.VITE_API_URL as string | undefined;
+    const socketHost = configurado
+      ? configurado.startsWith('/')
+        ? window.location.origin // Caminho relativo (proxy): vale a origem da página.
+        : configurado.replace(/\/api\/v1\/?$/, '')
+      : `${window.location.protocol}//${window.location.hostname}:${
+          (import.meta.env.VITE_API_PORT as string | undefined) ?? '3100'
+        }`;
 
     const socket = io(`${socketHost}/ai-copilot/voice`, {
       auth: { token: voiceToken },
@@ -357,6 +388,9 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
           setTimeout(() => {
             if (recognitionRef.current) {
               try {
+                // O objecto e reutilizado entre turnos: sem isto o idioma do
+                // reconhecimento ficaria preso ao da criacao da sessao.
+                recognitionRef.current.lang = idiomaDaConversaRef.current;
                 recognitionRef.current.start();
               } catch (e) {}
             }
@@ -372,7 +406,25 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         window.speechSynthesis.cancel();
         const cleaned = cleanTextForSpeech(payload.text);
         const utterance = new SpeechSynthesisUtterance(cleaned);
-        utterance.lang = 'pt-PT';
+
+        // O idioma sai do texto que a Mayra respondeu, e não de uma constante: se ela
+        // responder em inglês (porque lhe falaram inglês), ler a frase com fonética
+        // portuguesa torna-a incompreensível.
+        //
+        // Além do `lang`, escolhe-se a voz: definir `lang` sozinho não muda a voz já
+        // seleccionada em alguns browsers, e o resultado seria uma voz portuguesa a
+        // tentar ler inglês.
+        const idioma = detectarIdioma(cleaned);
+        utterance.lang = idioma;
+
+        // Guarda o idioma para o reconhecimento do turno seguinte: se a Mayra
+        // respondeu em inglês, é porque se falou inglês, e a pergunta seguinte será
+        // provavelmente também em inglês.
+        idiomaDaConversaRef.current = idioma;
+
+        const voz = escolherVoz(idioma, window.speechSynthesis.getVoices());
+        if (voz) utterance.voice = voz;
+
         utterance.pitch = 1.1;
 
         utterance.onstart = () => setState('SPEAKING');
@@ -382,6 +434,9 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
             setTimeout(() => {
               if (recognitionRef.current) {
                 try {
+                  // O objecto e reutilizado entre turnos: sem isto o idioma do
+                  // reconhecimento ficaria preso ao da criacao da sessao.
+                  recognitionRef.current.lang = idiomaDaConversaRef.current;
                   recognitionRef.current.start();
                 } catch (e) {}
               }

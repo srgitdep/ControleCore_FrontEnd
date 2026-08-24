@@ -89,7 +89,7 @@ src/
 
 ### Pré-requisitos
 - Node.js v20+
-- Backend ControlCore API a correr em `http://localhost:3000`
+- Backend ControlCore API a correr em `http://localhost:3100`
 
 ### 1. Instalar dependências
 ```bash
@@ -101,16 +101,83 @@ npm install
 cp .env.example .env
 ```
 
-```env
-VITE_API_URL=http://localhost:3000/api/v1
-```
+Em desenvolvimento não é preciso definir `VITE_API_URL`: sem ela, o endereço da API é
+deduzido do anfitrião que serve a página (ver `resolverEnderecoDaApi` em
+[src/shared/config/axios.ts](src/shared/config/axios.ts)). Defina-a em produção, ou para
+apontar para outro servidor.
 
 ### 3. Iniciar servidor de desenvolvimento
 ```bash
 npm run dev
 ```
 
-Aplicação disponível em: **http://localhost:5173**
+Aplicação disponível em: **http://localhost:5273**
+
+---
+
+## 📱 Vender pelo telemóvel
+
+### Em produção — o que o operador de caixa faz
+
+1. Abre o endereço do sistema no navegador do telemóvel
+2. Entra com o seu código de acesso
+3. No POS, toca em **Ler código** e aponta a câmara ao produto
+4. Confirma a quantidade e toca em **Adicionar**
+
+É tudo. Não há aplicação para instalar, nem configuração, nem avisos para aceitar.
+
+Funciona porque produção é servida em **HTTPS** (Vercel no frontend, Render na API), e o
+HTTPS é a única condição que a câmara exige. Nada de especial é preciso fazer: já está
+satisfeita.
+
+### Em desenvolvimento — porque é que aqui dá trabalho
+
+Os navegadores só dão acesso à câmara em **contextos seguros**: HTTPS, ou `localhost`. O
+servidor de desenvolvimento serve em `http://`, pelo que num endereço de rede como
+`http://192.168.1.20:5273` o `navigator.mediaDevices` **nem existe** — não é uma permissão
+recusada, é a API ausente. Nenhuma alteração ao código resolve isto.
+
+Daí os passos abaixo existirem: são andaime para *testar* o leitor na máquina de
+desenvolvimento. **Não** são o que o operador de caixa faz.
+
+<details>
+<summary>Passos para testar o leitor num telemóvel, em desenvolvimento</summary>
+
+**1.** Em `.env.local` (que não é versionado):
+
+```env
+VITE_HTTPS=true
+VITE_API_URL=/api/v1
+```
+
+O `VITE_API_URL=/api/v1` encaminha os pedidos pelo proxy do Vite
+(ver `server.proxy` em [vite.config.ts](vite.config.ts)), para a página e a API
+partilharem origem. Sem isso, uma página em HTTPS a chamar uma API em HTTP seria bloqueada
+pelo navegador como conteúdo misto.
+
+**2.** Arranque o backend (`npm run start:dev`) e o frontend (`npm run dev`).
+
+**3.** O Vite anuncia o endereço de rede:
+
+```
+➜  Local:   https://localhost:5273/
+➜  Network: https://192.168.18.17:5273/    ← este, no telemóvel
+```
+
+**4.** Abra-o no telemóvel, na mesma rede Wi-Fi. O certificado é auto-assinado, pelo que o
+navegador avisa — aceite uma vez («Avançadas» → «Prosseguir»). Em produção isto não
+acontece: o certificado é real.
+
+</details>
+
+### Notas
+
+- Sem câmara, ou com a permissão recusada, o leitor oferece escrever o código à mão.
+- O botão de leitura só aparece em dispositivos com câmara: num posto de caixa fixo, um
+  botão que abre e falha é pior do que botão nenhum.
+- O CORS do backend aceita endereços de rede privados, mas só nas portas de
+  desenvolvimento e só fora de produção — ver
+  [`cors-rede-local.ts`](../SRGControleCore-main/src/shared/cors-rede-local.ts), com testes.
 
 ---
 

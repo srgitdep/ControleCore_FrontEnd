@@ -53,27 +53,69 @@ interface ModalState {
   isOpen: boolean;
   stockId: string | null;
   type: ModalType;
+  /**
+   * O produto da linha, para a transferência poder oferecer os armazéns onde ele existe.
+   *
+   * Sem isto, o modal pedia o **UUID do stock de destino escrito à mão** — ninguém sabe
+   * um UUID de cor, pelo que o botão de transferir era decorativo.
+   */
+  produtoId: string | null;
+  /** Nome do armazém de origem, para o modal dizer de onde sai a mercadoria. */
+  armazemOrigem: string | null;
 }
 
 // ──â”€ Aba: Estoque Atual ──────────────────────────────────────────────────────â”€
 function StockCurrentTab() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useStockList({ page, limit: 10 });
+
+  /**
+   * Mostrar as posições a zero.
+   *
+   * Desligado por omissão. Criar um produto abre uma posição em **todos** os armazéns
+   * da empresa, pelo que a maioria fica a zero — e o mesmo produto aparecia várias
+   * vezes na lista, o que parecia duplicação de dados. Não era: eram armazéns
+   * diferentes, e a tabela não tinha coluna que o dissesse.
+   *
+   * As posições a zero **com mínimo definido** aparecem sempre, ligado ou desligado:
+   * são casos de ruptura, o mais importante de ver.
+   */
+  const [incluirSemSaldo, setIncluirSemSaldo] = useState(false);
+
+  const { data, isLoading } = useStockList({ page, limit: 10, incluirSemSaldo });
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     stockId: null,
     type: null,
+    produtoId: null,
+    armazemOrigem: null,
   });
 
   const stocks = data?.data ?? [];
   const totalPages = data?.lastPage ?? 1;
 
-  const openModal = (stockId: string, type: ModalType) =>
-    setModalState({ isOpen: true, stockId, type });
+  const openModal = (
+    stockId: string,
+    type: ModalType,
+    produtoId?: string,
+    armazemOrigem?: string,
+  ) =>
+    setModalState({
+      isOpen: true,
+      stockId,
+      type,
+      produtoId: produtoId ?? null,
+      armazemOrigem: armazemOrigem ?? null,
+    });
 
   const closeModal = () =>
-    setModalState({ isOpen: false, stockId: null, type: null });
+    setModalState({
+      isOpen: false,
+      stockId: null,
+      type: null,
+      produtoId: null,
+      armazemOrigem: null,
+    });
 
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
@@ -95,7 +137,7 @@ function StockCurrentTab() {
                   <Package className="h-5 w-5 text-slate-400" />
                 </div>
               )}
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-slate-900">
                   {stock.product?.nome ?? 'Produto Desconhecido'}
                 </p>
@@ -103,6 +145,30 @@ function StockCurrentTab() {
                   Cód: {stock.product?.codigoBarras ?? 'N/A'}
                 </p>
               </div>
+            </div>
+          );
+        },
+      }),
+
+      // Sem esta coluna, duas linhas do mesmo produto pareciam um registo duplicado —
+      // e eram posições em armazéns diferentes. O dado vinha do backend
+      // (`include: { armazem: true }`) e era descartado.
+      stockColumnHelper.display({
+        id: 'armazem',
+        header: 'Armazém',
+        cell: ({ row }) => {
+          const armazem = row.original.armazem;
+
+          if (!armazem) return <span className="text-xs text-slate-400">—</span>;
+
+          const ePontoDeVenda = armazem.tipo?.toUpperCase() === 'VENDA';
+
+          return (
+            <div className="min-w-[110px]">
+              <p className="text-sm text-slate-700">{armazem.nome}</p>
+              {ePontoDeVenda && (
+                <p className="text-xs text-blue-600">ponto de venda</p>
+              )}
             </div>
           );
         },
@@ -141,7 +207,7 @@ function StockCurrentTab() {
         id: 'acoes',
         header: 'Ações',
         cell: ({ row }) => {
-          const { id } = row.original;
+          const { id, product, armazem } = row.original;
           return (
             <div className="flex items-center justify-end gap-2">
               <Link
@@ -178,7 +244,7 @@ function StockCurrentTab() {
                 </Button>
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 shadow-xl rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                   <button
-                    onClick={() => openModal(id, 'TRANSFER')}
+                    onClick={() => openModal(id, 'TRANSFER', product?.id, armazem?.nome)}
                     className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
                   >
                     Transferir para Armazém
@@ -228,11 +294,41 @@ function StockCurrentTab() {
 
   return (
     <>
+      {/* O interruptor das posições a zero. Ver a nota em `incluirSemSaldo`: sem este
+          filtro, o mesmo produto aparecia uma vez por armazém — a maioria a zero — e
+          parecia duplicação de dados. */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={incluirSemSaldo}
+            onChange={(e) => {
+              setIncluirSemSaldo(e.target.checked);
+              // A contagem de páginas muda com o filtro: sem voltar ao início, a
+              // página 4 de uma lista que passou a ter 2 apareceria vazia.
+              setPage(1);
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          Mostrar produtos sem stock
+        </label>
+
+        {!incluirSemSaldo && (
+          <p className="text-xs text-slate-400">
+            As posições a zero estão escondidas, excepto as que têm mínimo definido.
+          </p>
+        )}
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <ResponsiveTable
           table={table}
           isLoading={isLoading}
-          emptyMessage="Nenhum stock encontrado."
+          emptyMessage={
+            incluirSemSaldo
+              ? 'Nenhum stock encontrado.'
+              : 'Nenhum produto com stock. Ligue «mostrar produtos sem stock» para ver as posições a zero.'
+          }
           getRowStatus={getRowStatus}
         />
 
@@ -267,6 +363,8 @@ function StockCurrentTab() {
         <MovementModals
           stockId={modalState.stockId}
           type={modalState.type}
+          produtoId={modalState.produtoId}
+          armazemOrigem={modalState.armazemOrigem}
           onClose={closeModal}
         />
       )}

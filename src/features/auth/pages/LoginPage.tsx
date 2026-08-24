@@ -8,6 +8,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { useAuth } from '../index';
 import { cn } from '@/shared/utils';
+import { useBreakpoint } from '@/shared/hooks';
 import { COPY } from '@/shared/constants/copywriting';
 import { Marca } from '@/features/landing';
 
@@ -51,6 +52,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const copy = COPY.AUTH;
+  const emEcraLargo = useBreakpoint('sm');
 
   const {
     register,
@@ -74,14 +76,16 @@ export function LoginPage() {
     <div className="cc-sitio cc-entrada">
       <PainelDaMarca />
 
-        {/* ── O formulário ───────────────────────────────────────────────── */}
+        {/* ── O formulário ─────────────────────────────────────────────────
+            `justify-center` centra verticalmente, o que num monitor é o correcto mas
+            num telemóvel deixava a metade de cima vazia e o formulário a meio do ecrã.
+            A classe alinha ao topo abaixo de `sm` e centra a partir daí. */}
         <div
+          className="cc-entrada-form"
           style={{
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
             alignItems: 'center',
-            padding: 'clamp(28px, 5vw, 56px) 24px',
             background: '#fff',
           }}
         >
@@ -123,7 +127,16 @@ export function LoginPage() {
                   id="code"
                   type="text"
                   autoComplete="username"
-                  autoFocus
+                  // Só em ecrã largo: num telemóvel, `autoFocus` abre o teclado
+                  // virtual ao carregar a página, que tapa metade do ecrã antes de o
+                  // utilizador ter visto onde está.
+                  autoFocus={emEcraLargo}
+                  // `characters` e não `words`: um código de acesso como «S001» não é
+                  // uma palavra, e o teclado do telemóvel capitalizaria a primeira
+                  // letra do que se escrevesse.
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder={copy.CAMPO_CODIGO_DICA}
                   aria-invalid={!!errors.code}
                   {...register('code')}

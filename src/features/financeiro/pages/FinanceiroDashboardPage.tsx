@@ -35,13 +35,97 @@ import {
   useProcessarPagamento,
 } from '@/features/financeiro';
 import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
+import { CardCarousel, KpiCard as SharedKpiCard, TableScroll } from '@/shared/ui';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// ──â”€ Helpers ────────────────────────────────────────────────────────────────â”€
+// ─── Helpers ───
 
+/**
+ * Um valor em meticais.
+ *
+ * ## A escolha de `pt-BR`
+ *
+ * Parece errado num sistema moçambicano, e é deliberado: `pt-PT` separa os milhares com
+ * **espaço** (`4 274,60`), enquanto `pt-BR` usa o ponto (`4.274,60`), que é a convenção
+ * usada em Moçambique e a que já estava a aparecer nestes relatórios. A vírgula decimal é
+ * igual nos dois. Trocar para `pt-PT` mudaria os milhares para espaço sem ninguém pedir.
+ *
+ * A unidade é «MT», que é o que aparece nos recibos e no fecho de caixa — «MZN» por
+ * extenso era o único sítio do sistema a escrevê-lo assim.
+ */
 const fmt = (v: number | string) =>
   Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Um valor com a unidade, para quando aparece sozinho. */
+const moeda = (v: number | string) => `${fmt(v)} MT`;
+
+/**
+ * Uma linha da demonstração de resultados.
+ *
+ * Três níveis, distinguidos por peso e por linha divisória — não por cor de fundo:
+ *
+ * - normal: uma parcela (faturação, custo, despesa)
+ * - `subtotal`: fecha um bloco (margem bruta)
+ * - `total`: o resultado final (lucro operacional)
+ *
+ * Os valores negativos mostram-se entre parênteses, como é convenção em contabilidade, em
+ * vez de com um sinal antes. Fica alinhado à direita em `tabular-nums`, para as casas
+ * decimais coincidirem entre linhas e a coluna se poder ler de cima a baixo.
+ */
+function LinhaDre({
+  rotulo,
+  valor,
+  detalhe,
+  subtotal = false,
+  total = false,
+}: {
+  rotulo: string;
+  valor: number;
+  detalhe?: string;
+  subtotal?: boolean;
+  total?: boolean;
+}) {
+  const negativo = valor < 0;
+  const absoluto = Math.abs(valor);
+
+  return (
+    <div
+      className={[
+        'flex items-baseline justify-between gap-4 py-2.5',
+        subtotal || total ? 'border-t border-slate-300 mt-1 pt-3' : '',
+        total ? 'mt-2 border-t-2 border-slate-900' : '',
+      ].join(' ')}
+    >
+      <dt className="min-w-0">
+        <span
+          className={
+            total
+              ? 'font-semibold text-slate-900'
+              : subtotal
+                ? 'font-medium text-slate-900'
+                : 'text-slate-600'
+          }
+        >
+          {rotulo}
+        </span>
+        {detalhe && <span className="ml-2 text-xs text-slate-400">{detalhe}</span>}
+      </dt>
+
+      <dd
+        className={[
+          'shrink-0 tabular-nums',
+          total ? 'text-lg font-bold' : subtotal ? 'text-base font-semibold' : 'text-sm',
+          // Vermelho só quando o **resultado** é negativo. Um custo é um custo.
+          total && negativo ? 'text-red-600' : 'text-slate-900',
+        ].join(' ')}
+      >
+        {negativo && !total ? `(${fmt(absoluto)})` : fmt(valor)}
+        <span className="ml-1 text-xs font-normal text-slate-400">MT</span>
+      </dd>
+    </div>
+  );
+}
 
 const fmtDate = (iso: string) => {
   try {
@@ -56,52 +140,52 @@ const MONTH_NAMES = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-// ──â”€ Sub-components ──────────────────────────────────────────────────────────â”€
+// ─── Sub-components ───
 
+/**
+ * Adaptador para o `KpiCard` partilhado.
+ *
+ * O cartão local usava gradiente colorido com borda translúcida — um dos oito estilos
+ * de cartão que existiam no sistema, e o único com fundo em degradê. Colorir o fundo
+ * inteiro baixava o contraste do texto por cima; a cor passa para a barra à esquerda,
+ * onde continua a distinguir receita de despesa sem prejudicar a leitura.
+ *
+ * Fica como adaptador em vez de substituição directa nos sete pontos de uso: as
+ * chamadas mantêm-se legíveis com o vocabulário desta página (`label`, `sub`, cores),
+ * e o mapeamento de cor→significado está num só lugar.
+ */
 function KpiCard({
   label,
   value,
   sub,
-  icon: Icon,
+  icon,
   accent,
-  trend,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: React.ElementType;
   accent: 'green' | 'blue' | 'red' | 'yellow' | 'purple';
+  /** Aceito e ignoro: a seta indicava direcção sem dizer de quanto, e o valor da
+   *  variação não existe nestes dados. */
   trend?: 'up' | 'down';
 }) {
-  const accents = {
-    green:  'from-emerald-500/20 to-emerald-600/5 border-emerald-500/30 text-emerald-400',
-    blue:   'from-blue-500/20 to-blue-600/5 border-blue-500/30 text-blue-400',
-    red:    'from-red-500/20 to-red-600/5 border-red-500/30 text-red-400',
-    yellow: 'from-amber-500/20 to-amber-600/5 border-amber-500/30 text-amber-400',
-    purple: 'from-violet-500/20 to-violet-600/5 border-violet-500/30 text-violet-400',
-  };
+  const paraAcento = {
+    green: 'success',
+    blue: 'primary',
+    red: 'danger',
+    yellow: 'warning',
+    purple: 'primary',
+  } as const;
+
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br p-5 backdrop-blur-sm ${accents[accent]}`}
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-          {sub && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
-        </div>
-        <div className={`rounded-xl p-2.5 bg-white/5 ${accents[accent].split(' ')[3]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-      {trend && (
-        <div className="absolute bottom-3 right-4 flex items-center gap-1 text-xs">
-          {trend === 'up'
-            ? <TrendingUp className="h-3 w-3 text-emerald-400" />
-            : <TrendingDown className="h-3 w-3 text-red-400" />}
-        </div>
-      )}
-    </div>
+    <SharedKpiCard
+      title={label}
+      value={value}
+      description={sub}
+      icon={icon}
+      accent={paraAcento[accent]}
+    />
   );
 }
 
@@ -130,7 +214,7 @@ function CreditBlockBadge() {
   );
 }
 
-// ──â”€ Tooltips personalizados ──────────────────────────────────────────────────
+// ─── Tooltips personalizados ──────────────────────────────────────────────────
 
 function CustomCashFlowTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -140,14 +224,14 @@ function CustomCashFlowTooltip({ active, payload, label }: any) {
       {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center justify-between gap-6 text-xs">
           <span style={{ color: entry.color }}>{entry.name}</span>
-          <span className="font-mono font-semibold text-slate-900 dark:text-white">MZN {fmt(entry.value)}</span>
+          <span className="font-mono font-semibold text-slate-900 dark:text-white">{moeda(entry.value)}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// ──â”€ Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 type Tab = 'dre' | 'cashflow' | 'receber' | 'pagar';
 
@@ -186,28 +270,35 @@ export function FinanceiroDashboardPage() {
   ];
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
+    // Sem padding próprio: o `AppLayout` já aplica `p-4 sm:p-6` ao `<main>`. Num
+    // telemóvel de 375px, o padding a dobrar comia 64px dos 375 — quase um quinto da
+    // largura, antes de a tabela começar.
+    <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Dashboard <span className="text-violet-400">Financeiro</span>
+        {/* `text-3xl` fixo (30px) transbordava em telemóvel; cresce com o ecrã. */}
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          Financeiro
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          DRE Â· Fluxo de Caixa Â· Contas a Pagar / Receber
+        <p className="mt-1 text-sm text-slate-500">
+          Resultados, fluxo de caixa e contas correntes
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-1 backdrop-blur-sm">
+      {/* Separadores.
+          Sublinhado em vez de pastilha preenchida: é o padrão que o Stock e o RH já
+          usam, e um bloco de cor sólida a competir com os números do relatório tirava-lhes
+          a atenção — num relatório financeiro, o que salta à vista deve ser o valor. */}
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200 hide-scrollbar">
         {TABS.map((t) => (
           <button
             key={t.id}
             id={`tab-${t.id}`}
             onClick={() => setTab(t.id)}
-            className={`flex-shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+            className={`-mb-px flex-shrink-0 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === t.id
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'border-blue-600 text-blue-700'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             {t.label}
@@ -215,7 +306,7 @@ export function FinanceiroDashboardPage() {
         ))}
       </div>
 
-      {/* ──â”€ TAB: DRE ────────────────────────────────────────────────────────â”€ */}
+      {/* ─── TAB: DRE ─── */}
       {tab === 'dre' && (
         <div className="space-y-6">
           {/* Period selector */}
@@ -245,55 +336,51 @@ export function FinanceiroDashboardPage() {
 
           {dreQuery.isLoading && (
             <div className="flex h-40 items-center justify-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-violet-400" />
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
             </div>
           )}
 
           {dre && (
             <>
-              {/* DRE: Linha Principal */}
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
-                <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  Demonstrativo de Resultados — {MONTH_NAMES[mes - 1]} {ano}
+              {/* Demonstração de resultados.
+                  Lê-se como um relatório, não como um painel: a hierarquia vem do peso da
+                  letra e de uma linha divisória antes de cada subtotal, não de faixas de
+                  cor. Antes, cada linha tinha o seu fundo colorido (verde, violeta,
+                  âmbar) e nenhuma se destacava — competiam todas.
+
+                  A cor fica para o que carrega sinal: vermelho quando o lucro é negativo.
+                  Um custo não é «mau», é um custo; pintá-lo de vermelho gasta o único
+                  recurso que devia avisar de um prejuízo. */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+                <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Demonstração de resultados — {MONTH_NAMES[mes - 1]} {ano}
                 </h2>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-700 dark:text-slate-300">Faturamento Bruto</span>
-                    <span className="font-mono text-lg font-bold text-slate-900 dark:text-white">
-                      MZN {fmt(dre.faturamentoBruto)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) CMV — Custo da Mercadoria Vendida</span>
-                    <span className="font-mono text-lg font-semibold text-red-400">
-                      MZN {fmt(dre.cmv)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-emerald-800/40 bg-emerald-950/20 rounded-lg px-3 py-2">
-                    <span className="font-semibold text-emerald-300">
-                      (=) Margem Bruta ({dre.margemBrutaPercentagem.toFixed(1)}%)
-                    </span>
-                    <span className="font-mono text-xl font-bold text-emerald-400">
-                      MZN {fmt(dre.margemBruta)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <span className="text-slate-500 dark:text-slate-400">( âˆ’ ) Despesas Pagas no PerÍodo</span>
-                    <span className="font-mono text-lg font-semibold text-amber-400">
-                      MZN {fmt(dre.despesasPagas)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-violet-950/20 px-3 py-2 border border-violet-800/30">
-                    <span className="font-bold text-violet-300">(=) Lucro Operacional Estimado</span>
-                    <span className={`font-mono text-xl font-bold ${dre.lucroOperacionalEstimado >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      MZN {fmt(dre.lucroOperacionalEstimado)}
-                    </span>
-                  </div>
-                </div>
+
+                <dl className="space-y-0">
+                  <LinhaDre rotulo="Faturação bruta" valor={dre.faturamentoBruto} />
+                  <LinhaDre rotulo="Custo da mercadoria vendida" valor={-dre.cmv} />
+
+                  <LinhaDre
+                    rotulo="Margem bruta"
+                    detalhe={`${dre.margemBrutaPercentagem.toFixed(1)}% da faturação`}
+                    valor={dre.margemBruta}
+                    subtotal
+                  />
+
+                  <LinhaDre rotulo="Despesas pagas no período" valor={-dre.despesasPagas} />
+
+                  <LinhaDre
+                    rotulo="Lucro operacional estimado"
+                    valor={dre.lucroOperacionalEstimado}
+                    total
+                  />
+                </dl>
               </div>
 
-              {/* KPI Grid */}
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {/* Os indicadores deslizam na horizontal abaixo de `lg`, em vez de
+                  empilharem: eram `grid-cols-2` em telemóvel, o que dava dois cartões
+                  de largura mínima por linha e texto a partir. */}
+              <CardCarousel label="Indicadores do período" colunas={4}>
                 <KpiCard
                   label="Vendas Realizadas"
                   value={String(dre.totalVendasRealizadas)}
@@ -302,23 +389,23 @@ export function FinanceiroDashboardPage() {
                 />
                 <KpiCard
                   label="Ticket Médio"
-                  value={`MZN ${fmt(dre.ticketMedioVenda)}`}
+                  value={moeda(dre.ticketMedioVenda)}
                   icon={DollarSign}
                   accent="purple"
                 />
                 <KpiCard
-                  label="RecebÍveis Pendentes"
-                  value={`MZN ${fmt(dre.receitasReceber)}`}
+                  label="Recebíveis Pendentes"
+                  value={moeda(dre.receitasReceber)}
                   icon={TrendingUp}
                   accent="green"
                 />
                 <KpiCard
                   label="Despesas Pendentes"
-                  value={`MZN ${fmt(dre.despesasPendentes)}`}
+                  value={moeda(dre.despesasPendentes)}
                   icon={TrendingDown}
                   accent="red"
                 />
-              </div>
+              </CardCarousel>
 
               {/* Top Produtos */}
               {dre.topProdutos.length > 0 && (
@@ -338,11 +425,11 @@ export function FinanceiroDashboardPage() {
                               <span className="mr-2 font-bold text-slate-500">#{i + 1}</span>
                               {p.nome}
                             </span>
-                            <span className="font-mono text-slate-900 dark:text-white">MZN {fmt(p.receita)}</span>
+                            <span className="font-mono text-slate-900 dark:text-white">{moeda(p.receita)}</span>
                           </div>
                           <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
                             <div
-                              className="h-1.5 rounded-full bg-violet-500"
+                              className="h-1.5 rounded-full bg-blue-600"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -357,36 +444,38 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* ──â”€ TAB: CASH FLOW ──────────────────────────────────────────────────â”€ */}
+      {/* ─── TAB: CASH FLOW ─── */}
       {tab === 'cashflow' && (
         <div className="space-y-6">
           {cashFlowQuery.isLoading && (
             <div className="flex h-40 items-center justify-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-violet-400" />
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
             </div>
           )}
           {cf && (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Três colunas, não quatro: com três indicadores, uma grelha de quatro
+                  deixaria uma lacuna à direita. */}
+              <CardCarousel label="Fluxo de caixa" colunas={3}>
                 <KpiCard
                   label="Saldo Atual (Caixa Real)"
-                  value={`MZN ${fmt(cf.saldoAtual)}`}
+                  value={moeda(cf.saldoAtual)}
                   icon={DollarSign}
                   accent={cf.saldoAtual >= 0 ? 'green' : 'red'}
                 />
                 <KpiCard
-                  label="RecebÍveis nos Próx. 30d"
-                  value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.receber, 0))}`}
+                  label="Recebíveis nos Próx. 30d"
+                  value={moeda(cf.serie.reduce((a, p) => a + p.receber, 0))}
                   icon={TrendingUp}
                   accent="blue"
                 />
                 <KpiCard
                   label="Pagáveis nos Próx. 30d"
-                  value={`MZN ${fmt(cf.serie.reduce((a, p) => a + p.pagar, 0))}`}
+                  value={moeda(cf.serie.reduce((a, p) => a + p.pagar, 0))}
                   icon={TrendingDown}
                   accent="red"
                 />
-              </div>
+              </CardCarousel>
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -397,7 +486,7 @@ export function FinanceiroDashboardPage() {
                 </p>
                 <ResponsiveContainer width="100%" height={340}>
                   <ComposedChart data={cf.serie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis
                       dataKey="data"
                       tick={{ fill: '#64748b', fontSize: 10 }}
@@ -416,17 +505,17 @@ export function FinanceiroDashboardPage() {
                       wrapperStyle={{ fontSize: 12, color: '#94a3b8' }}
                       iconType="circle"
                     />
-                    <ReferenceLine y={0} stroke="#334155" strokeDasharray="4 2" />
+                    <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="4 2" />
                     <Bar dataKey="receber" name="A Receber" fill="#3b82f6" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
                     <Bar dataKey="pagar" name="A Pagar" fill="#ef4444" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
                     <Line
                       type="monotone"
                       dataKey="saldoProjetado"
                       name="Saldo Projetado"
-                      stroke="#a78bfa"
+                      stroke="#1d4ed8"
                       strokeWidth={2.5}
                       dot={false}
-                      activeDot={{ r: 4, fill: '#a78bfa' }}
+                      activeDot={{ r: 4, fill: '#1d4ed8' }}
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -436,7 +525,7 @@ export function FinanceiroDashboardPage() {
         </div>
       )}
 
-      {/* ──â”€ TAB: CONTAS A RECEBER ──────────────────────────────────────────── */}
+      {/* ─── TAB: CONTAS A RECEBER ──────────────────────────────────────────── */}
       {tab === 'receber' && (
         <RegistrosTable
           query={contasReceberQuery}
@@ -448,7 +537,7 @@ export function FinanceiroDashboardPage() {
         />
       )}
 
-      {/* ──â”€ TAB: CONTAS A PAGAR ────────────────────────────────────────────── */}
+      {/* ─── TAB: CONTAS A PAGAR ────────────────────────────────────────────── */}
       {tab === 'pagar' && (
         <RegistrosTable
           query={contasPagarQuery}
@@ -463,7 +552,7 @@ export function FinanceiroDashboardPage() {
   );
 }
 
-// ──â”€ Registros Table Component ────────────────────────────────────────────────
+// ─── Registros Table Component ────────────────────────────────────────────────
 
 function RegistrosTable({
   query,
@@ -495,7 +584,7 @@ function RegistrosTable({
         </h2>
         <button
           id={`btn-novo-${tipo.toLowerCase()}`}
-          className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-slate-900 dark:text-white hover:bg-violet-500 transition"
+          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
         >
           <PlusCircle className="h-4 w-4" />
           Novo
@@ -504,7 +593,7 @@ function RegistrosTable({
 
       {isLoading && (
         <div className="flex h-40 items-center justify-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-violet-400" />
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       )}
 
@@ -517,6 +606,15 @@ function RegistrosTable({
 
       {registros.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+          {/* Era `overflow-hidden`: as seis colunas eram cortadas num telemóvel, sem
+              forma de as alcançar. O `TableScroll` permite deslizar e mostra um degradê
+              na margem quando há colunas escondidas — num telemóvel a barra de
+              deslocamento não se vê até se tocar, pelo que uma tabela cortada parece
+              uma tabela completa.
+
+              Envolve só a tabela, não a paginação: os controlos de página têm de ficar
+              parados enquanto se desliza as colunas. */}
+          <TableScroll>
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
               <tr>
@@ -586,7 +684,7 @@ function RegistrosTable({
 
                   <td className="px-4 py-3 text-right">
                     <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                      MZN {fmt(r.valor)}
+                      {moeda(r.valor)}
                     </span>
                   </td>
 
@@ -616,11 +714,12 @@ function RegistrosTable({
               ))}
             </tbody>
           </table>
+          </TableScroll>
 
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-4 py-3">
             <span className="text-xs text-slate-500">
-              Página {page} de {lastPage} Â· {data?.total ?? 0} registros
+              Página {page} de {lastPage} · {data?.total ?? 0} registros
             </span>
             <div className="flex gap-2">
               <button

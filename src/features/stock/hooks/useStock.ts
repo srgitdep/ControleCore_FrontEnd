@@ -2,7 +2,7 @@
 import { stockApi } from '@/features/stock';
 import toast from 'react-hot-toast';
 
-export function useStockList(params?: { page?: number; limit?: number; search?: string }) {
+export function useStockList(params?: { page?: number; limit?: number; search?: string; armazemId?: string; incluirSemSaldo?: boolean }) {
   return useQuery({
     queryKey: ['stocks', params],
     queryFn: () => stockApi.getStocks(params),

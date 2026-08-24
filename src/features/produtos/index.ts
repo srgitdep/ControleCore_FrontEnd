@@ -11,3 +11,4 @@ export * from './hooks/useCatalog';
 export * from './pages/ProductListPage';
 export * from './components/ProductFormModal';
 export * from './components/ProductsTab';
+export * from './components/CapturaPorFoto';

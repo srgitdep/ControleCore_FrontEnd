@@ -7,6 +7,7 @@ import { suppliersApi } from '@/features/fornecedores';
 import { catalogApi } from '@/features/produtos';
 import { useDebounce } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
+import { TableScroll } from '@/shared/ui';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -237,6 +238,7 @@ export function CriarPedidoModal({
               </p>
             ) : (
               <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+                <TableScroll>
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
@@ -296,6 +298,7 @@ export function CriarPedidoModal({
                     ))}
                   </tbody>
                 </table>
+                </TableScroll>
               </div>
             )}
           </div>

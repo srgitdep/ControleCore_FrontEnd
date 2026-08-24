@@ -27,6 +27,7 @@ import {
 } from '@/features/crm';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
+import { TableScroll } from '@/shared/ui';
 
 // ──â”€ Debounce hook ────────────────────────────────────────────────────────────
 function useDebounce<T>(value: T, delay: number): T {
@@ -435,7 +436,68 @@ export function ClientesPage() {
                   <p className="text-sm">Nenhum cliente encontrado.</p>
                 </div>
               ) : (
-                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                <>
+                {/* ── Cartões, em telemóvel ─────────────────────────────────────
+                    Sete colunas não cabem num telefone. O cartão inteiro é o alvo de
+                    toque para abrir o cliente — a linha da tabela já era clicável, e um
+                    alvo de 44px de altura é o mínimo confortável para o polegar. */}
+                <div className="space-y-2 sm:hidden">
+                  {clientes.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => handleSelectCliente(c.id)}
+                      className="rounded-xl border border-l-[3px] border-slate-200 border-l-blue-600 bg-white p-4 active:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-slate-900">{c.nome}</p>
+                          <p className="truncate text-xs text-slate-500">
+                            {c.telefone || c.email || 'sem contacto'}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          {c.pontos} pts
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
+                        <div>
+                          <p className="text-xs text-slate-400">Total gasto</p>
+                          <p className="font-semibold tabular-nums text-slate-900">
+                            {Number(c.totalGasto).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT
+                          </p>
+                          {c.dataUltimaCompra && (
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              Última: {new Date(c.dataUltimaCompra).toLocaleDateString('pt-PT')}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* `stopPropagation` para editar não abrir também a ficha. */}
+                        <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => { setEditingCliente(c); setShowModal(true); }}
+                            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            aria-label={`Editar ${c.nome}`}
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => { if (confirm(`Apagar "${c.nome}"?`)) apagar(c.id); }}
+                            className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                            aria-label={`Apagar ${c.nome}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Tabela, a partir de sm ────────────────────────────────── */}
+                <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white sm:block">
+                  <TableScroll>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50">
@@ -496,7 +558,9 @@ export function ClientesPage() {
                       ))}
                     </tbody>
                   </table>
+                  </TableScroll>
                 </div>
+                </>
               )}
 
               {/* Pagination */}

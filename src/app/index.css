@@ -146,5 +146,44 @@
     letter-spacing: 0.08em;
     font-size: 0.75rem;
   }
+
+  /* ── Barras de deslocamento ────────────────────────────────────────────────
+   *
+   * `custom-scrollbar` é usada em nove sítios e `hide-scrollbar` num — e nenhuma
+   * das duas estava definida em ficheiro CSS nenhum, nem vinha de plugin. Eram
+   * classes mortas: não geravam CSS e não faziam nada. A barra de categorias do
+   * POS, que pede `hide-scrollbar`, mostrava a barra nativa do sistema.
+   *
+   * Ficam definidas aqui, porque o carrossel de cartões precisa de esconder a
+   * barra sem esconder o gesto de deslizar. */
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(203 213 225);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(148 163 184);
+  }
+
+  /* Esconde a barra mas mantém o deslocamento — para carrosséis, onde os pontos
+   * indicam a posição e uma barra por baixo dos cartões seria ruído. */
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 

@@ -202,7 +202,69 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               Todas as linhas deste pedido já foram recebidas.
             </p>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-slate-200">
+            <>
+            {/* ── Mini-formulários, em telemóvel ────────────────────────────────
+                Um cartão por linha com o campo de quantidade a toda a largura. Numa
+                tabela de cinco colunas dentro de um modal de `max-w-2xl`, o input
+                ficava com cerca de 40px — impossível de acertar com o polegar, e é
+                onde se escreve o número que conta. */}
+            <div className="space-y-2 sm:hidden">
+              {porReceber.map((item) => {
+                const falta = emFalta(item);
+                const quantidade = quantidadeDe(item);
+                const excede = quantidade > falta;
+
+                return (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      'rounded-xl border border-l-[3px] bg-white p-3',
+                      excede ? 'border-rose-200 border-l-rose-500' : 'border-slate-200 border-l-slate-300',
+                    )}
+                  >
+                    <p className="font-medium text-slate-900">
+                      {item.produto?.nome ?? 'Produto desconhecido'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Falta {falta} · {moeda(item.custoUnitario)} cada
+                      {item.quantidadeRecebida > 0 &&
+                        ` · já recebido ${item.quantidadeRecebida} de ${item.quantidadePedida}`}
+                    </p>
+
+                    <div className="mt-3 flex items-end gap-3">
+                      <label className="flex-1">
+                        <span className="mb-1 block text-xs font-medium text-slate-600">
+                          A receber
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={falta}
+                          step="any"
+                          value={quantidade}
+                          onChange={(e) =>
+                            setQuantidades((antes) => ({ ...antes, [item.id]: Number(e.target.value) }))
+                          }
+                          className={cn(
+                            'w-full rounded-lg border px-3 py-2.5 text-base',
+                            excede ? 'border-rose-400 bg-rose-50' : 'border-slate-200',
+                          )}
+                        />
+                      </label>
+                      <div className="pb-2 text-right">
+                        <span className="block text-xs text-slate-400">Subtotal</span>
+                        <span className="font-semibold text-slate-900">
+                          {moeda(quantidade * item.custoUnitario)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Tabela, a partir de sm ─────────────────────────────────────── */}
+            <div className="hidden overflow-hidden rounded-xl border border-slate-200 sm:block">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
@@ -263,6 +325,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           {linhaInvalida && (

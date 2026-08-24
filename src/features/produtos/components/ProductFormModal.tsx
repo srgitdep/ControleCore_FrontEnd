@@ -10,6 +10,8 @@ import { stockApi } from '@/features/stock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui';
+import { CapturaPorFoto } from './CapturaPorFoto';
+import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
 const productSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -30,16 +32,60 @@ const productSchema = z.object({
   //
   // Só aparece na criação. Ao editar não se mostra: alterar existências por um
   // formulário de catálogo esconderia um movimento de inventário, que tem de ter
-  // autor e motivo próprios — para isso há os ajustes na secção Stock.
+  // autor e motivo próprios — para isso há os ajustes na secção Stock (e os mínimos
+  // por armazém, que se editam numa tabela própria).
   armazemId: z.string().optional(),
   quantidadeInicial: z.coerce.number().min(0, 'A quantidade não pode ser negativa').optional(),
   stockMinimo: z.coerce.number().min(0, 'O mínimo não pode ser negativo').optional(),
-}).refine(
-  // Dar entrada de 50 unidades sem dizer onde é ambíguo, e o backend recusa. Validar
-  // aqui evita a ida ao servidor e diz onde está o problema.
-  (dados) => !((dados.quantidadeInicial ?? 0) > 0 || (dados.stockMinimo ?? 0) > 0) || !!dados.armazemId,
-  { message: 'Escolha o armazém a que a quantidade ou o mínimo se referem.', path: ['armazemId'] },
-);
+});
+
+/**
+ * O schema, com o stock mínimo obrigatório **só na criação**.
+ *
+ * ## Porque é obrigatório
+ *
+ * Sem mínimo, um produto nunca entra nos alertas de ruptura nem nas sugestões de
+ * compra: ambos comparam o saldo com `minQuantity`, e um mínimo de zero significa «sem
+ * mínimo definido», não «alerta quando chegar a zero». O produto ficava invisível para
+ * o sistema de reposição, e só se descobria a falta quando o cliente perguntava.
+ *
+ * Torná-lo obrigatório aqui é mais barato do que descobrir depois quais dos produtos
+ * ficaram sem — que era o que acontecia.
+ *
+ * ## Porque não na edição
+ *
+ * O mínimo é por armazém, e um produto pode ter três. O formulário de edição mostra-os
+ * numa tabela própria (`MinimosPorArmazem`), com uma linha por armazém; exigir um valor
+ * único aqui contradiria isso.
+ */
+const construirSchema = (aCriar: boolean) =>
+  productSchema.superRefine((dados, ctx) => {
+    if (!aCriar) return;
+
+    if (!dados.armazemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['armazemId'],
+        message: 'Escolha o armazém a que o stock deste produto se refere.',
+      });
+    }
+
+    // `undefined` e `0` são casos diferentes: o primeiro é «não preenchi», o segundo é
+    // «sem mínimo». Ambos são recusados, mas a mensagem distingue-os.
+    if (dados.stockMinimo === undefined || dados.stockMinimo === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stockMinimo'],
+        message: 'Indique o stock mínimo.',
+      });
+    } else if (dados.stockMinimo <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['stockMinimo'],
+        message: 'O mínimo tem de ser maior que zero — abaixo dele o produto entra nos alertas.',
+      });
+    }
+  });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -61,9 +107,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
     handleSubmit,
     control,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
-    resolver: zodResolver(productSchema),
+    // O mínimo é obrigatório ao criar e não ao editar — ver `construirSchema`.
+    resolver: zodResolver(construirSchema(!productToEdit)),
     defaultValues: productToEdit
       ? {
           nome: productToEdit.nome,
@@ -96,7 +144,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           isActive: true,
           armazemId: '',
           quantidadeInicial: 0,
-          stockMinimo: 0,
+          // Sem valor inicial: um zero por omissão mostraria um erro de validação num
+          // campo que o utilizador ainda não tocou — o mínimo tem de ser maior que
+          // zero. Vazio é o estado honesto de «ainda não preenchi».
+          stockMinimo: undefined,
         },
   });
 
@@ -129,6 +180,49 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
       setValue('isWeighable', false);
     }
   }, [unidadeMedida, setValue]);
+
+  /**
+   * Aplica ao formulário o que a IA leu nas fotografias.
+   *
+   * ## Não sobrescreve o que já está escrito
+   *
+   * Se a pessoa já escreveu o nome à mão, uma leitura posterior não o substitui: o que
+   * alguém escreveu vale mais do que o que a IA adivinhou. Isto importa porque as
+   * fotografias podem ser analisadas várias vezes, e à segunda vez o formulário já tem
+   * conteúdo.
+   *
+   * ## O nome junta a marca
+   *
+   * A IA devolve «Azeite Extra Virgem» e «Oliveira da Serra» em campos separados, mas o
+   * catálogo tem um só campo de nome — e é por ele que se procura no ponto de venda.
+   * Juntar dá «Oliveira da Serra Azeite Extra Virgem», que é como o produto se identifica
+   * na prateleira.
+   *
+   * `shouldValidate` fica desligado: validar campos que a pessoa ainda não tocou enche o
+   * formulário de erros vermelhos por causa dos preços, que a foto nunca preenche.
+   */
+  const preencherDaFoto = (dados: DadosExtraidosDeFoto) => {
+    const vazio = (campo: keyof ProductFormData) => {
+      const actual = getValues(campo as any);
+      return actual === undefined || actual === null || actual === '' || actual === 0;
+    };
+
+    const nomeCompleto = [dados.marca, dados.nome].filter(Boolean).join(' ').trim();
+    if (nomeCompleto && vazio('nome')) setValue('nome', nomeCompleto);
+
+    if (dados.codigoBarras && vazio('codigoBarras')) {
+      setValue('codigoBarras', dados.codigoBarras);
+    }
+    if (dados.descricao && vazio('descricao')) setValue('descricao', dados.descricao);
+    if (dados.categoriaId && vazio('categoriaId')) setValue('categoriaId', dados.categoriaId);
+    if (dados.peso !== undefined && vazio('peso')) setValue('peso', dados.peso);
+
+    // A unidade tem valor por omissão (`UN`), pelo que `vazio` nunca dá verdadeiro. Só se
+    // substitui quando a foto diz outra coisa — um produto em litros ou quilos.
+    if (dados.unidadeMedida && dados.unidadeMedida !== getValues('unidadeMedida')) {
+      setValue('unidadeMedida', dados.unidadeMedida);
+    }
+  };
 
   const onSubmit = async (data: ProductFormData) => {
     try {
@@ -194,7 +288,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
         {/* Body */}
         <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col flex-1 overflow-hidden">
           <div className="p-6 overflow-y-auto flex-1 space-y-6">
-            
+
+            {/* Só ao criar: ao editar, os campos já estão preenchidos, e deixar a IA
+                sobrescrever o que alguém corrigiu à mão perderia trabalho feito. */}
+            {!productToEdit && <CapturaPorFoto onExtraido={preencherDaFoto} />}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto *</label>
@@ -287,10 +385,36 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 >
                   <option value="UN">Unidade (UN)</option>
                   <option value="KG">Quilograma (KG)</option>
+                  <option value="G">Grama (G)</option>
                   <option value="L">Litro (L)</option>
+                  <option value="ML">Mililitro (ML)</option>
                   <option value="CX">Caixa (CX)</option>
-                  <option value="PACK">Pack</option>
+                  <option value="PCT">Pacote (PCT)</option>
                 </select>
+              </div>
+
+              {/* O peso/volume estava no schema e era enviado ao servidor, mas não tinha
+                  campo no formulário: não havia como o preencher nem como o corrigir. A
+                  leitura por fotografia tornou isso visível — a IA lê «750ml» da
+                  embalagem e o valor ia para um campo que ninguém via. */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Peso / Volume
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  {...register('peso')}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Ex: 0.75 para 750ml"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Na unidade escolhida acima. Deixe zero se não se aplicar.
+                </p>
+                {errors.peso && (
+                  <p className="text-xs text-rose-500 mt-1">{errors.peso.message}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-6 md:col-span-2">
@@ -327,25 +451,26 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               <div className="mt-6 pt-5 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                   <Warehouse className="h-4 w-4 text-slate-400" />
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    Stock inicial <span className="font-normal text-slate-400">(opcional)</span>
-                  </h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Stock</h3>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Dá entrada da mercadoria que já tem, sem passar pela secção Stock. A entrada
-                  fica registada no histórico e é valorizada ao preço de custo indicado acima.
+                  O armazém e o stock mínimo são obrigatórios: sem mínimo definido, o produto
+                  não entra nos alertas de ruptura nem nas sugestões de compra. A quantidade é
+                  opcional — deixe a zero se a mercadoria ainda não chegou.
                 </p>
 
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-3">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Armazém</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Armazém <span className="text-rose-500">*</span>
+                    </label>
                     <select
                       {...register('armazemId')}
                       disabled={isLoadingArmazens}
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
                     >
                       <option value="">
-                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Não dar entrada agora'}
+                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Escolher armazém...'}
                       </option>
                       {armazens.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -382,14 +507,14 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Stock mínimo
+                      Stock mínimo <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
                       step="any"
                       min="0"
                       {...register('stockMinimo')}
-                      placeholder="0"
+                      placeholder="Ex: 10"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     {errors.stockMinimo && (
@@ -451,7 +576,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
   const [emEdicao, setEmEdicao] = useState<Record<string, string>>({});
   const [aGuardar, setAGuardar] = useState<string | null>(null);
 
-  const { data: posicoes = [], isLoading } = useQuery({
+  const { data: posicoes = [], isLoading, error } = useQuery({
     queryKey: ['stock-posicoes', produtoId],
     queryFn: () => stockApi.getPosicoesDoProduto(produtoId),
   });
@@ -492,7 +617,37 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
     );
   }
 
-  if (posicoes.length === 0) return null;
+  // Um erro tem de ser visível. Devolver `null` aqui — como estava — fazia a secção
+  // desaparecer sem explicação: quem abria o modal via um formulário sem os mínimos e
+  // concluía que a funcionalidade não existia. Foi o que aconteceu.
+  if (error) {
+    return (
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-2">
+          <Warehouse className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+        </div>
+        <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Não foi possível carregar os saldos por armazém. Se o servidor foi actualizado
+          há pouco, reinicie-o — esta secção usa um endpoint novo.
+        </p>
+      </div>
+    );
+  }
+
+  if (posicoes.length === 0) {
+    return (
+      <div className="mt-6 border-t border-slate-100 pt-5">
+        <div className="flex items-center gap-2">
+          <Warehouse className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Este produto não tem posições de stock. Crie um armazém na secção Armazéns.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 border-t border-slate-100 pt-5">
