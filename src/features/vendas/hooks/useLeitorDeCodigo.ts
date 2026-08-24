@@ -53,6 +53,61 @@ export function deveEntregarLeitura(
 /** Formatos de código de barras usados no retalho. */
 const FORMATOS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'] as const;
 
+/**
+ * Espera que o vídeo tenha dimensões reais — não apenas que esteja a reproduzir.
+ *
+ * O ZXing dimensiona o seu canvas de captura uma única vez, a partir de
+ * `videoWidth`/`videoHeight`, e considera o vídeo pronto quando `readyState > 2`. No
+ * Safari esse estado chega **antes** de as dimensões existirem: o canvas fica 0×0 e
+ * nunca há pixéis para descodificar. A câmara mostra imagem e o leitor nada encontra.
+ *
+ * `loadedmetadata` é o evento que garante as dimensões, mas pode já ter passado quando
+ * chegamos aqui — daí verificar primeiro. O limite de tempo evita ficar à espera para
+ * sempre de uma câmara que não arranca; ao expirar, deixa-se seguir em frente, porque
+ * uma tentativa que falha é melhor do que um ecrã parado sem explicação.
+ */
+async function esperarDimensoesDoVideo(
+  video: HTMLVideoElement,
+  stream: MediaStream,
+  limiteMs = 4000,
+): Promise<void> {
+  // O stream tem de estar ligado para os metadados chegarem. O ZXing volta a fazer
+  // isto adiante, e atribuir o mesmo stream duas vezes não tem efeito.
+  if (video.srcObject !== stream) video.srcObject = stream;
+
+  // O Safari só preenche as dimensões depois de a reprodução começar.
+  try {
+    await video.play();
+  } catch {
+    // Sem reprodução automática as dimensões ainda podem chegar; a espera abaixo
+    // decide. Falhar aqui não é motivo para desistir.
+  }
+
+  if (video.videoWidth > 0 && video.videoHeight > 0) return;
+
+  await new Promise<void>((resolve) => {
+    let terminado = false;
+    const concluir = () => {
+      if (terminado) return;
+      terminado = true;
+      clearTimeout(cronometro);
+      video.removeEventListener('loadedmetadata', aoCarregar);
+      video.removeEventListener('resize', aoCarregar);
+      resolve();
+    };
+
+    const aoCarregar = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) concluir();
+    };
+
+    const cronometro = setTimeout(concluir, limiteMs);
+    video.addEventListener('loadedmetadata', aoCarregar);
+    // `resize` cobre o caso em que os metadados chegam com 0×0 e são corrigidos depois,
+    // que acontece ao rodar o aparelho durante o arranque da câmara.
+    video.addEventListener('resize', aoCarregar);
+  });
+}
+
 interface OpcoesLeitor {
   /** Chamada a cada código lido. Ver a nota sobre repetições. */
   aoLer: (codigo: string) => void;
@@ -263,9 +318,17 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
       });
 
       // `decodeFromStream`, e não `decodeFromVideoElement`: entregamos o stream e é o
-      // ZXing que o liga ao elemento e espera que a reprodução comece. É a única das
-      // duas que funciona quando ninguém tocou no `srcObject` antes — e evita a corrida
-      // pelo evento `canplay` que deixava o leitor mudo no iOS.
+      // ZXing que o liga ao elemento e espera que a reprodução comece.
+      //
+      // Mas antes há uma espera que o ZXing não faz por nós, e é ela que faltava para
+      // o iOS ler. O ZXing cria o canvas de captura **uma vez**, no início, com
+      // `videoWidth`/`videoHeight` do elemento nesse instante. Considera o vídeo pronto
+      // quando `readyState > 2` — critério que no Safari se cumpre **antes** de as
+      // dimensões estarem preenchidas. O canvas nascia 0×0, e um canvas sem área não
+      // tem pixéis para analisar: a câmara mostrava imagem e o leitor nunca encontrava
+      // nada. Era exactamente o sintoma «abre mas não lê».
+      await esperarDimensoesDoVideo(video, stream);
+
       const controles = await leitor.decodeFromStream(stream, video, (resultado) => {
         if (resultado) entregarCodigo(resultado.getText());
       });
