@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { reduzirParaCaminhoSeOutroSitio } from './enderecoApi';
 
 /**
  * O endereço da API.
@@ -11,10 +12,22 @@ import axios from 'axios';
  * `localhost` gravado no pacote significaria, no telemóvel, o próprio telemóvel — que não
  * tem API a correr. Deduzido, o telemóvel chama o mesmo computador de onde carregou a
  * página.
+ *
+ * Em produção há um passo a mais: um endereço que aponte para outro sítio é reduzido ao
+ * seu caminho, para que os pedidos saiam pela própria origem e os cookies de sessão
+ * contem como *first-party*. Sem isso o login não sobrevive num iPhone — o motivo está
+ * em `enderecoApi.ts`, junto às funções que fazem a redução.
+ *
+ * Em desenvolvimento não se reduz nada: é onde apontar para outra máquina da rede é
+ * legítimo, e é o que permite testar no telemóvel contra o computador.
  */
 function resolverEnderecoDaApi(): string {
   const configurado = import.meta.env.VITE_API_URL as string | undefined;
-  if (configurado) return configurado;
+
+  if (configurado) {
+    if (!import.meta.env.PROD || typeof window === 'undefined') return configurado;
+    return reduzirParaCaminhoSeOutroSitio(configurado, window.location.hostname);
+  }
 
   // Sem `window` (testes, ou renderização fora do browser) não há de onde deduzir.
   if (typeof window === 'undefined') return '/api/v1';

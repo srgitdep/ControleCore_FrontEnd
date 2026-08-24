@@ -18,9 +18,18 @@ function resolverEnderecoDoSocket(): string {
   const configurado = import.meta.env.VITE_API_URL as string | undefined;
 
   if (configurado) {
-    // Um caminho relativo (`/api/v1`, usado quando os pedidos passam por um proxy) não
-    // serve para o Socket.io, que precisa de um endereço absoluto. Nesse caso vale a
-    // origem da página.
+    // Um caminho relativo (`/api/v1`, usado quando os pedidos REST passam pelo
+    // encaminhamento do Vercel) não serve para o Socket.io, que precisa de um endereço
+    // absoluto. Nesse caso vale a origem da página.
+    //
+    // Nota: ao contrário dos pedidos REST, o WebSocket **não** deve ser reduzido a
+    // caminho relativo em produção. Os rewrites do Vercel não encaminham WebSockets, e
+    // a ligação teria de falhar para depois cair no `polling` sobre HTTP. O
+    // `VITE_SOCKET_URL` existe para esse caso: dá o endereço directo da API quando os
+    // pedidos REST vão por caminho relativo.
+    const socketDirecto = import.meta.env.VITE_SOCKET_URL as string | undefined;
+    if (socketDirecto) return socketDirecto;
+
     if (configurado.startsWith('/')) {
       return typeof window === 'undefined' ? '' : window.location.origin;
     }
@@ -41,18 +50,16 @@ export function useSocket() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    
-    if (!token) return;
-
+    // Sem token lido daqui: o `accessToken` é um cookie HttpOnly desde a migração que
+    // o retirou do `localStorage` (era alcançável por XSS). Este ficheiro continuou a
+    // fazer `localStorage.getItem('accessToken')` e a desistir quando vinha `null` —
+    // ou seja, o WebSocket nunca chegava a ligar-se, em nenhuma plataforma, e as
+    // actualizações de stock em tempo real no POS estavam caladas sem dar erro.
+    //
+    // O gateway lê o token do cookie do handshake (`client.handshake.headers.cookie`),
+    // pelo que basta pedir ao Socket.io que envie as credenciais.
     const socketInstance = io(SOCKET_URL, {
-      extraHeaders: {
-        Authorization: `Bearer ${token}`
-      },
-      // auth: { token } -> Muito comum no NestJS Gateways
-      auth: {
-        token: token
-      }
+      withCredentials: true,
     });
 
     socketInstance.on('connect', () => {
