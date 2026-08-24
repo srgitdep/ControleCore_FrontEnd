@@ -231,7 +231,36 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
     // Firefox no iPhone caem aqui também.
     try {
       const { BrowserMultiFormatReader } = await import('@zxing/browser');
-      const leitor = new BrowserMultiFormatReader();
+      const { BarcodeFormat, DecodeHintType } = await import('@zxing/library');
+
+      // Sem `hints`, o ZXing tenta **todos** os formatos que conhece, incluindo QR,
+      // Data Matrix e Aztec. Cada imagem passa por dezenas de descodificadores 2D que
+      // nunca vão encontrar nada numa etiqueta de mercearia, e o tempo gasto neles é
+      // tempo em que o fotograma nítido já passou. Restringir aos formatos do retalho
+      // é o que faz a leitura acontecer num telemóvel à mão livre.
+      //
+      // `TRY_HARDER` autoriza o ZXing a insistir em cada imagem — mais trabalho por
+      // fotograma, mas é o que apanha um código ligeiramente inclinado ou desfocado,
+      // que é a norma quando se aponta um telemóvel a um produto.
+      const hints = new Map<number, unknown>();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.ITF,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+
+      // 500 ms por omissão são duas tentativas por segundo: com a mão a tremer, quase
+      // nenhuma cai num instante em que a imagem está nítida. A 100 ms são dez, e o
+      // custo é aceitável porque a lista de formatos acima já cortou o trabalho inútil.
+      const leitor = new BrowserMultiFormatReader(hints as never, {
+        delayBetweenScanAttempts: 100,
+        delayBetweenScanSuccess: 800,
+      });
 
       // `decodeFromStream`, e não `decodeFromVideoElement`: entregamos o stream e é o
       // ZXing que o liga ao elemento e espera que a reprodução comece. É a única das
