@@ -11,7 +11,7 @@
 ### Variável de ambiente
 
 ```
-VITE_API_URL=https://<backend>.onrender.com/api/v1
+VITE_API_URL=https://srg-controlcore-api.fly.dev/api/v1
 ```
 
 **Tem de incluir `/api/v1`** — é o prefixo global da API.
@@ -67,9 +67,9 @@ Daí este ficheiro existir — as explicações vivem fora do JSON.
 
 ## Ordem de execução
 
-1. **Backend no Render primeiro** — precisas da URL dele.
+1. **Backend no Fly.io primeiro** — precisas da URL dele.
 2. Configura o Vercel com `VITE_API_URL` a apontar para essa URL + `/api/v1`.
-3. **Volta ao Render** e põe a URL do Vercel em `CORS_ORIGINS`.
+3. **Volta ao Fly** e põe a URL do Vercel em `CORS_ORIGINS`.
 
 O passo 3 esquece-se facilmente, e sem ele o browser bloqueia todos os pedidos.
 

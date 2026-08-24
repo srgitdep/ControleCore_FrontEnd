@@ -126,7 +126,7 @@ Aplicação disponível em: **http://localhost:5273**
 
 É tudo. Não há aplicação para instalar, nem configuração, nem avisos para aceitar.
 
-Funciona porque produção é servida em **HTTPS** (Vercel no frontend, Render na API), e o
+Funciona porque produção é servida em **HTTPS** (Vercel no frontend, Fly.io na API), e o
 HTTPS é a única condição que a câmara exige. Nada de especial é preciso fazer: já está
 satisfeita.
 
