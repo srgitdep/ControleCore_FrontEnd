@@ -550,7 +550,7 @@ export function POSPage() {
             {/* Product Grid */}
             {/* `pb-24` no telemóvel: a barra do carrinho é sobreposta e taparia a última
                 linha de produtos, que ficaria inalcançável no fim da lista. */}
-            <div className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 lg:pb-6">
+            <div className="flex-1 overflow-y-auto p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 lg:pb-6">
               {isLoadingProducts ? (
                 <div className="flex justify-center items-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -813,11 +813,20 @@ export function POSPage() {
           Com o carrinho fechado não haveria nada a indicar o que já foi lido nem como
           chegar ao pagamento. Mostra a conta e abre o painel.
 
-          Só no separador de vendas: no histórico de sessões não há carrinho. */}
+          Só no separador de vendas: no histórico de sessões não há carrinho.
+
+          `fixed`, e não `absolute`: presa à janela, não ao contentor. Em `absolute`
+          bastava um antepassado ganhar `position` ou o contentor ficar mais alto do que
+          o ecrã para a barra ser desenhada fora do que se vê — e é o que acontecia no
+          Safari do iOS, onde `100vh` conta a altura sem as barras do browser. A barra
+          sumia ao rolar e a venda não se podia fechar.
+
+          `pb-[env(safe-area-inset-bottom)]` mantém o conteúdo acima da barra de gestos
+          do iPhone, que de outro modo fica por cima do total. */}
       {activeTab === 'CATALOG' && !carrinhoAberto && (
         <button
           onClick={() => setCarrinhoAberto(true)}
-          className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-blue-700 bg-blue-600 px-5 py-4 text-white shadow-2xl lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-blue-700 bg-blue-600 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-white shadow-2xl lg:hidden"
         >
           <span className="flex items-center gap-2 font-semibold">
             <ShoppingCart className="h-5 w-5" />

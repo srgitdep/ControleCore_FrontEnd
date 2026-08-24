@@ -27,7 +27,13 @@ export function AppLayout() {
   const isPOS = location.pathname === '/vendas';
 
   return (
-    <div className={isPOS ? "h-screen bg-slate-50 overflow-hidden" : "min-h-screen bg-slate-50"}>
+    <div
+      className={
+        isPOS
+          ? 'h-screen h-[100dvh] bg-slate-50 overflow-hidden'
+          : 'min-h-screen bg-slate-50'
+      }
+    >
 
       {/* ── DESKTOP (lg+): Sidebar fixo, sempre visível ────────────────────── */}
       <div className="hidden lg:block">
@@ -53,7 +59,9 @@ export function AppLayout() {
       {/* ── Área de conteúdo ─────────────────────────────────────────────── */}
       <div
         className={[
-          isPOS ? 'flex flex-col h-screen transition-all duration-300' : 'flex flex-col min-h-screen transition-all duration-300',
+          isPOS
+            ? 'flex flex-col h-screen h-[100dvh] transition-all duration-300'
+            : 'flex flex-col min-h-screen transition-all duration-300',
           // Em desktop, empurra o conteúdo para além do sidebar
           isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64',
           // ... e encolhe-o à direita quando a Mayra está aberta.

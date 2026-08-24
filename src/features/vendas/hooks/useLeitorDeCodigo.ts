@@ -159,15 +159,33 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
       return;
     }
 
-    video.srcObject = stream;
-    // `playsInline` evita que o iOS abra o vídeo em ecrã cheio por cima da aplicação.
+    // `playsInline` evita que o iOS abra o vídeo em ecrã cheio por cima da aplicação,
+    // e sem `muted` o Safari recusa a reprodução automática.
     video.playsInline = true;
     video.muted = true;
-    await video.play().catch(() => {});
-
-    setEstado('a-ler');
 
     const Detector = (window as any).BarcodeDetector;
+
+    // Só a via nativa precisa de o vídeo estar a correr antes de analisar fotogramas.
+    // Na via da biblioteca é o ZXing que liga o stream e espera pelo `canplay`, pelo
+    // que atribuí-lo aqui sabotava-o: no iOS o evento já tinha passado quando o ZXing
+    // começava a escutá-lo, e a leitura morria após o tempo limite de 5 s sem nada no
+    // ecrã. O `catch` vazio que aqui estava escondia também a razão.
+    if (Detector) {
+      video.srcObject = stream;
+      try {
+        await video.play();
+      } catch {
+        setEstado('erro');
+        setDetalheDoErro(
+          'O navegador não deixou iniciar a pré-visualização da câmara. Escreva o código à mão.',
+        );
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+    }
+
+    setEstado('a-ler');
 
     if (Detector) {
       // ─── Via nativa ─────────────────────────────────────────────────────────
@@ -208,16 +226,23 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
     }
 
     // ─── Via biblioteca, para quem não tem a nativa ───────────────────────────
+    // É por aqui que passa o iPhone: o Safari não implementa `BarcodeDetector`, em
+    // nenhuma versão, e no iOS todos os browsers usam o WebKit — portanto o Chrome e o
+    // Firefox no iPhone caem aqui também.
     try {
       const { BrowserMultiFormatReader } = await import('@zxing/browser');
       const leitor = new BrowserMultiFormatReader();
 
-      const controles = await leitor.decodeFromVideoElement(video, (resultado) => {
+      // `decodeFromStream`, e não `decodeFromVideoElement`: entregamos o stream e é o
+      // ZXing que o liga ao elemento e espera que a reprodução comece. É a única das
+      // duas que funciona quando ninguém tocou no `srcObject` antes — e evita a corrida
+      // pelo evento `canplay` que deixava o leitor mudo no iOS.
+      const controles = await leitor.decodeFromStream(stream, video, (resultado) => {
         if (resultado) entregarCodigo(resultado.getText());
       });
 
       pararRef.current = () => controles.stop();
-    } catch (erro: any) {
+    } catch {
       setEstado('erro');
       setDetalheDoErro(
         'Não foi possível iniciar o leitor neste navegador. Escreva o código à mão.',

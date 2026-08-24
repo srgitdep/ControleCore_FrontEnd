@@ -7,7 +7,7 @@ import {
   getLojas, getArmazensByLoja, createArmazem, updateArmazem, deleteArmazem, TIPOS_ARMAZEM,
 } from '@/features/lojas';
 import type { Armazem } from '@/features/lojas';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 import { ArmazemDetailsModal } from '../components/ArmazemDetailsModal';
 
 /** O armazém deste tipo é o ponto de venda da loja — só pode existir um. */
@@ -46,8 +46,8 @@ export function ArmazensPage() {
         })),
       );
       setLojas(comArmazens);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao carregar armazéns.');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível carregar os armazéns.'));
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +84,9 @@ export function ArmazensPage() {
       }
       setShowModal(false);
       carregar();
-    } catch (error: any) {
+    } catch (error) {
       // O backend recusa um segundo ponto de venda com mensagem explícita.
-      toast.error(error?.response?.data?.message || 'Erro ao guardar armazém.');
+      toast.error(mensagemDeErro(error, 'Não foi possível guardar o armazém.'));
     } finally {
       setIsSaving(false);
     }
@@ -104,8 +104,8 @@ export function ArmazensPage() {
       await deleteArmazem(a.id);
       toast.success('Armazém desactivado.');
       carregar();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao desactivar armazém.');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível desactivar o armazém.'));
     }
   };
 
@@ -114,8 +114,8 @@ export function ArmazensPage() {
       await updateArmazem(a.id, { isActive: true });
       toast.success('Armazém reactivado.');
       carregar();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao reactivar armazém.');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível reactivar o armazém.'));
     }
   };
 
@@ -135,6 +135,18 @@ export function ArmazensPage() {
     .filter((loja) => !termo || loja.armazens.length > 0 || loja.nome.toLowerCase().includes(termo));
 
   const total = lojas.reduce((acc, l) => acc + l.armazens.length, 0);
+
+  // Se a loja do formulário aberto já tem um armazém de venda activo. O armazém que se
+  // está a editar não conta contra si mesmo: sem esta excepção, abrir um ponto de venda
+  // para lhe mudar o nome mostrava o próprio tipo como indisponível.
+  const lojaJaTemPontoVenda = lojas
+    .find((l) => l.id === form.lojaId)
+    ?.armazens.some(
+      (a) =>
+        a.id !== editingId &&
+        a.isActive !== false &&
+        a.tipo?.toUpperCase() === TIPO_VENDA,
+    ) ?? false;
   const semPontoVenda = lojas.filter(
     (l) => !l.armazens.some((a) => a.isActive !== false && a.tipo?.toUpperCase() === TIPO_VENDA),
   );
@@ -366,11 +378,18 @@ export function ArmazensPage() {
                   onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                   className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  {TIPOS_ARMAZEM.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
+                  {TIPOS_ARMAZEM.map((t) => {
+                    // "Venda" desactivado quando a loja já tem o seu ponto de venda: o
+                    // servidor recusa o segundo, e oferecer a opção só para depois falhar
+                    // faz o utilizador preencher o formulário duas vezes para descobrir
+                    // uma regra que já se sabia de antemão.
+                    const bloqueado = t.toUpperCase() === TIPO_VENDA && lojaJaTemPontoVenda;
+                    return (
+                      <option key={t} value={t} disabled={bloqueado}>
+                        {bloqueado ? `${t} — já existe nesta loja` : t}
+                      </option>
+                    );
+                  })}
                 </select>
                 <p className="text-xs text-slate-500 mt-1.5">
                   <strong>Venda</strong> — ponto de venda de onde o POS abate stock (um por loja).{' '}

@@ -5,6 +5,7 @@ import { getAllCaixas, removerCaixa } from '@/features/vendas';
 import { getUsers } from '@/features/users';
 import toast from 'react-hot-toast';
 import { LojaDetailsModal } from '../components/LojaDetailsModal';
+import { mensagemDeErro } from '@/shared/utils';
 
 export function LojasPage() {
   const [activeTab, setActiveTab] = useState<'LOJAS' | 'CAIXAS'>('LOJAS');
@@ -41,7 +42,7 @@ export function LojasPage() {
       setCaixas(caixasData);
       setUsers(usersData.filter((u: any) => u.role === 'MANAGER' || u.role === 'ADMIN'));
     } catch (error) {
-      toast.error('Erro ao carregar dados');
+      toast.error(mensagemDeErro(error, 'Não foi possível carregar as lojas e os caixas.'));
     } finally {
       setIsLoading(false);
     }
@@ -56,13 +57,13 @@ export function LojasPage() {
       setNewLoja({ nome: '', endereco: '', cidade: '', gestorId: '' });
       fetchData();
     } catch (error) {
-      toast.error('Erro ao criar loja');
+      toast.error(mensagemDeErro(error, 'Não foi possível criar a loja.'));
     }
   };
 
   const handleCreateCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCaixa.lojaId) return toast.error('Selecione uma loja para o caixa.');
+    if (!newCaixa.lojaId) return toast.error('Selecione a loja a que este caixa pertence.');
     try {
       // Assuming criarCaixa is imported from @/api/caixas.api
       const { criarCaixa } = await import('@/features/vendas');
@@ -71,8 +72,8 @@ export function LojasPage() {
       setShowCreateCaixaModal(false);
       setNewCaixa({ nome: '', lojaId: '' });
       fetchData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao criar caixa.');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível criar o caixa.'));
     }
   };
 
@@ -89,7 +90,7 @@ export function LojasPage() {
       setShowEditModal(false);
       fetchData();
     } catch (error) {
-      toast.error('Erro ao atualizar loja');
+      toast.error(mensagemDeErro(error, 'Não foi possível actualizar a loja.'));
     }
   };
 
@@ -124,8 +125,8 @@ export function LojasPage() {
         toast.error('Reativação a ser implementada na API'); // Caso precise de um updateCaixa só para estado
       }
       fetchData();
-    } catch {
-      toast.error('Erro ao alterar estado do caixa');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível alterar o estado do caixa.'));
     }
   };
 
