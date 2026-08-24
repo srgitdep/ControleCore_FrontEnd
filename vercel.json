@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://srg-controlcore-api.fly.dev/api/:path*"
+    },
+    {
       "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
@@ -17,6 +21,12 @@
       "source": "/index.html",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
       ]
     }
   ]
