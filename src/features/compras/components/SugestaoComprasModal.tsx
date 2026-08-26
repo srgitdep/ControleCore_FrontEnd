@@ -44,17 +44,28 @@ const URGENCIAS: Record<UrgenciaSugestao, string> = {
  * A janela e a cobertura são ajustáveis porque a resposta certa depende do fornecedor:
  * quem entrega em 20 dias precisa de mais cobertura do que quem entrega em 2.
  */
-export function SugestaoComprasModal({
-  onClose,
+export function SugestoesDeCompra({
   onCriarPedido,
+  onFechar,
 }: {
-  onClose: () => void;
   /** Recebe as linhas escolhidas, agrupadas para um pedido. */
   onCriarPedido: (linhas: SugestaoCompra[]) => void;
+  /** Só existe quando o painel está dentro de um diálogo. */
+  onFechar?: () => void;
 }) {
   const [janelaDias, setJanelaDias] = useState(30);
   const [diasCobertura, setDiasCobertura] = useState(14);
   const [escolhidas, setEscolhidas] = useState<Set<string>>(new Set());
+
+  /**
+   * Que motivo mostrar.
+   *
+   * «O que está sem stock» e «o que está abaixo do mínimo» são duas perguntas
+   * diferentes, feitas por razões diferentes: a primeira é venda que se está a perder
+   * agora, a segunda é venda que se vai perder. Numa lista única, misturadas e
+   * distinguidas só por um distintivo de cor, nenhuma das duas se lê.
+   */
+  const [motivoVisivel, setMotivoVisivel] = useState<MotivoSugestao | 'TODOS'>('TODOS');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['compras-sugestoes', janelaDias, diasCobertura],
@@ -63,7 +74,21 @@ export function SugestaoComprasModal({
 
   // `?? []` criaria um array novo a cada render e tornaria o `useMemo` abaixo inútil;
   // com `useMemo` sobre `data`, a lista só muda quando os dados mudam.
-  const sugestoes = useMemo(() => data?.sugestoes ?? [], [data]);
+  const todasAsSugestoes = useMemo(() => data?.sugestoes ?? [], [data]);
+
+  const contagens = useMemo(() => {
+    const c: Record<string, number> = { TODOS: todasAsSugestoes.length };
+    for (const s of todasAsSugestoes) c[s.motivo] = (c[s.motivo] ?? 0) + 1;
+    return c;
+  }, [todasAsSugestoes]);
+
+  const sugestoes = useMemo(
+    () =>
+      motivoVisivel === 'TODOS'
+        ? todasAsSugestoes
+        : todasAsSugestoes.filter((s) => s.motivo === motivoVisivel),
+    [todasAsSugestoes, motivoVisivel],
+  );
 
   const seleccionadas = useMemo(
     () => sugestoes.filter((s) => escolhidas.has(s.produtoId)),
@@ -87,34 +112,13 @@ export function SugestaoComprasModal({
     });
   };
 
-  const todasEscolhidas = sugestoes.length > 0 && escolhidas.size === sugestoes.length;
+  // Sobre o que está à vista, e não sobre tudo: com um filtro activo, «escolher
+  // todas» tem de significar as que se estão a ver.
+  const todasEscolhidas =
+    sugestoes.length > 0 && sugestoes.every((s) => escolhidas.has(s.produtoId));
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        {/* ── Cabeçalho ──────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
-          <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-indigo-100 p-2">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Sugestão de compras</h2>
-              <p className="text-sm text-slate-500">
-                Cruza o ponto de reposição de cada armazém com a velocidade de venda.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
+    <div className="flex min-h-0 flex-1 flex-col">
         {/* ── Parâmetros ─────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-end gap-4 border-b border-slate-100 bg-slate-50/60 px-6 py-3">
           <label className="text-xs text-slate-600">
@@ -159,6 +163,35 @@ export function SugestaoComprasModal({
             </div>
           )}
         </div>
+
+        {/* ── Filtro por motivo ──────────────────────────────────────────── */}
+        {todasAsSugestoes.length > 0 && (
+          <div className="flex flex-wrap gap-2 border-b border-slate-100 px-6 py-3">
+            {([['TODOS', 'Tudo a repor'], ['RUPTURA', MOTIVOS.RUPTURA.rotulo], ['ABAIXO_MINIMO', MOTIVOS.ABAIXO_MINIMO.rotulo], ['VELOCIDADE', MOTIVOS.VELOCIDADE.rotulo]] as const).map(
+              ([chave, rotulo]) => {
+                const quantos = contagens[chave] ?? 0;
+                // Um filtro que não filtra nada só ocupa espaço e faz duvidar da lista.
+                if (chave !== 'TODOS' && quantos === 0) return null;
+
+                return (
+                  <button
+                    key={chave}
+                    type="button"
+                    onClick={() => setMotivoVisivel(chave)}
+                    className={cn(
+                      'rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+                      motivoVisivel === chave
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                    )}
+                  >
+                    {rotulo} · {quantos}
+                  </button>
+                );
+              },
+            )}
+          </div>
+        )}
 
         {/* ── Lista ──────────────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
@@ -278,12 +311,35 @@ export function SugestaoComprasModal({
         </div>
 
         {/* ── Rodapé ─────────────────────────────────────────────────────── */}
-        <div className="space-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3">
+        {/* Dentro do dialogo o rodape fica preso por o painel ter altura fixa. Numa
+            pagina nao ha altura fixa nenhuma, e o botao de criar pedido afundava-se no
+            fim de uma lista longa -- justamente quando ha mais para encomendar.
+            `sticky` resolve-o sem afectar o dialogo, onde ja nao ha para onde deslizar. */}
+        <div className="sticky bottom-0 space-y-2 border-t border-slate-100 bg-slate-50 px-6 py-3">
           {/* Nunca truncar em silêncio. */}
+          {/* O que o servidor omitiu, e o que o filtro escondeu, são duas coisas
+              diferentes. Somadas numa frase só, davam a entender que faltavam linhas
+              por decisão do sistema quando quem as escondeu foi quem carregou no
+              filtro. */}
           {data && data.resumo.omitidas > 0 && (
             <p className="flex items-center gap-1.5 text-xs text-slate-500">
               <Info size={13} />
-              A mostrar {sugestoes.length} das {data.resumo.total} linhas a repor.
+              A analisar {todasAsSugestoes.length} das {data.resumo.total} linhas a repor.
+            </p>
+          )}
+
+          {motivoVisivel !== 'TODOS' && (
+            <p className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Info size={13} />
+              A mostrar só «{MOTIVOS[motivoVisivel].rotulo}»: {sugestoes.length} de{' '}
+              {todasAsSugestoes.length}.
+              <button
+                type="button"
+                onClick={() => setMotivoVisivel('TODOS')}
+                className="font-semibold underline underline-offset-2 hover:text-slate-700"
+              >
+                Ver tudo
+              </button>
             </p>
           )}
 
@@ -309,12 +365,14 @@ export function SugestaoComprasModal({
             </p>
 
             <div className="flex gap-2">
-              <button
-                onClick={onClose}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-              >
-                Fechar
-              </button>
+              {onFechar && (
+                <button
+                  onClick={onFechar}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                >
+                  Fechar
+                </button>
+              )}
               <button
                 onClick={() => onCriarPedido(seleccionadas)}
                 disabled={seleccionadas.length === 0}
@@ -326,6 +384,51 @@ export function SugestaoComprasModal({
             </div>
           </div>
         </div>
+    </div>
+  );
+}
+
+/**
+ * A mesma lista, em diálogo.
+ *
+ * O painel passou a viver num separador da página de compras — é lá que se decide o
+ * que encomendar, e uma lista de rupturas escondida atrás de um botão que é preciso
+ * saber carregar não é uma lista que alguém veja. O diálogo fica para quem chega pelo
+ * atalho, e é só a moldura: o conteúdo é o mesmo componente.
+ */
+export function SugestaoComprasModal({
+  onClose,
+  onCriarPedido,
+}: {
+  onClose: () => void;
+  onCriarPedido: (linhas: SugestaoCompra[]) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-indigo-100 p-2">
+              <Sparkles className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Sugestão de compras</h2>
+              <p className="text-sm text-slate-500">
+                Cruza o ponto de reposição de cada armazém com a velocidade de venda.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Fechar"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <SugestoesDeCompra onCriarPedido={onCriarPedido} onFechar={onClose} />
       </div>
     </div>
   );

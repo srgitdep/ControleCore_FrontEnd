@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingBag, ShoppingCart, Truck, Sparkles, PackageCheck, Loader2 } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Truck, Sparkles, PackageCheck, Loader2 , PackageSearch } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { purchasesApi, EstadoPedidoCompra } from '../api/purchases.api';
 import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
@@ -11,10 +11,10 @@ import { usePermissions } from '@/features/auth';
 import { cn } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
 import { RececoesModal } from '../components/RececoesModal';
-import { SugestaoComprasModal } from '../components/SugestaoComprasModal';
+import { SugestaoComprasModal, SugestoesDeCompra } from '../components/SugestaoComprasModal';
 import { CriarPedidoModal } from '../components/CriarPedidoModal';
 
-type Aba = 'pedidos' | 'fornecedores';
+type Aba = 'pedidos' | 'reposicao' | 'fornecedores';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -49,6 +49,10 @@ export function PurchasesPage() {
 
   const ABAS: TabDefinition<Aba>[] = [
     { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
+    // A seguir aos pedidos, e antes dos fornecedores: é o que se consulta para
+    // decidir o que encomendar. Estava atrás de um botão que abria um diálogo — uma
+    // lista de rupturas que é preciso saber procurar não é uma lista que alguém veja.
+    { id: 'reposicao', label: 'A repor', icon: PackageSearch },
     ...(podeVerFornecedores
       ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck }]
       : []),
@@ -148,6 +152,10 @@ export function PurchasesPage() {
         />
 
         <div className="p-4 sm:p-6">
+          {aba === 'reposicao' && (
+            <SugestoesDeCompra onCriarPedido={daSugestaoParaPedido} />
+          )}
+
           {aba === 'pedidos' && (
             <ListaDePedidos
               pedidos={pedidos}
