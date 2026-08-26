@@ -81,7 +81,31 @@ function StockCurrentTab() {
    */
   const [incluirSemSaldo, setIncluirSemSaldo] = useState(false);
 
-  const { data, isLoading } = useStockList({ page, limit: 10, incluirSemSaldo });
+  /**
+   * Só o que está abaixo do mínimo — o filtro que o cartão do painel abre.
+   *
+   * Vive no URL, e não em estado local, por três razões: o painel pode ligá-lo com
+   * uma ligação simples, a página recarregada mantém o filtro, e o endereço pode ser
+   * partilhado com quem tem de tratar da reposição.
+   */
+  const [parametros, setParametros] = useSearchParams();
+  const apenasStockBaixo = parametros.get('stockBaixo') === 'true';
+
+  const limparFiltroDeStockBaixo = () => {
+    const seguintes = new URLSearchParams(parametros);
+    seguintes.delete('stockBaixo');
+    setParametros(seguintes, { replace: true });
+    setPage(1);
+  };
+
+  const { data, isLoading } = useStockList({
+    page,
+    limit: 10,
+    incluirSemSaldo,
+    // Só vai no pedido quando está ligado: um `false` explícito sujaria o URL e a
+    // chave da cache sem mudar o resultado.
+    apenasStockBaixo: apenasStockBaixo || undefined,
+  });
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -178,8 +202,9 @@ function StockCurrentTab() {
         id: 'balanco',
         header: 'Balanço Atual',
         cell: ({ row }) => {
-          const { currentQuantity, minQuantity, product } = row.original;
-          const isCritical = currentQuantity <= minQuantity;
+          const { currentQuantity, product, abaixoDoMinimo } = row.original;
+          // A mesma regra do painel, calculada no servidor. Ver `getRowStatus`.
+          const isCritical = !!abaixoDoMinimo;
           return (
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
@@ -291,14 +316,44 @@ function StockCurrentTab() {
     pageCount: totalPages,
   });
 
+  /**
+   * A cor da linha.
+   *
+   * `abaixoDoMinimo` vem calculado do servidor, pela mesma regra que o indicador do
+   * painel usa. Antes decidia-se aqui com `currentQuantity <= minQuantity`, o que
+   * pintava de vermelho toda a posição vazia **sem mínimo definido** — porque
+   * `0 <= 0` — e a tabela contradizia o número do painel.
+   */
   const getRowStatus = (stock: Stock): 'default' | 'critical' | 'warning' => {
-    if (stock.currentQuantity <= stock.minQuantity) return 'critical';
-    if (stock.currentQuantity <= stock.minQuantity * 1.5) return 'warning';
+    if (stock.abaixoDoMinimo) return 'critical';
+
+    // O aviso só faz sentido havendo mínimo: sem ele, `minQuantity * 1.5` é zero e
+    // qualquer posição vazia ficaria amarela.
+    if (stock.minQuantity > 0 && stock.currentQuantity <= stock.minQuantity * 1.5) {
+      return 'warning';
+    }
     return 'default';
   };
 
   return (
     <>
+      {/* Uma lista filtrada tem de dizer que está filtrada. Sem isto, quem chega aqui
+          pelo cartão do painel vê uma tabela curta e conclui que perdeu registos. */}
+      {apenasStockBaixo && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-900">
+            A mostrar só as posições abaixo do mínimo definido.
+          </p>
+          <button
+            type="button"
+            onClick={limparFiltroDeStockBaixo}
+            className="text-sm font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700"
+          >
+            Ver todo o stock
+          </button>
+        </div>
+      )}
+
       {/* O interruptor das posições a zero. Ver a nota em `incluirSemSaldo`: sem este
           filtro, o mesmo produto aparecia uma vez por armazém — a maioria a zero — e
           parecia duplicação de dados. */}
@@ -330,7 +385,9 @@ function StockCurrentTab() {
           table={table}
           isLoading={isLoading}
           emptyMessage={
-            incluirSemSaldo
+            apenasStockBaixo
+              ? 'Nenhum produto abaixo do mínimo definido. Está tudo reposto.'
+              : incluirSemSaldo
               ? 'Nenhum stock encontrado.'
               : 'Nenhum produto com stock. Ligue «mostrar produtos sem stock» para ver as posições a zero.'
           }

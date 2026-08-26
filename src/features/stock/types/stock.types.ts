@@ -19,6 +19,15 @@ export interface Stock {
   armazemId: string;
   currentQuantity: number;
   minQuantity: number;
+  /**
+   * Se esta posição está abaixo do mínimo definido.
+   *
+   * Calculado no servidor de propósito. A regra tem uma subtileza — `minQuantity = 0`
+   * significa «sem mínimo definido», não «mínimo de zero» — que já foi implementada
+   * mal em três sítios ao mesmo tempo, com o painel a contar de uma maneira e a
+   * tabela a pintar de outra.
+   */
+  abaixoDoMinimo?: boolean;
   /** Custo médio ponderado neste armazém. Recalculado a cada entrada de compra. */
   custoMedio: number;
   createdAt: string;

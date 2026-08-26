@@ -80,6 +80,14 @@ export interface KpiCardProps {
   accent?: VariantProps<typeof cardVariants>['accent'];
   isLoading?: boolean;
   className?: string;
+  /**
+   * O que fazer quando se carrega no cartão.
+   *
+   * Um indicador que anuncia «4 produtos com stock baixo» e não leva a lado nenhum
+   * obriga a procurar quais são. Com isto definido, o cartão passa a ser um `button`
+   * a sério — navegável por teclado e anunciado como botão por um leitor de ecrã.
+   */
+  onClick?: () => void;
 }
 
 /**
@@ -98,6 +106,7 @@ export function KpiCard({
   accent = 'neutral',
   isLoading = false,
   className,
+  onClick,
 }: KpiCardProps) {
   if (isLoading) {
     return (
@@ -109,8 +118,8 @@ export function KpiCard({
     );
   }
 
-  return (
-    <Card accent={accent} className={cn('flex flex-col', className)}>
+  const conteudo = (
+    <Card accent={accent} interactive={!!onClick} className={cn('flex flex-col', className)}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-semibold text-slate-600">{title}</p>
         {Icon && <Icon size={18} strokeWidth={1.5} className="shrink-0 text-slate-400" />}
@@ -143,6 +152,17 @@ export function KpiCard({
         </div>
       )}
     </Card>
+  );
+
+  if (!onClick) return conteudo;
+
+  // Um `<button>` a sério, e não um `div` com `onClick`: dá navegação por teclado e
+  // faz um leitor de ecrã anunciá-lo como botão. `text-left` porque o conteúdo do
+  // cartão é alinhado à esquerda e o `button` centra por omissão.
+  return (
+    <button type="button" onClick={onClick} className="w-full text-left">
+      {conteudo}
+    </button>
   );
 }
 

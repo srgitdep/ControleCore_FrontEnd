@@ -1,6 +1,7 @@
 import { useAdminDashboard } from '@/features/dashboard';
 import { DollarSign, FileText, Package, Users } from 'lucide-react';
 import { CardCarousel, KpiCard } from '@/shared/ui';
+import { useNavigate } from 'react-router-dom';
 import { SalesChart } from './SalesChart';
 
 /**
@@ -24,6 +25,7 @@ import { SalesChart } from './SalesChart';
  * evoluiu.
  */
 export function AdminDashboard() {
+  const navigate = useNavigate();
   const { data, isLoading } = useAdminDashboard();
 
   // O esqueleto usa os mesmos cartões, para o conteúdo não saltar de posição quando os
@@ -60,6 +62,21 @@ export function AdminDashboard() {
           title="Produtos com stock baixo"
           value={data.kpis.produtosBaixoStock.toLocaleString('pt-MZ')}
           icon={Package}
+          // Um número que assinala um problema tem de levar ao problema. Anunciar
+          // «4 produtos abaixo do mínimo» e deixar quem lê a procurar quais são numa
+          // tabela paginada é dar o alarme e esconder a lista.
+          //
+          // O destino é a aba do stock com o filtro ligado, e o filtro vive no URL:
+          // recarregar mantém-no, e o endereço pode ser enviado a quem trata da
+          // reposição.
+          //
+          // Sem nada abaixo do mínimo não há lista para abrir, e um cartão que se
+          // carrega para não mostrar nada é pior do que um cartão parado.
+          onClick={
+            data.kpis.produtosBaixoStock > 0
+              ? () => navigate('/stock?tab=estoque&stockBaixo=true')
+              : undefined
+          }
           // A barra fica âmbar só quando há algo a tratar: um alerta permanente deixa
           // de ser um alerta.
           accent={data.kpis.produtosBaixoStock > 0 ? 'warning' : 'success'}
