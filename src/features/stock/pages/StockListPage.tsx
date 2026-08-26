@@ -608,19 +608,7 @@ export function StockListPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* ──â”€ Cabeçalho ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-600" />
-            Produtos e Stock
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Catálogo, saldos por armazém, movimentos e inventário físico.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
 
       {/* ──â”€ Tabs ────────────────────────────────────────────────────────────â”€ */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">

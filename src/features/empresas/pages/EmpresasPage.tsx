@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BarraDaPagina } from '@/shared/ui';
 
 import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
 import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
@@ -100,13 +101,12 @@ export function EmpresasPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-4">
-      <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-        Lista de Empresas
-        <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-200">
-          Total: {filteredEmpresas?.length || 0}
-        </span>
-      </h1>
+    <div className="space-y-6">
+      {/* «Lista de Empresas» repetia o «Empresas» do cabeçalho da aplicação. O total
+          fica: é dado. */}
+      <BarraDaPagina
+        resumo={`${filteredEmpresas?.length || 0} ${(filteredEmpresas?.length || 0) === 1 ? 'empresa' : 'empresas'}`}
+      />
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
         

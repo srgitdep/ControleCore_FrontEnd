@@ -423,11 +423,10 @@ export function POSPage() {
           menos de 200 px dos 667 para os produtos, e não cabia uma linha inteira. O
           subtítulo desaparece — a barra de navegação já diz «Ponto de Venda». */}
       <div className="bg-white border-b border-slate-200 px-4 pt-3 pb-0 shrink-0 sm:px-6 sm:pt-5">
-        <div className="flex items-center justify-between gap-2 mb-2 sm:mb-4">
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold text-slate-900 sm:text-2xl">Vendas</h1>
-            <p className="hidden text-sm text-slate-500 sm:block">Ponto de Venda e Gestão de Caixas</p>
-          </div>
+        {/* O «Vendas» saiu com o subtítulo, e pela mesma razão: a barra de navegação
+            já diz «Ponto de Venda». Neste ecrã o espaço vale ainda mais — cada linha
+            recuperada no topo é uma linha de produtos a mais no telemóvel. */}
+        <div className="flex items-center justify-end gap-2 mb-2 sm:mb-4">
           <div className="flex items-center gap-3">
             {hasSession ? (
               <>

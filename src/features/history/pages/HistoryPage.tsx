@@ -11,21 +11,19 @@ export function HistoryPage() {
   const targetUserId = isManagerial ? undefined : user?.id;
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
           <History size={24} />
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            {isManagerial ? 'Histórico Global do Sistema' : 'Meu Histórico no Sistema'}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {isManagerial 
-              ? 'Visualize as ações de todos os utilizadores da empresa.' 
-              : 'Visualize o registo das suas ações no sistema.'}
-          </p>
-        </div>
+        {/* Aqui o título dizia mais do que o nome da página: distinguia o histórico
+            global do pessoal, e o cabeçalho da aplicação diz só «Histórico no
+            Sistema». A distinção fica — é ela que muda o que se está a ver. */}
+        <p className="text-sm text-slate-500">
+          {isManagerial
+            ? 'Acções de todos os utilizadores da empresa.'
+            : 'As suas acções no sistema.'}
+        </p>
       </div>
 
       <AuditLogTable userId={targetUserId} />

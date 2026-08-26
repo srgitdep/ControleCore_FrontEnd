@@ -110,18 +110,10 @@ export function PurchasesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
-            <ShoppingCart className="h-6 w-6 text-blue-600" />
-            Compras
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Pedidos, recepções de mercadoria e fornecedores.
-          </p>
-        </div>
-
+    <div className="space-y-6">
+      {/* O nome e a descrição saíram: o cabeçalho da aplicação já diz «Compras», e os
+          separadores abaixo dizem o resto. Sobram as acções, encostadas à direita. */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {aba === 'pedidos' && (
           <div className="flex flex-wrap gap-2">
             <button

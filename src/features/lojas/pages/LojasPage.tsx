@@ -131,16 +131,10 @@ export function LojasPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Store className="w-6 h-6 text-blue-600" />
-            Lojas & Caixas
-          </h1>
-          <p className="text-slate-500 mt-1">Gira as lojas fÍsicas, armazéns e terminais de caixa.</p>
-        </div>
-        
+        {/* O nome e a descrição saíram: o cabeçalho da aplicação já diz «Lojas &
+            Caixas», e os separadores abaixo dizem o resto melhor do que uma frase. */}
         <div className="flex gap-2">
           {activeTab === 'LOJAS' && (
             <button 

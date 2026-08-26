@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BarraDaPagina } from '@/shared/ui';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
 import { getUsers, deleteUser, deactivateUser, activateUser } from '@/features/users';
@@ -169,13 +170,12 @@ export function UsersPage() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-4">
-      <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-        Lista de Utilizadores
-        <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
-          Total: {filteredUsers?.length || 0}
-        </span>
-      </h1>
+    <div className="space-y-6">
+      {/* «Lista de Utilizadores» repetia o «Utilizadores» do cabeçalho da aplicação.
+          O total fica: é dado. */}
+      <BarraDaPagina
+        resumo={`${filteredUsers?.length || 0} ${(filteredUsers?.length || 0) === 1 ? 'utilizador' : 'utilizadores'}`}
+      />
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
         
