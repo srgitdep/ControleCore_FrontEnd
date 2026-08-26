@@ -75,3 +75,90 @@ export function reduzirParaCaminhoSeOutroSitio(
     return configurado;
   }
 }
+
+/** O que decide o endereço do WebSocket. Tudo injectado, para a função ser pura. */
+export interface ContextoDoSocket {
+  /** `VITE_API_URL`. Em produção é um caminho relativo (`/api/v1`). */
+  apiUrl?: string;
+  /** `VITE_SOCKET_URL`: o endereço directo da API, quando o REST vai por caminho. */
+  socketUrl?: string;
+  /** `window.location.origin`. */
+  origem: string;
+  /** `window.location.protocol`. */
+  protocolo: string;
+  /** `window.location.hostname`. */
+  anfitriao: string;
+  /** `VITE_API_PORT`. */
+  porta: string;
+  /** `import.meta.env.PROD`. */
+  producao: boolean;
+}
+
+export interface EnderecoDoSocket {
+  /** O endereço a passar ao Socket.io. */
+  endereco: string;
+  /**
+   * Preenchido quando o endereço escolhido é o último recurso e há razão para crer que
+   * não vai funcionar. Serve para dizer ao utilizador o que falta configurar, em vez de
+   * o deixar a olhar para «A ligar…» sem explicação.
+   */
+  avisoDeConfiguracao: string | null;
+}
+
+/**
+ * Onde o Socket.io se deve ligar.
+ *
+ * ## Porquê uma função à parte
+ *
+ * O endereço do WebSocket **não** segue a mesma regra do REST, e essa diferença já
+ * custou a funcionalidade de voz da Mayra em produção.
+ *
+ * Os pedidos REST saem por caminho relativo (`/api/v1`) de propósito: o `vercel.json`
+ * encaminha-os para a API, e assim os cookies contam como *first-party* — sem isso o
+ * login não sobrevive num iPhone. Mas **os `rewrites` do Vercel não encaminham
+ * WebSockets**. Um socket apontado à origem da página nunca chega à API: fica pendurado
+ * no handshake, e o ecrã da voz mostra «A ligar…» indefinidamente.
+ *
+ * `VITE_SOCKET_URL` existe exactamente para esse caso — dá o endereço directo da API
+ * quando o REST vai por caminho relativo. O `useSocket` já a lia; o hook da voz era uma
+ * cópia mais antiga da mesma lógica e ignorava-a, pelo que definir a variável não
+ * chegava para reparar a voz. Com a decisão num sítio só, as duas não podem voltar a
+ * divergir.
+ */
+export function resolverEnderecoDoSocket(ctx: ContextoDoSocket): EnderecoDoSocket {
+  // 1. O endereço directo manda sempre: foi posto lá precisamente para isto.
+  if (ctx.socketUrl) {
+    return { endereco: ctx.socketUrl.replace(/\/$/, ''), avisoDeConfiguracao: null };
+  }
+
+  if (ctx.apiUrl) {
+    // 2. Caminho relativo: não há daqui como chegar à API. Em produção sabe-se que a
+    //    origem não encaminha WebSockets, e o socket vai falhar — o aviso diz porquê.
+    if (ctx.apiUrl.startsWith('/')) {
+      return {
+        endereco: ctx.origem,
+        avisoDeConfiguracao: ctx.producao
+          ? 'VITE_API_URL é um caminho relativo e VITE_SOCKET_URL não está definida. ' +
+            'Os rewrites do Vercel não encaminham WebSockets: defina VITE_SOCKET_URL ' +
+            'com o endereço directo da API e volte a publicar.'
+          : null,
+      };
+    }
+
+    // 3. Endereço absoluto: tira-se o prefixo da API para sobrar o domínio, que é o que
+    //    o Socket.io quer. A remoção é ancorada ao fim de propósito — um `replace('/api')`
+    //    não ancorado apanharia o `//api` de `https://api.exemplo.com` e produziria um
+    //    endereço corrompido.
+    return {
+      endereco: ctx.apiUrl.replace(/\/$/, '').replace(/\/api(\/v\d+)?$/, ''),
+      avisoDeConfiguracao: null,
+    };
+  }
+
+  // 4. Sem variáveis: deduz-se do anfitrião que serve a página, e não de `localhost`. É
+  //    o que permite abrir o sistema no telemóvel contra o computador da mesma rede.
+  return {
+    endereco: `${ctx.protocolo}//${ctx.anfitriao}:${ctx.porta}`,
+    avisoDeConfiguracao: null,
+  };
+}

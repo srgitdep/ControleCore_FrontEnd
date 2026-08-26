@@ -20,6 +20,20 @@ própria origem do Vercel, que depois os encaminha para a API (ver a secção do
 
 **Tem de incluir `/api/v1`** — é o prefixo global da API.
 
+```
+VITE_SOCKET_URL=https://srg-controlcore-api.fly.dev
+```
+
+**Endereço absoluto, ao contrário da anterior.** Os WebSockets — os eventos em tempo
+real e a voz da Mayra — não podem passar pelo encaminhamento: **os `rewrites` do
+Vercel não encaminham WebSockets**. Sem esta variável o socket aponta para a origem
+do Vercel, o handshake nunca chega ao Fly, e o ecrã da voz fica em «A ligar…» sem
+nunca avançar.
+
+É o oposto do que a variável acima exige, e é de propósito: os cookies obrigam o REST
+a sair por caminho relativo, e o WebSocket obriga ao endereço directo. São dois
+transportes com restrições diferentes.
+
 As variáveis `VITE_*` são substituídas **no momento do build**, não lidas em runtime.
 Alterá-la exige um **novo deploy**; reiniciar não basta.
 

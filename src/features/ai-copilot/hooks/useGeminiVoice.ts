@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { enderecoDoSocket } from '../../../shared/config/enderecoSocket';
 import { PCMPlayer } from '@/shared/utils';
 import { api } from '@/shared/config';
 import { detectarIdioma, escolherVoz } from '../utils/idioma';
@@ -33,6 +34,10 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const [isFallback, setIsFallback] = useState<boolean>(false);
 
   const socketRef = useRef<Socket | null>(null);
+  // O temporizador que desiste de ligar. Numa ref porque `endVoiceSession` tem de o
+  // poder cancelar: sem isso, fechar o ecrã antes de ligar deixava-o a disparar e a
+  // marcar ERROR numa sessão que já não existe.
+  const esperaDeLigacaoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pcmPlayerRef = useRef<PCMPlayer | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -152,6 +157,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
 
     // Desconecta socket
+    if (esperaDeLigacaoRef.current) {
+      clearTimeout(esperaDeLigacaoRef.current);
+      esperaDeLigacaoRef.current = null;
+    }
+
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
@@ -336,19 +346,20 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       console.warn('Aviso: Não foi possível obter token de voz via REST API:', e);
     }
 
-    // Derivar URL do Socket.io a partir da VITE_API_URL.
+    // O endereço do socket **não** segue a regra do REST, e é aqui que a voz partia.
     //
-    // Sem a variável, deduz-se do anfitrião que serve a página em vez de fixar
-    // `localhost`: num telemóvel, `localhost` é o próprio telemóvel, e a voz da Mayra
-    // ficava sem servidor onde ligar.
-    const configurado = import.meta.env.VITE_API_URL as string | undefined;
-    const socketHost = configurado
-      ? configurado.startsWith('/')
-        ? window.location.origin // Caminho relativo (proxy): vale a origem da página.
-        : configurado.replace(/\/api\/v1\/?$/, '')
-      : `${window.location.protocol}//${window.location.hostname}:${
-          (import.meta.env.VITE_API_PORT as string | undefined) ?? '3100'
-        }`;
+    // Os pedidos REST saem por caminho relativo (`VITE_API_URL=/api/v1`) para os
+    // cookies contarem como *first-party* no iOS. Mas os `rewrites` do Vercel não
+    // encaminham WebSockets: apontado à origem da página, o socket ficava pendurado no
+    // handshake e este ecrã mostrava «A ligar…» indefinidamente.
+    //
+    // `enderecoDoSocket()` é o mesmo que o socket dos eventos usa, e conhece
+    // `VITE_SOCKET_URL` — o endereço directo da API para exactamente este caso.
+    const { endereco: socketHost, avisoDeConfiguracao } = enderecoDoSocket();
+
+    if (avisoDeConfiguracao) {
+      console.warn(`[Voz] ${avisoDeConfiguracao}`);
+    }
 
     const socket = io(`${socketHost}/ai-copilot/voice`, {
       auth: { token: voiceToken },
@@ -359,9 +370,29 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     socketRef.current = socket;
 
+    // Sem isto, um socket que nunca liga deixa o ecrã em «A ligar…» para sempre: o
+    // Socket.io não desiste sozinho, e `reconnection` está desligado. Foi assim que a
+    // avaria chegou ao utilizador sem nada que a explicasse.
+    esperaDeLigacaoRef.current = setTimeout(() => {
+      if (socket.connected) return;
+      socket.close();
+      setErrorMessage(
+        avisoDeConfiguracao ??
+          `Não foi possível ligar ao servidor de voz em ${socketHost}. Verifique a ligação.`,
+      );
+      setState('ERROR');
+    }, 12000);
+
     socket.on('connect', () => {
+      if (esperaDeLigacaoRef.current) clearTimeout(esperaDeLigacaoRef.current);
       setState('LISTENING');
       startMicrophone();
+    });
+
+    socket.on('connect_error', (err) => {
+      if (esperaDeLigacaoRef.current) clearTimeout(esperaDeLigacaoRef.current);
+      setErrorMessage(avisoDeConfiguracao ?? `Falha ao ligar ao servidor de voz: ${err.message}`);
+      setState('ERROR');
     });
 
     // 1. Chunk de Áudio Nativo (Gemini Live 24kHz)

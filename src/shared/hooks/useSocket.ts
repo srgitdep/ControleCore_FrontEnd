@@ -1,49 +1,16 @@
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
+import { enderecoDoSocket } from '../config/enderecoSocket';
 
 /**
- * O endereço do WebSocket.
+ * O endereço do WebSocket vem de `enderecoDoSocket()`, partilhado com o hook da voz.
  *
- * `VITE_API_URL` é opcional em desenvolvimento — sem ela, o endereço da API é deduzido do
- * anfitrião que serve a página. Este ficheiro assumia que existia sempre e fazia
- * `BASE_URL.replace(...)` no topo do módulo: com a variável ausente, o `replace` corria
- * sobre `undefined` e lançava ao **importar** o módulo, antes de qualquer render. A
- * aplicação inteira ficava em branco, sem nada no ecrã que indicasse a causa.
- *
- * Deduz-se da mesma forma que em `axios.ts`, e o `/api` sai do fim para sobrar o domínio,
- * que é o que o Socket.io quer.
+ * Este ficheiro tinha uma cópia própria da regra. A da voz tinha outra, mais antiga,
+ * que ignorava `VITE_SOCKET_URL` — e foi por aí que a voz da Mayra deixou de ligar em
+ * produção. Com a decisão num sítio só, as duas não podem voltar a divergir.
  */
-function resolverEnderecoDoSocket(): string {
-  const configurado = import.meta.env.VITE_API_URL as string | undefined;
-
-  if (configurado) {
-    // Um caminho relativo (`/api/v1`, usado quando os pedidos REST passam pelo
-    // encaminhamento do Vercel) não serve para o Socket.io, que precisa de um endereço
-    // absoluto. Nesse caso vale a origem da página.
-    //
-    // Nota: ao contrário dos pedidos REST, o WebSocket **não** deve ser reduzido a
-    // caminho relativo em produção. Os rewrites do Vercel não encaminham WebSockets, e
-    // a ligação teria de falhar para depois cair no `polling` sobre HTTP. O
-    // `VITE_SOCKET_URL` existe para esse caso: dá o endereço directo da API quando os
-    // pedidos REST vão por caminho relativo.
-    const socketDirecto = import.meta.env.VITE_SOCKET_URL as string | undefined;
-    if (socketDirecto) return socketDirecto;
-
-    if (configurado.startsWith('/')) {
-      return typeof window === 'undefined' ? '' : window.location.origin;
-    }
-    return configurado.replace('/api', '');
-  }
-
-  if (typeof window === 'undefined') return '';
-
-  const { protocol, hostname } = window.location;
-  const porta = (import.meta.env.VITE_API_PORT as string | undefined) ?? '3100';
-  return `${protocol}//${hostname}:${porta}`;
-}
-
-const SOCKET_URL = resolverEnderecoDoSocket();
+const SOCKET_URL = enderecoDoSocket().endereco;
 
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
