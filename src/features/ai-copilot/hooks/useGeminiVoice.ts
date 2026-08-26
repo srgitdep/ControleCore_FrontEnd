@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { podeVoltarAOuvir } from '../escuta';
 import { enderecoDoSocket } from '../../../shared/config/enderecoSocket';
 import { PCMPlayer } from '@/shared/utils';
 import { api } from '@/shared/config';
@@ -38,6 +39,25 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   // poder cancelar: sem isso, fechar o ecrã antes de ligar deixava-o a disparar e a
   // marcar ERROR numa sessão que já não existe.
   const esperaDeLigacaoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Se a Mayra está a falar neste preciso momento.
+   *
+   * Sem este sinal, o microfone reabria enquanto ela falava e transcrevia a própria
+   * voz: o texto dela chegava ao gateway como se fosse do utilizador, e ela respondia
+   * às suas próprias frases. Nos registos via-se «Está correto ou se deseja que eu
+   * procuro...» a entrar como pergunta — uma frase que ela tinha acabado de dizer.
+   */
+  const mayraAFalarRef = useRef(false);
+  /**
+   * O MP3 da ElevenLabs que está a tocar.
+   *
+   * Era uma variável local dentro do handler, fora do alcance de `endVoiceSession` —
+   * e por isso fechar a aba da voz não a calava: a síntese do browser era cancelada,
+   * o reprodutor PCM era parado, e este `<audio>` continuava até ao fim.
+   */
+  const audioDaMayraRef = useRef<HTMLAudioElement | null>(null);
+  /** Se há sessão de voz aberta. Nada deve reabrir o microfone depois de fechada. */
+  const sessaoActivaRef = useRef(false);
   const pcmPlayerRef = useRef<PCMPlayer | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -123,6 +143,48 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   /**
    * Encerra todos os recursos de áudio e conexões.
    */
+  /** Cala o microfone. O `onend` que isto dispara não o reabre — ver `voltarAOuvir`. */
+  const pararDeOuvir = useCallback(() => {
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.stop();
+    } catch (e) {}
+  }, []);
+
+  /**
+   * Devolve o microfone à escuta — se, e só se, for seguro.
+   *
+   * Todas as condições têm de passar, e cada uma corresponde a uma avaria observada:
+   * a sessão tem de estar aberta (fechar a aba deixava o microfone a reabrir-se),
+   * a Mayra não pode estar a falar (senão ela ouve-se a si própria), e o socket tem
+   * de estar ligado.
+   *
+   * O meio segundo de espera não é estético: o altifalante tem cauda, e um microfone
+   * aberto cedo demais apanha o fim da frase dela.
+   */
+  const voltarAOuvir = useCallback(() => {
+    setTimeout(() => {
+      if (!recognitionRef.current) return;
+
+      // A decisão vive em `escuta.ts`, com testes: cada condição corresponde a uma
+      // avaria observada, e errar por excesso não dá erro — só faz a conversa começar
+      // a falar sozinha.
+      const seguro = podeVoltarAOuvir({
+        sessaoActiva: sessaoActivaRef.current,
+        emFallback: fallbackModeRef.current,
+        mayraAFalar: mayraAFalarRef.current,
+        socketLigado: socketRef.current?.connected ?? false,
+      });
+      if (!seguro) return;
+      try {
+        // O objecto é reutilizado entre turnos: sem isto o idioma do reconhecimento
+        // ficaria preso ao da criação da sessão.
+        recognitionRef.current.lang = idiomaDaConversaRef.current;
+        recognitionRef.current.start();
+      } catch (e) {}
+    }, 500);
+  }, []);
+
   const endVoiceSession = useCallback(() => {
     // Para microfone
     if (processorRef.current) {
@@ -139,8 +201,21 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
 
     // Para áudio e síntese
+    //
+    // A sessão fecha primeiro, e só depois se cala o que está a tocar: qualquer
+    // `onended` que dispare a seguir encontra `sessaoActivaRef` a falso e não reabre
+    // o microfone.
+    sessaoActivaRef.current = false;
+    mayraAFalarRef.current = false;
+
     if (pcmPlayerRef.current) {
       pcmPlayerRef.current.stop();
+    }
+    // O MP3 da ElevenLabs: sem isto, fechar a aba deixava-a a falar até ao fim.
+    if (audioDaMayraRef.current) {
+      audioDaMayraRef.current.pause();
+      audioDaMayraRef.current.src = '';
+      audioDaMayraRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -208,6 +283,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     recognition.maxAlternatives = 3;
 
     recognition.onresult = (event: any) => {
+      // Segunda linha de defesa. Mesmo com o microfone bem gerido, um altifalante
+      // alto chega a entrar no microfone antes de `pararDeOuvir` fazer efeito. Nada
+      // do que se ouve enquanto ela fala pode ser tratado como fala do utilizador.
+      if (mayraAFalarRef.current) return;
+
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
@@ -245,21 +325,18 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     };
 
     recognition.onend = () => {
-      // Reiniciar continuamente se mantiver em modo fallback e listening
-      if (fallbackModeRef.current && socketRef.current?.connected) {
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {}
-        }, 300);
-      }
+      // Reabrir aqui incondicionalmente era o ciclo: o `stop()` que se faz quando a
+      // Mayra começa a falar dispara este `onend`, que voltava a abrir o microfone
+      // 300 ms depois — com ela ainda a falar. Ela ouvia-se, transcrevia-se, e
+      // respondia a si própria. `voltarAOuvir` só reabre quando é seguro.
+      voltarAOuvir();
     };
 
     recognitionRef.current = recognition;
     try {
       recognition.start();
     } catch (e) {}
-  }, []);
+  }, [voltarAOuvir]);
 
   /**
    * Captura áudio do microfone (16kHz PCM mono) para envio em tempo real.
@@ -334,6 +411,10 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const startVoiceSession = useCallback(async () => {
     endVoiceSession();
 
+    // Depois de `endVoiceSession`, que a fecha. Enquanto isto for falso, nada reabre
+    // o microfone nem deixa um `onended` atrasado mexer no estado.
+    sessaoActivaRef.current = true;
+
     setState('CONNECTING');
     setErrorMessage(null);
 
@@ -406,29 +487,38 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     // 2. MP3 da ElevenLabs (TTS Fallback Primário)
     socket.on('system_audio_mp3', (payload: { data: string; text: string }) => {
       setState('SPEAKING');
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {}
+      mayraAFalarRef.current = true;
+      pararDeOuvir();
+
+      // Uma resposta nova cala a anterior: sem isto, duas respostas seguidas tocam
+      // sobrepostas e nenhuma se percebe.
+      if (audioDaMayraRef.current) {
+        audioDaMayraRef.current.pause();
       }
 
       const audio = new Audio(`data:audio/mp3;base64,${payload.data}`);
-      audio.onended = () => {
+      audioDaMayraRef.current = audio;
+
+      const terminou = () => {
+        // Só liberta se ainda for este o áudio em curso: uma resposta mais recente
+        // pode já ter tomado o lugar, e não é este `onended` que a deve calar.
+        if (audioDaMayraRef.current !== audio) return;
+        audioDaMayraRef.current = null;
+        mayraAFalarRef.current = false;
+        if (!sessaoActivaRef.current) return;
         setState('LISTENING');
-        if (fallbackModeRef.current) {
-          setTimeout(() => {
-            if (recognitionRef.current) {
-              try {
-                // O objecto e reutilizado entre turnos: sem isto o idioma do
-                // reconhecimento ficaria preso ao da criacao da sessao.
-                recognitionRef.current.lang = idiomaDaConversaRef.current;
-                recognitionRef.current.start();
-              } catch (e) {}
-            }
-          }, 300);
-        }
+        voltarAOuvir();
       };
-      audio.play().catch((e) => console.error('Erro ao reproduzir MP3 ElevenLabs:', e));
+
+      audio.onended = terminou;
+      // Sem isto, um MP3 que falhe a reproduzir deixava `mayraAFalarRef` preso a
+      // verdadeiro e o microfone nunca mais reabria: a voz emudecia dos dois lados.
+      audio.onerror = terminou;
+
+      audio.play().catch((e) => {
+        console.error('Erro ao reproduzir MP3 ElevenLabs:', e);
+        terminou();
+      });
     });
 
     // 3. Texto limpo para Web Speech API (TTS Fallback Secundário)
@@ -458,23 +548,29 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
         utterance.pitch = 1.1;
 
-        utterance.onstart = () => setState('SPEAKING');
-        utterance.onend = () => {
-          setState('LISTENING');
-          if (fallbackModeRef.current) {
-            setTimeout(() => {
-              if (recognitionRef.current) {
-                try {
-                  // O objecto e reutilizado entre turnos: sem isto o idioma do
-                  // reconhecimento ficaria preso ao da criacao da sessao.
-                  recognitionRef.current.lang = idiomaDaConversaRef.current;
-                  recognitionRef.current.start();
-                } catch (e) {}
-              }
-            }, 300);
-          }
+        utterance.onstart = () => {
+          setState('SPEAKING');
+          mayraAFalarRef.current = true;
+          pararDeOuvir();
         };
 
+        const terminou = () => {
+          mayraAFalarRef.current = false;
+          if (!sessaoActivaRef.current) return;
+          setState('LISTENING');
+          voltarAOuvir();
+        };
+
+        utterance.onend = terminou;
+        // Um `utterance` que rebente sem `onend` deixaria o microfone fechado para
+        // sempre. `onerror` fecha essa porta.
+        utterance.onerror = terminou;
+
+        // `mayraAFalarRef` é marcado já aqui, e não só no `onstart`: entre `speak()` e
+        // o disparo do `onstart` há uma janela em que o microfone ainda estaria a
+        // ouvir, e é onde cabe o início da frase dela.
+        mayraAFalarRef.current = true;
+        pararDeOuvir();
         window.speechSynthesis.speak(utterance);
       }
     });
@@ -546,7 +642,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         setState('DISCONNECTED');
       }
     });
-  }, [endVoiceSession, startMicrophone, startFallbackRecognition, cleanTextForSpeech, state]);
+  }, [endVoiceSession, startMicrophone, startFallbackRecognition, cleanTextForSpeech, state, pararDeOuvir, voltarAOuvir]);
 
   /**
    * Envia uma mensagem de texto alternativa pelo socket ative.
