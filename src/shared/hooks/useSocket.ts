@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { enderecoDoSocket } from '../config/enderecoSocket';
+import { api } from '../config';
 
 /**
  * O endereço do WebSocket vem de `enderecoDoSocket()`, partilhado com o hook da voz.
@@ -17,18 +18,43 @@ export function useSocket() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Sem token lido daqui: o `accessToken` é um cookie HttpOnly desde a migração que
-    // o retirou do `localStorage` (era alcançável por XSS). Este ficheiro continuou a
-    // fazer `localStorage.getItem('accessToken')` e a desistir quando vinha `null` —
-    // ou seja, o WebSocket nunca chegava a ligar-se, em nenhuma plataforma, e as
-    // actualizações de stock em tempo real no POS estavam caladas sem dar erro.
-    //
-    // O gateway lê o token do cookie do handshake (`client.handshake.headers.cookie`),
-    // pelo que basta pedir ao Socket.io que envie as credenciais.
-    const socketInstance = io(SOCKET_URL, {
-      withCredentials: true,
-    });
+    // Uma ligação abandonada: o efeito pode ser desmontado enquanto o token ainda vem
+    // a caminho, e nesse caso não se deve abrir socket nenhum.
+    let cancelado = false;
+    let socketInstance: Socket | null = null;
 
+    // O cookie não chega ao gateway. A página é servida pela Vercel e a API vive no
+    // Fly, e os `rewrites` da Vercel não encaminham WebSockets: o socket liga
+    // directamente ao Fly, para onde os cookies do domínio da Vercel — que são de
+    // outro sítio — não seguem. O handshake chegava vazio e era recusado com
+    // «No cookies found», deixando as actualizações de stock no POS caladas sem erro
+    // visível.
+    //
+    // Este pedido, sendo REST, passa pelo encaminhamento e leva o cookie. O token que
+    // devolve vale 15 minutos e serve só para abrir a ligação. É o mesmo caminho que a
+    // voz da Mayra já usava.
+    const ligar = async () => {
+      let token: string | undefined;
+      try {
+        const resposta = await api.get('/auth/socket-token');
+        token = resposta.data?.token;
+      } catch (e) {
+        // Em desenvolvimento a página e a API partilham origem e o cookie chega bem,
+        // pelo que vale a pena tentar ligar mesmo sem token.
+        console.warn('[WebSockets] Não foi possível obter o token; a tentar pelo cookie.', e);
+      }
+
+      if (cancelado) return;
+
+      socketInstance = io(SOCKET_URL, {
+        auth: { token },
+        withCredentials: true,
+      });
+      registarEventos(socketInstance);
+      setSocket(socketInstance);
+    };
+
+    const registarEventos = (socketInstance: Socket) => {
     socketInstance.on('connect', () => {
       console.log('[WebSockets] Connected:', socketInstance.id);
     });
@@ -50,10 +76,13 @@ export function useSocket() {
       console.log('[WebSockets] Disconnected');
     });
 
-    setSocket(socketInstance);
+    };
+
+    void ligar();
 
     return () => {
-      socketInstance.disconnect();
+      cancelado = true;
+      socketInstance?.disconnect();
     };
   }, [queryClient]);
 

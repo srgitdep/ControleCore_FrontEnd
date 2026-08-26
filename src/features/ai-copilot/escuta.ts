@@ -39,3 +39,50 @@ export function podeVoltarAOuvir(estado: EstadoDaEscuta): boolean {
     estado.sessaoActiva && estado.emFallback && !estado.mayraAFalar && estado.socketLigado
   );
 }
+
+// ── Interromper a Mayra a meio ───────────────────────────────────────────────
+
+/**
+ * Quão alto tem de estar o microfone para contar como alguém a falar.
+ *
+ * Medido em RMS do bloco de áudio. Baixo demais e o próprio altifalante da Mayra
+ * interrompe-a; alto demais e é preciso gritar para lhe cortar a palavra.
+ */
+export const RMS_DE_FALA = 0.08;
+
+/**
+ * Quantos blocos seguidos acima do limiar antes de a interromper.
+ *
+ * Cada bloco é de 2048 amostras a 16 kHz — 128 ms. Dois blocos dão ~256 ms de som
+ * contínuo, o que distingue uma pessoa a começar a falar de uma porta a bater ou de um
+ * resto de eco que o cancelamento não apanhou. Exigir um só bloco tornava a Mayra
+ * impossível de ouvir numa sala com ruído.
+ */
+export const BLOCOS_PARA_INTERROMPER = 2;
+
+/** O RMS de um bloco de áudio: a medida de quão alto ele está. */
+export function calcularRms(amostras: Float32Array | number[]): number {
+  let soma = 0;
+  for (let i = 0; i < amostras.length; i++) soma += amostras[i] * amostras[i];
+  return Math.sqrt(soma / amostras.length);
+}
+
+/**
+ * Actualiza a contagem de blocos consecutivos com fala.
+ *
+ * Um bloco silencioso põe a contagem a zero: o que interessa é som **contínuo**, e não
+ * o total acumulado ao longo de uma frase inteira dela.
+ */
+export function contarBlocoDeFala(rms: number, blocosAnteriores: number): number {
+  return rms > RMS_DE_FALA ? blocosAnteriores + 1 : 0;
+}
+
+/**
+ * Se é altura de a calar e passar a ouvir.
+ *
+ * Só faz sentido enquanto ela fala: fora disso o microfone já está a ser ouvido, e
+ * «interromper» não significaria nada.
+ */
+export function deveInterromper(mayraAFalar: boolean, blocosConsecutivos: number): boolean {
+  return mayraAFalar && blocosConsecutivos >= BLOCOS_PARA_INTERROMPER;
+}

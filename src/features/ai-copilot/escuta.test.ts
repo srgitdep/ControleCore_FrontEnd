@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { podeVoltarAOuvir, type EstadoDaEscuta } from './escuta';
+import {
+  podeVoltarAOuvir,
+  calcularRms,
+  contarBlocoDeFala,
+  deveInterromper,
+  BLOCOS_PARA_INTERROMPER,
+  type EstadoDaEscuta,
+} from './escuta';
 
 const seguro: EstadoDaEscuta = {
   sessaoActiva: true,
@@ -45,5 +52,37 @@ describe('podeVoltarAOuvir', () => {
         socketLigado: false,
       }),
     ).toBe(false);
+  });
+});
+
+describe('interromper a Mayra a meio', () => {
+  it('mede o RMS de um bloco', () => {
+    expect(calcularRms([0, 0, 0, 0])).toBe(0);
+    expect(calcularRms([0.5, -0.5, 0.5, -0.5])).toBeCloseTo(0.5);
+  });
+
+  it('conta blocos seguidos e reinicia ao primeiro silêncio', () => {
+    // O que interessa é som contínuo. Sem o reinício, os picos dispersos de uma frase
+    // inteira dela acabariam por somar e interromperiam-na sozinhos.
+    let n = 0;
+    n = contarBlocoDeFala(0.2, n);
+    expect(n).toBe(1);
+    n = contarBlocoDeFala(0.2, n);
+    expect(n).toBe(2);
+    n = contarBlocoDeFala(0.01, n);
+    expect(n).toBe(0);
+  });
+
+  it('interrompe só depois de som contínuo suficiente', () => {
+    // Um bloco só seria uma porta a bater, ou um resto de eco que o cancelamento não
+    // apanhou — e a Mayra ficaria impossível de ouvir numa sala com ruído.
+    expect(deveInterromper(true, 1)).toBe(false);
+    expect(deveInterromper(true, BLOCOS_PARA_INTERROMPER)).toBe(true);
+  });
+
+  it('não interrompe quem não está a falar', () => {
+    // Fora do turno dela o microfone já está a ser ouvido; interromper não significaria
+    // nada, e limparia o estado sem razão.
+    expect(deveInterromper(false, 99)).toBe(false);
   });
 });

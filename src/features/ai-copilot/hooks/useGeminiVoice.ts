@@ -1,6 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { podeVoltarAOuvir } from '../escuta';
+import {
+  podeVoltarAOuvir,
+  calcularRms,
+  contarBlocoDeFala,
+  deveInterromper,
+} from '../escuta';
 import { enderecoDoSocket } from '../../../shared/config/enderecoSocket';
 import { PCMPlayer } from '@/shared/utils';
 import { api } from '@/shared/config';
@@ -58,6 +63,8 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const audioDaMayraRef = useRef<HTMLAudioElement | null>(null);
   /** Se há sessão de voz aberta. Nada deve reabrir o microfone depois de fechada. */
   const sessaoActivaRef = useRef(false);
+  /** Blocos de áudio seguidos em que se ouviu alguém a falar por cima dela. */
+  const blocosDeFalaRef = useRef(0);
   const pcmPlayerRef = useRef<PCMPlayer | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -184,6 +191,45 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       } catch (e) {}
     }, 500);
   }, []);
+
+  /**
+   * Cala a Mayra a meio da frase e passa a ouvir.
+   *
+   * Serve os dois modos, e em cada um há uma coisa diferente a calar: na voz nativa é
+   * o reprodutor PCM e é preciso avisar o modelo (senão ele continua a gerar áudio de
+   * uma frase que ninguém vai ouvir); no modo de recurso é o MP3 da ElevenLabs ou a
+   * síntese do browser.
+   */
+  const interromperMayra = useCallback(() => {
+    if (!mayraAFalarRef.current) return;
+    mayraAFalarRef.current = false;
+    blocosDeFalaRef.current = 0;
+
+    // Avisa o modelo. Sem isto ele continua a debitar a resposta antiga, e o turno
+    // seguinte chega por cima dela.
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('client_interrupt');
+    }
+
+    if (pcmPlayerRef.current) {
+      pcmPlayerRef.current.stop();
+    }
+    if (audioDaMayraRef.current) {
+      audioDaMayraRef.current.pause();
+      audioDaMayraRef.current = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    setState('LISTENING');
+
+    // No modo de recurso o microfone estava fechado enquanto ela falava — reabri-lo é
+    // o que dá sentido à interrupção. Na voz nativa ele nunca fechou.
+    if (fallbackModeRef.current) {
+      voltarAOuvir();
+    }
+  }, [voltarAOuvir]);
 
   const endVoiceSession = useCallback(() => {
     // Para microfone
@@ -368,27 +414,29 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         processor.onaudioprocess = (e) => {
           const inputData = e.inputBuffer.getChannelData(0);
 
-          // 1. Voice Activity Detection (VAD) para Barge-in no modo nativo
-          if (state === 'SPEAKING' && !fallbackModeRef.current) {
-            let sumSq = 0;
-            for (let i = 0; i < inputData.length; i++) {
-              sumSq += inputData[i] * inputData[i];
-            }
-            const rms = Math.sqrt(sumSq / inputData.length);
+          // 1. Deixar espaço para lhe cortar a palavra.
+          //
+          // A condição era `state === 'SPEAKING'`, e nunca era verdadeira: este
+          // `onaudioprocess` fecha sobre o `state` do render em que foi criado — a
+          // ligação ainda estava a abrir — e nunca vê os valores seguintes. O barge-in
+          // existia no código e não funcionava uma única vez.
+          //
+          // Uma `ref` não tem esse problema: é sempre a leitura actual.
+          //
+          // Vale nos dois modos. Antes era excluído o de recurso, que é justamente
+          // aquele em que o microfone fecha enquanto ela fala — ou seja, aquele em que
+          // não havia mesmo maneira nenhuma de a interromper.
+          if (mayraAFalarRef.current) {
+            blocosDeFalaRef.current = contarBlocoDeFala(
+              calcularRms(inputData),
+              blocosDeFalaRef.current,
+            );
 
-            // RMS > 0.08 indica fala ativa do utilizador por cima da agente
-            if (rms > 0.08) {
-              if (socketRef.current) {
-                socketRef.current.emit('client_interrupt');
-              }
-              if (pcmPlayerRef.current) {
-                pcmPlayerRef.current.stop();
-              }
-              if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-              }
-              setState('LISTENING');
+            if (deveInterromper(mayraAFalarRef.current, blocosDeFalaRef.current)) {
+              interromperMayra();
             }
+          } else {
+            blocosDeFalaRef.current = 0;
           }
 
           // 2. Enviar chunk de áudio para a Gemini Live API se não estiver em fallback
@@ -403,7 +451,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         setErrorMessage('Não foi possível aceder ao microfone. Verifique as permissões.');
         setState('ERROR');
       });
-  }, [state]);
+  }, [interromperMayra]);
 
   /**
    * Inicia a sessão de voz conectando ao WebSocket Gateway.
