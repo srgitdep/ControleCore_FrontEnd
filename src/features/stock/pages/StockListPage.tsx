@@ -19,6 +19,8 @@ import {
   ArrowUp,
   ArrowDown,
   Settings2,
+  HeartPulse,
+  CalendarClock,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -26,11 +28,13 @@ import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { ResponsiveTable, Button, Tabs, type TabDefinition } from '@/shared/ui';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
+import { SaudeStockTab } from '../components/SaudeStockTab';
+import { ValidadeTab } from '../components/ValidadeTab';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'estoque' | 'saude' | 'validade' | 'movimentos' | 'inventario';
 
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
@@ -38,6 +42,8 @@ type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
 const TABS: TabDefinition<StockTab>[] = [
   { id: 'produtos', label: 'Produtos', icon: Boxes },
   { id: 'estoque', label: 'Stock', icon: Package },
+  { id: 'saude', label: 'Saúde do stock', icon: HeartPulse },
+  { id: 'validade', label: 'Validades', icon: CalendarClock },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
   { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
 ];
@@ -617,6 +623,8 @@ export function StockListPage() {
         <div className="p-4 sm:p-6">
           {activeTab === 'produtos' && <ProductsTab />}
           {activeTab === 'estoque' && <StockCurrentTab />}
+          {activeTab === 'saude' && <SaudeStockTab />}
+          {activeTab === 'validade' && <ValidadeTab />}
           {activeTab === 'movimentos' && <MovementsTab />}
           {activeTab === 'inventario' && <InventoryTab />}
         </div>
