@@ -24,6 +24,16 @@ export interface PurchaseOrderItem {
     id: string;
     nome: string;
     codigoBarras?: string;
+    /**
+     * Se a entrada de mercadoria deste produto exige data de validade e código de lote.
+     *
+     * O backend recusa a recepção sem eles, e a recusa chega com o camião à porta. O modal
+     * usa estes campos para exigir o preenchimento antes de submeter — é a diferença entre
+     * um aviso no ecrã e um erro depois de carregar em Confirmar.
+     */
+    temValidade?: boolean;
+    rastreavelPorLote?: boolean;
+    diasAvisoValidade?: number | null;
   };
 }
 
@@ -81,6 +91,21 @@ export interface ReceiveMercadoriaDto {
     produtoId: string;
     quantidade: number;
     custoUnitario: number;
+    /**
+     * Lote e validade da mercadoria que entra.
+     *
+     * A recepção é o único momento em que alguém tem estes dados à frente dos olhos — no
+     * documento do fornecedor e na embalagem. Não os capturar aqui é não os capturar nunca:
+     * nenhum ecrã posterior sabe que aqueles 50 sacos expiram em Março.
+     *
+     * Sem código de lote mas com validade, o backend deriva o código da própria data
+     * (`V-2027-03-12`): é a validade que distingue mercadoria no armazém, não o número
+     * impresso.
+     */
+    lote?: string;
+    /** ISO 8601 (`2027-03-12`). Obrigatória se o produto tiver `temValidade`. */
+    dataValidade?: string;
+    dataProducao?: string;
   }[];
 }
 

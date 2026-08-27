@@ -24,6 +24,21 @@ export interface Product {
   peso?: number;
   isWeighable: boolean;
   isActive: boolean;
+
+  /**
+   * Controlo de lote e validade.
+   *
+   * `temValidade` torna a data obrigatória na entrada de mercadoria deste produto — é o que
+   * garante que existem dados para vigiar. `diasAvisoValidade` é `null` quando o produto não
+   * define nada, e então usa-se a omissão do domínio (45 dias): o prazo útil de um iogurte
+   * não é o de uma conserva, por isso é por produto e não uma constante global.
+   *
+   * Opcionais no tipo porque respostas de endpoints antigos podem não os trazer.
+   */
+  temValidade?: boolean;
+  rastreavelPorLote?: boolean;
+  diasAvisoValidade?: number | null;
+
   createdAt: string;
   updatedAt: string;
   
