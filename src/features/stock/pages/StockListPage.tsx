@@ -206,22 +206,60 @@ function StockCurrentTab() {
 
       stockColumnHelper.accessor('currentQuantity', {
         id: 'balanco',
-        header: 'Balanço Atual',
+        // «Disponível» e não «Balanço Atual»: desde que a verificação de disponibilidade
+        // existe no abate, é este o número que decide se uma venda passa. O físico continua
+        // visível na linha de baixo quando os dois divergem.
+        header: 'Disponível',
         cell: ({ row }) => {
-          const { currentQuantity, product, abaixoDoMinimo } = row.original;
+          const { currentQuantity, product, abaixoDoMinimo, estados } = row.original;
           // A mesma regra do painel, calculada no servidor. Ver `getRowStatus`.
           const isCritical = !!abaixoDoMinimo;
+          const unidade = product?.unidadeMedida ?? 'UN';
+
+          // Parte do saldo pode estar comprometida — reservada, em quarentena ou bloqueada.
+          // Nesse caso o número grande passa a ser o **disponível**, porque é esse que decide
+          // se uma venda passa. Mostrar só o físico faria o ecrã contradizer o POS.
+          const comprometido = estados
+            ? estados.reservado + estados.quarentena + estados.bloqueado
+            : 0;
+          const temComprometido = comprometido > 0;
+
+          const detalhe = estados
+            ? [
+                estados.reservado > 0 ? `${estados.reservado} reservadas` : null,
+                estados.quarentena > 0 ? `${estados.quarentena} em quarentena` : null,
+                estados.bloqueado > 0 ? `${estados.bloqueado} bloqueadas` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : '';
+
           return (
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
-                isCritical ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-              }`}
-            >
-              {currentQuantity}
-              <span className="ml-1 text-xs opacity-75">
-                {product?.unidadeMedida ?? 'UN'}
+            <div className="flex flex-col items-start gap-1">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
+                  isCritical ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                }`}
+                title={temComprometido ? `${currentQuantity} ${unidade} em armazém` : undefined}
+              >
+                {temComprometido && estados ? estados.disponivel : currentQuantity}
+                <span className="ml-1 text-xs opacity-75">{unidade}</span>
               </span>
-            </span>
+
+              {temComprometido && estados && (
+                <span className="text-[11px] leading-tight text-slate-500">
+                  {estados.fisico} em armazém · {detalhe}
+                </span>
+              )}
+
+              {/* Não devia acontecer, e por isso aparece em vez de ficar escondido: uma
+                  reserva ou retenção sobreviveu a uma saída de mercadoria. */}
+              {estados?.inconsistente && (
+                <span className="text-[11px] font-medium leading-tight text-amber-700">
+                  Comprometido excede o saldo em armazém — verificar
+                </span>
+              )}
+            </div>
           );
         },
       }),
