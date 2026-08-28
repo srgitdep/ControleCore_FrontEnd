@@ -21,6 +21,9 @@ import {
   Settings2,
   HeartPulse,
   CalendarClock,
+  Timer,
+  ShieldQuestion,
+  Lock,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -30,11 +33,13 @@ import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
 import { SaudeStockTab } from '../components/SaudeStockTab';
 import { ValidadeTab } from '../components/ValidadeTab';
+import { ReservasTab } from '../components/ReservasTab';
+import { RetencaoModal, type TipoRetencao } from '../components/RetencaoModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'produtos' | 'estoque' | 'saude' | 'validade' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario';
 
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
@@ -42,6 +47,7 @@ type StockTab = 'produtos' | 'estoque' | 'saude' | 'validade' | 'movimentos' | '
 const TABS: TabDefinition<StockTab>[] = [
   { id: 'produtos', label: 'Produtos', icon: Boxes },
   { id: 'estoque', label: 'Stock', icon: Package },
+  { id: 'reservas', label: 'Reservas', icon: Timer },
   { id: 'saude', label: 'Saúde do stock', icon: HeartPulse },
   { id: 'validade', label: 'Validades', icon: CalendarClock },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
@@ -146,6 +152,29 @@ function StockCurrentTab() {
       produtoId: null,
       armazemOrigem: null,
     });
+
+  /**
+   * Estado do modal de retenção, separado do de movimentos.
+   *
+   * Podia ser mais um valor no `ModalType`, mas as duas famílias não são a mesma coisa: os
+   * movimentos alteram o saldo físico e aparecem no extracto; as retenções alteram o que o
+   * saldo oferece e não aparecem. Um só estado obrigaria cada modal a ignorar os campos do
+   * outro, e é assim que um `produtoId` acaba passado a uma operação que não o usa.
+   *
+   * Guarda a posição inteira e não só o id: o modal mostra o disponível actual, porque
+   * comprometer mercadoria é uma decisão que se toma contra um número — e obrigar quem decide
+   * a fechar o modal para o ir ver é como se pede um erro.
+   */
+  const [retencao, setRetencao] = useState<{
+    stockId: string | null;
+    tipo: TipoRetencao | null;
+    posicao: Stock | null;
+  }>({ stockId: null, tipo: null, posicao: null });
+
+  const abrirRetencao = (stockId: string, tipo: TipoRetencao, posicao: Stock) =>
+    setRetencao({ stockId, tipo, posicao });
+
+  const fecharRetencao = () => setRetencao({ stockId: null, tipo: null, posicao: null });
 
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
@@ -331,6 +360,33 @@ function StockCurrentTab() {
                   >
                     Ajuste - (Quebra)
                   </button>
+
+                  {/* Retenções: mexem no que o stock oferece sem mexer no que tem. Ficam
+                      separadas dos ajustes por uma linha, porque não são movimentos — a
+                      mercadoria não sai, e nenhuma destas operações aparece no extracto. */}
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  <button
+                    onClick={() => abrirRetencao(id, 'RESERVAR', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-blue-700 hover:bg-blue-50"
+                  >
+                    <Timer className="h-3.5 w-3.5" />
+                    Reservar
+                  </button>
+                  <button
+                    onClick={() => abrirRetencao(id, 'QUARENTENA', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                  >
+                    <ShieldQuestion className="h-3.5 w-3.5" />
+                    Reter em quarentena
+                  </button>
+                  <button
+                    onClick={() => abrirRetencao(id, 'BLOQUEIO', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                    Bloquear
+                  </button>
                 </div>
               </div>
             </div>
@@ -474,6 +530,17 @@ function StockCurrentTab() {
           onClose={closeModal}
         />
       )}
+
+      {/* Fora do condicional do outro modal, de propósito: são estados independentes, e o
+          próprio componente devolve `null` quando não tem `stockId` nem `tipo`. */}
+      <RetencaoModal
+        stockId={retencao.stockId}
+        tipo={retencao.tipo}
+        produtoNome={retencao.posicao?.product?.nome ?? null}
+        estados={retencao.posicao?.estados}
+        unidade={retencao.posicao?.product?.unidadeMedida ?? 'UN'}
+        onClose={fecharRetencao}
+      />
     </>
   );
 }
@@ -661,6 +728,7 @@ export function StockListPage() {
         <div className="p-4 sm:p-6">
           {activeTab === 'produtos' && <ProductsTab />}
           {activeTab === 'estoque' && <StockCurrentTab />}
+          {activeTab === 'reservas' && <ReservasTab />}
           {activeTab === 'saude' && <SaudeStockTab />}
           {activeTab === 'validade' && <ValidadeTab />}
           {activeTab === 'movimentos' && <MovementsTab />}
