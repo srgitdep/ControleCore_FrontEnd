@@ -27,6 +27,7 @@ import {
   LockOpen,
   PackageCheck,
   Layers3,
+  MapPin,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -39,6 +40,7 @@ import { ValidadeTab } from '../components/ValidadeTab';
 import { ReservasTab } from '../components/ReservasTab';
 import { RetencaoModal, type TipoRetencao } from '../components/RetencaoModal';
 import { FefoModal } from '../components/FefoModal';
+import { LocalizacaoStockModal } from '../components/LocalizacaoStockModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
@@ -188,6 +190,9 @@ function StockCurrentTab() {
    * e permitiria combinações de produto e armazém que não existem.
    */
   const [fefo, setFefo] = useState<Stock | null>(null);
+
+  /** A posicao para a qual se esta a ver ou editar as prateleiras. */
+  const [localizacao, setLocalizacao] = useState<Stock | null>(null);
 
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
@@ -387,6 +392,13 @@ function StockCurrentTab() {
                     Reservar
                   </button>
                   <button
+                    onClick={() => setLocalizacao(row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    Onde está / posições
+                  </button>
+                  <button
                     onClick={() => setFefo(row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                   >
@@ -583,6 +595,16 @@ function StockCurrentTab() {
         estados={retencao.posicao?.estados}
         unidade={retencao.posicao?.product?.unidadeMedida ?? 'UN'}
         onClose={fecharRetencao}
+      />
+
+      <LocalizacaoStockModal
+        stockId={localizacao?.id ?? null}
+        produtoId={localizacao?.productId ?? null}
+        armazemId={localizacao?.armazemId ?? null}
+        produtoNome={localizacao?.product?.nome ?? null}
+        armazemNome={localizacao?.armazem?.nome ?? null}
+        unidade={localizacao?.product?.unidadeMedida ?? 'UN'}
+        onClose={() => setLocalizacao(null)}
       />
 
       <FefoModal

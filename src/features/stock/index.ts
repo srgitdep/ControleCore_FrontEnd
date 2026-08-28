@@ -3,6 +3,7 @@ export * from './api/stock.api';
 export * from './api/inventory.api';
 export * from './api/saude.api';
 export * from './api/reservas.api';
+export * from './api/distribuicao.api';
 
 // Export Types
 export * from './types/stock.types';
@@ -14,6 +15,7 @@ export * from './hooks/useStock';
 export * from './hooks/useInventory';
 export * from './hooks/useSaudeStock';
 export * from './hooks/useReservas';
+export * from './hooks/useDistribuicao';
 
 // Export Pages & Components
 export * from './pages/StockListPage';
@@ -25,4 +27,5 @@ export * from './components/ValidadeTab';
 export * from './components/ReservasTab';
 export * from './components/RetencaoModal';
 export * from './components/FefoModal';
+export * from './components/LocalizacaoStockModal';
 export * from './components/MovementModals';
