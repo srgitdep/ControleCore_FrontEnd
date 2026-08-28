@@ -24,4 +24,5 @@ export * from './components/SaudeStockTab';
 export * from './components/ValidadeTab';
 export * from './components/ReservasTab';
 export * from './components/RetencaoModal';
+export * from './components/FefoModal';
 export * from './components/MovementModals';

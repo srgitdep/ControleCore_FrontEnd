@@ -24,6 +24,9 @@ import {
   Timer,
   ShieldQuestion,
   Lock,
+  LockOpen,
+  PackageCheck,
+  Layers3,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -35,6 +38,7 @@ import { SaudeStockTab } from '../components/SaudeStockTab';
 import { ValidadeTab } from '../components/ValidadeTab';
 import { ReservasTab } from '../components/ReservasTab';
 import { RetencaoModal, type TipoRetencao } from '../components/RetencaoModal';
+import { FefoModal } from '../components/FefoModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
@@ -175,6 +179,15 @@ function StockCurrentTab() {
     setRetencao({ stockId, tipo, posicao });
 
   const fecharRetencao = () => setRetencao({ stockId: null, tipo: null, posicao: null });
+
+  /**
+   * A posição para a qual se está a perguntar de que lote tirar.
+   *
+   * Guarda a posição inteira porque o FEFO precisa de produto **e** armazém, e ambos vêm da
+   * linha — um ecrã com selectores obrigaria a escolher outra vez o que já estava escolhido,
+   * e permitiria combinações de produto e armazém que não existem.
+   */
+  const [fefo, setFefo] = useState<Stock | null>(null);
 
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
@@ -374,6 +387,13 @@ function StockCurrentTab() {
                     Reservar
                   </button>
                   <button
+                    onClick={() => setFefo(row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Layers3 className="h-3.5 w-3.5" />
+                    De que lote tirar?
+                  </button>
+                  <button
                     onClick={() => abrirRetencao(id, 'QUARENTENA', row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
                   >
@@ -387,6 +407,29 @@ function StockCurrentTab() {
                     <Lock className="h-3.5 w-3.5" />
                     Bloquear
                   </button>
+
+                  {/* As libertações só aparecem quando há de facto algo retido. Um menu com
+                      «Libertar da quarentena» sempre visível numa posição sem quarentena
+                      convida a carregar e a receber uma recusa. */}
+                  {!!row.original.estados?.quarentena && (
+                    <button
+                      onClick={() => abrirRetencao(id, 'LIBERTAR_QUARENTENA', row.original)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+                    >
+                      <PackageCheck className="h-3.5 w-3.5" />
+                      Libertar da quarentena ({row.original.estados.quarentena})
+                    </button>
+                  )}
+
+                  {!!row.original.estados?.bloqueado && (
+                    <button
+                      onClick={() => abrirRetencao(id, 'LIBERTAR_BLOQUEIO', row.original)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+                    >
+                      <LockOpen className="h-3.5 w-3.5" />
+                      Desbloquear ({row.original.estados.bloqueado})
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -540,6 +583,15 @@ function StockCurrentTab() {
         estados={retencao.posicao?.estados}
         unidade={retencao.posicao?.product?.unidadeMedida ?? 'UN'}
         onClose={fecharRetencao}
+      />
+
+      <FefoModal
+        produtoId={fefo?.productId ?? null}
+        armazemId={fefo?.armazemId ?? null}
+        produtoNome={fefo?.product?.nome ?? null}
+        armazemNome={fefo?.armazem?.nome ?? null}
+        unidade={fefo?.product?.unidadeMedida ?? 'UN'}
+        onClose={() => setFefo(null)}
       />
     </>
   );
