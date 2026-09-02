@@ -19,6 +19,7 @@ import { PurchasesPage } from '@/features/compras';
 import { RecepcoesPage, RecepcaoDetalhePage } from '@/features/recepcao';
 import { RequisicoesPage } from '@/features/requisicoes';
 import { TransferenciasPage } from '@/features/transferencias';
+import { ConfiguracaoPage } from '@/features/configuracao';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
@@ -136,7 +137,7 @@ export const router = createBrowserRouter([
           // `/configuracoes` apontava para um placeholder de treze linhas que nunca foi
           // construído. A rota redirecciona para o painel; `/permissoes`, que está em
           // `pages/settings/`, é independente e não foi afectada.
-          { path: '/configuracoes', element: <Navigate to="/dashboard" replace /> },
+          { path: '/configuracoes', element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />, children: [{ index: true, element: <ConfiguracaoPage /> }] },
           { path: '/historico',     element: <HistoryPage /> },
         ],
       },

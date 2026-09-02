@@ -20,6 +20,7 @@ import {
   Truck,
   ClipboardList,
   ArrowLeftRight,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -63,6 +64,7 @@ const navGroups: NavGroup[] = [
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { label: 'Configuração', icon: SlidersHorizontal, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ]
   },
   {

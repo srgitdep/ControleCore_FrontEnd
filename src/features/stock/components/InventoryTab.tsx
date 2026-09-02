@@ -377,9 +377,13 @@ function CycleDetailPanel({
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {cycle.counts.map((count) => {
+                  // Num ciclo cego, o servidor não devolve o que o sistema esperava enquanto
+                  // se conta — e sem isso não há diferença que se possa mostrar. `undefined`
+                  // aqui não é um erro: é a contagem cega a funcionar.
                   const diff = count.difference;
-                  const isShortage = diff < 0;
-                  const isSurplus = diff > 0;
+                  const cega = diff === undefined;
+                  const isShortage = diff !== undefined && diff < 0;
+                  const isSurplus = diff !== undefined && diff > 0;
 
                   return (
                     <tr
@@ -396,17 +400,27 @@ function CycleDetailPanel({
                         <p className="font-medium text-slate-800">
                           {count.stock?.product?.nome ?? '—'}
                         </p>
-                        {count.stock?.product?.codigoBarras && (
-                          <p className="text-xs text-slate-400">
-                            {count.stock.product.codigoBarras}
-                          </p>
-                        )}
+                        <p className="text-xs text-slate-400">
+                          {[
+                            count.stock?.product?.codigoBarras,
+                            count.localizacao?.caminho,
+                            count.lote?.codigo && `lote ${count.lote.codigo}`,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600 tabular-nums">
-                        {count.systemQuantity}
-                        <span className="ml-1 text-xs text-slate-400">
-                          {count.stock?.product?.unidadeMedida ?? 'UN'}
-                        </span>
+                        {count.systemQuantity === undefined ? (
+                          <span className="text-xs italic text-slate-400">oculto</span>
+                        ) : (
+                          <>
+                            {count.systemQuantity}
+                            <span className="ml-1 text-xs text-slate-400">
+                              {count.stock?.product?.unidadeMedida ?? 'UN'}
+                            </span>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right text-slate-800 font-medium tabular-nums">
                         {count.physicalQuantity}
@@ -424,8 +438,7 @@ function CycleDetailPanel({
                                 : 'bg-slate-100 text-slate-500'
                           }`}
                         >
-                          {diff > 0 ? '+' : ''}
-                          {diff}
+                          {cega ? '—' : `${diff! > 0 ? '+' : ''}${diff}`}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs">
