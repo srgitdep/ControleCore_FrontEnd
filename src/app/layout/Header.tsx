@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
-import { Bell, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { SinoDeAlertas } from '@/features/alertas';
 import { useUIStore } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
@@ -81,15 +82,14 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         </h1>
       </div>
 
-      {/* ── Lado direito: Notificações ──────────────────────────────────── */}
+      {/* ── Lado direito: Alertas ───────────────────────────────────────── */}
+      {/*
+        Havia aqui um sino com um ponto azul fixo: sempre aceso, sem abrir nada e sem
+        corresponder a coisa nenhuma. É pior do que não existir — ensina as pessoas a
+        ignorá-lo, e quando passa a ter significado já ninguém olha.
+      */}
       <div className="flex items-center">
-        <button
-          className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-          title="Notificações"
-        >
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
-        </button>
+        <SinoDeAlertas />
       </div>
     </header>
   );

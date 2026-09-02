@@ -16,6 +16,9 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
+import { RecepcoesPage, RecepcaoDetalhePage } from '@/features/recepcao';
+import { RequisicoesPage } from '@/features/requisicoes';
+import { TransferenciasPage } from '@/features/transferencias';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
@@ -88,6 +91,15 @@ export const router = createBrowserRouter([
           // e um separador aqui que era uma tabela só de leitura. Fica só no separador,
           // agora completo.
           { path: '/compras',       element: <PurchasesPage /> },
+
+          // ─── Recepção de mercadoria ─────────────────────────────────────
+          // A entrada simples continua em Compras: uma guia de três linhas que chega ao
+          // balcão não precisa de sessão, contagem e aprovação, e obrigar a isso faria as
+          // pessoas deixarem de registar. Estas rotas são para a descarga que o justifica.
+          { path: '/recepcoes',     element: <RecepcoesPage /> },
+          { path: '/recepcoes/:id', element: <RecepcaoDetalhePage /> },
+          { path: '/requisicoes',   element: <RequisicoesPage /> },
+          { path: '/transferencias', element: <TransferenciasPage /> },
           { path: '/fornecedores',  element: <Navigate to="/compras?tab=fornecedores" replace /> },
 
           // ─── Vendas ─────────────────────────────────────────────────────
