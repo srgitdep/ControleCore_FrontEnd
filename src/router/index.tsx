@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/app/layout/AppLayout';
+import { ErroDaAplicacao } from '@/app/ErroDaAplicacao';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
 import { LandingPage } from '@/pages/LandingPage';
 import { DashboardPage } from '@/features/dashboard';
@@ -50,6 +51,9 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppLayout />,
+        // Dentro do layout de proposito: um ecra que rebenta mantem o menu e o cabecalho, e
+        // da para ir a outro sitio sem recarregar a aplicacao inteira.
+        errorElement: <ErroDaAplicacao />,
         children: [
 
           // Dashboard
@@ -145,5 +149,8 @@ export const router = createBrowserRouter([
   },
 
   // Rota fallback
-  { path: '*', element: <Navigate to="/" replace /> },
+  // Fora do layout — login, landing — nao ha menu que manter, mas continua a valer a pena
+  // mostrar o erro em vez do ecra de omissao do Router, que esta em ingles e mostra a pilha
+  // do sintoma em vez da causa.
+  { path: '*', element: <Navigate to="/" replace />, errorElement: <ErroDaAplicacao /> },
 ]);
