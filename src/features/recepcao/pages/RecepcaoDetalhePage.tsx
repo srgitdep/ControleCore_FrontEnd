@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ClipboardCheck, Eye, PackageCheck } from 'lucide-react';
-import { Button, Card, Tabs, type TabDefinition } from '@/shared/ui';
+import { Button, Card, ConfirmDialog, Tabs, type TabDefinition } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { COR_ESTADO, ROTULO_ESTADO, type LinhaRecepcao } from '../api/recepcao.api';
 import { useRecepcao, useRecepcaoMutations } from '../hooks/useRecepcoes';
@@ -109,10 +109,9 @@ function AccoesDaDescarga({
   accoes: ReturnType<typeof useRecepcaoMutations>;
   porContar: number;
 }) {
-  const pedirMotivo = (pergunta: string) => {
-    const motivo = window.prompt(pergunta);
-    return motivo?.trim() ? motivo.trim() : null;
-  };
+  // Qual decisão está a ser tomada, ou nenhuma. Um só estado: são o mesmo diálogo com outro
+  // título, e dois booleanos permitiriam abrir os dois ao mesmo tempo.
+  const [aDecidir, setADecidir] = useState<'rejeitar' | 'cancelar' | null>(null);
 
   const emContagem = sessao.estado === 'ABERTA' || sessao.estado === 'EM_CONFERENCIA';
   const podeLancar = sessao.estado === 'CONFERIDA' || sessao.estado === 'APROVADA';
@@ -142,10 +141,7 @@ function AccoesDaDescarga({
           </Button>
           <Button
             variant="outline"
-            onClick={() => {
-              const motivo = pedirMotivo('Porque está a rejeitar esta descarga?');
-              if (motivo) accoes.rejeitar.mutate(motivo);
-            }}
+            onClick={() => setADecidir('rejeitar')}
           >
             Rejeitar
           </Button>
@@ -173,14 +169,45 @@ function AccoesDaDescarga({
       {sessao.estado !== 'STOCK_LANCADO' && sessao.estado !== 'CANCELADA' && (
         <Button
           variant="ghost"
-          onClick={() => {
-            const motivo = pedirMotivo('Porque está a cancelar esta descarga?');
-            if (motivo) accoes.cancelar.mutate(motivo);
-          }}
+          onClick={() => setADecidir('cancelar')}
         >
           Cancelar
         </Button>
       )}
+
+      <ConfirmDialog
+        isOpen={aDecidir !== null}
+        variant="danger"
+        title={
+          aDecidir === 'rejeitar'
+            ? `Rejeitar a divergência de ${sessao.numero}`
+            : `Cancelar ${sessao.numero}`
+        }
+        message={
+          aDecidir === 'rejeitar'
+            ? 'A descarga volta atrás para ser recontada. A mercadoria não entra no stock.'
+            : 'A descarga fica terminada e a mercadoria não entra. Não há forma de a reabrir.'
+        }
+        confirmText={aDecidir === 'rejeitar' ? 'Rejeitar' : 'Cancelar descarga'}
+        cancelText="Fechar"
+        motivo={{
+          rotulo: `Porque está a ${aDecidir}?`,
+          placeholder:
+            aDecidir === 'rejeitar'
+              ? 'A contagem não bate com o que está no cais — recontar'
+              : 'O camião foi-se embora sem descarregar',
+          ajuda: 'Fica no registo da descarga e em auditoria.',
+        }}
+        isLoading={accoes.rejeitar.isPending || accoes.cancelar.isPending}
+        onCancel={() => setADecidir(null)}
+        onConfirm={(motivo) => {
+          if (!motivo) return;
+
+          const accao = aDecidir === 'rejeitar' ? accoes.rejeitar : accoes.cancelar;
+
+          accao.mutate(motivo, { onSuccess: () => setADecidir(null) });
+        }}
+      />
     </div>
   );
 }

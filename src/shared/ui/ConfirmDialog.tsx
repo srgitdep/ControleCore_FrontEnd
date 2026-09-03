@@ -1,4 +1,27 @@
+import { useEffect, useRef, useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+
+/**
+ * Um motivo pedido antes de confirmar.
+ *
+ * Existe porque o servidor recusa cancelamentos e rejeições sem justificação — e a única
+ * forma de a pedir era o `prompt` do browser, que não se pode estilizar, não diz de que
+ * aplicação vem, e num telemóvel aparece colado ao topo do ecrã.
+ */
+export interface PedidoDeMotivo {
+  /** O que se pede. «Porque está a cancelar?» */
+  rotulo: string;
+  placeholder?: string;
+  /** Uma frase a dizer para que serve o texto — quem o vai ler, e quando. */
+  ajuda?: string;
+  /**
+   * Obrigatório por omissão.
+   *
+   * Se fosse opcional, o botão passaria com o campo vazio e o servidor recusaria depois —
+   * dois passos e uma mensagem de erro para dizer o que o ecrã já sabia.
+   */
+  obrigatorio?: boolean;
+}
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -6,10 +29,12 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  /** Recebe o motivo quando `motivo` foi pedido. */
+  onConfirm: (motivo?: string) => void;
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
+  motivo?: PedidoDeMotivo;
 }
 
 export function ConfirmDialog({
@@ -22,8 +47,32 @@ export function ConfirmDialog({
   onCancel,
   variant = 'warning',
   isLoading = false,
+  motivo,
 }: ConfirmDialogProps) {
+  const [texto, setTexto] = useState('');
+  const campo = useRef<HTMLTextAreaElement>(null);
+
+  // Limpo a cada abertura, e com o cursor lá dentro. Sem a limpeza, reabrir o diálogo para
+  // outra linha traria o motivo escrito para a anterior — e a pessoa confirmaria sem reparar.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setTexto('');
+    const foco = setTimeout(() => campo.current?.focus(), 50);
+
+    return () => clearTimeout(foco);
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const exigeMotivo = !!motivo && motivo.obrigatorio !== false;
+  const podeConfirmar = !isLoading && (!exigeMotivo || texto.trim().length > 0);
+
+  const confirmar = () => {
+    if (!podeConfirmar) return;
+
+    onConfirm(motivo ? texto.trim() : undefined);
+  };
 
   const getVariantStyles = () => {
     switch (variant) {
@@ -74,6 +123,43 @@ export function ConfirmDialog({
               {message}
             </div>
           </div>
+
+          {motivo && (
+            <div className="mt-4">
+              <label
+                htmlFor="dialogo-motivo"
+                className="block text-sm font-medium text-slate-700"
+              >
+                {motivo.rotulo}
+                {!exigeMotivo && (
+                  <span className="ml-1 font-normal text-slate-400">(opcional)</span>
+                )}
+              </label>
+
+              <textarea
+                id="dialogo-motivo"
+                ref={campo}
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                // Enter confirma, Shift+Enter faz parágrafo. Um motivo é quase sempre uma
+                // linha, e obrigar a ir com o rato ao botão torna lento o que é frequente.
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    confirmar();
+                  }
+                }}
+                rows={2}
+                disabled={isLoading}
+                placeholder={motivo.placeholder}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none disabled:bg-slate-50"
+              />
+
+              {motivo.ajuda && (
+                <p className="mt-1 text-xs text-slate-400">{motivo.ajuda}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 mt-auto">
@@ -87,8 +173,8 @@ export function ConfirmDialog({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
-            disabled={isLoading}
+            onClick={confirmar}
+            disabled={!podeConfirmar}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 ${styles.btn}`}
           >
             {isLoading ? (

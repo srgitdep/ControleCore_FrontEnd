@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ClipboardList } from 'lucide-react';
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, ConfirmDialog } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
   COR_ESTADO_REQUISICAO,
@@ -117,10 +117,9 @@ function CartaoDeRequisicao({
 }) {
   const [aConverter, setAConverter] = useState(false);
 
-  const pedirMotivo = (pergunta: string) => {
-    const motivo = window.prompt(pergunta);
-    return motivo?.trim() ? motivo.trim() : null;
-  };
+  // Qual decisão está a ser tomada, ou nenhuma. Um só estado para as duas: são o mesmo
+  // diálogo com outro título, e dois booleanos permitiriam abrir os dois ao mesmo tempo.
+  const [aDecidir, setADecidir] = useState<'recusar' | 'cancelar' | null>(null);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -172,10 +171,7 @@ function CartaoDeRequisicao({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => {
-                  const motivo = pedirMotivo('Porque está a recusar?');
-                  if (motivo) accoes.rejeitar.mutate({ requisicaoId: r.id, motivo });
-                }}
+                onClick={() => setADecidir('recusar')}
               >
                 Recusar
               </Button>
@@ -189,14 +185,7 @@ function CartaoDeRequisicao({
           )}
 
           {r.estado !== 'CONVERTIDA' && r.estado !== 'CANCELADA' && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const motivo = pedirMotivo('Porque está a cancelar?');
-                if (motivo) accoes.cancelar.mutate({ requisicaoId: r.id, motivo });
-              }}
-            >
+            <Button size="sm" variant="ghost" onClick={() => setADecidir('cancelar')}>
               Cancelar
             </Button>
           )}
@@ -206,6 +195,45 @@ function CartaoDeRequisicao({
       {aConverter && (
         <ConverterEmOrdemModal requisicao={r} aoFechar={() => setAConverter(false)} />
       )}
+
+      <ConfirmDialog
+        isOpen={aDecidir !== null}
+        variant={aDecidir === 'recusar' ? 'warning' : 'danger'}
+        title={
+          aDecidir === 'recusar' ? `Recusar ${r.numero}` : `Cancelar ${r.numero}`
+        }
+        message={
+          aDecidir === 'recusar'
+            ? 'A requisição volta a quem a pediu, que a pode corrigir e submeter outra vez.'
+            : 'A requisição fica terminada. Não há forma de a reabrir.'
+        }
+        confirmText={aDecidir === 'recusar' ? 'Recusar' : 'Cancelar requisição'}
+        cancelText="Fechar"
+        motivo={{
+          rotulo: `Porque está a ${aDecidir}?`,
+          placeholder:
+            aDecidir === 'recusar'
+              ? 'O valor está acima do orçamento deste mês'
+              : 'A ruptura foi resolvida com stock de outra loja',
+          ajuda:
+            aDecidir === 'recusar'
+              ? `${r.solicitante?.name ?? 'Quem pediu'} vê este texto, e é por ele que sabe o que corrigir.`
+              : 'Fica no registo da requisição e em auditoria.',
+        }}
+        isLoading={accoes.rejeitar.isPending || accoes.cancelar.isPending}
+        onCancel={() => setADecidir(null)}
+        onConfirm={(motivo) => {
+          if (!motivo) return;
+
+          const accao =
+            aDecidir === 'recusar' ? accoes.rejeitar : accoes.cancelar;
+
+          accao.mutate(
+            { requisicaoId: r.id, motivo },
+            { onSuccess: () => setADecidir(null) },
+          );
+        }}
+      />
     </div>
   );
 }

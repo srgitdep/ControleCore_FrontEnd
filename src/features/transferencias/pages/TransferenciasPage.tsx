@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { ArrowLeftRight, PackageX } from 'lucide-react';
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, ConfirmDialog } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
   COR_ESTADO_TRANSFERENCIA,
   ROTULO_ESTADO_TRANSFERENCIA,
   transferenciasApi,
   type Transferencia,
+  type TransferenciaNaLista,
 } from '../api/transferencias.api';
 import { SolicitarTransferenciaModal } from '../components/SolicitarTransferenciaModal';
 
@@ -72,6 +73,9 @@ export function TransferenciasPage() {
 }
 function Lista() {
   const queryClient = useQueryClient();
+  // Qual transferência está a ser cancelada. O id e não um booleano: a lista tem várias, e
+  // um booleano partilhado não saberia dizer qual.
+  const [aCancelar, setACancelar] = useState<TransferenciaNaLista | null>(null);
 
   const { data: transferencias, isLoading } = useQuery({
     queryKey: ['transferencias'],
@@ -165,14 +169,7 @@ function Lista() {
               )}
 
               {t.estado !== 'RECEBIDA' && t.estado !== 'CANCELADA' && t.estado !== 'EM_TRANSITO' && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    const motivo = window.prompt('Porque está a cancelar?');
-                    if (motivo?.trim()) cancelar.mutate({ id: t.id, motivo: motivo.trim() });
-                  }}
-                >
+                <Button size="sm" variant="ghost" onClick={() => setACancelar(t)}>
                   Cancelar
                 </Button>
               )}
@@ -180,6 +177,30 @@ function Lista() {
           </div>
         </div>
       ))}
+
+      <ConfirmDialog
+        isOpen={aCancelar !== null}
+        variant="danger"
+        title={`Cancelar ${aCancelar?.numero ?? ''}`}
+        message="A transferência fica terminada. Só é possível enquanto a mercadoria não saiu da origem."
+        confirmText="Cancelar transferência"
+        cancelText="Fechar"
+        motivo={{
+          rotulo: 'Porque está a cancelar?',
+          placeholder: 'A loja de destino já foi reabastecida',
+          ajuda: 'Fica no registo da transferência e em auditoria.',
+        }}
+        isLoading={cancelar.isPending}
+        onCancel={() => setACancelar(null)}
+        onConfirm={(motivo) => {
+          if (!aCancelar || !motivo) return;
+
+          cancelar.mutate(
+            { id: aCancelar.id, motivo },
+            { onSuccess: () => setACancelar(null) },
+          );
+        }}
+      />
     </div>
   );
 }
