@@ -6,3 +6,4 @@ export * from './ConfirmDialog';
 export * from './ResponsiveTable';
 export * from './TableScroll';
 export * from './Tabs';
+export * from './BotaoVoltar';

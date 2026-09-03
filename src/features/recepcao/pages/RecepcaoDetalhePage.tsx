@@ -31,9 +31,14 @@ export function RecepcaoDetalhePage() {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
+          {/*
+            Aponta para o separador e não para `/recepcoes`, que agora só redirecciona:
+            passar pelo redireccionamento daria um salto a mais e deixaria na barra de
+            endereço um URL que já não é o do ecrã.
+          */}
           <Link
-            to="/recepcoes"
-            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-1"
+            to="/compras?tab=recepcoes"
+            className="mb-1 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
           >
             <ArrowLeft size={14} /> Descargas
           </Link>

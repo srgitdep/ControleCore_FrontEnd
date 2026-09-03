@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 import { purchasesApi, EstadoPedidoCompra } from '../api/purchases.api';
 import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
 import { FornecedoresTab } from '@/features/fornecedores';
-import { Tabs, type TabDefinition } from '@/shared/ui';
+import { BotaoVoltar, Tabs, type TabDefinition } from '@/shared/ui';
 import { RequisicoesPage } from '@/features/requisicoes';
 import { RecepcoesPage } from '@/features/recepcao';
 import { TransferenciasPage } from '@/features/transferencias';
@@ -35,6 +35,14 @@ type Aba =
   | 'recepcoes'
   | 'transferencias'
   | 'fornecedores';
+
+/**
+ * Os separadores que vieram de páginas próprias, e que por isso levam um botão de voltar.
+ *
+ * Numa lista e não repetido em cada `&&`: acrescentar um quarto sem dar por isso deixaria
+ * essa sub-secção sem saída, e a falta só se nota a usar.
+ */
+const SUB_SECCOES: Aba[] = ['requisicoes', 'recepcoes', 'transferencias'];
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -182,6 +190,21 @@ export function PurchasesPage() {
 
             As páginas continuam a existir como componentes; só deixaram de ter rota própria.
           */}
+          {SUB_SECCOES.includes(aba) && (
+            <div className="mb-4">
+              {/*
+                Volta ao separador de omissão, e não ao histórico do browser: mudar de
+                separador não navegou para lado nenhum, e `history.back()` daqui sairia da
+                secção Compras inteira — ou pior, voltaria a um ecrã anterior que não tem
+                nada a ver.
+              */}
+              <BotaoVoltar
+                destino="Pedidos de compra"
+                aoVoltar={() => setSearchParams({ tab: 'pedidos' }, { replace: true })}
+              />
+            </div>
+          )}
+
           {aba === 'requisicoes' && <RequisicoesPage />}
           {aba === 'recepcoes' && <RecepcoesPage />}
           {aba === 'transferencias' && <TransferenciasPage />}
