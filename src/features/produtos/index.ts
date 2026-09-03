@@ -12,3 +12,4 @@ export * from './pages/ProductListPage';
 export * from './components/ProductFormModal';
 export * from './components/ProductsTab';
 export * from './components/CapturaPorFoto';
+export * from './components/ConversoesDoProduto';

@@ -10,6 +10,7 @@ import {
   transferenciasApi,
   type Transferencia,
 } from '../api/transferencias.api';
+import { SolicitarTransferenciaModal } from '../components/SolicitarTransferenciaModal';
 
 type Separador = 'lista' | 'transito';
 
@@ -20,6 +21,7 @@ const SEPARADORES: TabDefinition<Separador>[] = [
 
 export function TransferenciasPage() {
   const [separador, setSeparador] = useState<Separador>('lista');
+  const [aSolicitar, setASolicitar] = useState(false);
 
   const { data: transferencias } = useQuery({
     queryKey: ['transferencias'],
@@ -41,6 +43,11 @@ export function TransferenciasPage() {
             </>
           )
         }
+        acoes={
+          separador === 'lista' ? (
+            <Button onClick={() => setASolicitar(true)}>Solicitar transferência</Button>
+          ) : undefined
+        }
       />
 
       <Tabs
@@ -51,6 +58,8 @@ export function TransferenciasPage() {
       />
 
       {separador === 'lista' ? <Lista /> : <PainelEmTransito />}
+
+      {aSolicitar && <SolicitarTransferenciaModal aoFechar={() => setASolicitar(false)} />}
     </div>
   );
 }

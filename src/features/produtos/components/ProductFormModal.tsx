@@ -10,6 +10,7 @@ import { stockApi } from '@/features/stock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui';
+import { ConversoesDoProduto } from './ConversoesDoProduto';
 import { CapturaPorFoto } from './CapturaPorFoto';
 import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
@@ -534,6 +535,16 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 formulário de catálogo esconderia um movimento de inventário, que
                 tem de ter autor e motivo próprios. Para isso há os ajustes na
                 secção Stock. */}
+            {/* ── Ao editar: unidades e conversoes ────────────────────────────
+                So na edicao, e nao na criacao: o produto tem de existir para lhe
+                declarar factores, e pedi-los antes de haver ficha seria pedir uma
+                decisao sobre uma coisa que ainda nao existe.
+
+                Sem este painel, a unica via para declarar «uma caixa tem 24» era o
+                Swagger — e comprar a caixa ficava a funcionar no servidor e
+                inacessivel a quem trabalha na loja. */}
+            {productToEdit && <ConversoesDoProduto produtoId={productToEdit.id} />}
+
             {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
 
             {/* ── Stock inicial, só na criação ──────────────────────────────── */}

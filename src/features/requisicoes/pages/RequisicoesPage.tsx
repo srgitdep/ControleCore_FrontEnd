@@ -11,6 +11,7 @@ import {
 import { useEscaloes, useRequisicaoMutations, useRequisicoes } from '../hooks/useRequisicoes';
 import { PainelDeEscaloes } from '../components/PainelDeEscaloes';
 import { ConverterEmOrdemModal } from '../components/ConverterEmOrdemModal';
+import { CriarRequisicaoModal } from '../components/CriarRequisicaoModal';
 
 type Separador = 'pedidos' | 'escaloes';
 
@@ -21,6 +22,7 @@ const SEPARADORES: TabDefinition<Separador>[] = [
 
 export function RequisicoesPage() {
   const [separador, setSeparador] = useState<Separador>('pedidos');
+  const [aCriar, setACriar] = useState(false);
   const { data: requisicoes } = useRequisicoes();
   const { data: tabela } = useEscaloes();
 
@@ -41,6 +43,11 @@ export function RequisicoesPage() {
               )}
             </>
           )
+        }
+        acoes={
+          separador === 'pedidos' ? (
+            <Button onClick={() => setACriar(true)}>Nova requisição</Button>
+          ) : undefined
         }
       />
 
@@ -79,6 +86,8 @@ export function RequisicoesPage() {
       />
 
       {separador === 'pedidos' ? <ListaDeRequisicoes /> : <PainelDeEscaloes />}
+
+      {aCriar && <CriarRequisicaoModal aoFechar={() => setACriar(false)} />}
     </div>
   );
 }
