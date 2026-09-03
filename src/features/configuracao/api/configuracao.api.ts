@@ -30,8 +30,13 @@ export type CampoConfiguracao = keyof ValoresConfiguracao;
 
 export interface ConfiguracaoDaEmpresa {
   definido: ValoresConfiguracao | null;
-  omissoes: Record<string, number>;
-  efectivo: Record<string, number>;
+  /**
+   * Os valores de fábrica. Booleanos e números na mesma estrutura: `conferentePodeAprovar`
+   * é uma omissão como qualquer outra, e separá-la em dois campos obrigaria cada ecrã a
+   * saber de antemão qual é qual.
+   */
+  omissoes: Record<string, number | boolean>;
+  efectivo: Record<string, number | boolean>;
 }
 
 export const configuracaoApi = {

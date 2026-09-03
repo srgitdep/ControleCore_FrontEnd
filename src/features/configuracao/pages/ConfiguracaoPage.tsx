@@ -136,7 +136,7 @@ function LinhaDeLimiar({
 }: {
   definicao: DefinicaoDeCampo;
   valor: number | boolean | null | undefined;
-  omissao: number | undefined;
+  omissao: number | boolean | undefined;
   aoMudar: (valor: number | boolean | null) => void;
 }) {
   const definido = valor !== null && valor !== undefined;
@@ -150,7 +150,15 @@ function LinhaDeLimiar({
           {!definido && (
             <span className="text-[11px] text-slate-400">
               a usar a omissão
-              {definicao.tipo === 'booleano' ? ' (não)' : omissao !== undefined ? `: ${omissao}` : ''}
+              {/*
+                A omissão vem do servidor, e não escrita aqui: quando ela mudar do lado de lá,
+                um texto fixo neste ecrã passaria a mentir sem ninguém dar por isso.
+              */}
+              {omissao === undefined
+                ? ''
+                : typeof omissao === 'boolean'
+                  ? ` (${omissao ? 'sim' : 'não'})`
+                  : `: ${omissao}`}
             </span>
           )}
         </div>
@@ -168,7 +176,7 @@ function LinhaDeLimiar({
               definido ? 'border-slate-300 text-slate-900' : 'border-slate-200 text-slate-400',
             )}
           >
-            <option value="">Omissão (não)</option>
+            <option value="">Omissão ({omissao ? 'sim' : 'não'})</option>
             <option value="false">Não</option>
             <option value="true">Sim</option>
           </select>
@@ -177,7 +185,7 @@ function LinhaDeLimiar({
             <input
               type="number"
               value={definido ? String(valor) : ''}
-              placeholder={omissao !== undefined ? String(omissao) : ''}
+              placeholder={typeof omissao === 'number' ? String(omissao) : ''}
               onChange={(e) => aoMudar(e.target.value === '' ? null : Number(e.target.value))}
               className={cn(
                 'w-24 rounded-lg border px-3 py-1.5 text-right text-sm',
