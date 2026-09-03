@@ -76,19 +76,29 @@ export const alertasApi = {
   },
 };
 
-/** Para onde levar quem carrega num alerta. */
+/**
+ * Para onde levar quem carrega num alerta.
+ *
+ * Os endereços são os definitivos e não os antigos. As rotas `/recepcoes`, `/requisicoes` e
+ * `/transferencias` ainda redireccionam para os separadores de Compras — mas passar por elas
+ * daria um salto a mais e deixaria na barra de endereço um URL que já não é o do ecrã.
+ */
 export function destinoDoAlerta(alerta: Alerta): string | null {
   switch (alerta.entidade) {
     case 'Stock':
       return alerta.entidadeId ? `/stock/${alerta.entidadeId}` : '/stock';
     case 'SessaoRecepcao':
-      return alerta.entidadeId ? `/recepcoes/${alerta.entidadeId}` : '/recepcoes';
+      // O detalhe de uma descarga tem ecrã próprio: a contagem linha a linha não cabe num
+      // separador.
+      return alerta.entidadeId
+        ? `/recepcoes/${alerta.entidadeId}`
+        : '/compras?tab=recepcoes';
     case 'Transferencia':
-      return '/transferencias';
+      return '/compras?tab=transferencias';
     case 'InventoryCycle':
       return '/stock?tab=inventario';
     case 'RequisicaoCompra':
-      return '/requisicoes';
+      return '/compras?tab=requisicoes';
     case 'ReservaStock':
       return '/stock?tab=reservas';
     case 'Cliente':

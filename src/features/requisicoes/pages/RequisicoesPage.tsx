@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AlertTriangle, ClipboardList, Layers } from 'lucide-react';
-import { BarraDaPagina, Button, Card, Tabs, type TabDefinition } from '@/shared/ui';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, ClipboardList } from 'lucide-react';
+import { Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
   COR_ESTADO_REQUISICAO,
@@ -10,19 +11,23 @@ import {
   type Requisicao,
 } from '../api/requisicoes.api';
 import { useEscaloes, useRequisicaoMutations, useRequisicoes } from '../hooks/useRequisicoes';
-import { PainelDeEscaloes } from '../components/PainelDeEscaloes';
 import { ConverterEmOrdemModal } from '../components/ConverterEmOrdemModal';
 import { CriarRequisicaoModal } from '../components/CriarRequisicaoModal';
 
-type Separador = 'pedidos' | 'escaloes';
-
-const SEPARADORES: TabDefinition<Separador>[] = [
-  { id: 'pedidos', label: 'Requisições', icon: ClipboardList },
-  { id: 'escaloes', label: 'Escalões de aprovação', icon: Layers },
-];
-
+/**
+ * As requisições de compra, como separador da secção Compras.
+ *
+ * ## Sem barra de página nem separadores próprios
+ *
+ * Vive dentro dos separadores de Compras. Uma barra de página aqui repetiria a que já está
+ * em cima, e separadores dentro de separadores obrigariam quem navega a lembrar-se em qual
+ * dos dois níveis estava.
+ *
+ * Os escalões de aprovação saíram para a Configuração: são uma regra da empresa e não uma
+ * operação, e lá ficam ao lado de «quem confere pode aprovar», que é a mesma espécie de
+ * decisão.
+ */
 export function RequisicoesPage() {
-  const [separador, setSeparador] = useState<Separador>('pedidos');
   const [aCriar, setACriar] = useState(false);
   const { data: requisicoes } = useRequisicoes();
   const { data: tabela } = useEscaloes();
@@ -31,33 +36,23 @@ export function RequisicoesPage() {
 
   return (
     <div className="space-y-4">
-      <BarraDaPagina
-        resumo={
-          requisicoes && (
-            <>
-              {requisicoes.length} requisição(ões)
-              {aEsperar > 0 && (
-                <span className="font-medium text-amber-600">
-                  {' '}
-                  · {aEsperar} à espera de decisão
-                </span>
-              )}
-            </>
-          )
-        }
-        acoes={
-          separador === 'pedidos' ? (
-            <Button onClick={() => setACriar(true)}>Nova requisição</Button>
-          ) : undefined
-        }
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">
+          {requisicoes?.length ?? 0} requisição(ões)
+          {aEsperar > 0 && (
+            <span className="font-medium text-amber-600"> · {aEsperar} à espera de decisão</span>
+          )}
+        </p>
+
+        <Button onClick={() => setACriar(true)}>Nova requisição</Button>
+      </div>
 
       {/*
-        Os problemas da tabela de escalões aparecem no separador das requisições, e não só
-        no dos escalões. Um buraco entre escalões manifesta-se como uma requisição que fica
-        presa — e ninguém liga as duas coisas se o aviso só estiver do outro lado.
+        O aviso dos escalões aparece aqui, e não só onde eles se editam. Um buraco entre
+        escalões manifesta-se como uma requisição que fica presa — e ninguém liga as duas
+        coisas se o aviso só estiver do outro lado.
       */}
-      {(tabela?.problemas.length ?? 0) > 0 && separador === 'pedidos' && (
+      {(tabela?.problemas.length ?? 0) > 0 && (
         <Card className="border-amber-200 bg-amber-50">
           <div className="flex gap-3 p-4">
             <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={18} />
@@ -68,31 +63,23 @@ export function RequisicoesPage() {
                   <li key={i}>{p}</li>
                 ))}
               </ul>
-              <button
-                onClick={() => setSeparador('escaloes')}
-                className="mt-2 font-medium text-amber-900 underline"
+              <Link
+                to="/configuracoes?tab=escaloes"
+                className="mt-2 inline-block font-medium text-amber-900 underline"
               >
                 Corrigir os escalões
-              </button>
+              </Link>
             </div>
           </div>
         </Card>
       )}
 
-      <Tabs
-        tabs={SEPARADORES}
-        active={separador}
-        onChange={setSeparador}
-        label="Secções das requisições"
-      />
-
-      {separador === 'pedidos' ? <ListaDeRequisicoes /> : <PainelDeEscaloes />}
+      <ListaDeRequisicoes />
 
       {aCriar && <CriarRequisicaoModal aoFechar={() => setACriar(false)} />}
     </div>
   );
 }
-
 function ListaDeRequisicoes() {
   const { data: requisicoes, isLoading } = useRequisicoes();
   const accoes = useRequisicaoMutations();

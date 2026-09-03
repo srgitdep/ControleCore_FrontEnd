@@ -17,9 +17,7 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
-import { RecepcoesPage, RecepcaoDetalhePage } from '@/features/recepcao';
-import { RequisicoesPage } from '@/features/requisicoes';
-import { TransferenciasPage } from '@/features/transferencias';
+import { RecepcaoDetalhePage } from '@/features/recepcao';
 import { ConfiguracaoPage } from '@/features/configuracao';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
@@ -97,14 +95,22 @@ export const router = createBrowserRouter([
           // agora completo.
           { path: '/compras',       element: <PurchasesPage /> },
 
-          // ─── Recepção de mercadoria ─────────────────────────────────────
-          // A entrada simples continua em Compras: uma guia de três linhas que chega ao
-          // balcão não precisa de sessão, contagem e aprovação, e obrigar a isso faria as
-          // pessoas deixarem de registar. Estas rotas são para a descarga que o justifica.
-          { path: '/recepcoes',     element: <RecepcoesPage /> },
-          { path: '/recepcoes/:id', element: <RecepcaoDetalhePage /> },
-          { path: '/requisicoes',   element: <RequisicoesPage /> },
-          { path: '/transferencias', element: <TransferenciasPage /> },
+          // ─── Recepção, requisições e transferências ─────────────────────
+          //
+          // Eram três entradas de menu próprias. Passaram a separadores de Compras: é o
+          // mesmo processo do princípio ao fim — pede-se, encomenda-se, recebe-se,
+          // distribui-se — e tê-lo repartido por quatro sítios do menu obrigava quem
+          // trabalha a saber de antemão em qual deles estava o passo seguinte.
+          //
+          // As rotas antigas redireccionam: há ligações gravadas nos alertas, que apontam
+          // para `/recepcoes/:id` e para `/requisicoes`.
+          { path: '/recepcoes',      element: <Navigate to="/compras?tab=recepcoes" replace /> },
+          { path: '/requisicoes',    element: <Navigate to="/compras?tab=requisicoes" replace /> },
+          { path: '/transferencias', element: <Navigate to="/compras?tab=transferencias" replace /> },
+
+          // O detalhe de uma descarga fica com rota própria: é um ecrã inteiro, com a
+          // contagem linha a linha, e não cabe dentro de um separador.
+          { path: '/recepcoes/:id',  element: <RecepcaoDetalhePage /> },
           { path: '/fornecedores',  element: <Navigate to="/compras?tab=fornecedores" replace /> },
 
           // ─── Vendas ─────────────────────────────────────────────────────

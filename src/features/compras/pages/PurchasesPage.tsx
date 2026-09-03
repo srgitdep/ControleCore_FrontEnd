@@ -1,12 +1,26 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingBag, ShoppingCart, Truck, Sparkles, PackageCheck, Loader2 , PackageSearch } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Building2,
+  ClipboardList,
+  Loader2,
+  PackageCheck,
+  PackageSearch,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  Truck,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { purchasesApi, EstadoPedidoCompra } from '../api/purchases.api';
 import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
 import { FornecedoresTab } from '@/features/fornecedores';
 import { Tabs, type TabDefinition } from '@/shared/ui';
+import { RequisicoesPage } from '@/features/requisicoes';
+import { RecepcoesPage } from '@/features/recepcao';
+import { TransferenciasPage } from '@/features/transferencias';
 import { usePermissions } from '@/features/auth';
 import { cn } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
@@ -14,7 +28,13 @@ import { RececoesModal } from '../components/RececoesModal';
 import { SugestaoComprasModal, SugestoesDeCompra } from '../components/SugestaoComprasModal';
 import { CriarPedidoModal } from '../components/CriarPedidoModal';
 
-type Aba = 'pedidos' | 'reposicao' | 'fornecedores';
+type Aba =
+  | 'pedidos'
+  | 'requisicoes'
+  | 'reposicao'
+  | 'recepcoes'
+  | 'transferencias'
+  | 'fornecedores';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -47,14 +67,20 @@ export function PurchasesPage() {
   // mostrar do que mostrar um erro.
   const podeVerFornecedores = hasPermission('read', 'fornecedor');
 
+  // A ordem segue o ciclo de vida de uma compra, e não a ordem por que foram construídos:
+  // pede-se, decide-se o que encomendar, encomenda-se, recebe-se, distribui-se. Quem
+  // percorre os separadores da esquerda para a direita percorre o processo.
   const ABAS: TabDefinition<Aba>[] = [
-    { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
-    // A seguir aos pedidos, e antes dos fornecedores: é o que se consulta para
-    // decidir o que encomendar. Estava atrás de um botão que abria um diálogo — uma
-    // lista de rupturas que é preciso saber procurar não é uma lista que alguém veja.
+    { id: 'requisicoes', label: 'Requisições', icon: ClipboardList },
+    // O que se consulta para decidir o que encomendar. Estava atrás de um botão que abria
+    // um diálogo — uma lista de rupturas que é preciso saber procurar não é uma lista que
+    // alguém veja.
     { id: 'reposicao', label: 'A repor', icon: PackageSearch },
+    { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
+    { id: 'recepcoes', label: 'Recepções', icon: Truck },
+    { id: 'transferencias', label: 'Transferências', icon: ArrowLeftRight },
     ...(podeVerFornecedores
-      ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck }]
+      ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Building2 }]
       : []),
   ];
 
@@ -147,6 +173,18 @@ export function PurchasesPage() {
           {aba === 'reposicao' && (
             <SugestoesDeCompra onCriarPedido={daSugestaoParaPedido} />
           )}
+
+          {/*
+            Os três separadores abaixo eram páginas próprias, com entrada no menu. Passam a
+            viver aqui porque é o mesmo processo: uma requisição vira ordem, a ordem vira
+            descarga, e o que sobra distribui-se entre lojas. Tê-los em quatro sítios do menu
+            obrigava quem trabalha a saber de antemão em qual deles estava o passo seguinte.
+
+            As páginas continuam a existir como componentes; só deixaram de ter rota própria.
+          */}
+          {aba === 'requisicoes' && <RequisicoesPage />}
+          {aba === 'recepcoes' && <RecepcoesPage />}
+          {aba === 'transferencias' && <TransferenciasPage />}
 
           {aba === 'pedidos' && (
             <ListaDePedidos

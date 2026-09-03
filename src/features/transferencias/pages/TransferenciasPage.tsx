@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ArrowLeftRight, PackageX, Truck } from 'lucide-react';
-import { BarraDaPagina, Button, Card, Tabs, type TabDefinition } from '@/shared/ui';
+import { ArrowLeftRight, PackageX } from 'lucide-react';
+import { Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
   COR_ESTADO_TRANSFERENCIA,
@@ -12,15 +12,23 @@ import {
 } from '../api/transferencias.api';
 import { SolicitarTransferenciaModal } from '../components/SolicitarTransferenciaModal';
 
-type Separador = 'lista' | 'transito';
+type Vista = 'lista' | 'transito';
 
-const SEPARADORES: TabDefinition<Separador>[] = [
-  { id: 'lista', label: 'Transferências', icon: ArrowLeftRight },
-  { id: 'transito', label: 'A caminho', icon: Truck },
-];
-
+/**
+ * As transferências, como separador da secção Compras.
+ *
+ * ## Filtros e não separadores
+ *
+ * «A caminho» era um separador. Dentro dos separadores de Compras isso daria dois níveis, e
+ * quem navega teria de se lembrar em qual deles estava. Passa a botão de filtro, que é o
+ * padrão que as Recepções já usam ao lado.
+ *
+ * Continua a ser uma vista diferente e não um filtro da mesma lista: agrega por produto e
+ * destino, e responde a «o que vem a caminho para aqui» em vez de «que transferências
+ * existem».
+ */
 export function TransferenciasPage() {
-  const [separador, setSeparador] = useState<Separador>('lista');
+  const [vista, setVista] = useState<Vista>('lista');
   const [aSolicitar, setASolicitar] = useState(false);
 
   const { data: transferencias } = useQuery({
@@ -32,38 +40,36 @@ export function TransferenciasPage() {
 
   return (
     <div className="space-y-4">
-      <BarraDaPagina
-        resumo={
-          transferencias && (
-            <>
-              {transferencias.length} transferência(s)
-              {aCaminho > 0 && (
-                <span className="font-medium text-amber-600"> · {aCaminho} a caminho</span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {([
+            ['lista', `Todas (${transferencias?.length ?? 0})`],
+            ['transito', `A caminho${aCaminho > 0 ? ` (${aCaminho})` : ''}`],
+          ] as [Vista, string][]).map(([id, rotulo]) => (
+            <button
+              key={id}
+              onClick={() => setVista(id)}
+              className={cn(
+                'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                vista === id
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
               )}
-            </>
-          )
-        }
-        acoes={
-          separador === 'lista' ? (
-            <Button onClick={() => setASolicitar(true)}>Solicitar transferência</Button>
-          ) : undefined
-        }
-      />
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
 
-      <Tabs
-        tabs={SEPARADORES}
-        active={separador}
-        onChange={setSeparador}
-        label="Vistas das transferências"
-      />
+        <Button onClick={() => setASolicitar(true)}>Solicitar transferência</Button>
+      </div>
 
-      {separador === 'lista' ? <Lista /> : <PainelEmTransito />}
+      {vista === 'lista' ? <Lista /> : <PainelEmTransito />}
 
       {aSolicitar && <SolicitarTransferenciaModal aoFechar={() => setASolicitar(false)} />}
     </div>
   );
 }
-
 function Lista() {
   const queryClient = useQueryClient();
 

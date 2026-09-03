@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Truck } from 'lucide-react';
-import { BarraDaPagina, Button } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { COR_ESTADO, ROTULO_ESTADO, type EstadoRecepcao } from '../api/recepcao.api';
 import { useRecepcoes } from '../hooks/useRecepcoes';
@@ -36,24 +36,12 @@ export function RecepcoesPage() {
 
   return (
     <div className="space-y-4">
-      <BarraDaPagina
-        resumo={
-          sessoes && (
-            <>
-              {sessoes.length} descarga(s)
-              {porDecidir > 0 && (
-                <span className="text-amber-600 font-medium">
-                  {' '}
-                  · {porDecidir} à espera de decisão
-                </span>
-              )}
-            </>
-          )
-        }
-        acoes={<Button onClick={() => setAAbrir(true)}>Abrir descarga</Button>}
-      />
-
-      <div className="flex gap-2 flex-wrap">
+      {/*
+        Sem barra de página: isto vive dentro dos separadores de Compras, e uma barra aqui
+        repetiria a que já está em cima.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
         {FILTROS.map((f) => (
           <button
             key={f.id}
@@ -68,7 +56,16 @@ export function RecepcoesPage() {
             {f.rotulo}
           </button>
         ))}
+        </div>
+
+        <Button onClick={() => setAAbrir(true)}>Abrir descarga</Button>
       </div>
+
+      {porDecidir > 0 && (
+        <p className="text-sm font-medium text-amber-600">
+          {porDecidir} descarga(s) à espera de decisão.
+        </p>
+      )}
 
       {isLoading && <p className="text-sm text-slate-400">A carregar…</p>}
 

@@ -17,9 +17,6 @@ import {
   History,
   X,
   Sparkles,
-  Truck,
-  ClipboardList,
-  ArrowLeftRight,
   SlidersHorizontal,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -78,9 +75,6 @@ const navGroups: NavGroup[] = [
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Compras leva Fornecedores como separador.
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Recepções', icon: Truck, path: '/recepcoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Requisições', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      { label: 'Transferências', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },

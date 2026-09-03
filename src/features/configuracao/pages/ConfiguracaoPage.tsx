@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Info, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
+import { Info, Layers, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
 import { BarraDaPagina, Button, Card, Tabs, type TabDefinition } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
@@ -13,29 +14,45 @@ import {
   type ValoresConfiguracao,
 } from '../api/configuracao.api';
 import { PainelDeUnidades } from '../components/PainelDeUnidades';
+import { PainelDeEscaloes } from '@/features/requisicoes/components/PainelDeEscaloes';
 
-type Separador = 'limiares' | 'unidades';
+type Separador = 'limiares' | 'unidades' | 'escaloes';
 
 const SEPARADORES: TabDefinition<Separador>[] = [
   { id: 'limiares', label: 'Limiares', icon: SlidersHorizontal },
   { id: 'unidades', label: 'Unidades de medida', icon: Ruler },
+  // Os escalões vieram das Requisições. São uma regra da empresa e não uma operação, e aqui
+  // ficam ao lado de «quem confere pode aprovar» — que é a mesma espécie de decisão: quem
+  // tem alçada para quê.
+  { id: 'escaloes', label: 'Escalões de aprovação', icon: Layers },
 ];
 
 export function ConfiguracaoPage() {
-  const [separador, setSeparador] = useState<Separador>('limiares');
+  // Na URL e não em estado local: o aviso dos escalões nas Requisições aponta para
+  // `/configuracoes?tab=escaloes`, e um separador que só vive em memória ignoraria a
+  // ligação e abriria sempre no primeiro.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const doUrl = searchParams.get('tab');
+  const separador: Separador = SEPARADORES.some((s) => s.id === doUrl)
+    ? (doUrl as Separador)
+    : 'limiares';
 
   return (
     <div className="space-y-4">
-      <BarraDaPagina resumo="Os números que decidem o que o sistema classifica e recusa." />
+      <BarraDaPagina resumo="Os números e as regras que decidem o que o sistema classifica e recusa." />
 
       <Tabs
         tabs={SEPARADORES}
         active={separador}
-        onChange={setSeparador}
+        // `replace` para não encher o histórico: três cliques em separadores exigiriam três
+        // «voltar» para sair da página.
+        onChange={(id) => setSearchParams({ tab: id }, { replace: true })}
         label="Secções da configuração"
       />
 
-      {separador === 'limiares' ? <PainelDeLimiares /> : <PainelDeUnidades />}
+      {separador === 'limiares' && <PainelDeLimiares />}
+      {separador === 'unidades' && <PainelDeUnidades />}
+      {separador === 'escaloes' && <PainelDeEscaloes />}
     </div>
   );
 }
