@@ -54,9 +54,33 @@ export interface Requisicao {
   solicitante?: { id: string; name: string } | null;
   aprovadaPor?: { id: string; name: string } | null;
   armazem?: { id: string; nome: string } | null;
-  itens: ItemRequisicao[];
-  /** A quem esta requisição vai, pelo valor. Nulo quando não há escalões configurados. */
-  escalaoAplicavel: Escalao | null;
+
+  /**
+   * As linhas **só vêm no detalhe**.
+   *
+   * A listagem devolve `_count` em vez delas: mandar as linhas de todas as requisições para
+   * mostrar um número seria carregar o ecrã inteiro para o descartar. O tipo diz isso, para
+   * o compilador recusar quem as ler na lista — que foi como este defeito passou.
+   */
+  itens?: ItemRequisicao[];
+  _count?: { itens: number };
+
+  /**
+   * A quem esta requisição vai, pelo valor. Nulo quando não há escalões configurados.
+   *
+   * Calculado no detalhe. Ausente na listagem.
+   */
+  escalaoAplicavel?: Escalao | null;
+}
+
+/**
+ * Quantas linhas tem, venha ela da listagem ou do detalhe.
+ *
+ * As duas respostas dizem a mesma coisa de maneiras diferentes, e cada ecrã que resolvesse
+ * isso à sua maneira acabaria por escolher a errada uma vez.
+ */
+export function numeroDeLinhas(r: Requisicao): number {
+  return r._count?.itens ?? r.itens?.length ?? 0;
 }
 
 export interface TabelaDeEscaloes {

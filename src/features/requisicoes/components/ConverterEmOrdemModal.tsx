@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { suppliersApi } from '@/features/fornecedores';
-import type { Requisicao } from '../api/requisicoes.api';
+import { numeroDeLinhas, type Requisicao } from '../api/requisicoes.api';
 import { useRequisicaoMutations } from '../hooks/useRequisicoes';
 
 /**
@@ -46,7 +46,7 @@ export function ConverterEmOrdemModal({
               Converter {requisicao.numero} em ordem de compra
             </h3>
             <p className="mt-0.5 text-xs text-slate-500">
-              {requisicao.itens.length} linha(s) · estimativa{' '}
+              {numeroDeLinhas(requisicao)} linha(s) · estimativa{' '}
               {requisicao.valorEstimado.toFixed(2)} MT
             </p>
           </div>

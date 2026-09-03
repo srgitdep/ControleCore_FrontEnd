@@ -60,13 +60,35 @@ export interface EmTransito {
   transferencias: { numero: string; origem: string; expedidaEm: string | null }[];
 }
 
+/**
+ * O que a listagem devolve — que não é o mesmo que o detalhe.
+ *
+ * As linhas só vêm em `obter`: mandá-las todas para mostrar uma contagem seria carregar o
+ * ecrã inteiro para o descartar. Tipado à parte, e não como `any[]`, porque foi um tipo
+ * demasiado optimista que deixou passar o mesmo defeito nas requisições — o ecrã lia
+ * `itens.length` numa resposta que não trazia `itens`, e rebentava em produção.
+ */
+export interface TransferenciaNaLista {
+  id: string;
+  numero: string;
+  estado: EstadoTransferencia;
+  motivo: string | null;
+  solicitadaEm: string;
+  origem?: { nome: string } | null;
+  destino?: { nome: string } | null;
+  solicitadaPor?: { name: string } | null;
+  _count: { itens: number };
+}
+
 export const transferenciasApi = {
   listar: async (filtros?: {
     estado?: EstadoTransferencia;
     origemId?: string;
     destinoId?: string;
   }) => {
-    const { data } = await api.get<any[]>('/transferencias', { params: filtros });
+    const { data } = await api.get<TransferenciaNaLista[]>('/transferencias', {
+      params: filtros,
+    });
     return data;
   },
 

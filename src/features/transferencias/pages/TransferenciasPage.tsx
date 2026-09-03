@@ -126,13 +126,11 @@ function Lista() {
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-[11px] font-medium',
-                    COR_ESTADO_TRANSFERENCIA[t.estado as keyof typeof COR_ESTADO_TRANSFERENCIA],
+                    COR_ESTADO_TRANSFERENCIA[t.estado],
                   )}
                 >
                   {
-                    ROTULO_ESTADO_TRANSFERENCIA[
-                      t.estado as keyof typeof ROTULO_ESTADO_TRANSFERENCIA
-                    ]
+                    ROTULO_ESTADO_TRANSFERENCIA[t.estado]
                   }
                 </span>
               </div>
@@ -144,7 +142,7 @@ function Lista() {
               </p>
 
               <p className="mt-0.5 text-xs text-slate-400">
-                {t._count?.itens ?? t.itens?.length ?? 0} linha(s)
+                {t._count.itens} linha(s)
                 {t.motivo && ` · ${t.motivo}`}
               </p>
             </div>

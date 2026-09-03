@@ -6,6 +6,7 @@ import {
   COR_ESTADO_REQUISICAO,
   COR_PRIORIDADE,
   ROTULO_ESTADO_REQUISICAO,
+  numeroDeLinhas,
   type Requisicao,
 } from '../api/requisicoes.api';
 import { useEscaloes, useRequisicaoMutations, useRequisicoes } from '../hooks/useRequisicoes';
@@ -160,7 +161,7 @@ function CartaoDeRequisicao({
           {r.motivo && <p className="mt-1 text-sm text-slate-500 italic">«{r.motivo}»</p>}
 
           <p className="mt-1 text-xs text-slate-400">
-            {r.itens.length} linha(s) · estimativa {r.valorEstimado.toFixed(2)} MT
+            {numeroDeLinhas(r)} linha(s) · estimativa {r.valorEstimado.toFixed(2)} MT
             {r.escalaoAplicavel && ` · decide ${r.escalaoAplicavel.nome}`}
           </p>
 
