@@ -24,6 +24,7 @@ import {
   useRegisterCountByBarcode,
   inventoryApi,
 } from '@/features/stock';
+import { api } from '@/shared/config';
 import { Button } from '@/shared/ui';
 import { CreateCycleModal } from './CreateCycleModal';
 import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
@@ -55,10 +56,47 @@ const STATUS_CONFIG: Record<
   },
 };
 
+interface NoLocalizacaoContagem {
+  id: string;
+  caminho: string;
+  filhos: NoLocalizacaoContagem[];
+}
+
+/** A árvore vem aninhada; o selector precisa de uma lista. O caminho já diz a profundidade. */
+function achatarPosicoes(nos: NoLocalizacaoContagem[]): NoLocalizacaoContagem[] {
+  return nos.flatMap((no) => [no, ...achatarPosicoes(no.filhos ?? [])]);
+}
+
 // ──â”€ Operador: Contagem Cega ──────────────────────────────────────────────────
 function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
   const [barcode, setBarcode] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [localizacaoId, setLocalizacaoId] = useState('');
+
+  // As posições do armazém do ciclo. Num ciclo sem âmbito não há nada a escolher — e pedir
+  // uma prateleira quando o ciclo é a empresa inteira seria pedir informação que não serve
+  // para nada.
+  const { data: arvore } = useQuery({
+    queryKey: ['localizacoes', activeCycle.armazemId],
+    queryFn: async () => {
+      const { data } = await api.get<{ arvore: NoLocalizacaoContagem[] }>(
+        `/armazens/${activeCycle.armazemId}/localizacoes`,
+      );
+      return data;
+    },
+    enabled: !!activeCycle.armazemId,
+  });
+
+  // Num ciclo limitado a um corredor, só as posições desse corredor. Oferecer as outras daria
+  // uma escolha que o servidor recusaria depois de a pessoa já ter contado.
+  const posicoes = achatarPosicoes(arvore?.arvore ?? []).filter((l) =>
+    activeCycle.localizacao?.caminho
+      ? l.caminho === activeCycle.localizacao.caminho ||
+        l.caminho.startsWith(`${activeCycle.localizacao.caminho} / `)
+      : true,
+  );
+
+  const exigePosicao = !!activeCycle.localizacaoId;
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { mutate: registerCount, isPending } = useRegisterCountByBarcode(activeCycle.id);
@@ -73,12 +111,18 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
     if (!barcode.trim() || quantity.trim() === '') return;
 
     registerCount(
-      { codigoBarras: barcode.trim(), physicalQuantity: parseFloat(quantity) },
+      {
+        codigoBarras: barcode.trim(),
+        physicalQuantity: parseFloat(quantity),
+        localizacaoId: localizacaoId || undefined,
+      },
       {
         onSuccess: () => {
           setSuccessMsg(`Contagem registada para: ${barcode}`);
           setBarcode('');
           setQuantity('');
+          // A prateleira **não** é limpa: quem conta percorre um corredor de cada vez, e
+          // reescolhê-la a cada artigo seria o passo que faz as pessoas deixarem de a indicar.
         },
         onError: (err: any) => {
           setErrorMsg(err?.response?.data?.message ?? 'Erro ao registar contagem.');
@@ -109,11 +153,18 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
         <div className="inline-flex p-3 bg-blue-100 rounded-2xl mb-3">
           <Package className="h-8 w-8 text-blue-600" />
         </div>
-        <h3 className="text-xl font-bold text-slate-800">Contagem Cega</h3>
+        <h3 className="text-xl font-bold text-slate-800">
+          {activeCycle.contagemCega === false ? 'Contagem' : 'Contagem Cega'}
+        </h3>
         <p className="text-slate-500 text-sm mt-1">
           Ciclo: <span className="font-medium">{activeCycle.name}</span>
         </p>
-        {/* Intencionalmente omitimos stock atual — princÍpio da Contagem Cega */}
+        {activeCycle.localizacao?.caminho && (
+          <p className="mt-1 text-xs text-slate-400">
+            Limitado a {activeCycle.localizacao.caminho}
+          </p>
+        )}
+        {/* O stock actual é omitido de propósito — é o princípio da contagem cega. */}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,6 +188,40 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
             />
           </div>
         </div>
+
+        {activeCycle.armazemId && posicoes.length > 0 && (
+          <div>
+            <label
+              htmlFor="inv-posicao"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
+            >
+              Prateleira
+              {exigePosicao ? (
+                <span className="ml-1 text-rose-600">*</span>
+              ) : (
+                <span className="ml-1 font-normal text-slate-400">(opcional)</span>
+              )}
+            </label>
+            <select
+              id="inv-posicao"
+              value={localizacaoId}
+              onChange={(e) => setLocalizacaoId(e.target.value)}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+            >
+              <option value="">
+                {exigePosicao ? 'Escolher…' : 'O armazém inteiro'}
+              </option>
+              {posicoes.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.caminho}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-slate-400">
+              Fica escolhida entre artigos: percorre-se um corredor de cada vez.
+            </p>
+          </div>
+        )}
 
         <div>
           <label
@@ -175,14 +260,20 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
           className="w-full py-3 text-base"
           // Ver a nota no `handleSubmit`: `!quantity` bloqueava o botão quando a
           // quantidade era zero.
-          disabled={!barcode.trim() || quantity.trim() === '' || isPending}
+          disabled={
+            !barcode.trim() ||
+            quantity.trim() === '' ||
+            (exigePosicao && !localizacaoId) ||
+            isPending
+          }
         >
           {isPending ? 'A registar...' : 'Registar Contagem'}
         </Button>
 
         <p className="text-center text-xs text-slate-400">
-          Conte o que está na prateleira, incluindo zero. O saldo do sistema não é
-          mostrado de propósito — é uma contagem cega, para o número não ser influenciado.
+          Conte o que está na prateleira, incluindo zero.
+          {activeCycle.contagemCega !== false &&
+            ' O saldo do sistema não é mostrado de propósito — é uma contagem cega, para o número não ser influenciado.'}
         </p>
       </form>
     </div>

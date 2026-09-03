@@ -111,6 +111,9 @@ export interface RegisterCountByBarcodePayload {
   codigoBarras: string;
   physicalQuantity: number;
   armazemId?: string;
+  /** Obrigatória num ciclo limitado a um corredor. */
+  localizacaoId?: string;
+  loteId?: string;
 }
 
 export interface UpdateCycleStatusPayload {
