@@ -10,6 +10,7 @@ import {
 } from '../api/requisicoes.api';
 import { useEscaloes, useRequisicaoMutations, useRequisicoes } from '../hooks/useRequisicoes';
 import { PainelDeEscaloes } from '../components/PainelDeEscaloes';
+import { ConverterEmOrdemModal } from '../components/ConverterEmOrdemModal';
 
 type Separador = 'pedidos' | 'escaloes';
 
@@ -117,6 +118,8 @@ function CartaoDeRequisicao({
   requisicao: Requisicao;
   accoes: ReturnType<typeof useRequisicaoMutations>;
 }) {
+  const [aConverter, setAConverter] = useState(false);
+
   const pedirMotivo = (pergunta: string) => {
     const motivo = window.prompt(pergunta);
     return motivo?.trim() ? motivo.trim() : null;
@@ -183,20 +186,7 @@ function CartaoDeRequisicao({
           )}
 
           {r.estado === 'APROVADA' && (
-            <Button
-              size="sm"
-              onClick={() => {
-                const fornecedorId = window.prompt(
-                  'ID do fornecedor a quem encomendar (a lista chega numa versão seguinte):',
-                );
-                if (fornecedorId?.trim()) {
-                  accoes.converter.mutate({
-                    requisicaoId: r.id,
-                    fornecedorId: fornecedorId.trim(),
-                  });
-                }
-              }}
-            >
+            <Button size="sm" onClick={() => setAConverter(true)}>
               Converter em ordem
             </Button>
           )}
@@ -215,6 +205,10 @@ function CartaoDeRequisicao({
           )}
         </div>
       </div>
+
+      {aConverter && (
+        <ConverterEmOrdemModal requisicao={r} aoFechar={() => setAConverter(false)} />
+      )}
     </div>
   );
 }
