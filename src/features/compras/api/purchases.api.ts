@@ -144,9 +144,66 @@ export interface ResultadoSugestao {
   };
 }
 
+// ─── Conferência a três ──────────────────────────────────────────────────────
+
+/**
+ * Uma linha da comparação entre o que foi pedido, o que foi facturado e o que entrou.
+ *
+ * As três vias respondem a perguntas diferentes, e é por isso que são três: `pedida` é o
+ * que a empresa autorizou comprar, `facturada` é o que o fornecedor diz ter enviado e
+ * cobra, `recebida` é o que o armazém contou. Uma factura paga-se quando as três fecham.
+ */
+export interface LinhaTresVias {
+  produtoId: string;
+  produto?: string;
+  pedida: number;
+  facturada: number;
+  recebida: number;
+  /** Se esta linha fecha dentro da tolerância pedida. */
+  conforme: boolean;
+  /** `recebida - facturada`. Negativo significa pagar mercadoria que não chegou. */
+  diferencaQuantidade: number;
+  /** `custoFacturado - custoPedido`. Positivo significa cobrança acima do acordado. */
+  diferencaCusto: number;
+  /** O que está errado, em português, uma frase por problema. Vazio quando conforme. */
+  observacoes: string[];
+}
+
+export interface ConferenciaTresVias {
+  pedidoId: string;
+  fornecedor: string;
+  estado: EstadoPedidoCompra;
+  /** A percentagem de divergência que foi tolerada nesta leitura. */
+  tolerancia: number;
+  linhas: LinhaTresVias[];
+  /** `true` quando todas as linhas fecham. É o que autoriza o pagamento. */
+  conforme: boolean;
+}
+
 export const purchasesApi = {
   getOrders: async () => {
     const { data } = await api.get<PurchaseOrder[]>('/compras/pedidos');
+    return data;
+  },
+
+  /**
+   * Compara pedido, factura e recepção de uma ordem inteira.
+   *
+   * ## Porque isto não é a comparação da descarga
+   *
+   * A recepção já compara as três vias linha a linha, com o camião no cais — que é quando
+   * uma divergência se resolve. Esta é a mesma pergunta feita sobre o **acumulado** da
+   * ordem, e apanha o que só se vê no conjunto: três recepções parciais que somam mais do
+   * que foi encomendado, ou um preço que subiu entre a primeira factura e a terceira.
+   *
+   * Recepções anuladas ficam de fora: a mercadoria voltou por movimento inverso, e
+   * contá-las acusaria um excesso que já foi desfeito.
+   */
+  compararTresVias: async (id: string, tolerancia = 0) => {
+    const { data } = await api.get<ConferenciaTresVias>(
+      `/compras/pedidos/${id}/three-way-match`,
+      { params: { tolerancia } },
+    );
     return data;
   },
 

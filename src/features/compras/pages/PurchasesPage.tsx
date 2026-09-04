@@ -8,6 +8,7 @@ import {
   Loader2,
   PackageCheck,
   PackageSearch,
+  Scale,
   ShoppingBag,
   ShoppingCart,
   Sparkles,
@@ -27,6 +28,7 @@ import { RecebimentoModal } from '../components/RecebimentoModal';
 import { RececoesModal } from '../components/RececoesModal';
 import { SugestaoComprasModal, SugestoesDeCompra } from '../components/SugestaoComprasModal';
 import { CriarPedidoModal } from '../components/CriarPedidoModal';
+import { ConferenciaTresViasModal } from '../components/ConferenciaTresViasModal';
 
 type Aba =
   | 'pedidos'
@@ -97,6 +99,7 @@ export function PurchasesPage() {
 
   const [aReceber, setAReceber] = useState<PurchaseOrder | null>(null);
   const [aVerRececoes, setAVerRececoes] = useState<PurchaseOrder | null>(null);
+  const [aConferir, setAConferir] = useState<PurchaseOrder | null>(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
   const [aCriar, setACriar] = useState<{
     linhas?: { produtoId: string; nome: string; quantidade: number; custoUnitario: number }[];
@@ -215,6 +218,7 @@ export function PurchasesPage() {
               isLoading={isLoading}
               onClicar={aoClicarNoPedido}
               onVerRececoes={setAVerRececoes}
+              onConferir={setAConferir}
             />
           )}
           {aba === 'fornecedores' && <FornecedoresTab />}
@@ -244,6 +248,13 @@ export function PurchasesPage() {
         />
       )}
 
+      {aConferir && (
+        <ConferenciaTresViasModal
+          order={aConferir}
+          onClose={() => setAConferir(null)}
+        />
+      )}
+
       {aCriar && (
         <CriarPedidoModal
           linhasIniciais={aCriar.linhas}
@@ -263,11 +274,13 @@ function ListaDePedidos({
   isLoading,
   onClicar,
   onVerRececoes,
+  onConferir,
 }: {
   pedidos: PurchaseOrder[];
   isLoading: boolean;
   onClicar: (p: PurchaseOrder) => void;
   onVerRececoes: (p: PurchaseOrder) => void;
+  onConferir: (p: PurchaseOrder) => void;
 }) {
   if (isLoading) {
     return (
@@ -316,6 +329,12 @@ function ListaDePedidos({
             const recebivel =
               p.estado === EstadoPedidoCompra.ENVIADO || p.estado === EstadoPedidoCompra.PARCIAL;
 
+            // A conferência a três só tem as três vias quando mercadoria já entrou. Num
+            // pedido em rascunho ou apenas enviado a coluna «recebida» seria zero em todas
+            // as linhas, e um ecrã que acusa divergência em tudo não diz nada.
+            const conferivel =
+              p.estado === EstadoPedidoCompra.PARCIAL || p.estado === EstadoPedidoCompra.RECEBIDO;
+
             return (
               <tr key={p.id} className="hover:bg-slate-50/60">
                 <td className="px-4 py-3">
@@ -354,6 +373,15 @@ function ListaDePedidos({
                         className="p-2 text-slate-400 transition-colors hover:text-emerald-600"
                       >
                         <PackageCheck size={16} />
+                      </button>
+                    )}
+                    {conferivel && (
+                      <button
+                        onClick={() => onConferir(p)}
+                        title="Conferir pedido, factura e recepção"
+                        className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      >
+                        <Scale size={16} />
                       </button>
                     )}
                     <button
