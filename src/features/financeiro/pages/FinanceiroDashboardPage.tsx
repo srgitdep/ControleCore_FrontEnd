@@ -29,12 +29,14 @@ import {
 } from 'lucide-react';
 import {
   useDreSummary,
+  useRelatorioLucro,
   useCashFlowProjection,
   useContasReceber,
   useContasPagar,
   useProcessarPagamento,
 } from '@/features/financeiro';
 import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
+import { PainelLucroEQuebras } from '../components/PainelLucroEQuebras';
 import { CardCarousel, KpiCard as SharedKpiCard, TableScroll } from '@/shared/ui';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -233,7 +235,7 @@ function CustomCashFlowTooltip({ active, payload, label }: any) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-type Tab = 'dre' | 'cashflow' | 'receber' | 'pagar';
+type Tab = 'dre' | 'lucro' | 'cashflow' | 'receber' | 'pagar';
 
 export function FinanceiroDashboardPage() {
   const now = new Date();
@@ -244,6 +246,7 @@ export function FinanceiroDashboardPage() {
   const [pagePagar, setPagePagar] = useState(1);
 
   const dreQuery = useDreSummary(mes, ano);
+  const lucroQuery = useRelatorioLucro(mes, ano, tab === 'lucro');
   const cashFlowQuery = useCashFlowProjection(30);
   const contasReceberQuery = useContasReceber(pageReceber);
   const contasPagarQuery = useContasPagar(pagePagar);
@@ -264,6 +267,9 @@ export function FinanceiroDashboardPage() {
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'dre', label: 'DRE — Resultados' },
+    // Ao lado do DRE porque é o mesmo mês visto de outro ângulo — e traz duas coisas que
+    // o DRE não tem: as quebras de caixa e os produtos mais vendidos.
+    { id: 'lucro', label: 'Lucro e Quebras' },
     { id: 'cashflow', label: 'Fluxo de Caixa' },
     { id: 'receber', label: 'Contas a Receber' },
     { id: 'pagar', label: 'Contas a Pagar' },
@@ -298,6 +304,46 @@ export function FinanceiroDashboardPage() {
           </button>
         ))}
       </div>
+
+      {/* ─── TAB: Lucro e quebras de caixa ─── */}
+      {tab === 'lucro' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={prevMonth}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+              aria-label="Mês anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="min-w-40 text-center text-base font-semibold text-slate-900 dark:text-white">
+              {MONTH_NAMES[mes - 1]} {ano}
+            </span>
+            <button
+              onClick={nextMonth}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+              aria-label="Mês seguinte"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => lucroQuery.refetch()}
+              className="ml-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
+              aria-label="Recarregar"
+            >
+              <RefreshCw className={`h-4 w-4 ${lucroQuery.isFetching ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          {lucroQuery.isLoading && (
+            <div className="flex h-40 items-center justify-center">
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          )}
+
+          {lucroQuery.data && <PainelLucroEQuebras relatorio={lucroQuery.data} />}
+        </div>
+      )}
 
       {/* ─── TAB: DRE ─── */}
       {tab === 'dre' && (

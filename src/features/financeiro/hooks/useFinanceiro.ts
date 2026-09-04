@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getDreSummary, 
-  getCashFlowProjection, 
-  getContasReceber, 
-  getContasPagar, 
+import {
+  getDreSummary,
+  getCashFlowProjection,
+  getContasReceber,
+  getContasPagar,
   processarPagamento,
-  criarRegistro 
+  criarRegistro,
+  getRelatorioLucro
 } from '../api/finance.api';
 import type { CriarRegistroDto } from '../api/finance.api';
 import toast from 'react-hot-toast';
@@ -14,6 +15,21 @@ export function useDreSummary(mes: number, ano: number) {
   return useQuery({
     queryKey: ['dre-summary', mes, ano],
     queryFn: () => getDreSummary(mes, ano),
+  });
+}
+
+/**
+ * Lucro, margem, quebras de caixa e produtos mais vendidos do mês.
+ *
+ * `enabled` deixa a consulta em espera até o separador ser aberto: o relatório percorre
+ * todos os itens vendidos no mês e todas as sessões de caixa, e não vale correr isso a
+ * cada visita ao Financeiro para quem só vem ver contas a pagar.
+ */
+export function useRelatorioLucro(mes: number, ano: number, enabled = true) {
+  return useQuery({
+    queryKey: ['relatorio-lucro', mes, ano],
+    queryFn: () => getRelatorioLucro(mes, ano),
+    enabled,
   });
 }
 

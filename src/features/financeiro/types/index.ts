@@ -93,3 +93,25 @@ export interface PaginatedRegistros {
   page: number;
   lastPage: number;
 }
+
+/**
+ * O relatório de lucro e quebras de caixa de um mês.
+ *
+ * `margemLucroPercentagem` vem do servidor **já formatada** («18.42%») e não como número —
+ * é assim que o use-case a devolve, e reformatá-la aqui exigiria voltar a fazer o parse de
+ * uma string que já perdeu precisão.
+ */
+export interface RelatorioLucro {
+  receitaBrutaLiquidaDeIva: number;
+  custoMercadoriaVendida: number;
+  lucroBruto: number;
+  /** Já com o símbolo, ex.: «18.42%». */
+  margemLucroPercentagem: string;
+  /**
+   * Soma de (saldo calculado − saldo declarado) das sessões fechadas no mês.
+   *
+   * Positivo significa que faltou dinheiro na gaveta; negativo, que sobrou.
+   */
+  quebrasDeCaixa: number;
+  topProdutos: Array<{ nome: string; quantidade: number; receita: number }>;
+}

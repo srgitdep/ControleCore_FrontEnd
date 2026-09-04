@@ -7,5 +7,6 @@ export * from './hooks/useFinanceiro';
 // Export Types
 export * from './types';
 
-// Export Pages
+// Export Pages & Components
 export * from './pages/FinanceiroDashboardPage';
+export * from './components/PainelLucroEQuebras';
