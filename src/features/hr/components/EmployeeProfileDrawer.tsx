@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { X, User, Calendar, TrendingUp, History, Loader2, ShieldAlert } from 'lucide-react';
+import { X, User, Calendar, TrendingUp, History, Loader2, ShieldAlert, FileText } from 'lucide-react';
 import { getEmployee360Profile } from '../api/hr.api';
+import { ContratosDoColaborador } from './ContratosDoColaborador';
 import type { Employee360Profile } from '../types';
 
 interface EmployeeProfileDrawerProps {
@@ -9,7 +10,14 @@ interface EmployeeProfileDrawerProps {
   onClose: () => void;
 }
 
-type TabType = 'perfil' | 'assiduidade' | 'performance' | 'auditoria';
+/**
+ * `contratos` é novo.
+ *
+ * O drawer mostrava `salarioBase` no separador de perfil e não havia caminho nenhum, em
+ * toda a aplicação, para o definir — o `ContratoController` estava órfão. É aqui que o
+ * separador pertence: é a ficha da pessoa, e o contrato é dela.
+ */
+type TabType = 'perfil' | 'contratos' | 'assiduidade' | 'performance' | 'auditoria';
 
 export function EmployeeProfileDrawer({ employeeId, isOpen, onClose }: EmployeeProfileDrawerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('perfil');
@@ -89,6 +97,14 @@ export function EmployeeProfileDrawer({ employeeId, isOpen, onClose }: EmployeeP
                   <User className="w-4 h-4" /> Perfil
                 </button>
                 <button
+                  onClick={() => setActiveTab('contratos')}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'contratos' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" /> Contratos
+                </button>
+                <button
                   onClick={() => setActiveTab('assiduidade')}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'assiduidade' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -154,6 +170,13 @@ export function EmployeeProfileDrawer({ employeeId, isOpen, onClose }: EmployeeP
                       </div>
                     </div>
                   </div>
+                )}
+
+                {activeTab === 'contratos' && (
+                  <ContratosDoColaborador
+                    userId={employeeId}
+                    nome={profile.perfil.nome}
+                  />
                 )}
 
                 {activeTab === 'assiduidade' && (

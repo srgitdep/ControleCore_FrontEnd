@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Settings2 } from 'lucide-react';
+import { Button } from '@/shared/ui';
 import { getWeeklySchedule } from '../api/hr.api';
+import { GestaoDeTurnos } from '../components/GestaoDeTurnos';
 import type { Shift } from '../types';
 
 // Gera os 7 dias da semana a partir de uma data base (segunda-feira)
@@ -30,23 +33,31 @@ const WEEKDAY_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
 export function ShiftManagementPage() {
   const [monday, setMonday] = useState<Date>(() => getMondayOf(new Date()));
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [mostrarGestao, setMostrarGestao] = useState(false);
 
   const weekDays = getWeekDays(monday);
   const sunday = weekDays[6];
   const dataInicial = formatDate(monday);
   const dataFinal = formatDate(sunday);
 
-  useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-    getWeeklySchedule(dataInicial, dataFinal)
-      .then((res) => setShifts(res.escalas ?? []))
-      .catch(() => setError('Erro ao carregar a escala semanal.'))
-      .finally(() => setIsLoading(false));
-  }, [dataInicial, dataFinal]);
+  /**
+   * Passou de `useEffect` com estado local para `useQuery`.
+   *
+   * Não é arrumação: criar um turno ou escalar alguém tem de fazer este calendário
+   * recarregar, e um `useEffect` com dependência nas datas nunca voltaria a correr — a
+   * escala nova só apareceria ao mudar de semana e voltar. Com uma chave de consulta, quem
+   * escreve invalida e o calendário actualiza-se.
+   */
+  const {
+    data: escala,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['escala-semanal', dataInicial, dataFinal],
+    queryFn: () => getWeeklySchedule(dataInicial, dataFinal),
+  });
+
+  const shifts: Shift[] = escala?.escalas ?? [];
 
   const navigateWeek = (direction: number) => {
     const next = new Date(monday);
@@ -85,6 +96,12 @@ export function ShiftManagementPage() {
 
         {/* Navegação de semana */}
         <div className="flex items-center gap-2">
+          {/* A entrada para definir turnos e escalar pessoas. Sem ela, este ecrã mostrava
+              uma semana que nada na aplicação conseguia preencher. */}
+          <Button variant="outline" size="sm" onClick={() => setMostrarGestao((v) => !v)}>
+            <Settings2 size={14} className="mr-1.5" />
+            {mostrarGestao ? 'Fechar gestão' : 'Gerir turnos'}
+          </Button>
           <button
             onClick={() => navigateWeek(-1)}
             className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
@@ -110,7 +127,17 @@ export function ShiftManagementPage() {
 
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
-          {error}
+          {(error as any)?.response?.data?.message ?? 'Erro ao carregar a escala semanal.'}
+        </div>
+      )}
+
+      {/* Aberto por escolha, ou por necessidade: com a semana vazia, o painel abre-se
+          sozinho — um calendário sem nada e sem caminho para o preencher é o defeito que
+          este ecrã tinha, e escondê-lo atrás de um botão repetiria-o em menor escala. */}
+      {(mostrarGestao || (!isLoading && shifts.length === 0)) && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-slate-700">Turnos e escalas</h3>
+          <GestaoDeTurnos />
         </div>
       )}
 

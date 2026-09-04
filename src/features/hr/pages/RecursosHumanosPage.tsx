@@ -1,12 +1,13 @@
 import { useSearchParams } from 'react-router-dom';
-import { Users, CalendarDays, Wallet } from 'lucide-react';
+import { Users, CalendarDays, Network, Wallet } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { usePermissions, useAuth } from '@/features/auth';
 import { EmployeeListPage } from './EmployeeListPage';
 import { ShiftManagementPage } from './ShiftManagementPage';
 import { SalariosPage } from './SalariosPage';
+import { Organograma } from '../components/Organograma';
 
-type Aba = 'colaboradores' | 'escalas' | 'salarios';
+type Aba = 'colaboradores' | 'escalas' | 'salarios' | 'organograma';
 
 /**
  * Recursos Humanos: colaboradores, escalas e salários.
@@ -40,6 +41,9 @@ export function RecursosHumanosPage() {
       : []),
     { id: 'escalas', label: 'Escalas', icon: CalendarDays },
     { id: 'salarios', label: 'Salários', icon: Wallet },
+    // `GET /hr/org-chart` e o componente da árvore existiam os dois, e nada ligava um ao
+    // outro. Fica em último por ser consulta, não operação.
+    { id: 'organograma', label: 'Organograma', icon: Network },
   ];
 
   const doUrl = searchParams.get('tab');
@@ -66,6 +70,7 @@ export function RecursosHumanosPage() {
           {aba === 'colaboradores' && <EmployeeListPage />}
           {aba === 'escalas' && <ShiftManagementPage />}
           {aba === 'salarios' && <SalariosPage />}
+          {aba === 'organograma' && <Organograma />}
         </div>
       </div>
     </div>
