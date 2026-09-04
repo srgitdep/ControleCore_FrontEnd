@@ -2,7 +2,14 @@
   id: string;
   empresaId: string;
   nome: string;
+  descricao?: string | null;
   imagemUrl?: string; // Usado para os botões do POS
+  /**
+   * Uma categoria desactivada sai das escolhas novas sem desaparecer dos produtos que já
+   * a usam. O campo existia na tabela e faltava aqui, pelo que a listagem não distinguia
+   * uma categoria em uso de uma retirada.
+   */
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -50,9 +50,95 @@ export interface CreateProductPayload extends Partial<Product> {
   stockMinimo?: number;
 }
 
+/**
+ * Um fornecedor ligado a um produto: a referência com que ele o chama, e a que preço.
+ *
+ * ## O que este mapeamento resolve
+ *
+ * O mesmo arroz é `ARZ-25KG` num fornecedor e `1042` noutro. Sem esta ligação, quem
+ * encomenda tem de traduzir de cabeça, e a sugestão de compras não sabe a quem comprar
+ * nem a quanto — é daqui que sai o `fornecedorSugerido` de cada linha.
+ */
+export interface FornecedorDoProduto {
+  id: string;
+  produtoId: string;
+  fornecedorId: string;
+  /** O SKU do fornecedor. Nulo quando ninguém o registou. */
+  referenciaFornecedor: string | null;
+  custoCompra: number;
+  createdAt: string;
+  updatedAt: string;
+  fornecedor?: { nome: string };
+  criadoPor?: { name: string } | null;
+  atualizadoPor?: { name: string } | null;
+}
+
+/** O produto como o detalhe o devolve: com categoria e fornecedores ligados. */
+export interface ProductDetail extends Product {
+  fornecedores?: FornecedorDoProduto[];
+}
+
 export const catalogApi = {
   getCategories: async () => {
     const { data } = await api.get<Category[]>('/categorias');
+    return data;
+  },
+
+  createCategory: async (payload: { nome: string; descricao?: string; imagemUrl?: string }) => {
+    const { data } = await api.post<Category>('/categorias', payload);
+    return data;
+  },
+
+  updateCategory: async (
+    id: string,
+    payload: { nome?: string; descricao?: string; imagemUrl?: string; isActive?: boolean },
+  ) => {
+    const { data } = await api.patch<Category>(`/categorias/${id}`, payload);
+    return data;
+  },
+
+  deleteCategory: async (id: string) => {
+    const { data } = await api.delete(`/categorias/${id}`);
+    return data;
+  },
+
+  /**
+   * Um produto com o que a listagem não traz: a categoria completa e os fornecedores.
+   *
+   * A listagem devolve os produtos em página, sem os fornecedores — mandá-los para todos
+   * carregaria o catálogo inteiro para mostrar uma linha de cada. Quem precisa da ficha
+   * pede a ficha.
+   */
+  getProduct: async (id: string) => {
+    const { data } = await api.get<ProductDetail>(`/produtos/${id}`);
+    return data;
+  },
+
+  // ─── Fornecedores do produto ───────────────────────────────────────────────
+
+  addSupplierToProduct: async (
+    produtoId: string,
+    payload: { fornecedorId: string; referenciaFornecedor?: string; custoCompra: number },
+  ) => {
+    const { data } = await api.post(`/produtos/${produtoId}/fornecedores`, payload);
+    return data;
+  },
+
+  updateSupplierOfProduct: async (
+    produtoId: string,
+    fornecedorId: string,
+    payload: { referenciaFornecedor?: string; custoCompra: number },
+  ) => {
+    // O backend recebe o DTO completo, `fornecedorId` incluído: é o mesmo DTO da criação.
+    const { data } = await api.put(`/produtos/${produtoId}/fornecedores/${fornecedorId}`, {
+      fornecedorId,
+      ...payload,
+    });
+    return data;
+  },
+
+  removeSupplierFromProduct: async (produtoId: string, fornecedorId: string) => {
+    const { data } = await api.delete(`/produtos/${produtoId}/fornecedores/${fornecedorId}`);
     return data;
   },
 

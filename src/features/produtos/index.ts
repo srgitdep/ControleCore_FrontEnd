@@ -13,3 +13,5 @@ export * from './components/ProductFormModal';
 export * from './components/ProductsTab';
 export * from './components/CapturaPorFoto';
 export * from './components/ConversoesDoProduto';
+export * from './components/FornecedoresDoProduto';
+export * from './components/PainelDeCategorias';

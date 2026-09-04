@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button } from '@/shared/ui';
 import { ConversoesDoProduto } from './ConversoesDoProduto';
+import { FornecedoresDoProduto } from './FornecedoresDoProduto';
 import { CapturaPorFoto } from './CapturaPorFoto';
 import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
@@ -544,6 +545,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 Swagger — e comprar a caixa ficava a funcionar no servidor e
                 inacessivel a quem trabalha na loja. */}
             {productToEdit && <ConversoesDoProduto produtoId={productToEdit.id} />}
+
+            {/* A quem se compra, com que referência e a que preço. Só na edição, pela
+                mesma razão das conversões: a ligação é entre duas fichas que já existem. */}
+            {productToEdit && <FornecedoresDoProduto produtoId={productToEdit.id} />}
 
             {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
 
