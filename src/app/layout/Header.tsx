@@ -27,6 +27,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/financeiro':    'Financeiro',
   '/rh':            'Recursos Humanos',
   '/empresas':      'Empresas',
+  '/modulos':       'Catálogo de Módulos',
   '/utilizadores':  'Utilizadores',
   '/permissoes':    'Permissões',
   '/historico':     'Histórico no Sistema',

@@ -6,6 +6,7 @@ import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/aut
 import { LandingPage } from '@/pages/LandingPage';
 import { DashboardPage } from '@/features/dashboard';
 import { EmpresasPage } from '@/features/empresas';
+import { ModulosPage } from '@/features/modulos';
 import { UsersPage } from '@/features/users';
 import { HistoryPage } from '@/features/history';
 import { ProductListPage } from '@/features/produtos';
@@ -62,10 +63,18 @@ export const router = createBrowserRouter([
           },
 
           // Gestão do Sistema
-          { 
-            path: '/empresas', 
+          {
+            path: '/empresas',
             element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
             children: [{ index: true, element: <EmpresasPage /> }]
+          },
+          // O catálogo de módulos é da plataforma, não de uma empresa: `Modulo` não tem
+          // `empresaId` e o código é único em todo o ControlCore. Fica ao lado de Empresas
+          // e restrito ao SUPER_ADMIN, como as permissões do controlador já exigiam.
+          {
+            path: '/modulos',
+            element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
+            children: [{ index: true, element: <ModulosPage /> }]
           },
           { 
             path: '/utilizadores', 

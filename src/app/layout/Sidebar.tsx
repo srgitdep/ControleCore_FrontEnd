@@ -18,6 +18,7 @@ import {
   X,
   Sparkles,
   SlidersHorizontal,
+  Blocks,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -59,6 +60,11 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
+      // O catálogo do que a plataforma vende. Ficava sem entrada e sem rota — as seis
+      // rotas do `ModuloController` não eram chamadas por nada.
+      // `Blocks` e não `Package`: esse já é o ícone de «Produtos & Stock», e dois ícones
+      // iguais no mesmo menu obrigam a ler o rótulo para distinguir a entrada.
+      { label: 'Módulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Configuração', icon: SlidersHorizontal, path: '/configuracoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
