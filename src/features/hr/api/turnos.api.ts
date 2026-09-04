@@ -85,11 +85,8 @@ export const turnosApi = {
     return data;
   },
 
-  /** As escalas de uma loja num dia. */
-  escalaDoDia: async (lojaId: string, dia: string) => {
-    const { data } = await api.get<EscalaAtribuida[]>('/rh/turnos/escala', {
-      params: { lojaId, data: dia },
-    });
-    return data;
-  },
+  // `GET /rh/turnos/escala` — as escalas de uma loja num dia — não tem envolvente aqui de
+  // propósito. O calendário semanal já traz todas as lojas da semana numa consulta, e uma
+  // leitura por dia seria um segundo pedido para dados que já estão em memória. Fica em
+  // aberto no servidor para quando existir um ecrã de um só dia, se existir.
 };

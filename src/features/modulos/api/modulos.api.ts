@@ -57,11 +57,8 @@ export const modulosApi = {
     return data;
   },
 
-  obter: async (id: string) => {
-    const { data } = await api.get<Modulo>(`/modulos/${id}`);
-    return data;
-  },
-
+  // `GET /modulos/:id` não tem envolvente aqui: a listagem já devolve todos os campos do
+  // módulo, e o ecrã de edição abre com a linha que a tabela tem em mão.
   criar: async (dto: CriarModuloDto) => {
     const { data } = await api.post<Modulo>('/modulos', dto);
     return data;

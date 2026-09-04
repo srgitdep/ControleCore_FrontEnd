@@ -42,18 +42,9 @@ export interface CriarContratoDto {
 }
 
 export const contratosApi = {
-  /**
-   * O contrato em vigor de um funcionário.
-   *
-   * Devolve nulo quando não há nenhum — o que é informação, não erro: um funcionário sem
-   * contrato registado é o estado inicial de todos, e é o que este ecrã veio permitir
-   * resolver.
-   */
-  activo: async (userId: string) => {
-    const { data } = await api.get<Contrato | null>(`/rh/contratos/funcionario/${userId}/ativo`);
-    return data;
-  },
-
+  // `GET .../ativo` não tem envolvente aqui: o contrato em vigor sai do histórico com um
+  // filtro por `estado`, o que dá uma consulta em vez de duas para o mesmo ecrã. E o
+  // salário base do perfil 360 já vem no próprio endpoint do perfil.
   historico: async (userId: string) => {
     const { data } = await api.get<Contrato[]>(
       `/rh/contratos/funcionario/${userId}/historico`,
