@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, Building2, UserCircle, Info } from 'lucide-react';
+import { X, Building2, UserCircle, Info, Blocks } from 'lucide-react';
 import { useCreateEmpresa, useUpdateEmpresa } from '@/features/empresas';
+import { modulosApi } from '@/features/modulos';
 import type { Empresa } from '@/features/empresas';
+import { cn } from '@/shared/utils';
 
 // ── Esquema para CRIAÇÃO (onboarding completo) ────────────────────────────────
 const criarEmpresaSchema = z.object({
@@ -134,10 +138,33 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
     },
   });
 
+  /**
+   * Os módulos que a nova empresa vai subscrever.
+   *
+   * Era `modulos: []` fixo no código: todas as empresas criadas pela aplicação nasciam sem
+   * módulo nenhum, e a `Assinatura` ficava sem linhas — com valor total zero. O catálogo
+   * existia no servidor (`GET /empresas/modulos/catalogo`) e nada o pedia.
+   */
+  const [modulosEscolhidos, setModulosEscolhidos] = useState<string[]>([]);
+
+  const { data: catalogo, isLoading: aCarregarCatalogo } = useQuery({
+    queryKey: ['catalogo-modulos'],
+    queryFn: () => modulosApi.catalogoParaSubscricao(),
+  });
+
+  const alternarModulo = (id: string) =>
+    setModulosEscolhidos((antes) =>
+      antes.includes(id) ? antes.filter((m) => m !== id) : [...antes, id],
+    );
+
+  const totalMensal = (catalogo ?? [])
+    .filter((m) => modulosEscolhidos.includes(m.id))
+    .reduce((soma, m) => soma + Number(m.precoMensal), 0);
+
   const mutation = useCreateEmpresa();
   const onSubmit = handleSubmit((data) => {
     mutation.mutate(
-      { ...data, modulos: [] },
+      { ...data, modulos: modulosEscolhidos },
       { onSuccess: onClose }
     );
   });
@@ -220,6 +247,87 @@ function CriarEmpresaForm({ onClose }: { onClose: () => void }) {
             O sistema irá gerar automaticamente um <strong>código de acesso</strong> e uma <strong>senha provisória</strong> para o gestor, que serão enviados para o e-mail indicado assim que a empresa for registada. Um perÍodo de <strong>TRIAL de 14 dias</strong> será ativado automaticamente.
           </p>
         </div>
+      </div>
+
+      {/* ── Divisor ────────────────────────────────────────────────────â”€ */}
+      <div className="mx-6 border-t border-dashed border-slate-200" />
+
+      {/* ── Secção 3: Módulos a subscrever ─────────────────────────────── */}
+      <div className="px-6 pt-4 pb-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0">
+            <Blocks size={14} className="text-violet-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Módulos</h3>
+            <p className="text-xs text-slate-500">
+              O que esta empresa vai poder usar. Define o valor da assinatura.
+            </p>
+          </div>
+        </div>
+
+        {aCarregarCatalogo ? (
+          <p className="text-sm text-slate-400">A carregar o catálogo…</p>
+        ) : (catalogo ?? []).length === 0 ? (
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            O catálogo de módulos está vazio. A empresa será criada sem subscrição e a
+            assinatura ficará a zero. Módulos criam-se em «Módulos», no menu.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {catalogo!.map((m) => {
+                const escolhido = modulosEscolhidos.includes(m.id);
+
+                return (
+                  <label
+                    key={m.id}
+                    className={cn(
+                      'flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors',
+                      escolhido
+                        ? 'border-violet-400 bg-violet-50'
+                        : 'border-slate-200 hover:bg-slate-50',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={escolhido}
+                      onChange={() => alternarModulo(m.id)}
+                      className="mt-0.5 rounded border-slate-300"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-slate-800">{m.nome}</span>
+                      {m.descricao && (
+                        <span className="block text-xs text-slate-500">{m.descricao}</span>
+                      )}
+                      <span className="mt-1 block text-xs font-semibold text-slate-600">
+                        {Number(m.precoMensal).toLocaleString('pt-MZ', {
+                          style: 'currency',
+                          currency: 'MZN',
+                        })}
+                        <span className="font-normal text-slate-400"> /mês</span>
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <p className="mt-3 text-right text-sm text-slate-600">
+              {modulosEscolhidos.length} escolhido(s) ·{' '}
+              <span className="font-semibold text-slate-900">
+                {totalMensal.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
+              </span>{' '}
+              por mês
+            </p>
+
+            {modulosEscolhidos.length === 0 && (
+              <p className="mt-1 text-right text-xs text-amber-700">
+                Sem módulos, a empresa entra sem nada subscrito.
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       {/* ── Footer / Botões ──────────────────────────────────────────────â”€ */}

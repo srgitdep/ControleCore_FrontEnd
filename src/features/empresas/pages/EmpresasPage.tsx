@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { BarraDaPagina } from '@/shared/ui';
 
-import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
-import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
+import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Ban, CheckCircle2, Palette } from 'lucide-react';
+import { useEmpresas, useDeleteEmpresa, useEmpresaStatus } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
 import { EmpresaDialog } from '../components/EmpresaDialog';
-import { ConfirmDialog } from '@/shared/ui';
+import { ConfirmDialog, type PedidoDeMotivo } from '@/shared/ui';
 import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
+import { BrandingModal } from '../components/BrandingModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -16,14 +17,18 @@ export function EmpresasPage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [empresaToEdit, setEmpresaToEdit] = useState<Empresa | null>(null);
   const [empresaToView, setEmpresaToView] = useState<Empresa | null>(null);
+  const [empresaToBrand, setEmpresaToBrand] = useState<Empresa | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    /** Recebe o motivo quando o diálogo o pediu. */
+    onConfirm: (motivo?: string) => void;
     variant: 'danger' | 'warning' | 'info';
+    /** Presente quando a acção exige justificação — a suspensão exige. */
+    motivo?: PedidoDeMotivo;
   }>({
     isOpen: false,
     title: '',
@@ -37,6 +42,7 @@ export function EmpresasPage() {
   const { data: empresas, isLoading } = useEmpresas();
 
   const deleteMutation = useDeleteEmpresa();
+  const statusMutation = useEmpresaStatus();
 
   const filteredEmpresas = empresas?.filter(emp => 
     emp.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,6 +84,43 @@ export function EmpresasPage() {
   const handleEdit = (empresa: Empresa) => {
     setEmpresaToEdit(empresa);
     setIsDialogOpen(true);
+  };
+
+  /**
+   * Suspender ou reactivar.
+   *
+   * A confirmação pede o motivo quando se suspende: o servidor grava-o no registo de
+   * auditoria, e uma suspensão sem motivo é impossível de explicar três meses depois.
+   * Reactivar não pede — voltar ao normal não precisa de justificação.
+   */
+  const handleToggleStatus = (empresa: Empresa) => {
+    const suspender = empresa.isActive;
+
+    setConfirmDialog({
+      isOpen: true,
+      title: suspender ? 'Suspender empresa' : 'Reactivar empresa',
+      message: suspender
+        ? `Suspender "${empresa.nome}" fecha o acesso a todos os seus utilizadores. Os dados — stock, vendas, histórico — ficam intactos, e a suspensão é reversível.`
+        : `Reactivar "${empresa.nome}" devolve o acesso aos seus utilizadores.`,
+      variant: suspender ? 'warning' : 'info',
+      motivo: suspender
+        ? {
+            rotulo: 'Porque está a suspender?',
+            placeholder: 'Assinatura em atraso desde Julho',
+            ajuda: 'Fica no registo de auditoria, com o seu nome e a data.',
+          }
+        : undefined,
+      onConfirm: (motivo?: string) => {
+        statusMutation.mutate(
+          {
+            id: empresa.id,
+            action: suspender ? 'DEACTIVATE' : 'ACTIVATE',
+            reason: motivo,
+          },
+          { onSuccess: closeConfirmDialog, onError: closeConfirmDialog },
+        );
+      },
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -188,6 +231,20 @@ export function EmpresasPage() {
                     <Eye size={17} />
                   </button>
                   <button
+                    onClick={() => setEmpresaToBrand(empresa)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
+                    aria-label={`Identidade visual de ${empresa.nome}`}
+                  >
+                    <Palette size={17} />
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(empresa)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    aria-label={empresa.isActive ? `Suspender ${empresa.nome}` : `Reactivar ${empresa.nome}`}
+                  >
+                    {empresa.isActive ? <Ban size={17} /> : <CheckCircle2 size={17} />}
+                  </button>
+                  <button
                     onClick={() => handleEdit(empresa)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
                     aria-label={`Editar ${empresa.nome}`}
@@ -273,6 +330,20 @@ export function EmpresasPage() {
                           <Eye size={15} />
                         </button>
                         <button
+                          onClick={() => setEmpresaToBrand(empresa)}
+                          className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                          title="Identidade visual"
+                        >
+                          <Palette size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(empresa)}
+                          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                          title={empresa.isActive ? 'Suspender (reversível)' : 'Reactivar'}
+                        >
+                          {empresa.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
+                        </button>
+                        <button
                           onClick={() => handleEdit(empresa)}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           title="Editar"
@@ -282,7 +353,7 @@ export function EmpresasPage() {
                         <button
                           onClick={() => handleDelete(empresa.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors disabled:opacity-30"
-                          title="Eliminar"
+                          title="Eliminar (irreversível)"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -342,6 +413,13 @@ export function EmpresasPage() {
         />
       )}
 
+      {empresaToBrand && (
+        <BrandingModal
+          empresa={empresaToBrand}
+          onClose={() => setEmpresaToBrand(null)}
+        />
+      )}
+
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
@@ -349,7 +427,8 @@ export function EmpresasPage() {
         onConfirm={confirmDialog.onConfirm}
         onCancel={closeConfirmDialog}
         variant={confirmDialog.variant}
-        isLoading={deleteMutation.isPending}
+        motivo={confirmDialog.motivo}
+        isLoading={deleteMutation.isPending || statusMutation.isPending}
       />
     </div>
   );

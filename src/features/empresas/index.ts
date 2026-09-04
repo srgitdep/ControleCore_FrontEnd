@@ -11,3 +11,4 @@ export * from './types';
 export * from './pages/EmpresasPage';
 export * from './components/EmpresaDialog';
 export * from './components/EmpresaDetailsModal';
+export * from './components/BrandingModal';
