@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Info, Layers, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
+import { Blocks, Info, Layers, RotateCcw, Ruler, SlidersHorizontal, Tags } from 'lucide-react';
 import { BarraDaPagina, Button, Card, Tabs, type TabDefinition } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import {
@@ -15,16 +15,25 @@ import {
 } from '../api/configuracao.api';
 import { PainelDeUnidades } from '../components/PainelDeUnidades';
 import { PainelDeEscaloes } from '@/features/requisicoes/components/PainelDeEscaloes';
+import { PainelDeCategorias } from '@/features/produtos';
+import { MeusModulos } from '@/features/modulos';
 
-type Separador = 'limiares' | 'unidades' | 'escaloes';
+type Separador = 'limiares' | 'unidades' | 'categorias' | 'escaloes' | 'modulos';
 
 const SEPARADORES: TabDefinition<Separador>[] = [
   { id: 'limiares', label: 'Limiares', icon: SlidersHorizontal },
   { id: 'unidades', label: 'Unidades de medida', icon: Ruler },
+  // As categorias ficam ao lado das unidades porque são da mesma espécie: dados de
+  // referência da empresa, escritos uma vez e lidos por todo o catálogo. Não são uma
+  // operação, e por isso não pertencem à página de Produtos.
+  { id: 'categorias', label: 'Categorias', icon: Tags },
   // Os escalões vieram das Requisições. São uma regra da empresa e não uma operação, e aqui
   // ficam ao lado de «quem confere pode aprovar» — que é a mesma espécie de decisão: quem
   // tem alçada para quê.
   { id: 'escaloes', label: 'Escalões de aprovação', icon: Layers },
+  // Só de leitura: mostra o que a empresa subscreve. A gestão do catálogo é da
+  // plataforma, em `/modulos`, e alterar a subscrição não tem rota no servidor.
+  { id: 'modulos', label: 'Módulos subscritos', icon: Blocks },
 ];
 
 export function ConfiguracaoPage() {
@@ -52,7 +61,9 @@ export function ConfiguracaoPage() {
 
       {separador === 'limiares' && <PainelDeLimiares />}
       {separador === 'unidades' && <PainelDeUnidades />}
+      {separador === 'categorias' && <PainelDeCategorias />}
       {separador === 'escaloes' && <PainelDeEscaloes />}
+      {separador === 'modulos' && <MeusModulos />}
     </div>
   );
 }

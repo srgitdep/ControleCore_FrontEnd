@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Info, Plus, Power } from 'lucide-react';
+import { Info, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
 import { api } from '@/shared/config';
 import { Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -33,6 +33,26 @@ const unidadesApi = {
     const { data } = await api.post<UnidadeMedida>('/unidades', payload);
     return data;
   },
+  /**
+   * Corrige nome, símbolo, tipo e casas decimais — nunca o código.
+   *
+   * O `PATCH` existia no servidor e nenhum ecrã o chamava: uma unidade criada com o nome
+   * mal escrito só se podia corrigir criando outra e desactivando a errada, o que deixava
+   * duas linhas para a mesma coisa.
+   */
+  actualizar: async (
+    id: string,
+    payload: {
+      nome?: string;
+      simbolo?: string;
+      tipo?: string;
+      casasDecimais?: number;
+      isActive?: boolean;
+    },
+  ) => {
+    const { data } = await api.patch<UnidadeMedida>(`/unidades/${id}`, payload);
+    return data;
+  },
   desactivar: async (id: string) => {
     const { data } = await api.delete(`/unidades/${id}`);
     return data;
@@ -54,6 +74,7 @@ export function PainelDeUnidades() {
   const queryClient = useQueryClient();
   const [incluirInactivas, setIncluirInactivas] = useState(false);
   const [aCriar, setACriar] = useState(false);
+  const [aEditar, setAEditar] = useState<UnidadeMedida | null>(null);
 
   const { data: unidades, isLoading } = useQuery({
     queryKey: ['unidades', incluirInactivas],
@@ -71,6 +92,19 @@ export function PainelDeUnidades() {
       invalidar();
       setACriar(false);
       toast.success(`Unidade ${u.codigo} criada.`);
+    },
+    onError: aoFalhar,
+  });
+
+  const actualizar = useMutation({
+    mutationFn: ({ id, ...payload }: { id: string } & Parameters<typeof unidadesApi.actualizar>[1]) =>
+      unidadesApi.actualizar(id, payload),
+    onSuccess: () => {
+      invalidar();
+      // As conversões dos produtos mostram o código e o nome desta unidade.
+      queryClient.invalidateQueries({ queryKey: ['conversoes'] });
+      setAEditar(null);
+      toast.success('Unidade actualizada.');
     },
     onError: aoFalhar,
   });
@@ -154,15 +188,34 @@ export function PainelDeUnidades() {
                 </td>
                 <td className="px-3 py-2 text-right text-slate-600">{u.casasDecimais}</td>
                 <td className="px-2 py-2">
-                  {u.isActive && (
+                  <div className="flex items-center justify-end gap-1">
                     <button
-                      onClick={() => desactivar.mutate(u.id)}
-                      title="Retirar de uso"
-                      className="text-slate-400 hover:text-red-600"
+                      onClick={() => setAEditar(u)}
+                      title="Corrigir nome, símbolo ou tipo"
+                      className="text-slate-400 hover:text-indigo-600"
                     >
-                      <Power size={15} />
+                      <Pencil size={15} />
                     </button>
-                  )}
+                    {u.isActive ? (
+                      <button
+                        onClick={() => desactivar.mutate(u.id)}
+                        title="Retirar de uso"
+                        className="text-slate-400 hover:text-red-600"
+                      >
+                        <Power size={15} />
+                      </button>
+                    ) : (
+                      // Reactivar existia no servidor (`isActive` no PATCH) e não tinha
+                      // botão: uma unidade retirada por engano ficava retirada.
+                      <button
+                        onClick={() => actualizar.mutate({ id: u.id, isActive: true })}
+                        title="Voltar a pôr em uso"
+                        className="text-slate-400 hover:text-emerald-600"
+                      >
+                        <RotateCcw size={15} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -185,6 +238,113 @@ export function PainelDeUnidades() {
           aGravar={criar.isPending}
         />
       )}
+
+      {aEditar && (
+        <ModalEditarUnidade
+          unidade={aEditar}
+          aoFechar={() => setAEditar(null)}
+          aoGravar={(payload) => actualizar.mutate({ id: aEditar.id, ...payload })}
+          aGravar={actualizar.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalEditarUnidade({
+  unidade,
+  aoFechar,
+  aoGravar,
+  aGravar,
+}: {
+  unidade: UnidadeMedida;
+  aoFechar: () => void;
+  aoGravar: (payload: {
+    nome?: string;
+    simbolo?: string;
+    tipo?: string;
+    casasDecimais?: number;
+  }) => void;
+  aGravar: boolean;
+}) {
+  const [nome, setNome] = useState(unidade.nome);
+  const [simbolo, setSimbolo] = useState(unidade.simbolo ?? '');
+  const [continua, setContinua] = useState(unidade.tipo === 'CONTINUA');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+        <div className="border-b border-slate-100 px-5 py-3">
+          <h3 className="font-semibold text-slate-900">Editar unidade {unidade.codigo}</h3>
+        </div>
+
+        <div className="space-y-4 p-5">
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            O código <span className="font-semibold text-slate-700">{unidade.codigo}</span> não
+            se altera: está impresso em documentos já emitidos, e mudá-lo reescreveria o que
+            eles dizem. Para outro código, cria-se outra unidade e retira-se esta de uso.
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Nome</label>
+            <input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">
+              Símbolo <span className="text-slate-400">(opcional)</span>
+            </label>
+            <input
+              value={simbolo}
+              onChange={(e) => setSimbolo(e.target.value)}
+              placeholder="kg"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              O que aparece ao lado do número nos ecrãs e recibos.
+            </p>
+          </div>
+
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              checked={continua}
+              onChange={(e) => setContinua(e.target.checked)}
+              className="mt-1 rounded border-slate-300"
+            />
+            <span className="text-sm text-slate-700">
+              Pesa-se ou mede-se
+              <span className="block text-xs text-slate-400">
+                Passar de contável a mensurável abre as casas decimais; ao contrário, o
+                servidor recusa se houver saldos fraccionados que passariam a ser inválidos.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+          <Button variant="ghost" onClick={aoFechar}>
+            Cancelar
+          </Button>
+          <Button
+            disabled={!nome.trim() || aGravar}
+            onClick={() =>
+              aoGravar({
+                nome: nome.trim(),
+                simbolo: simbolo.trim() || undefined,
+                tipo: continua ? 'CONTINUA' : 'DISCRETA',
+                casasDecimais: continua ? Math.max(unidade.casasDecimais, 3) : 0,
+              })
+            }
+          >
+            Gravar
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
