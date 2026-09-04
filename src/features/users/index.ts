@@ -9,3 +9,4 @@ export * from './pages/UsersPage';
 export * from './components/UserDialog';
 export * from './components/UserDetailsModal';
 export * from './components/UserAuditLogModal';
+export * from './components/DefinirPinModal';

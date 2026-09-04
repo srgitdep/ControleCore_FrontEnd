@@ -37,3 +37,20 @@ export const resendPassword = async (id: string): Promise<{ message: string }> =
   const { data } = await api.post(`/users/${id}/reenviar-senha`);
   return data;
 };
+
+/**
+ * Define o PIN de um utilizador.
+ *
+ * ## Porque o PIN não é a senha
+ *
+ * A senha serve para entrar no sistema; o PIN serve para autorizar uma acção no balcão sem
+ * fechar a sessão da caixa — anular uma linha, abrir a gaveta, aplicar um desconto. São
+ * quatro a seis dígitos precisamente porque se digita à frente do cliente, e é essa
+ * diferença que justifica os dois existirem.
+ *
+ * `PATCH /users/:id/pin` existia no servidor, com validação de comprimento e de só-dígitos,
+ * e a palavra «PIN» não aparecia uma única vez no frontend.
+ */
+export const setUserPin = async (id: string, pin: string): Promise<void> => {
+  await api.patch(`/users/${id}/pin`, { pin });
+};

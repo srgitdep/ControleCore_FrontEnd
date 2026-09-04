@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BarraDaPagina } from '@/shared/ui';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
+import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History, KeyRound } from 'lucide-react';
 import { getUsers, deleteUser, deactivateUser, activateUser } from '@/features/users';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
@@ -10,6 +10,7 @@ import { UserDialog } from '../components/UserDialog';
 import { ConfirmDialog } from '@/shared/ui';
 import { UserDetailsModal } from '../components/UserDetailsModal';
 import { UserAuditLogModal } from '../components/UserAuditLogModal';
+import { DefinirPinModal } from '../components/DefinirPinModal';
 import { useAuth } from '@/features/auth';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +23,7 @@ export function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<UserDetail | null>(null);
   const [userToView, setUserToView] = useState<UserDetail | null>(null);
   const [userToAudit, setUserToAudit] = useState<UserDetail | null>(null);
+  const [userToPin, setUserToPin] = useState<UserDetail | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -284,6 +286,13 @@ export function UsersPage() {
                     {u.isActive ? <Ban size={17} /> : <CheckCircle2 size={17} />}
                   </button>
                   <button
+                    onClick={() => setUserToPin(u)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+                    aria-label={`Definir PIN de ${u.name}`}
+                  >
+                    <KeyRound size={17} />
+                  </button>
+                  <button
                     onClick={() => handleEdit(u)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
                     aria-label={`Editar ${u.name}`}
@@ -405,6 +414,13 @@ export function UsersPage() {
                           {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
                         </button>
                         <button
+                          onClick={() => setUserToPin(u)}
+                          className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          title="Definir PIN de balcão"
+                        >
+                          <KeyRound size={15} />
+                        </button>
+                        <button
                           onClick={() => handleEdit(u)}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           title="Editar"
@@ -480,6 +496,10 @@ export function UsersPage() {
           user={userToAudit}
           onClose={() => setUserToAudit(null)}
         />
+      )}
+
+      {userToPin && (
+        <DefinirPinModal user={userToPin} onClose={() => setUserToPin(null)} />
       )}
 
       <ConfirmDialog
