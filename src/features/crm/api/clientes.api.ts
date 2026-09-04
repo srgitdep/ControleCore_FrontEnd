@@ -66,6 +66,24 @@ export const obterCliente = async (id: string): Promise<ClienteDetalhe> => {
   return data;
 };
 
+/**
+ * Todas as compras de um cliente.
+ *
+ * ## Porque não bastava a ficha
+ *
+ * `GET /clientes/:id` traz o cliente com as **dez** vendas mais recentes — é o que o
+ * separador de detalhes mostra. Este endpoint traz o histórico inteiro, e não era chamado
+ * por nada: um cliente com trinta compras aparecia com dez, sem nada no ecrã a dizer que
+ * havia mais.
+ *
+ * A diferença importa numa conversa sobre fidelização ou sobre uma devolução antiga, que
+ * são as duas razões para se abrir a ficha de um cliente.
+ */
+export const obterHistoricoCompras = async (id: string): Promise<VendaResumida[]> => {
+  const { data } = await api.get<VendaResumida[]>(`/clientes/${id}/historico`);
+  return data;
+};
+
 export const criarCliente = async (payload: CriarClienteDto): Promise<Cliente> => {
   const { data } = await api.post('/clientes', payload);
   return data;

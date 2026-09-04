@@ -20,6 +20,7 @@ import {
 import {
   useClientes,
   useCliente,
+  useHistoricoCliente,
   useCreateCliente,
   useUpdateCliente,
   useDeleteCliente,
@@ -153,6 +154,12 @@ function ClienteDetails({
 }) {
   const { data: cliente, isLoading } = useCliente(clienteId);
 
+  const [verTudo, setVerTudo] = useState(false);
+  const historicoQuery = useHistoricoCliente(clienteId, verTudo);
+
+  /** As dez da ficha, ou o histórico completo quando pedido. */
+  const compras = (verTudo ? historicoQuery.data : cliente?.vendas) ?? [];
+
   if (isLoading || !cliente) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -161,7 +168,25 @@ function ClienteDetails({
     );
   }
 
-  const totalCompras = cliente.vendas?.length ?? 0;
+  /**
+   * Quantas compras, e o ticket médio.
+   *
+   * ## O defeito que o limite de dez causava
+   *
+   * `cliente.vendas` são as **dez** vendas mais recentes, e não todas. «Total de Compras»
+   * mostrava esse comprimento — pelo que qualquer cliente com dez ou mais compras aparecia
+   * com exactamente «10». Pior: o ticket médio dividia o `totalGasto` de sempre por esse
+   * número, o que num cliente com trinta compras o inflacionava três vezes.
+   *
+   * Com o histórico completo carregado, os dois números passam a estar certos. Sem ele,
+   * dizem-se aproximados em vez de se apresentarem como exactos — o rótulo muda com o que
+   * se sabe.
+   */
+  const historicoCompleto = verTudo && !!historicoQuery.data;
+  const totalCompras = historicoCompleto
+    ? historicoQuery.data!.length
+    : (cliente.vendas?.length ?? 0);
+  const compraLimitada = !historicoCompleto && totalCompras >= 10;
   const ticketMedio =
     totalCompras > 0 ? Number(cliente.totalGasto) / totalCompras : 0;
 
@@ -229,7 +254,8 @@ function ClienteDetails({
           <MetricCard
             icon={ShoppingBag}
             label="Total de Compras"
-            value={totalCompras.toString()}
+            value={compraLimitada ? `${totalCompras}+` : totalCompras.toString()}
+            sub={compraLimitada ? 'Ver histórico completo para o total' : undefined}
             color="bg-blue-500"
           />
           <MetricCard
@@ -237,9 +263,11 @@ function ClienteDetails({
             label="Ticket Médio"
             value={`${ticketMedio.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`}
             sub={
-              cliente.dataUltimaCompra
-                ? `Última: ${new Date(cliente.dataUltimaCompra).toLocaleDateString('pt-PT')}`
-                : 'Sem compras ainda'
+              compraLimitada
+                ? 'Aproximado — calculado sobre as últimas 10'
+                : cliente.dataUltimaCompra
+                  ? `Última: ${new Date(cliente.dataUltimaCompra).toLocaleDateString('pt-PT')}`
+                  : 'Sem compras ainda'
             }
             color="bg-violet-500"
           />
@@ -247,14 +275,38 @@ function ClienteDetails({
 
         {/* Histórico de Compras */}
         <div>
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Últimas Compras</h3>
-          {cliente.vendas?.length === 0 ? (
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-slate-700">
+              {verTudo ? 'Todas as Compras' : 'Últimas Compras'}
+            </h3>
+
+            {/*
+              A ficha do cliente traz sempre as **dez** vendas mais recentes — é o limite
+              que o servidor aplica em `GET /clientes/:id`. Havia um endpoint com o
+              histórico completo que nada chamava, pelo que um cliente com trinta compras
+              aparecia com dez e sem nada a dizer que havia mais.
+            */}
+            {!verTudo && (cliente.vendas?.length ?? 0) >= 10 && (
+              <button
+                onClick={() => setVerTudo(true)}
+                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                Ver histórico completo
+              </button>
+            )}
+          </div>
+
+          {verTudo && historicoQuery.isLoading && (
+            <p className="text-sm text-slate-400">A carregar o histórico…</p>
+          )}
+
+          {compras.length === 0 && !historicoQuery.isLoading ? (
             <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 rounded-xl border border-slate-200">
               Nenhuma compra registada.
             </div>
           ) : (
             <div className="space-y-2">
-              {cliente.vendas?.map((venda) => (
+              {compras.map((venda) => (
                 <div
                   key={venda.id}
                   className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg"

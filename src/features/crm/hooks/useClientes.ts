@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  listarClientes, 
-  obterCliente, 
-  criarCliente, 
-  atualizarCliente, 
+import {
+  listarClientes,
+  obterCliente,
+  criarCliente,
+  atualizarCliente,
   apagarCliente,
-  buscarClientesCRM
+  buscarClientesCRM,
+  obterHistoricoCompras
 } from '../api/clientes.api';
 import toast from 'react-hot-toast';
 
@@ -22,6 +23,21 @@ export function useCliente(id: string) {
     queryKey: ['cliente', id],
     queryFn: () => obterCliente(id),
     enabled: !!id,
+  });
+}
+
+/**
+ * O histórico completo de compras, para quando as dez da ficha não bastam.
+ *
+ * `enabled` mantém-no em espera até alguém o pedir: um cliente com centenas de compras
+ * traria todas as linhas de todas as vendas, e a ficha abre-se muitas vezes só para ver o
+ * contacto.
+ */
+export function useHistoricoCliente(id: string, enabled = false) {
+  return useQuery({
+    queryKey: ['cliente-historico', id],
+    queryFn: () => obterHistoricoCompras(id),
+    enabled: !!id && enabled,
   });
 }
 
