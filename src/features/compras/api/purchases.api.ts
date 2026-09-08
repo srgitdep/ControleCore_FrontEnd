@@ -246,6 +246,18 @@ export const purchasesApi = {
   },
 
   /**
+   * Marca a ordem como enviada ao fornecedor.
+   *
+   * Passo próprio e não um efeito da aprovação: aprovar autoriza a compra, enviar
+   * comunica-a, e entre os dois passam-se muitas vezes dias. Sem ele, a resposta do
+   * fornecedor não tem onde ser registada.
+   */
+  sendOrder: async (id: string) => {
+    const { data } = await api.post<PurchaseOrder>(`/compras/pedidos/${id}/enviar`);
+    return data;
+  },
+
+  /**
    * Aprova ou rejeita.
    *
    * Quando quem aprova é quem criou, passa mas fica marcado como excepção de segregação
@@ -393,6 +405,15 @@ export function podeSubmeter(p: PurchaseOrder): boolean {
 /** Se há uma decisão de aprovação por tomar. */
 export function podeDecidir(p: PurchaseOrder): boolean {
   return p.estadoAprovacao === EstadoAprovacaoOC.AGUARDA_APROVACAO && p.cancelamento !== 'CANCELADA';
+}
+
+/** Se a ordem está aprovada mas ainda não saiu para o fornecedor. */
+export function podeEnviar(p: PurchaseOrder): boolean {
+  return (
+    p.estadoAprovacao === EstadoAprovacaoOC.APROVADA &&
+    p.estadoComercial === EstadoComercialOC.NAO_ENVIADA &&
+    p.cancelamento !== 'CANCELADA'
+  );
 }
 
 /** Se faz sentido registar a resposta do fornecedor. */

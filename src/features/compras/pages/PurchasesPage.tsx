@@ -23,6 +23,7 @@ import {
   podeReceberMercadoria,
   podeSubmeter,
   podeDecidir,
+  podeEnviar,
   podeConfirmar,
 } from '../api/purchases.api';
 import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
@@ -139,6 +140,19 @@ export function PurchasesPage() {
     });
   };
 
+  const enviarAoFornecedor = async (pedido: PurchaseOrder) => {
+    setASubmeter(pedido.id);
+    try {
+      await purchasesApi.sendOrder(pedido.id);
+      toast.success('Ordem marcada como enviada. Já podes registar a resposta do fornecedor.');
+      queryClient.invalidateQueries({ queryKey: ['pedidos-compra'] });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao marcar como enviada.');
+    } finally {
+      setASubmeter(null);
+    }
+  };
+
   const submeterParaAprovacao = async (pedido: PurchaseOrder) => {
     setASubmeter(pedido.id);
     try {
@@ -170,6 +184,10 @@ export function PurchasesPage() {
     }
     if (podeSubmeter(pedido)) {
       submeterParaAprovacao(pedido);
+      return;
+    }
+    if (podeEnviar(pedido)) {
+      enviarAoFornecedor(pedido);
       return;
     }
     if (
@@ -231,6 +249,7 @@ export function PurchasesPage() {
               onVerRececoes={setAVerRececoes}
               onSubmeter={submeterParaAprovacao}
               onDecidir={setADecidir}
+              onEnviar={enviarAoFornecedor}
               onConfirmar={setAConfirmar}
               onExpedir={setAExpedir}
               aSubmeter={aSubmeter}
@@ -314,6 +333,7 @@ function ListaDePedidos({
   onVerRececoes,
   onSubmeter,
   onDecidir,
+  onEnviar,
   onConfirmar,
   onExpedir,
   aSubmeter,
@@ -324,6 +344,7 @@ function ListaDePedidos({
   onVerRececoes: (p: PurchaseOrder) => void;
   onSubmeter: (p: PurchaseOrder) => void;
   onDecidir: (p: PurchaseOrder) => void;
+  onEnviar: (p: PurchaseOrder) => void;
   onConfirmar: (p: PurchaseOrder) => void;
   onExpedir: (p: PurchaseOrder) => void;
   /** O id do pedido a ser submetido, para desactivar só esse botão. */
@@ -383,6 +404,7 @@ function ListaDePedidos({
             const submetivel = podeSubmeter(p);
             const decidivel = podeDecidir(p);
             const confirmavel = podeConfirmar(p);
+            const enviavel = podeEnviar(p);
 
             return (
               <tr key={p.id} className="hover:bg-slate-50/60">
@@ -445,6 +467,20 @@ function ListaDePedidos({
                         className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
                       >
                         <Truck size={16} />
+                      </button>
+                    )}
+                    {enviavel && (
+                      <button
+                        onClick={() => onEnviar(p)}
+                        disabled={aSubmeter === p.id}
+                        title="Marcar como enviada ao fornecedor"
+                        className="p-2 text-blue-500 transition-colors hover:text-blue-700 disabled:opacity-40"
+                      >
+                        {aSubmeter === p.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Send size={16} />
+                        )}
                       </button>
                     )}
                     {confirmavel && (
@@ -569,6 +605,12 @@ function rotularEstado(p: PurchaseOrder): { rotulo: string; cor: string } {
   }
   if (p.estadoComercial === 'ENVIADA' || p.estadoComercial === 'AGUARDA_RESPOSTA') {
     return { rotulo: 'Sem resposta', cor: 'bg-blue-100 text-blue-700' };
+  }
+
+  // Aprovada e ainda por enviar. O rótulo diz o passo que falta, e não o estado em que
+  // está — «Aprovada» sozinho não diz a ninguém que ainda há uma acção pendente.
+  if (p.estadoComercial === 'NAO_ENVIADA') {
+    return { rotulo: 'Por enviar', cor: 'bg-emerald-100 text-emerald-700' };
   }
 
   return { rotulo: 'Aprovada', cor: 'bg-emerald-100 text-emerald-700' };
