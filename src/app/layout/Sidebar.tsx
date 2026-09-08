@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Scale,
   BarChart2,
   Box,
   Store,
@@ -73,6 +74,8 @@ const navGroups: NavGroup[] = [
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Compras leva Fornecedores como separador.
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // Sem STOCK_KEEPER: quem recebe mercadoria não deve libertar o pagamento dela.
+      { label: 'Conferência', icon: Scale, path: '/conferencia', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },

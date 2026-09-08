@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BarraDaPagina } from '@/shared/ui';
 import {
   Box, Plus, Search, Edit2, X, Loader2, Store, Ban, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
@@ -152,18 +153,12 @@ export function ArmazensPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Box className="text-emerald-600" size={26} /> Armazéns
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {total} armazém(ns) em {lojas.length} loja(s)
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      {/* O nome da secção vive no cabeçalho da aplicação. Aqui fica só a contagem,
+          que é dado e não rótulo. */}
+      <BarraDaPagina
+        resumo={`${total} ${total === 1 ? 'armazém' : 'armazéns'} em ${lojas.length} ${lojas.length === 1 ? 'loja' : 'lojas'}`}
+      />
 
       {/* Aviso: loja sem ponto de venda não pode vender */}
       {!isLoading && semPontoVenda.length > 0 && (

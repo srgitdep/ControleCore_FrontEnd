@@ -9,6 +9,103 @@ import { cn } from '@/shared/utils';
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
+// ── Lote e validade de uma linha ─────────────────────────────────────────────
+
+interface CamposDeLoteProps {
+  item: PurchaseOrderItem;
+  valor: { lote?: string; dataValidade?: string };
+  onChange: (campos: { lote?: string; dataValidade?: string }) => void;
+}
+
+/**
+ * Os campos de lote e validade de uma linha da recepção.
+ *
+ * ## Porque estão aqui e não num ecrã à parte
+ *
+ * A entrada de mercadoria é o único momento em que alguém tem estes dados à frente dos
+ * olhos: a validade está impressa na embalagem e o lote no documento do fornecedor. Um ecrã
+ * posterior de «registar validades» obrigaria a voltar ao armazém com uma lista, e a resposta
+ * seria não preencher — a tabela de lotes ficaria vazia e os alertas nunca disparariam.
+ *
+ * ## Obrigatório só onde o produto o exige
+ *
+ * Para os restantes, os campos ficam visíveis mas opcionais: um saco de cimento não tem
+ * validade, e exigi-la faria a recepção mais lenta sem nada em troca. Marcar o produto com
+ * controlo de validade é o que torna o campo obrigatório — e o pedido é recusado sem ele,
+ * tanto aqui como no servidor.
+ */
+function CamposDeLote({ item, valor, onChange }: CamposDeLoteProps) {
+  const exigeValidade = item.produto?.temValidade === true;
+  const exigeLote = item.produto?.rastreavelPorLote === true;
+
+  const faltaValidade = exigeValidade && !valor.dataValidade;
+  const faltaLote = exigeLote && !valor.lote?.trim();
+
+  // Uma validade no passado é aceite pelo servidor — há mercadoria que chega já fora de
+  // prazo, e esconder isso seria pior. Mas vale avisar quem escreve, porque a causa mais
+  // provável é um engano no ano.
+  const jaExpirada =
+    !!valor.dataValidade && new Date(valor.dataValidade) < new Date(new Date().toDateString());
+
+  return (
+    <div className="mt-3 border-t border-slate-100 pt-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-slate-600">
+            Validade
+            {exigeValidade && <span className="ml-1 text-rose-600">obrigatória</span>}
+          </span>
+          <input
+            type="date"
+            value={valor.dataValidade ?? ''}
+            onChange={(e) => onChange({ dataValidade: e.target.value })}
+            className={cn(
+              'w-full rounded-lg border px-3 py-2 text-sm',
+              faltaValidade ? 'border-rose-400 bg-rose-50' : 'border-slate-200',
+            )}
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-slate-600">
+            Lote
+            {exigeLote ? (
+              <span className="ml-1 text-rose-600">obrigatório</span>
+            ) : (
+              <span className="ml-1 font-normal text-slate-400">opcional</span>
+            )}
+          </span>
+          <input
+            type="text"
+            placeholder={valor.dataValidade ? 'deriva da validade se vazio' : 'ex: L-2026-114'}
+            value={valor.lote ?? ''}
+            onChange={(e) => onChange({ lote: e.target.value })}
+            className={cn(
+              'w-full rounded-lg border px-3 py-2 text-sm',
+              faltaLote ? 'border-rose-400 bg-rose-50' : 'border-slate-200',
+            )}
+          />
+        </label>
+      </div>
+
+      {faltaValidade && (
+        <p className="mt-2 text-xs text-rose-600">
+          Este produto é controlado por validade. Sem a data não há alerta possível antes da
+          perda.
+        </p>
+      )}
+
+      {jaExpirada && (
+        <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          A data indicada já passou. Se a mercadoria chegou fora de prazo, é legítimo — se não,
+          verifique o ano.
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface RecebimentoModalProps {
   order: PurchaseOrder;
   onClose: () => void;
@@ -44,6 +141,15 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
 
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
 
+  /**
+   * Lote e validade por linha do pedido.
+   *
+   * Guardado por `item.id` como as quantidades. Fica no mesmo sítio onde se escreve a
+   * quantidade porque é o mesmo momento: quem recebe tem o documento numa mão e a caixa na
+   * outra, e a validade está impressa na caixa.
+   */
+  const [lotes, setLotes] = useState<Record<string, { lote?: string; dataValidade?: string }>>({});
+
   useEffect(() => {
     if (order.itens?.length) return;
 
@@ -69,6 +175,8 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
   const emFalta = (item: PurchaseOrderItem) => item.quantidadePedida - item.quantidadeRecebida;
   const quantidadeDe = (item: PurchaseOrderItem) => quantidades[item.id] ?? emFalta(item);
 
+  const loteDe = (item: PurchaseOrderItem) => lotes[item.id] ?? {};
+
   const porReceber = itens.filter((i) => emFalta(i) > 0);
   const total = porReceber.reduce((soma, i) => soma + quantidadeDe(i) * i.custoUnitario, 0);
 
@@ -76,6 +184,20 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
     const q = quantidadeDe(i);
     return q < 0 || q > emFalta(i);
   });
+
+  /**
+   * As linhas a que falta a validade ou o lote que o produto exige.
+   *
+   * Verificado aqui e não só no servidor: o backend recusa a recepção inteira, e a recusa
+   * chega com o camião à porta e a mercadoria no chão. Melhor marcar o campo em falta antes
+   * de alguém carregar em Confirmar.
+   */
+  const linhasSemValidade = porReceber.filter(
+    (i) => quantidadeDe(i) > 0 && i.produto?.temValidade && !loteDe(i).dataValidade,
+  );
+  const linhasSemLote = porReceber.filter(
+    (i) => quantidadeDe(i) > 0 && i.produto?.rastreavelPorLote && !loteDe(i).lote?.trim(),
+  );
 
   const confirmar = async () => {
     if (!armazemId) return toast.error('Escolha o armazém de destino.');
@@ -88,17 +210,40 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
       return toast.error('Indique a quantidade recebida de pelo menos um produto.');
     }
 
+    if (linhasSemValidade.length > 0) {
+      return toast.error(
+        `Falta a data de validade de: ${linhasSemValidade
+          .map((i) => i.produto?.nome ?? 'produto')
+          .join(', ')}. Sem ela não há alerta possível antes da perda.`,
+      );
+    }
+
+    if (linhasSemLote.length > 0) {
+      return toast.error(
+        `Falta o código do lote de: ${linhasSemLote
+          .map((i) => i.produto?.nome ?? 'produto')
+          .join(', ')}.`,
+      );
+    }
+
     setLoading(true);
     try {
       await purchasesApi.receiveOrder(order.id, {
         armazemId,
         documentoRef: documentoRef.trim() || undefined,
         observacoes: 'Recepção registada na secção Compras',
-        itens: aReceber.map(({ item, quantidade }) => ({
-          produtoId: item.produtoId,
-          quantidade,
-          custoUnitario: item.custoUnitario,
-        })),
+        itens: aReceber.map(({ item, quantidade }) => {
+          const { lote, dataValidade } = loteDe(item);
+          return {
+            produtoId: item.produtoId,
+            quantidade,
+            custoUnitario: item.custoUnitario,
+            // Só vão se preenchidos: uma string vazia falharia a validação `IsDateString`
+            // do servidor, e enviar `lote: ''` criaria um lote de código vazio.
+            lote: lote?.trim() || undefined,
+            dataValidade: dataValidade || undefined,
+          };
+        }),
       });
 
       toast.success('Mercadoria recebida. O stock, o custo médio e as contas a pagar foram actualizados.', {
@@ -258,6 +403,17 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                         </span>
                       </div>
                     </div>
+
+                    <CamposDeLote
+                      item={item}
+                      valor={loteDe(item)}
+                      onChange={(campos) =>
+                        setLotes((antes) => ({
+                          ...antes,
+                          [item.id]: { ...antes[item.id], ...campos },
+                        }))
+                      }
+                    />
                   </div>
                 );
               })}
@@ -324,6 +480,35 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* ── Lote e validade, a partir de sm ─────────────────────────────
+                Fora da tabela e não numa sexta e sétima coluna: dentro de um modal
+                de `max-w-2xl`, sete colunas deixariam cada campo com uns 40px, e é
+                aqui que se escreve a data que vai gerar os alertas. */}
+            <div className="hidden space-y-2 sm:block">
+              {porReceber
+                .filter((i) => quantidadeDe(i) > 0)
+                .map((item) => (
+                  <div
+                    key={`lote-${item.id}`}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <p className="text-sm font-medium text-slate-800">
+                      {item.produto?.nome ?? 'Produto desconhecido'}
+                    </p>
+                    <CamposDeLote
+                      item={item}
+                      valor={loteDe(item)}
+                      onChange={(campos) =>
+                        setLotes((antes) => ({
+                          ...antes,
+                          [item.id]: { ...antes[item.id], ...campos },
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
             </div>
             </>
           )}

@@ -274,16 +274,9 @@ export function FinanceiroDashboardPage() {
     // telemóvel de 375px, o padding a dobrar comia 64px dos 375 — quase um quinto da
     // largura, antes de a tabela começar.
     <div>
-      {/* Header */}
-      <div className="mb-8">
-        {/* `text-3xl` fixo (30px) transbordava em telemóvel; cresce com o ecrã. */}
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Financeiro
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Resultados, fluxo de caixa e contas correntes
-        </p>
-      </div>
+      {/* O nome e a descrição saíram: o cabeçalho da aplicação já diz «Financeiro», e
+          os separadores logo abaixo enumeram o mesmo que a descrição enumerava — com
+          a vantagem de se poder carregar neles. */}
 
       {/* Separadores.
           Sublinhado em vez de pastilha preenchida: é o padrão que o Stock e o RH já

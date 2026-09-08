@@ -8,7 +8,7 @@ export function DashboardPage() {
   // O componente SuperAdminDashboard só será mostrado se a role for SUPER_ADMIN
   if (user?.role === 'SUPER_ADMIN') {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <SuperAdminDashboard />
       </div>
     );
@@ -16,7 +16,7 @@ export function DashboardPage() {
 
   // Caso contrário, mostra o AdminDashboard (acessÍvel para ADMIN e MANAGER)
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <AdminDashboard />
     </div>
   );

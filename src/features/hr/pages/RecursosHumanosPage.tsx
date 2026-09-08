@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { Users, CalendarDays, Wallet, UserSquare } from 'lucide-react';
+import { Users, CalendarDays, Wallet } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { usePermissions, useAuth } from '@/features/auth';
 import { EmployeeListPage } from './EmployeeListPage';
@@ -46,16 +46,9 @@ export function RecursosHumanosPage() {
   const aba: Aba = ABAS.some((a) => a.id === doUrl) ? (doUrl as Aba) : ABAS[0].id;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
-          <UserSquare className="h-6 w-6 text-indigo-600" />
-          Recursos Humanos
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Colaboradores, escalas de turno e processamento de vencimentos.
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* O cabeçalho da aplicação já diz «Recursos Humanos»; os separadores abaixo
+          dizem o que a descrição enumerava. */}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <Tabs

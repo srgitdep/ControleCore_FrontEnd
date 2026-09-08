@@ -2,6 +2,9 @@ import { api } from '@/shared/config';
 
 export interface Supplier {
   id: string;
+  /** A organização a que esta relação comercial pertence. */
+  organizacaoId?: string | null;
+  estadoRelacao?: string;
   nome: string;
   nuit?: string;
   tipoFornecimento?: string;
@@ -118,6 +121,168 @@ export const suppliersApi = {
       fornecedor: { id: string; nome: string };
       desempenho: DesempenhoFornecedor;
     }>(`/fornecedores/${id}/desempenho`);
+    return data;
+  },
+};
+
+// ─── Organização fornecedora e conta bancária (§3 e §15.1) ───────────────────
+//
+// A identidade da organização é global; a relação comercial é por empresa compradora. O
+// que é da organização — NUIT, sede, conta bancária — não se repete a cada empresa que
+// compra ao mesmo fornecedor.
+
+export type ForcaIndicio = 'CERTEZA' | 'FORTE' | 'FRACO';
+
+export interface Indicio {
+  campo: 'NUIT' | 'IBAN' | 'NOME' | 'EMAIL' | 'TELEFONE';
+  forca: ForcaIndicio;
+  descricao: string;
+}
+
+export interface SuspeitaDuplicado {
+  organizacaoId: string;
+  razaoSocial: string;
+  indicios: Indicio[];
+  /** Verdadeiro quando há certeza — NUIT igual. O cadastro reutiliza em vez de criar. */
+  bloqueia: boolean;
+}
+
+export interface OrganizacaoFornecedora {
+  id: string;
+  razaoSocial: string;
+  nomeComercial?: string | null;
+  nuit?: string | null;
+  sede?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+  website?: string | null;
+  /** Preenchido quando esta organização foi fundida noutra. É um remissivo. */
+  fundidaEmId?: string | null;
+  fundidaEm?: string | null;
+  motivoFusao?: string | null;
+}
+
+export const EstadoContaBancaria = {
+  PENDENTE: 'PENDENTE',
+  ACTIVA: 'ACTIVA',
+  RECUSADA: 'RECUSADA',
+  SUBSTITUIDA: 'SUBSTITUIDA',
+} as const;
+export type EstadoContaBancaria =
+  (typeof EstadoContaBancaria)[keyof typeof EstadoContaBancaria];
+
+export interface ContaBancaria {
+  id: string;
+  organizacaoId: string;
+  banco: string;
+  iban: string;
+  ibanNormalizado: string;
+  titular?: string | null;
+  estado: EstadoContaBancaria;
+  comprovativoUrl?: string | null;
+  canalVerificacao?: string | null;
+  solicitadaEm: string;
+  decididaEm?: string | null;
+  motivoDecisao?: string | null;
+  /** Verdadeiro quando quem pediu foi quem aprovou. Hoje impossível — a regra bloqueia. */
+  sodExcepcao: boolean;
+  solicitadaPor?: { name: string };
+  decididaPor?: { name: string } | null;
+}
+
+export interface PedidoDeContaBancaria {
+  banco: string;
+  iban: string;
+  titular?: string;
+  comprovativoUrl?: string;
+}
+
+export const ROTULO_ESTADO_CONTA: Record<EstadoContaBancaria, string> = {
+  PENDENTE: 'Por aprovar',
+  ACTIVA: 'Em uso',
+  RECUSADA: 'Recusada',
+  SUBSTITUIDA: 'Substituída',
+};
+
+export const b2bFornecedorApi = {
+  /**
+   * Procura organizações que possam ser a mesma antes de criar.
+   *
+   * NUIT igual é certeza e o cadastro reutiliza sem perguntar — pedir confirmação
+   * ensinaria a carregar em «sim» sem ler. Nome parecido, IBAN partilhado e contactos
+   * iguais avisam e deixam prosseguir: «Padaria Central» da Beira não é a de Maputo.
+   */
+  verificarDuplicado: async (dados: {
+    razaoSocial: string;
+    nomeComercial?: string;
+    nuit?: string;
+    email?: string;
+    telefone?: string;
+  }) => {
+    const { data } = await api.post<SuspeitaDuplicado[]>(
+      '/b2b/organizacoes/verificar-duplicado',
+      dados,
+    );
+    return data;
+  },
+
+  obterOrganizacao: async (id: string) => {
+    const { data } = await api.get<OrganizacaoFornecedora>(`/b2b/organizacoes/${id}`);
+    return data;
+  },
+
+  /**
+   * Funde duas organizações que são a mesma empresa.
+   *
+   * A perdedora não é apagada: fica como remissivo, e a fusão pode ser desfeita. Nenhuma
+   * ordem de compra, recepção ou registo financeiro é tocado — apontam para a relação, e
+   * não para a organização.
+   */
+  fundirOrganizacoes: async (dto: {
+    perdedoraId: string;
+    sobreviventeId: string;
+    motivo: string;
+  }) => {
+    const { data } = await api.post<{
+      sobreviventeId: string;
+      relacoesMovidas: number;
+      contasMovidas: number;
+      aviso: string | null;
+    }>('/b2b/organizacoes/fundir', dto);
+    return data;
+  },
+
+  // ─── Contas bancárias ──────────────────────────────────────────────────────
+
+  /** Todas as contas, incluindo substituídas e recusadas. Nunca se apaga nenhuma. */
+  listarContas: async (organizacaoId: string) => {
+    const { data } = await api.get<ContaBancaria[]>(
+      `/b2b/organizacoes/${organizacaoId}/contas-bancarias`,
+    );
+    return data;
+  },
+
+  /** Cria o pedido em PENDENTE. Não activa nada — a conta só vale depois de aprovada. */
+  pedirConta: async (organizacaoId: string, dto: PedidoDeContaBancaria) => {
+    const { data } = await api.post<{
+      conta: ContaBancaria;
+      avisoIbanJaRecusado: string | null;
+    }>(`/b2b/organizacoes/${organizacaoId}/contas-bancarias`, dto);
+    return data;
+  },
+
+  /**
+   * Aprova ou recusa, por outra pessoa.
+   *
+   * Exige comprovativo junto ao pedido e a descrição do canal independente pelo qual a
+   * alteração foi confirmada. Um pedido que chega por e-mail e é confirmado por resposta
+   * ao mesmo e-mail não foi confirmado: quem controla a caixa controla os dois lados.
+   */
+  decidirConta: async (
+    contaId: string,
+    dto: { aprovar: boolean; canalVerificacao?: string; motivo?: string },
+  ) => {
+    const { data } = await api.patch<ContaBancaria>(`/b2b/contas-bancarias/${contaId}`, dto);
     return data;
   },
 };

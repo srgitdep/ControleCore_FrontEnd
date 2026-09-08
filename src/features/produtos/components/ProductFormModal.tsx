@@ -26,6 +26,15 @@ const productSchema = z.object({
   unidadeMedida: z.string().min(1, 'Unidade de medida é obrigatória'),
   peso: z.coerce.number().optional(),
   isWeighable: z.boolean().default(false),
+
+  // ─── Lote e validade ──────────────────────────────────────────────────────
+  //
+  // `temValidade` torna a data OBRIGATÓRIA na entrada de mercadoria deste produto. É
+  // deliberado e é o que faz o controlo existir: sem a exigência, ninguém escreve as
+  // datas, a tabela de lotes fica vazia e os alertas nunca disparam.
+  temValidade: z.boolean().default(false),
+  rastreavelPorLote: z.boolean().default(false),
+  diasAvisoValidade: z.coerce.number().min(1, 'O aviso tem de ser de pelo menos 1 dia').optional(),
   isActive: z.boolean().default(true),
 
   // ─── Stock inicial ────────────────────────────────────────────────────────
@@ -127,6 +136,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           peso: productToEdit.peso || 0,
           isWeighable: productToEdit.isWeighable,
           isActive: productToEdit.isActive,
+          temValidade: productToEdit.temValidade ?? false,
+          rastreavelPorLote: productToEdit.rastreavelPorLote ?? false,
+          diasAvisoValidade: productToEdit.diasAvisoValidade ?? undefined,
         }
       : {
           nome: '',
@@ -142,6 +154,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           peso: 0,
           isWeighable: false,
           isActive: true,
+          temValidade: false,
+          rastreavelPorLote: false,
+          // Sem valor: a omissão do domínio (45 dias) aplica-se quando não está definido, e
+          // um zero pré-preenchido mostraria um erro num campo que ninguém tocou.
+          diasAvisoValidade: undefined,
           armazemId: '',
           quantidadeInicial: 0,
           // Sem valor inicial: um zero por omissão mostraria um erro de validação num
@@ -153,6 +170,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
   const precoCusto = useWatch({ control, name: 'precoCusto' });
   const precoVenda = useWatch({ control, name: 'precoVenda' });
+  // Os campos de validade só aparecem depois de o controlo ser ligado: mostrá-los sempre
+  // sugeriria que todo o produto tem prazo, e um saco de cimento não tem.
+  const temValidade = useWatch({ control, name: 'temValidade' });
   const unidadeMedida = useWatch({ control, name: 'unidadeMedida' });
   const quantidadeInicial = useWatch({ control, name: 'quantidadeInicial' });
 
@@ -431,6 +451,76 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                     Se marcado, o PDV solicitará o peso ou lerá a etiqueta da balança. Requer unidade KG.
                   </p>
                 </label>
+              </div>
+
+              {/* ─── Lote e validade ──────────────────────────────────────────
+                  Fica no bloco das características físicas porque é isso que é: uma
+                  propriedade da mercadoria, não uma regra comercial. */}
+              <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="temValidade"
+                    {...register('temValidade')}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="temValidade" className="text-sm font-medium text-slate-700">
+                    Controlar prazo de validade
+                    <p className="mt-0.5 text-xs font-normal text-slate-500">
+                      A data de validade passa a ser <strong>obrigatória</strong> em cada entrada
+                      de mercadoria deste produto. É o que faz os alertas existirem — sem a
+                      exigência, as datas não são registadas e não há nada para vigiar.
+                    </p>
+                  </label>
+                </div>
+
+                {temValidade && (
+                  <div className="mt-4 grid grid-cols-1 gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="diasAvisoValidade"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                      >
+                        Avisar quantos dias antes?
+                      </label>
+                      <input
+                        type="number"
+                        id="diasAvisoValidade"
+                        min={1}
+                        placeholder="45"
+                        {...register('diasAvisoValidade')}
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <p className="mt-1 text-xs text-slate-400">
+                        Vazio usa 45 dias. O prazo útil de um iogurte não é o de uma conserva.
+                      </p>
+                      {errors.diasAvisoValidade && (
+                        <p className="mt-1 text-xs text-rose-500">
+                          {errors.diasAvisoValidade.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-start gap-3 sm:pt-7">
+                      <input
+                        type="checkbox"
+                        id="rastreavelPorLote"
+                        {...register('rastreavelPorLote')}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <label
+                        htmlFor="rastreavelPorLote"
+                        className="text-sm font-medium text-slate-700"
+                      >
+                        Exigir código de lote
+                        <p className="mt-0.5 text-xs font-normal text-slate-500">
+                          Sem isto, o lote é derivado da própria validade — que já basta para
+                          distinguir mercadoria no armazém.
+                        </p>
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

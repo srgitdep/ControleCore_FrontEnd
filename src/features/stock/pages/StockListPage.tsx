@@ -19,6 +19,15 @@ import {
   ArrowUp,
   ArrowDown,
   Settings2,
+  HeartPulse,
+  CalendarClock,
+  Timer,
+  ShieldQuestion,
+  Lock,
+  LockOpen,
+  PackageCheck,
+  Layers3,
+  MapPin,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -26,11 +35,17 @@ import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { ResponsiveTable, Button, Tabs, type TabDefinition } from '@/shared/ui';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
+import { SaudeStockTab } from '../components/SaudeStockTab';
+import { ValidadeTab } from '../components/ValidadeTab';
+import { ReservasTab } from '../components/ReservasTab';
+import { RetencaoModal, type TipoRetencao } from '../components/RetencaoModal';
+import { FefoModal } from '../components/FefoModal';
+import { LocalizacaoStockModal } from '../components/LocalizacaoStockModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario';
 
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
@@ -38,6 +53,9 @@ type StockTab = 'produtos' | 'estoque' | 'movimentos' | 'inventario';
 const TABS: TabDefinition<StockTab>[] = [
   { id: 'produtos', label: 'Produtos', icon: Boxes },
   { id: 'estoque', label: 'Stock', icon: Package },
+  { id: 'reservas', label: 'Reservas', icon: Timer },
+  { id: 'saude', label: 'Saúde do stock', icon: HeartPulse },
+  { id: 'validade', label: 'Validades', icon: CalendarClock },
   { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
   { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
 ];
@@ -141,6 +159,41 @@ function StockCurrentTab() {
       armazemOrigem: null,
     });
 
+  /**
+   * Estado do modal de retenção, separado do de movimentos.
+   *
+   * Podia ser mais um valor no `ModalType`, mas as duas famílias não são a mesma coisa: os
+   * movimentos alteram o saldo físico e aparecem no extracto; as retenções alteram o que o
+   * saldo oferece e não aparecem. Um só estado obrigaria cada modal a ignorar os campos do
+   * outro, e é assim que um `produtoId` acaba passado a uma operação que não o usa.
+   *
+   * Guarda a posição inteira e não só o id: o modal mostra o disponível actual, porque
+   * comprometer mercadoria é uma decisão que se toma contra um número — e obrigar quem decide
+   * a fechar o modal para o ir ver é como se pede um erro.
+   */
+  const [retencao, setRetencao] = useState<{
+    stockId: string | null;
+    tipo: TipoRetencao | null;
+    posicao: Stock | null;
+  }>({ stockId: null, tipo: null, posicao: null });
+
+  const abrirRetencao = (stockId: string, tipo: TipoRetencao, posicao: Stock) =>
+    setRetencao({ stockId, tipo, posicao });
+
+  const fecharRetencao = () => setRetencao({ stockId: null, tipo: null, posicao: null });
+
+  /**
+   * A posição para a qual se está a perguntar de que lote tirar.
+   *
+   * Guarda a posição inteira porque o FEFO precisa de produto **e** armazém, e ambos vêm da
+   * linha — um ecrã com selectores obrigaria a escolher outra vez o que já estava escolhido,
+   * e permitiria combinações de produto e armazém que não existem.
+   */
+  const [fefo, setFefo] = useState<Stock | null>(null);
+
+  /** A posicao para a qual se esta a ver ou editar as prateleiras. */
+  const [localizacao, setLocalizacao] = useState<Stock | null>(null);
+
   const columns = useMemo<ColumnDef<Stock, any>[]>(
     () => [
       stockColumnHelper.accessor('product', {
@@ -200,22 +253,60 @@ function StockCurrentTab() {
 
       stockColumnHelper.accessor('currentQuantity', {
         id: 'balanco',
-        header: 'Balanço Atual',
+        // «Disponível» e não «Balanço Atual»: desde que a verificação de disponibilidade
+        // existe no abate, é este o número que decide se uma venda passa. O físico continua
+        // visível na linha de baixo quando os dois divergem.
+        header: 'Disponível',
         cell: ({ row }) => {
-          const { currentQuantity, product, abaixoDoMinimo } = row.original;
+          const { currentQuantity, product, abaixoDoMinimo, estados } = row.original;
           // A mesma regra do painel, calculada no servidor. Ver `getRowStatus`.
           const isCritical = !!abaixoDoMinimo;
+          const unidade = product?.unidadeMedida ?? 'UN';
+
+          // Parte do saldo pode estar comprometida — reservada, em quarentena ou bloqueada.
+          // Nesse caso o número grande passa a ser o **disponível**, porque é esse que decide
+          // se uma venda passa. Mostrar só o físico faria o ecrã contradizer o POS.
+          const comprometido = estados
+            ? estados.reservado + estados.quarentena + estados.bloqueado
+            : 0;
+          const temComprometido = comprometido > 0;
+
+          const detalhe = estados
+            ? [
+                estados.reservado > 0 ? `${estados.reservado} reservadas` : null,
+                estados.quarentena > 0 ? `${estados.quarentena} em quarentena` : null,
+                estados.bloqueado > 0 ? `${estados.bloqueado} bloqueadas` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : '';
+
           return (
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
-                isCritical ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-              }`}
-            >
-              {currentQuantity}
-              <span className="ml-1 text-xs opacity-75">
-                {product?.unidadeMedida ?? 'UN'}
+            <div className="flex flex-col items-start gap-1">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
+                  isCritical ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                }`}
+                title={temComprometido ? `${currentQuantity} ${unidade} em armazém` : undefined}
+              >
+                {temComprometido && estados ? estados.disponivel : currentQuantity}
+                <span className="ml-1 text-xs opacity-75">{unidade}</span>
               </span>
-            </span>
+
+              {temComprometido && estados && (
+                <span className="text-[11px] leading-tight text-slate-500">
+                  {estados.fisico} em armazém · {detalhe}
+                </span>
+              )}
+
+              {/* Não devia acontecer, e por isso aparece em vez de ficar escondido: uma
+                  reserva ou retenção sobreviveu a uma saída de mercadoria. */}
+              {estados?.inconsistente && (
+                <span className="text-[11px] font-medium leading-tight text-amber-700">
+                  Comprometido excede o saldo em armazém — verificar
+                </span>
+              )}
+            </div>
           );
         },
       }),
@@ -287,6 +378,70 @@ function StockCurrentTab() {
                   >
                     Ajuste - (Quebra)
                   </button>
+
+                  {/* Retenções: mexem no que o stock oferece sem mexer no que tem. Ficam
+                      separadas dos ajustes por uma linha, porque não são movimentos — a
+                      mercadoria não sai, e nenhuma destas operações aparece no extracto. */}
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  <button
+                    onClick={() => abrirRetencao(id, 'RESERVAR', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-blue-700 hover:bg-blue-50"
+                  >
+                    <Timer className="h-3.5 w-3.5" />
+                    Reservar
+                  </button>
+                  <button
+                    onClick={() => setLocalizacao(row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    Onde está / posições
+                  </button>
+                  <button
+                    onClick={() => setFefo(row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Layers3 className="h-3.5 w-3.5" />
+                    De que lote tirar?
+                  </button>
+                  <button
+                    onClick={() => abrirRetencao(id, 'QUARENTENA', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                  >
+                    <ShieldQuestion className="h-3.5 w-3.5" />
+                    Reter em quarentena
+                  </button>
+                  <button
+                    onClick={() => abrirRetencao(id, 'BLOQUEIO', row.original)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                    Bloquear
+                  </button>
+
+                  {/* As libertações só aparecem quando há de facto algo retido. Um menu com
+                      «Libertar da quarentena» sempre visível numa posição sem quarentena
+                      convida a carregar e a receber uma recusa. */}
+                  {!!row.original.estados?.quarentena && (
+                    <button
+                      onClick={() => abrirRetencao(id, 'LIBERTAR_QUARENTENA', row.original)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+                    >
+                      <PackageCheck className="h-3.5 w-3.5" />
+                      Libertar da quarentena ({row.original.estados.quarentena})
+                    </button>
+                  )}
+
+                  {!!row.original.estados?.bloqueado && (
+                    <button
+                      onClick={() => abrirRetencao(id, 'LIBERTAR_BLOQUEIO', row.original)}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
+                    >
+                      <LockOpen className="h-3.5 w-3.5" />
+                      Desbloquear ({row.original.estados.bloqueado})
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -430,6 +585,36 @@ function StockCurrentTab() {
           onClose={closeModal}
         />
       )}
+
+      {/* Fora do condicional do outro modal, de propósito: são estados independentes, e o
+          próprio componente devolve `null` quando não tem `stockId` nem `tipo`. */}
+      <RetencaoModal
+        stockId={retencao.stockId}
+        tipo={retencao.tipo}
+        produtoNome={retencao.posicao?.product?.nome ?? null}
+        estados={retencao.posicao?.estados}
+        unidade={retencao.posicao?.product?.unidadeMedida ?? 'UN'}
+        onClose={fecharRetencao}
+      />
+
+      <LocalizacaoStockModal
+        stockId={localizacao?.id ?? null}
+        produtoId={localizacao?.productId ?? null}
+        armazemId={localizacao?.armazemId ?? null}
+        produtoNome={localizacao?.product?.nome ?? null}
+        armazemNome={localizacao?.armazem?.nome ?? null}
+        unidade={localizacao?.product?.unidadeMedida ?? 'UN'}
+        onClose={() => setLocalizacao(null)}
+      />
+
+      <FefoModal
+        produtoId={fefo?.productId ?? null}
+        armazemId={fefo?.armazemId ?? null}
+        produtoNome={fefo?.product?.nome ?? null}
+        armazemNome={fefo?.armazem?.nome ?? null}
+        unidade={fefo?.product?.unidadeMedida ?? 'UN'}
+        onClose={() => setFefo(null)}
+      />
     </>
   );
 }
@@ -608,19 +793,7 @@ export function StockListPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* ──â”€ Cabeçalho ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-600" />
-            Produtos e Stock
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Catálogo, saldos por armazém, movimentos e inventário físico.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
 
       {/* ──â”€ Tabs ────────────────────────────────────────────────────────────â”€ */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -629,6 +802,9 @@ export function StockListPage() {
         <div className="p-4 sm:p-6">
           {activeTab === 'produtos' && <ProductsTab />}
           {activeTab === 'estoque' && <StockCurrentTab />}
+          {activeTab === 'reservas' && <ReservasTab />}
+          {activeTab === 'saude' && <SaudeStockTab />}
+          {activeTab === 'validade' && <ValidadeTab />}
           {activeTab === 'movimentos' && <MovementsTab />}
           {activeTab === 'inventario' && <InventoryTab />}
         </div>

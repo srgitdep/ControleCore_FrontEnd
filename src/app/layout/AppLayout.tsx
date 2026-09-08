@@ -70,12 +70,17 @@ export function AppLayout() {
       >
         <Header isCollapsed={isSidebarCollapsed} />
 
-        {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão */}
+        {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão.
+
+            A largura máxima das restantes decide-se aqui, e não em cada página. Estava
+            repetida em dez ficheiros e em dois valores diferentes — `max-w-7xl` numas,
+            `max-w-[1400px]` noutras — pelo que o conteúdo mudava de largura ao navegar
+            entre secções. Nada que dê erro, mas que se lê como desalinhamento. */}
         <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
           {isPOS ? (
             <Outlet />
           ) : (
-            <div className="p-4 sm:p-6">
+            <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
               <Outlet />
             </div>
           )}

@@ -5,6 +5,7 @@ import { X, Box, Search, AlertTriangle, Loader2, ExternalLink } from 'lucide-rea
 import { getStockDoArmazem, type Armazem } from '@/features/lojas';
 import { cn } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
+import { LocalizacoesPanel } from './LocalizacoesPanel';
 
 /**
  * O que está dentro de um armazém.
@@ -38,6 +39,7 @@ export function ArmazemDetailsModal({
   const [pesquisa, setPesquisa] = useState('');
   const [incluirSemSaldo, setIncluirSemSaldo] = useState(false);
   const [soAbaixoDoMinimo, setSoAbaixoDoMinimo] = useState(false);
+  const [separador, setSeparador] = useState<'stock' | 'localizacoes'>('stock');
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['armazem-stock', armazem.id, incluirSemSaldo],
@@ -133,6 +135,39 @@ export function ArmazemDetailsModal({
           </div>
         )}
 
+        {/* ── Separadores ────────────────────────────────────────────────────
+            «O que está cá dentro» e «onde é que cabe» são duas perguntas sobre o mesmo
+            armazém, e quem gere um responde às duas no mesmo sítio. Um ecrã à parte para as
+            posições obrigaria a sair daqui e a escolher outra vez o armazém. */}
+        <div className="flex gap-1 border-b border-slate-100 px-6 pt-3">
+          {(
+            [
+              ['stock', 'Mercadoria'],
+              ['localizacoes', 'Posições'],
+            ] as const
+          ).map(([id, rotulo]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setSeparador(id)}
+              className={cn(
+                'rounded-t-lg px-4 py-2 text-sm font-medium transition-colors',
+                separador === id
+                  ? 'border-b-2 border-blue-600 text-blue-700'
+                  : 'text-slate-500 hover:text-slate-800',
+              )}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
+
+        {separador === 'localizacoes' ? (
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <LocalizacoesPanel armazemId={armazem.id} armazemNome={armazem.nome} />
+          </div>
+        ) : (
+          <>
         {/* ── Filtros ────────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/60 px-6 py-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
@@ -271,6 +306,8 @@ export function ArmazemDetailsModal({
             Abrir na secção Stock
           </Link>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
