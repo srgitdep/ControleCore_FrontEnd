@@ -35,8 +35,10 @@ import { SugestaoComprasModal, SugestoesDeCompra } from '../components/SugestaoC
 import { CriarPedidoModal } from '../components/CriarPedidoModal';
 import { AprovacaoModal } from '../components/AprovacaoModal';
 import { ConfirmacaoFornecedorModal } from '../components/ConfirmacaoFornecedorModal';
+import { AvisosExpedicaoTab } from '../components/AvisosExpedicaoTab';
+import { CriarAvisoModal } from '../components/CriarAvisoModal';
 
-type Aba = 'pedidos' | 'reposicao' | 'fornecedores';
+type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'fornecedores';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -78,6 +80,10 @@ export function PurchasesPage() {
     // decidir o que encomendar. Estava atrás de um botão que abria um diálogo — uma
     // lista de rupturas que é preciso saber procurar não é uma lista que alguém veja.
     { id: 'reposicao', label: 'A repor', icon: PackageSearch },
+    // A seguir ao que se vai encomendar vem o que já vem a caminho. Responde a «o que
+    // chega esta semana» — pergunta que antes só tinha resposta abrindo cada ordem uma
+    // a uma e adivinhando pela data prevista.
+    { id: 'expedicoes', label: 'A caminho', icon: Truck },
     ...(podeVerFornecedores
       ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck }]
       : []),
@@ -91,6 +97,7 @@ export function PurchasesPage() {
   const [aDecidir, setADecidir] = useState<PurchaseOrder | null>(null);
   const [aConfirmar, setAConfirmar] = useState<PurchaseOrder | null>(null);
   const [aSubmeter, setASubmeter] = useState<string | null>(null);
+  const [aExpedir, setAExpedir] = useState<PurchaseOrder | null>(null);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
   const [aCriar, setACriar] = useState<{
     linhas?: { produtoId: string; nome: string; quantidade: number; custoUnitario: number }[];
@@ -218,9 +225,11 @@ export function PurchasesPage() {
               onSubmeter={submeterParaAprovacao}
               onDecidir={setADecidir}
               onConfirmar={setAConfirmar}
+              onExpedir={setAExpedir}
               aSubmeter={aSubmeter}
             />
           )}
+          {aba === 'expedicoes' && <AvisosExpedicaoTab />}
           {aba === 'fornecedores' && <FornecedoresTab />}
         </div>
       </div>
@@ -239,6 +248,17 @@ export function PurchasesPage() {
           utilizadorId={utilizadorId}
           onClose={() => setADecidir(null)}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['pedidos-compra'] })}
+        />
+      )}
+
+      {aExpedir && (
+        <CriarAvisoModal
+          order={aExpedir}
+          onClose={() => setAExpedir(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['pedidos-compra'] });
+            queryClient.invalidateQueries({ queryKey: ['avisos-expedicao'] });
+          }}
         />
       )}
 
@@ -287,6 +307,7 @@ function ListaDePedidos({
   onSubmeter,
   onDecidir,
   onConfirmar,
+  onExpedir,
   aSubmeter,
 }: {
   pedidos: PurchaseOrder[];
@@ -296,6 +317,7 @@ function ListaDePedidos({
   onSubmeter: (p: PurchaseOrder) => void;
   onDecidir: (p: PurchaseOrder) => void;
   onConfirmar: (p: PurchaseOrder) => void;
+  onExpedir: (p: PurchaseOrder) => void;
   /** O id do pedido a ser submetido, para desactivar só esse botão. */
   aSubmeter: string | null;
 }) {
@@ -406,6 +428,15 @@ function ListaDePedidos({
                         className="p-2 text-amber-500 transition-colors hover:text-amber-700"
                       >
                         <Gavel size={16} />
+                      </button>
+                    )}
+                    {recebivel && (
+                      <button
+                        onClick={() => onExpedir(p)}
+                        title="Registar o que o fornecedor expediu"
+                        className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      >
+                        <Truck size={16} />
                       </button>
                     )}
                     {confirmavel && (

@@ -8,3 +8,6 @@ export * from './components/SugestaoComprasModal';
 export * from './components/CriarPedidoModal';
 export * from './components/AprovacaoModal';
 export * from './components/ConfirmacaoFornecedorModal';
+export * from './api/avisos.api';
+export * from './components/AvisosExpedicaoTab';
+export * from './components/CriarAvisoModal';
