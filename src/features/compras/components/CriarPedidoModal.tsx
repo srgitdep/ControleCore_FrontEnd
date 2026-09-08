@@ -12,6 +12,14 @@ import { TableScroll } from '@/shared/ui';
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
+/**
+ * Quantos produtos a lista mostra de uma vez.
+ *
+ * Alto o suficiente para que um catálogo pequeno apareça inteiro — que é o caso comum —
+ * e baixo o suficiente para não trazer milhares de linhas para dentro de um dropdown.
+ */
+const LIMITE_CATALOGO = 50;
+
 /** Uma linha em construção. `nome` é só para mostrar. */
 interface Linha {
   produtoId: string;
@@ -55,6 +63,7 @@ export function CriarPedidoModal({
   const [isSaving, setIsSaving] = useState(false);
 
   const [pesquisa, setPesquisa] = useState('');
+  const [listaAberta, setListaAberta] = useState(false);
   // `useDebounce` devolve o valor, não um par: com destructuring de array sobre uma
   // string, isto ficava com o primeiro carácter — e `undefined` quando vazia, que era
   // o que rebentava em `.trim()` ao abrir o modal.
@@ -65,12 +74,28 @@ export function CriarPedidoModal({
     queryFn: () => suppliersApi.getSuppliers(),
   });
 
-  const { data: produtosEncontrados } = useQuery({
-    queryKey: ['products', { search: pesquisaAdiada, page: 1, limit: 8 }],
-    queryFn: () => catalogApi.getProducts({ search: pesquisaAdiada, page: 1, limit: 8 }),
-    // Sem termo não vale trazer o catálogo inteiro para uma lista de sugestões.
-    enabled: pesquisaAdiada.trim().length >= 2,
+  const termo = pesquisaAdiada.trim();
+
+  // ─── A lista abre com o catálogo, não à espera que se adivinhe ──────────────
+  //
+  // Antes só procurava a partir de dois caracteres, e sem termo não mostrava nada. Quem
+  // abre o modal não sabe necessariamente o nome exacto do que quer comprar — e obrigar
+  // a adivinhar torna impossível descobrir o que existe.
+  //
+  // Agora abre com os primeiros `LIMITE_CATALOGO` produtos da empresa e a escrita passa
+  // a filtrar essa lista em vez de a fazer nascer. O limite existe porque um catálogo
+  // grande não cabe num dropdown nem vale a pena trazer inteiro; quando é excedido, o
+  // rodapé diz quantos ficaram de fora e que escrever os alcança.
+  const { data: produtosEncontrados, isLoading: aCarregarProdutos } = useQuery({
+    queryKey: ['products', { search: termo, page: 1, limit: LIMITE_CATALOGO }],
+    queryFn: () => catalogApi.getProducts({ search: termo, page: 1, limit: LIMITE_CATALOGO }),
+    // Sem isto a lista pisca a vazio entre teclas, porque cada termo é uma chave nova.
+    placeholderData: (anterior) => anterior,
   });
+
+  const produtos = produtosEncontrados?.data ?? [];
+  const totalNoCatalogo = produtosEncontrados?.total ?? 0;
+  const escondidos = Math.max(0, totalNoCatalogo - produtos.length);
 
   // Fornecedores suspensos ficam de fora: o backend recusa o pedido, e é melhor não os
   // oferecer do que falhar depois de preencher as linhas.
@@ -95,6 +120,8 @@ export function CriarPedidoModal({
       },
     ]);
     setPesquisa('');
+    // A lista fica aberta de propósito: quem acrescenta um produto costuma acrescentar
+    // outro a seguir, e fechá-la obrigaria a clicar no campo outra vez a cada linha.
   };
 
   const actualizar = (produtoId: string, campo: 'quantidade' | 'custoUnitario', valor: number) => {
@@ -201,40 +228,95 @@ export function CriarPedidoModal({
           {/* ── Produtos ─────────────────────────────────────────────────── */}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Produtos</label>
-            <div className="relative">
+            {/*
+              O `onBlur` está no contentor e não no input: fecha a lista quando o foco sai
+              para fora dela, e deixa-a aberta quando passa para um dos botões lá dentro —
+              que é o que um `onBlur` no próprio input não distingue, fechando a lista
+              antes de o clique chegar a registar.
+            */}
+            <div
+              className="relative"
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setListaAberta(false);
+              }}
+            >
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={pesquisa}
                 onChange={(e) => setPesquisa(e.target.value)}
-                placeholder="Escrever para procurar um produto..."
+                onFocus={() => setListaAberta(true)}
+                placeholder="Clicar para ver os produtos, ou escrever para procurar..."
                 className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500"
               />
 
-              {(produtosEncontrados?.data?.length ?? 0) > 0 && (
-                <ul className="absolute z-10 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                  {produtosEncontrados!.data.map((p) => (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        onClick={() => acrescentar(p)}
-                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50"
-                      >
-                        <span className="text-slate-800">{p.nome}</span>
-                        <span className="flex items-center gap-2 text-xs text-slate-500">
-                          {moeda(p.precoCusto ?? 0)}
-                          <Plus size={13} className="text-blue-600" />
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+              {listaAberta && (
+                <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+                  {aCarregarProdutos && produtos.length === 0 ? (
+                    <p className="flex items-center gap-2 px-3 py-3 text-sm text-slate-500">
+                      <Loader2 size={14} className="animate-spin" />
+                      A carregar produtos...
+                    </p>
+                  ) : produtos.length === 0 ? (
+                    <p className="px-3 py-3 text-sm text-slate-500">
+                      {termo
+                        ? `Nenhum produto encontrado para "${termo}".`
+                        : 'A empresa ainda não tem produtos no catálogo.'}
+                    </p>
+                  ) : (
+                    <>
+                      <ul className="max-h-60 overflow-y-auto">
+                        {produtos.map((p) => {
+                          // Mostrar o que já está no pedido, em vez de o esconder: quem
+                          // procura um produto que já acrescentou precisa de ver que ele
+                          // está lá, senão parece ter desaparecido do catálogo.
+                          const jaNoPedido = linhas.some((l) => l.produtoId === p.id);
+
+                          return (
+                            <li key={p.id}>
+                              <button
+                                type="button"
+                                onClick={() => acrescentar(p)}
+                                disabled={jaNoPedido}
+                                className={cn(
+                                  'flex w-full items-center justify-between px-3 py-2 text-left text-sm',
+                                  jaNoPedido ? 'cursor-default bg-slate-50' : 'hover:bg-slate-50',
+                                )}
+                              >
+                                <span className={jaNoPedido ? 'text-slate-400' : 'text-slate-800'}>
+                                  {p.nome}
+                                </span>
+                                <span className="flex items-center gap-2 text-xs text-slate-500">
+                                  {jaNoPedido ? (
+                                    <span className="text-slate-400">já no pedido</span>
+                                  ) : (
+                                    <>
+                                      {moeda(p.precoCusto ?? 0)}
+                                      <Plus size={13} className="text-blue-600" />
+                                    </>
+                                  )}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+
+                      {escondidos > 0 && (
+                        <p className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                          A mostrar {produtos.length} de {totalNoCatalogo}. Escreva para
+                          encontrar os restantes {escondidos}.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
 
             {linhas.length === 0 ? (
               <p className="mt-3 rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Nenhum produto no pedido. Procure acima para acrescentar.
+                Nenhum produto no pedido. Clique no campo acima para ver o catálogo.
               </p>
             ) : (
               <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
