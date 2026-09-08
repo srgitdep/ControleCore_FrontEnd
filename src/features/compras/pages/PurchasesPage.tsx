@@ -13,6 +13,7 @@ import {
   Gavel,
   MessageSquare,
   UserCheck,
+  FileSpreadsheet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -36,9 +37,10 @@ import { CriarPedidoModal } from '../components/CriarPedidoModal';
 import { AprovacaoModal } from '../components/AprovacaoModal';
 import { ConfirmacaoFornecedorModal } from '../components/ConfirmacaoFornecedorModal';
 import { AvisosExpedicaoTab } from '../components/AvisosExpedicaoTab';
+import { CatalogoTab } from '@/features/catalogo-fornecedor';
 import { CriarAvisoModal } from '../components/CriarAvisoModal';
 
-type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'fornecedores';
+type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'catalogo' | 'fornecedores';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -84,8 +86,13 @@ export function PurchasesPage() {
     // chega esta semana» — pergunta que antes só tinha resposta abrindo cada ordem uma
     // a uma e adivinhando pela data prevista.
     { id: 'expedicoes', label: 'A caminho', icon: Truck },
+    // O catálogo vem antes dos fornecedores porque é sobre o que eles vendem, e a
+    // pergunta «a que preço?» faz-se mais vezes do que «quem é este fornecedor?».
     ...(podeVerFornecedores
-      ? [{ id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck }]
+      ? [
+          { id: 'catalogo' as Aba, label: 'Catálogo', icon: FileSpreadsheet },
+          { id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck },
+        ]
       : []),
   ];
 
@@ -230,6 +237,7 @@ export function PurchasesPage() {
             />
           )}
           {aba === 'expedicoes' && <AvisosExpedicaoTab />}
+          {aba === 'catalogo' && <CatalogoTab />}
           {aba === 'fornecedores' && <FornecedoresTab />}
         </div>
       </div>
