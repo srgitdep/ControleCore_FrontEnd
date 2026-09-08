@@ -16,6 +16,7 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
+import { ConferenciaPage } from '@/features/conferencia';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
           // e um separador aqui que era uma tabela só de leitura. Fica só no separador,
           // agora completo.
           { path: '/compras',       element: <PurchasesPage /> },
+          // Conferência é secção própria e não separador das Compras: quem regista a
+          // factura não a pode aprovar, e juntá-las no mesmo ecrã convidaria a que fosse
+          // a mesma pessoa a fazer as duas coisas.
+          { path: '/conferencia',   element: <ConferenciaPage /> },
           { path: '/fornecedores',  element: <Navigate to="/compras?tab=fornecedores" replace /> },
 
           // ─── Vendas ─────────────────────────────────────────────────────
