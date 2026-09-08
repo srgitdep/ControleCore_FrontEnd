@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { suppliersApi } from '../api/suppliers.api';
+import { suppliersApi, b2bFornecedorApi } from '../api/suppliers.api';
+import type { SuspeitaDuplicado } from '../api/suppliers.api';
 import type { Supplier, SupplierPayload } from '../api/suppliers.api';
 
 const VAZIO: SupplierPayload = {
@@ -45,6 +46,41 @@ export function FornecedorFormModal({
       : VAZIO,
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [suspeitas, setSuspeitas] = useState<SuspeitaDuplicado[]>([]);
+  const [aVerificar, setAVerificar] = useState(false);
+
+  /**
+   * Procura organizações que possam ser a mesma, sem impedir nada.
+   *
+   * Corre quando o campo do NUIT ou do nome perde o foco, e não a cada tecla: uma
+   * chamada por caracter escrito seria ruído na rede e um aviso a piscar enquanto se
+   * escreve, que ninguém lê.
+   *
+   * O resultado **não bloqueia**. Um NUIT igual é reutilizado pelo servidor sem
+   * perguntar — pedir confirmação ensinaria a carregar em «sim» sem ler. O que aparece
+   * aqui são os indícios mais fracos: nome parecido, contactos iguais. «Padaria Central»
+   * da Beira não é a de Maputo, e quem cadastra é que sabe.
+   */
+  const verificarDuplicados = async () => {
+    if (fornecedor || !form.nome.trim()) return;
+
+    setAVerificar(true);
+    try {
+      const encontradas = await b2bFornecedorApi.verificarDuplicado({
+        razaoSocial: form.nome.trim(),
+        nuit: form.nuit?.trim() || undefined,
+        email: form.email?.trim() || undefined,
+        telefone: form.telefone?.trim() || undefined,
+      });
+      setSuspeitas(encontradas);
+    } catch {
+      // Silêncio de propósito: isto é um auxílio, e falhar a procura não deve impedir
+      // ninguém de cadastrar um fornecedor.
+      setSuspeitas([]);
+    } finally {
+      setAVerificar(false);
+    }
+  };
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,11 +120,24 @@ export function FornecedorFormModal({
       <label className="mb-1 block text-sm font-medium text-slate-700">
         {rotulo}
         {extra?.obrigatorio && <span className="text-rose-500"> *</span>}
+        {aVerificar && chave === 'nome' && (
+          <Loader2 size={12} className="ml-2 inline animate-spin text-slate-400" />
+        )}
       </label>
       <input
         type={extra?.tipo ?? 'text'}
         value={String(form[chave] ?? '')}
         onChange={(e) => setForm({ ...form, [chave]: e.target.value })}
+        onBlur={() => {
+          // Ao sair do campo, e não a cada tecla: uma chamada por caracter escrito seria
+          // ruído na rede e um aviso a piscar enquanto se escreve, que ninguém lê.
+          //
+          // Só nos campos que identificam a organização — o endereço e o website não
+          // ajudam a reconhecer um duplicado.
+          if (chave === 'nome' || chave === 'nuit' || chave === 'email' || chave === 'telefone') {
+            verificarDuplicados();
+          }
+        }}
         placeholder={extra?.placeholder}
         autoFocus={extra?.autoFocus}
         className="w-full rounded-xl border border-slate-200 px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
@@ -113,6 +162,32 @@ export function FornecedorFormModal({
         </div>
 
         <form onSubmit={guardar} className="space-y-4 overflow-y-auto p-6">
+        {suspeitas.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="flex items-center gap-2 text-xs font-medium text-amber-900">
+              <AlertTriangle size={14} />
+              {suspeitas.length === 1
+                ? 'Já existe uma organização parecida'
+                : `Já existem ${suspeitas.length} organizações parecidas`}
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {suspeitas.slice(0, 3).map((sp) => (
+                <li key={sp.organizacaoId} className="text-xs text-amber-800">
+                  <span className="font-medium">{sp.razaoSocial}</span>
+                  <span className="text-amber-700">
+                    {' — '}
+                    {sp.indicios.map((i) => i.descricao).join(' ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-amber-700">
+              Podes continuar: nomes parecidos não são o mesmo fornecedor. Se forem, funde as
+              organizações depois de criar.
+            </p>
+          </div>
+        )}
+
           {campo('Nome', 'nome', { obrigatorio: true, autoFocus: true })}
 
           {/* Empilhado abaixo de `sm`: dois campos lado a lado num telemóvel dão

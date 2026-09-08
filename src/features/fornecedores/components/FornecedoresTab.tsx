@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Truck, Plus, Search, Edit2, Loader2, Mail, Phone, Globe, MapPin, Ban, CheckCircle2,
-  BarChart3,
+  BarChart3, Landmark,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { suppliersApi } from '../api/suppliers.api';
 import type { Supplier } from '../api/suppliers.api';
 import { FornecedorFormModal } from './FornecedorFormModal';
 import { FornecedorDetailsModal } from './FornecedorDetailsModal';
+import { ContasBancariasModal } from './ContasBancariasModal';
 import { ConfirmDialog } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -35,6 +36,7 @@ export function FornecedoresTab() {
   const [aEditar, setAEditar] = useState<{ fornecedor?: Supplier } | null>(null);
   const [aVer, setAVer] = useState<Supplier | null>(null);
   const [aAlternar, setAAlternar] = useState<Supplier | null>(null);
+  const [aVerContas, setAVerContas] = useState<Supplier | null>(null);
   const [aGuardar, setAGuardar] = useState(false);
 
   const { data: fornecedores = [], isLoading } = useQuery({
@@ -196,6 +198,18 @@ export function FornecedoresTab() {
                           <BarChart3 size={16} />
                         </button>
                         <button
+                          onClick={() => setAVerContas(f)}
+                          disabled={!f.organizacaoId}
+                          title={
+                            f.organizacaoId
+                              ? 'Contas bancárias'
+                              : 'Sem organização associada — cadastro anterior à separação de identidade'
+                          }
+                          className="p-2 text-slate-400 transition-colors hover:text-amber-600 disabled:opacity-30 disabled:hover:text-slate-400"
+                        >
+                          <Landmark size={16} />
+                        </button>
+                        <button
                           onClick={() => setAEditar({ fornecedor: f })}
                           title="Editar"
                           className="p-2 text-slate-400 transition-colors hover:text-blue-600"
@@ -238,6 +252,14 @@ export function FornecedoresTab() {
       )}
 
       {aVer && <FornecedorDetailsModal fornecedor={aVer} onClose={() => setAVer(null)} />}
+
+      {aVerContas?.organizacaoId && (
+        <ContasBancariasModal
+          organizacaoId={aVerContas.organizacaoId}
+          nomeFornecedor={aVerContas.nome}
+          onClose={() => setAVerContas(null)}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={aAlternar !== null}
