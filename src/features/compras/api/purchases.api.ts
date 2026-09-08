@@ -17,6 +17,18 @@ export interface PurchaseOrderItem {
   produtoId: string;
   quantidadePedida: number;
   quantidadeRecebida: number;
+
+  /**
+   * Quanto é que o fornecedor confirmou desta linha.
+   *
+   * A diferença para `quantidadePedida` é o saldo por confirmar: o que ele **não** se
+   * comprometeu a entregar, e que precisa de nova decisão de abastecimento. Sem este
+   * número, uma confirmação parcial fica indistinguível de uma total, e a falta só
+   * aparece no dia da entrega.
+   *
+   * Ausente em ordens anteriores à governação.
+   */
+  quantidadeConfirmada?: number;
   custoUnitario: number;
   taxaIva: number;
   desconto: number;
@@ -59,7 +71,40 @@ export interface Rececao {
 export interface PurchaseOrder {
   id: string;
   fornecedorId: string;
+
+  /**
+   * A projecção dos três eixos, mantida para os ecrãs que já a liam.
+   *
+   * **Perde informação**: uma ordem por aprovar e uma ordem rejeitada aparecem as duas
+   * como `RASCUNHO`. Para decidir o que mostrar, olha-se para os eixos.
+   */
   estado: EstadoPedidoCompra;
+
+  /** Se a ordem pode sair da empresa. Ausente em ordens anteriores à governação. */
+  estadoAprovacao?: EstadoAprovacaoOC;
+  /** O que o fornecedor respondeu. */
+  estadoComercial?: EstadoComercialOC;
+  /** Quanto é que já veio. */
+  estadoCumprimento?: EstadoCumprimentoOC;
+  cancelamento?: EstadoCancelamentoOC | null;
+  motivoCancelamento?: string;
+
+  /** Sobe a cada alteração. As versões anteriores ficam guardadas por inteiro. */
+  versao?: number;
+
+  submetidaPor?: { name: string };
+  submetidaEm?: string;
+  aprovadaPor?: { name: string };
+  aprovadaEm?: string;
+  motivoDecisao?: string;
+
+  /**
+   * Verdadeiro quando quem criou a ordem foi também quem a aprovou.
+   *
+   * Não é um erro: há estabelecimentos com uma pessoa só, e bloquear levaria a partilha
+   * de credenciais. Mas fica visível, que é o ponto.
+   */
+  sodExcepcao?: boolean;
   dataPedido: string;
   dataPrevista?: string;
   observacoes?: string;
@@ -191,4 +236,175 @@ export const purchasesApi = {
     const { data } = await api.post(`/compras/rececoes/${rececaoId}/anular`, { motivo });
     return data;
   },
+
+  // ─── Governação (§8) ───────────────────────────────────────────────────────
+
+  /** Marca a ordem como pronta para alguém decidir. Deixa de ser editável. */
+  submitOrder: async (id: string) => {
+    const { data } = await api.post<PurchaseOrder>(`/compras/pedidos/${id}/submeter`);
+    return data;
+  },
+
+  /**
+   * Aprova ou rejeita.
+   *
+   * Quando quem aprova é quem criou, passa mas fica marcado como excepção de segregação
+   * de funções. A rejeição exige motivo — é o que quem for corrigir a ordem vai ler.
+   */
+  decideApproval: async (id: string, dto: { aprovar: boolean; motivo?: string }) => {
+    const { data } = await api.post<PurchaseOrder>(`/compras/pedidos/${id}/aprovacao`, dto);
+    return data;
+  },
+
+  /**
+   * Regista o que o fornecedor respondeu.
+   *
+   * Linhas não mencionadas contam como **não confirmadas**: o silêncio sobre uma linha
+   * não é um compromisso de a entregar.
+   */
+  registerConfirmation: async (
+    id: string,
+    dto: {
+      linhas: LinhaConfirmada[];
+      dataPropostaEntrega?: string;
+      observacoes?: string;
+      canal?: string;
+    },
+  ) => {
+    const { data } = await api.post<{
+      tipo: ResultadoConfirmacao['tipo'];
+      saldoPorConfirmar: SaldoPorConfirmar[];
+      alteracoes: string[];
+    }>(`/compras/pedidos/${id}/confirmacao`, dto);
+    return data;
+  },
+
+  /** O que cada versão dizia, quem alterou, e se a alteração foi material. */
+  getVersions: async (id: string) => {
+    const { data } = await api.get<VersaoPedido[]>(`/compras/pedidos/${id}/versoes`);
+    return data;
+  },
 };
+
+// ─── Governação da ordem de compra (§8) ──────────────────────────────────────
+//
+// O estado passou a ter três eixos, e `estado` é a projecção deles.
+//
+// A projecção **perde informação**, e é por isso que estes campos existem no cliente: uma
+// ordem por aprovar e uma ordem rejeitada aparecem as duas como `RASCUNHO`. Quem decide o
+// que mostrar tem de olhar para os eixos, e não para a projecção — foi assim que o botão
+// de dar entrada de mercadoria deixou de aparecer em pedidos novos.
+
+export const EstadoAprovacaoOC = {
+  RASCUNHO: 'RASCUNHO',
+  AGUARDA_APROVACAO: 'AGUARDA_APROVACAO',
+  APROVADA: 'APROVADA',
+  REJEITADA: 'REJEITADA',
+} as const;
+export type EstadoAprovacaoOC = (typeof EstadoAprovacaoOC)[keyof typeof EstadoAprovacaoOC];
+
+export const EstadoComercialOC = {
+  NAO_ENVIADA: 'NAO_ENVIADA',
+  ENVIADA: 'ENVIADA',
+  AGUARDA_RESPOSTA: 'AGUARDA_RESPOSTA',
+  ACEITE: 'ACEITE',
+  ACEITE_COM_ALTERACOES: 'ACEITE_COM_ALTERACOES',
+  PARCIALMENTE_CONFIRMADA: 'PARCIALMENTE_CONFIRMADA',
+  RECUSADA: 'RECUSADA',
+} as const;
+export type EstadoComercialOC = (typeof EstadoComercialOC)[keyof typeof EstadoComercialOC];
+
+export const EstadoCumprimentoOC = {
+  PENDENTE: 'PENDENTE',
+  PARCIALMENTE_EXPEDIDA: 'PARCIALMENTE_EXPEDIDA',
+  TOTALMENTE_EXPEDIDA: 'TOTALMENTE_EXPEDIDA',
+  PARCIALMENTE_RECEBIDA: 'PARCIALMENTE_RECEBIDA',
+  TOTALMENTE_RECEBIDA: 'TOTALMENTE_RECEBIDA',
+  ENCERRADA: 'ENCERRADA',
+} as const;
+export type EstadoCumprimentoOC = (typeof EstadoCumprimentoOC)[keyof typeof EstadoCumprimentoOC];
+
+export type EstadoCancelamentoOC = 'SOLICITADO' | 'CANCELADA';
+
+export interface VersaoPedido {
+  id: string;
+  versao: number;
+  conteudo: unknown;
+  /** Se a alteração invalidou a aprovação. */
+  materialidade: boolean;
+  motivoAlteracao?: string;
+  criadaEm: string;
+  alteradaPor?: { name: string };
+}
+
+export interface LinhaConfirmada {
+  itemId: string;
+  quantidadeConfirmada: number;
+  /** Vazio significa «aceita o preço da ordem» — não é preço zero. */
+  precoConfirmado?: number;
+}
+
+export interface SaldoPorConfirmar {
+  itemId: string;
+  produtoId: string;
+  quantidade: number;
+}
+
+export interface ResultadoConfirmacao {
+  tipo: 'ACEITE_TOTAL' | 'ACEITE_PARCIAL' | 'ACEITE_COM_ALTERACOES' | 'RECUSA';
+  /** O §8.3 em números: o que é preciso voltar a decidir. */
+  saldoPorConfirmar: SaldoPorConfirmar[];
+  alteracoes: string[];
+}
+
+/**
+ * Se se pode dar entrada de mercadoria contra esta ordem.
+ *
+ * Espelha `podeReceber` do backend. Duplicar a regra no cliente é aceitável — e
+ * preferível a esconder o botão por engano — porque o backend continua a ser quem decide:
+ * aqui só se evita mostrar uma acção que ia dar erro.
+ *
+ * Ordens anteriores à governação não têm os eixos preenchidos na listagem; nesse caso
+ * cai-se na projecção, que é o que o ecrã sempre usou.
+ */
+export function podeReceberMercadoria(p: PurchaseOrder): boolean {
+  if (p.cancelamento === 'CANCELADA') return false;
+
+  if (p.estadoAprovacao) {
+    return (
+      p.estadoAprovacao === EstadoAprovacaoOC.APROVADA &&
+      p.estadoCumprimento !== EstadoCumprimentoOC.TOTALMENTE_RECEBIDA &&
+      p.estadoCumprimento !== EstadoCumprimentoOC.ENCERRADA
+    );
+  }
+
+  return p.estado === EstadoPedidoCompra.ENVIADO || p.estado === EstadoPedidoCompra.PARCIAL;
+}
+
+/** Se a ordem está à espera de ser submetida para aprovação. */
+export function podeSubmeter(p: PurchaseOrder): boolean {
+  if (!p.estadoAprovacao || p.cancelamento === 'CANCELADA') return false;
+  return (
+    p.estadoAprovacao === EstadoAprovacaoOC.RASCUNHO ||
+    p.estadoAprovacao === EstadoAprovacaoOC.REJEITADA
+  );
+}
+
+/** Se há uma decisão de aprovação por tomar. */
+export function podeDecidir(p: PurchaseOrder): boolean {
+  return p.estadoAprovacao === EstadoAprovacaoOC.AGUARDA_APROVACAO && p.cancelamento !== 'CANCELADA';
+}
+
+/** Se faz sentido registar a resposta do fornecedor. */
+export function podeConfirmar(p: PurchaseOrder): boolean {
+  if (!p.estadoComercial || p.cancelamento === 'CANCELADA') return false;
+  return (
+    p.estadoAprovacao === EstadoAprovacaoOC.APROVADA &&
+    p.estadoComercial !== EstadoComercialOC.NAO_ENVIADA
+  );
+}
+
+/** O que falta confirmar de uma linha. Zero quando o fornecedor confirmou tudo. */
+export function saldoPorConfirmar(item: PurchaseOrderItem): number {
+  return Math.max(item.quantidadePedida - (item.quantidadeConfirmada ?? 0), 0);
+}

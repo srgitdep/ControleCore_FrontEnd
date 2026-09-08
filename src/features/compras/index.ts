@@ -6,3 +6,5 @@ export * from './components/RecebimentoModal';
 export * from './components/RececoesModal';
 export * from './components/SugestaoComprasModal';
 export * from './components/CriarPedidoModal';
+export * from './components/AprovacaoModal';
+export * from './components/ConfirmacaoFornecedorModal';
