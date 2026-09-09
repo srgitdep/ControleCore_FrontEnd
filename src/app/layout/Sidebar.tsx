@@ -18,11 +18,15 @@ import {
   History,
   X,
   Sparkles,
+  ClipboardList,
+  Inbox,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth';
+import { adesoes } from '@/features/adesao';
 import { useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
@@ -59,6 +63,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
+      // Ao lado de Empresas porque é a origem delas: um pedido aprovado é uma empresa nova.
+      { label: 'Adesões', icon: Inbox, path: '/adesoes', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ]
@@ -72,6 +78,10 @@ const navGroups: NavGroup[] = [
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
       { label: 'Produtos & Stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a
+      // quem comprar, depois emite-se a ordem. A ordem inversa no menu sugeriria que a
+      // requisição é um detalhe da ordem, quando é o contrário.
+      { label: 'Requisições', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Compras leva Fornecedores como separador.
       { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Sem STOCK_KEEPER: quem recebe mercadoria não deve libertar o pagamento dela.
@@ -98,6 +108,26 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const { user, hasRole, logout } = useAuth();
+
+  /**
+   * Os pedidos de adesão à espera, no selo da entrada de menu.
+   *
+   * Rota própria e não a listagem: quem mostra o selo quer o número, e trazer os pedidos
+   * todos a cada carregamento de página para contar o comprimento da lista seria puxar os
+   * dados de todos os requerentes para pintar um selo.
+   *
+   * `enabled` só para o SUPER_ADMIN: para qualquer outro role a rota responde 403, e uma
+   * chamada que falha sempre acende o interceptor de erro em cada navegação.
+   */
+  const { data: adesoesPendentes } = useQuery({
+    queryKey: ['adesoes-pendentes'],
+    queryFn: adesoes.contarPendentes,
+    enabled: user?.role === 'SUPER_ADMIN',
+    // Um pedido novo não é urgente ao minuto, e um intervalo curto punha uma chamada por
+    // minuto por cada separador aberto. Cinco minutos, e a mutação de decidir invalida
+    // esta chave — o que faz o número acertar no instante em que alguém decide.
+    staleTime: 5 * 60 * 1000,
+  });
   const { toggleSidebarCollapse, closeMobileMenu } = useUIStore();
   const { toggleOpen: toggleCopilot } = useCopilotStore();
   const location = useLocation();
@@ -215,11 +245,19 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                           {!collapsed && <span className="truncate">{item.label}</span>}
                         </div>
 
-                        {!collapsed && item.badge && (
+                        {/* O selo das adesões é âmbar e não verde: é trabalho à espera, não
+                            uma novidade a celebrar. Zero não mostra selo nenhum — um «0»
+                            permanente treina quem o vê a ignorar o sítio onde o número
+                            aparece. */}
+                        {!collapsed && item.path === '/adesoes' && adesoesPendentes ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            {adesoesPendentes}
+                          </span>
+                        ) : !collapsed && item.badge ? (
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
                             {item.badge}
                           </span>
-                        )}
+                        ) : null}
                       </NavLink>
                     </li>
                   );

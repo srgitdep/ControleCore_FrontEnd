@@ -14,6 +14,7 @@ import {
   MessageSquare,
   UserCheck,
   FileSpreadsheet,
+  ShieldCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -39,9 +40,13 @@ import { AprovacaoModal } from '../components/AprovacaoModal';
 import { ConfirmacaoFornecedorModal } from '../components/ConfirmacaoFornecedorModal';
 import { AvisosExpedicaoTab } from '../components/AvisosExpedicaoTab';
 import { CatalogoTab } from '@/features/catalogo-fornecedor';
+import { QualificacaoTab } from '@/features/b2b';
 import { CriarAvisoModal } from '../components/CriarAvisoModal';
 
-type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'catalogo' | 'fornecedores';
+// «qualificacao» vive aqui e não numa entrada de menu própria: é a fila de fornecedores
+// por verificar, e quem a trata é quem trata de fornecedores. Uma entrada de menu para
+// uma tarefa que se faz uma vez por semana seria uma entrada que ninguém abre.
+type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'catalogo' | 'fornecedores' | 'qualificacao';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
@@ -77,6 +82,11 @@ export function PurchasesPage() {
   // mostrar do que mostrar um erro.
   const podeVerFornecedores = hasPermission('read', 'fornecedor');
 
+  // A fila de verificação exige `read:vitrines` — a permissão do módulo B2B. Um perfil com
+  // acesso a fornecedores mas sem ela veria o separador falhar com 403; melhor não o
+  // mostrar do que mostrar um erro.
+  const podeQualificar = hasPermission('read', 'vitrines');
+
   const ABAS: TabDefinition<Aba>[] = [
     { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
     // A seguir aos pedidos, e antes dos fornecedores: é o que se consulta para
@@ -94,6 +104,13 @@ export function PurchasesPage() {
           { id: 'catalogo' as Aba, label: 'Catálogo', icon: FileSpreadsheet },
           { id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck },
         ]
+      : []),
+    // Por último: é a tarefa menos frequente, e a única que trata de fornecedores que
+    // ainda não são fornecedores de ninguém. Um fornecedor auto-registado não tem relação
+    // com nenhuma empresa e por isso não aparece no separador Fornecedores — sem esta fila
+    // submeteria o alvará e ficaria à espera para sempre.
+    ...(podeQualificar
+      ? [{ id: 'qualificacao' as Aba, label: 'Por verificar', icon: ShieldCheck }]
       : []),
   ];
 
@@ -258,6 +275,7 @@ export function PurchasesPage() {
           {aba === 'expedicoes' && <AvisosExpedicaoTab />}
           {aba === 'catalogo' && <CatalogoTab />}
           {aba === 'fornecedores' && <FornecedoresTab />}
+          {aba === 'qualificacao' && <QualificacaoTab />}
         </div>
       </div>
 

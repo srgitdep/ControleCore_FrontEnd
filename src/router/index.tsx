@@ -16,6 +16,21 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
+import { RequisicoesPage } from '@/features/b2b';
+import {
+  PortalLayout,
+  RegistarFornecedorPage,
+  EntrarPortalPage,
+  VitrinePage,
+  DocumentosPage,
+  ZonasPage,
+} from '@/features/portal-fornecedor';
+import { MercadoPage, FichaFornecedorPage } from '@/features/mercado';
+import {
+  AdesoesPage,
+  EscolherTipoContaPage,
+  PedirAdesaoPage,
+} from '@/features/adesao';
 import { ConferenciaPage } from '@/features/conferencia';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
@@ -38,8 +53,54 @@ export const router = createBrowserRouter([
   { path: '/',                 element: <RootRedirectOrLanding /> },
   { path: '/landing',          element: <LandingPage /> },
   { path: '/login',            element: <LoginPage /> },
+
+  // ─── Criar conta ────────────────────────────────────────────────────────────────
+  //
+  // A bifurcação antes do formulário, porque os dois registos criam coisas diferentes:
+  // o do comprador cria um **pedido** que alguém aprova — a aprovação provisiona um
+  // tenant com plano facturável — e o do fornecedor cria a conta na hora, porque o que
+  // ela dá acesso é a uma vitrine vazia.
+  //
+  // Alcançável da landing page, que é o que o pedido exigia: sem isto o único caminho
+  // para o registo de fornecedor era escrever o URL à mão.
+  { path: '/criar-conta',            element: <EscolherTipoContaPage /> },
+  { path: '/criar-conta/comprador',  element: <PedirAdesaoPage /> },
   { path: '/recuperar-senha',  element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha',  element: <ResetPasswordPage /> },
+
+  // ── Portal do Fornecedor ──────────────────────────────────────────────────
+  //
+  // Fora do `ProtectedRoute` de propósito. Esse guarda exige um `User` do lado
+  // comprador — com `role` e `empresaId` — e um fornecedor não tem nenhum dos dois.
+  //
+  // O registo e a entrada são públicos porque um fornecedor que ainda não está na
+  // plataforma não tem conta para entrar; se dependesse de um convite, o mercado só
+  // cresceria à velocidade a que os compradores se lembrassem de convidar.
+  //
+  // As rotas de dentro são guardadas pelo `PortalLayout`, que verifica a sessão do
+  // portal contra o servidor e redirecciona para `/fornecedor/entrar` — e não para
+  // `/login`, que é o formulário do código de funcionário onde um fornecedor nunca
+  // conseguiria entrar.
+  // ── Mercado público ───────────────────────────────────────────────────────
+  //
+  // Sem autenticação nenhuma, e é o motor de aquisição: quem entra a comparar
+  // fornecedores sai a experimentar o ControlCore. Nada de nenhuma empresa compradora
+  // aparece aqui — a fronteira está no backend, e estas páginas só conseguem chamar o
+  // repositório partilhado.
+  { path: '/mercado',                          element: <MercadoPage /> },
+  { path: '/mercado/fornecedores/:organizacaoId', element: <FichaFornecedorPage /> },
+
+  { path: '/fornecedor/registar', element: <RegistarFornecedorPage /> },
+  { path: '/fornecedor/entrar',   element: <EntrarPortalPage /> },
+  {
+    path: '/fornecedor',
+    element: <PortalLayout />,
+    children: [
+      { index: true,            element: <VitrinePage /> },
+      { path: 'documentos',     element: <DocumentosPage /> },
+      { path: 'zonas',          element: <ZonasPage /> },
+    ],
+  },
 
   // ──────────────── Rotas Protegidas (requerem autenticação) ─────────────────────────────
   {
@@ -61,6 +122,15 @@ export const router = createBrowserRouter([
             path: '/empresas', 
             element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
             children: [{ index: true, element: <EmpresasPage /> }]
+          },
+          // A fila de adesões vive ao lado das empresas porque é a origem delas: um
+          // pedido aprovado **é** uma empresa nova. Só SUPER_ADMIN, e não por escolha do
+          // frontend — o backend leva o `RolesGuard` porque o `PermissoesGuard` dá bypass
+          // a qualquer ADMIN, que passaria a poder criar empresas na plataforma.
+          {
+            path: '/adesoes',
+            element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
+            children: [{ index: true, element: <AdesoesPage /> }]
           },
           { 
             path: '/utilizadores', 
@@ -89,6 +159,12 @@ export const router = createBrowserRouter([
           // e um separador aqui que era uma tabela só de leitura. Fica só no separador,
           // agora completo.
           { path: '/compras',       element: <PurchasesPage /> },
+          // As requisições vivem em rota própria e não como separador de Compras.
+          //
+          // São a fase **anterior** à ordem de compra — o documento que existe antes de haver
+          // fornecedor — e enterrá-las num separador de «Compras» faria parecer que são mais
+          // uma vista das ordens. A permissão é verificada no backend; aqui basta a rota.
+          { path: '/requisicoes',   element: <RequisicoesPage /> },
           // Conferência é secção própria e não separador das Compras: quem regista a
           // factura não a pode aprovar, e juntá-las no mesmo ecrã convidaria a que fosse
           // a mesma pessoa a fazer as duas coisas.

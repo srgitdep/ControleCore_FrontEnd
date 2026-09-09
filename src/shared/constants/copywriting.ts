@@ -105,8 +105,15 @@ export const COPY = {
     SUBTITULO:
       'Cada venda no balcão abate o stock do armazém certo, actualiza o custo médio, entra na conta do cliente e aparece no painel da direcção.',
     SUBTITULO_FORTE: 'Sem ninguém copiar nada.',
+    /* `BOTAO_CRIAR_CONTA` é o principal e `BOTAO_PRIMARIO` passou a ser a ligação
+     * secundária de quem já é cliente. O nome não mudou porque está usado noutro sítio;
+     * o que mudou é a hierarquia na página. Uma landing page existe para quem ainda não
+     * tem conta, e os dois botões dela levavam ambos ao formulário de quem já tem. */
+    BOTAO_CRIAR_CONTA: 'Criar conta',
     BOTAO_PRIMARIO: 'Entrar no sistema',
     BOTAO_SECUNDARIO: 'Pedir demonstração',
+    JA_TENHO_CONTA: 'Já é cliente?',
+    ENTRAR_FORNECEDOR: 'Portal do fornecedor',
     GARANTIAS: ['Multi-loja e multi-armazém', 'Funciona no telemóvel', 'Instalação assistida'],
     ALT_CAPTURA: 'Painel de gestão do ControlCore, com os indicadores de vendas, margem e stock.',
   },
@@ -362,7 +369,10 @@ export const COPY = {
     SUBTITULO:
       'Traga o fecho de caixa de ontem, ou a última contagem de stock. Meia hora basta para ver se o ControlCore responde — e para dizer se não.',
     BOTAO_PRIMARIO: 'Pedir demonstração',
-    BOTAO_SECUNDARIO: 'Já tenho conta',
+    /* Era «Já tenho conta» e levava ao login. O botão passou a levar ao registo, e o
+     * texto tinha de acompanhar: um botão que diz «já tenho conta» e abre um formulário
+     * de criação de conta é a pior combinação possível. */
+    BOTAO_SECUNDARIO: 'Criar conta',
     ASSUNTO_EMAIL: 'Demonstração do ControlCore',
   },
 

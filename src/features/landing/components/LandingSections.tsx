@@ -77,14 +77,40 @@ export function Heroi() {
             <strong style={{ color: 'var(--tinta)' }}>{copy.SUBTITULO_FORTE}</strong>
           </p>
 
+          {/*
+            O botão principal cria conta; entrar passa a ser a terceira via.
+
+            Antes os dois botões da página levavam a `/login` — o que faz sentido para quem
+            já é cliente e nenhum para quem chegou pela primeira vez, que é para quem uma
+            landing page existe. Um visitante sem conta encontrava um formulário que pede um
+            código de funcionário que ele não tem, e não havia caminho nenhum para o
+            registo: o de fornecedor só era alcançável escrevendo o URL à mão.
+
+            `/criar-conta` é a bifurcação — comprador ou fornecedor — porque os dois
+            registos criam coisas diferentes e seguem caminhos diferentes.
+          */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 32 }}>
-            <Link to="/login" className="cc-botao cc-botao--cheio">
-              {copy.BOTAO_PRIMARIO}
+            <Link to="/criar-conta" className="cc-botao cc-botao--cheio">
+              {copy.BOTAO_CRIAR_CONTA}
             </Link>
             <a href="#comecar" className="cc-botao cc-botao--contorno">
               {copy.BOTAO_SECUNDARIO} <ArrowRight size={16} />
             </a>
           </div>
+
+          <p style={{ margin: '14px 0 0', fontSize: 13, color: 'var(--tinta-suave)' }}>
+            {copy.JA_TENHO_CONTA}{' '}
+            <Link
+              to="/login"
+              style={{ color: 'var(--tinta)', fontWeight: 600, textDecoration: 'underline' }}
+            >
+              {copy.BOTAO_PRIMARIO}
+            </Link>
+            <span style={{ margin: '0 8px', color: 'var(--tinta-suave)' }}>·</span>
+            <Link to="/fornecedor/entrar" style={{ color: 'var(--tinta-suave)' }}>
+              {copy.ENTRAR_FORNECEDOR}
+            </Link>
+          </p>
 
           <div
             style={{
@@ -836,7 +862,9 @@ export function Fecho() {
           <a href={mailto} className="cc-botao cc-botao--claro">
             {copy.BOTAO_PRIMARIO}
           </a>
-          <Link to="/login" className="cc-botao cc-botao--fantasma-claro">
+          {/* Criar conta, e não entrar: quem chega ao fim da página ainda não é cliente —
+              se fosse, tinha entrado pelo cabeçalho e não tinha lido até aqui. */}
+          <Link to="/criar-conta" className="cc-botao cc-botao--fantasma-claro">
             {copy.BOTAO_SECUNDARIO} <ArrowRight size={16} />
           </Link>
         </div>

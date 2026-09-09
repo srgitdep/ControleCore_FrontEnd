@@ -19,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/stock':         'Produtos & Stock',
   '/armazens':      'Armazéns',
   '/compras':       'Compras',
+  '/requisicoes':   'Requisições de Compra',
   '/conferencia':   'Conferência',
   '/vendas':        'Ponto de Venda',
   '/lojas':         'Lojas & Caixas',
