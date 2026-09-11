@@ -43,6 +43,93 @@ export interface PaginatedClientes {
   lastPage: number;
 }
 
+// ──── Visão 360° ──────────────────────────────────────────────────────────────
+
+export type EstadoRelacionamento =
+  | 'NOVO'
+  | 'ACTIVO'
+  | 'EM_RISCO'
+  | 'INACTIVO'
+  | 'SEM_COMPRAS';
+
+export type TipoIdentidade =
+  | 'TELEFONE'
+  | 'EMAIL'
+  | 'NUIT'
+  | 'CARTAO_FIDELIZACAO'
+  | 'WHATSAPP'
+  | 'ECOMMERCE';
+
+export type CanalComunicacao = 'SMS' | 'EMAIL' | 'WHATSAPP' | 'CHAMADA' | 'PUSH';
+
+export type FinalidadeConsentimento =
+  | 'MARKETING'
+  | 'TRANSACIONAL'
+  | 'COBRANCA'
+  | 'INQUERITO';
+
+export interface EventoCliente {
+  id: string;
+  tipo: string;
+  canal: string;
+  ocorridoEm: string;
+  valor?: number | null;
+  produtoId?: string | null;
+  vendaId?: string | null;
+}
+
+export interface Visao360 {
+  cliente: {
+    id: string;
+    nome: string;
+    telefone?: string | null;
+    email?: string | null;
+    nuit?: string | null;
+    pontos: number;
+    clienteDesde: string;
+    creditoBloqueado: boolean;
+    creditLimit: number;
+    fundidoEmId?: string | null;
+  };
+  identidades: Array<{
+    id: string;
+    tipo: TipoIdentidade;
+    valor: string;
+    principal: boolean;
+    verificadoEm?: string | null;
+  }>;
+  consentimentos: Array<{
+    finalidade: FinalidadeConsentimento;
+    canal: CanalComunicacao;
+    concedidoEm: string;
+  }>;
+  preferencias: Record<string, string>;
+  comportamento: {
+    totalCompras: number;
+    ticketMedio: number;
+    valorTotal: number;
+    diasDesdeUltimaCompra: number | null;
+    frequenciaMediaDias: number | null;
+    primeiraCompra: string | null;
+    ultimaCompra: string | null;
+    canalPredominante: string | null;
+    comprasPorCanal: Record<string, number>;
+    lojaPreferida: string | null;
+    lojaPreferidaNome: string | null;
+    totalDevolucoes: number;
+    taxaDevolucao: number;
+    estado: EstadoRelacionamento;
+  };
+  produtosRecorrentes: Array<{ produtoId: string; nome: string; vezes: number }>;
+  financeiro: {
+    valorEmAberto: number;
+    titulosEmAberto: number;
+    valorLiquidado: number;
+  };
+  ultimasVendas: VendaResumida[];
+  eventosRecentes: EventoCliente[];
+}
+
 export interface CriarClienteDto {
   nome: string;
   telefone?: string;
@@ -87,4 +174,32 @@ export const buscarClientesCRM = async (search: string): Promise<Cliente[]> => {
   // Utilizado no POS para identificar cliente rapidamente — retorna até 5 resultados
   const { data } = await api.get('/clientes', { params: { search, limit: 5 } });
   return data.data;
+};
+
+export const obterVisao360 = async (id: string): Promise<Visao360> => {
+  const { data } = await api.get(`/crm/clientes/${id}/360`);
+  return data;
+};
+
+export const registarConsentimento = async (
+  clienteId: string,
+  payload: {
+    finalidade: FinalidadeConsentimento;
+    canal: CanalComunicacao;
+    concedido: boolean;
+    origem?: string;
+  },
+): Promise<void> => {
+  await api.post(`/crm/identidade/clientes/${clienteId}/consentimentos`, payload);
+};
+
+export const adicionarIdentidade = async (
+  clienteId: string,
+  payload: { tipo: TipoIdentidade; valor: string; principal?: boolean; origem?: string },
+): Promise<void> => {
+  await api.post(`/crm/identidade/clientes/${clienteId}/identidades`, payload);
+};
+
+export const removerIdentidade = async (identidadeId: string): Promise<void> => {
+  await api.delete(`/crm/identidade/identidades/${identidadeId}`);
 };

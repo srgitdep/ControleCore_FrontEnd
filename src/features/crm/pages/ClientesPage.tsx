@@ -4,27 +4,20 @@ import {
   Search,
   Plus,
   UserSquare,
-  TrendingUp,
-  Award,
-  Calendar,
   Trash2,
   Edit2,
   X,
   ChevronLeft,
   ChevronRight,
-  ShoppingBag,
-  Mail,
-  Phone,
-  CreditCard,
 } from 'lucide-react';
 import {
   useClientes,
-  useCliente,
   useCreateCliente,
   useUpdateCliente,
   useDeleteCliente,
-  type Cliente,
-} from '@/features/crm';
+} from '../hooks/useClientes';
+import type { Cliente } from '../api/clientes.api';
+import { Visao360Panel } from '../components/Visao360Panel';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
 import { TableScroll } from '@/shared/ui';
@@ -41,34 +34,6 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
 type Tab = 'clientes' | 'detalhes';
-
-// ──â”€ Metric Card ──────────────────────────────────────────────────────────────
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  sub?: string;
-  color: string;
-}) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-4">
-      <div className={cn('p-2.5 rounded-lg', color)}>
-        <Icon size={20} className="text-white" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{label}</p>
-        <p className="text-xl font-bold text-slate-900 mt-0.5 truncate">{value}</p>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
 
 // ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
@@ -138,159 +103,6 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-// ──â”€ Details Panel ────────────────────────────────────────────────────────────
-function ClienteDetails({
-  clienteId,
-  onBack,
-}: {
-  clienteId: string;
-  onBack: () => void;
-}) {
-  const { data: cliente, isLoading } = useCliente(clienteId);
-
-  if (isLoading || !cliente) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const totalCompras = cliente.vendas?.length ?? 0;
-  const ticketMedio =
-    totalCompras > 0 ? Number(cliente.totalGasto) / totalCompras : 0;
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-5 border-b border-slate-100">
-        <button
-          onClick={onBack}
-          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-bold text-slate-900 truncate">{cliente.nome}</h2>
-          <p className="text-sm text-slate-500">Perfil de Cliente</p>
-        </div>
-        <span
-          className={cn(
-            'px-2 py-0.5 rounded-full text-xs font-semibold',
-            cliente.consentimentoMarketing
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-slate-100 text-slate-500',
-          )}
-        >
-          {cliente.consentimentoMarketing ? 'LGPD: Consente' : 'LGPD: Não Consente'}
-        </span>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
-        {/* Contactos */}
-        <div className="flex flex-wrap gap-3">
-          {cliente.telefone && (
-            <span className="flex items-center gap-1.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <Phone size={14} /> {cliente.telefone}
-            </span>
-          )}
-          {cliente.email && (
-            <span className="flex items-center gap-1.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <Mail size={14} /> {cliente.email}
-            </span>
-          )}
-          {cliente.nuit && (
-            <span className="flex items-center gap-1.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <CreditCard size={14} /> NUIT: {cliente.nuit}
-            </span>
-          )}
-        </div>
-
-        {/* KPI Metrics */}
-        <div className="grid grid-cols-2 gap-3">
-          <MetricCard
-            icon={TrendingUp}
-            label="Total Gasto"
-            value={`${Number(cliente.totalGasto).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`}
-            color="bg-emerald-500"
-          />
-          <MetricCard
-            icon={Award}
-            label="Pontos de Fidelidade"
-            value={cliente.pontos.toLocaleString()}
-            sub="1 ponto por cada 100 MT"
-            color="bg-amber-500"
-          />
-          <MetricCard
-            icon={ShoppingBag}
-            label="Total de Compras"
-            value={totalCompras.toString()}
-            color="bg-blue-500"
-          />
-          <MetricCard
-            icon={Calendar}
-            label="Ticket Médio"
-            value={`${ticketMedio.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`}
-            sub={
-              cliente.dataUltimaCompra
-                ? `Última: ${new Date(cliente.dataUltimaCompra).toLocaleDateString('pt-PT')}`
-                : 'Sem compras ainda'
-            }
-            color="bg-violet-500"
-          />
-        </div>
-
-        {/* Histórico de Compras */}
-        <div>
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Últimas Compras</h3>
-          {cliente.vendas?.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm bg-slate-50 rounded-xl border border-slate-200">
-              Nenhuma compra registada.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {cliente.vendas?.map((venda) => (
-                <div
-                  key={venda.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900">{venda.numeroFatura}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(venda.createdAt).toLocaleDateString('pt-PT', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                      {' Â· '}
-                      {venda.itens?.length ?? 0} itens
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className="text-sm font-bold text-slate-900">
-                      {venda.totalFinal.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT
-                    </p>
-                    <span
-                      className={cn(
-                        'text-[10px] font-semibold px-1.5 py-0.5 rounded',
-                        venda.estado === 'CONCLUIDA'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-700',
-                      )}
-                    >
-                      {venda.estado}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -593,7 +405,7 @@ export function ClientesPage() {
 
         {/* Tab: Detalhes */}
         {activeTab === 'detalhes' && selectedClienteId && (
-          <ClienteDetails
+          <Visao360Panel
             clienteId={selectedClienteId}
             onBack={() => setActiveTab('clientes')}
           />
