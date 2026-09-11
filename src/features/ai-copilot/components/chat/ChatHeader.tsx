@@ -1,4 +1,4 @@
-import { X, Sparkles, Trash2, Maximize2, Minimize2, History } from 'lucide-react';
+import { X, Sparkles, SquarePen, Maximize2, Minimize2, History } from 'lucide-react';
 import { useCopilotStore } from '../../store/copilotStore';
 
 export function ChatHeader() {
@@ -36,12 +36,17 @@ export function ChatHeader() {
         >
           <History className="w-4 h-4" />
         </button>
+        {/* Ícone + rótulo visível, e não só `title`: um `title` é um tooltip que só
+            aparece ao passar o rato — em ecrã táctil (a maioria do uso deste chat)
+            ninguém o vê, e o ícone sozinho de uma lixeira lia-se como "apagar", não
+            como "começar uma conversa nova". */}
         <button
           onClick={startNewSession}
-          title="Limpar Conversa (Nova Sessão)"
-          className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+          title="Nova conversa"
+          className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-indigo-200 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <Trash2 className="w-4 h-4" />
+          <SquarePen className="w-4 h-4" />
+          <span className="text-xs font-medium">Novo chat</span>
         </button>
         <button
           onClick={() => setOpen(false)}
