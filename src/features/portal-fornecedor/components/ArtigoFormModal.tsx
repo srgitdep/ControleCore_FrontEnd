@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { Info, Loader2, X } from 'lucide-react';
+import { ImageOff, Info, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CapturaPorFoto } from '@/shared/ui';
+import { mensagemDeErro } from '@/shared/utils';
 import { portal } from '../api/portal.api';
 import type { ArtigoVitrine } from '../api/portal.api';
+import { OUTRA, TIPOS_DE_EMBALAGEM, UNIDADES_COMUNS } from '../constants/embalagem';
 
 interface Props {
   /** Nulo cria um artigo novo. */
@@ -11,51 +14,152 @@ interface Props {
   onSuccess: () => void;
 }
 
+const hoje = () => new Date().toISOString().slice(0, 10);
+
 /**
  * Criar ou editar um artigo da vitrine.
  *
- * ## Os dois campos que decidem comparações
+ * ## O que este formulário pede, e o que deixou de pedir
  *
- * **Factor de conversão** e **GTIN**. Nenhum dos dois é óbvio para quem preenche, e ambos
- * têm consequências que não dão erro:
+ * Fica só o que decide se o artigo aparece, se é reconhecido, e se o comprador o escolhe:
+ * nome, imagem, como se vende, e o preço. GTIN, mínimo e múltiplo de encomenda, prazo de
+ * expedição saíram — são reais e o sourcing usa-os quando existem, mas pedi-los **na
+ * criação** custa mais do que vale: um fornecedor a publicar o primeiro artigo desiste
+ * diante de um formulário com dez campos técnicos, a maioria dos quais nem sabe responder
+ * de cabeça. Continuam editáveis depois, em `VitrinePage → Editar`.
  *
- * - sem o factor, dez caixas de seis entram no stock do comprador como dez unidades. Não
- *   falha validação nenhuma — dá stock errado em silêncio até alguém contar. E do lado da
- *   comparação, é o que faz 240 por caixa competir de igual com 42 por unidade;
- * - sem GTIN, o artigo é encontrado por semelhança de nome, que falha quando o fornecedor
- *   lhe dá um nome que só ele entende.
+ * O saldo em stock (`quantidadeDisponivel`) **fica**, ao contrário desses — junto da secção
+ * «como vende», porque é a mesma pergunta que o fornecedor já está a responder ali: quantas
+ * embalagens tem, na mesma unidade de venda que acabou de descrever.
  *
- * Por isso os dois têm explicação no formulário, e o factor tem uma pré-visualização em
- * palavras — «1 caixa 6 = 6 unidades» — em vez de um número solto.
+ * ## O preço faz parte deste formulário, e não de um segundo passo
+ *
+ * Estruturalmente o preço é uma entidade à parte — `PrecoArtigo`, com escalões e histórico,
+ * gerido em `PrecosModal`. Mas o primeiro preço de um artigo novo não é uma decisão
+ * separada da criação: é a mesma decisão. Publicar sem preço deixa o artigo invisível em
+ * todas as comparações sem erro nenhum, e antes disto o fornecedor só descobria ao reparar
+ * no aviso da lista.
+ *
+ * Por isso, ao criar, este formulário chama as duas APIs em sequência — cria o artigo,
+ * publica o preço com a mesma data de hoje. Se o preço falhar, o artigo já existe (em
+ * rascunho, sem preço): o aviso da lista continua a apanhar esse caso, e o modal de Preços
+ * continua lá para completar. Ao editar, o preço não aparece aqui — mudar o preço de um
+ * artigo publicado é sempre uma decisão de escalão e vigência, que é o que `PrecosModal`
+ * já resolve bem.
+ *
+ * ## Como se vende: embalagem, quantas embalagens, quanto tem cada uma
+ *
+ * Três perguntas onde havia duas, e a razão é que a pergunta anterior — «quantidade por
+ * embalagem» — confundia duas coisas com o mesmo número num produto como uma caixa de doze
+ * garrafas de um litro: doze garrafas, ou um litro? A resposta certa para o sourcing é o
+ * produto dos dois — a caixa tem 12 litros — mas pedir isso já multiplicado obrigava o
+ * fornecedor a fazer a conta de cabeça e a acertar as unidades sozinho.
+ *
+ * Separado em três, cada pergunta tem uma resposta óbvia: **que tipo de embalagem** (caixa),
+ * **quantas unidades cabem lá dentro** (12), e **quanto mede cada unidade** (1, em litros).
+ * O formulário multiplica os dois números — `factorConversao = unidadesPorEmbalagem ×
+ * conteudoPorUnidade` — e é esse produto que o backend recebe, exactamente como recebia
+ * antes: `unidade-conversao.ts` e `normalizacao-custo.ts` não sabem nem precisam de saber
+ * que o número chegou em duas partes.
+ *
+ * Vender «à unidade» esconde os dois campos: não há embalagem nenhuma a descrever, e a
+ * quantidade por embalagem vale 1 por definição.
+ *
+ * ## A leitura por fotografia é a mesma do lado comprador
+ *
+ * `CapturaPorFoto` e o serviço que a alimenta (`ExtrairProdutoDeFotoService`) já existiam
+ * para o formulário de produto interno. Aqui só muda a chamada de API — `analisar` — e o
+ * mapeamento do que volta para os campos deste formulário: o peso lido de uma fotografia
+ * preenche o «quanto mede cada unidade», nunca o total já multiplicado, porque a foto não
+ * sabe quantas unidades há dentro da caixa.
  */
 export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
+  const aEditar = artigo !== null;
   const [aGravar, setAGravar] = useState(false);
+
+  const embalagemInicial = interpretarEmbalagem(artigo);
 
   const [f, setF] = useState({
     referencia: artigo?.referencia ?? '',
     nome: artigo?.nome ?? '',
     descricao: artigo?.descricao ?? '',
-    gtin: artigo?.gtin ?? '',
     categoria: artigo?.categoria ?? '',
     marca: artigo?.marca ?? '',
-    unidadeVenda: artigo?.unidadeVenda ?? '',
-    factorConversao: String(artigo?.factorConversao ?? 1),
-    embalagem: artigo?.embalagem ?? '',
-    moq: artigo?.moq !== null && artigo?.moq !== undefined ? String(artigo.moq) : '',
-    multiplo:
-      artigo?.multiplo !== null && artigo?.multiplo !== undefined ? String(artigo.multiplo) : '',
-    prazoExpedicaoDias:
-      artigo?.prazoExpedicaoDias !== null && artigo?.prazoExpedicaoDias !== undefined
-        ? String(artigo.prazoExpedicaoDias)
-        : '',
+    tipoEmbalagem: embalagemInicial.tipoEmbalagem,
+    unidadeSelector: embalagemInicial.unidadeSelector,
+    unidadeOutra: embalagemInicial.unidadeOutra,
+    unidadesPorEmbalagem: embalagemInicial.unidadesPorEmbalagem,
+    conteudoPorUnidade: embalagemInicial.conteudoPorUnidade,
     quantidadeDisponivel:
       artigo?.quantidadeDisponivel !== null && artigo?.quantidadeDisponivel !== undefined
         ? String(artigo.quantidadeDisponivel)
         : '',
+    imagemUrl: artigo?.imagens?.[0] ?? '',
   });
 
-  const factor = Number(f.factorConversao);
-  const factorValido = Number.isFinite(factor) && factor > 0;
+  const [preco, setPreco] = useState({
+    preco: artigo?.precos?.[0]?.preco !== undefined ? String(artigo.precos[0].preco) : '',
+  });
+
+  // A unidade efectiva: o que o selector escolheu, ou o texto livre quando é «Outra».
+  const unidadeBase = f.unidadeSelector === OUTRA ? f.unidadeOutra : f.unidadeSelector;
+
+  const vendeAUnidade = f.tipoEmbalagem === '';
+
+  const unidades = vendeAUnidade ? 1 : Number(f.unidadesPorEmbalagem);
+  const conteudo = vendeAUnidade ? 1 : Number(f.conteudoPorUnidade || '1');
+  const unidadesValidas = vendeAUnidade || (Number.isFinite(unidades) && unidades > 0);
+  const conteudoValido = vendeAUnidade || (Number.isFinite(conteudo) && conteudo > 0);
+
+  // O número que o backend recebe — o produto das duas perguntas, nunca digitado
+  // directamente.
+  const factorConversao = unidadesValidas && conteudoValido ? unidades * conteudo : NaN;
+  const factorValido = Number.isFinite(factorConversao) && factorConversao > 0;
+
+  /**
+   * Aplica o que a fotografia leu.
+   *
+   * `unidadeMedida` vem no vocabulário do produto interno (UN, KG, G, L, ML, CX, PCT) e
+   * precisa de descer para o texto que este selector usa (kg, litro…) — os dois vocabulários
+   * existem porque servem perguntas diferentes: ali é uma coluna fechada do `Produto`, aqui
+   * é a descrição livre de como o fornecedor embala. `peso` preenche o **conteúdo por
+   * unidade**, não a quantidade de embalagens — a foto lê o que está escrito na embalagem
+   * («500g»), não quantas embalagens existem numa caixa que ela não mostra.
+   */
+  const preencherDaFoto = (dados: Record<string, unknown>) => {
+    const nome = dados.nome as string | undefined;
+    const marca = dados.marca as string | undefined;
+    const descricao = dados.descricao as string | undefined;
+    const peso = dados.peso as number | undefined;
+    const unidadeMedida = dados.unidadeMedida as string | undefined;
+    const categoriaSugerida = dados.categoriaSugerida as string | undefined;
+
+    setF((antes) => {
+      const nomeCompleto = [marca, nome].filter(Boolean).join(' ').trim();
+      const proximo = { ...antes };
+
+      if (nomeCompleto && !antes.nome.trim()) proximo.nome = nomeCompleto;
+      if (marca && !antes.marca.trim()) proximo.marca = marca;
+      if (descricao && !antes.descricao.trim()) proximo.descricao = descricao;
+      if (categoriaSugerida && !antes.categoria.trim()) proximo.categoria = categoriaSugerida;
+
+      if (unidadeMedida && !antes.unidadeSelector) {
+        const traduzida = DA_UNIDADE_DE_PRODUTO[unidadeMedida];
+        if (traduzida && UNIDADES_COMUNS.some((u) => u.valor === traduzida)) {
+          proximo.unidadeSelector = traduzida;
+        } else if (traduzida) {
+          proximo.unidadeSelector = OUTRA;
+          proximo.unidadeOutra = traduzida;
+        }
+      }
+
+      if (peso !== undefined && (!antes.conteudoPorUnidade || antes.conteudoPorUnidade === '1')) {
+        proximo.conteudoPorUnidade = String(peso);
+      }
+
+      return proximo;
+    });
+  };
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,47 +169,91 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
       return;
     }
 
-    if (!factorValido) {
-      toast.error('O factor de conversão tem de ser maior do que zero.');
+    if (!vendeAUnidade && !unidadesValidas) {
+      toast.error('Quantas unidades tem cada embalagem? Tem de ser maior do que zero.');
       return;
     }
 
-    // `undefined` e não string vazia: o `ValidationPipe` do backend corre com
-    // `forbidNonWhitelisted`, e um campo opcional enviado vazio grava uma string vazia onde
-    // devia ficar nulo — que depois aparece no ecrã do comprador como um campo preenchido a
-    // branco.
+    if (!vendeAUnidade && !conteudoValido) {
+      toast.error('Quanto mede cada unidade? Tem de ser maior do que zero.');
+      return;
+    }
+
+    if (f.unidadeSelector === OUTRA && !f.unidadeOutra.trim()) {
+      toast.error('Escreva qual é a unidade base, ou escolha uma da lista.');
+      return;
+    }
+
+    // O preço só é obrigatório ao criar. Ao editar, mudar o preço passa por `PrecosModal`
+    // — que é o único sítio que sabe lidar com escalão e vigência sem sobrescrever nada.
+    let precoNumero: number | null = null;
+    if (!aEditar) {
+      precoNumero = Number(preco.preco);
+      if (!Number.isFinite(precoNumero) || precoNumero <= 0) {
+        toast.error('O preço tem de ser maior do que zero.');
+        return;
+      }
+    }
+
     const opcional = (v: string) => (v.trim() ? v.trim() : undefined);
-    const numero = (v: string) => (v.trim() ? Number(v) : undefined);
+    const numeroOpcional = (v: string) => (v.trim() ? Number(v) : undefined);
+
+    // `unidadeVenda` continua a existir no artigo — é o texto que aparece na vitrine e no
+    // preço («Preço por caixa»). Deriva-se do tipo de embalagem escolhido, ou da unidade
+    // base quando se vende à unidade.
+    const unidadeVenda = vendeAUnidade ? opcional(unidadeBase) : f.tipoEmbalagem;
 
     const payload = {
       referencia: f.referencia.trim(),
       nome: f.nome.trim(),
       descricao: opcional(f.descricao),
-      gtin: opcional(f.gtin),
       categoria: opcional(f.categoria),
       marca: opcional(f.marca),
-      unidadeVenda: opcional(f.unidadeVenda),
-      factorConversao: factor,
-      embalagem: opcional(f.embalagem),
-      moq: numero(f.moq),
-      multiplo: numero(f.multiplo),
-      prazoExpedicaoDias: numero(f.prazoExpedicaoDias),
-      quantidadeDisponivel: numero(f.quantidadeDisponivel),
+      unidadeVenda,
+      factorConversao,
+      // A embalagem guarda a descrição legível: «caixa com 12 × 1litro», que é o que o
+      // comprador lê na ficha do artigo. `unidadeVenda`/`factorConversao` continuam a ser
+      // os números que o sourcing usa para comparar — este texto é só para leitura humana.
+      embalagem:
+        !vendeAUnidade && unidadeBase.trim()
+          ? `${f.tipoEmbalagem} com ${unidades} × ${conteudo}${unidadeBase.trim()}`
+          : undefined,
+      quantidadeDisponivel: numeroOpcional(f.quantidadeDisponivel),
+      imagens: f.imagemUrl.trim() ? [f.imagemUrl.trim()] : [],
     };
 
     setAGravar(true);
     try {
-      if (artigo) {
+      if (aEditar) {
         await portal.actualizarArtigo(artigo.id, payload);
         toast.success('Artigo actualizado.');
+        onSuccess();
+        onClose();
       } else {
-        await portal.criarArtigo(payload);
-        toast.success('Artigo criado em rascunho. Publique um preço e depois publique-o.');
+        const criado = await portal.criarArtigo(payload);
+
+        try {
+          await portal.publicarPreco(criado.id, {
+            preco: precoNumero!,
+            vigenteDe: new Date(`${hoje()}T00:00:00`).toISOString(),
+          });
+          toast.success('Artigo e preço publicados.');
+        } catch (erroPreco) {
+          // O artigo já existe — não desfazer. O aviso da vitrine («sem preço em vigor»)
+          // continua a apanhar este caso, e o modal de Preços resolve-o a seguir.
+          toast.error(
+            mensagemDeErro(
+              erroPreco,
+              'Artigo criado, mas o preço não foi gravado. Publique-o em «Preços».',
+            ),
+          );
+        }
+
+        onSuccess();
+        onClose();
       }
-      onSuccess();
-      onClose();
-    } catch (erro: any) {
-      toast.error(erro?.response?.data?.message ?? 'Erro ao gravar o artigo.');
+    } catch (erro) {
+      toast.error(mensagemDeErro(erro, 'Erro ao gravar o artigo.'));
     } finally {
       setAGravar(false);
     }
@@ -116,7 +264,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
       <form onSubmit={submeter} className="my-4 w-full max-w-2xl rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {artigo ? 'Editar artigo' : 'Novo artigo'}
+            {aEditar ? 'Editar artigo' : 'Novo artigo'}
           </h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
@@ -124,34 +272,48 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
         </header>
 
         <div className="space-y-5 px-5 py-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo
-              etiqueta="Referência"
-              obrigatorio
-              valor={f.referencia}
-              onChange={(v) => setF({ ...f, referencia: v })}
-              exemplo="ARZ-25"
-              ajuda="O seu código para este artigo. Único na sua vitrine."
+          {/* Só ao criar: ao editar, os campos já estão preenchidos, e deixar a IA
+              sobrescrever o que alguém corrigiu à mão perderia trabalho feito. */}
+          {!aEditar && (
+            <CapturaPorFoto
+              analisar={portal.extrairArtigoDeFoto}
+              onExtraido={preencherDaFoto}
+              legenda="Fotografe a embalagem — o nome, a marca e o peso costumam ler-se numa só fotografia. O preço não é lido da imagem."
             />
-            <Campo
-              etiqueta="Nome"
-              obrigatorio
-              valor={f.nome}
-              onChange={(v) => setF({ ...f, nome: v })}
-              exemplo="Arroz Agulha 25kg"
-            />
+          )}
+
+          {/* ── Imagem e identificação ─────────────────────────────── */}
+          <div className="flex gap-4">
+            <PreviaImagem url={f.imagemUrl} />
+
+            <div className="flex-1 space-y-3">
+              <Campo
+                etiqueta="Nome"
+                obrigatorio
+                valor={f.nome}
+                onChange={(v) => setF({ ...f, nome: v })}
+                exemplo="Arroz Agulha 25kg"
+              />
+              <Campo
+                etiqueta="Referência"
+                obrigatorio
+                valor={f.referencia}
+                onChange={(v) => setF({ ...f, referencia: v })}
+                exemplo="ARZ-25"
+                ajuda="O seu código para este artigo. Único na sua vitrine."
+              />
+            </div>
           </div>
 
           <Campo
-            etiqueta="Código de barras (GTIN)"
-            valor={f.gtin}
-            onChange={(v) => setF({ ...f, gtin: v })}
-            exemplo="6001234567890"
-            ajuda="O critério mais forte que existe. Com GTIN, os compradores encontram este artigo com certeza; sem ele, por semelhança de nome — que falha quando o nome que usam não é o seu."
-            destaque
+            etiqueta="Imagem do produto"
+            valor={f.imagemUrl}
+            onChange={(v) => setF({ ...f, imagemUrl: v })}
+            exemplo="https://exemplo.com/arroz-25kg.png"
+            ajuda="O URL de uma imagem já publicada algures — no seu site, numa rede social, num serviço de imagens. É o que o comprador vê primeiro na vitrine."
           />
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Campo
               etiqueta="Categoria"
               valor={f.categoria}
@@ -163,87 +325,193 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
               valor={f.marca}
               onChange={(v) => setF({ ...f, marca: v })}
             />
-            <Campo
-              etiqueta="Embalagem"
-              valor={f.embalagem}
-              onChange={(v) => setF({ ...f, embalagem: v })}
-              exemplo="Saco"
-            />
           </div>
 
-          {/* ── Unidade e conversão ────────────────────────────────── */}
+          {/* ── Embalagem e conversão ──────────────────────────────── */}
           <section className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
             <h3 className="text-xs font-semibold text-blue-900">Como vende este artigo</h3>
             <p className="mt-1 text-[11px] leading-snug text-blue-800">
-              É o campo mais importante do formulário. O comprador conta em unidades; se
-              vender em caixas, temos de saber quantas unidades tem cada caixa — sem isso,
-              dez caixas entram no stock dele como dez unidades.
+              O comprador conta em unidades — quilos, litros, peças. Uma caixa com 12
+              garrafas de 1 litro cada tem 12 litros no total: diga os dois números e
+              deixe o cálculo para nós.
             </p>
 
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              <Campo
-                etiqueta="Unidade de venda"
-                valor={f.unidadeVenda}
-                onChange={(v) => setF({ ...f, unidadeVenda: v })}
-                exemplo="caixa 6"
-                ajuda="Como o descreve: «caixa 6», «fardo», «kg», «unidade»."
-              />
-              <Campo
-                etiqueta="Unidades por embalagem"
-                tipo="number"
-                obrigatorio
-                valor={f.factorConversao}
-                onChange={(v) => setF({ ...f, factorConversao: v })}
-                exemplo="6"
-                ajuda="1 se vende à unidade."
-              />
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-slate-700">Embalagem</label>
+              <select
+                value={f.tipoEmbalagem}
+                onChange={(e) => setF({ ...f, tipoEmbalagem: e.target.value })}
+                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              >
+                {TIPOS_DE_EMBALAGEM.map((t) => (
+                  <option key={t.valor} value={t.valor}>
+                    {t.etiqueta}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {factorValido && (
-              <p className="mt-2 rounded bg-white px-2.5 py-1.5 text-xs text-slate-700">
+            {!vendeAUnidade && (
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <Campo
+                  etiqueta={`Quantas unidades tem cada ${f.tipoEmbalagem || 'embalagem'}`}
+                  tipo="number"
+                  obrigatorio
+                  valor={f.unidadesPorEmbalagem}
+                  onChange={(v) => setF({ ...f, unidadesPorEmbalagem: v })}
+                  exemplo="12"
+                  ajuda="Ex.: 12 garrafas numa caixa."
+                />
+                <div>
+                  <label className="block text-xs font-medium text-slate-700">
+                    Quanto mede cada unidade
+                    <span className="ml-0.5 text-red-500">*</span>
+                  </label>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={f.conteudoPorUnidade}
+                      onChange={(e) => setF({ ...f, conteudoPorUnidade: e.target.value })}
+                      required
+                      placeholder="1"
+                      className="w-1/2 rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+                    />
+                    <select
+                      value={f.unidadeSelector}
+                      onChange={(e) => setF({ ...f, unidadeSelector: e.target.value })}
+                      className="w-1/2 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="" disabled>
+                        Unidade…
+                      </option>
+                      {UNIDADES_COMUNS.map((u) => (
+                        <option key={u.valor} value={u.valor}>
+                          {u.etiqueta}
+                        </option>
+                      ))}
+                      <option value={OUTRA}>Outra…</option>
+                    </select>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                    Ex.: 1 litro por garrafa.
+                  </p>
+                </div>
+
+                {f.unidadeSelector === OUTRA && (
+                  <div className="sm:col-span-2">
+                    <Campo
+                      etiqueta="Qual é a unidade"
+                      obrigatorio
+                      valor={f.unidadeOutra}
+                      onChange={(v) => setF({ ...f, unidadeOutra: v })}
+                      exemplo="galão"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {vendeAUnidade && (
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-slate-700">
+                  Como se mede este produto
+                </label>
+                <select
+                  value={f.unidadeSelector}
+                  onChange={(e) => setF({ ...f, unidadeSelector: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="" disabled>
+                    Escolha uma unidade…
+                  </option>
+                  {UNIDADES_COMUNS.map((u) => (
+                    <option key={u.valor} value={u.valor}>
+                      {u.etiqueta}
+                    </option>
+                  ))}
+                  <option value={OUTRA}>Outra…</option>
+                </select>
+                {f.unidadeSelector === OUTRA && (
+                  <div className="mt-3">
+                    <Campo
+                      etiqueta="Qual é a unidade"
+                      obrigatorio
+                      valor={f.unidadeOutra}
+                      onChange={(v) => setF({ ...f, unidadeOutra: v })}
+                      exemplo="galão"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {factorValido && unidadeBase.trim() && (
+              <p className="mt-3 rounded bg-white px-2.5 py-1.5 text-xs text-slate-700">
                 <Info size={11} className="mr-1 inline text-blue-600" />
-                {factor === 1 ? (
-                  <>Vende à unidade — o preço que publicar é o preço por unidade.</>
+                {vendeAUnidade ? (
+                  <>Vende à unidade — o preço abaixo é o preço por {unidadeBase.trim()}.</>
                 ) : (
                   <>
-                    1 {f.unidadeVenda.trim() || 'embalagem'} = <strong>{factor} unidades</strong>.
-                    Um preço de 240 será comparado como {(240 / factor).toFixed(2)} por unidade.
+                    1 {f.tipoEmbalagem} = <strong>{unidades} × {conteudo}{unidadeBase.trim()}</strong> ={' '}
+                    <strong>{arredondar(factorConversao)} {unidadeBase.trim()}</strong>. Dez{' '}
+                    {f.tipoEmbalagem}s entram no stock do comprador como{' '}
+                    {arredondar(10 * factorConversao)} {unidadeBase.trim()}.
                   </>
                 )}
               </p>
             )}
+
+            <div className="mt-3">
+              <Campo
+                etiqueta={`Quantas ${vendeAUnidade ? unidadeBase.trim() || 'unidades' : `${f.tipoEmbalagem}s`} tem em stock`}
+                tipo="number"
+                valor={f.quantidadeDisponivel}
+                onChange={(v) => setF({ ...f, quantidadeDisponivel: v })}
+                exemplo="200"
+                ajuda="Deixe vazio se preferir não publicar. Vazio não é lido como «sem stock» — só falta a informação."
+              />
+            </div>
           </section>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo
-              etiqueta="Mínimo de encomenda"
-              tipo="number"
-              valor={f.moq}
-              onChange={(v) => setF({ ...f, moq: v })}
-              ajuda="Na unidade de venda. Deixe vazio se não exige mínimo."
-            />
-            <Campo
-              etiqueta="Múltiplo de encomenda"
-              tipo="number"
-              valor={f.multiplo}
-              onChange={(v) => setF({ ...f, multiplo: v })}
-              ajuda="Se for 6, encomenda-se 6, 12, 18 — nunca 7."
-            />
-            <Campo
-              etiqueta="Dias até expedir"
-              tipo="number"
-              valor={f.prazoExpedicaoDias}
-              onChange={(v) => setF({ ...f, prazoExpedicaoDias: v })}
-              ajuda="Entre receber a ordem e a mercadoria sair."
-            />
-            <Campo
-              etiqueta="Saldo disponível"
-              tipo="number"
-              valor={f.quantidadeDisponivel}
-              onChange={(v) => setF({ ...f, quantidadeDisponivel: v })}
-              ajuda="Deixe vazio se preferir não publicar. Vazio não prejudica — não é lido como «sem stock»."
-            />
-          </div>
+          {/* ── Preço — só ao criar ────────────────────────────────── */}
+          {!aEditar && (
+            <section className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+              <h3 className="text-xs font-semibold text-emerald-900">Preço</h3>
+              <p className="mt-1 text-[11px] leading-snug text-emerald-800">
+                É o que o comprador vê primeiro numa comparação. Um artigo sem preço fica
+                invisível em todas as comparações, mesmo publicado.
+              </p>
+
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-slate-700">
+                  Preço por {vendeAUnidade ? unidadeBase.trim() || 'unidade' : f.tipoEmbalagem || 'embalagem'}
+                  <span className="ml-0.5 text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={preco.preco}
+                  onChange={(e) => setPreco({ preco: e.target.value })}
+                  required
+                  placeholder="450"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                />
+                {!vendeAUnidade && factorValido && Number(preco.preco) > 0 && (
+                  <p className="mt-1 text-[11px] text-emerald-700">
+                    {(Number(preco.preco) / factorConversao).toFixed(2)} MT por{' '}
+                    {unidadeBase.trim() || 'unidade'}.
+                  </p>
+                )}
+                <p className="mt-1 text-[11px] leading-snug text-slate-500">
+                  Pode publicar preços diferentes por quantidade e alterá-lo mais tarde em
+                  «Preços», na lista de artigos.
+                </p>
+              </div>
+            </section>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-slate-700">Descrição</label>
@@ -274,13 +542,126 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aGravar && <Loader2 size={15} className="animate-spin" />}
-            {artigo ? 'Guardar' : 'Criar'}
+            {aEditar ? 'Guardar' : 'Criar'}
           </button>
         </footer>
       </form>
     </div>
   );
 }
+
+/**
+ * A miniatura da imagem, com o mesmo enquadramento quadrado dos cards da vitrine — o que se
+ * vê aqui é o que o comprador vai ver.
+ */
+function PreviaImagem({ url }: { url: string }) {
+  const [falhou, setFalhou] = useState(false);
+  const limpo = url.trim();
+
+  return (
+    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+      {limpo && !falhou ? (
+        <img
+          src={limpo}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setFalhou(true)}
+          onLoad={() => setFalhou(false)}
+        />
+      ) : (
+        <ImageOff size={20} className="text-slate-300" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Recupera os três campos da embalagem a partir do que já estava gravado, ao editar.
+ *
+ * `factorConversao` chega como um único número — o produto de unidades × conteúdo — e não
+ * há forma de o separar sem ambiguidade (12 pode ser «12 × 1» ou «1 × 12», e o resultado
+ * seria o mesmo). Por isso, ao editar um artigo antigo, todo o factor entra como
+ * «unidades», com conteúdo 1: o valor final do formulário continua correcto, mesmo que a
+ * separação não reflicta como o fornecedor pensou nele da primeira vez. Quem editar vê o
+ * número certo e pode reparti-lo como preferir.
+ */
+function interpretarEmbalagem(artigo: ArtigoVitrine | null) {
+  if (!artigo) {
+    return {
+      tipoEmbalagem: '',
+      unidadeSelector: '',
+      unidadeOutra: '',
+      unidadesPorEmbalagem: '1',
+      conteudoPorUnidade: '1',
+    };
+  }
+
+  const unidadeBase = extrairUnidadeBase(artigo.embalagem, artigo.unidadeVenda);
+  const naListaComum = UNIDADES_COMUNS.some((u) => u.valor === unidadeBase.toLowerCase());
+  const factor = artigo.factorConversao ?? 1;
+
+  if (factor === 1) {
+    return {
+      tipoEmbalagem: '',
+      unidadeSelector: unidadeBase && !naListaComum ? OUTRA : unidadeBase,
+      unidadeOutra: unidadeBase && !naListaComum ? unidadeBase : '',
+      unidadesPorEmbalagem: '1',
+      conteudoPorUnidade: '1',
+    };
+  }
+
+  const tipo = TIPOS_DE_EMBALAGEM.some((t) => t.valor === (artigo.unidadeVenda ?? '').toLowerCase())
+    ? (artigo.unidadeVenda as string).toLowerCase()
+    : artigo.unidadeVenda?.trim() || 'caixa';
+
+  return {
+    tipoEmbalagem: tipo,
+    unidadeSelector: unidadeBase && !naListaComum ? OUTRA : unidadeBase,
+    unidadeOutra: unidadeBase && !naListaComum ? unidadeBase : '',
+    unidadesPorEmbalagem: String(factor),
+    conteudoPorUnidade: '1',
+  };
+}
+
+/**
+ * Recupera a unidade base a partir do que já estava gravado, ao editar.
+ *
+ * `embalagem` guarda «caixa com 12 × 1litro» quando o factor não é 1; `unidadeVenda` guarda
+ * a unidade base directamente quando o artigo se vende à unidade. As duas formas convergem
+ * aqui para o mesmo campo do formulário.
+ */
+function extrairUnidadeBase(
+  embalagem: string | null | undefined,
+  unidadeVenda: string | null | undefined,
+): string {
+  // «caixa com 12 × 1litro» → «litro»: os números já vivem noutros campos, só a unidade
+  // interessa aqui.
+  const daEmbalagem = embalagem?.match(/×\s*[\d.,]*\s*(\D+)$/)?.[1]?.trim();
+  return daEmbalagem || unidadeVenda || '';
+}
+
+/** Arredonda a duas casas, sem zeros a mais: 12 fica 12, 12.5 fica 12.5. */
+function arredondar(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
+/**
+ * Traduz a unidade que `ExtrairProdutoDeFotoService` devolve (o vocabulário fechado do
+ * `Produto` interno) para o texto livre que este formulário usa.
+ *
+ * Os dois vocabulários existem por razões diferentes: ali é uma coluna do `Produto`, com
+ * unidades que o POS e o inventário reconhecem; aqui é a descrição de como o fornecedor
+ * embala, que pode ser «dúzia» ou «rolo» — coisas que o `Produto` nunca teve de nomear.
+ */
+const DA_UNIDADE_DE_PRODUTO: Record<string, string> = {
+  UN: 'unidade',
+  KG: 'kg',
+  G: 'g',
+  L: 'litro',
+  ML: 'ml',
+  CX: 'unidade',
+  PCT: 'unidade',
+};
 
 function Campo({
   etiqueta,
@@ -290,7 +671,6 @@ function Campo({
   obrigatorio,
   exemplo,
   ajuda,
-  destaque,
 }: {
   etiqueta: string;
   valor: string;
@@ -299,7 +679,6 @@ function Campo({
   obrigatorio?: boolean;
   exemplo?: string;
   ajuda?: string;
-  destaque?: boolean;
 }) {
   return (
     <div>
@@ -315,12 +694,7 @@ function Campo({
         onChange={(e) => onChange(e.target.value)}
         required={obrigatorio}
         placeholder={exemplo}
-        className={
-          'mt-1 w-full rounded-md border px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none ' +
-          (destaque
-            ? 'border-blue-300 focus:border-blue-500'
-            : 'border-slate-300 focus:border-blue-500')
-        }
+        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
       />
       {ajuda && <p className="mt-1 text-[11px] leading-snug text-slate-500">{ajuda}</p>}
     </div>

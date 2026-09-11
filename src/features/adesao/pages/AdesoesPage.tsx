@@ -13,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { mensagemDeErro } from '@/shared/utils';
 import { api } from '@/shared/config';
 import {
   adesoes,
@@ -222,7 +223,7 @@ function PainelDecisao({
       onFechar();
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível registar a decisão.');
+      toast.error(mensagemDeErro(erro, 'Não foi possível registar a decisão.'));
     },
   });
 

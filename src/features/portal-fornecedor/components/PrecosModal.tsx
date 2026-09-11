@@ -4,7 +4,7 @@ import { Info, Loader2, Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { portal } from '../api/portal.api';
 import type { ArtigoVitrine, PrecoArtigo } from '../api/portal.api';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 
 interface Props {
   artigo: ArtigoVitrine;
@@ -70,7 +70,7 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
       setNovo({ ...novo, preco: '' });
       recarregar();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao publicar o preço.'),
+    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao publicar o preço.')),
   });
 
   const apagar = useMutation({
@@ -81,8 +81,7 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
     },
     onError: (e: any) =>
       toast.error(
-        e?.response?.data?.message ??
-          'Só preços que ainda não entraram em vigor podem ser removidos.',
+        mensagemDeErro(e, 'Só preços que ainda não entraram em vigor podem ser removidos.'),
       ),
   });
 

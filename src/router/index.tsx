@@ -24,6 +24,8 @@ import {
   VitrinePage,
   DocumentosPage,
   ZonasPage,
+  PerfilPage,
+  ImportarCatalogoPage,
 } from '@/features/portal-fornecedor';
 import { MercadoPage, FichaFornecedorPage } from '@/features/mercado';
 import {
@@ -32,6 +34,7 @@ import {
   PedirAdesaoPage,
 } from '@/features/adesao';
 import { ConferenciaPage } from '@/features/conferencia';
+import { FornecedorVitrinePage } from '@/features/fornecedores';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
@@ -99,6 +102,8 @@ export const router = createBrowserRouter([
       { index: true,            element: <VitrinePage /> },
       { path: 'documentos',     element: <DocumentosPage /> },
       { path: 'zonas',          element: <ZonasPage /> },
+      { path: 'perfil',         element: <PerfilPage /> },
+      { path: 'importar',       element: <ImportarCatalogoPage /> },
     ],
   },
 
@@ -170,6 +175,10 @@ export const router = createBrowserRouter([
           // a mesma pessoa a fazer as duas coisas.
           { path: '/conferencia',   element: <ConferenciaPage /> },
           { path: '/fornecedores',  element: <Navigate to="/compras?tab=fornecedores" replace /> },
+          // A vitrine de um fornecedor específico — dentro do `AppLayout`, e não junto às
+          // rotas públicas do mercado: exige sessão e o módulo B2B, e mostra dados
+          // comerciais (e-mail, telefone) que a ficha pública do mercado não expõe.
+          { path: '/fornecedores/:organizacaoId/vitrine', element: <FornecedorVitrinePage /> },
 
           // ─── Vendas ─────────────────────────────────────────────────────
           // `/sessoes-historico` era o mesmo componente que o POS já monta no seu

@@ -10,9 +10,25 @@ interface MessageBubbleProps {
   idx: number;
 }
 
+const REGEX_TAG_PERSONA = /^\s*\[PERSONA:\s*([^\]]+)\]\s*/i;
+
+/**
+ * A resposta da Mayra vem prefixada com `[PERSONA: X]` (ver base.persona.ts) — a tag existe
+ * para o frontend interpretar e estilizar, nunca para o utilizador ler em bruto. Sem isto, o
+ * texto `[PERSONA: Compras]` aparecia literalmente dentro da bolha de chat.
+ */
+function extrairPersona(content: string): { persona: string | null; texto: string } {
+  const match = typeof content === 'string' ? content.match(REGEX_TAG_PERSONA) : null;
+  if (!match) return { persona: null, texto: content };
+  return { persona: match[1].trim(), texto: content.slice(match[0].length) };
+}
+
 export function MessageBubble({ msg, idx }: MessageBubbleProps) {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const isUser = msg.role === 'user';
+  const { persona, texto } = isUser
+    ? { persona: null, texto: msg.content }
+    : extrairPersona(msg.content);
 
   const handleCopy = (content: string, idx: number) => {
     navigator.clipboard.writeText(content);
@@ -53,8 +69,13 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
           <p className="whitespace-pre-wrap">{msg.content}</p>
         ) : (
           <div className="relative group">
+            {persona && (
+              <span className="mb-1.5 inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-500">
+                {persona}
+              </span>
+            )}
             <div className="prose prose-sm prose-slate max-w-none prose-p:leading-relaxed prose-th:bg-slate-50 prose-th:p-2 prose-td:p-2 prose-table:border prose-table:rounded-lg prose-table:overflow-hidden prose-tr:border-b pr-12">
-              <ReactMarkdown 
+              <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   a: ({ node, ...props }) => {
@@ -67,19 +88,19 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
                   }
                 }}
               >
-                {msg.content}
+                {texto}
               </ReactMarkdown>
             </div>
             <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={() => handleSpeak(msg.content)}
+                onClick={() => handleSpeak(texto)}
                 className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                 title="Ouvir em voz alta"
               >
                 <Volume2 className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => handleCopy(msg.content, idx)}
+                onClick={() => handleCopy(texto, idx)}
                 className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                 title="Copiar texto"
               >

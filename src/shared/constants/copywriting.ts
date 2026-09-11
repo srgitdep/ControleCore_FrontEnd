@@ -383,9 +383,9 @@ export const COPY = {
    * estava em lugar nenhum onde se lesse. */
   AUTH: {
     TITULO: 'Entrar no ControlCore',
-    SUBTITULO: 'Use o código de acesso que a sua empresa lhe atribuiu.',
-    CAMPO_CODIGO: 'Código de acesso',
-    CAMPO_CODIGO_DICA: 'Ex: S001',
+    SUBTITULO: 'Use o código de acesso ou e-mail — de comprador ou de fornecedor.',
+    CAMPO_CODIGO: 'Código de acesso ou e-mail',
+    CAMPO_CODIGO_DICA: 'Ex: S001 ou F4821',
     CAMPO_SENHA: 'Senha',
     CAMPO_SENHA_DICA: 'Mínimo 6 caracteres',
     ESQUECEU: 'Esqueceu a senha?',

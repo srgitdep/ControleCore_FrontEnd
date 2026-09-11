@@ -1,7 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Building2, CheckCircle2, Info, Loader2, Store, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Info,
+  Loader2,
+  Store,
+  User,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  avisoDeNuitAoEscrever,
+  diagnosticarNuit,
+  mensagemDeErro,
+} from '@/shared/utils';
 import { adesoes, type AdesaoSubmetida } from '../api/adesao.api';
 
 /**
@@ -48,11 +62,21 @@ export function PedirAdesaoPage() {
 
   const [observacoes, setObservacoes] = useState('');
 
+  // Ver a nota em `RegistarFornecedorPage`: derivado do estado, e só assinala quando
+  // passou dos nove dígitos.
+  const avisoDoNuit = avisoDeNuitAoEscrever(empresa.empresaNuit);
+
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!empresa.empresaNome.trim() || !empresa.empresaNuit.trim()) {
-      toast.error('O nome da empresa e o NUIT são obrigatórios.');
+    if (!empresa.empresaNome.trim()) {
+      toast.error('O nome da empresa é obrigatório.');
+      return;
+    }
+
+    const erroDoNuit = diagnosticarNuit(empresa.empresaNuit);
+    if (erroDoNuit) {
+      toast.error(erroDoNuit);
       return;
     }
 
@@ -81,7 +105,7 @@ export function PedirAdesaoPage() {
       // O 409 do NUIT já registado — ou do e-mail que já tem utilizador — traz uma mensagem
       // que explica o caminho alternativo («já é cliente, o que quer é entrar»). Vale mais
       // mostrá-la do que um «erro ao submeter» que não diz nada.
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível submeter o pedido.');
+      toast.error(mensagemDeErro(erro, 'Não foi possível submeter o pedido.'));
     } finally {
       setAGravar(false);
     }
@@ -94,6 +118,14 @@ export function PedirAdesaoPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
+        <Link
+          to="/criar-conta"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </Link>
+
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />
@@ -140,6 +172,7 @@ export function PedirAdesaoPage() {
                 valor={empresa.empresaNuit}
                 onChange={(v) => setEmpresa({ ...empresa, empresaNuit: v })}
                 exemplo="400 123 456"
+                erro={avisoDoNuit}
                 ajuda="Nove dígitos. É por ele que evitamos registos duplicados da mesma empresa."
               />
               <Campo
@@ -312,6 +345,7 @@ function Campo({
   obrigatorio,
   exemplo,
   ajuda,
+  erro,
 }: {
   etiqueta: string;
   valor: string;
@@ -320,6 +354,7 @@ function Campo({
   obrigatorio?: boolean;
   exemplo?: string;
   ajuda?: string;
+  erro?: string | null;
 }) {
   return (
     <div>
@@ -333,9 +368,24 @@ function Campo({
         onChange={(e) => onChange(e.target.value)}
         required={obrigatorio}
         placeholder={exemplo}
-        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        aria-invalid={erro ? true : undefined}
+        aria-errormessage={erro ? `${etiqueta}-erro` : undefined}
+        className={`mt-1 w-full rounded-md border px-3 py-2 text-sm focus:outline-none ${
+          erro
+            ? 'border-red-400 focus:border-red-500'
+            : 'border-slate-300 focus:border-blue-500'
+        }`}
       />
-      {ajuda ? <p className="mt-1 text-[11px] leading-snug text-slate-500">{ajuda}</p> : null}
+      {erro ? (
+        <p
+          id={`${etiqueta}-erro`}
+          className="mt-1 text-[11px] font-medium leading-snug text-red-600"
+        >
+          {erro}
+        </p>
+      ) : ajuda ? (
+        <p className="mt-1 text-[11px] leading-snug text-slate-500">{ajuda}</p>
+      ) : null}
     </div>
   );
 }

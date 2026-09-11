@@ -17,6 +17,84 @@ export interface Supplier {
 
 export type SupplierPayload = Omit<Supplier, 'id' | 'isActive'> & { isActive?: boolean };
 
+// ─── Vitrine ──────────────────────────────────────────────────────────────────
+
+export interface PrecoVitrine {
+  id: string;
+  preco: number;
+  moeda: string;
+  quantidadeMinima: number;
+  vigenteDe: string;
+  vigenteAte: string | null;
+  promocional: boolean;
+}
+
+/**
+ * Um artigo publicado, como o comprador o vê. A mesma forma que `ArtigoVitrine` do portal
+ * do fornecedor, menos os campos que só interessam a quem gere a vitrine (`estado`,
+ * `publicadoEm`) — aqui só entram artigos já publicados, o backend filtra por isso.
+ */
+export interface ArtigoDaVitrine {
+  id: string;
+  organizacaoId: string;
+  referencia: string;
+  nome: string;
+  descricao: string | null;
+  gtin: string | null;
+  categoria: string | null;
+  marca: string | null;
+  unidadeVenda: string | null;
+  factorConversao: number;
+  embalagem: string | null;
+  quantidadeDisponivel: number | null;
+  esgotado: boolean;
+  imagens: string[];
+  precos: PrecoVitrine[];
+}
+
+// ─── A lista completa, incluindo quem ainda não é fornecedor desta empresa ────
+
+/** Um fornecedor com quem esta empresa já tem relação — cadastrado à mão, ou já usado. */
+export interface FornecedorComRelacao {
+  tipo: 'RELACAO';
+  fornecedor: Supplier;
+}
+
+/**
+ * Uma organização da plataforma com vitrine publicada, que esta empresa ainda não usou.
+ *
+ * Sem `id` de `Fornecedor` — não existe relação nenhuma para editar, suspender ou ver
+ * desempenho. O único acto possível é ver a vitrine; ao adjudicar-lhe algo através do
+ * sourcing, a relação nasce e a organização passa a aparecer como as outras.
+ */
+export interface FornecedorSemRelacao {
+  tipo: 'SEM_RELACAO';
+  organizacaoId: string;
+  razaoSocial: string;
+  nomeComercial: string | null;
+  nuit: string | null;
+  email: string | null;
+  telefone: string | null;
+  artigosPublicados: number;
+}
+
+export type LinhaDeFornecedor = FornecedorComRelacao | FornecedorSemRelacao;
+
+export interface VitrinaDoFornecedor {
+  organizacaoId: string;
+  razaoSocial: string;
+  nomeComercial: string | null;
+  sede: string | null;
+  email: string | null;
+  telefone: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  nuit: string | null;
+  provinciasServidas: string[];
+  documentosValidos: string[];
+  artigos: ArtigoDaVitrine[];
+}
+
 // ─── Histórico e desempenho ──────────────────────────────────────────────────
 
 export interface PedidoDoFornecedor {
@@ -85,6 +163,36 @@ export const suppliersApi = {
 
   getSupplierById: async (id: string) => {
     const { data } = await api.get<Supplier>(`/fornecedores/${id}`);
+    return data;
+  },
+
+  /**
+   * A lista de fornecedores desta empresa, incluindo as organizações da plataforma que
+   * ainda não usou — a lista que `FornecedoresTab` mostra.
+   *
+   * Diferente de `getSuppliers`: aquela devolve só `Fornecedor`, a relação comercial, e é o
+   * que `CriarPedidoModal` e `CatalogoTab` continuam a usar — não se pode emitir um pedido
+   * de compra manual a uma organização com quem não há relação nenhuma; essa nasce na
+   * adjudicação do sourcing, não à mão.
+   */
+  getFornecedoresDaEmpresa: async () => {
+    const { data } = await api.get<LinhaDeFornecedor[]>('/b2b/qualificacao/fornecedores');
+    return data;
+  },
+
+  /**
+   * A vitrine de um fornecedor — os seus dados e todos os artigos publicados, com preço.
+   *
+   * `organizacaoId` e não `id`: a vitrine pertence à **organização** do fornecedor, que é a
+   * identidade partilhada por todos os compradores; `id` é a relação comercial desta
+   * empresa com ele, e uma organização sem relação nenhuma ainda tem vitrine. Um fornecedor
+   * cadastrado à mão (sem `organizacaoId`) não tem esta rota para chamar — ver a nota em
+   * `FornecedoresTab`.
+   */
+  getVitrina: async (organizacaoId: string) => {
+    const { data } = await api.get<VitrinaDoFornecedor>(
+      `/b2b/qualificacao/${organizacaoId}/vitrine`,
+    );
     return data;
   },
 

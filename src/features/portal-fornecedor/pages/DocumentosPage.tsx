@@ -11,7 +11,7 @@ import {
 } from '../api/portal.api';
 import type { DocumentoFornecedor } from '../api/portal.api';
 import { usePortalStore } from '../store/usePortalStore';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 
 /**
  * Os documentos de habilitação do fornecedor.
@@ -278,7 +278,7 @@ function SubmeterModal({
       onSuccess();
       onClose();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao submeter.'),
+    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao submeter.')),
   });
 
   const enviar = (e: React.FormEvent) => {

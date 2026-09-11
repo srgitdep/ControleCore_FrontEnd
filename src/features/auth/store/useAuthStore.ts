@@ -11,6 +11,11 @@ interface AuthState {
   isLoading: boolean;
 
   login: (payload: LoginPayload) => Promise<void>;
+  /**
+   * Regista uma sessão já obtida pelo ecrã de entrada único (`POST /auth/entrar`), sem
+   * repetir o `POST /auth/login` — os cookies já vieram nessa resposta.
+   */
+  entrarComSessao: (user: AuthUser) => void;
   logout: () => Promise<void>;
   setPermissions: (permissions: string[]) => void;
   hasRole: (roles: Role[]) => boolean;
@@ -34,6 +39,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       permissions: userPermissions,
       isAuthenticated: true,
     });
+  },
+
+  entrarComSessao: (user: AuthUser) => {
+    const userPermissions = (user as any).permissions ?? [];
+    sessionStorage.setItem('authUser', JSON.stringify(user));
+    set({ user, permissions: userPermissions, isAuthenticated: true });
   },
 
   logout: async () => {

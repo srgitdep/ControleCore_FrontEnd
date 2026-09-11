@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Barcode,
@@ -6,13 +7,17 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  ImageOff,
   Info,
+  LayoutGrid,
+  List,
   Loader2,
   Package,
   PackageX,
   Plus,
   Search,
   Tag,
+  Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -24,38 +29,61 @@ import {
 import type { ArtigoVitrine } from '../api/portal.api';
 import { ArtigoFormModal } from '../components/ArtigoFormModal';
 import { PrecosModal } from '../components/PrecosModal';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 
 const mt = (v: number) =>
   `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
+const CHAVE_MODO = 'controlcore.portal.vitrine.modo';
+
+/** O modo de visualização lembrado por browser — a mesma conveniência que o resto do
+ *  sistema dá a filtros e a abas, e sem custar uma coluna na base de dados: é preferência
+ *  de ecrã, não dado de negócio. */
+function lerModoGuardado(): 'grelha' | 'lista' {
+  try {
+    const guardado = localStorage.getItem(CHAVE_MODO);
+    return guardado === 'lista' ? 'lista' : 'grelha';
+  } catch {
+    return 'grelha';
+  }
+}
+
 /**
  * A vitrine: os artigos que o fornecedor publica e os preços deles.
  *
- * ## O que este ecrã tem de conseguir explicar
+ * ## Dois modos de ver a mesma lista
  *
- * Dois campos decidem se o fornecedor ganha ou perde comparações, e nenhum dos dois é óbvio
- * para quem os preenche:
+ * **Grelha** — cards com imagem, nome e preço em destaque. É a mesma leitura que o
+ * comprador tem no POS ao vender, e é isso que este modo existe para mostrar: o fornecedor
+ * vê a vitrine como ela compete visualmente, não como uma tabela técnica.
  *
- * **O factor de conversão.** Vende em caixas de 6 e o comprador conta unidades. Sem o
- * factor, dez caixas entram no stock dele como dez unidades — e o erro não dá mensagem
- * nenhuma, dá stock errado em silêncio. Do lado da comparação, é o que faz 240 por caixa
- * competir de igual com 42 por unidade.
+ * **Lista** — uma linha por artigo, com o factor de conversão e o aviso de GTIN em
+ * destaque, e um detalhe expansível com os campos técnicos. É o modo para gerir muitos
+ * artigos de uma vez: scanear cinquenta linhas é mais rápido do que scanear cinquenta
+ * cards.
  *
- * **O GTIN.** É o critério mais forte de correspondência que existe. Com código de barras, o
- * artigo é encontrado com certeza; sem ele, por semelhança de nome — que falha quando o
- * fornecedor lhe dá um nome que só ele entende.
- *
- * A lista mostra os dois em destaque, e a ausência do GTIN é assinalada.
+ * Nenhum dos dois substitui o outro — um fornecedor com três artigos quer ver os cards que
+ * vai mostrar; um com trezentos quer a lista para os encontrar depressa.
  */
 export function VitrinePage() {
+  const navegar = useNavigate();
   const queryClient = useQueryClient();
 
+  const [modo, setModo] = useState<'grelha' | 'lista'>(lerModoGuardado);
   const [filtro, setFiltro] = useState<EstadoArtigoVitrine | 'TODOS'>('TODOS');
   const [termo, setTermo] = useState('');
   const [aEditar, setAEditar] = useState<ArtigoVitrine | 'novo' | null>(null);
   const [aPrecificar, setAPrecificar] = useState<ArtigoVitrine | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
+
+  const mudarModo = (novo: 'grelha' | 'lista') => {
+    setModo(novo);
+    try {
+      localStorage.setItem(CHAVE_MODO, novo);
+    } catch {
+      // Preferência de ecrã, sem consequência se não gravar — uma aba privada, por exemplo.
+    }
+  };
 
   const { data: artigos, isLoading } = useQuery({
     queryKey: ['portal-artigos', filtro, termo],
@@ -78,7 +106,7 @@ export function VitrinePage() {
       );
       recarregar();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao mudar o estado.'),
+    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao mudar o estado.')),
   });
 
   const semPreco = artigos?.filter((a) => precoVigente(a) === null).length ?? 0;
@@ -92,13 +120,22 @@ export function VitrinePage() {
             Publique uma vez. Todos os compradores da plataforma vêem.
           </p>
         </div>
-        <button
-          onClick={() => setAEditar('novo')}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          <Plus size={15} />
-          Novo artigo
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navegar('/fornecedor/importar')}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Upload size={15} />
+            Importar catálogo
+          </button>
+          <button
+            onClick={() => setAEditar('novo')}
+            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            <Plus size={15} />
+            Novo artigo
+          </button>
+        </div>
       </header>
 
       {/* Um artigo publicado sem preço em vigor desaparece de todas as comparações, e o
@@ -148,6 +185,33 @@ export function VitrinePage() {
             ),
           )}
         </div>
+
+        {/* O par de botões, e não um `<select>`: são só duas opções e visíveis as duas ao
+            mesmo tempo é mais rápido de reconhecer do que abrir um menu para ver a outra. */}
+        <div className="ml-auto flex shrink-0 gap-1 rounded-md border border-slate-300 p-0.5">
+          <button
+            onClick={() => mudarModo('grelha')}
+            aria-pressed={modo === 'grelha'}
+            title="Ver em grelha de cards"
+            className={cn(
+              'rounded px-2 py-1.5 transition-colors',
+              modo === 'grelha' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
+            )}
+          >
+            <LayoutGrid size={14} />
+          </button>
+          <button
+            onClick={() => mudarModo('lista')}
+            aria-pressed={modo === 'lista'}
+            title="Ver em lista"
+            className={cn(
+              'rounded px-2 py-1.5 transition-colors',
+              modo === 'lista' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
+            )}
+          >
+            <List size={14} />
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -170,6 +234,19 @@ export function VitrinePage() {
               Acrescentar o primeiro artigo
             </button>
           )}
+        </div>
+      ) : modo === 'grelha' ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {artigos.map((artigo) => (
+            <ArtigoCard
+              key={artigo.id}
+              artigo={artigo}
+              aMudar={mudarEstado.isPending && mudarEstado.variables?.id === artigo.id}
+              onEditar={() => setAEditar(artigo)}
+              onPrecificar={() => setAPrecificar(artigo)}
+              onMudarEstado={(estado) => mudarEstado.mutate({ id: artigo.id, estado })}
+            />
+          ))}
         </div>
       ) : (
         <ul className="space-y-2">
@@ -330,6 +407,131 @@ function EtiquetaEstado({ estado }: { estado: EstadoArtigoVitrine }) {
 }
 
 /**
+ * O card da grelha — a mesma leitura visual do `ProductCard` do POS: imagem quadrada,
+ * nome, referência, preço em destaque. É deliberadamente a mesma composição, porque é
+ * assim que o comprador vê produtos ao vender, e o fornecedor deve ver a sua vitrine como
+ * ela compete visualmente, não como uma tabela técnica.
+ *
+ * Difere do POS em três pontos que são deste lado e não daquele: o estado (RASCUNHO,
+ * ESGOTADO…) substitui o «restam N» do stock, o card não é clicável para vender — abre em
+ * Editar — e leva as acções de gestão no rodapé, porque quem olha para isto é quem publica,
+ * não quem compra.
+ */
+function ArtigoCard({
+  artigo,
+  aMudar,
+  onEditar,
+  onPrecificar,
+  onMudarEstado,
+}: {
+  artigo: ArtigoVitrine;
+  aMudar: boolean;
+  onEditar: () => void;
+  onPrecificar: () => void;
+  onMudarEstado: (estado: EstadoArtigoVitrine) => void;
+}) {
+  const vigente = precoVigente(artigo);
+  const imagemUrl = artigo.imagens?.[0];
+  // Sem isto, um URL que falhe a carregar (link partido, servidor a recusar, CORS) deixa o
+  // browser desenhar o ícone nativo de imagem quebrada com o texto `alt` — o nome do
+  // artigo — por cima do espaço da imagem, sobreposto ao selo de estado. `falhou` troca
+  // isso pelo mesmo placeholder «sem imagem» que já se usa quando não há URL nenhum.
+  const [falhou, setFalhou] = useState(false);
+  const temImagem = !!imagemUrl && !falhou;
+
+  return (
+    <div className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
+      <button
+        type="button"
+        onClick={onEditar}
+        className="relative mb-3 flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-3 text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <span className="absolute left-2 top-2 z-10">
+          <EtiquetaEstado estado={artigo.estado} />
+        </span>
+
+        {!artigo.gtin && (
+          <span
+            className="absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
+            title="Sem código de barras, os compradores encontram este artigo por semelhança de nome — que falha quando o nome não é o que eles usam."
+          >
+            <Barcode size={8} />
+            sem GTIN
+          </span>
+        )}
+
+        {temImagem ? (
+          <img
+            src={imagemUrl}
+            alt={artigo.nome}
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+            onError={() => setFalhou(true)}
+            onLoad={() => setFalhou(false)}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-slate-300">
+            <ImageOff size={22} />
+            <span className="text-[9px] font-medium uppercase tracking-wide">Sem imagem</span>
+          </div>
+        )}
+      </button>
+
+      <button type="button" onClick={onEditar} className="flex-1 text-left">
+        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-800">
+          {artigo.nome}
+        </h3>
+        <p className="mt-1 font-mono text-[11px] font-medium text-slate-400">
+          {artigo.referencia}
+        </p>
+
+        <div className="mt-2">
+          {vigente ? (
+            <>
+              <p className="flex items-baseline gap-1">
+                <span className="text-lg font-black text-slate-900">{vigente.preco.toFixed(2)}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  MT
+                </span>
+              </p>
+              {artigo.factorConversao !== 1 && (
+                <p className="text-[11px] text-slate-500">
+                  {mt(vigente.preco / artigo.factorConversao)} / unidade
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-xs font-semibold text-amber-600">Sem preço em vigor</p>
+          )}
+        </div>
+      </button>
+
+      <div className="mt-3 flex gap-1.5 border-t border-slate-100 pt-2.5">
+        <button
+          onClick={onPrecificar}
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-300 px-2 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <Tag size={11} />
+          Preços
+        </button>
+        {aMudar ? (
+          <span className="inline-flex items-center px-2">
+            <Loader2 size={13} className="animate-spin text-slate-400" />
+          </span>
+        ) : (
+          <BotaoEstado
+            artigo={artigo}
+            temPreco={vigente !== null}
+            aMudar={false}
+            onMudar={onMudarEstado}
+            compacto
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Publicar, esgotar ou voltar a rascunho.
  *
  * Publicar sem preço é recusado no ecrã. O backend aceita — um artigo publicado sem preço é
@@ -342,11 +544,14 @@ function BotaoEstado({
   temPreco,
   aMudar,
   onMudar,
+  compacto,
 }: {
   artigo: ArtigoVitrine;
   temPreco: boolean;
   aMudar: boolean;
   onMudar: (estado: EstadoArtigoVitrine) => void;
+  /** Card da grelha: texto mais curto, para caber ao lado do botão de Preços. */
+  compacto?: boolean;
 }) {
   if (aMudar) {
     return (
@@ -355,6 +560,10 @@ function BotaoEstado({
       </span>
     );
   }
+
+  const base = compacto
+    ? 'inline-flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium'
+    : 'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium';
 
   if (artigo.estado === 'RASCUNHO' || artigo.estado === 'DESCONTINUADO') {
     return (
@@ -370,9 +579,9 @@ function BotaoEstado({
           }
           onMudar('PUBLICADO');
         }}
-        className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+        className={cn(base, 'bg-emerald-600 text-white hover:bg-emerald-700')}
       >
-        <Eye size={12} />
+        <Eye size={compacto ? 11 : 12} />
         Publicar
       </button>
     );
@@ -382,10 +591,10 @@ function BotaoEstado({
     return (
       <button
         onClick={() => onMudar('ESGOTADO')}
-        className="inline-flex items-center gap-1 rounded-md border border-amber-300 px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50"
+        className={cn(base, 'border border-amber-300 text-amber-700 hover:bg-amber-50')}
         title="Marca como sem saldo. Continua visível — o comprador vê que existe e vai voltar."
       >
-        <PackageX size={12} />
+        <PackageX size={compacto ? 11 : 12} />
         Esgotado
       </button>
     );
@@ -394,9 +603,9 @@ function BotaoEstado({
   return (
     <button
       onClick={() => onMudar('PUBLICADO')}
-      className="inline-flex items-center gap-1 rounded-md border border-emerald-300 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+      className={cn(base, 'border border-emerald-300 text-emerald-700 hover:bg-emerald-50')}
     >
-      <EyeOff size={12} />
+      <EyeOff size={compacto ? 11 : 12} />
       Repor
     </button>
   );

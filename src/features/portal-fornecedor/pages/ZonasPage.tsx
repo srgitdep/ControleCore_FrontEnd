@@ -4,7 +4,7 @@ import { AlertTriangle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PROVINCIAS, portal } from '../api/portal.api';
 import type { ZonaEntrega } from '../api/portal.api';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 
 const mt = (v: number) =>
   `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
@@ -44,7 +44,7 @@ export function ZonasPage() {
       toast.success('Zona removida.');
       recarregar();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao remover.'),
+    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao remover.')),
   });
 
   const activas = zonas?.filter((z) => z.activa) ?? [];
@@ -212,7 +212,7 @@ function ZonaModal({
       onSuccess();
       onClose();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao guardar a zona.'),
+    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao guardar a zona.')),
   });
 
   return (

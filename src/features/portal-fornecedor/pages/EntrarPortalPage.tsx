@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, Store } from 'lucide-react';
+import { ArrowLeft, Loader2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { mensagemDeErro } from '@/shared/utils';
 import { usePortalStore } from '../store/usePortalStore';
 
 /**
@@ -35,7 +36,7 @@ export function EntrarPortalPage() {
       // O backend responde sempre «Credenciais inválidas» — não distingue e-mail inexistente
       // de senha errada, para não servir de oráculo sobre quem está na plataforma. A
       // mensagem é mostrada como vem.
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível entrar.');
+      toast.error(mensagemDeErro(erro, 'Não foi possível entrar.'));
     } finally {
       setAEntrar(false);
     }
@@ -44,6 +45,14 @@ export function EntrarPortalPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
+        <Link
+          to="/criar-conta"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </Link>
+
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />

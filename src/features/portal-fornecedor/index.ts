@@ -6,3 +6,5 @@ export * from './pages/EntrarPortalPage';
 export * from './pages/VitrinePage';
 export * from './pages/DocumentosPage';
 export * from './pages/ZonasPage';
+export * from './pages/PerfilPage';
+export * from './pages/ImportarCatalogoPage';

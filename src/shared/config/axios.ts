@@ -76,7 +76,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const isLoginRequest = originalRequest.url?.includes('/auth/login');
+    // `/auth/entrar` é o ecrã de entrada único (comprador ou fornecedor, ver
+    // `ResolverEntradaUseCase` no backend) — um 401 aí é senha errada, exactamente como em
+    // `/auth/login`, e não uma sessão que caiu. Sem esta linha, uma senha errada disparava
+    // `/auth/refresh` (que falha, porque nunca houve sessão) e um redirect para `/login` a
+    // meio da própria tentativa de entrar.
+    const isLoginRequest =
+      originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/entrar');
     const isRefreshRequest = originalRequest.url?.includes('/auth/refresh');
 
     // Só tenta refresh se for 401, não for login/refresh e ainda não reentrou

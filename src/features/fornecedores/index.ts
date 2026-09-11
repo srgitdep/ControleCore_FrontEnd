@@ -10,3 +10,4 @@ export * from './components/FornecedoresTab';
 export * from './components/FornecedorFormModal';
 export * from './components/FornecedorDetailsModal';
 export * from './components/ContasBancariasModal';
+export * from './pages/FornecedorVitrinePage';

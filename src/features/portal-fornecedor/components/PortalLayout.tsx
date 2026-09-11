@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -9,6 +9,7 @@ import {
   MapPin,
   Package,
   Store,
+  UserCircle2,
 } from 'lucide-react';
 import { usePortalStore } from '../store/usePortalStore';
 import { cn } from '@/shared/utils';
@@ -27,10 +28,17 @@ import { cn } from '@/shared/utils';
  * título errado e um copiloto sem contexto — três sintomas do mesmo erro de raiz, que é
  * tratar um fornecedor como um utilizador do ControlCore.
  *
- * ## Três entradas e não mais
+ * ## Quatro entradas e não mais
  *
- * Vitrine, documentos, zonas. É tudo o que o fornecedor pode fazer hoje, e a barra reflecte
- * isso em vez de prometer separadores que não existem.
+ * Vitrine, documentos, zonas, perfil. É tudo o que o fornecedor pode fazer hoje, e a barra
+ * reflecte isso em vez de prometer separadores que não existem.
+ *
+ * ## O cabeçalho mostra o nome da **empresa**, não o de quem está a usar a conta
+ *
+ * `fornecedor.organizacaoNome` — a razão social ou o nome comercial da organização — e não
+ * `fornecedor.nome`, que é o nome do responsável. Uma organização com mais do que uma conta
+ * mostraria um nome diferente a cada pessoa que entrasse, se o cabeçalho lesse o utilizador;
+ * é a mesma distinção que a página «Perfil» explica na sua própria nota.
  */
 export function PortalLayout() {
   const { fornecedor, autenticado, aCarregar, carregar, sair, conformidade } = usePortalStore();
@@ -65,6 +73,7 @@ export function PortalLayout() {
     { para: '/fornecedor', etiqueta: 'Vitrine', icone: Package, fim: true },
     { para: '/fornecedor/documentos', etiqueta: 'Documentos', icone: FileText },
     { para: '/fornecedor/zonas', etiqueta: 'Zonas de entrega', icone: MapPin },
+    { para: '/fornecedor/perfil', etiqueta: 'Perfil', icone: UserCircle2 },
   ];
 
   return (
@@ -72,14 +81,37 @@ export function PortalLayout() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <Store size={16} className="text-white" />
-            </div>
+            {/* A logomarca da fornecedora quando existe; o ícone genérico caso contrário
+                — a maioria dos fornecedores não vai ter uma logo no primeiro dia, e o
+                cabeçalho não pode ficar vazio à espera disso. */}
+            {fornecedor.organizacaoLogoUrl ? (
+              <img
+                src={fornecedor.organizacaoLogoUrl}
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-lg border border-slate-100 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+                <Store size={16} className="text-white" />
+              </div>
+            )}
             <div>
+              {/* O nome da **empresa**, não o de quem está a usar a conta — ver a nota da
+                  função. «Portal do Fornecedor» sozinho, sem organização a identificá-lo,
+                  não diz a que empresa a sessão pertence. */}
               <p className="text-sm font-semibold leading-tight text-slate-900">
-                Portal do Fornecedor
+                {fornecedor.organizacaoNome ?? 'Portal do Fornecedor'}
               </p>
-              <p className="text-xs leading-tight text-slate-500">{fornecedor.nome}</p>
+              <Link
+                to="/fornecedor/perfil"
+                className="text-xs leading-tight text-slate-500 hover:text-blue-600 hover:underline"
+                title="Ver e editar os dados da empresa e do responsável"
+              >
+                {fornecedor.nome}
+              </Link>
             </div>
           </div>
 

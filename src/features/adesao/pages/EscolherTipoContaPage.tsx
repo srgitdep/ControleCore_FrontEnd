@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, Store, Truck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Store, Truck } from 'lucide-react';
 
 /**
  * A bifurcação: comprador ou fornecedor.
@@ -32,6 +32,17 @@ export function EscolherTipoContaPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-3xl">
+        {/* Sem isto, quem chega aqui pela landing page fica sem forma de recuar — a única
+            saída era o botão «Voltar» do browser, que em muitos telemóveis nem está à
+            vista. */}
+        <Link
+          to="/landing"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </Link>
+
         <header className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-slate-900">Criar conta no ControlCore</h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-500">

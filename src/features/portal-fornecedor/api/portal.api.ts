@@ -94,9 +94,35 @@ export interface UtilizadorPortal {
   id: string;
   nome: string;
   email: string;
+  /** O código `F####` — vem de `GET /eu` e de `entrar()`, não de `PATCH /perfil`. */
+  codigo?: string;
+  telefone?: string | null;
   cargo?: string | null;
   principal: boolean;
   organizacaoId: string;
+  /** O nome comercial (ou a razão social) da fornecedora — para o cabeçalho do portal. */
+  organizacaoNome?: string;
+  /** A logomarca, quando existe — também para o cabeçalho. */
+  organizacaoLogoUrl?: string | null;
+}
+
+/**
+ * Os dados da organização fornecedora, para o formulário de edição.
+ *
+ * Sem os campos administrativos (`observacoes`, `criadoPorId`, fusão) — o backend não os
+ * devolve nesta rota; ver `PortalFornecedorController.paraFrontend`.
+ */
+export interface OrganizacaoFornecedor {
+  id: string;
+  razaoSocial: string;
+  nomeComercial: string | null;
+  /** Só leitura: o NUIT não é editável por aqui — ver a nota em `actualizarOrganizacao`. */
+  nuit: string | null;
+  sede: string | null;
+  email: string | null;
+  telefone: string | null;
+  website: string | null;
+  logoUrl: string | null;
 }
 
 export interface PrecoArtigo {
@@ -130,6 +156,52 @@ export interface ArtigoVitrine {
   fichaTecnicaUrl?: string | null;
   publicadoEm?: string | null;
   precos: PrecoArtigo[];
+}
+
+/**
+ * Uma linha de catálogo, como o servidor a leu de um documento — antes de ser revista.
+ *
+ * Os mesmos três números do `ArtigoFormModal`: `unidadesPorEmbalagem` × `conteudoPorUnidade`
+ * é o `factorConversao` que o artigo vai receber. Não chegam já multiplicados porque a
+ * tabela de pré-visualização precisa de os mostrar separados, para quem revê perceber de
+ * onde veio o número.
+ */
+export interface ArtigoExtraidoDeCatalogo {
+  nome: string;
+  referencia?: string;
+  marca?: string;
+  categoria?: string;
+  tipoEmbalagem?: string;
+  unidadesPorEmbalagem: number;
+  conteudoPorUnidade: number;
+  unidadeMedida?: string;
+  preco?: number;
+  moeda?: string;
+  quantidadeDisponivel?: number;
+}
+
+/** Uma linha, depois de revista, pronta para `POST /artigos/importar-lote`. */
+export interface LinhaParaImportar {
+  nome: string;
+  referencia?: string;
+  marca?: string;
+  categoria?: string;
+  tipoEmbalagem?: string;
+  unidadesPorEmbalagem: number;
+  conteudoPorUnidade: number;
+  unidadeMedida?: string;
+  preco: number;
+  moeda?: string;
+  quantidadeDisponivel?: number;
+  imagens?: string[];
+}
+
+export interface ResultadoLinhaImportacao {
+  nome: string;
+  referencia: string;
+  artigoId?: string;
+  sucesso: boolean;
+  erro?: string;
 }
 
 export interface DocumentoFornecedor {
@@ -231,11 +303,15 @@ export const portal = {
 
   eu: async () => {
     const { data } = await portalApi.get<{
+      identidade: {
+        organizacao: { id: string; nome: string; eTenant: boolean; logoUrl?: string | null };
+      };
       fornecedor: {
         utilizadorId: string;
         organizacaoId: string;
         nome: string;
         email: string;
+        codigo: string;
         principal: boolean;
       };
       conformidade: Conformidade;
@@ -243,7 +319,108 @@ export const portal = {
     return data;
   },
 
+  // ─── Perfil e organização ─────────────────────────────────────────────────
+
+  /** Os dados completos da organização — para o formulário de edição pré-preencher. */
+  obterOrganizacao: async () => {
+    const { data } = await portalApi.get<OrganizacaoFornecedor>(`${BASE}/organizacao`);
+    return data;
+  },
+
+  /**
+   * Sem `nuit`: é a chave de deduplicação entre organizações, e uma correcção passa por
+   * suporte — ver a nota em `IVitrineRepository.actualizarOrganizacao` no backend.
+   */
+  actualizarOrganizacao: async (payload: {
+    razaoSocial?: string;
+    nomeComercial?: string;
+    sede?: string;
+    email?: string;
+    telefone?: string;
+    website?: string;
+    logoUrl?: string;
+  }) => {
+    const { data } = await portalApi.patch<OrganizacaoFornecedor>(
+      `${BASE}/organizacao`,
+      payload,
+    );
+    return data;
+  },
+
+  /** Sem `email` nem `codigo`: são os identificadores de login, editáveis noutro fluxo. */
+  actualizarPerfil: async (payload: { nome?: string; telefone?: string; cargo?: string }) => {
+    const { data } = await portalApi.patch<UtilizadorPortal>(`${BASE}/perfil`, payload);
+    return data;
+  },
+
   // ─── Vitrine ──────────────────────────────────────────────────────────────
+
+  /**
+   * Lê nome, marca, peso e unidade a partir de fotografias da embalagem.
+   *
+   * O mesmo serviço que o formulário de produto do lado comprador usa — `B2bModule`
+   * importa `ProdutoModule` só por isto. Não grava nada; o resultado é sugestão para o
+   * formulário, que a pessoa confirma antes de criar o artigo.
+   */
+  extrairArtigoDeFoto: async (imagens: File[]) => {
+    const form = new FormData();
+    for (const img of imagens) form.append('imagens', img);
+
+    const { data } = await portalApi.post<{
+      dados: Record<string, unknown>;
+      recusados: { campo: string; motivo: string }[];
+      semResultado: boolean;
+    }>(`${BASE}/artigos/extrair-de-foto`, form, {
+      // O `Content-Type` fica ao browser: acrescenta o `boundary` que o multipart exige.
+      headers: { 'Content-Type': undefined as unknown as string },
+      // A leitura de quatro imagens por um modelo de visão passa dos 10s por omissão do
+      // axios.
+      timeout: 90_000,
+    });
+
+    return data;
+  },
+
+  /**
+   * Lê um catálogo inteiro de um documento — PDF, Word, Excel ou fotografia.
+   *
+   * Um documento por pedido; um catálogo é uma lista única, e o servidor não junta dois
+   * documentos numa análise só. O resultado vai para a tabela de pré-visualização — nada é
+   * gravado até `importarLoteDeArtigos`.
+   */
+  extrairCatalogoDeDocumento: async (documento: File) => {
+    const form = new FormData();
+    form.append('documento', documento);
+
+    const { data } = await portalApi.post<{
+      artigos: ArtigoExtraidoDeCatalogo[];
+      recusadas: { linha: number; motivo: string; bruto: Record<string, unknown> }[];
+      semResultado: boolean;
+    }>(`${BASE}/artigos/extrair-catalogo`, form, {
+      headers: { 'Content-Type': undefined as unknown as string },
+      // Um documento inteiro custa mais tempo de análise do que uma fotografia só.
+      timeout: 120_000,
+    });
+
+    return data;
+  },
+
+  /**
+   * Cria os artigos revistos na pré-visualização, cada um com o seu primeiro preço.
+   *
+   * Cada linha é uma transacção própria do lado do servidor: uma referência duplicada numa
+   * linha não impede as outras de serem criadas. A resposta diz, linha a linha, o que
+   * aconteceu.
+   */
+  importarLoteDeArtigos: async (linhas: LinhaParaImportar[]) => {
+    const { data } = await portalApi.post<{
+      resultados: ResultadoLinhaImportacao[];
+      criados: number;
+      falhados: number;
+    }>(`${BASE}/artigos/importar-lote`, { linhas });
+
+    return data;
+  },
 
   listarArtigos: async (filtros?: { estado?: EstadoArtigoVitrine; termo?: string }) => {
     const { data } = await portalApi.get<ArtigoVitrine[]>(`${BASE}/artigos`, {

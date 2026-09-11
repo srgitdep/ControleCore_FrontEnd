@@ -47,6 +47,29 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+// POST /auth/entrar — o ecrã de entrada único. `identificador` é o código ou e-mail de
+// QUALQUER um dos dois tipos de conta; o backend descobre qual é (ver
+// `ResolverEntradaUseCase`) e devolve `tipo` para o frontend saber para onde reencaminhar.
+export interface EntrarPayload {
+  identificador: string;
+  password: string;
+}
+
+export type RespostaEntrar =
+  | { tipo: 'COMPRADOR'; user: AuthUser }
+  | {
+      tipo: 'FORNECEDOR';
+      utilizador: {
+        id: string;
+        nome: string;
+        email: string;
+        codigo?: string;
+        cargo?: string | null;
+        principal: boolean;
+        organizacaoId: string;
+      };
+    };
+
 // POST /auth/refresh não retorna tokens no body — os cookies são rotacionados pelo backend
 export interface RefreshResponse {
   message: string;

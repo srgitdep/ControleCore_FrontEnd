@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { useAuth } from '../index';
+import { entrarApi } from '../api/auth.api';
+import { usePortal } from '@/features/portal-fornecedor/store/usePortalStore';
 import { cn } from '@/shared/utils';
 import { useBreakpoint } from '@/shared/hooks';
 import { COPY } from '@/shared/constants/copywriting';
@@ -48,7 +50,8 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { entrarComSessao } = useAuth();
+  const { entrarComSessao: entrarNoPortal } = usePortal();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const copy = COPY.AUTH;
@@ -60,9 +63,22 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
+  // Um ecrã só: o código ou e-mail escrito aqui pode ser de um comprador ou de um
+  // fornecedor — `POST /auth/entrar` descobre qual (ver `ResolverEntradaUseCase` no
+  // backend) e diz `tipo`, que é o que decide para onde navegar a seguir. O utilizador
+  // nunca escolhe o portal: o próprio identificador já o diz.
   const onSubmit = async (data: LoginForm) => {
     try {
-      await login(data);
+      const resposta = await entrarApi({ identificador: data.code, password: data.password });
+
+      if (resposta.tipo === 'FORNECEDOR') {
+        await entrarNoPortal(resposta.utilizador);
+        toast.success(copy.SUCESSO, { duration: 2000 });
+        navigate('/fornecedor', { replace: true });
+        return;
+      }
+
+      entrarComSessao(resposta.user);
       toast.success(copy.SUCESSO, { duration: 2000 });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {

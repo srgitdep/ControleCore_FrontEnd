@@ -9,8 +9,8 @@ import { useArmazens } from '@/features/lojas';
 import { stockApi } from '@/features/stock';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Button } from '@/shared/ui';
-import { CapturaPorFoto } from './CapturaPorFoto';
+import { Button, CapturaPorFoto } from '@/shared/ui';
+import { catalogApi } from '../api/catalog.api';
 import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
 const productSchema = z.object({
@@ -221,7 +221,12 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
    * `shouldValidate` fica desligado: validar campos que a pessoa ainda não tocou enche o
    * formulário de erros vermelhos por causa dos preços, que a foto nunca preenche.
    */
-  const preencherDaFoto = (dados: DadosExtraidosDeFoto) => {
+  const preencherDaFoto = (brutos: Record<string, unknown>) => {
+    // `CapturaPorFoto` é genérico — devolve `Record<string, unknown>` porque serve também o
+    // portal do fornecedor, com um conjunto de campos diferente. Aqui sabe-se que veio de
+    // `/produtos/extrair-de-foto`, cuja forma é `DadosExtraidosDeFoto`.
+    const dados = brutos as DadosExtraidosDeFoto;
+
     const vazio = (campo: keyof ProductFormData) => {
       const actual = getValues(campo as any);
       return actual === undefined || actual === null || actual === '' || actual === 0;
@@ -311,7 +316,19 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
             {/* Só ao criar: ao editar, os campos já estão preenchidos, e deixar a IA
                 sobrescrever o que alguém corrigiu à mão perderia trabalho feito. */}
-            {!productToEdit && <CapturaPorFoto onExtraido={preencherDaFoto} />}
+            {!productToEdit && (
+              <CapturaPorFoto
+                analisar={async (imagens) => {
+                  const r = await catalogApi.extrairDeFoto(imagens);
+                  // `dados` chega tipado (`DadosExtraidosDeFoto`, sem assinatura de índice)
+                  // e `CapturaPorFoto` é genérico (`Record<string, unknown>`) para servir
+                  // também o portal do fornecedor. O espalhamento é só para satisfazer o
+                  // tipo — o valor não muda.
+                  return { ...r, dados: { ...r.dados } };
+                }}
+                onExtraido={preencherDaFoto}
+              />
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">

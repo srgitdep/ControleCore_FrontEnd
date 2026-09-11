@@ -34,6 +34,13 @@ interface EstadoPortal {
 
   /** `identificador` é o e-mail **ou** o código `F####` — o servidor reconhece qual. */
   entrar: (identificador: string, password: string) => Promise<void>;
+  /**
+   * Regista uma sessão já resolvida pelo ecrã de entrada único (`POST /auth/entrar`), sem
+   * repetir o `POST /portal-fornecedor/entrar` — o cookie `tokenFornecedor` já veio nessa
+   * resposta. Só falta o que `entrar()` também busca a seguir: `carregar()` traz o nome da
+   * organização e a conformidade.
+   */
+  entrarComSessao: (utilizador: UtilizadorPortal) => Promise<void>;
   sair: () => Promise<void>;
   /** Relê a sessão e a conformidade do servidor. */
   carregar: () => Promise<void>;
@@ -48,27 +55,20 @@ export const usePortalStore = create<EstadoPortal>((set, get) => ({
   aCarregar: true,
 
   entrar: async (identificador, password) => {
+    // `POST /entrar` só devolve o token e uma sessão mínima — não o nome da organização,
+    // que é uma leitura à parte (`organizacoesParaSourcing`). Marca-se autenticado com o
+    // que já se tem para o ecrã reagir de imediato, e chama-se `carregar()` a seguir, que
+    // lê `/eu` e traz o resto — nome da organização e conformidade incluídos.
     const { utilizador } = await portal.entrar({ identificador, password });
-
-    try {
-      sessionStorage.setItem(CHAVE, JSON.stringify(utilizador));
-    } catch {
-      // Um separador em modo privado pode recusar a escrita. A sessão continua válida —
-      // é o cookie que a carrega — e o utilizador apenas terá de esperar por um `carregar()`
-      // depois de recarregar a página. Falhar o login por causa disto seria absurdo.
-    }
 
     set({ fornecedor: utilizador, autenticado: true, aCarregar: false });
 
-    // A conformidade é buscada a seguir, e não em paralelo: só faz sentido depois de haver
-    // sessão. O `catch` silencioso é deliberado — entrar no portal não deve falhar porque o
-    // painel de conformidade não carregou.
-    try {
-      const { conformidade } = await portal.eu();
-      set({ conformidade });
-    } catch {
-      /* o painel mostra-se vazio e um `carregar()` posterior recupera */
-    }
+    await get().carregar();
+  },
+
+  entrarComSessao: async (utilizador) => {
+    set({ fornecedor: utilizador, autenticado: true, aCarregar: false });
+    await get().carregar();
   },
 
   sair: async () => {
@@ -83,14 +83,17 @@ export const usePortalStore = create<EstadoPortal>((set, get) => ({
 
   carregar: async () => {
     try {
-      const { fornecedor, conformidade } = await portal.eu();
+      const { identidade, fornecedor, conformidade } = await portal.eu();
 
       const utilizador: UtilizadorPortal = {
         id: fornecedor.utilizadorId,
         nome: fornecedor.nome,
         email: fornecedor.email,
+        codigo: fornecedor.codigo,
         principal: fornecedor.principal,
         organizacaoId: fornecedor.organizacaoId,
+        organizacaoNome: identidade.organizacao.nome,
+        organizacaoLogoUrl: identidade.organizacao.logoUrl,
       };
 
       try {

@@ -1,7 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Building2, CheckCircle2, Info, Loader2, Mail, Store, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Info,
+  Loader2,
+  Mail,
+  Store,
+  User,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  avisoDeNuitAoEscrever,
+  diagnosticarNuit,
+  mensagemDeErro,
+} from '@/shared/utils';
 import { portal } from '../api/portal.api';
 import type { RegistoResultado } from '../api/portal.api';
 
@@ -46,11 +61,32 @@ export function RegistarFornecedorPage() {
     telefone: '',
   });
 
+  /**
+   * O aviso do NUIT, enquanto se escreve.
+   *
+   * Derivado do estado e não guardado noutro: um segundo `useState` para o erro daria
+   * duas fontes para a mesma verdade, e a primeira vez que alguém mudasse o NUIT sem
+   * passar pelo `onChange` — colar, preencher automaticamente — o aviso ficava obsoleto.
+   *
+   * `avisoDeNuitAoEscrever` só assinala quando **passou** dos nove dígitos. Um campo a
+   * meio não é um erro, e pintá-lo de vermelho ao quarto dígito acusa a pessoa de um
+   * engano que ela ainda não cometeu.
+   */
+  const avisoDoNuit = avisoDeNuitAoEscrever(empresa.nuit);
+
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!empresa.razaoSocial.trim() || !empresa.nuit.trim()) {
-      toast.error('A razão social e o NUIT são obrigatórios.');
+    if (!empresa.razaoSocial.trim()) {
+      toast.error('A razão social é obrigatória.');
+      return;
+    }
+
+    // O diagnóstico completo, e não o de escrita: aqui o campo está terminado, e um NUIT
+    // com dígitos a menos passa a ser um erro que tem de ser dito.
+    const erroDoNuit = diagnosticarNuit(empresa.nuit);
+    if (erroDoNuit) {
+      toast.error(erroDoNuit);
       return;
     }
 
@@ -83,7 +119,7 @@ export function RegistarFornecedorPage() {
     } catch (erro: any) {
       // O 409 do NUIT já registado traz uma mensagem que explica o que fazer — vale mais
       // mostrá-la do que um «erro ao registar» que não diz nada.
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível concluir o registo.');
+      toast.error(mensagemDeErro(erro, 'Não foi possível concluir o registo.'));
     } finally {
       setAGravar(false);
     }
@@ -96,6 +132,14 @@ export function RegistarFornecedorPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
+        <Link
+          to="/criar-conta"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </Link>
+
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />
@@ -139,6 +183,7 @@ export function RegistarFornecedorPage() {
                   valor={empresa.nuit}
                   onChange={(v) => setEmpresa({ ...empresa, nuit: v })}
                   exemplo="400 123 456"
+                  erro={avisoDoNuit}
                   ajuda="É por ele que evitamos cadastros duplicados da mesma empresa. Se a sua empresa já foi cadastrada por um cliente, encontramo-la e ligamos a conta a esse registo — com o histórico de compras todo."
                 />
               </div>
@@ -344,6 +389,13 @@ function RegistoConcluido({
   );
 }
 
+/**
+ * Um campo do formulário.
+ *
+ * `erro` pinta a borda e substitui a ajuda pela mensagem. Substitui em vez de acrescentar:
+ * as duas ao mesmo tempo dão quatro linhas de texto debaixo de um campo, e a que importa
+ * perde-se no meio.
+ */
 function Campo({
   etiqueta,
   valor,
@@ -352,6 +404,7 @@ function Campo({
   obrigatorio,
   exemplo,
   ajuda,
+  erro,
 }: {
   etiqueta: string;
   valor: string;
@@ -360,6 +413,7 @@ function Campo({
   obrigatorio?: boolean;
   exemplo?: string;
   ajuda?: string;
+  erro?: string | null;
 }) {
   return (
     <div>
@@ -373,9 +427,24 @@ function Campo({
         onChange={(e) => onChange(e.target.value)}
         required={obrigatorio}
         placeholder={exemplo}
-        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
+        // `aria-invalid` e `aria-errormessage` e não só a cor: um leitor de ecrã não vê a
+        // borda vermelha, e um campo recusado sem aviso audível é um formulário que não se
+        // consegue submeter às cegas.
+        aria-invalid={erro ? true : undefined}
+        aria-errormessage={erro ? `${etiqueta}-erro` : undefined}
+        className={`mt-1 w-full rounded-md border px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none ${
+          erro
+            ? 'border-red-400 focus:border-red-500'
+            : 'border-slate-300 focus:border-blue-500'
+        }`}
       />
-      {ajuda && <p className="mt-1 text-[11px] leading-snug text-slate-500">{ajuda}</p>}
+      {erro ? (
+        <p id={`${etiqueta}-erro`} className="mt-1 text-[11px] font-medium leading-snug text-red-600">
+          {erro}
+        </p>
+      ) : ajuda ? (
+        <p className="mt-1 text-[11px] leading-snug text-slate-500">{ajuda}</p>
+      ) : null}
     </div>
   );
 }

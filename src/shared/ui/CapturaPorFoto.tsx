@@ -1,32 +1,20 @@
 import { useRef, useState } from 'react';
 import { Camera, X, Sparkles, Loader2, AlertTriangle, Check, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { catalogApi, type DadosExtraidosDeFoto } from '../api/catalog.api';
 
 /**
- * Preenche o formulário de produto a partir de fotografias da embalagem.
+ * O que qualquer leitura por fotografia devolve, para este componente ser genérico.
  *
- * ## Várias fotografias, de propósito
- *
- * A informação está repartida pela embalagem: o nome e a marca na frente, o código de
- * barras quase sempre na face de trás, o peso às vezes na lateral. Com uma fotografia só,
- * metade dos campos ficava vazia por razões de embalagem — não de leitura.
- *
- * Até quatro imagens. Cada uma é uma chamada paga ao modelo, e quatro cobrem as faces que
- * interessam.
- *
- * ## O que preenche, e o que não
- *
- * Nome, marca, código de barras, volume, unidade e categoria. **Não preços.** Uma
- * fotografia não sabe quanto custou nem a que se vende, e um preço inventado que passe sem
- * revisão vende com prejuízo. Esses campos ficam para quem registou o produto.
- *
- * ## Nada é gravado aqui
- *
- * O resultado entra no formulário como sugestão, e a pessoa confirma antes de gravar. É a
- * diferença entre uma ferramenta de apoio e uma que enche o catálogo de dados que ninguém
- * viu.
+ * `dados` fica como `Record<string, unknown>` de propósito: o que se lê de um produto de
+ * retalho (nome, marca, código de barras) e o que se lê de um artigo de fornecedor (mais o
+ * conteúdo por embalagem) não são o mesmo conjunto de campos, e este componente não precisa
+ * de saber qual dos dois está a lidar — só de mostrar quantos vieram e o que foi recusado.
  */
+export interface RespostaExtracaoPorFoto {
+  dados: Record<string, unknown>;
+  recusados: { campo: string; motivo: string }[];
+  semResultado: boolean;
+}
 
 interface Foto {
   ficheiro: File;
@@ -34,11 +22,46 @@ interface Foto {
   previa: string;
 }
 
+/**
+ * Preenche um formulário a partir de fotografias de um produto ou artigo.
+ *
+ * ## Porque é genérico e não vive em `features/produtos`
+ *
+ * Nasceu ali, para o formulário de produto do lado comprador. Quando o portal do
+ * fornecedor precisou da mesma coisa — ler nome, marca, peso e unidade da fotografia de um
+ * artigo — a escolha era duplicar as ~250 linhas de UI (pré-visualizações, limite de
+ * imagens, mensagens de recusa) ou generalizar a única coisa que os dois formulários fazem
+ * de forma diferente: **como perguntar ao servidor**.
+ *
+ * `analisar` é essa diferença — cada quem-chama passa a sua própria chamada de API (uma
+ * fala com `/produtos/extrair-de-foto`, a outra com
+ * `/portal-fornecedor/artigos/extrair-de-foto`) — e o resto, que é a parte que pode ter
+ * bugs subtis (libertar URLs de pré-visualização, limite de tamanho, mensagens de recusa),
+ * existe num só sítio.
+ *
+ * ## Várias fotografias, de propósito
+ *
+ * A informação está repartida pela embalagem: o nome e a marca na frente, o código de
+ * barras quase sempre na face de trás, o peso às vezes na lateral. Com uma fotografia só,
+ * metade dos campos ficava vazia por razões de embalagem — não de leitura.
+ *
+ * ## Nada é gravado aqui
+ *
+ * O resultado entra no formulário como sugestão, e a pessoa confirma antes de gravar. É a
+ * diferença entre uma ferramenta de apoio e uma que enche o catálogo de dados que ninguém
+ * viu.
+ */
 export function CapturaPorFoto({
+  analisar,
   onExtraido,
+  legenda,
 }: {
-  /** Chamado com os campos que a IA leu. Só inclui o que passou a validação. */
-  onExtraido: (dados: DadosExtraidosDeFoto) => void;
+  /** A chamada que sabe falar com o endpoint certo. */
+  analisar: (imagens: File[]) => Promise<RespostaExtracaoPorFoto>;
+  /** Chamado com os campos lidos. Só inclui o que passou a validação do lado do servidor. */
+  onExtraido: (dados: Record<string, unknown>) => void;
+  /** Substitui o texto de ajuda por omissão, quando o que se lê difere (preço nunca incluído). */
+  legenda?: string;
 }) {
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [aAnalisar, setAAnalisar] = useState(false);
@@ -86,14 +109,14 @@ export function CapturaPorFoto({
     });
   };
 
-  const analisar = async () => {
+  const executar = async () => {
     if (fotos.length === 0) return;
 
     setAAnalisar(true);
     setRecusados([]);
 
     try {
-      const r = await catalogApi.extrairDeFoto(fotos.map((f) => f.ficheiro));
+      const r = await analisar(fotos.map((f) => f.ficheiro));
 
       if (r.semResultado) {
         toast.error(
@@ -129,8 +152,8 @@ export function CapturaPorFoto({
             Preencher a partir de fotografias
           </p>
           <p className="text-xs text-slate-600">
-            Fotografe a frente e a face de trás — o código de barras costuma estar atrás.
-            Os preços não são lidos da imagem.
+            {legenda ??
+              'Fotografe a frente e a face de trás — o código de barras costuma estar atrás. Os preços não são lidos da imagem.'}
           </p>
         </div>
       </div>
@@ -210,7 +233,7 @@ export function CapturaPorFoto({
         {fotos.length > 0 && (
           <button
             type="button"
-            onClick={analisar}
+            onClick={executar}
             disabled={aAnalisar}
             className="ml-auto flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
           >
