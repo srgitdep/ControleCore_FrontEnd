@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
+  Camera,
   CheckCircle2,
   FileSpreadsheet,
   FileText,
@@ -69,6 +70,7 @@ interface LinhaRevisao extends ArtigoExtraidoDeCatalogo {
 export function ImportarCatalogoPage() {
   const navegar = useNavigate();
   const inputFicheiro = useRef<HTMLInputElement>(null);
+  const inputCamara = useRef<HTMLInputElement>(null);
 
   const [fase, setFase] = useState<Fase>('upload');
   const [aArrastar, setAArrastar] = useState(false);
@@ -229,6 +231,7 @@ export function ImportarCatalogoPage() {
           onRemover={() => setFicheiro(null)}
           onAnalisar={analisar}
           inputRef={inputFicheiro}
+          inputCamaraRef={inputCamara}
         />
       )}
 
@@ -313,6 +316,7 @@ function ZonaDeUpload({
   onRemover,
   onAnalisar,
   inputRef,
+  inputCamaraRef,
 }: {
   ficheiro: File | null;
   aArrastar: boolean;
@@ -322,6 +326,7 @@ function ZonaDeUpload({
   onRemover: () => void;
   onAnalisar: () => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  inputCamaraRef: React.RefObject<HTMLInputElement | null>;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -345,31 +350,61 @@ function ZonaDeUpload({
         }}
       />
 
+      {/* `capture="environment"` abre a câmara de trás directamente no telemóvel, sem
+          passar pelo selector de ficheiros — o mesmo padrão de `CapturaPorFoto`. A foto não
+          é guardada em lado nenhum: serve só de entrada para a mesma leitura que um PDF ou
+          um Excel já fazem, e é descartada depois de analisada. */}
+      <input
+        ref={inputCamaraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          onEscolher(e.target.files);
+          e.target.value = '';
+        }}
+      />
+
       {!ficheiro ? (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            onArrastar(true);
-          }}
-          onDragLeave={() => onArrastar(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            onArrastar(false);
-            onEscolher(e.dataTransfer.files);
-          }}
-          onClick={() => inputRef.current?.click()}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed py-14 text-center transition-colors ${
-            aArrastar ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-slate-400'
-          }`}
-        >
-          <Upload size={28} className={aArrastar ? 'text-blue-500' : 'text-slate-300'} />
-          <p className="mt-3 text-sm font-medium text-slate-700">
-            Arraste e solte o seu ficheiro aqui
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">ou clique para seleccionar</p>
-          <p className="mt-3 text-[11px] text-slate-400">
-            PDF, Word (.docx), Excel (.xlsx), ou uma fotografia — até {MAX_BYTES / 1024 / 1024} MB
-          </p>
+        <div>
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              onArrastar(true);
+            }}
+            onDragLeave={() => onArrastar(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              onArrastar(false);
+              onEscolher(e.dataTransfer.files);
+            }}
+            onClick={() => inputRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed py-14 text-center transition-colors ${
+              aArrastar ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-slate-400'
+            }`}
+          >
+            <Upload size={28} className={aArrastar ? 'text-blue-500' : 'text-slate-300'} />
+            <p className="mt-3 text-sm font-medium text-slate-700">
+              Arraste e solte o seu ficheiro aqui
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">ou clique para seleccionar</p>
+            <p className="mt-3 text-[11px] text-slate-400">
+              PDF, Word (.docx), Excel (.xlsx), ou uma fotografia — até {MAX_BYTES / 1024 / 1024} MB
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              inputCamaraRef.current?.click();
+            }}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            <Camera size={16} />
+            Tirar fotografia da lista de preços
+          </button>
         </div>
       ) : (
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
