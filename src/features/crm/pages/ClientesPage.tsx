@@ -101,7 +101,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
               disabled={isSaving}
               className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
             >
-              {isSaving ? 'A guardarâ€¦' : 'Guardar'}
+              {isSaving ? 'A guardar…' : 'Guardar'}
             </button>
           </div>
         </form>
@@ -233,7 +233,7 @@ export function ClientesPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Pesquisar por nome, email, telefone ou NUITâ€¦"
+                  placeholder="Pesquisar por nome, email, telefone ou NUIT…"
                   className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                 />
               </div>
