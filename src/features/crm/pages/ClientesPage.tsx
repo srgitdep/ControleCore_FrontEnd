@@ -5,6 +5,7 @@ import {
   Plus,
   UserSquare,
   PieChart,
+  Megaphone,
   Trash2,
   Edit2,
   X,
@@ -20,6 +21,7 @@ import {
 import type { Cliente } from '../api/clientes.api';
 import { Visao360Panel } from '../components/Visao360Panel';
 import { SegmentosPanel } from '../components/SegmentosPanel';
+import { CampanhasPanel } from '../components/CampanhasPanel';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
 import { TableScroll } from '@/shared/ui';
@@ -35,7 +37,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
-type Tab = 'clientes' | 'segmentos' | 'detalhes';
+type Tab = 'clientes' | 'segmentos' | 'campanhas' | 'detalhes';
 
 // ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
@@ -164,6 +166,7 @@ export function ClientesPage() {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'segmentos', label: 'Segmentos', icon: PieChart },
+    { id: 'campanhas', label: 'Campanhas', icon: Megaphone },
     { id: 'detalhes', label: 'Detalhes', icon: UserSquare },
   ];
 
@@ -410,6 +413,9 @@ export function ClientesPage() {
         {activeTab === 'segmentos' && (
           <SegmentosPanel onVerCliente={handleSelectCliente} />
         )}
+
+        {/* Tab: Campanhas */}
+        {activeTab === 'campanhas' && <CampanhasPanel />}
 
         {/* Tab: Detalhes */}
         {activeTab === 'detalhes' && selectedClienteId && (

@@ -135,6 +135,57 @@ export interface Audiencia {
   segment?: { nome: string; dimensao: DimensaoSegmento } | null;
 }
 
+// ──── Campanhas ───────────────────────────────────────────────────────────────
+
+export type EstadoCampanha = 'RASCUNHO' | 'A_ENVIAR' | 'CONCLUIDA' | 'CANCELADA';
+
+export type ResultadoEnvioCampanha =
+  | 'ENVIADO'
+  | 'FALHADO'
+  | 'SUPRIMIDO_SEM_CONSENTIMENTO'
+  | 'SUPRIMIDO_SEM_CONTACTO'
+  | 'SUPRIMIDO_JA_COMPROU'
+  | 'SUPRIMIDO_LIMITE_FREQUENCIA'
+  | 'SUPRIMIDO_CANAL_INDISPONIVEL';
+
+export interface Campanha {
+  id: string;
+  nome: string;
+  texto: string;
+  assunto?: string | null;
+  canal: CanalComunicacao;
+  estado: EstadoCampanha;
+  segmentId?: string | null;
+  audienceId?: string | null;
+  suprimirSeComprouEmDias?: number | null;
+  totalDestinatarios: number;
+  totalEnviados: number;
+  totalSuprimidos: number;
+  totalFalhados: number;
+  iniciadaEm?: string | null;
+  concluidaEm?: string | null;
+  createdAt: string;
+  segment?: { nome: string } | null;
+  audience?: { nome: string; total: number } | null;
+  porResultado?: Partial<Record<ResultadoEnvioCampanha, number>>;
+}
+
+export interface EnvioCampanha {
+  cliente: { id: string; nome: string; telefone?: string | null; email?: string | null };
+  resultado: ResultadoEnvioCampanha;
+  erro?: string | null;
+  enviadoEm: string;
+  convertidoEm?: string | null;
+  valorConvertido?: number | null;
+}
+
+export interface ResultadoCampanhaKpi {
+  enviados: number;
+  convertidos: number;
+  taxaConversao: number;
+  receita: number;
+}
+
 export interface Visao360 {
   cliente: {
     id: string;
@@ -314,5 +365,61 @@ export const criarAudiencia = async (payload: {
   nome: string;
 }): Promise<Audiencia> => {
   const { data } = await api.post('/crm/segmentos/audiencias', payload);
+  return data;
+};
+
+// ──── Campanhas ───────────────────────────────────────────────────────────────
+
+export const listarCampanhas = async (): Promise<Campanha[]> => {
+  const { data } = await api.get('/crm/campanhas');
+  return data;
+};
+
+export const obterCampanha = async (id: string): Promise<Campanha> => {
+  const { data } = await api.get(`/crm/campanhas/${id}`);
+  return data;
+};
+
+export const listarEnviosCampanha = async (
+  id: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<{ data: EnvioCampanha[]; total: number; page: number; lastPage: number }> => {
+  const { data } = await api.get(`/crm/campanhas/${id}/envios`, { params });
+  return data;
+};
+
+export const obterResultadoCampanha = async (id: string): Promise<ResultadoCampanhaKpi> => {
+  const { data } = await api.get(`/crm/campanhas/${id}/resultado`);
+  return data;
+};
+
+export const criarCampanha = async (payload: {
+  nome: string;
+  texto: string;
+  assunto?: string;
+  canal: CanalComunicacao;
+  segmentId?: string;
+  audienceId?: string;
+  suprimirSeComprouEmDias?: number;
+}): Promise<Campanha> => {
+  const { data } = await api.post('/crm/campanhas', payload);
+  return data;
+};
+
+export const enviarCampanha = async (
+  id: string,
+): Promise<{
+  destinatarios: number;
+  enviados: number;
+  suprimidos: number;
+  falhados: number;
+  porMotivo: Record<string, number>;
+}> => {
+  const { data } = await api.post(`/crm/campanhas/${id}/enviar`);
+  return data;
+};
+
+export const cancelarCampanha = async (id: string): Promise<Campanha> => {
+  const { data } = await api.post(`/crm/campanhas/${id}/cancelar`);
   return data;
 };

@@ -16,6 +16,13 @@ import {
   recalcularSegmentos,
   listarAudiencias,
   criarAudiencia,
+  listarCampanhas,
+  obterCampanha,
+  listarEnviosCampanha,
+  obterResultadoCampanha,
+  criarCampanha,
+  enviarCampanha,
+  cancelarCampanha,
   type CanalComunicacao,
   type DimensaoSegmento,
   type FinalidadeConsentimento,
@@ -233,6 +240,90 @@ export function useCriarAudiencia() {
     onError: (error: any) => {
       // Segmento vazio devolve 400 com a explicação.
       toast.error(error.response?.data?.message || 'Erro ao fixar audiência.');
+    },
+  });
+}
+
+// ──── Campanhas ───────────────────────────────────────────────────────────────
+
+export function useCampanhas() {
+  return useQuery({ queryKey: ['crm-campanhas'], queryFn: listarCampanhas });
+}
+
+export function useCampanha(id: string | null) {
+  return useQuery({
+    queryKey: ['crm-campanha', id],
+    queryFn: () => obterCampanha(id!),
+    enabled: !!id,
+  });
+}
+
+export function useEnviosCampanha(id: string | null, page: number) {
+  return useQuery({
+    queryKey: ['crm-campanha-envios', id, page],
+    queryFn: () => listarEnviosCampanha(id!, { page, limit: 25 }),
+    enabled: !!id,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useResultadoCampanha(id: string | null) {
+  return useQuery({
+    queryKey: ['crm-campanha-resultado', id],
+    queryFn: () => obterResultadoCampanha(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCriarCampanha() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: criarCampanha,
+    onSuccess: () => {
+      toast.success('Campanha criada. Reveja antes de enviar.');
+      queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao criar campanha.');
+    },
+  });
+}
+
+export function useEnviarCampanha() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: enviarCampanha,
+    onSuccess: (r) => {
+      // O número que interessa é o que saiu, não o de destinatários: a diferença
+      // entre os dois é o que explica o resultado.
+      toast.success(
+        `${r.enviados} mensagem(ns) enviada(s) de ${r.destinatarios} destinatário(s).`,
+      );
+      queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha-envios'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha-resultado'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao enviar campanha.');
+    },
+  });
+}
+
+export function useCancelarCampanha() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cancelarCampanha,
+    onSuccess: () => {
+      toast.success('Campanha cancelada.');
+      queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao cancelar campanha.');
     },
   });
 }
