@@ -24,6 +24,7 @@ import {
   enviarCampanha,
   cancelarCampanha,
   obterOportunidades,
+  obterAtencao,
   sugerirMensagens,
   type CanalComunicacao,
   type DimensaoSegmento,
@@ -346,4 +347,8 @@ export function useSugerirMensagens() {
       );
     },
   });
+}
+
+export function useAtencao() {
+  return useQuery({ queryKey: ['crm-mayra-atencao'], queryFn: obterAtencao });
 }

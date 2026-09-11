@@ -186,6 +186,42 @@ export interface ResultadoCampanhaKpi {
   receita: number;
 }
 
+// ──── MAYRA: próxima acção ────────────────────────────────────────────────────
+
+export type UrgenciaAccao = 'URGENTE' | 'IMPORTANTE' | 'OPORTUNIDADE' | 'NENHUMA';
+
+export interface ProximaAccao {
+  urgencia: UrgenciaAccao;
+  titulo: string;
+  porque: string;
+  sugestao: string;
+  sinais: Record<string, unknown>;
+}
+
+export interface PrevisaoCompra {
+  emDias: number;
+  data: string;
+  confianca: 'ALTA' | 'MEDIA' | 'BAIXA';
+}
+
+export interface ClienteAAgir {
+  clienteId: string;
+  nome: string;
+  telefone?: string | null;
+  valorTotal: number;
+  diasDesdeUltimaCompra: number | null;
+  accao: ProximaAccao;
+}
+
+export interface SaudeDaBase {
+  clientes: number;
+  comCompras: number;
+  contactaveis: number;
+  valorEmRisco: number;
+  porUrgencia: Record<string, number>;
+  obstaculos: string[];
+}
+
 export interface Visao360 {
   cliente: {
     id: string;
@@ -228,6 +264,8 @@ export interface Visao360 {
     taxaDevolucao: number;
     estado: EstadoRelacionamento;
   };
+  proximaAccao: ProximaAccao;
+  previsaoProximaCompra: PrevisaoCompra | null;
   segmentos: SegmentoDoCliente[];
   produtosRecorrentes: Array<{ produtoId: string; nome: string; vezes: number }>;
   financeiro: {
@@ -457,6 +495,14 @@ export interface AvisoContexto {
   tipo: 'SEM_HISTORICO' | 'SEM_PRODUTOS';
   mensagem: string;
 }
+
+export const obterAtencao = async (): Promise<{
+  clientes: ClienteAAgir[];
+  saude: SaudeDaBase;
+}> => {
+  const { data } = await api.get('/crm/mayra/atencao');
+  return data;
+};
 
 export const sugerirMensagens = async (payload: {
   segmentId: string;

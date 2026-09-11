@@ -13,6 +13,7 @@ import {
   Plus,
   ShieldCheck,
   Smartphone,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -279,6 +280,8 @@ export function Visao360Panel({
       <Cabecalho visao={visao} onBack={onBack} />
 
       <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-5">
+        <Recomendacao visao={visao} />
+
         <Comportamento visao={visao} />
 
         {visao.segmentos.length > 0 && (
@@ -447,6 +450,127 @@ function Comportamento({ visao }: { visao: Visao360 }) {
       />
     </div>
   );
+}
+
+/**
+ * O que fazer com este cliente.
+ *
+ * Fica acima dos números porque é a conclusão deles: quem abre a ficha quer
+ * saber o que fazer, não calcular a diferença entre datas. O raciocínio vem
+ * junto — uma recomendação que não se pode verificar não merece confiança.
+ */
+function Recomendacao({ visao }: { visao: Visao360 }) {
+  const [verSinais, setVerSinais] = useState(false);
+  const a = visao.proximaAccao;
+  const previsao = visao.previsaoProximaCompra;
+
+  if (!a) return null;
+
+  const TOM: Record<string, { caixa: string; etiqueta: string; rotulo: string }> = {
+    URGENTE: {
+      caixa: 'border-amber-300 bg-amber-50',
+      etiqueta: 'bg-amber-600 text-white',
+      rotulo: 'Agir agora',
+    },
+    IMPORTANTE: {
+      caixa: 'border-rose-200 bg-rose-50',
+      etiqueta: 'bg-rose-600 text-white',
+      rotulo: 'A ter em conta',
+    },
+    OPORTUNIDADE: {
+      caixa: 'border-blue-200 bg-blue-50',
+      etiqueta: 'bg-blue-600 text-white',
+      rotulo: 'Oportunidade',
+    },
+    NENHUMA: {
+      caixa: 'border-slate-200 bg-white',
+      etiqueta: 'bg-slate-200 text-slate-600',
+      rotulo: 'Tudo em ordem',
+    },
+  };
+
+  const tom = TOM[a.urgencia] ?? TOM.NENHUMA;
+
+  return (
+    <div className={cn('rounded-xl border p-4', tom.caixa)}>
+      <div className="flex items-start gap-3">
+        <Sparkles size={16} className="mt-0.5 shrink-0 text-violet-600" />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                'rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                tom.etiqueta,
+              )}
+            >
+              {tom.rotulo}
+            </span>
+            <p className="text-sm font-bold text-slate-900">{a.titulo}</p>
+          </div>
+
+          <p className="mt-1.5 text-sm text-slate-700">{a.porque}</p>
+          <p className="mt-1 text-sm font-medium text-slate-900">{a.sugestao}</p>
+
+          {previsao && previsao.emDias > 0 && (
+            <p className="mt-2 text-xs text-slate-500">
+              Pela média dele, deve voltar dentro de {previsao.emDias} dia(s)
+              {previsao.confianca === 'BAIXA' && ' — ainda com poucas compras para ter a certeza'}.
+            </p>
+          )}
+
+          {/* Os números por trás da conclusão, à distância de um clique. */}
+          <button
+            onClick={() => setVerSinais((v) => !v)}
+            className="mt-2 text-xs font-medium text-slate-500 underline decoration-dotted underline-offset-2 hover:text-slate-700"
+          >
+            {verSinais ? 'Esconder os números' : 'Em que é que se baseia?'}
+          </button>
+
+          {verSinais && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg bg-white/70 p-2.5 text-xs">
+              {Object.entries(a.sinais).map(([chave, valor]) => (
+                <div key={chave} className="flex justify-between gap-2">
+                  <dt className="text-slate-500">{rotuloSinal(chave)}</dt>
+                  <dd className="font-semibold tabular-nums text-slate-800">
+                    {formatarSinal(chave, valor)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function rotuloSinal(chave: string): string {
+  return (
+    {
+      intervaloHabitualDias: 'Compra a cada',
+      diasDesdeUltimaCompra: 'Sem comprar há',
+      vezesOIntervalo: 'Isso é',
+      valorTotal: 'Já gastou',
+      ticketMedio: 'Ticket médio',
+      totalCompras: 'Compras',
+      dividaEmAberto: 'Em dívida',
+      creditoBloqueado: 'Crédito bloqueado',
+      proximaCompraPrevistaEmDias: 'Deve voltar em',
+      consente: 'Aceita contacto',
+    }[chave] ?? chave
+  );
+}
+
+function formatarSinal(chave: string, valor: unknown): string {
+  if (typeof valor === 'boolean') return valor ? 'sim' : 'não';
+  if (valor === null || valor === undefined) return '—';
+  if (chave === 'vezesOIntervalo') return `${valor}x o hábito`;
+  if (chave.includes('Dias') || chave.includes('EmDias')) return `${valor} dias`;
+  if (chave === 'valorTotal' || chave === 'ticketMedio' || chave === 'dividaEmAberto') {
+    return moeda(Number(valor));
+  }
+  return String(valor);
 }
 
 function Segmentos({ visao }: { visao: Visao360 }) {
