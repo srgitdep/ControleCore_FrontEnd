@@ -12,6 +12,7 @@ import {
   Search,
   Package,
   X,
+  Camera,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -26,6 +27,7 @@ import {
 } from '@/features/stock';
 import { Button } from '@/shared/ui';
 import { CreateCycleModal } from './CreateCycleModal';
+import { LeitorCameraContagemModal } from './LeitorCameraContagemModal';
 import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
 
 // ──â”€ Status badges ────────────────────────────────────────────────────────────â”€
@@ -61,6 +63,7 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
   const [quantity, setQuantity] = useState('');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [leitorAberto, setLeitorAberto] = useState(false);
   const { mutate: registerCount, isPending } = useRegisterCountByBarcode(activeCycle.id);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -118,12 +121,22 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label
-            htmlFor="inv-barcode"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
-            Código de Barras
-          </label>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label htmlFor="inv-barcode" className="block text-sm font-medium text-slate-700">
+              Código de Barras
+            </label>
+            {/* A mesma câmara e UI/UX do leitor do POS — ver `LeitorCameraContagemModal`.
+                Bipar um a um com o teclado do telemóvel obriga a olhar para baixo a cada
+                produto; a câmara lê apontando, sem tirar os olhos da prateleira. */}
+            <button
+              type="button"
+              onClick={() => setLeitorAberto(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+            >
+              <Camera size={14} />
+              Usar câmara
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
@@ -185,6 +198,13 @@ function OperatorCountView({ activeCycle }: { activeCycle: InventoryCycle }) {
           mostrado de propósito — é uma contagem cega, para o número não ser influenciado.
         </p>
       </form>
+
+      {leitorAberto && (
+        <LeitorCameraContagemModal
+          cycleId={activeCycle.id}
+          onFechar={() => setLeitorAberto(false)}
+        />
+      )}
     </div>
   );
 }

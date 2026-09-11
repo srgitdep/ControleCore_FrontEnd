@@ -3,7 +3,7 @@ import {
   X, Camera, CameraOff, Check, Minus, Plus, ScanLine, AlertTriangle, Keyboard, Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useLeitorDeCodigo } from '../hooks/useLeitorDeCodigo';
+import { useLeitorDeCodigo } from '@/shared/hooks';
 import { catalogApi, type Product } from '@/features/produtos';
 import { cn } from '@/shared/utils';
 
