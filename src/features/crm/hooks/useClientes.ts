@@ -10,7 +10,13 @@ import {
   registarConsentimento,
   adicionarIdentidade,
   removerIdentidade,
+  listarSegmentos,
+  listarMembrosSegmento,
+  recalcularSegmentos,
+  listarAudiencias,
+  criarAudiencia,
   type CanalComunicacao,
+  type DimensaoSegmento,
   type FinalidadeConsentimento,
   type TipoIdentidade,
 } from '../api/clientes.api';
@@ -153,6 +159,64 @@ export function useRemoverIdentidade(clienteId: string) {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao desligar identidade.');
+    },
+  });
+}
+
+// ──── Segmentação ─────────────────────────────────────────────────────────────
+
+export function useSegmentos(dimensao?: DimensaoSegmento) {
+  return useQuery({
+    queryKey: ['crm-segmentos', dimensao ?? 'todas'],
+    queryFn: () => listarSegmentos(dimensao),
+  });
+}
+
+export function useMembrosSegmento(segmentId: string | null, page: number) {
+  return useQuery({
+    queryKey: ['crm-segmento-membros', segmentId, page],
+    queryFn: () => listarMembrosSegmento(segmentId!, { page, limit: 25 }),
+    enabled: !!segmentId,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useRecalcularSegmentos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: recalcularSegmentos,
+    onSuccess: (r) => {
+      toast.success(
+        `${r.clientes} cliente(s) reclassificado(s): ${r.entradas} entrada(s), ${r.saidas} saída(s).`,
+      );
+      queryClient.invalidateQueries({ queryKey: ['crm-segmentos'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-segmento-membros'] });
+      // A ficha de cada cliente mostra os segmentos a que pertence.
+      queryClient.invalidateQueries({ queryKey: ['cliente-360'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao recalcular segmentos.');
+    },
+  });
+}
+
+export function useAudiencias() {
+  return useQuery({ queryKey: ['crm-audiencias'], queryFn: listarAudiencias });
+}
+
+export function useCriarAudiencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: criarAudiencia,
+    onSuccess: (a) => {
+      toast.success(`Audiência "${a.nome}" fixada com ${a.total} cliente(s).`);
+      queryClient.invalidateQueries({ queryKey: ['crm-audiencias'] });
+    },
+    onError: (error: any) => {
+      // Segmento vazio devolve 400 com a explicação.
+      toast.error(error.response?.data?.message || 'Erro ao fixar audiência.');
     },
   });
 }

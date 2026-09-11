@@ -78,6 +78,63 @@ export interface EventoCliente {
   vendaId?: string | null;
 }
 
+// ──── Segmentação ─────────────────────────────────────────────────────────────
+
+export type DimensaoSegmento =
+  | 'RECORRENCIA'
+  | 'VALOR'
+  | 'CANAL'
+  | 'PRODUTO'
+  | 'LOCALIZACAO'
+  | 'MANUAL';
+
+export interface Segmento {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  dimensao: DimensaoSegmento;
+  tipo: 'AUTOMATICO' | 'MANUAL';
+  chave?: string | null;
+  total: number;
+  ultimoCalculo?: string | null;
+}
+
+export interface SegmentoDoCliente {
+  segmentId: string;
+  nome: string;
+  dimensao: DimensaoSegmento;
+  chave?: string | null;
+  desde: string;
+  justificacao?: Record<string, unknown> | null;
+}
+
+export interface MembroSegmento {
+  id: string;
+  nome: string;
+  telefone?: string | null;
+  email?: string | null;
+  totalGasto: number;
+  dataUltimaCompra?: string | null;
+  desde: string;
+  justificacao?: Record<string, unknown> | null;
+}
+
+export interface MembrosSegmento {
+  segmento: { id: string; nome: string; dimensao: DimensaoSegmento };
+  data: MembroSegmento[];
+  total: number;
+  page: number;
+  lastPage: number;
+}
+
+export interface Audiencia {
+  id: string;
+  nome: string;
+  total: number;
+  createdAt: string;
+  segment?: { nome: string; dimensao: DimensaoSegmento } | null;
+}
+
 export interface Visao360 {
   cliente: {
     id: string;
@@ -120,6 +177,7 @@ export interface Visao360 {
     taxaDevolucao: number;
     estado: EstadoRelacionamento;
   };
+  segmentos: SegmentoDoCliente[];
   produtosRecorrentes: Array<{ produtoId: string; nome: string; vezes: number }>;
   financeiro: {
     valorEmAberto: number;
@@ -202,4 +260,42 @@ export const adicionarIdentidade = async (
 
 export const removerIdentidade = async (identidadeId: string): Promise<void> => {
   await api.delete(`/crm/identidade/identidades/${identidadeId}`);
+};
+
+// ──── Segmentação ─────────────────────────────────────────────────────────────
+
+export const listarSegmentos = async (dimensao?: DimensaoSegmento): Promise<Segmento[]> => {
+  const { data } = await api.get('/crm/segmentos', { params: dimensao ? { dimensao } : {} });
+  return data;
+};
+
+export const listarMembrosSegmento = async (
+  segmentId: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<MembrosSegmento> => {
+  const { data } = await api.get(`/crm/segmentos/${segmentId}/membros`, { params });
+  return data;
+};
+
+export const recalcularSegmentos = async (): Promise<{
+  clientes: number;
+  entradas: number;
+  saidas: number;
+  segmentos: number;
+}> => {
+  const { data } = await api.post('/crm/segmentos/recalcular');
+  return data;
+};
+
+export const listarAudiencias = async (): Promise<Audiencia[]> => {
+  const { data } = await api.get('/crm/segmentos/audiencias');
+  return data;
+};
+
+export const criarAudiencia = async (payload: {
+  segmentId: string;
+  nome: string;
+}): Promise<Audiencia> => {
+  const { data } = await api.post('/crm/segmentos/audiencias', payload);
+  return data;
 };

@@ -294,6 +294,12 @@ export function Visao360Panel({
       <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-5">
         <Comportamento visao={visao} />
 
+        {visao.segmentos.length > 0 && (
+          <Seccao titulo="Segmentos">
+            <Segmentos visao={visao} />
+          </Seccao>
+        )}
+
         <Seccao
           titulo="Identidades"
           accao={
@@ -458,6 +464,39 @@ function Comportamento({ visao }: { visao: Visao360 }) {
             : undefined
         }
       />
+    </div>
+  );
+}
+
+function Segmentos({ visao }: { visao: Visao360 }) {
+  /** Mesma leitura por estado do painel de segmentos: o que precisa de atenção destaca-se. */
+  const tom = (chave?: string | null) => {
+    if (!chave) return 'border-slate-200 bg-white text-slate-700';
+    if (chave.includes('em_risco')) return 'border-amber-200 bg-amber-50 text-amber-800';
+    if (chave.includes('inactivo')) return 'border-rose-200 bg-rose-50 text-rose-800';
+    if (chave.includes('activo') || chave.includes('alto'))
+      return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+    if (chave.includes('novo')) return 'border-blue-200 bg-blue-50 text-blue-800';
+    return 'border-slate-200 bg-white text-slate-700';
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {visao.segmentos.map((s) => (
+        <span
+          key={s.segmentId}
+          // A justificação explica porque o sistema classificou assim — sem ela, a
+          // etiqueta seria um veredicto sem argumento.
+          title={s.justificacao ? JSON.stringify(s.justificacao, null, 2) : undefined}
+          className={cn(
+            'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm',
+            tom(s.chave),
+          )}
+        >
+          {s.nome}
+          <span className="text-xs opacity-60">desde {data(s.desde)}</span>
+        </span>
+      ))}
     </div>
   );
 }
