@@ -117,21 +117,41 @@ function CampanhaModal({
   });
 
   const [sugestoes, setSugestoes] = useState<SugestaoMensagem[] | null>(null);
+  const [avisoMayra, setAvisoMayra] = useState<string | null>(null);
 
-  const comMembros = (segmentos ?? []).filter((s) => s.total > 0);
+  /**
+   * "Sem compras" fica no fim: são clientes sem histórico nenhum, e uma campanha
+   * para eles não tem o que dizer — nem a MAYRA tem com que escrever. Não se
+   * esconde, porque contactar quem se registou e nunca comprou é uma decisão
+   * defensável; deixa é de ser a primeira coisa que aparece.
+   */
+  const semHistorico = (chave?: string | null) =>
+    chave?.includes('sem_compras') || chave?.includes('sem_valor');
+
+  const comMembros = (segmentos ?? [])
+    .filter((s) => s.total > 0)
+    .sort((a, b) => Number(semHistorico(a.chave)) - Number(semHistorico(b.chave)));
+
   const escolhido = comMembros.find((s) => s.id === form.segmentId);
+  const escolhidoSemHistorico = semHistorico(escolhido?.chave);
 
   const pedirSugestoes = () => {
     if (!form.segmentId) return;
     sugerir.mutate(
       { segmentId: form.segmentId, canal: form.canal },
-      { onSuccess: (r) => setSugestoes(r.sugestoes) },
+      {
+        onSuccess: (r) => {
+          setSugestoes(r.sugestoes);
+          setAvisoMayra(r.aviso?.mensagem ?? null);
+        },
+      },
     );
   };
 
   const usar = (s: SugestaoMensagem) => {
     setForm((f) => ({ ...f, texto: s.texto, assunto: s.assunto ?? f.assunto }));
     setSugestoes(null);
+    setAvisoMayra(null);
   };
 
   const submeter = (e: React.FormEvent) => {
@@ -186,14 +206,25 @@ function CampanhaModal({
               <option value="">Escolher segmento…</option>
               {comMembros.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nome} ({s.total})
+                  {s.nome} ({s.total}){semHistorico(s.chave) ? ' — ainda não compraram' : ''}
                 </option>
               ))}
             </select>
-            {comMembros.length === 0 && (
+
+            {comMembros.length === 0 ? (
               <p className="mt-1 text-xs text-amber-600">
                 Nenhum segmento tem clientes. Calcule os segmentos primeiro.
               </p>
+            ) : (
+              escolhido && (
+                // Quantos vão receber de facto depende do consentimento, que só
+                // se sabe ao enviar. Dizer o número do segmento sem esta ressalva
+                // criaria uma expectativa que o envio não cumpre.
+                <p className="mt-1 text-xs text-slate-400">
+                  {escolhido.total} cliente(s) no grupo. Recebem só os que aceitaram ser
+                  contactados por este canal.
+                </p>
+              )
             )}
           </div>
 
@@ -235,11 +266,13 @@ function CampanhaModal({
               <button
                 type="button"
                 onClick={pedirSugestoes}
-                disabled={!form.segmentId || sugerir.isPending}
+                disabled={!form.segmentId || escolhidoSemHistorico || sugerir.isPending}
                 title={
-                  form.segmentId
-                    ? 'A MAYRA lê o que estes clientes compram e escreve três opções.'
-                    : 'Escolha primeiro quem recebe.'
+                  !form.segmentId
+                    ? 'Escolha primeiro quem recebe.'
+                    : escolhidoSemHistorico
+                      ? 'Estes clientes ainda não compraram nada: a MAYRA não tem histórico com que escrever.'
+                      : 'A MAYRA lê o que estes clientes compram e escreve três opções.'
                 }
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
@@ -256,10 +289,38 @@ function CampanhaModal({
               </button>
             </div>
 
+            {/* Dizer porque é que a MAYRA não ajuda aqui, e o que fazer em vez
+                disso. Um botão apagado sem explicação parece uma avaria. */}
+            {escolhidoSemHistorico && (
+              <div className="mb-2 flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <Sparkles size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                <div className="text-xs text-slate-600">
+                  <p className="font-semibold text-slate-700">
+                    A MAYRA não consegue escrever para este grupo.
+                  </p>
+                  <p className="mt-0.5">
+                    Estes clientes registaram-se mas ainda não compraram nada — não há histórico
+                    de compras a partir do qual escrever. Escreva a mensagem, ou escolha um grupo
+                    com compras.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* As sugestões substituem o campo enquanto estão à escolha: mostrar
                 as duas coisas ao mesmo tempo obrigaria a decidir onde olhar. */}
             {sugestoes ? (
               <div className="space-y-2">
+                {/* A MAYRA escreveu, mas sem produtos no histórico só pôde ser
+                    genérica. Dizê-lo é melhor que entregar texto vago como se
+                    fosse fundamentado. */}
+                {avisoMayra && (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                    <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                    <span>{avisoMayra}</span>
+                  </div>
+                )}
+
                 {sugestoes.map((s, i) => (
                   <button
                     key={i}

@@ -453,10 +453,19 @@ export const obterOportunidades = async (): Promise<{
   return data;
 };
 
+export interface AvisoContexto {
+  tipo: 'SEM_HISTORICO' | 'SEM_PRODUTOS';
+  mensagem: string;
+}
+
 export const sugerirMensagens = async (payload: {
   segmentId: string;
   canal: CanalComunicacao;
-}): Promise<{ sugestoes: SugestaoMensagem[]; contexto: Record<string, unknown> }> => {
+}): Promise<{
+  sugestoes: SugestaoMensagem[];
+  contexto: Record<string, unknown>;
+  aviso?: AvisoContexto;
+}> => {
   const { data } = await api.post('/crm/mayra/sugerir-mensagem', payload);
   return data;
 };
