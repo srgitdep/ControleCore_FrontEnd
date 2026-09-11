@@ -4,24 +4,16 @@ import {
   Award,
   Ban,
   Calendar,
-  CheckCircle2,
   ChevronLeft,
-  Clock,
   CreditCard,
   Fingerprint,
   Mail,
   MessageSquare,
   Phone,
   Plus,
-  Repeat,
   ShieldCheck,
-  ShoppingBag,
   Smartphone,
-  Store,
   Trash2,
-  TrendingUp,
-  Undo2,
-  Wallet,
   X,
 } from 'lucide-react';
 import {
@@ -65,12 +57,12 @@ const ESTADOS: Record<
   EM_RISCO: {
     rotulo: 'Em risco',
     classe: 'bg-amber-50 text-amber-700 border-amber-200',
-    descricao: 'Há mais de 60 dias sem comprar',
+    descricao: 'Sem comprar há mais tempo do que é habitual neste cliente',
   },
   INACTIVO: {
     rotulo: 'Inactivo',
     classe: 'bg-rose-50 text-rose-700 border-rose-200',
-    descricao: 'Há mais de 120 dias sem comprar',
+    descricao: 'Sem comprar há muito mais tempo do que é habitual neste cliente',
   },
   SEM_COMPRAS: {
     rotulo: 'Sem compras',
@@ -114,13 +106,11 @@ const ROTULO_EVENTO: Record<string, string> = {
 // ──── Peças ───────────────────────────────────────────────────────────────────
 
 function Medida({
-  icon: Icon,
   label,
   value,
   sub,
   tom = 'neutro',
 }: {
-  icon: React.ElementType;
   label: string;
   value: string;
   sub?: string;
@@ -128,10 +118,7 @@ function Medida({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-slate-400">
-        <Icon size={14} />
-        <p className="text-[11px] font-semibold uppercase tracking-wider">{label}</p>
-      </div>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
       <p
         className={cn(
           'mt-1.5 text-xl font-bold tabular-nums',
@@ -416,27 +403,23 @@ function Comportamento({ visao }: { visao: Visao360 }) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Medida
-        icon={TrendingUp}
         label="Valor total"
         value={moeda(c.valorTotal)}
         sub={`${c.totalCompras} ${c.totalCompras === 1 ? 'compra' : 'compras'}`}
       />
-      <Medida icon={ShoppingBag} label="Ticket médio" value={moeda(c.ticketMedio)} />
+      <Medida label="Ticket médio" value={moeda(c.ticketMedio)} />
       <Medida
-        icon={Clock}
         label="Última compra"
         value={c.diasDesdeUltimaCompra === null ? '—' : `${c.diasDesdeUltimaCompra}d`}
         sub={c.ultimaCompra ? data(c.ultimaCompra) : 'Sem compras'}
         tom={c.diasDesdeUltimaCompra !== null && c.diasDesdeUltimaCompra > 60 ? 'alerta' : 'neutro'}
       />
       <Medida
-        icon={Repeat}
         label="Compra a cada"
         value={c.frequenciaMediaDias === null ? '—' : `${c.frequenciaMediaDias}d`}
         sub={c.frequenciaMediaDias === null ? 'Precisa de 2 compras' : 'Em média'}
       />
       <Medida
-        icon={Wallet}
         label="Em dívida"
         value={moeda(financeiro.valorEmAberto)}
         sub={
@@ -446,16 +429,14 @@ function Comportamento({ visao }: { visao: Visao360 }) {
         }
         tom={financeiro.valorEmAberto > 0 ? 'alerta' : 'neutro'}
       />
-      <Medida icon={CheckCircle2} label="Já liquidado" value={moeda(financeiro.valorLiquidado)} />
+      <Medida label="Já liquidado" value={moeda(financeiro.valorLiquidado)} />
       <Medida
-        icon={Undo2}
         label="Devoluções"
         value={String(c.totalDevolucoes)}
         sub={c.taxaDevolucao > 0 ? `${Math.round(c.taxaDevolucao * 100)}% do valor` : undefined}
         tom={c.taxaDevolucao > 0.2 ? 'alerta' : 'neutro'}
       />
       <Medida
-        icon={Store}
         label="Canal habitual"
         value={c.canalPredominante === 'POS' ? 'Loja' : (c.canalPredominante ?? '—')}
         sub={
