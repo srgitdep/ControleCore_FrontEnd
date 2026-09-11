@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp, UserPlus, UserCheck } from 'lucide-react';
 import { useProducts, useCategories, catalogApi } from '@/features/produtos';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
@@ -11,6 +11,7 @@ import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { LeitorCameraModal } from '../components/LeitorCameraModal';
+import { IdentificarClienteModal } from '../components/IdentificarClienteModal';
 import { cn } from '@/shared/utils';
 
 const PAYMENT_METHODS = [
@@ -39,7 +40,8 @@ export function POSPage() {
     searchTerm, setSearchTerm,
     selectedCategoryId, setSelectedCategory,
     cartItems, addItem, removeItem, updateQuantity, clearCart,
-    descontoGlobal, getTotal
+    descontoGlobal, getTotal,
+    clienteIdentificado, associarCliente
   } = usePosStore();
 
   // O store é a fonte única do total: aplica descontos de linha e desconto global,
@@ -151,6 +153,8 @@ export function POSPage() {
 
   /** `lg` é onde o carrinho volta a ser coluna fixa e este estado deixa de contar. */
   const ecraGrande = useBreakpoint('lg');
+
+  const [showClienteModal, setShowClienteModal] = useState(false);
 
   // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
@@ -394,6 +398,9 @@ export function POSPage() {
       })),
       pagamentos: pagamentos,
       descontoGlobal,
+      // Liga a venda ao cliente: é o que a faz entrar no histórico dele, contar
+      // para os pontos e chegar ao CRM. Sem isto a venda fica anónima.
+      clienteId: clienteIdentificado?.id,
     };
 
     processarVendaMutation.mutate(payload, {
@@ -639,6 +646,41 @@ export function POSPage() {
           </div>
         </div>
 
+        {/* Cliente da venda
+            Sem isto, a venda fica anónima: não entra no histórico de ninguém, não
+            conta para fidelização e o CRM não a vê. */}
+        <div className="border-b border-gray-100 bg-white px-3 pb-3 sm:px-5">
+          {clienteIdentificado ? (
+            <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 p-2.5">
+              <UserCheck className="h-5 w-5 shrink-0 text-blue-600" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-blue-900">
+                  {clienteIdentificado.nome}
+                </p>
+                <p className="truncate text-xs text-blue-600">
+                  {clienteIdentificado.telefone || clienteIdentificado.email || 'sem contacto'}
+                  {clienteIdentificado.pontos > 0 && ` · ${clienteIdentificado.pontos} pontos`}
+                </p>
+              </div>
+              <button
+                onClick={() => associarCliente(null)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-blue-400 hover:bg-blue-100 hover:text-blue-700"
+                aria-label="Remover cliente da venda"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowClienteModal(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700"
+            >
+              <UserPlus className="h-4 w-4" />
+              Identificar cliente
+            </button>
+          )}
+        </div>
+
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
           {cartItems.length === 0 ? (
@@ -848,6 +890,18 @@ export function POSPage() {
         <LeitorCameraModal
           onConfirmar={adicionarLido}
           onFechar={() => setLeitorAberto(false)}
+        />
+      )}
+
+      {/* ─── Identificação do cliente da venda ─── */}
+      {showClienteModal && (
+        <IdentificarClienteModal
+          onClose={() => setShowClienteModal(false)}
+          onEscolher={(cliente) => {
+            associarCliente(cliente);
+            setShowClienteModal(false);
+            toast.success(`Venda associada a ${cliente.nome}.`);
+          }}
         />
       )}
           </div>
