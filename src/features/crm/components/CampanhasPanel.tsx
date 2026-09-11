@@ -4,8 +4,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Megaphone,
+  Pencil,
   Plus,
+  RefreshCw,
   Send,
+  Sparkles,
   X,
 } from 'lucide-react';
 import {
@@ -17,12 +20,16 @@ import {
   useEnviarCampanha,
   useCancelarCampanha,
   useSegmentos,
+  useOportunidades,
+  useSugerirMensagens,
 } from '../hooks/useClientes';
 import type {
   CanalComunicacao,
   Campanha,
   EstadoCampanha,
+  OportunidadeCampanha,
   ResultadoEnvioCampanha,
+  SugestaoMensagem,
 } from '../api/clientes.api';
 import { cn } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
@@ -85,21 +92,47 @@ const CANAIS: CanalComunicacao[] = ['SMS', 'WHATSAPP', 'EMAIL'];
 
 // ──── Modal de criação ────────────────────────────────────────────────────────
 
-function CampanhaModal({ onClose }: { onClose: () => void }) {
+function CampanhaModal({
+  onClose,
+  oportunidadeInicial,
+}: {
+  onClose: () => void;
+  oportunidadeInicial?: OportunidadeCampanha;
+}) {
   const { data: segmentos } = useSegmentos();
   const criar = useCriarCampanha();
+  const sugerir = useSugerirMensagens();
 
   const [form, setForm] = useState({
-    nome: '',
+    // Quando vem de uma recomendação da MAYRA, o formulário nasce preenchido:
+    // repetir à mão o que ela já decidiu seria trabalho sem valor.
+    nome: oportunidadeInicial ? `${oportunidadeInicial.nome}` : '',
     texto: '',
     assunto: '',
-    canal: 'SMS' as CanalComunicacao,
-    segmentId: '',
-    suprimirSeComprouEmDias: '',
+    canal: (oportunidadeInicial?.canalSugerido ?? 'SMS') as CanalComunicacao,
+    segmentId: oportunidadeInicial?.segmentId ?? '',
+    suprimirSeComprouEmDias: oportunidadeInicial?.supressaoSugeridaDias
+      ? String(oportunidadeInicial.supressaoSugeridaDias)
+      : '',
   });
+
+  const [sugestoes, setSugestoes] = useState<SugestaoMensagem[] | null>(null);
 
   const comMembros = (segmentos ?? []).filter((s) => s.total > 0);
   const escolhido = comMembros.find((s) => s.id === form.segmentId);
+
+  const pedirSugestoes = () => {
+    if (!form.segmentId) return;
+    sugerir.mutate(
+      { segmentId: form.segmentId, canal: form.canal },
+      { onSuccess: (r) => setSugestoes(r.sugestoes) },
+    );
+  };
+
+  const usar = (s: SugestaoMensagem) => {
+    setForm((f) => ({ ...f, texto: s.texto, assunto: s.assunto ?? f.assunto }));
+    setSugestoes(null);
+  };
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,18 +230,110 @@ function CampanhaModal({ onClose }: { onClose: () => void }) {
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Mensagem *</label>
-            <textarea
-              rows={4}
-              value={form.texto}
-              onChange={(e) => setForm((f) => ({ ...f, texto: e.target.value }))}
-              placeholder="Olá {{nome}}, temos novidades esta semana."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-            />
-            <p className="mt-1 text-xs text-slate-400">
-              <code className="rounded bg-slate-100 px-1">{'{{nome}}'}</code> é substituído pelo
-              primeiro nome do cliente.
-            </p>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-sm font-medium text-slate-700">Mensagem *</label>
+              <button
+                type="button"
+                onClick={pedirSugestoes}
+                disabled={!form.segmentId || sugerir.isPending}
+                title={
+                  form.segmentId
+                    ? 'A MAYRA lê o que estes clientes compram e escreve três opções.'
+                    : 'Escolha primeiro quem recebe.'
+                }
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                  'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100',
+                  'disabled:cursor-not-allowed disabled:opacity-40',
+                )}
+              >
+                {sugerir.isPending ? (
+                  <RefreshCw size={13} className="animate-spin" />
+                ) : (
+                  <Sparkles size={13} />
+                )}
+                {sugerir.isPending ? 'A pensar…' : 'Pedir à MAYRA'}
+              </button>
+            </div>
+
+            {/* As sugestões substituem o campo enquanto estão à escolha: mostrar
+                as duas coisas ao mesmo tempo obrigaria a decidir onde olhar. */}
+            {sugestoes ? (
+              <div className="space-y-2">
+                {sugestoes.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => usar(s)}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left transition-colors hover:border-violet-300 hover:bg-violet-50/40"
+                  >
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                        {s.tom}
+                      </span>
+                      <span className="text-[11px] tabular-nums text-slate-400">
+                        {s.texto.length} caracteres
+                      </span>
+                    </div>
+                    {s.assunto && (
+                      <p className="text-sm font-semibold text-slate-800">{s.assunto}</p>
+                    )}
+                    <p className="whitespace-pre-wrap text-sm text-slate-700">{s.texto}</p>
+                    <p className="mt-1.5 text-xs text-slate-400">{s.porque}</p>
+                  </button>
+                ))}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSugestoes(null)}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    <Pencil size={13} /> Escrever a minha
+                  </button>
+                  <button
+                    type="button"
+                    onClick={pedirSugestoes}
+                    disabled={sugerir.isPending}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <RefreshCw size={13} className={cn(sugerir.isPending && 'animate-spin')} />
+                    Outras opções
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  rows={4}
+                  value={form.texto}
+                  onChange={(e) => setForm((f) => ({ ...f, texto: e.target.value }))}
+                  placeholder="Olá {{nome}}, temos novidades esta semana."
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+                <div className="mt-1 flex items-start justify-between gap-2">
+                  <p className="text-xs text-slate-400">
+                    <code className="rounded bg-slate-100 px-1">{'{{nome}}'}</code> é substituído
+                    pelo primeiro nome do cliente.
+                  </p>
+                  {form.texto.length > 0 && (
+                    <span
+                      className={cn(
+                        'shrink-0 text-xs tabular-nums',
+                        // Um SMS acima de 160 caracteres conta como dois e custa
+                        // a dobrar — o aviso tem de ser visível antes de enviar.
+                        form.canal === 'SMS' && form.texto.length > 160
+                          ? 'font-semibold text-amber-600'
+                          : 'text-slate-400',
+                      )}
+                    >
+                      {form.texto.length}
+                      {form.canal === 'SMS' && form.texto.length > 160 && ' — 2 SMS'}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div>
@@ -453,10 +578,95 @@ function Numero({ rotulo, valor, sub }: { rotulo: string; valor: string; sub?: s
 
 // ──── Painel ──────────────────────────────────────────────────────────────────
 
+/**
+ * O que a MAYRA recomenda contactar.
+ *
+ * Aparece acima das campanhas porque é a pergunta que vem primeiro: não "que
+ * campanhas fiz" mas "a quem devia falar agora". Cada cartão leva directamente
+ * ao formulário já preenchido.
+ */
+function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }) {
+  const { data, isLoading } = useOportunidades();
+
+  if (isLoading) return null;
+  if (!data) return null;
+
+  if (data.aviso) {
+    return (
+      <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-600" />
+        <div>
+          <p className="text-sm font-semibold text-amber-900">A MAYRA ainda não tem com que trabalhar</p>
+          <p className="mt-0.5 text-sm text-amber-700">{data.aviso}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Só vale a pena mostrar grupos que se conseguem mesmo contactar.
+  const uteis = data.oportunidades.filter((o) => o.contactaveis > 0).slice(0, 3);
+  if (uteis.length === 0) return null;
+
+  const TOM: Record<string, string> = {
+    ALTA: 'border-amber-200 bg-amber-50',
+    MEDIA: 'border-blue-200 bg-blue-50',
+    BAIXA: 'border-slate-200 bg-white',
+  };
+
+  return (
+    <section className="mb-6">
+      <div className="mb-2 flex items-center gap-2">
+        <Sparkles size={15} className="text-violet-600" />
+        <h3 className="text-sm font-semibold text-slate-700">A MAYRA sugere contactar</h3>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        {uteis.map((o) => (
+          <button
+            key={o.segmentId}
+            onClick={() => onUsar(o)}
+            className={cn(
+              'rounded-xl border p-4 text-left transition-colors hover:border-violet-300',
+              TOM[o.prioridade],
+            )}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="truncate text-sm font-semibold text-slate-900">{o.nome}</p>
+              <span className="shrink-0 text-lg font-bold tabular-nums text-slate-900">
+                {o.contactaveis}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-slate-600">{o.porque}</p>
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
+              {o.canalSugerido && (
+                <span className="rounded bg-white/70 px-1.5 py-0.5 font-semibold capitalize">
+                  {o.canalSugerido.toLowerCase()}
+                </span>
+              )}
+              <span className="tabular-nums">{moeda(o.valorEmJogo)} já gastos</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function CampanhasPanel() {
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [aCriar, setACriar] = useState(false);
+  const [oportunidade, setOportunidade] = useState<OportunidadeCampanha | undefined>();
   const { data: campanhas, isLoading, isError } = useCampanhas();
+
+  const abrirCom = (o: OportunidadeCampanha) => {
+    setOportunidade(o);
+    setACriar(true);
+  };
+
+  const fechar = () => {
+    setACriar(false);
+    setOportunidade(undefined);
+  };
 
   if (isLoading) {
     return (
@@ -494,6 +704,8 @@ export function CampanhasPanel() {
               <Plus size={15} /> Nova campanha
             </button>
           </div>
+
+          <Oportunidades onUsar={abrirCom} />
 
           {lista.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -552,7 +764,7 @@ export function CampanhasPanel() {
         </>
       )}
 
-      {aCriar && <CampanhaModal onClose={() => setACriar(false)} />}
+      {aCriar && <CampanhaModal onClose={fechar} oportunidadeInicial={oportunidade} />}
     </div>
   );
 }

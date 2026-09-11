@@ -423,3 +423,40 @@ export const cancelarCampanha = async (id: string): Promise<Campanha> => {
   const { data } = await api.post(`/crm/campanhas/${id}/cancelar`);
   return data;
 };
+
+// ──── MAYRA ───────────────────────────────────────────────────────────────────
+
+export interface OportunidadeCampanha {
+  segmentId: string;
+  nome: string;
+  clientes: number;
+  contactaveis: number;
+  canalSugerido: CanalComunicacao | null;
+  valorEmJogo: number;
+  prioridade: 'ALTA' | 'MEDIA' | 'BAIXA';
+  porque: string;
+  supressaoSugeridaDias?: number;
+}
+
+export interface SugestaoMensagem {
+  tom: string;
+  texto: string;
+  assunto?: string;
+  porque: string;
+}
+
+export const obterOportunidades = async (): Promise<{
+  oportunidades: OportunidadeCampanha[];
+  aviso?: string;
+}> => {
+  const { data } = await api.get('/crm/mayra/oportunidades');
+  return data;
+};
+
+export const sugerirMensagens = async (payload: {
+  segmentId: string;
+  canal: CanalComunicacao;
+}): Promise<{ sugestoes: SugestaoMensagem[]; contexto: Record<string, unknown> }> => {
+  const { data } = await api.post('/crm/mayra/sugerir-mensagem', payload);
+  return data;
+};

@@ -23,6 +23,8 @@ import {
   criarCampanha,
   enviarCampanha,
   cancelarCampanha,
+  obterOportunidades,
+  sugerirMensagens,
   type CanalComunicacao,
   type DimensaoSegmento,
   type FinalidadeConsentimento,
@@ -324,6 +326,24 @@ export function useCancelarCampanha() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao cancelar campanha.');
+    },
+  });
+}
+
+// ──── MAYRA ───────────────────────────────────────────────────────────────────
+
+export function useOportunidades() {
+  return useQuery({ queryKey: ['crm-mayra-oportunidades'], queryFn: obterOportunidades });
+}
+
+export function useSugerirMensagens() {
+  return useMutation({
+    mutationFn: sugerirMensagens,
+    onError: (error: any) => {
+      // A MAYRA pode estar indisponível; o campo de texto continua a funcionar.
+      toast.error(
+        error.response?.data?.message || 'A MAYRA não conseguiu sugerir agora. Escreva a mensagem.',
+      );
     },
   });
 }
