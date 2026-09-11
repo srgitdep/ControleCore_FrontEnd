@@ -10,6 +10,7 @@ import {
   registarConsentimento,
   adicionarIdentidade,
   removerIdentidade,
+  registarClienteNoBalcao,
   listarSegmentos,
   listarMembrosSegmento,
   recalcularSegmentos,
@@ -159,6 +160,21 @@ export function useRemoverIdentidade(clienteId: string) {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao desligar identidade.');
+    },
+  });
+}
+
+export function useRegistarClienteNoBalcao() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: registarClienteNoBalcao,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes-search'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao registar cliente.');
     },
   });
 }

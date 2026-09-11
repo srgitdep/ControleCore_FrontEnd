@@ -262,6 +262,23 @@ export const removerIdentidade = async (identidadeId: string): Promise<void> => 
   await api.delete(`/crm/identidade/identidades/${identidadeId}`);
 };
 
+/**
+ * Regista o cliente com identidades e consentimentos numa só chamada.
+ *
+ * Usado no balcão: em três chamadas separadas, uma falha a meio deixaria o
+ * cliente sem consentimento e ninguém a saber.
+ */
+export const registarClienteNoBalcao = async (payload: {
+  nome: string;
+  telefone?: string;
+  email?: string;
+  nuit?: string;
+  canaisConsentidos?: CanalComunicacao[];
+}): Promise<Cliente> => {
+  const { data } = await api.post('/crm/identidade/clientes', payload);
+  return data;
+};
+
 // ──── Segmentação ─────────────────────────────────────────────────────────────
 
 export const listarSegmentos = async (dimensao?: DimensaoSegmento): Promise<Segmento[]> => {
