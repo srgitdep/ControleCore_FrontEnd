@@ -7,6 +7,7 @@ import {
   PieChart,
   Megaphone,
   Sparkles,
+  SlidersHorizontal,
   Trash2,
   Edit2,
   X,
@@ -24,6 +25,7 @@ import { Visao360Panel } from '../components/Visao360Panel';
 import { SegmentosPanel } from '../components/SegmentosPanel';
 import { CampanhasPanel } from '../components/CampanhasPanel';
 import { AnalisePanel } from '../components/AnalisePanel';
+import { ConfiguracaoPanel } from '../components/ConfiguracaoPanel';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
 import { TableScroll } from '@/shared/ui';
@@ -39,7 +41,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
-type Tab = 'clientes' | 'analise' | 'segmentos' | 'campanhas' | 'detalhes';
+type Tab = 'clientes' | 'analise' | 'segmentos' | 'campanhas' | 'definicoes' | 'detalhes';
 
 // ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
@@ -170,6 +172,7 @@ export function ClientesPage() {
     { id: 'analise', label: 'MAYRA', icon: Sparkles },
     { id: 'segmentos', label: 'Segmentos', icon: PieChart },
     { id: 'campanhas', label: 'Campanhas', icon: Megaphone },
+    { id: 'definicoes', label: 'Definições', icon: SlidersHorizontal },
     { id: 'detalhes', label: 'Detalhes', icon: UserSquare },
   ];
 
@@ -422,6 +425,9 @@ export function ClientesPage() {
 
         {/* Tab: Campanhas */}
         {activeTab === 'campanhas' && <CampanhasPanel />}
+
+        {/* Tab: Definicoes */}
+        {activeTab === 'definicoes' && <ConfiguracaoPanel />}
 
         {/* Tab: Detalhes */}
         {activeTab === 'detalhes' && selectedClienteId && (

@@ -25,6 +25,8 @@ import {
   cancelarCampanha,
   obterOportunidades,
   obterAtencao,
+  obterConfiguracao,
+  actualizarConfiguracao,
   sugerirMensagens,
   type CanalComunicacao,
   type DimensaoSegmento,
@@ -351,4 +353,29 @@ export function useSugerirMensagens() {
 
 export function useAtencao() {
   return useQuery({ queryKey: ['crm-mayra-atencao'], queryFn: obterAtencao });
+}
+
+// ──── Configuração ────────────────────────────────────────────────────────────
+
+export function useConfiguracaoCrm() {
+  return useQuery({ queryKey: ['crm-configuracao'], queryFn: obterConfiguracao });
+}
+
+export function useActualizarConfiguracao() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: actualizarConfiguracao,
+    onSuccess: () => {
+      toast.success('Definições guardadas. Aplicam-se no próximo cálculo.');
+      queryClient.invalidateQueries({ queryKey: ['crm-configuracao'] });
+      // A classificação e as recomendações passam a usar os valores novos.
+      queryClient.invalidateQueries({ queryKey: ['crm-segmentos'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-mayra-oportunidades'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-mayra-atencao'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao guardar as definições.');
+    },
+  });
 }

@@ -515,3 +515,31 @@ export const sugerirMensagens = async (payload: {
   const { data } = await api.post('/crm/mayra/sugerir-mensagem', payload);
   return data;
 };
+
+// ──── Configuração do CRM ─────────────────────────────────────────────────────
+
+export interface ConfiguracaoCrm {
+  limiteMensagens: number;
+  limiteJanelaDias: number;
+  factorRisco: number;
+  factorInactivo: number;
+  intervaloMinimoDias: number;
+  diasRiscoSemHabito: number;
+  diasInactivoSemHabito: number;
+  janelaConversaoDias: number;
+  supressaoEmRiscoDias: number;
+  supressaoInactivoDias: number;
+  canaisPermitidos: CanalComunicacao[];
+}
+
+export const obterConfiguracao = async (): Promise<ConfiguracaoCrm> => {
+  const { data } = await api.get('/crm/configuracao');
+  return data;
+};
+
+export const actualizarConfiguracao = async (
+  payload: Partial<ConfiguracaoCrm>,
+): Promise<ConfiguracaoCrm> => {
+  const { data } = await api.put('/crm/configuracao', payload);
+  return data;
+};

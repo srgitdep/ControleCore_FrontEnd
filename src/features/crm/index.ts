@@ -12,3 +12,4 @@ export * from './components/CampanhasPanel';
 // Export Pages
 export * from './pages/ClientesPage';
 export * from './components/AnalisePanel';
+export * from './components/ConfiguracaoPanel';
