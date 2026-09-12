@@ -35,7 +35,7 @@ import type {
   SugestaoMensagem,
 } from '../api/clientes.api';
 import { cn } from '@/shared/utils';
-import { TableScroll } from '@/shared/ui';
+import { TableScroll, ConfirmDialog } from '@/shared/ui';
 
 const moeda = (v: number) =>
   `${Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
@@ -499,6 +499,10 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
   const enviar = useEnviarCampanha();
   const cancelar = useCancelarCampanha();
   const verificar = useVerificarEntregas();
+  // O `confirm()` nativo do browser bloqueia a janela e não se estiliza;
+  // enviar uma campanha dispara mensagens reais e merece o mesmo cuidado que
+  // as outras confirmações da aplicação.
+  const [accaoPendente, setAccaoPendente] = useState<'enviar' | 'cancelar' | null>(null);
 
   if (isLoading || !campanha) {
     return (
@@ -547,11 +551,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
         {emRascunho && (
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                if (confirm(`Enviar "${campanha.nome}"? As mensagens saem de imediato.`)) {
-                  enviar.mutate(id);
-                }
-              }}
+              onClick={() => setAccaoPendente('enviar')}
               disabled={enviar.isPending}
               className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
             >
@@ -559,9 +559,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
               {enviar.isPending ? 'A enviar…' : 'Enviar agora'}
             </button>
             <button
-              onClick={() => {
-                if (confirm('Cancelar esta campanha?')) cancelar.mutate(id);
-              }}
+              onClick={() => setAccaoPendente('cancelar')}
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
               Cancelar
@@ -704,6 +702,25 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
           </div>
         )
       )}
+
+      <ConfirmDialog
+        isOpen={accaoPendente !== null}
+        title={accaoPendente === 'enviar' ? 'Enviar campanha' : 'Cancelar campanha'}
+        message={
+          accaoPendente === 'enviar'
+            ? `Enviar "${campanha.nome}"? As mensagens saem de imediato.`
+            : 'Cancelar esta campanha? Não poderá ser reactivada.'
+        }
+        confirmText={accaoPendente === 'enviar' ? 'Enviar' : 'Cancelar campanha'}
+        cancelText="Voltar"
+        variant={accaoPendente === 'enviar' ? 'info' : 'danger'}
+        isLoading={enviar.isPending || cancelar.isPending}
+        onConfirm={() => {
+          if (accaoPendente === 'enviar') enviar.mutate(id, { onSettled: () => setAccaoPendente(null) });
+          if (accaoPendente === 'cancelar') cancelar.mutate(id, { onSettled: () => setAccaoPendente(null) });
+        }}
+        onCancel={() => setAccaoPendente(null)}
+      />
     </div>
   );
 }

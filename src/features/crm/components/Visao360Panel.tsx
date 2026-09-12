@@ -34,7 +34,7 @@ import type {
   Visao360,
 } from '../api/clientes.api';
 import { cn } from '@/shared/utils';
-import { TableScroll } from '@/shared/ui';
+import { TableScroll, ConfirmDialog } from '@/shared/ui';
 
 const moeda = (valor: number) =>
   `${Number(valor).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
@@ -261,6 +261,9 @@ export function Visao360Panel({
 }) {
   const { data: visao, isLoading, isError } = useVisao360(clienteId);
   const [showIdentidade, setShowIdentidade] = useState(false);
+  // O `confirm()` nativo do browser bloqueia a janela e não se estiliza; o
+  // projecto já tem um `ConfirmDialog` para isto.
+  const [identidadeARemover, setIdentidadeARemover] = useState<string | null>(null);
 
   const consentimento = useRegistarConsentimento(clienteId);
   const novaIdentidade = useAdicionarIdentidade(clienteId);
@@ -312,12 +315,7 @@ export function Visao360Panel({
             </button>
           }
         >
-          <Identidades
-            visao={visao}
-            onRemover={(id) => {
-              if (confirm('Desligar esta identidade do cliente?')) removerId.mutate(id);
-            }}
-          />
+          <Identidades visao={visao} onRemover={(id) => setIdentidadeARemover(id)} />
         </Seccao>
 
         <Seccao titulo="Consentimentos de contacto">
@@ -368,6 +366,20 @@ export function Visao360Panel({
           }
         />
       )}
+
+      <ConfirmDialog
+        isOpen={identidadeARemover !== null}
+        title="Desligar identidade"
+        message="Desligar esta identidade do cliente?"
+        confirmText="Desligar"
+        variant="danger"
+        isLoading={removerId.isPending}
+        onConfirm={() => {
+          if (!identidadeARemover) return;
+          removerId.mutate(identidadeARemover, { onSettled: () => setIdentidadeARemover(null) });
+        }}
+        onCancel={() => setIdentidadeARemover(null)}
+      />
     </div>
   );
 }

@@ -28,7 +28,7 @@ import { AnalisePanel } from '../components/AnalisePanel';
 import { ConfiguracaoPanel } from '../components/ConfiguracaoPanel';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
-import { TableScroll } from '@/shared/ui';
+import { TableScroll, ConfirmDialog } from '@/shared/ui';
 
 // ──â”€ Debounce hook ────────────────────────────────────────────────────────────
 function useDebounce<T>(value: T, delay: number): T {
@@ -124,6 +124,10 @@ export function ClientesPage() {
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+  // O `confirm()` nativo do browser bloqueia a janela e não se estiliza; o
+  // projecto já tem um `ConfirmDialog`, e apagar um cliente merece o mesmo
+  // cuidado que as outras eliminações da aplicação.
+  const [aEliminar, setAEliminar] = useState<Cliente | null>(null);
   const debouncedSearch = useDebounce(search, 500);
 
   // Reset page when search changes
@@ -137,7 +141,7 @@ export function ClientesPage() {
 
   const { mutate: criarMutate, isPending: isCreatingMutate } = useCreateCliente();
   const { mutate: atualizarMutate, isPending: isUpdatingMutate } = useUpdateCliente();
-  const { mutate: apagar } = useDeleteCliente();
+  const { mutate: apagar, isPending: isApagando } = useDeleteCliente();
 
   const isCreating = isCreatingMutate || isUpdatingMutate;
 
@@ -307,7 +311,7 @@ export function ClientesPage() {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={() => { if (confirm(`Apagar "${c.nome}"?`)) apagar(c.id); }}
+                            onClick={() => setAEliminar(c)}
                             className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                             aria-label={`Apagar ${c.nome}`}
                           >
@@ -369,9 +373,7 @@ export function ClientesPage() {
                                 <Edit2 size={14} />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (confirm(`Apagar "${c.nome}"?`)) apagar(c.id);
-                                }}
+                                onClick={() => setAEliminar(c)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                               >
                                 <Trash2 size={14} />
@@ -447,6 +449,24 @@ export function ClientesPage() {
           isSaving={isCreating}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={aEliminar !== null}
+        title="Apagar cliente"
+        message={
+          aEliminar
+            ? `Apagar "${aEliminar.nome}"? Esta acção não pode ser desfeita.`
+            : ''
+        }
+        confirmText="Apagar"
+        variant="danger"
+        isLoading={isApagando}
+        onConfirm={() => {
+          if (!aEliminar) return;
+          apagar(aEliminar.id, { onSettled: () => setAEliminar(null) });
+        }}
+        onCancel={() => setAEliminar(null)}
+      />
     </div>
   );
 }
