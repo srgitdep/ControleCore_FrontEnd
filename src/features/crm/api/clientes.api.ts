@@ -550,6 +550,10 @@ export interface ConfiguracaoCrm {
   supressaoEmRiscoDias: number;
   supressaoInactivoDias: number;
   canaisPermitidos: CanalComunicacao[];
+  pontosPorMetical: number;
+  valorDoPonto: number;
+  minimoResgate: number;
+  fidelizacaoActiva: boolean;
 }
 
 export const obterConfiguracao = async (): Promise<ConfiguracaoCrm> => {
@@ -561,5 +565,68 @@ export const actualizarConfiguracao = async (
   payload: Partial<ConfiguracaoCrm>,
 ): Promise<ConfiguracaoCrm> => {
   const { data } = await api.put('/crm/configuracao', payload);
+  return data;
+};
+
+// ──── Fidelização ─────────────────────────────────────────────────────────────
+
+export interface SaldoDePontos {
+  pontos: number;
+  valorEmMeticais: number;
+  podeResgatar: boolean;
+  minimoResgate: number;
+  fidelizacaoActiva: boolean;
+}
+
+export type TipoMovimentoPontos = 'GANHO' | 'RESGATE' | 'ESTORNO' | 'AJUSTE';
+
+export interface MovimentoPontos {
+  id: string;
+  tipo: TipoMovimentoPontos;
+  /** Positivo em ganhos e estornos, negativo em resgates. */
+  pontos: number;
+  saldoApos: number;
+  valor: string | null;
+  vendaId: string | null;
+  motivo: string | null;
+  createdAt: string;
+  criadoPor: { name: string } | null;
+}
+
+export interface ResultadoResgate {
+  pontosUsados: number;
+  descontoEmMeticais: number;
+  saldoRestante: number;
+}
+
+export const obterSaldoPontos = async (clienteId: string): Promise<SaldoDePontos> => {
+  const { data } = await api.get(`/crm/fidelizacao/clientes/${clienteId}/saldo`);
+  return data;
+};
+
+export const obterHistoricoPontos = async (
+  clienteId: string,
+): Promise<MovimentoPontos[]> => {
+  const { data } = await api.get(`/crm/fidelizacao/clientes/${clienteId}/historico`);
+  return data;
+};
+
+export const resgatarPontos = async (payload: {
+  clienteId: string;
+  pontos: number;
+  vendaId?: string;
+}): Promise<ResultadoResgate> => {
+  const { clienteId, ...corpo } = payload;
+  const { data } = await api.post(`/crm/fidelizacao/clientes/${clienteId}/resgatar`, corpo);
+  return data;
+};
+
+export const ajustarPontos = async (payload: {
+  clienteId: string;
+  pontos: number;
+  motivo: string;
+}): Promise<{ saldoAnterior: number; saldoApos: number }> => {
+  const { clienteId, ...corpo } = payload;
+  const { data } = await api.post(`/crm/fidelizacao/clientes/${clienteId}/ajustar`, corpo);
   return data;
 };

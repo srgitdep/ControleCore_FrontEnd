@@ -22,11 +22,15 @@ import {
   useRegistarConsentimento,
   useAdicionarIdentidade,
   useRemoverIdentidade,
+  useSaldoPontos,
+  useHistoricoPontos,
+  useAjustarPontos,
 } from '../hooks/useClientes';
 import type {
   CanalComunicacao,
   EstadoRelacionamento,
   TipoIdentidade,
+  TipoMovimentoPontos,
   Visao360,
 } from '../api/clientes.api';
 import { cn } from '@/shared/utils';
@@ -91,6 +95,13 @@ const ROTULO_IDENTIDADE: Record<TipoIdentidade, string> = {
 };
 
 const CANAIS: CanalComunicacao[] = ['WHATSAPP', 'SMS', 'EMAIL', 'CHAMADA'];
+
+const ROTULO_MOVIMENTO: Record<TipoMovimentoPontos, string> = {
+  GANHO: 'Ganhos numa compra',
+  RESGATE: 'Usados como desconto',
+  ESTORNO: 'Retirados por venda anulada',
+  AJUSTE: 'Ajuste manual',
+};
 
 const ROTULO_EVENTO: Record<string, string> = {
   COMPRA_POS: 'Compra na loja',
@@ -337,6 +348,8 @@ export function Visao360Panel({
           </Seccao>
         )}
 
+        <Fidelizacao clienteId={clienteId} />
+
         <Seccao titulo="Últimas compras">
           <UltimasCompras visao={visao} />
         </Seccao>
@@ -397,6 +410,166 @@ function Cabecalho({ visao, onBack }: { visao: Visao360; onBack: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Os pontos do cliente, e como lá chegaram.
+ *
+ * O saldo já aparece no cabeçalho, mas um número sozinho não responde à
+ * pergunta que o cliente faz ao balcão — "porque tenho 340 e não 400?". O
+ * histórico responde.
+ */
+function Fidelizacao({ clienteId }: { clienteId: string }) {
+  const { data: saldo, isLoading } = useSaldoPontos(clienteId);
+  const { data: historico } = useHistoricoPontos(clienteId);
+  const ajustar = useAjustarPontos();
+
+  const [aAjustar, setAAjustar] = useState(false);
+  const [pontos, setPontos] = useState('');
+  const [motivo, setMotivo] = useState('');
+
+  if (isLoading || !saldo) return null;
+
+  const submeterAjuste = () => {
+    const valor = Number(pontos);
+    if (!Number.isInteger(valor) || valor === 0 || !motivo.trim()) return;
+
+    ajustar.mutate(
+      { clienteId, pontos: valor, motivo: motivo.trim() },
+      {
+        onSuccess: () => {
+          setAAjustar(false);
+          setPontos('');
+          setMotivo('');
+        },
+      },
+    );
+  };
+
+  return (
+    <Seccao
+      titulo="Pontos de fidelização"
+      accao={
+        !aAjustar && (
+          <button
+            onClick={() => setAAjustar(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            <Plus size={13} /> Ajustar
+          </button>
+        )
+      }
+    >
+      <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
+          <div>
+            <p className="text-xl font-bold tabular-nums text-amber-600">
+              {saldo.pontos.toLocaleString('pt-MZ')}{' '}
+              <span className="text-sm font-medium text-slate-400">pontos</span>
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Valem {moeda(saldo.valorEmMeticais)} em desconto.
+            </p>
+          </div>
+
+          {!saldo.fidelizacaoActiva ? (
+            <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
+              Fidelização desligada nesta empresa
+            </span>
+          ) : saldo.podeResgatar ? (
+            <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              Pode usar no balcão
+            </span>
+          ) : (
+            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500">
+              Faltam {(saldo.minimoResgate - saldo.pontos).toLocaleString('pt-MZ')} para o
+              mínimo de {saldo.minimoResgate}
+            </span>
+          )}
+        </div>
+
+        {aAjustar && (
+          <div className="border-b border-slate-100 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-600">Pontos</label>
+                <input
+                  type="number"
+                  autoFocus
+                  value={pontos}
+                  onChange={(e) => setPontos(e.target.value)}
+                  placeholder="ex.: -50"
+                  className="mt-1 block w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+              <div className="min-w-48 flex-1">
+                <label className="text-xs font-medium text-slate-600">Porquê</label>
+                <input
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  placeholder="Fica registado e é visível aqui"
+                  className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAAjustar(false)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={submeterAjuste}
+                  disabled={!motivo.trim() || !pontos || ajustar.isPending}
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                >
+                  {ajustar.isPending ? 'A guardar…' : 'Aplicar'}
+                </button>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              Positivo acrescenta, negativo retira. O saldo nunca desce abaixo de zero.
+            </p>
+          </div>
+        )}
+
+        {historico && historico.length > 0 ? (
+          <ol className="divide-y divide-slate-100">
+            {historico.slice(0, 8).map((m) => (
+              <li key={m.id} className="flex items-start gap-3 px-4 py-2.5">
+                <span
+                  className={cn(
+                    'w-16 shrink-0 text-sm font-semibold tabular-nums',
+                    m.pontos > 0 ? 'text-emerald-600' : 'text-rose-600',
+                  )}
+                >
+                  {m.pontos > 0 ? '+' : ''}
+                  {m.pontos}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-700">{ROTULO_MOVIMENTO[m.tipo]}</p>
+                  {m.motivo && <p className="text-xs text-slate-400">{m.motivo}</p>}
+                  {m.criadoPor && (
+                    <p className="text-xs text-slate-400">por {m.criadoPor.name}</p>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs text-slate-400">{data(m.createdAt)}</p>
+                  <p className="text-xs tabular-nums text-slate-400">
+                    saldo: {m.saldoApos.toLocaleString('pt-MZ')}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="px-4 py-6 text-center text-sm text-slate-400">
+            Ainda sem movimentos de pontos.
+          </p>
+        )}
+      </div>
+    </Seccao>
   );
 }
 

@@ -114,6 +114,16 @@ interface POSState {
   descontoGlobal: number;
   setDescontoGlobal: (value: number) => void;
 
+  // ── Pontos de fidelização a resgatar nesta venda ──────────────────────â”€
+  // Separado do desconto manual: o valor em MT depende da regra da empresa
+  // (quanto vale um ponto), por isso guarda-se a quantidade de pontos e só se
+  // converte para MT na hora de mostrar o total. O resgate em si só acontece
+  // depois da venda ser criada — ver handleCheckout no POSPage.
+  pontosAResgatar: number;
+  setPontosAResgatar: (pontos: number) => void;
+  valorPontosAResgatar: number;
+  setValorPontosAResgatar: (valor: number) => void;
+
   // ── Filtros do Catálogo ────────────────────────────────────────────────
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -217,17 +227,33 @@ export const usePosStore = create<POSState>((set, get) => ({
   },
 
   clearCart: () =>
-    set({ cartItems: [], clienteIdentificado: null, descontoGlobal: 0 }),
+    set({
+      cartItems: [],
+      clienteIdentificado: null,
+      descontoGlobal: 0,
+      pontosAResgatar: 0,
+      valorPontosAResgatar: 0,
+    }),
 
   // ── Cliente Identificado ────────────────────────────────────────────────â”€
 
   clienteIdentificado: null,
-  associarCliente: (cliente) => set({ clienteIdentificado: cliente }),
+  associarCliente: (cliente) =>
+    // Trocar de cliente a meio da venda invalida qualquer resgate já
+    // escolhido: os pontos eram de outra pessoa.
+    set({ clienteIdentificado: cliente, pontosAResgatar: 0, valorPontosAResgatar: 0 }),
 
   // ── Desconto Global ──────────────────────────────────────────────────────
 
   descontoGlobal: 0,
   setDescontoGlobal: (value) => set({ descontoGlobal: Math.max(0, value) }),
+
+  // ── Pontos a resgatar ──────────────────────────────────────────────────â”€
+
+  pontosAResgatar: 0,
+  setPontosAResgatar: (pontos) => set({ pontosAResgatar: Math.max(0, Math.floor(pontos)) }),
+  valorPontosAResgatar: 0,
+  setValorPontosAResgatar: (valor) => set({ valorPontosAResgatar: Math.max(0, valor) }),
 
   // ── Filtros do Catálogo ──────────────────────────────────────────────────
 
@@ -246,7 +272,8 @@ export const usePosStore = create<POSState>((set, get) => ({
 
   getTotalDesconto: () =>
     get().cartItems.reduce((acc, item) => acc + item.desconto, 0) +
-    get().descontoGlobal,
+    get().descontoGlobal +
+    get().valorPontosAResgatar,
 
   // `taxaIva ?? 0`: o campo é obrigatório no tipo e tem `@default(0)` no schema, mas
   // basta uma resposta sem ele — um produto antigo, um payload parcial — para o IVA dar

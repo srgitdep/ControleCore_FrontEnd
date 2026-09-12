@@ -20,11 +20,18 @@ const OMISSAO: ConfiguracaoCrm = {
   supressaoEmRiscoDias: 15,
   supressaoInactivoDias: 30,
   canaisPermitidos: [],
+  pontosPorMetical: 0.01,
+  valorDoPonto: 1,
+  minimoResgate: 50,
+  fidelizacaoActiva: true,
 };
 
 const CANAIS: CanalComunicacao[] = ['WHATSAPP', 'SMS', 'EMAIL'];
 
-type CampoNumerico = Exclude<keyof ConfiguracaoCrm, 'canaisPermitidos'>;
+type CampoNumerico = Exclude<
+  keyof ConfiguracaoCrm,
+  'canaisPermitidos' | 'fidelizacaoActiva'
+>;
 
 interface Campo {
   chave: CampoNumerico;
@@ -161,6 +168,39 @@ const SECCOES: Array<{ titulo: string; explicacao: string; campos: Campo[] }> = 
   },
 ];
 
+/**
+ * Os campos de fidelização, fora das SECCOES porque a secção deles tem
+ * interruptor e simulação próprios.
+ */
+const FIDELIZACAO: Campo[] = [
+  {
+    chave: 'pontosPorMetical',
+    rotulo: 'Pontos por cada metical',
+    ajuda: '0,01 dá 1 ponto por cada 100 MT gastos.',
+    min: 0,
+    max: 1,
+    passo: 0.001,
+    unidade: 'pontos/MT',
+  },
+  {
+    chave: 'valorDoPonto',
+    rotulo: 'Quanto vale um ponto',
+    ajuda: 'Em desconto, quando o cliente os usa.',
+    min: 0.01,
+    max: 100,
+    passo: 0.5,
+    unidade: 'MT',
+  },
+  {
+    chave: 'minimoResgate',
+    rotulo: 'Mínimo para usar',
+    ajuda: 'Abaixo disto o cliente acumula, mas não pode gastar.',
+    min: 1,
+    max: 100000,
+    unidade: 'pontos',
+  },
+];
+
 export function ConfiguracaoPanel() {
   const { data: guardada, isLoading, isError } = useConfiguracaoCrm();
   const actualizar = useActualizarConfiguracao();
@@ -174,6 +214,8 @@ export function ConfiguracaoPanel() {
         ...guardada,
         factorRisco: Number(guardada.factorRisco),
         factorInactivo: Number(guardada.factorInactivo),
+        pontosPorMetical: Number(guardada.pontosPorMetical),
+        valorDoPonto: Number(guardada.valorDoPonto),
       });
     }
   }, [guardada]);
@@ -197,11 +239,23 @@ export function ConfiguracaoPanel() {
 
   const alterado = (chave: CampoNumerico) => form[chave] !== OMISSAO[chave];
 
+  // Quanto de cada venda volta ao cliente em pontos. É este número, e não
+  // "0,01 pontos por metical", que diz se a regra é sustentável.
+  const custoPercentual = form.pontosPorMetical * form.valorDoPonto * 100;
+
+  // Quanto o cliente tem de gastar antes de poder usar alguma coisa. Com
+  // pontosPorMetical a zero nunca chega lá — daí o Infinity, tratado na vista.
+  const meticaisAteResgatar =
+    form.pontosPorMetical > 0 ? form.minimoResgate / form.pontosPorMetical : Infinity;
+
   const temAlteracoes =
     guardada &&
     (Object.keys(form) as Array<keyof ConfiguracaoCrm>).some((k) => {
       if (k === 'canaisPermitidos') {
         return JSON.stringify(form[k]) !== JSON.stringify(guardada[k]);
+      }
+      if (k === 'fidelizacaoActiva') {
+        return form[k] !== guardada[k];
       }
       return Number(form[k]) !== Number(guardada[k]);
     });
@@ -241,7 +295,15 @@ export function ConfiguracaoPanel() {
 
         <div className="flex shrink-0 gap-2">
           <button
-            onClick={() => setForm({ ...OMISSAO, canaisPermitidos: form.canaisPermitidos })}
+            onClick={() =>
+              setForm({
+                ...OMISSAO,
+                // Repor os números não é o mesmo que voltar a ligar um programa
+                // de pontos que a loja decidiu desligar.
+                canaisPermitidos: form.canaisPermitidos,
+                fidelizacaoActiva: form.fidelizacaoActiva,
+              })
+            }
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             <RotateCcw size={14} /> Repor
@@ -304,6 +366,132 @@ export function ConfiguracaoPanel() {
             </div>
           </section>
         ))}
+
+        {/* Fidelização: não entra na grelha genérica porque tem um interruptor
+            e porque o que importa aqui não são os números, é o que resulta
+            deles. Quem configura precisa de ver quanto custa à loja. */}
+        <section className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">Pontos de fidelização</h3>
+              <p className="mt-0.5 max-w-2xl text-xs text-slate-500">
+                Quanto os clientes ganham por comprar, e quanto isso vale quando usam.
+              </p>
+            </div>
+
+            <button
+              onClick={() =>
+                setForm((f) => (f ? { ...f, fidelizacaoActiva: !f.fidelizacaoActiva } : f))
+              }
+              role="switch"
+              aria-checked={form.fidelizacaoActiva}
+              className={cn(
+                'flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                form.fidelizacaoActiva
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+              )}
+            >
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  form.fidelizacaoActiva ? 'bg-emerald-500' : 'bg-slate-300',
+                )}
+              />
+              {form.fidelizacaoActiva ? 'Activa' : 'Desligada'}
+            </button>
+          </div>
+
+          {!form.fidelizacaoActiva && (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Desligada, ninguém ganha nem usa pontos. Os saldos actuais ficam guardados e
+              voltam a estar disponíveis se a religar.
+            </p>
+          )}
+
+          <div
+            className={cn(
+              'mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3',
+              !form.fidelizacaoActiva && 'pointer-events-none opacity-50',
+            )}
+          >
+            {FIDELIZACAO.map((campo) => (
+              <div key={campo.chave}>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                  {campo.rotulo}
+                  {alterado(campo.chave) && (
+                    <span
+                      title={`Valor de origem: ${OMISSAO[campo.chave]}`}
+                      className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700"
+                    >
+                      alterado
+                    </span>
+                  )}
+                </label>
+
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={campo.min}
+                    max={campo.max}
+                    step={campo.passo ?? 1}
+                    value={form[campo.chave]}
+                    onChange={(e) =>
+                      setForm((f) => (f ? { ...f, [campo.chave]: Number(e.target.value) } : f))
+                    }
+                    className={cn(
+                      'w-24 rounded-lg border px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-slate-900',
+                      alterado(campo.chave) ? 'border-blue-300' : 'border-slate-300',
+                    )}
+                  />
+                  <span className="text-sm text-slate-500">{campo.unidade}</span>
+                </div>
+
+                <p className="mt-1 text-xs text-slate-400">{campo.ajuda}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* O que os números acima querem dizer na prática. Sem isto, ninguém
+              percebe que 0,05 com o ponto a 1 MT é dar 5% de desconto. */}
+          {form.fidelizacaoActiva && (
+            <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+              <p>
+                Numa compra de <strong>1 000 MT</strong> o cliente ganha{' '}
+                <strong className="tabular-nums">
+                  {Math.floor(1000 * form.pontosPorMetical)} pontos
+                </strong>
+                , que valem{' '}
+                <strong className="tabular-nums">
+                  {(Math.floor(1000 * form.pontosPorMetical) * form.valorDoPonto).toLocaleString(
+                    'pt-MZ',
+                    { maximumFractionDigits: 2 },
+                  )}{' '}
+                  MT
+                </strong>{' '}
+                de desconto — {custoPercentual.toLocaleString('pt-MZ', {
+                  maximumFractionDigits: 2,
+                })}
+                % do valor da compra.
+              </p>
+              <p className="mt-1 text-slate-500">
+                Só pode usar a partir de {form.minimoResgate} pontos, ou seja depois de gastar{' '}
+                {meticaisAteResgatar === Infinity
+                  ? '—'
+                  : Math.ceil(meticaisAteResgatar).toLocaleString('pt-MZ')}{' '}
+                MT.
+              </p>
+            </div>
+          )}
+
+          {custoPercentual > 20 && form.fidelizacaoActiva && (
+            <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <AlertTriangle size={14} className="mt-px shrink-0" />
+              Está a devolver mais de um quinto de cada venda em pontos. Confirme que a margem
+              aguenta.
+            </p>
+          )}
+        </section>
 
         {/* Canais */}
         <section className="rounded-xl border border-slate-200 bg-white p-4">

@@ -28,6 +28,10 @@ import {
   obterAtencao,
   obterConfiguracao,
   actualizarConfiguracao,
+  obterSaldoPontos,
+  obterHistoricoPontos,
+  resgatarPontos,
+  ajustarPontos,
   sugerirMensagens,
   type CanalComunicacao,
   type DimensaoSegmento,
@@ -377,6 +381,68 @@ export function useActualizarConfiguracao() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao guardar as definições.');
+    },
+  });
+}
+
+// ──── Fidelização ─────────────────────────────────────────────────────────────
+
+export function useSaldoPontos(clienteId?: string) {
+  return useQuery({
+    queryKey: ['crm-pontos-saldo', clienteId],
+    queryFn: () => obterSaldoPontos(clienteId!),
+    enabled: !!clienteId,
+  });
+}
+
+export function useHistoricoPontos(clienteId?: string) {
+  return useQuery({
+    queryKey: ['crm-pontos-historico', clienteId],
+    queryFn: () => obterHistoricoPontos(clienteId!),
+    enabled: !!clienteId,
+  });
+}
+
+/**
+ * O saldo muda em vários sítios ao mesmo tempo — a ficha do cliente, o balcão,
+ * a lista. Invalidar tudo o que o mostra evita um número desactualizado num
+ * ecrã enquanto o outro já tem o certo.
+ */
+function invalidarPontos(queryClient: ReturnType<typeof useQueryClient>, clienteId: string) {
+  queryClient.invalidateQueries({ queryKey: ['crm-pontos-saldo', clienteId] });
+  queryClient.invalidateQueries({ queryKey: ['crm-pontos-historico', clienteId] });
+  queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
+  queryClient.invalidateQueries({ queryKey: ['clientes'] });
+}
+
+export function useResgatarPontos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: resgatarPontos,
+    onSuccess: (r, variaveis) => {
+      toast.success(
+        `${r.pontosUsados} pontos usados: ${r.descontoEmMeticais.toLocaleString('pt-MZ')} MT de desconto.`,
+      );
+      invalidarPontos(queryClient, variaveis.clienteId);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Não foi possível usar os pontos.');
+    },
+  });
+}
+
+export function useAjustarPontos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ajustarPontos,
+    onSuccess: (r, variaveis) => {
+      toast.success(`Saldo ajustado: ${r.saldoAnterior} → ${r.saldoApos} pontos.`);
+      invalidarPontos(queryClient, variaveis.clienteId);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Não foi possível ajustar os pontos.');
     },
   });
 }
