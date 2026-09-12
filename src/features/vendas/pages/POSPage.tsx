@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp, UserPlus, UserCheck } from 'lucide-react';
 import { useProducts, useCategories, catalogApi } from '@/features/produtos';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
@@ -11,6 +11,8 @@ import type { Product } from '@/features/produtos';
 import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { LeitorCameraModal } from '../components/LeitorCameraModal';
+import { IdentificarClienteModal } from '../components/IdentificarClienteModal';
+import { useSaldoPontos, useResgatarPontos } from '@/features/crm';
 import { cn } from '@/shared/utils';
 
 const PAYMENT_METHODS = [
@@ -39,13 +41,36 @@ export function POSPage() {
     searchTerm, setSearchTerm,
     selectedCategoryId, setSelectedCategory,
     cartItems, addItem, removeItem, updateQuantity, clearCart,
-    descontoGlobal, getTotal
+    descontoGlobal, getTotal,
+    clienteIdentificado, associarCliente,
+    pontosAResgatar, setPontosAResgatar, valorPontosAResgatar, setValorPontosAResgatar,
   } = usePosStore();
+
+  // Fidelização: só pede o saldo quando há cliente na venda.
+  const { data: saldoPontos } = useSaldoPontos(clienteIdentificado?.id);
+  const resgatarPontosMutation = useResgatarPontos();
 
   // O store é a fonte única do total: aplica descontos de linha e desconto global,
   // que este ecrã antes ignorava ao recalcular por si.
   const total = getTotal();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Se o carrinho encolher depois de aplicar pontos — um item removido, a
+  // quantidade reduzida — o resgate pode passar a valer mais do que a venda.
+  // Reduz para caber, em vez de deixar o total ir a negativo em silêncio.
+  useEffect(() => {
+    if (valorPontosAResgatar === 0 || !saldoPontos) return;
+
+    const totalSemPontos = total + valorPontosAResgatar;
+    if (valorPontosAResgatar <= totalSemPontos) return;
+
+    const valorPorPonto = saldoPontos.valorEmMeticais / saldoPontos.pontos;
+    const pontosAjustados = Math.floor(totalSemPontos / valorPorPonto);
+    const valorAjustado = Math.round(pontosAjustados * valorPorPonto * 100) / 100;
+
+    setPontosAResgatar(pontosAjustados);
+    setValorPontosAResgatar(valorAjustado);
+  }, [total, valorPontosAResgatar, saldoPontos, setPontosAResgatar, setValorPontosAResgatar]);
 
   const { data: categoriesData } = useCategories();
   const { data: productsData, isLoading: isLoadingProducts } = useProducts({ 
@@ -151,6 +176,8 @@ export function POSPage() {
 
   /** `lg` é onde o carrinho volta a ser coluna fixa e este estado deixa de contar. */
   const ecraGrande = useBreakpoint('lg');
+
+  const [showClienteModal, setShowClienteModal] = useState(false);
 
   // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
@@ -393,12 +420,30 @@ export function POSPage() {
         desconto: item.desconto,
       })),
       pagamentos: pagamentos,
-      descontoGlobal,
+      // O valor dos pontos entra aqui como desconto: é o que faz o cliente
+      // pagar menos por causa deles. O resgate em si — o que desconta o saldo
+      // de pontos e fica no histórico — só acontece depois da venda existir,
+      // porque precisa do vendaId dela.
+      descontoGlobal: descontoGlobal + valorPontosAResgatar,
+      // Liga a venda ao cliente: é o que a faz entrar no histórico dele, contar
+      // para os pontos e chegar ao CRM. Sem isto a venda fica anónima.
+      clienteId: clienteIdentificado?.id,
     };
+
+    const pontosParaResgatar = pontosAResgatar;
+    const clienteParaResgate = clienteIdentificado?.id;
 
     processarVendaMutation.mutate(payload, {
       onSuccess: (venda) => {
         setReceiptData(venda);
+
+        if (pontosParaResgatar > 0 && clienteParaResgate) {
+          resgatarPontosMutation.mutate({
+            clienteId: clienteParaResgate,
+            pontos: pontosParaResgatar,
+            vendaId: venda.id,
+          });
+        }
       }
     });
   };
@@ -639,6 +684,99 @@ export function POSPage() {
           </div>
         </div>
 
+        {/* Cliente da venda
+            Sem isto, a venda fica anónima: não entra no histórico de ninguém, não
+            conta para fidelização e o CRM não a vê. */}
+        <div className="border-b border-gray-100 bg-white px-3 pb-3 sm:px-5">
+          {clienteIdentificado ? (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-2.5">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 shrink-0 text-blue-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-blue-900">
+                    {clienteIdentificado.nome}
+                  </p>
+                  <p className="truncate text-xs text-blue-600">
+                    {clienteIdentificado.telefone || clienteIdentificado.email || 'sem contacto'}
+                    {clienteIdentificado.pontos > 0 && ` · ${clienteIdentificado.pontos} pontos`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => associarCliente(null)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-blue-400 hover:bg-blue-100 hover:text-blue-700"
+                  aria-label="Remover cliente da venda"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Resgate de pontos: só aparece se a empresa tem fidelização
+                  activa e o cliente já atinge o mínimo. Sem isso o botão só
+                  confundiria — ninguém percebe "não pode" sem contexto. */}
+              {saldoPontos?.fidelizacaoActiva && saldoPontos.podeResgatar && (() => {
+                // Nunca resgata mais do que a venda vale: sem este limite, uma
+                // compra pequena com saldo alto deixaria o total negativo. O
+                // total de referência é sem os pontos já aplicados, para o
+                // botão continuar a oferecer o máximo real a cada clique.
+                const totalSemPontos = total + valorPontosAResgatar;
+                const valorPorPonto = saldoPontos.valorEmMeticais / saldoPontos.pontos;
+                const cabeTudo = saldoPontos.valorEmMeticais <= totalSemPontos;
+                const pontosAOferecer = cabeTudo
+                  ? saldoPontos.pontos
+                  : Math.floor(totalSemPontos / valorPorPonto);
+                const valorAOferecer = cabeTudo
+                  ? saldoPontos.valorEmMeticais
+                  : Math.round(pontosAOferecer * valorPorPonto * 100) / 100;
+
+                // Sem cobertura nenhuma (venda a zero, ou saldo abaixo de 1
+                // ponto de valor): não há nada de útil a oferecer.
+                if (pontosAOferecer <= 0) return null;
+
+                return (
+                  <div className="mt-2 border-t border-blue-200 pt-2">
+                    {pontosAResgatar === 0 ? (
+                      <button
+                        onClick={() => {
+                          setPontosAResgatar(pontosAOferecer);
+                          setValorPontosAResgatar(valorAOferecer);
+                        }}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                      >
+                        Usar {pontosAOferecer.toLocaleString('pt-MZ')} pontos (
+                        {valorAOferecer.toLocaleString('pt-MZ')} MT de desconto)
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-100 px-3 py-2">
+                        <span className="text-xs font-semibold text-emerald-800">
+                          {pontosAResgatar} pontos aplicados: −
+                          {valorPontosAResgatar.toLocaleString('pt-MZ')} MT
+                        </span>
+                        <button
+                          onClick={() => {
+                            setPontosAResgatar(0);
+                            setValorPontosAResgatar(0);
+                          }}
+                          className="shrink-0 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowClienteModal(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700"
+            >
+              <UserPlus className="h-4 w-4" />
+              Identificar cliente
+            </button>
+          )}
+        </div>
+
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
           {cartItems.length === 0 ? (
@@ -848,6 +986,18 @@ export function POSPage() {
         <LeitorCameraModal
           onConfirmar={adicionarLido}
           onFechar={() => setLeitorAberto(false)}
+        />
+      )}
+
+      {/* ─── Identificação do cliente da venda ─── */}
+      {showClienteModal && (
+        <IdentificarClienteModal
+          onClose={() => setShowClienteModal(false)}
+          onEscolher={(cliente) => {
+            associarCliente(cliente);
+            setShowClienteModal(false);
+            toast.success(`Venda associada a ${cliente.nome}.`);
+          }}
         />
       )}
           </div>

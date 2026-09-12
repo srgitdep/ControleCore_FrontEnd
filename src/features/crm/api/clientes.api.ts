@@ -43,6 +43,250 @@ export interface PaginatedClientes {
   lastPage: number;
 }
 
+// ──── Visão 360° ──────────────────────────────────────────────────────────────
+
+export type EstadoRelacionamento =
+  | 'NOVO'
+  | 'ACTIVO'
+  | 'EM_RISCO'
+  | 'INACTIVO'
+  | 'SEM_COMPRAS';
+
+export type TipoIdentidade =
+  | 'TELEFONE'
+  | 'EMAIL'
+  | 'NUIT'
+  | 'CARTAO_FIDELIZACAO'
+  | 'WHATSAPP'
+  | 'ECOMMERCE';
+
+export type CanalComunicacao = 'SMS' | 'EMAIL' | 'WHATSAPP' | 'CHAMADA' | 'PUSH';
+
+export type FinalidadeConsentimento =
+  | 'MARKETING'
+  | 'TRANSACIONAL'
+  | 'COBRANCA'
+  | 'INQUERITO';
+
+export interface EventoCliente {
+  id: string;
+  tipo: string;
+  canal: string;
+  ocorridoEm: string;
+  valor?: number | null;
+  produtoId?: string | null;
+  vendaId?: string | null;
+}
+
+// ──── Segmentação ─────────────────────────────────────────────────────────────
+
+export type DimensaoSegmento =
+  | 'RECORRENCIA'
+  | 'VALOR'
+  | 'CANAL'
+  | 'PRODUTO'
+  | 'LOCALIZACAO'
+  | 'MANUAL';
+
+export interface Segmento {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  dimensao: DimensaoSegmento;
+  tipo: 'AUTOMATICO' | 'MANUAL';
+  chave?: string | null;
+  total: number;
+  ultimoCalculo?: string | null;
+}
+
+export interface SegmentoDoCliente {
+  segmentId: string;
+  nome: string;
+  dimensao: DimensaoSegmento;
+  chave?: string | null;
+  desde: string;
+  justificacao?: Record<string, unknown> | null;
+}
+
+export interface MembroSegmento {
+  id: string;
+  nome: string;
+  telefone?: string | null;
+  email?: string | null;
+  totalGasto: number;
+  dataUltimaCompra?: string | null;
+  desde: string;
+  justificacao?: Record<string, unknown> | null;
+}
+
+export interface MembrosSegmento {
+  segmento: { id: string; nome: string; dimensao: DimensaoSegmento };
+  data: MembroSegmento[];
+  total: number;
+  page: number;
+  lastPage: number;
+}
+
+export interface Audiencia {
+  id: string;
+  nome: string;
+  total: number;
+  createdAt: string;
+  segment?: { nome: string; dimensao: DimensaoSegmento } | null;
+}
+
+// ──── Campanhas ───────────────────────────────────────────────────────────────
+
+export type EstadoCampanha = 'RASCUNHO' | 'A_ENVIAR' | 'CONCLUIDA' | 'CANCELADA';
+
+export type ResultadoEnvioCampanha =
+  | 'ENVIADO'
+  | 'FALHADO'
+  | 'SUPRIMIDO_SEM_CONSENTIMENTO'
+  | 'SUPRIMIDO_SEM_CONTACTO'
+  | 'SUPRIMIDO_JA_COMPROU'
+  | 'SUPRIMIDO_LIMITE_FREQUENCIA'
+  | 'SUPRIMIDO_CANAL_INDISPONIVEL';
+
+export interface Campanha {
+  id: string;
+  nome: string;
+  texto: string;
+  assunto?: string | null;
+  canal: CanalComunicacao;
+  estado: EstadoCampanha;
+  segmentId?: string | null;
+  audienceId?: string | null;
+  suprimirSeComprouEmDias?: number | null;
+  totalDestinatarios: number;
+  totalEnviados: number;
+  totalSuprimidos: number;
+  totalFalhados: number;
+  iniciadaEm?: string | null;
+  concluidaEm?: string | null;
+  createdAt: string;
+  segment?: { nome: string } | null;
+  audience?: { nome: string; total: number } | null;
+  porResultado?: Partial<Record<ResultadoEnvioCampanha, number>>;
+}
+
+/** O que aconteceu à mensagem depois de sair daqui. */
+export type EstadoEntrega = 'ACEITE' | 'ENVIADA' | 'ENTREGUE' | 'LIDA' | 'NAO_ENTREGUE';
+
+export interface EnvioCampanha {
+  cliente: { id: string; nome: string; telefone?: string | null; email?: string | null };
+  resultado: ResultadoEnvioCampanha;
+  erro?: string | null;
+  enviadoEm: string;
+  /** O que o fornecedor diz que aconteceu depois de a mensagem sair. */
+  estadoEntrega?: EstadoEntrega | null;
+  erroEntrega?: string | null;
+  convertidoEm?: string | null;
+  valorConvertido?: number | null;
+}
+
+export interface ResultadoCampanhaKpi {
+  enviados: number;
+  entregues: number;
+  naoEntregues: number;
+  porConfirmar: number;
+  custo: number;
+  convertidos: number;
+  taxaConversao: number;
+  receita: number;
+}
+
+// ──── MAYRA: próxima acção ────────────────────────────────────────────────────
+
+export type UrgenciaAccao = 'URGENTE' | 'IMPORTANTE' | 'OPORTUNIDADE' | 'NENHUMA';
+
+export interface ProximaAccao {
+  urgencia: UrgenciaAccao;
+  titulo: string;
+  porque: string;
+  sugestao: string;
+  sinais: Record<string, unknown>;
+}
+
+export interface PrevisaoCompra {
+  emDias: number;
+  data: string;
+  confianca: 'ALTA' | 'MEDIA' | 'BAIXA';
+}
+
+export interface ClienteAAgir {
+  clienteId: string;
+  nome: string;
+  telefone?: string | null;
+  valorTotal: number;
+  diasDesdeUltimaCompra: number | null;
+  accao: ProximaAccao;
+}
+
+export interface SaudeDaBase {
+  clientes: number;
+  comCompras: number;
+  contactaveis: number;
+  valorEmRisco: number;
+  porUrgencia: Record<string, number>;
+  obstaculos: string[];
+}
+
+export interface Visao360 {
+  cliente: {
+    id: string;
+    nome: string;
+    telefone?: string | null;
+    email?: string | null;
+    nuit?: string | null;
+    pontos: number;
+    clienteDesde: string;
+    creditoBloqueado: boolean;
+    creditLimit: number;
+    fundidoEmId?: string | null;
+  };
+  identidades: Array<{
+    id: string;
+    tipo: TipoIdentidade;
+    valor: string;
+    principal: boolean;
+    verificadoEm?: string | null;
+  }>;
+  consentimentos: Array<{
+    finalidade: FinalidadeConsentimento;
+    canal: CanalComunicacao;
+    concedidoEm: string;
+  }>;
+  preferencias: Record<string, string>;
+  comportamento: {
+    totalCompras: number;
+    ticketMedio: number;
+    valorTotal: number;
+    diasDesdeUltimaCompra: number | null;
+    frequenciaMediaDias: number | null;
+    primeiraCompra: string | null;
+    ultimaCompra: string | null;
+    canalPredominante: string | null;
+    comprasPorCanal: Record<string, number>;
+    lojaPreferida: string | null;
+    lojaPreferidaNome: string | null;
+    totalDevolucoes: number;
+    taxaDevolucao: number;
+    estado: EstadoRelacionamento;
+  };
+  proximaAccao: ProximaAccao;
+  previsaoProximaCompra: PrevisaoCompra | null;
+  segmentos: SegmentoDoCliente[];
+  produtosRecorrentes: Array<{ produtoId: string; nome: string; vezes: number }>;
+  financeiro: {
+    valorEmAberto: number;
+    titulosEmAberto: number;
+    valorLiquidado: number;
+  };
+  ultimasVendas: VendaResumida[];
+  eventosRecentes: EventoCliente[];
+}
+
 export interface CriarClienteDto {
   nome: string;
   telefone?: string;
@@ -87,4 +331,302 @@ export const buscarClientesCRM = async (search: string): Promise<Cliente[]> => {
   // Utilizado no POS para identificar cliente rapidamente — retorna até 5 resultados
   const { data } = await api.get('/clientes', { params: { search, limit: 5 } });
   return data.data;
+};
+
+export const obterVisao360 = async (id: string): Promise<Visao360> => {
+  const { data } = await api.get(`/crm/clientes/${id}/360`);
+  return data;
+};
+
+export const registarConsentimento = async (
+  clienteId: string,
+  payload: {
+    finalidade: FinalidadeConsentimento;
+    canal: CanalComunicacao;
+    concedido: boolean;
+    origem?: string;
+  },
+): Promise<void> => {
+  await api.post(`/crm/identidade/clientes/${clienteId}/consentimentos`, payload);
+};
+
+export const adicionarIdentidade = async (
+  clienteId: string,
+  payload: { tipo: TipoIdentidade; valor: string; principal?: boolean; origem?: string },
+): Promise<void> => {
+  await api.post(`/crm/identidade/clientes/${clienteId}/identidades`, payload);
+};
+
+export const removerIdentidade = async (identidadeId: string): Promise<void> => {
+  await api.delete(`/crm/identidade/identidades/${identidadeId}`);
+};
+
+/**
+ * Regista o cliente com identidades e consentimentos numa só chamada.
+ *
+ * Usado no balcão: em três chamadas separadas, uma falha a meio deixaria o
+ * cliente sem consentimento e ninguém a saber.
+ */
+export const registarClienteNoBalcao = async (payload: {
+  nome: string;
+  telefone?: string;
+  email?: string;
+  nuit?: string;
+  canaisConsentidos?: CanalComunicacao[];
+}): Promise<Cliente> => {
+  const { data } = await api.post('/crm/identidade/clientes', payload);
+  return data;
+};
+
+// ──── Segmentação ─────────────────────────────────────────────────────────────
+
+export const listarSegmentos = async (dimensao?: DimensaoSegmento): Promise<Segmento[]> => {
+  const { data } = await api.get('/crm/segmentos', { params: dimensao ? { dimensao } : {} });
+  return data;
+};
+
+export const listarMembrosSegmento = async (
+  segmentId: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<MembrosSegmento> => {
+  const { data } = await api.get(`/crm/segmentos/${segmentId}/membros`, { params });
+  return data;
+};
+
+export const recalcularSegmentos = async (): Promise<{
+  clientes: number;
+  entradas: number;
+  saidas: number;
+  segmentos: number;
+}> => {
+  const { data } = await api.post('/crm/segmentos/recalcular');
+  return data;
+};
+
+export const listarAudiencias = async (): Promise<Audiencia[]> => {
+  const { data } = await api.get('/crm/segmentos/audiencias');
+  return data;
+};
+
+export const criarAudiencia = async (payload: {
+  segmentId: string;
+  nome: string;
+}): Promise<Audiencia> => {
+  const { data } = await api.post('/crm/segmentos/audiencias', payload);
+  return data;
+};
+
+// ──── Campanhas ───────────────────────────────────────────────────────────────
+
+export const listarCampanhas = async (): Promise<Campanha[]> => {
+  const { data } = await api.get('/crm/campanhas');
+  return data;
+};
+
+export const obterCampanha = async (id: string): Promise<Campanha> => {
+  const { data } = await api.get(`/crm/campanhas/${id}`);
+  return data;
+};
+
+export const listarEnviosCampanha = async (
+  id: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<{ data: EnvioCampanha[]; total: number; page: number; lastPage: number }> => {
+  const { data } = await api.get(`/crm/campanhas/${id}/envios`, { params });
+  return data;
+};
+
+export const obterResultadoCampanha = async (id: string): Promise<ResultadoCampanhaKpi> => {
+  const { data } = await api.get(`/crm/campanhas/${id}/resultado`);
+  return data;
+};
+
+export const criarCampanha = async (payload: {
+  nome: string;
+  texto: string;
+  assunto?: string;
+  canal: CanalComunicacao;
+  segmentId?: string;
+  audienceId?: string;
+  suprimirSeComprouEmDias?: number;
+}): Promise<Campanha> => {
+  const { data } = await api.post('/crm/campanhas', payload);
+  return data;
+};
+
+export const enviarCampanha = async (
+  id: string,
+): Promise<{
+  destinatarios: number;
+  enviados: number;
+  suprimidos: number;
+  falhados: number;
+  porMotivo: Record<string, number>;
+}> => {
+  const { data } = await api.post(`/crm/campanhas/${id}/enviar`);
+  return data;
+};
+
+export const verificarEntregas = async (): Promise<{
+  verificadas: number;
+  entregues: number;
+  naoEntregues: number;
+  aindaEmTransito: number;
+}> => {
+  const { data } = await api.post('/crm/campanhas/verificar-entregas');
+  return data;
+};
+
+export const cancelarCampanha = async (id: string): Promise<Campanha> => {
+  const { data } = await api.post(`/crm/campanhas/${id}/cancelar`);
+  return data;
+};
+
+// ──── MAYRA ───────────────────────────────────────────────────────────────────
+
+export interface OportunidadeCampanha {
+  segmentId: string;
+  nome: string;
+  clientes: number;
+  contactaveis: number;
+  canalSugerido: CanalComunicacao | null;
+  valorEmJogo: number;
+  prioridade: 'ALTA' | 'MEDIA' | 'BAIXA';
+  porque: string;
+  supressaoSugeridaDias?: number;
+}
+
+export interface SugestaoMensagem {
+  tom: string;
+  texto: string;
+  assunto?: string;
+  porque: string;
+}
+
+export const obterOportunidades = async (): Promise<{
+  oportunidades: OportunidadeCampanha[];
+  aviso?: string;
+}> => {
+  const { data } = await api.get('/crm/mayra/oportunidades');
+  return data;
+};
+
+export interface AvisoContexto {
+  tipo: 'SEM_HISTORICO' | 'SEM_PRODUTOS';
+  mensagem: string;
+}
+
+export const obterAtencao = async (): Promise<{
+  clientes: ClienteAAgir[];
+  saude: SaudeDaBase;
+}> => {
+  const { data } = await api.get('/crm/mayra/atencao');
+  return data;
+};
+
+export const sugerirMensagens = async (payload: {
+  segmentId: string;
+  canal: CanalComunicacao;
+}): Promise<{
+  sugestoes: SugestaoMensagem[];
+  contexto: Record<string, unknown>;
+  aviso?: AvisoContexto;
+}> => {
+  const { data } = await api.post('/crm/mayra/sugerir-mensagem', payload);
+  return data;
+};
+
+// ──── Configuração do CRM ─────────────────────────────────────────────────────
+
+export interface ConfiguracaoCrm {
+  limiteMensagens: number;
+  limiteJanelaDias: number;
+  factorRisco: number;
+  factorInactivo: number;
+  intervaloMinimoDias: number;
+  diasRiscoSemHabito: number;
+  diasInactivoSemHabito: number;
+  janelaConversaoDias: number;
+  supressaoEmRiscoDias: number;
+  supressaoInactivoDias: number;
+  canaisPermitidos: CanalComunicacao[];
+  pontosPorMetical: number;
+  valorDoPonto: number;
+  minimoResgate: number;
+  fidelizacaoActiva: boolean;
+}
+
+export const obterConfiguracao = async (): Promise<ConfiguracaoCrm> => {
+  const { data } = await api.get('/crm/configuracao');
+  return data;
+};
+
+export const actualizarConfiguracao = async (
+  payload: Partial<ConfiguracaoCrm>,
+): Promise<ConfiguracaoCrm> => {
+  const { data } = await api.put('/crm/configuracao', payload);
+  return data;
+};
+
+// ──── Fidelização ─────────────────────────────────────────────────────────────
+
+export interface SaldoDePontos {
+  pontos: number;
+  valorEmMeticais: number;
+  podeResgatar: boolean;
+  minimoResgate: number;
+  fidelizacaoActiva: boolean;
+}
+
+export type TipoMovimentoPontos = 'GANHO' | 'RESGATE' | 'ESTORNO' | 'AJUSTE';
+
+export interface MovimentoPontos {
+  id: string;
+  tipo: TipoMovimentoPontos;
+  /** Positivo em ganhos e estornos, negativo em resgates. */
+  pontos: number;
+  saldoApos: number;
+  valor: string | null;
+  vendaId: string | null;
+  motivo: string | null;
+  createdAt: string;
+  criadoPor: { name: string } | null;
+}
+
+export interface ResultadoResgate {
+  pontosUsados: number;
+  descontoEmMeticais: number;
+  saldoRestante: number;
+}
+
+export const obterSaldoPontos = async (clienteId: string): Promise<SaldoDePontos> => {
+  const { data } = await api.get(`/crm/fidelizacao/clientes/${clienteId}/saldo`);
+  return data;
+};
+
+export const obterHistoricoPontos = async (
+  clienteId: string,
+): Promise<MovimentoPontos[]> => {
+  const { data } = await api.get(`/crm/fidelizacao/clientes/${clienteId}/historico`);
+  return data;
+};
+
+export const resgatarPontos = async (payload: {
+  clienteId: string;
+  pontos: number;
+  vendaId?: string;
+}): Promise<ResultadoResgate> => {
+  const { clienteId, ...corpo } = payload;
+  const { data } = await api.post(`/crm/fidelizacao/clientes/${clienteId}/resgatar`, corpo);
+  return data;
+};
+
+export const ajustarPontos = async (payload: {
+  clienteId: string;
+  pontos: number;
+  motivo: string;
+}): Promise<{ saldoAnterior: number; saldoApos: number }> => {
+  const { clienteId, ...corpo } = payload;
+  const { data } = await api.post(`/crm/fidelizacao/clientes/${clienteId}/ajustar`, corpo);
+  return data;
 };
