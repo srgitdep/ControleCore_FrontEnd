@@ -23,6 +23,7 @@ import {
   criarCampanha,
   enviarCampanha,
   cancelarCampanha,
+  verificarEntregas,
   obterOportunidades,
   obterAtencao,
   obterConfiguracao,
@@ -376,6 +377,29 @@ export function useActualizarConfiguracao() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao guardar as definições.');
+    },
+  });
+}
+
+export function useVerificarEntregas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verificarEntregas,
+    onSuccess: (r) => {
+      if (r.verificadas === 0) {
+        toast.success('Nada por confirmar — todas as mensagens já têm estado.');
+      } else {
+        toast.success(
+          `${r.entregues} entregue(s), ${r.naoEntregues} não entregue(s), ` +
+            `${r.aindaEmTransito} ainda a caminho.`,
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha-envios'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-campanha-resultado'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao verificar as entregas.');
     },
   });
 }

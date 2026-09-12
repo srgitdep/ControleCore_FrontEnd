@@ -6,6 +6,7 @@ import {
   Megaphone,
   Pencil,
   Plus,
+  CheckCheck,
   RefreshCw,
   Send,
   Sparkles,
@@ -19,6 +20,7 @@ import {
   useCriarCampanha,
   useEnviarCampanha,
   useCancelarCampanha,
+  useVerificarEntregas,
   useSegmentos,
   useOportunidades,
   useSugerirMensagens,
@@ -27,6 +29,7 @@ import type {
   CanalComunicacao,
   Campanha,
   EstadoCampanha,
+  EstadoEntrega,
   OportunidadeCampanha,
   ResultadoEnvioCampanha,
   SugestaoMensagem,
@@ -89,6 +92,42 @@ const RESULTADOS: Record<ResultadoEnvioCampanha, { rotulo: string; classe: strin
 };
 
 const CANAIS: CanalComunicacao[] = ['SMS', 'WHATSAPP', 'EMAIL'];
+
+/**
+ * O que aconteceu à mensagem depois de sair daqui.
+ *
+ * "Saiu" e "chegou" são coisas diferentes: o fornecedor aceita a mensagem em
+ * segundos, mas o operador de rede pode não a entregar — telemóvel desligado,
+ * fora de cobertura, número inválido. Mostrar as duas como a mesma coisa faria
+ * a campanha parecer bem-sucedida quando ninguém a recebeu.
+ */
+const ENTREGAS: Record<EstadoEntrega, { rotulo: string; classe: string; ajuda: string }> = {
+  ACEITE: {
+    rotulo: 'A caminho',
+    classe: 'bg-slate-100 text-slate-600',
+    ajuda: 'O fornecedor aceitou. Ainda não se sabe se chegou.',
+  },
+  ENVIADA: {
+    rotulo: 'A caminho',
+    classe: 'bg-slate-100 text-slate-600',
+    ajuda: 'Entregue ao operador de rede, a caminho do cliente.',
+  },
+  ENTREGUE: {
+    rotulo: 'Chegou',
+    classe: 'bg-emerald-50 text-emerald-700',
+    ajuda: 'Chegou ao telemóvel do cliente.',
+  },
+  LIDA: {
+    rotulo: 'Lida',
+    classe: 'bg-emerald-50 text-emerald-700',
+    ajuda: 'O cliente abriu a mensagem.',
+  },
+  NAO_ENTREGUE: {
+    rotulo: 'Não chegou',
+    classe: 'bg-rose-50 text-rose-700',
+    ajuda: 'O operador não conseguiu entregar.',
+  },
+};
 
 // ──── Modal de criação ────────────────────────────────────────────────────────
 
@@ -459,6 +498,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
   const { data: kpi } = useResultadoCampanha(id);
   const enviar = useEnviarCampanha();
   const cancelar = useCancelarCampanha();
+  const verificar = useVerificarEntregas();
 
   if (isLoading || !campanha) {
     return (
@@ -491,6 +531,18 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
             </p>
           </div>
         </div>
+
+        {campanha.estado === 'CONCLUIDA' && (
+          <button
+            onClick={() => verificar.mutate()}
+            disabled={verificar.isPending}
+            title="Pergunta ao fornecedor o que aconteceu às mensagens. Corre sozinho de 10 em 10 minutos."
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <CheckCheck size={14} className={cn(verificar.isPending && 'animate-pulse')} />
+            {verificar.isPending ? 'A confirmar…' : 'Confirmar entregas'}
+          </button>
+        )}
 
         {emRascunho && (
           <div className="flex gap-2">
@@ -528,18 +580,30 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
 
       {campanha.estado === 'CONCLUIDA' && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Numero rotulo="Enviadas" valor={String(campanha.totalEnviados)} />
+          <Numero rotulo="Saíram" valor={String(campanha.totalEnviados)} />
+          {/* Chegar é diferente de sair: entre as duas está o operador de rede. */}
           <Numero
-            rotulo="Não enviadas"
-            valor={String(campanha.totalSuprimidos + campanha.totalFalhados)}
-            sub={`de ${campanha.totalDestinatarios} destinatários`}
+            rotulo="Chegaram"
+            valor={kpi ? String(kpi.entregues) : '—'}
+            sub={
+              kpi && kpi.naoEntregues > 0
+                ? `${kpi.naoEntregues} não chegaram`
+                : kpi && kpi.porConfirmar > 0
+                  ? `${kpi.porConfirmar} por confirmar`
+                  : undefined
+            }
+            alerta={!!kpi && kpi.naoEntregues > 0}
           />
           <Numero
             rotulo="Converteram"
             valor={kpi ? String(kpi.convertidos) : '—'}
             sub={kpi && kpi.enviados > 0 ? `${Math.round(kpi.taxaConversao * 100)}% dos envios` : undefined}
           />
-          <Numero rotulo="Receita atribuída" valor={kpi ? moeda(kpi.receita) : '—'} />
+          <Numero
+            rotulo="Receita atribuída"
+            valor={kpi ? moeda(kpi.receita) : '—'}
+            sub={kpi && kpi.custo > 0 ? `custou ${kpi.custo.toFixed(2)}` : undefined}
+          />
         </div>
       )}
 
@@ -554,7 +618,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
-                    {['Cliente', 'Contacto', 'Resultado', 'Converteu'].map((h) => (
+                    {['Cliente', 'Contacto', 'Resultado', 'Chegou?', 'Converteu'].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
@@ -580,6 +644,23 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
                           >
                             {r.rotulo}
                           </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {/* Só faz sentido para mensagens que saíram: uma
+                              suprimida nunca teve entrega para acompanhar. */}
+                          {e.resultado === 'ENVIADO' && e.estadoEntrega ? (
+                            <span
+                              title={e.erroEntrega ?? ENTREGAS[e.estadoEntrega].ajuda}
+                              className={cn(
+                                'rounded px-2 py-0.5 text-xs font-semibold',
+                                ENTREGAS[e.estadoEntrega].classe,
+                              )}
+                            >
+                              {ENTREGAS[e.estadoEntrega].rotulo}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-300">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 tabular-nums text-slate-500">
                           {e.convertidoEm ? moeda(Number(e.valorConvertido ?? 0)) : '—'}
@@ -627,11 +708,28 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
   );
 }
 
-function Numero({ rotulo, valor, sub }: { rotulo: string; valor: string; sub?: string }) {
+function Numero({
+  rotulo,
+  valor,
+  sub,
+  alerta,
+}: {
+  rotulo: string;
+  valor: string;
+  sub?: string;
+  alerta?: boolean;
+}) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{rotulo}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">{valor}</p>
+      <p
+        className={cn(
+          'mt-1 text-xl font-bold tabular-nums',
+          alerta ? 'text-amber-700' : 'text-slate-900',
+        )}
+      >
+        {valor}
+      </p>
       {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
     </div>
   );

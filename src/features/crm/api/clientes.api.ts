@@ -170,17 +170,27 @@ export interface Campanha {
   porResultado?: Partial<Record<ResultadoEnvioCampanha, number>>;
 }
 
+/** O que aconteceu à mensagem depois de sair daqui. */
+export type EstadoEntrega = 'ACEITE' | 'ENVIADA' | 'ENTREGUE' | 'LIDA' | 'NAO_ENTREGUE';
+
 export interface EnvioCampanha {
   cliente: { id: string; nome: string; telefone?: string | null; email?: string | null };
   resultado: ResultadoEnvioCampanha;
   erro?: string | null;
   enviadoEm: string;
+  /** O que o fornecedor diz que aconteceu depois de a mensagem sair. */
+  estadoEntrega?: EstadoEntrega | null;
+  erroEntrega?: string | null;
   convertidoEm?: string | null;
   valorConvertido?: number | null;
 }
 
 export interface ResultadoCampanhaKpi {
   enviados: number;
+  entregues: number;
+  naoEntregues: number;
+  porConfirmar: number;
+  custo: number;
   convertidos: number;
   taxaConversao: number;
   receita: number;
@@ -454,6 +464,16 @@ export const enviarCampanha = async (
   porMotivo: Record<string, number>;
 }> => {
   const { data } = await api.post(`/crm/campanhas/${id}/enviar`);
+  return data;
+};
+
+export const verificarEntregas = async (): Promise<{
+  verificadas: number;
+  entregues: number;
+  naoEntregues: number;
+  aindaEmTransito: number;
+}> => {
+  const { data } = await api.post('/crm/campanhas/verificar-entregas');
   return data;
 };
 
