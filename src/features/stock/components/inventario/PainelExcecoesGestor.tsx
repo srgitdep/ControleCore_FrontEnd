@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useExcecoes, useDecidirExcecao, useAnalisarExcecaoMayra } from '@/features/stock';
 import { Button } from '@/shared/ui';
@@ -56,7 +56,18 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
     decidir.mutate(
       { excecaoId: excecao.id, payload: { acao, motivo: motivo || undefined } },
       {
-        onSuccess: () => toast.success('Decisão registada.'),
+        onSuccess: (resultado) => {
+          toast.success('Decisão registada.');
+          if (resultado.recomendacao) {
+            const r = resultado.recomendacao;
+            toast(
+              r.acao === 'TRANSFERIR'
+                ? `Risco de ruptura: transferir ${r.quantidade ?? '?'} unidade(s) de ${r.armazemOrigemNome}.`
+                : `Risco de ruptura: nenhum armazém com sobra — considerar comprar ${r.quantidade ?? '?'} unidade(s).`,
+              { icon: '🚚', duration: 6000 },
+            );
+          }
+        },
         onError: (err: any) =>
           toast.error(err?.response?.data?.message ?? 'Não foi possível registar a decisão.'),
       },
@@ -155,18 +166,36 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
               )}
 
               {e.acao ? (
-                <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  {e.acao === 'REJEITAR_AJUSTE' ? (
-                    <XCircle className="h-3.5 w-3.5 text-rose-500" />
-                  ) : (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <>
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                    {e.acao === 'REJEITAR_AJUSTE' ? (
+                      <XCircle className="h-3.5 w-3.5 text-rose-500" />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    )}
+                    <span>
+                      Decidido: <span className="font-medium">{formatarAcao(e.acao)}</span>
+                      {e.aprovador ? ` por ${e.aprovador}` : ''}
+                      {e.motivo ? ` — ${e.motivo}` : ''}
+                    </span>
+                  </div>
+
+                  {e.recomendacao && (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-orange-50/60 px-3 py-2 text-xs text-orange-700">
+                      <Truck className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <p>
+                        {e.recomendacao.acao === 'TRANSFERIR' ? (
+                          <>
+                            Risco de ruptura — transferir {e.recomendacao.quantidade ?? '?'} unidade(s) de{' '}
+                            <span className="font-medium">{e.recomendacao.armazemOrigemNome}</span>.
+                          </>
+                        ) : (
+                          <>Risco de ruptura — nenhum outro armazém tem sobra; considerar comprar {e.recomendacao.quantidade ?? '?'} unidade(s).</>
+                        )}
+                      </p>
+                    </div>
                   )}
-                  <span>
-                    Decidido: <span className="font-medium">{formatarAcao(e.acao)}</span>
-                    {e.aprovador ? ` por ${e.aprovador}` : ''}
-                    {e.motivo ? ` — ${e.motivo}` : ''}
-                  </span>
-                </div>
+                </>
               ) : (
                 <div className="mt-3 space-y-2">
                   {e.classificacao === 'CRITICO' && (

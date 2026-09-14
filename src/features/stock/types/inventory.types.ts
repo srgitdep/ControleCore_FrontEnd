@@ -227,9 +227,19 @@ export interface InventoryException {
   aprovador: string | null;
   decididoEm: string | null;
 
+  /** §12, §14: só preenchido quando o ajuste aprovado deixou o armazém em risco de ruptura. */
+  recomendacao: RecomendacaoReposicao | null;
+
   /** MAYRA ainda não classificou — fallback do §11: não bloquear a fila indefinidamente. */
   aguardaClassificacaoMayra: boolean;
   createdAt: string;
+}
+
+export interface RecomendacaoReposicao {
+  acao: 'TRANSFERIR' | 'COMPRAR';
+  armazemOrigemId: string | null;
+  armazemOrigemNome: string | null;
+  quantidade: number | null;
 }
 
 export interface DecidirExcecaoResponse {
@@ -238,6 +248,7 @@ export interface DecidirExcecaoResponse {
   movimentoId?: string;
   stockAnterior?: number;
   stockPosterior?: number;
+  recomendacao?: RecomendacaoReposicao;
 }
 
 export interface AnalisarExcecaoMayraResponse {
