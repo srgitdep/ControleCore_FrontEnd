@@ -24,7 +24,9 @@ export type InventoryItemStatus =
   | 'ZERO_CONFIRMADO'
   | 'FORA_DA_LOCALIZACAO'
   | 'RECONTAGEM_PENDENTE'
-  | 'RECONTADO';
+  | 'RECONTADO'
+  /** Encontrado na contagem mas não fazia parte do perímetro do ciclo (§5 "+ Produto encontrado"). */
+  | 'PRODUTO_INESPERADO';
 
 export type AcaoGestor = 'APROVAR_AJUSTE' | 'SOLICITAR_RECONTAGEM' | 'INVESTIGAR' | 'REJEITAR_AJUSTE';
 
@@ -138,6 +140,14 @@ export interface ConfirmarZeroPayload {
 
 export interface RegistarForaDaLocalizacaoPayload {
   inventoryCountId: string;
+  localizacaoRealId: string;
+  physicalQuantity: number;
+  terminal?: string;
+}
+
+export interface RegistarProdutoInesperadoPayload {
+  codigoBarras: string;
+  armazemId: string;
   localizacaoRealId: string;
   physicalQuantity: number;
   terminal?: string;

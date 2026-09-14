@@ -10,6 +10,7 @@ const ESTADO_LABEL: Record<InventoryItemStatus, string> = {
   FORA_DA_LOCALIZACAO: 'Fora da localização',
   RECONTAGEM_PENDENTE: 'Recontagem pendente',
   RECONTADO: 'Recontado',
+  PRODUTO_INESPERADO: 'Produto inesperado',
 };
 
 /**

@@ -6,6 +6,7 @@ import type {
   RegisterCountByBarcodePayload,
   ConfirmarZeroPayload,
   RegistarForaDaLocalizacaoPayload,
+  RegistarProdutoInesperadoPayload,
   RegistarRecontagemPayload,
   UpdateCycleStatusPayload,
   CancelarCicloPayload,
@@ -163,6 +164,16 @@ export const useRegistarForaDaLocalizacao = (cycleId: string) => {
   return useMutation({
     mutationFn: (payload: RegistarForaDaLocalizacaoPayload) =>
       inventoryApi.registarForaDaLocalizacao(cycleId, payload),
+    onSuccess: () => invalidarAposContagem(qc, cycleId),
+  });
+};
+
+/** Produto encontrado que não fazia parte do perímetro do ciclo (§5 "+ Produto encontrado"). */
+export const useRegistarProdutoInesperado = (cycleId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RegistarProdutoInesperadoPayload) =>
+      inventoryApi.registarProdutoInesperado(cycleId, payload),
     onSuccess: () => invalidarAposContagem(qc, cycleId),
   });
 };

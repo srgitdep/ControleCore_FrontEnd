@@ -7,6 +7,7 @@ import type {
   RegisterCountByBarcodePayload,
   ConfirmarZeroPayload,
   RegistarForaDaLocalizacaoPayload,
+  RegistarProdutoInesperadoPayload,
   RegistarRecontagemPayload,
   UpdateCycleStatusPayload,
   CancelarCicloPayload,
@@ -147,6 +148,18 @@ export const inventoryApi = {
   ): Promise<InventoryCount> => {
     const { data } = await api.post<InventoryCount>(
       `/inventory/cycles/${cycleId}/counts/fora-da-localizacao`,
+      payload,
+    );
+    return data;
+  },
+
+  /** Produto encontrado que não fazia parte do perímetro do ciclo (§5 "+ Produto encontrado") — fica rastreado para o Gestor investigar. */
+  registarProdutoInesperado: async (
+    cycleId: string,
+    payload: RegistarProdutoInesperadoPayload,
+  ): Promise<InventoryCount> => {
+    const { data } = await api.post<InventoryCount>(
+      `/inventory/cycles/${cycleId}/counts/inesperado`,
       payload,
     );
     return data;

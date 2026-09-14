@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History } from 'lucide-react';
+import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History, PackagePlus } from 'lucide-react';
 import { useInventoryCycleDetail, useCobertura } from '@/features/stock';
 import { LeitorCameraContagemModal } from '../LeitorCameraContagemModal';
 import { ContagemItemPanel } from './ContagemItemPanel';
 import { HistoricoContagemModal } from './HistoricoContagemModal';
+import { RegistarProdutoInesperadoModal } from './RegistarProdutoInesperadoModal';
 import type { InventoryCount, InventoryItemStatus } from '@/features/stock';
 
 const FILTROS: Array<{ key: 'TODOS' | InventoryItemStatus; label: string }> = [
@@ -12,6 +13,7 @@ const FILTROS: Array<{ key: 'TODOS' | InventoryItemStatus; label: string }> = [
   { key: 'CONTADO', label: 'Contados' },
   { key: 'ZERO_CONFIRMADO', label: 'Zero' },
   { key: 'FORA_DA_LOCALIZACAO', label: 'Fora da localização' },
+  { key: 'PRODUTO_INESPERADO', label: 'Inesperados' },
 ];
 
 const STATUS_BADGE: Record<InventoryItemStatus, { label: string; className: string; icon: React.ReactNode }> = {
@@ -22,6 +24,7 @@ const STATUS_BADGE: Record<InventoryItemStatus, { label: string; className: stri
   FORA_DA_LOCALIZACAO: { label: 'Fora da localização', className: 'bg-amber-100 text-amber-700', icon: <MapPin className="h-3 w-3" /> },
   RECONTAGEM_PENDENTE: { label: 'Recontagem pendente', className: 'bg-purple-100 text-purple-700', icon: <Circle className="h-3 w-3" /> },
   RECONTADO: { label: 'Recontado', className: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="h-3 w-3" /> },
+  PRODUTO_INESPERADO: { label: 'Inesperado', className: 'bg-orange-100 text-orange-700', icon: <PackagePlus className="h-3 w-3" /> },
 };
 
 /**
@@ -36,6 +39,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
   const [itemSelecionadoId, setItemSelecionadoId] = useState<string | null>(null);
   const [leitorAberto, setLeitorAberto] = useState(false);
   const [itemHistoricoId, setItemHistoricoId] = useState<string | null>(null);
+  const [produtoInesperadoAberto, setProdutoInesperadoAberto] = useState(false);
 
   // Referência estável: `cycle?.counts ?? []` criaria um array novo a cada
   // render enquanto `cycle` for undefined, invalidando a memoização abaixo.
@@ -45,18 +49,25 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
     const mapa = new Map<string, { id: string; codigo: string; nome: string | null; caminho: string }>();
     for (const c of counts) {
       if (c.localizacaoEsperada) mapa.set(c.localizacaoEsperada.id, c.localizacaoEsperada);
+      if (c.localizacaoReal) mapa.set(c.localizacaoReal.id, c.localizacaoReal);
     }
     return [...mapa.values()];
   }, [counts]);
+
+  const armazemId = useMemo(
+    () => counts.find((c) => c.stock?.armazem?.id)?.stock?.armazem?.id ?? null,
+    [counts],
+  );
 
   const indicadores = useMemo(() => {
     const total = counts.length;
     const contados = counts.filter((c) => c.status === 'CONTADO').length;
     const zero = counts.filter((c) => c.status === 'ZERO_CONFIRMADO').length;
     const fora = counts.filter((c) => c.status === 'FORA_DA_LOCALIZACAO').length;
+    const inesperados = counts.filter((c) => c.status === 'PRODUTO_INESPERADO').length;
     const pendentes = counts.filter((c) => c.status === 'PENDENTE' || c.status === 'EM_CONTAGEM').length;
     const feitos = contados + zero + fora;
-    return { total, contados, zero, fora, pendentes, progresso: total > 0 ? Math.round((feitos / total) * 100) : 0 };
+    return { total, contados, zero, fora, inesperados, pendentes, progresso: total > 0 ? Math.round((feitos / total) * 100) : 0 };
   }, [counts]);
 
   const itensFiltrados = useMemo(() => {
@@ -96,12 +107,13 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
       </div>
 
       {/* Indicadores */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
         {[
           { rotulo: 'No inventário', valor: indicadores.total },
           { rotulo: 'Contados', valor: indicadores.contados, cor: 'text-emerald-600' },
           { rotulo: 'Zero confirmado', valor: indicadores.zero },
           { rotulo: 'Fora da localização', valor: indicadores.fora, cor: 'text-amber-600' },
+          { rotulo: 'Inesperados', valor: indicadores.inesperados, cor: 'text-orange-600' },
           { rotulo: 'Pendentes', valor: indicadores.pendentes, cor: 'text-rose-600' },
         ].map((m) => (
           <div key={m.rotulo} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
@@ -162,6 +174,15 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
             <Camera size={14} />
             Câmara
           </button>
+          <button
+            onClick={() => setProdutoInesperadoAberto(true)}
+            disabled={!armazemId}
+            title={armazemId ? undefined : 'Sem itens no perímetro para identificar o armazém'}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <PackagePlus size={14} />
+            + Produto
+          </button>
         </div>
       </div>
 
@@ -213,6 +234,15 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
           onClose={() => setItemHistoricoId(null)}
         />
       )}
+
+      {produtoInesperadoAberto && armazemId && (
+        <RegistarProdutoInesperadoModal
+          cycleId={cycleId}
+          armazemId={armazemId}
+          localizacoesDoArmazem={localizacoesDoArmazem}
+          onClose={() => setProdutoInesperadoAberto(false)}
+        />
+      )}
     </div>
   );
 }
@@ -248,7 +278,7 @@ function ItemLinha({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{produto?.nome ?? '—'}</p>
           <p className="text-[11px] text-slate-400">
-            {produto?.codigoBarras ?? '—'} · {item.localizacaoEsperada?.codigo ?? '—'}
+            {produto?.codigoBarras ?? '—'} · {item.localizacaoEsperada?.codigo ?? item.localizacaoReal?.codigo ?? '—'}
           </p>
         </div>
       </button>
