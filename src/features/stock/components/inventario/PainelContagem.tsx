@@ -40,7 +40,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
   const counts = useMemo(() => cycle?.counts ?? [], [cycle]);
 
   const localizacoesDoArmazem = useMemo(() => {
-    const mapa = new Map<string, { id: string; codigo: string; descricao: string | null }>();
+    const mapa = new Map<string, { id: string; codigo: string; nome: string | null; caminho: string }>();
     for (const c of counts) {
       if (c.localizacaoEsperada) mapa.set(c.localizacaoEsperada.id, c.localizacaoEsperada);
     }

@@ -20,9 +20,6 @@ import type {
   ReconciliarResponse,
   CloseCycleResponse,
   PrevisaoDeFechoResponse,
-  LocalizacaoDetalhada,
-  CriarLocalizacaoPayload,
-  AtualizarLocalizacaoPayload,
   AnalisarExcecaoMayraResponse,
   ToleranciaInventario,
   CriarToleranciaPayload,
@@ -201,35 +198,9 @@ export const inventoryApi = {
     return data;
   },
 
-  // ── Localizações (prateleiras/zonas) — §5 ───────────────────────────────
-
-  listarLocalizacoes: async (armazemId: string): Promise<LocalizacaoDetalhada[]> => {
-    const { data } = await api.get<LocalizacaoDetalhada[]>(`/inventory/armazens/${armazemId}/localizacoes`);
-    return data;
-  },
-
-  criarLocalizacao: async (armazemId: string, payload: CriarLocalizacaoPayload): Promise<LocalizacaoDetalhada> => {
-    const { data } = await api.post<LocalizacaoDetalhada>(`/inventory/armazens/${armazemId}/localizacoes`, payload);
-    return data;
-  },
-
-  atualizarLocalizacao: async (id: string, payload: AtualizarLocalizacaoPayload): Promise<LocalizacaoDetalhada> => {
-    const { data } = await api.patch<LocalizacaoDetalhada>(`/inventory/localizacoes/${id}`, payload);
-    return data;
-  },
-
-  desativarLocalizacao: async (id: string): Promise<LocalizacaoDetalhada> => {
-    const { data } = await api.delete<LocalizacaoDetalhada>(`/inventory/localizacoes/${id}`);
-    return data;
-  },
-
-  associarProduto: async (localizacaoId: string, productId: string): Promise<void> => {
-    await api.post(`/inventory/localizacoes/${localizacaoId}/produtos`, { productId });
-  },
-
-  desassociarProduto: async (localizacaoId: string, productId: string): Promise<void> => {
-    await api.delete(`/inventory/localizacoes/${localizacaoId}/produtos/${productId}`);
-  },
+  // Localizações e atribuição de quantidade por posição migraram para
+  // `@/features/armazens` (localizacoesApi) e `@/features/stock`
+  // (distribuicaoApi) — ver a nota em `hooks/useInventory.ts`.
 
   // ── Tolerâncias (§10) ────────────────────────────────────────────────────
 

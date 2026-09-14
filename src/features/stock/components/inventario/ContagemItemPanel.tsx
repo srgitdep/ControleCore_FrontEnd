@@ -19,7 +19,7 @@ export function ContagemItemPanel({
   cycleId: string;
   item: InventoryCount;
   /** Para o selector de "produto noutra localização" — localizações do mesmo armazém. */
-  localizacoesDoArmazem: Array<{ id: string; codigo: string; descricao: string | null }>;
+  localizacoesDoArmazem: Array<{ id: string; codigo: string; nome: string | null; caminho: string }>;
   onConcluido?: () => void;
 }) {
   const [quantidade, setQuantidade] = useState('');
@@ -146,7 +146,7 @@ export function ContagemItemPanel({
                 .filter((l) => l.id !== item.localizacaoEsperadaId)
                 .map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.codigo}{l.descricao ? ` — ${l.descricao}` : ''}
+                    {l.caminho}
                   </option>
                 ))}
             </select>

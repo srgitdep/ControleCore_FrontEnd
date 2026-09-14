@@ -10,8 +10,6 @@ import type {
   UpdateCycleStatusPayload,
   CancelarCicloPayload,
   DecidirExcecaoPayload,
-  CriarLocalizacaoPayload,
-  AtualizarLocalizacaoPayload,
   CriarToleranciaPayload,
   AtualizarToleranciaPayload,
 } from '@/features/stock';
@@ -216,57 +214,11 @@ export const useAnalisarExcecaoMayra = () => {
   });
 };
 
-// ── Localizações (prateleiras/zonas) — §5 ─────────────────────────────────
-
-export const useLocalizacoesInventario = (armazemId: string | null) =>
-  useQuery({
-    queryKey: inventoryKeys.localizacoes(armazemId ?? ''),
-    queryFn: () => inventoryApi.listarLocalizacoes(armazemId!),
-    enabled: !!armazemId,
-  });
-
-export const useCriarLocalizacao = (armazemId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: CriarLocalizacaoPayload) => inventoryApi.criarLocalizacao(armazemId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.localizacoes(armazemId) }),
-  });
-};
-
-export const useAtualizarLocalizacao = (armazemId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: AtualizarLocalizacaoPayload }) =>
-      inventoryApi.atualizarLocalizacao(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.localizacoes(armazemId) }),
-  });
-};
-
-export const useDesativarLocalizacao = (armazemId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => inventoryApi.desativarLocalizacao(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.localizacoes(armazemId) }),
-  });
-};
-
-export const useAssociarProduto = (armazemId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ localizacaoId, productId }: { localizacaoId: string; productId: string }) =>
-      inventoryApi.associarProduto(localizacaoId, productId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.localizacoes(armazemId) }),
-  });
-};
-
-export const useDesassociarProduto = (armazemId: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ localizacaoId, productId }: { localizacaoId: string; productId: string }) =>
-      inventoryApi.desassociarProduto(localizacaoId, productId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.localizacoes(armazemId) }),
-  });
-};
+// A gestão de Localizações (§5, §15-17) vive em `@/features/armazens`
+// (useLocalizacoes/useLocalizacaoMutations) e a atribuição de quantidade por
+// posição em `@/features/stock` (useDistribuicao/useDistribuicaoMutations) —
+// o modelo hierárquico de `feat/estados-de-stock`, trazido para main por já
+// ser o que o front-end de armazéns esperava. Não há CRUD próprio aqui.
 
 // ── Tolerâncias (§10) ──────────────────────────────────────────────────────
 

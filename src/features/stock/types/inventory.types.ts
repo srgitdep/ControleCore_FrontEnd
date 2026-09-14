@@ -28,44 +28,18 @@ export type InventoryItemStatus =
 
 export type AcaoGestor = 'APROVAR_AJUSTE' | 'SOLICITAR_RECONTAGEM' | 'INVESTIGAR' | 'REJEITAR_AJUSTE';
 
-// ── Localizações (prateleiras/zonas) ─────────────────────────────────────────
-
-export interface LocalizacaoProduto {
-  id: string;
-  produto: {
-    id: string;
-    nome: string;
-    codigoBarras?: string | null;
-    imagemUrl?: string | null;
-  };
-}
-
-export interface LocalizacaoDetalhada {
-  id: string;
-  armazemId: string;
-  codigo: string;
-  descricao: string | null;
-  isActive: boolean;
-  _count: { produtos: number };
-  produtos: LocalizacaoProduto[];
-}
-
-export interface CriarLocalizacaoPayload {
-  codigo: string;
-  descricao?: string;
-}
-
-export interface AtualizarLocalizacaoPayload {
-  codigo?: string;
-  descricao?: string;
-}
+// Localizações (prateleiras/zonas) e a atribuição de quantidade por posição
+// vivem em `@/features/armazens` (localizacoesApi, árvore com paiId/caminho)
+// e `@/features/stock` (distribuicaoApi, StockLocalizacao) — não neste
+// arquivo. Ver a nota em `hooks/useInventory.ts`.
 
 // ── Entidades base ───────────────────────────────────────────────────────────
 
 export interface LocalizacaoResumo {
   id: string;
   codigo: string;
-  descricao: string | null;
+  nome: string | null;
+  caminho: string;
 }
 
 export interface InventoryCount {

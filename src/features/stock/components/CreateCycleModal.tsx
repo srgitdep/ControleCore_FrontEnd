@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { X, ClipboardList, MapPin } from 'lucide-react';
-import { useCreateCycle, useLocalizacoesInventario } from '@/features/stock';
+import { useCreateCycle } from '@/features/stock';
 import { useArmazens } from '@/features/lojas';
+import { useLocalizacoes, LocalizacoesPanel } from '@/features/armazens';
 import { Button } from '@/shared/ui';
-import { GerirLocalizacoesModal } from './inventario/GerirLocalizacoesModal';
 
 interface CreateCycleModalProps {
   onClose: () => void;
@@ -12,9 +12,14 @@ interface CreateCycleModalProps {
 
 /**
  * Novo ciclo de inventário (§5): ao criar, o backend carrega automaticamente
- * o perímetro — todo produto associado a uma localização (prateleira) deste
- * armazém entra no ciclo como PENDENTE. Por isso o armazém é obrigatório: sem
- * ele não há perímetro a carregar.
+ * o perímetro — toda posição de `StockLocalizacao` deste armazém entra no
+ * ciclo como PENDENTE. Por isso o armazém é obrigatório: sem localizações
+ * com mercadoria atribuída não há perímetro a carregar.
+ *
+ * A atribuição de quantidade a uma prateleira (`StockLocalizacao`) não se faz
+ * aqui — é `LocalizacaoStockModal`, acessível a partir da ficha de cada
+ * posição em Stock. Este modal só cobre o primeiro passo (criar as
+ * localizações em si); o aviso abaixo orienta para o segundo.
  */
 export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) {
   const [name, setName] = useState('');
@@ -22,10 +27,10 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
   const [gerirLocalizacoesAberto, setGerirLocalizacoesAberto] = useState(false);
   const { armazens, isLoading: isLoadingArmazens } = useArmazens();
   const { mutate: createCycle, isPending, error } = useCreateCycle();
-  const { data: localizacoes = [] } = useLocalizacoesInventario(armazemId || null);
+  const { data: arvore } = useLocalizacoes(armazemId || undefined);
 
   const armazemSelecionado = armazens.find((a) => a.id === armazemId);
-  const totalProdutosNoPerimetro = localizacoes.reduce((soma, l) => soma + l._count.produtos, 0);
+  const totalLocalizacoes = arvore?.total ?? 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,21 +102,21 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
                 ))}
               </select>
               <p className="mt-1.5 text-xs text-slate-400">
-                Todos os produtos associados a uma localização (prateleira) deste armazém
-                entram no ciclo como pendentes.
+                Toda mercadoria já atribuída a uma prateleira deste armazém entra no ciclo
+                como pendente.
               </p>
             </div>
 
             {armazemId && (
               <div
                 className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs ${
-                  totalProdutosNoPerimetro > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                  totalLocalizacoes > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                 }`}
               >
                 <span>
-                  {totalProdutosNoPerimetro > 0
-                    ? `${totalProdutosNoPerimetro} produto(s) em ${localizacoes.length} localização(ões).`
-                    : 'Este armazém ainda não tem localizações com produtos associados.'}
+                  {totalLocalizacoes > 0
+                    ? `${totalLocalizacoes} localização(ões) cadastrada(s). Confirme que há mercadoria atribuída a elas na ficha de cada posição em Stock.`
+                    : 'Este armazém ainda não tem localizações (prateleiras) cadastradas.'}
                 </span>
                 <button
                   type="button"
@@ -135,10 +140,7 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={!name.trim() || !armazemId || totalProdutosNoPerimetro === 0 || isPending}
-            >
+            <Button type="submit" disabled={!name.trim() || !armazemId || isPending}>
               {isPending ? 'A criar...' : 'Criar Ciclo'}
             </Button>
           </div>
@@ -146,11 +148,22 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
       </div>
 
       {gerirLocalizacoesAberto && armazemId && (
-        <GerirLocalizacoesModal
-          armazemId={armazemId}
-          armazemNome={armazemSelecionado?.etiqueta ?? ''}
-          onClose={() => setGerirLocalizacoesAberto(false)}
-        />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <h3 className="font-bold text-slate-800">Localizações — {armazemSelecionado?.etiqueta}</h3>
+              <button
+                onClick={() => setGerirLocalizacoesAberto(false)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <LocalizacoesPanel armazemId={armazemId} armazemNome={armazemSelecionado?.etiqueta ?? ''} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
