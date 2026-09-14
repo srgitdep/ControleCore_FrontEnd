@@ -27,6 +27,9 @@ import type {
   AtualizarToleranciaPayload,
   HistoricoContagemEntry,
   DashboardInventarioResponse,
+  AtribuirPrateleirasPayload,
+  AtribuirPrateleirasResponse,
+  AtribuicaoOperador,
 } from '@/features/stock';
 
 export const inventoryApi = {
@@ -106,6 +109,22 @@ export const inventoryApi = {
   iniciarContagem: async (cycleId: string, itemId: string): Promise<InventoryCount> => {
     const { data } = await api.post<InventoryCount>(
       `/inventory/cycles/${cycleId}/items/${itemId}/iniciar`,
+    );
+    return data;
+  },
+
+  /** Distribui prateleiras por um operador (§8) — só ele pode iniciar a contagem dessas posições. */
+  atribuirPrateleiras: async (cycleId: string, payload: AtribuirPrateleirasPayload): Promise<AtribuirPrateleirasResponse> => {
+    const { data } = await api.post<AtribuirPrateleirasResponse>(
+      `/inventory/cycles/${cycleId}/prateleiras/atribuir`,
+      payload,
+    );
+    return data;
+  },
+
+  listarAtribuicoes: async (cycleId: string): Promise<AtribuicaoOperador[]> => {
+    const { data } = await api.get<AtribuicaoOperador[]>(
+      `/inventory/cycles/${cycleId}/prateleiras/atribuicoes`,
     );
     return data;
   },

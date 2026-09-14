@@ -56,6 +56,8 @@ export interface InventoryCount {
   localizacaoReal?: LocalizacaoResumo | null;
 
   operatorId: string | null;
+  /** A quem o Gestor distribuiu esta posição antes da contagem (§8) — só este operador pode iniciar a contagem enquanto preenchido. */
+  assignedToId?: string | null;
   terminal?: string | null;
   physicalQuantity: number | null;
 
@@ -91,6 +93,10 @@ export interface InventoryCount {
     id: string;
     name: string;
   };
+  assignedTo?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface InventoryCycle {
@@ -117,6 +123,30 @@ export interface CreateCyclePayload {
   name: string;
   /** Armazém cujo perímetro (produtos × localizações) é carregado como PENDENTE. */
   armazemId: string;
+}
+
+// ── Distribuição de prateleiras (§8) ─────────────────────────────────────────
+
+export interface AtribuirPrateleirasPayload {
+  localizacaoIds: string[];
+  operatorId: string;
+}
+
+export interface AtribuirPrateleirasResponse {
+  cycleId: string;
+  operatorId: string;
+  posicoesAtribuidas: number;
+}
+
+export interface AtribuicaoOperador {
+  operatorId: string;
+  operatorName: string;
+  posicoes: Array<{
+    inventoryCountId: string;
+    status: InventoryItemStatus;
+    produto: string;
+    localizacao: { id: string; codigo: string; caminho: string } | null;
+  }>;
 }
 
 export interface RegisterCountPayload {

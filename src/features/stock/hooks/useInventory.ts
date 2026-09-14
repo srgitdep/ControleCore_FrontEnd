@@ -13,6 +13,7 @@ import type {
   DecidirExcecaoPayload,
   CriarToleranciaPayload,
   AtualizarToleranciaPayload,
+  AtribuirPrateleirasPayload,
 } from '@/features/stock';
 
 // ── Query Keys ────────────────────────────────────────────────────────────
@@ -127,6 +128,25 @@ export const useIniciarContagem = (cycleId: string) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: inventoryKeys.cycleDetail(cycleId) }),
   });
 };
+
+/** Distribui prateleiras por um operador (§8). */
+export const useAtribuirPrateleiras = (cycleId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AtribuirPrateleirasPayload) => inventoryApi.atribuirPrateleiras(cycleId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: inventoryKeys.cycleDetail(cycleId) });
+      qc.invalidateQueries({ queryKey: [...inventoryKeys.cycleDetail(cycleId), 'atribuicoes'] });
+    },
+  });
+};
+
+export const useAtribuicoes = (cycleId: string | null) =>
+  useQuery({
+    queryKey: [...inventoryKeys.cycleDetail(cycleId ?? ''), 'atribuicoes'],
+    queryFn: () => inventoryApi.listarAtribuicoes(cycleId!),
+    enabled: !!cycleId,
+  });
 
 function invalidarAposContagem(qc: ReturnType<typeof useQueryClient>, cycleId: string) {
   qc.invalidateQueries({ queryKey: inventoryKeys.cycleDetail(cycleId) });

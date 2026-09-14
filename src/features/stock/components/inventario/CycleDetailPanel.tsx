@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, CheckCircle2, XCircle, BarChart3, ShieldCheck, Users } from 'lucide-react';
+import { ChevronRight, CheckCircle2, XCircle, BarChart3, ShieldCheck, Users, Users2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   useInventoryCycleDetail,
@@ -13,6 +13,7 @@ import { Button, Tabs, type TabDefinition } from '@/shared/ui';
 import { PainelContagem } from './PainelContagem';
 import { PainelRecontagem } from './PainelRecontagem';
 import { PainelExcecoesGestor } from './PainelExcecoesGestor';
+import { AtribuirPrateleirasModal } from './AtribuirPrateleirasModal';
 import type { InventoryCycleStatus } from '@/features/stock';
 
 const STATUS_LABEL: Record<InventoryCycleStatus, string> = {
@@ -55,6 +56,7 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
   const cancelarCiclo = useCancelarCiclo();
   const reconciliar = useReconciliar();
   const [aba, setAba] = useState<'contagem' | 'recontagem' | 'excecoes'>('contagem');
+  const [distribuirAberto, setDistribuirAberto] = useState(false);
 
   if (isLoading || !cycle) {
     return (
@@ -136,6 +138,12 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
           </p>
 
           <div className="flex flex-wrap gap-2">
+            {(cycle.status === 'PREPARADO' || cycle.status === 'EM_CONTAGEM') && (
+              <Button variant="outline" onClick={() => setDistribuirAberto(true)}>
+                <Users2 className="h-4 w-4" />
+                Distribuir prateleiras
+              </Button>
+            )}
             {cycle.status === 'PREPARADO' && (
               <Button onClick={() => avancar('EM_CONTAGEM')} disabled={updateStatus.isPending}>
                 Iniciar contagem
@@ -198,6 +206,14 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
         </>
       ) : (
         <PainelExcecoesGestor cycleId={cycleId} />
+      )}
+
+      {distribuirAberto && (
+        <AtribuirPrateleirasModal
+          cycleId={cycleId}
+          counts={cycle.counts}
+          onClose={() => setDistribuirAberto(false)}
+        />
       )}
     </div>
   );

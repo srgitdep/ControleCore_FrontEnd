@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History, PackagePlus } from 'lucide-react';
+import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History, PackagePlus, Lock } from 'lucide-react';
+import { useAuth } from '@/features/auth';
 import { useInventoryCycleDetail, useCobertura } from '@/features/stock';
 import { LeitorCameraContagemModal } from '../LeitorCameraContagemModal';
 import { ContagemItemPanel } from './ContagemItemPanel';
@@ -32,6 +33,7 @@ const STATUS_BADGE: Record<InventoryItemStatus, { label: string; className: stri
  * agrupados por localização, e o painel de registo do item selecionado.
  */
 export function PainelContagem({ cycleId }: { cycleId: string }) {
+  const { user } = useAuth();
   const { data: cycle, isLoading } = useInventoryCycleDetail(cycleId);
   const { data: cobertura } = useCobertura(cycleId, { poll: true });
   const [filtro, setFiltro] = useState<'TODOS' | InventoryItemStatus>('TODOS');
@@ -200,6 +202,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
                   selecionado={item.id === itemSelecionadoId}
                   onSelecionar={() => setItemSelecionadoId(item.id)}
                   onVerHistorico={() => setItemHistoricoId(item.id)}
+                  currentUserId={user?.id}
                 />
               ))
             )}
@@ -252,15 +255,18 @@ function ItemLinha({
   selecionado,
   onSelecionar,
   onVerHistorico,
+  currentUserId,
 }: {
   item: InventoryCount;
   selecionado: boolean;
   onSelecionar: () => void;
   onVerHistorico: () => void;
+  currentUserId?: string;
 }) {
   const badge = STATUS_BADGE[item.status];
   const produto = item.stock?.product;
   const jaTemHistorico = item.status !== 'PENDENTE';
+  const bloqueadaParaOutro = !!item.assignedToId && item.assignedToId !== currentUserId;
 
   return (
     <div
@@ -281,6 +287,15 @@ function ItemLinha({
             {produto?.codigoBarras ?? '—'} · {item.localizacaoEsperada?.codigo ?? item.localizacaoReal?.codigo ?? '—'}
           </p>
         </div>
+        {bloqueadaParaOutro && (
+          <span
+            title={`Prateleira distribuída a ${item.assignedTo?.name ?? 'outro operador'}`}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+          >
+            <Lock className="h-3 w-3" />
+            {item.assignedTo?.name ?? 'Atribuída'}
+          </span>
+        )}
       </button>
       {jaTemHistorico && (
         <button
