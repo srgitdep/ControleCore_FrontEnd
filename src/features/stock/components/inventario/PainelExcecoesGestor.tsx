@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw, Truck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw, Truck, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useExcecoes, useDecidirExcecao, useAnalisarExcecaoMayra } from '@/features/stock';
+import { useExcecoes, useDecidirExcecao, useAnalisarExcecaoMayra, useExportarExcecoes } from '@/features/stock';
 import { Button } from '@/shared/ui';
 import type { AcaoGestor, InventoryException } from '@/features/stock';
 
@@ -37,7 +37,15 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
   });
   const decidir = useDecidirExcecao();
   const analisarComMayra = useAnalisarExcecaoMayra();
+  const exportar = useExportarExcecoes();
   const [motivoPorExcecao, setMotivoPorExcecao] = useState<Record<string, string>>({});
+
+  const handleExportar = () => {
+    exportar.mutate(
+      { cycleId, decididas: somenteAbertas ? false : undefined },
+      { onError: () => toast.error('Não foi possível exportar as exceções.') },
+    );
+  };
 
   const handleAnalisar = (excecaoId: string) => {
     analisarComMayra.mutate(excecaoId, {
@@ -84,16 +92,27 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold text-slate-700">Exceções para Decisão</h3>
-        <label className="flex items-center gap-2 text-xs text-slate-500">
-          <input
-            type="checkbox"
-            checked={somenteAbertas}
-            onChange={(e) => setSomenteAbertas(e.target.checked)}
-          />
-          Mostrar só as por decidir
-        </label>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-xs text-slate-500">
+            <input
+              type="checkbox"
+              checked={somenteAbertas}
+              onChange={(e) => setSomenteAbertas(e.target.checked)}
+            />
+            Mostrar só as por decidir
+          </label>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={exportar.isPending || excecoes.length === 0}
+            onClick={handleExportar}
+          >
+            <Download className="h-3.5 w-3.5" />
+            {exportar.isPending ? 'A exportar...' : 'Exportar'}
+          </Button>
+        </div>
       </div>
 
       {excecoes.length === 0 ? (

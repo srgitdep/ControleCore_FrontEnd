@@ -210,6 +210,18 @@ export const inventoryApi = {
     return data;
   },
 
+  /** Mesmos dados e filtros de listarExcecoes, num .xlsx para download. */
+  exportarExcecoes: async (params?: { cycleId?: string; decididas?: boolean }): Promise<Blob> => {
+    const { data } = await api.get('/inventory/excecoes/exportar', {
+      params: {
+        cycleId: params?.cycleId,
+        decididas: params?.decididas === undefined ? undefined : String(params.decididas),
+      },
+      responseType: 'blob',
+    });
+    return data;
+  },
+
   decidirExcecao: async (
     excecaoId: string,
     payload: DecidirExcecaoPayload,

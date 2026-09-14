@@ -236,6 +236,22 @@ export const useDecidirExcecao = () => {
   });
 };
 
+/** Baixa o .xlsx da fila de exceções — mesmo filtro de useExcecoes. */
+export const useExportarExcecoes = () =>
+  useMutation({
+    mutationFn: (params?: { cycleId?: string; decididas?: boolean }) => inventoryApi.exportarExcecoes(params),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `excecoes-inventario-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    },
+  });
+
 export const useAnalisarExcecaoMayra = () => {
   const qc = useQueryClient();
   return useMutation({
