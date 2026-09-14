@@ -1,22 +1,101 @@
-﻿// ──â”€ Enums (espelha o schema Prisma — sem importação direta) ──────────────────
-export type InventoryCycleStatus = 'OPEN' | 'COUNTING' | 'RECONCILING' | 'CLOSED';
+// ── Enums (espelha o schema Prisma do backend — sem importação direta) ──────
 
-// ──â”€ Entidades base ──────────────────────────────────────────────────────────â”€
+/** Máquina de estados da sessão (§13 do Documento Técnico de Inventário v1.1). */
+export type InventoryCycleStatus =
+  | 'RASCUNHO'
+  | 'PREPARADO'
+  | 'EM_CONTAGEM'
+  | 'PAUSADO'
+  | 'VALIDACAO_DE_COBERTURA'
+  | 'EM_RECONCILIACAO'
+  | 'AGUARDA_RECONTAGEM'
+  | 'EM_ANALISE_MAYRA'
+  | 'AGUARDA_APROVACAO'
+  | 'AJUSTE_APROVADO'
+  | 'ENCERRADO'
+  | 'CANCELADO'
+  | 'BLOQUEADO_POR_ERRO';
+
+/** Estado por Produto + Localização (§6). */
+export type InventoryItemStatus =
+  | 'PENDENTE'
+  | 'EM_CONTAGEM'
+  | 'CONTADO'
+  | 'ZERO_CONFIRMADO'
+  | 'FORA_DA_LOCALIZACAO'
+  | 'RECONTAGEM_PENDENTE'
+  | 'RECONTADO';
+
+export type AcaoGestor = 'APROVAR_AJUSTE' | 'SOLICITAR_RECONTAGEM' | 'INVESTIGAR' | 'REJEITAR_AJUSTE';
+
+// ── Localizações (prateleiras/zonas) ─────────────────────────────────────────
+
+export interface LocalizacaoProduto {
+  id: string;
+  produto: {
+    id: string;
+    nome: string;
+    codigoBarras?: string | null;
+    imagemUrl?: string | null;
+  };
+}
+
+export interface LocalizacaoDetalhada {
+  id: string;
+  armazemId: string;
+  codigo: string;
+  descricao: string | null;
+  isActive: boolean;
+  _count: { produtos: number };
+  produtos: LocalizacaoProduto[];
+}
+
+export interface CriarLocalizacaoPayload {
+  codigo: string;
+  descricao?: string;
+}
+
+export interface AtualizarLocalizacaoPayload {
+  codigo?: string;
+  descricao?: string;
+}
+
+// ── Entidades base ───────────────────────────────────────────────────────────
+
+export interface LocalizacaoResumo {
+  id: string;
+  codigo: string;
+  descricao: string | null;
+}
 
 export interface InventoryCount {
   id: string;
   cycleId: string;
   stockId: string;
-  operatorId: string;
+  status: InventoryItemStatus;
 
-  // Dados calculados no momento da contagem (snapshot imutável)
-  systemQuantity: number;
-  physicalQuantity: number;
-  difference: number; // positivo = sobra, negativo = falta
+  localizacaoEsperadaId: string | null;
+  localizacaoRealId: string | null;
+  localizacaoEsperada?: LocalizacaoResumo | null;
+  localizacaoReal?: LocalizacaoResumo | null;
 
+  operatorId: string | null;
+  terminal?: string | null;
+  physicalQuantity: number | null;
+
+  /**
+   * Nunca vem preenchido no momento de contar — o backend só os calcula
+   * na reconciliação (§9). Um `InventoryCount` devolvido por
+   * `registerCount`/`confirmarZero`/`registarForaDaLocalizacao` tem sempre
+   * estes dois campos `null`: é a cegueira aplicada na API, não só na tela.
+   */
+  systemQuantity: number | null;
+  difference: number | null;
+
+  countedAt: string | null;
   createdAt: string;
+  updatedAt: string;
 
-  // Relações opcionais (incluÍdas no getCycleDetail)
   stock?: {
     id: string;
     currentQuantity: number;
@@ -25,6 +104,7 @@ export interface InventoryCount {
       nome: string;
       codigoBarras?: string;
       unidadeMedida: string;
+      imagemUrl?: string | null;
     };
     armazem?: {
       id: string;
@@ -42,11 +122,11 @@ export interface InventoryCycle {
   empresaId: string;
   name: string;
   status: InventoryCycleStatus;
+  motivoCancelamento?: string | null;
   createdById: string;
   createdAt: string;
   updatedAt: string;
 
-  // Relações opcionais
   createdBy?: { id: string; name: string };
   _count?: { counts: number };
 }
@@ -55,33 +135,179 @@ export interface InventoryCycleDetail extends InventoryCycle {
   counts: InventoryCount[];
 }
 
-// ──â”€ Payloads de mutação ──────────────────────────────────────────────────────
+// ── Payloads de mutação ──────────────────────────────────────────────────────
 
 export interface CreateCyclePayload {
   name: string;
+  /** Armazém cujo perímetro (produtos × localizações) é carregado como PENDENTE. */
+  armazemId: string;
 }
 
 export interface RegisterCountPayload {
-  stockId: string;
+  inventoryCountId: string;
   physicalQuantity: number;
+  terminal?: string;
 }
 
 export interface RegisterCountByBarcodePayload {
   codigoBarras: string;
   physicalQuantity: number;
   armazemId?: string;
+  terminal?: string;
+}
+
+export interface ConfirmarZeroPayload {
+  inventoryCountId: string;
+  confirmado: true;
+  terminal?: string;
+}
+
+export interface RegistarForaDaLocalizacaoPayload {
+  inventoryCountId: string;
+  localizacaoRealId: string;
+  physicalQuantity: number;
+  terminal?: string;
+}
+
+export interface RegistarRecontagemPayload {
+  inventoryCountId: string;
+  physicalQuantity: number;
+  terminal?: string;
 }
 
 export interface UpdateCycleStatusPayload {
   status: InventoryCycleStatus;
 }
 
-// ──â”€ Resposta do fecho de ciclo ──────────────────────────────────────────────â”€
+export interface CancelarCicloPayload {
+  motivo: string;
+}
+
+export interface DecidirExcecaoPayload {
+  acao: AcaoGestor;
+  motivo?: string;
+}
+
+// ── Cobertura obrigatória (§7) ───────────────────────────────────────────────
+
+export interface CoberturaResponse {
+  cycleId: string;
+  pendentes: number;
+  coberturaCompleta: boolean;
+}
+
+// ── Recontagem cega (§10) — a view nunca traz teórico/divergência ───────────
+
+export interface RecontagemPendente {
+  inventoryCountId: string;
+  produto: {
+    id: string;
+    nome: string;
+    codigoBarras?: string;
+    imagemUrl?: string | null;
+  };
+  localizacao: LocalizacaoResumo | null;
+}
+
+export interface RegistrarRecontagemResponse {
+  inventoryCountId: string;
+  status: InventoryItemStatus;
+  divergenciaConfirmada: boolean;
+}
+
+// ── Fila do Gestor (§12) ─────────────────────────────────────────────────────
+
+export interface InventoryException {
+  id: string;
+  cycleId: string;
+  cycleName: string;
+  produto: string;
+  codigoBarras?: string | null;
+  armazem: string;
+  localizacao: string | null;
+
+  teorico: number;
+  fisico: number;
+  diferenca: number;
+  impacto: number | null;
+
+  classificacao: 'CONFORME' | 'ATENCAO' | 'CRITICO' | null;
+  causa: 'CAUSA_CONFIRMADA' | 'CAUSA_PROVAVEL' | 'EVIDENCIA_INSUFICIENTE' | null;
+  recomendacaoMayra: string | null;
+
+  acao: AcaoGestor | null;
+  motivo: string | null;
+  aprovador: string | null;
+  decididoEm: string | null;
+
+  /** MAYRA ainda não classificou — fallback do §11: não bloquear a fila indefinidamente. */
+  aguardaClassificacaoMayra: boolean;
+  createdAt: string;
+}
+
+export interface DecidirExcecaoResponse {
+  excecaoId: string;
+  acao: AcaoGestor;
+  movimentoId?: string;
+  stockAnterior?: number;
+  stockPosterior?: number;
+}
+
+export interface AnalisarExcecaoMayraResponse {
+  excecaoId: string;
+  classificacao: NonNullable<InventoryException['classificacao']>;
+  causa: NonNullable<InventoryException['causa']>;
+  recomendacao: string;
+}
+
+// ── Tolerâncias (§10) ─────────────────────────────────────────────────────
+
+export interface ToleranciaInventario {
+  id: string;
+  productId: string | null;
+  categoriaId: string | null;
+  toleranciaQtd: number | null;
+  toleranciaPct: number | null;
+  toleranciaValor: number | null;
+  criticidade: string | null;
+  isActive: boolean;
+  produto: { id: string; nome: string } | null;
+  categoria: { id: string; nome: string } | null;
+  createdBy: { id: string; name: string };
+  createdAt: string;
+}
+
+export interface CriarToleranciaPayload {
+  productId?: string;
+  categoriaId?: string;
+  toleranciaQtd?: number;
+  toleranciaPct?: number;
+  toleranciaValor?: number;
+  criticidade?: string;
+}
+
+export interface AtualizarToleranciaPayload {
+  toleranciaQtd?: number;
+  toleranciaPct?: number;
+  toleranciaValor?: number;
+  criticidade?: string;
+}
+
+// ── Reconciliação (§9) ───────────────────────────────────────────────────────
+
+export interface ReconciliarResponse {
+  cycleId: string;
+  totalStocks: number;
+  comDivergencia: number;
+  recontagensPendentes: number;
+}
+
+// ── Fecho legado (ciclos antigos, pré-Fase-1-4) ──────────────────────────────
 
 export interface CloseCycleResponse {
   cycleId: string;
   cycleName: string;
-  status: 'CLOSED';
+  status: 'ENCERRADO';
   summary: {
     totalCounts: number;
     totalAdjustments: number;
@@ -95,14 +321,6 @@ export interface CloseCycleResponse {
   };
 }
 
-// ──â”€ Previsão do fecho ────────────────────────────────────────────────────────
-
-/**
- * O que o fecho vai fazer, antes de o fazer.
- *
- * `semDivergencia` é a resposta a «a contagem bate com o sistema?»: são as linhas em
- * que o que se contou é exactamente o que o sistema tinha.
- */
 export interface PrevisaoDeFechoResponse {
   cycleId: string;
   cycleName: string;
@@ -114,7 +332,6 @@ export interface PrevisaoDeFechoResponse {
     comDivergencia: number;
     faltas: number;
     sobras: number;
-    /** Entra como despesa no financeiro ao fechar. */
     valorFaltas: number;
     valorSobras: number;
   };

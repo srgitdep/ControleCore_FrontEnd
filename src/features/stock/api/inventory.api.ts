@@ -5,14 +5,32 @@ import type {
   CreateCyclePayload,
   RegisterCountPayload,
   RegisterCountByBarcodePayload,
+  ConfirmarZeroPayload,
+  RegistarForaDaLocalizacaoPayload,
+  RegistarRecontagemPayload,
   UpdateCycleStatusPayload,
+  CancelarCicloPayload,
+  DecidirExcecaoPayload,
+  DecidirExcecaoResponse,
   InventoryCount,
+  InventoryException,
+  RecontagemPendente,
+  RegistrarRecontagemResponse,
+  CoberturaResponse,
+  ReconciliarResponse,
   CloseCycleResponse,
   PrevisaoDeFechoResponse,
+  LocalizacaoDetalhada,
+  CriarLocalizacaoPayload,
+  AtualizarLocalizacaoPayload,
+  AnalisarExcecaoMayraResponse,
+  ToleranciaInventario,
+  CriarToleranciaPayload,
+  AtualizarToleranciaPayload,
 } from '@/features/stock';
 
 export const inventoryApi = {
-  // ──â”€ Ciclos ────────────────────────────────────────────────────────────────
+  // ── Ciclos ──────────────────────────────────────────────────────────────
 
   listCycles: async (): Promise<InventoryCycle[]> => {
     const { data } = await api.get<InventoryCycle[]>('/inventory/cycles');
@@ -40,12 +58,28 @@ export const inventoryApi = {
     return data;
   },
 
+  cancelarCiclo: async (cycleId: string, payload: CancelarCicloPayload): Promise<InventoryCycle> => {
+    const { data } = await api.post<InventoryCycle>(`/inventory/cycles/${cycleId}/cancelar`, payload);
+    return data;
+  },
+
+  /** Cobertura obrigatória (§7): quantos itens do perímetro ainda estão PENDENTE. */
+  validarCobertura: async (cycleId: string): Promise<CoberturaResponse> => {
+    const { data } = await api.get<CoberturaResponse>(`/inventory/cycles/${cycleId}/cobertura`);
+    return data;
+  },
+
+  /** Compara físico com teórico (§9) e cria RECONTAGEM_PENDENTE onde a divergência excede a tolerância. */
+  reconciliar: async (cycleId: string): Promise<ReconciliarResponse> => {
+    const { data } = await api.post<ReconciliarResponse>(`/inventory/cycles/${cycleId}/reconciliar`);
+    return data;
+  },
+
   /**
    * O que o fecho vai fazer, sem o fazer.
    *
-   * O resumo — quantas contagens batem, quantas divergem, e quanto valem as faltas —
-   * só era conhecido depois de fechar, quando a operação já é irreversível: escreve
-   * movimentos de stock e cria uma despesa financeira por cada falta.
+   * Existe para ciclos legados (fecho directo, pré-Fase-4). No fluxo novo, o caminho
+   * é reconciliar -> recontar -> decidir exceções na fila do Gestor.
    */
   preverFecho: async (cycleId: string): Promise<PrevisaoDeFechoResponse> => {
     const { data } = await api.get<PrevisaoDeFechoResponse>(
@@ -61,7 +95,14 @@ export const inventoryApi = {
     return data;
   },
 
-  // ──â”€ Contagem ──────────────────────────────────────────────────────────────
+  // ── Contagem (§5, §6) ───────────────────────────────────────────────────
+
+  iniciarContagem: async (cycleId: string, itemId: string): Promise<InventoryCount> => {
+    const { data } = await api.post<InventoryCount>(
+      `/inventory/cycles/${cycleId}/items/${itemId}/iniciar`,
+    );
+    return data;
+  },
 
   registerCount: async (
     cycleId: string,
@@ -82,6 +123,133 @@ export const inventoryApi = {
       `/inventory/cycles/${cycleId}/counts/barcode`,
       payload,
     );
+    return data;
+  },
+
+  /** Quantidade = 0 com confirmação física explícita — nunca confundir com pendente. */
+  confirmarZero: async (cycleId: string, payload: ConfirmarZeroPayload): Promise<InventoryCount> => {
+    const { data } = await api.post<InventoryCount>(
+      `/inventory/cycles/${cycleId}/counts/zero`,
+      payload,
+    );
+    return data;
+  },
+
+  /** Produto encontrado noutra localização — LOCATION_EXCEPTION, nunca tratado como perda. */
+  registarForaDaLocalizacao: async (
+    cycleId: string,
+    payload: RegistarForaDaLocalizacaoPayload,
+  ): Promise<InventoryCount> => {
+    const { data } = await api.post<InventoryCount>(
+      `/inventory/cycles/${cycleId}/counts/fora-da-localizacao`,
+      payload,
+    );
+    return data;
+  },
+
+  // ── Recontagem cega (§10) ───────────────────────────────────────────────
+
+  listarRecontagensPendentes: async (cycleId: string): Promise<RecontagemPendente[]> => {
+    const { data } = await api.get<RecontagemPendente[]>(`/inventory/cycles/${cycleId}/recontagens`);
+    return data;
+  },
+
+  atribuirRecontagem: async (cycleId: string, itemId: string): Promise<InventoryCount> => {
+    const { data } = await api.post<InventoryCount>(
+      `/inventory/cycles/${cycleId}/recontagens/${itemId}/atribuir`,
+    );
+    return data;
+  },
+
+  registrarRecontagem: async (
+    cycleId: string,
+    payload: RegistarRecontagemPayload,
+  ): Promise<RegistrarRecontagemResponse> => {
+    const { data } = await api.post<RegistrarRecontagemResponse>(
+      `/inventory/cycles/${cycleId}/recontagens`,
+      payload,
+    );
+    return data;
+  },
+
+  // ── Fila do Gestor (§12) ────────────────────────────────────────────────
+
+  listarExcecoes: async (params?: { cycleId?: string; decididas?: boolean }): Promise<InventoryException[]> => {
+    const { data } = await api.get<InventoryException[]>('/inventory/excecoes', {
+      params: {
+        cycleId: params?.cycleId,
+        decididas: params?.decididas === undefined ? undefined : String(params.decididas),
+      },
+    });
+    return data;
+  },
+
+  decidirExcecao: async (
+    excecaoId: string,
+    payload: DecidirExcecaoPayload,
+  ): Promise<DecidirExcecaoResponse> => {
+    const { data } = await api.post<DecidirExcecaoResponse>(
+      `/inventory/excecoes/${excecaoId}/decisao`,
+      payload,
+    );
+    return data;
+  },
+
+  /** Reúne os factos e pede à MAYRA a classificação (§11) numa única chamada. */
+  analisarExcecaoMayra: async (excecaoId: string): Promise<AnalisarExcecaoMayraResponse> => {
+    const { data } = await api.post<AnalisarExcecaoMayraResponse>(`/inventory/excecoes/${excecaoId}/analisar-mayra`);
+    return data;
+  },
+
+  // ── Localizações (prateleiras/zonas) — §5 ───────────────────────────────
+
+  listarLocalizacoes: async (armazemId: string): Promise<LocalizacaoDetalhada[]> => {
+    const { data } = await api.get<LocalizacaoDetalhada[]>(`/inventory/armazens/${armazemId}/localizacoes`);
+    return data;
+  },
+
+  criarLocalizacao: async (armazemId: string, payload: CriarLocalizacaoPayload): Promise<LocalizacaoDetalhada> => {
+    const { data } = await api.post<LocalizacaoDetalhada>(`/inventory/armazens/${armazemId}/localizacoes`, payload);
+    return data;
+  },
+
+  atualizarLocalizacao: async (id: string, payload: AtualizarLocalizacaoPayload): Promise<LocalizacaoDetalhada> => {
+    const { data } = await api.patch<LocalizacaoDetalhada>(`/inventory/localizacoes/${id}`, payload);
+    return data;
+  },
+
+  desativarLocalizacao: async (id: string): Promise<LocalizacaoDetalhada> => {
+    const { data } = await api.delete<LocalizacaoDetalhada>(`/inventory/localizacoes/${id}`);
+    return data;
+  },
+
+  associarProduto: async (localizacaoId: string, productId: string): Promise<void> => {
+    await api.post(`/inventory/localizacoes/${localizacaoId}/produtos`, { productId });
+  },
+
+  desassociarProduto: async (localizacaoId: string, productId: string): Promise<void> => {
+    await api.delete(`/inventory/localizacoes/${localizacaoId}/produtos/${productId}`);
+  },
+
+  // ── Tolerâncias (§10) ────────────────────────────────────────────────────
+
+  listarTolerancias: async (): Promise<ToleranciaInventario[]> => {
+    const { data } = await api.get<ToleranciaInventario[]>('/inventory/tolerancias');
+    return data;
+  },
+
+  criarTolerancia: async (payload: CriarToleranciaPayload): Promise<ToleranciaInventario> => {
+    const { data } = await api.post<ToleranciaInventario>('/inventory/tolerancias', payload);
+    return data;
+  },
+
+  atualizarTolerancia: async (id: string, payload: AtualizarToleranciaPayload): Promise<ToleranciaInventario> => {
+    const { data } = await api.patch<ToleranciaInventario>(`/inventory/tolerancias/${id}`, payload);
+    return data;
+  },
+
+  desativarTolerancia: async (id: string): Promise<ToleranciaInventario> => {
+    const { data } = await api.delete<ToleranciaInventario>(`/inventory/tolerancias/${id}`);
     return data;
   },
 };
