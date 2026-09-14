@@ -24,6 +24,7 @@ import type {
   ToleranciaInventario,
   CriarToleranciaPayload,
   AtualizarToleranciaPayload,
+  HistoricoContagemEntry,
 } from '@/features/stock';
 
 export const inventoryApi = {
@@ -140,6 +141,14 @@ export const inventoryApi = {
     const { data } = await api.post<InventoryCount>(
       `/inventory/cycles/${cycleId}/counts/fora-da-localizacao`,
       payload,
+    );
+    return data;
+  },
+
+  /** Trilha append-only de alterações a esta contagem (§5, §13) — nada aqui é apagado. */
+  listarHistoricoContagem: async (cycleId: string, itemId: string): Promise<HistoricoContagemEntry[]> => {
+    const { data } = await api.get<HistoricoContagemEntry[]>(
+      `/inventory/cycles/${cycleId}/counts/${itemId}/historico`,
     );
     return data;
   },

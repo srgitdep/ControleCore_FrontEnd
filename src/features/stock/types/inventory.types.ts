@@ -267,6 +267,18 @@ export interface AtualizarToleranciaPayload {
   criticidade?: string;
 }
 
+// ── Histórico de contagem (§5, §13) — trilha append-only ────────────────────
+
+export interface HistoricoContagemEntry {
+  id: string;
+  valorAnterior: number | null;
+  valorNovo: number | null;
+  estadoAnterior: InventoryItemStatus;
+  estadoNovo: InventoryItemStatus;
+  alteradoPor: string;
+  em: string;
+}
+
 // ── Reconciliação (§9) ───────────────────────────────────────────────────────
 
 export interface ReconciliarResponse {

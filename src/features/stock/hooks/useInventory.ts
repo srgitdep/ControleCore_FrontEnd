@@ -24,6 +24,8 @@ export const inventoryKeys = {
   excecoes: (cycleId?: string, decididas?: boolean) =>
     [...inventoryKeys.all, 'excecoes', cycleId ?? 'todos', decididas ?? 'todas'] as const,
   localizacoes: (armazemId: string) => [...inventoryKeys.all, 'localizacoes', armazemId] as const,
+  historico: (cycleId: string, itemId: string) =>
+    [...inventoryKeys.cycleDetail(cycleId), 'counts', itemId, 'historico'] as const,
 };
 
 // ── Queries: Ciclos ──────────────────────────────────────────────────────
@@ -155,6 +157,14 @@ export const useRegistarForaDaLocalizacao = (cycleId: string) => {
     onSuccess: () => invalidarAposContagem(qc, cycleId),
   });
 };
+
+/** Trilha append-only de alterações a uma contagem (§5, §13). Só aberta sob pedido. */
+export const useHistoricoContagem = (cycleId: string | null, itemId: string | null, opts?: { enabled?: boolean }) =>
+  useQuery({
+    queryKey: inventoryKeys.historico(cycleId ?? '', itemId ?? ''),
+    queryFn: () => inventoryApi.listarHistoricoContagem(cycleId!, itemId!),
+    enabled: !!cycleId && !!itemId && (opts?.enabled ?? true),
+  });
 
 // ── Recontagem cega (§10) ────────────────────────────────────────────────
 

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX } from 'lucide-react';
+import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History } from 'lucide-react';
 import { useInventoryCycleDetail, useCobertura } from '@/features/stock';
 import { LeitorCameraContagemModal } from '../LeitorCameraContagemModal';
 import { ContagemItemPanel } from './ContagemItemPanel';
+import { HistoricoContagemModal } from './HistoricoContagemModal';
 import type { InventoryCount, InventoryItemStatus } from '@/features/stock';
 
 const FILTROS: Array<{ key: 'TODOS' | InventoryItemStatus; label: string }> = [
@@ -34,6 +35,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
   const [busca, setBusca] = useState('');
   const [itemSelecionadoId, setItemSelecionadoId] = useState<string | null>(null);
   const [leitorAberto, setLeitorAberto] = useState(false);
+  const [itemHistoricoId, setItemHistoricoId] = useState<string | null>(null);
 
   // Referência estável: `cycle?.counts ?? []` criaria um array novo a cada
   // render enquanto `cycle` for undefined, invalidando a memoização abaixo.
@@ -72,6 +74,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
   }, [counts, filtro, busca]);
 
   const itemSelecionado = counts.find((c) => c.id === itemSelecionadoId) ?? null;
+  const itemHistorico = counts.find((c) => c.id === itemHistoricoId) ?? null;
 
   if (isLoading || !cycle) {
     return (
@@ -175,6 +178,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
                   item={item}
                   selecionado={item.id === itemSelecionadoId}
                   onSelecionar={() => setItemSelecionadoId(item.id)}
+                  onVerHistorico={() => setItemHistoricoId(item.id)}
                 />
               ))
             )}
@@ -200,6 +204,15 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
       {leitorAberto && (
         <LeitorCameraContagemModal cycleId={cycleId} onFechar={() => setLeitorAberto(false)} />
       )}
+
+      {itemHistorico && (
+        <HistoricoContagemModal
+          cycleId={cycleId}
+          itemId={itemHistorico.id}
+          produtoNome={itemHistorico.stock?.product?.nome}
+          onClose={() => setItemHistoricoId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -208,33 +221,49 @@ function ItemLinha({
   item,
   selecionado,
   onSelecionar,
+  onVerHistorico,
 }: {
   item: InventoryCount;
   selecionado: boolean;
   onSelecionar: () => void;
+  onVerHistorico: () => void;
 }) {
   const badge = STATUS_BADGE[item.status];
   const produto = item.stock?.product;
+  const jaTemHistorico = item.status !== 'PENDENTE';
 
   return (
-    <button
-      onClick={onSelecionar}
-      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+    <div
+      className={`flex w-full items-center gap-3 px-4 py-3 transition-colors ${
         selecionado ? 'bg-blue-50' : 'hover:bg-slate-50'
       }`}
     >
-      <span
-        className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}
-      >
-        {badge.icon}
-        {badge.label}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-slate-800">{produto?.nome ?? '—'}</p>
-        <p className="text-[11px] text-slate-400">
-          {produto?.codigoBarras ?? '—'} · {item.localizacaoEsperada?.codigo ?? '—'}
-        </p>
-      </div>
-    </button>
+      <button onClick={onSelecionar} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}
+        >
+          {badge.icon}
+          {badge.label}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-slate-800">{produto?.nome ?? '—'}</p>
+          <p className="text-[11px] text-slate-400">
+            {produto?.codigoBarras ?? '—'} · {item.localizacaoEsperada?.codigo ?? '—'}
+          </p>
+        </div>
+      </button>
+      {jaTemHistorico && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onVerHistorico();
+          }}
+          title="Ver histórico de alterações"
+          className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+        >
+          <History className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
