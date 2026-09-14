@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useExcecoes, useDecidirExcecao, useAnalisarExcecaoMayra } from '@/features/stock';
 import { Button } from '@/shared/ui';
@@ -136,6 +136,13 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                 />
                 <Metrica rotulo="Impacto" valor={e.impacto != null ? moeda(e.impacto) : '—'} />
               </div>
+
+              {e.movimentosDuranteContagem > 0 && (
+                <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-amber-50/60 px-3 py-2 text-xs text-amber-700">
+                  <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+                  {e.movimentosDuranteContagem} movimento(s) de stock durante a contagem — a divergência pode ser reflexo de uma venda/receção concorrente, não uma perda real (§9).
+                </p>
+              )}
 
               {e.recomendacaoMayra && (
                 <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-50/60 px-3 py-2 text-xs text-blue-700">

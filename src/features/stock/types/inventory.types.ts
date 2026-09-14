@@ -215,6 +215,9 @@ export interface InventoryException {
   diferenca: number;
   impacto: number | null;
 
+  /** Quantos movimentos de stock aconteceram entre a contagem física e esta exceção nascer (§9) — indício de que pode ser reflexo de venda/receção concorrente, não perda real. */
+  movimentosDuranteContagem: number;
+
   classificacao: 'CONFORME' | 'ATENCAO' | 'CRITICO' | null;
   causa: 'CAUSA_CONFIRMADA' | 'CAUSA_PROVAVEL' | 'EVIDENCIA_INSUFICIENTE' | null;
   recomendacaoMayra: string | null;
