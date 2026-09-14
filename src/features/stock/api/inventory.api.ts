@@ -25,6 +25,7 @@ import type {
   CriarToleranciaPayload,
   AtualizarToleranciaPayload,
   HistoricoContagemEntry,
+  DashboardInventarioResponse,
 } from '@/features/stock';
 
 export const inventoryApi = {
@@ -90,6 +91,12 @@ export const inventoryApi = {
     const { data } = await api.post<CloseCycleResponse>(
       `/inventory/cycles/${cycleId}/close`,
     );
+    return data;
+  },
+
+  /** Visão agregada da empresa (§12): ciclos por estado, exceções pendentes/decididas e impacto financeiro. */
+  obterDashboard: async (): Promise<DashboardInventarioResponse> => {
+    const { data } = await api.get<DashboardInventarioResponse>('/inventory/dashboard');
     return data;
   },
 

@@ -7,6 +7,7 @@ import { CreateCycleModal } from './CreateCycleModal';
 import { CycleDetailPanel } from './inventario/CycleDetailPanel';
 import { PainelContagem } from './inventario/PainelContagem';
 import { GerirToleranciasModal } from './inventario/GerirToleranciasModal';
+import { DashboardInventario } from './inventario/DashboardInventario';
 import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
 
 const STATUS_LABEL: Record<InventoryCycleStatus, string> = {
@@ -68,7 +69,9 @@ function ManagerCycleList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <DashboardInventario onSelectCycle={onSelectCycle} />
+
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-slate-700">Ciclos de Inventário</h3>
         <div className="flex gap-2">

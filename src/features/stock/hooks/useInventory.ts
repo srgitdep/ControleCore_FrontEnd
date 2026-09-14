@@ -26,6 +26,7 @@ export const inventoryKeys = {
   localizacoes: (armazemId: string) => [...inventoryKeys.all, 'localizacoes', armazemId] as const,
   historico: (cycleId: string, itemId: string) =>
     [...inventoryKeys.cycleDetail(cycleId), 'counts', itemId, 'historico'] as const,
+  dashboard: () => [...inventoryKeys.all, 'dashboard'] as const,
 };
 
 // ── Queries: Ciclos ──────────────────────────────────────────────────────
@@ -52,6 +53,14 @@ export const useCobertura = (cycleId: string | null, opts?: { poll?: boolean }) 
     queryFn: () => inventoryApi.validarCobertura(cycleId!),
     enabled: !!cycleId,
     refetchInterval: opts?.poll ? 5_000 : false,
+  });
+
+/** Visão agregada da empresa (§12): ciclos por estado, exceções pendentes/decididas e impacto financeiro. */
+export const useDashboardInventario = () =>
+  useQuery({
+    queryKey: inventoryKeys.dashboard(),
+    queryFn: inventoryApi.obterDashboard,
+    staleTime: 30_000,
   });
 
 // ── Mutations: Ciclos ────────────────────────────────────────────────────

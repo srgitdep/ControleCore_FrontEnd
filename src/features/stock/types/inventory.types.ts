@@ -279,6 +279,28 @@ export interface HistoricoContagemEntry {
   em: string;
 }
 
+// ── Dashboard agregado (§12) ─────────────────────────────────────────────────
+
+export interface DashboardInventarioResponse {
+  ciclosAtivos: number;
+  ciclosPorStatus: Array<{ status: InventoryCycleStatus; total: number }>;
+  excecoes: {
+    pendentes: number;
+    decididas: number;
+    impactoPendente: number;
+    impactoDecidido: number;
+  };
+  ultimosCiclos: Array<{
+    id: string;
+    name: string;
+    status: InventoryCycleStatus;
+    totalItens: number;
+    totalExcecoes: number;
+    createdBy: string;
+    createdAt: string;
+  }>;
+}
+
 // ── Reconciliação (§9) ───────────────────────────────────────────────────────
 
 export interface ReconciliarResponse {
