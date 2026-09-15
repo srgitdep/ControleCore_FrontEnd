@@ -328,6 +328,16 @@ export const podeCancelar = (r: Requisicao) =>
   );
 
 /**
+ * Uma requisição já adjudicada tem ordens de compra emitidas a partir dela — o backend
+ * recusa devolvê-la a rascunho enquanto essas ordens existirem. Em sourcing recusa também,
+ * porque há uma corrida em curso que ainda vai escrever no mesmo registo.
+ */
+export const podeReabrir = (r: Requisicao) =>
+  !['ADJUDICADA', 'PARCIALMENTE_ADJUDICADA', 'EM_SOURCING', 'RASCUNHO', 'CANCELADA'].includes(
+    r.estado,
+  );
+
+/**
  * O saldo por adjudicar de uma requisição.
  *
  * A diferença entre o pedido e o adjudicado, por linha. É o que distingue uma requisição

@@ -5,26 +5,36 @@ import {
   Check,
   ClipboardList,
   Gavel,
+  ListPlus,
   Loader2,
   Plus,
   Radar,
+  RotateCcw,
   Send,
+  Sliders,
   UserCheck,
   X,
+  XCircle,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   b2bApi,
   ETIQUETA_ESTADO,
   ETIQUETA_ESTRATEGIA,
   podeAdjudicar,
+  podeCancelar,
   podeCorrerSourcing,
   podeDecidir,
+  podeEditarLinhas,
+  podeReabrir,
   podeSubmeter,
   saldoPorAdjudicar,
 } from '../api/b2b.api';
 import type { EstadoRequisicao, Requisicao, SourcingRun } from '../api/b2b.api';
 import { CriarRequisicaoModal } from '../components/CriarRequisicaoModal';
+import { EditarLinhasModal } from '../components/EditarLinhasModal';
+import { MotivoModal } from '../components/MotivoModal';
 import { SourcingComparacaoModal } from '../components/SourcingComparacaoModal';
 import { usePermissions, useAuth } from '@/features/auth';
 import { cn } from '@/shared/utils';
@@ -52,6 +62,9 @@ export function RequisicoesPage() {
     null,
   );
   const [aDecidir, setADecidir] = useState<Requisicao | null>(null);
+  const [aEditarLinhas, setAEditarLinhas] = useState<Requisicao | null>(null);
+  const [aReabrir, setAReabrir] = useState<Requisicao | null>(null);
+  const [aCancelar, setACancelar] = useState<Requisicao | null>(null);
 
   const podeGerir = hasPermission('manage', 'requisicoes');
   const podeCriar = hasPermission('write', 'requisicoes');
@@ -104,6 +117,28 @@ export function RequisicoesPage() {
       toast.error(e?.response?.data?.message ?? 'Erro ao correr o sourcing.'),
   });
 
+  const reabrir = useMutation({
+    mutationFn: ({ requisicao, motivo }: { requisicao: Requisicao; motivo: string }) =>
+      b2bApi.reabrir(requisicao.id, motivo),
+    onSuccess: (r) => {
+      toast.success(`${r.numero} devolvida a rascunho.`);
+      recarregar();
+      setAReabrir(null);
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao reabrir.'),
+  });
+
+  const cancelar = useMutation({
+    mutationFn: ({ requisicao, motivo }: { requisicao: Requisicao; motivo: string }) =>
+      b2bApi.cancelar(requisicao.id, motivo),
+    onSuccess: (r) => {
+      toast.success(`${r.numero} cancelada.`);
+      recarregar();
+      setACancelar(null);
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao cancelar.'),
+  });
+
   const abrirComparacaoExistente = useMutation({
     mutationFn: async (requisicao: Requisicao) => {
       const runs = await b2bApi.listarRuns(requisicao.id);
@@ -129,15 +164,27 @@ export function RequisicoesPage() {
           </p>
         </div>
 
-        {podeCriar && (
-          <button
-            onClick={() => setACriar(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <Plus size={15} />
-            Nova requisição
-          </button>
-        )}
+        <div className="flex shrink-0 gap-2">
+          {podeSourcing && (
+            <Link
+              to="/requisicoes/pesos"
+              className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <Sliders size={15} />
+              Pesos do sourcing
+            </Link>
+          )}
+
+          {podeCriar && (
+            <button
+              onClick={() => setACriar(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              <Plus size={15} />
+              Nova requisição
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-1.5">
@@ -229,6 +276,14 @@ export function RequisicoesPage() {
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-1.5">
+                  {podeEditarLinhas(requisicao) && podeCriar && (
+                    <Accao
+                      onClick={() => setAEditarLinhas(requisicao)}
+                      icone={<ListPlus size={13} />}
+                      texto="Editar linhas"
+                    />
+                  )}
+
                   {podeSubmeter(requisicao) && podeCriar && (
                     <Accao
                       onClick={() => submeter.mutate(requisicao.id)}
@@ -272,6 +327,22 @@ export function RequisicoesPage() {
                       destaque
                     />
                   )}
+
+                  {podeReabrir(requisicao) && podeGerir && (
+                    <Accao
+                      onClick={() => setAReabrir(requisicao)}
+                      icone={<RotateCcw size={13} />}
+                      texto="Reabrir"
+                    />
+                  )}
+
+                  {podeCancelar(requisicao) && podeGerir && (
+                    <Accao
+                      onClick={() => setACancelar(requisicao)}
+                      icone={<XCircle size={13} />}
+                      texto="Cancelar"
+                    />
+                  )}
                 </div>
               </div>
             </li>
@@ -298,6 +369,35 @@ export function RequisicoesPage() {
           utilizadorId={utilizadorId}
           onClose={() => setADecidir(null)}
           onSuccess={recarregar}
+        />
+      )}
+
+      {aEditarLinhas && (
+        <EditarLinhasModal
+          requisicao={aEditarLinhas}
+          onClose={() => setAEditarLinhas(null)}
+          onSuccess={recarregar}
+        />
+      )}
+
+      {aReabrir && (
+        <MotivoModal
+          titulo={`Reabrir ${aReabrir.numero}`}
+          descricao="A requisição volta a rascunho para poder ser editada. Fica registado o motivo."
+          textoConfirmar="Reabrir"
+          onConfirmar={(motivo) => reabrir.mutateAsync({ requisicao: aReabrir, motivo })}
+          onClose={() => setAReabrir(null)}
+        />
+      )}
+
+      {aCancelar && (
+        <MotivoModal
+          titulo={`Cancelar ${aCancelar.numero}`}
+          descricao="Uma requisição cancelada não pode voltar a ser usada."
+          textoConfirmar="Cancelar requisição"
+          corConfirmar="rose"
+          onConfirmar={(motivo) => cancelar.mutateAsync({ requisicao: aCancelar, motivo })}
+          onClose={() => setACancelar(null)}
         />
       )}
     </div>
