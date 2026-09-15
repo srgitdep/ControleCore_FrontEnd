@@ -14,6 +14,7 @@ import { PainelContagem } from './PainelContagem';
 import { PainelRecontagem } from './PainelRecontagem';
 import { PainelExcecoesGestor } from './PainelExcecoesGestor';
 import { AtribuirPrateleirasModal } from './AtribuirPrateleirasModal';
+import { FecharCicloModal } from './FecharCicloModal';
 import type { InventoryCycleStatus } from '@/features/stock';
 
 const STATUS_LABEL: Record<InventoryCycleStatus, string> = {
@@ -57,6 +58,7 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
   const reconciliar = useReconciliar();
   const [aba, setAba] = useState<'contagem' | 'recontagem' | 'excecoes'>('contagem');
   const [distribuirAberto, setDistribuirAberto] = useState(false);
+  const [fecharDirectoAberto, setFecharDirectoAberto] = useState(false);
 
   if (isLoading || !cycle) {
     return (
@@ -135,6 +137,8 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
             {cycle.status === 'VALIDACAO_DE_COBERTURA' && 'A validar cobertura — avance para reconciliar.'}
             {cycle.status === 'EM_RECONCILIACAO' && 'Execute a reconciliação para comparar físico com teórico.'}
             {cycle.status === 'AGUARDA_RECONTAGEM' && 'Existem itens pendentes de recontagem cega.'}
+            {cycle.status === 'AJUSTE_APROVADO' &&
+              'Todas as exceções foram decididas e os ajustes de stock já foram escritos. Falta encerrar o ciclo.'}
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -174,8 +178,19 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
               </Button>
             )}
             {cycle.status === 'EM_RECONCILIACAO' && (
-              <Button onClick={reconciliarAgora} disabled={reconciliar.isPending}>
-                {reconciliar.isPending ? 'A reconciliar...' : 'Executar reconciliação'}
+              <>
+                <Button variant="outline" onClick={() => setFecharDirectoAberto(true)}>
+                  Fechar directamente
+                </Button>
+                <Button onClick={reconciliarAgora} disabled={reconciliar.isPending}>
+                  {reconciliar.isPending ? 'A reconciliar...' : 'Executar reconciliação'}
+                </Button>
+              </>
+            )}
+            {cycle.status === 'AJUSTE_APROVADO' && (
+              <Button onClick={() => avancar('ENCERRADO')} disabled={updateStatus.isPending}>
+                <CheckCircle2 className="h-4 w-4" />
+                {updateStatus.isPending ? 'A encerrar...' : 'Encerrar ciclo'}
               </Button>
             )}
             <Button variant="destructive" onClick={cancelar} disabled={cancelarCiclo.isPending}>
@@ -213,6 +228,14 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
           cycleId={cycleId}
           counts={cycle.counts}
           onClose={() => setDistribuirAberto(false)}
+        />
+      )}
+
+      {fecharDirectoAberto && (
+        <FecharCicloModal
+          cycleId={cycleId}
+          onClose={() => setFecharDirectoAberto(false)}
+          onClosed={() => setFecharDirectoAberto(false)}
         />
       )}
     </div>

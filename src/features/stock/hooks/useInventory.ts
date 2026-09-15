@@ -23,6 +23,7 @@ export const inventoryKeys = {
   cycleDetail: (id: string) => [...inventoryKeys.cycles(), id] as const,
   cobertura: (id: string) => [...inventoryKeys.cycles(), id, 'cobertura'] as const,
   recontagens: (id: string) => [...inventoryKeys.cycles(), id, 'recontagens'] as const,
+  previsaoFecho: (id: string) => [...inventoryKeys.cycles(), id, 'previsao-fecho'] as const,
   excecoes: (cycleId?: string, decididas?: boolean) =>
     [...inventoryKeys.all, 'excecoes', cycleId ?? 'todos', decididas ?? 'todas'] as const,
   localizacoes: (armazemId: string) => [...inventoryKeys.all, 'localizacoes', armazemId] as const,
@@ -108,6 +109,20 @@ export const useReconciliar = () => {
       qc.invalidateQueries({ queryKey: inventoryKeys.recontagens(cycleId) });
       qc.invalidateQueries({ queryKey: inventoryKeys.excecoes() });
     },
+  });
+};
+
+/**
+ * O que o fecho directo vai fazer, sem o fazer.
+ *
+ * Só se aplica com o ciclo em `EM_RECONCILIACAO` — é o atalho para fechar sem passar por
+ * recontagem/exceções, quando as divergências não justificam esse trabalho todo.
+ */
+export const usePreverFecho = (cycleId: string, enabled: boolean) => {
+  return useQuery({
+    queryKey: inventoryKeys.previsaoFecho(cycleId),
+    queryFn: () => inventoryApi.preverFecho(cycleId),
+    enabled,
   });
 };
 
