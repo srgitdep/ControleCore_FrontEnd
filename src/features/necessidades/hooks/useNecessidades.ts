@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { necessidadesApi } from '../api/necessidades.api';
-import type { FiltrosNecessidade } from '../types/necessidade.types';
+import type { FiltrosHistorico, FiltrosNecessidade } from '../types/necessidade.types';
 
 /**
  * Necessidades mudam com cada venda, recepção e transferência — não faz sentido um
@@ -148,5 +148,31 @@ export function useRecalcularNecessidades() {
     onError: (erro: any) => {
       toast.error(erro?.response?.data?.message ?? 'Não foi possível reavaliar.');
     },
+  });
+}
+
+/** O Histórico de Necessidades como ecrã agregado — DT01 §15.3. */
+export function useHistoricoNecessidades(filtros?: FiltrosHistorico) {
+  return useQuery({
+    queryKey: ['necessidades', 'historico', filtros],
+    queryFn: () => necessidadesApi.getHistorico(filtros),
+    staleTime: UM_MINUTO,
+    placeholderData: (prev) => prev,
+  });
+}
+
+/**
+ * O Centro de Alertas — DT01 §15.4.
+ *
+ * `refetchInterval` de 2 minutos: é a badge do sino de notificações no cabeçalho, e
+ * precisa de reflectir OCs que se tornam atrasadas com o tempo — não só por acção do
+ * utilizador, como o resto do painel.
+ */
+export function useAlertas(lojaId?: string) {
+  return useQuery({
+    queryKey: ['necessidades', 'alertas', lojaId],
+    queryFn: () => necessidadesApi.getAlertas(lojaId),
+    staleTime: UM_MINUTO,
+    refetchInterval: 2 * UM_MINUTO,
   });
 }

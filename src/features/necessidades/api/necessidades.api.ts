@@ -1,9 +1,12 @@
 import { api } from '@/shared/config';
 import type {
   AnaliseMayra,
+  CentroDeAlertas,
   DetalheNecessidade,
+  FiltrosHistorico,
   FiltrosNecessidade,
   KpisNecessidades,
+  ListaHistoricoNecessidades,
   ListaNecessidades,
   ResultadoCriacaoRequisicao,
 } from '../types/necessidade.types';
@@ -95,6 +98,24 @@ export const necessidadesApi = {
   /** Forçar reavaliação de uma loja. Uso manual — o caminho normal é por evento. */
   recalcular: async (lojaId: string, produtoIds?: string[]) => {
     const { data } = await api.post('/necessidades/recalcular', { lojaId, produtoIds });
+    return data;
+  },
+
+  /** O Histórico de Necessidades como ecrã (DT01 §15.3). */
+  getHistorico: async (filtros?: FiltrosHistorico) => {
+    const { data } = await api.get<ListaHistoricoNecessidades>('/necessidades/historico', {
+      params: filtros,
+    });
+    return data;
+  },
+
+  /**
+   * O Centro de Alertas (DT01 §15.4): ruptura, OC atrasada e recepção pendente.
+   * Atraso de fornecedor e transporte não estão incluídos — o backend não os calcula
+   * (sem módulo de logística).
+   */
+  getAlertas: async (lojaId?: string) => {
+    const { data } = await api.get<CentroDeAlertas>('/necessidades/alertas', { params: { lojaId } });
     return data;
   },
 };

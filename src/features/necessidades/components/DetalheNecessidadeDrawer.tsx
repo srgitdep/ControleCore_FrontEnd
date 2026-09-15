@@ -180,9 +180,19 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                 ) : (
                   <div className="space-y-2 text-sm">
                     {detalhe.compras.requisicoes.map((r) => (
-                      <div key={r.id} className="flex justify-between text-slate-600">
-                        <span>Requisição {r.numero}</span>
-                        <span className="text-xs text-slate-400">{r.estado}</span>
+                      <div key={r.id} className="text-slate-600">
+                        <div className="flex justify-between">
+                          <span>Requisição {r.numero}</span>
+                          <span className="text-xs text-slate-400">{r.estado}</span>
+                        </div>
+                        {/* RFQ/sourcing adjudicado — DT01 §17: a ligação
+                            requisição→RFQ→OC visível a partir da necessidade. */}
+                        {r.sourcing && (
+                          <div className="mt-0.5 flex justify-between pl-3 text-xs text-slate-400">
+                            <span>↳ RFQ ({r.sourcing.candidatosAvaliados} candidatos)</span>
+                            <span>{r.sourcing.estado}</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {detalhe.compras.ordensCompra.map((o) => (

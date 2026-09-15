@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Download, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Download, AlertCircle, History, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getLojas } from '@/features/lojas/api/lojas.api';
 import { BarraDaPagina } from '@/shared/ui';
@@ -31,10 +32,12 @@ import type { LinhaNecessidade, RecomendacaoNecessidade } from '../types/necessi
  * ## Pesquisa global — DT01 7.1
  *
  * A pesquisa desta página filtra a tabela de necessidades (nome, SKU, código de barras).
- * Não é a pesquisa global do cabeçalho, que abre produtos, fornecedores, requisições e
- * OCs — essa é do `Header`/`AppLayout` e está fora do âmbito desta feature.
+ * Não é a pesquisa global do cabeçalho (`PesquisaGlobal`, em `Header`), que abre
+ * produtos, fornecedores, requisições, RFQs e ordens de compra sem tocar em nenhum
+ * filtro desta página.
  */
 export function NecessidadesPage() {
+  const navigate = useNavigate();
   const [lojaId, setLojaId] = useState<string>('');
   const [pesquisa, setPesquisa] = useState('');
   const [recomendacoes, setRecomendacoes] = useState<RecomendacaoNecessidade[]>([]);
@@ -79,6 +82,20 @@ export function NecessidadesPage() {
         resumo={lista ? `${lista.total} necessidades activas` : undefined}
         acoes={
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/compras/necessidades/alertas')}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <Bell size={16} /> Alertas
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/compras/necessidades/historico')}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <History size={16} /> Histórico
+            </button>
             <select
               value={lojaId}
               onChange={(e) => {

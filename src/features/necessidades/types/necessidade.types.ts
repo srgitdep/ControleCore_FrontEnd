@@ -127,6 +127,8 @@ export interface DetalheNecessidade {
       estado: string;
       quantidade: number;
       criadaEm: string;
+      /** A corrida de sourcing/RFQ adjudicada desta requisição, quando existe (DT01 §17). */
+      sourcing: { id: string; estado: string; candidatosAvaliados: number } | null;
     }[];
     ordensCompra: {
       id: string;
@@ -190,3 +192,61 @@ export interface AnaliseMayra {
   confianca: number;
   geradaEm: string;
 }
+
+/** Uma linha do Histórico de Necessidades — DT01 §15.3. */
+export interface LinhaHistoricoNecessidade {
+  id: string;
+  accao: string;
+  estadoAnterior: EstadoNecessidade | null;
+  estadoNovo: EstadoNecessidade;
+  recomendacaoAnterior: RecomendacaoNecessidade | null;
+  recomendacaoNova: RecomendacaoNecessidade | null;
+  stockDisponivel: number | null;
+  quantidadeSugerida: number | null;
+  origem: string | null;
+  observacoes: string | null;
+  utilizador: string | null;
+  createdAt: string;
+  produto: { id: string; nome: string; sku: string | null };
+  loja: { id: string; nome: string };
+}
+
+export interface ListaHistoricoNecessidades {
+  dados: LinhaHistoricoNecessidade[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface FiltrosHistorico {
+  lojaId?: string;
+  produtoId?: string;
+  desde?: string;
+  ate?: string;
+  page?: number;
+  limit?: number;
+}
+
+/** Um alerta do Centro de Alertas — DT01 §15.4. */
+export type TipoAlerta = 'RISCO_RUPTURA' | 'OC_ATRASADA' | 'RECEPCAO_PENDENTE';
+
+export interface Alerta {
+  tipo: TipoAlerta;
+  entidadeId: string;
+  titulo: string;
+  descricao: string;
+  loja: { id: string; nome: string } | null;
+  diasEmAberto: number;
+  criadoEm: string;
+}
+
+export interface CentroDeAlertas {
+  dados: Alerta[];
+  total: number;
+}
+
+export const TIPO_ALERTA_LABEL: Record<TipoAlerta, string> = {
+  RISCO_RUPTURA: 'Risco de ruptura',
+  OC_ATRASADA: 'OC atrasada',
+  RECEPCAO_PENDENTE: 'Recepção pendente',
+};
