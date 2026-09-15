@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Inbox,
   Blocks,
+  AlertTriangle,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -81,6 +82,10 @@ const navGroups: NavGroup[] = [
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
       { label: 'Produtos & Stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
+      // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
+      // contrário (DT01 1).
+      { label: 'Necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a
       // quem comprar, depois emite-se a ordem. A ordem inversa no menu sugeriria que a
       // requisição é um detalhe da ordem, quando é o contrário.

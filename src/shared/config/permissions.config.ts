@@ -8,6 +8,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'stock', label: 'Stock' },
   { id: 'catalogo', label: 'Catálogo' },
   { id: 'compras', label: 'Compras' },
+  { id: 'necessidades', label: 'Necessidades de Compra' },
   { id: 'rh', label: 'Recursos Humanos' },
   { id: 'vendas', label: 'Vendas' },
   { id: 'clientes', label: 'Clientes / CRM' },
