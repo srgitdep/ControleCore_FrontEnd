@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, AlertCircle, History, Bell } from 'lucide-react';
+import { Search, Download, AlertCircle, History, Bell, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getLojas } from '@/features/lojas/api/lojas.api';
 import { BarraDaPagina } from '@/shared/ui';
@@ -15,6 +15,7 @@ import {
   useNecessidades,
   useKpisNecessidades,
   useCriarRequisicaoDeNecessidade,
+  useRecalcularNecessidades,
 } from '../hooks/useNecessidades';
 import type { LinhaNecessidade, RecomendacaoNecessidade } from '../types/necessidade.types';
 
@@ -60,6 +61,7 @@ export function NecessidadesPage() {
   const { data: lista, isLoading } = useNecessidades(filtros);
   const { data: kpis, isLoading: aCarregarKpis } = useKpisNecessidades(lojaId || undefined);
   const criarRequisicao = useCriarRequisicaoDeNecessidade();
+  const recalcular = useRecalcularNecessidades();
 
   const alternarRecomendacao = (recomendacao: RecomendacaoNecessidade) => {
     setRecomendacoes((anterior) =>
@@ -82,6 +84,15 @@ export function NecessidadesPage() {
         resumo={lista ? `${lista.total} necessidades activas` : undefined}
         acoes={
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!lojaId || recalcular.isPending}
+              title={lojaId ? 'Forçar reavaliação desta loja agora' : 'Seleccione uma loja para reavaliar'}
+              onClick={() => lojaId && recalcular.mutate({ lojaId })}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <RefreshCw size={16} className={recalcular.isPending ? 'animate-spin' : ''} /> Reavaliar
+            </button>
             <button
               type="button"
               onClick={() => navigate('/compras/necessidades/alertas')}

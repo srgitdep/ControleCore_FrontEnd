@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaTransferencias } from '../components/TabelaTransferencias';
 import { MotivoAccaoModal } from '../components/MotivoAccaoModal';
 import { ReceberTransferenciaModal } from '../components/ReceberTransferenciaModal';
+import { DetalheTransferenciaDrawer } from '../components/DetalheTransferenciaDrawer';
+import { SolicitarTransferenciaModal } from '../components/SolicitarTransferenciaModal';
 import {
   useCancelarTransferencia,
   useDecidirTransferencia,
   useExpedirTransferencia,
   useReceberTransferencia,
+  useSolicitarTransferencia,
   useTransferencias,
 } from '../hooks/useTransferencias';
 import { ESTADO_TRANSFERENCIA_LABEL, type EstadoTransferencia, type LinhaTransferencia } from '../types/transferencia.types';
@@ -28,6 +32,8 @@ export function TransferenciasPage() {
   const [aRecusar, setARecusar] = useState<LinhaTransferencia | null>(null);
   const [aCancelar, setACancelar] = useState<LinhaTransferencia | null>(null);
   const [aReceber, setAReceber] = useState<LinhaTransferencia | null>(null);
+  const [detalheAberto, setDetalheAberto] = useState<string | null>(null);
+  const [aSolicitar, setASolicitar] = useState(false);
 
   const { data: lista, isLoading } = useTransferencias({
     estado: estados.length ? estados : undefined,
@@ -35,6 +41,7 @@ export function TransferenciasPage() {
     limit: 10,
   });
 
+  const solicitar = useSolicitarTransferencia();
   const decidir = useDecidirTransferencia();
   const expedir = useExpedirTransferencia();
   const receber = useReceberTransferencia();
@@ -49,7 +56,18 @@ export function TransferenciasPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <BarraDaPagina resumo={lista ? `${lista.total} transferências` : undefined} />
+      <BarraDaPagina
+        resumo={lista ? `${lista.total} transferências` : undefined}
+        acoes={
+          <button
+            type="button"
+            onClick={() => setASolicitar(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            <Plus size={16} /> Nova transferência
+          </button>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -88,10 +106,7 @@ export function TransferenciasPage() {
           onExpedir={(linha) => expedir.mutate(linha.id)}
           onReceber={setAReceber}
           onCancelar={setACancelar}
-          onVerDetalhe={() => {
-            /* Fica para quando existir um drawer de detalhe próprio; a tabela já
-               mostra o essencial (rota, quantidade, estado). */
-          }}
+          onVerDetalhe={setDetalheAberto}
         />
 
         {lista && lista.total > 0 && (
@@ -147,6 +162,18 @@ export function TransferenciasPage() {
           }
         />
       )}
+
+      <DetalheTransferenciaDrawer
+        transferenciaId={detalheAberto}
+        onClose={() => setDetalheAberto(null)}
+      />
+
+      <SolicitarTransferenciaModal
+        isOpen={aSolicitar}
+        isSubmitting={solicitar.isPending}
+        onClose={() => setASolicitar(false)}
+        onConfirm={(dados) => solicitar.mutate(dados, { onSuccess: () => setASolicitar(false) })}
+      />
     </div>
   );
 }
