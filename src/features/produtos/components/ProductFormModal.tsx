@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, PackagePlus, Warehouse } from 'lucide-react';
+import { X, PackagePlus, Warehouse, Truck, Plus, Trash2, Loader2 } from 'lucide-react';
 import type { Product } from '../types';
 import { useCreateProduct, useUpdateProduct, useCategories } from '../hooks/useCatalog';
 import { useArmazens } from '@/features/lojas';
 import { stockApi } from '@/features/stock';
+import { suppliersApi } from '@/features/fornecedores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button, CapturaPorFoto } from '@/shared/ui';
@@ -553,6 +554,12 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 secção Stock. */}
             {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
 
+            {/* ── Ao editar: os fornecedores do produto ───────────────────────
+                Um produto pode ter mais do que um fornecedor, cada um com o seu
+                preço de custo — é o que a sugestão de compras e a criação de
+                pedidos usam para saber onde é mais barato repor. */}
+            {productToEdit && <FornecedoresDoProduto produtoId={productToEdit.id} />}
+
             {/* ── Stock inicial, só na criação ──────────────────────────────── */}
             {!productToEdit && (
               <div className="mt-6 pt-5 border-t border-slate-100">
@@ -828,6 +835,201 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+const moeda = (v: number) =>
+  v.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
+
+/**
+ * Os fornecedores deste produto, cada um com o seu preço de custo.
+ *
+ * Um produto pode ter mais do que um fornecedor — a sugestão de compras e a criação de
+ * pedidos usam este preço, por fornecedor, para saber onde é mais barato repor. Não se
+ * confunde com `precoCusto` do produto (o campo lá em cima): aquele é um valor de
+ * referência único; este é o preço praticado por cada fornecedor concreto.
+ */
+function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
+  const queryClient = useQueryClient();
+  const [aAdicionar, setAAdicionar] = useState(false);
+  const [fornecedorId, setFornecedorId] = useState('');
+  const [referencia, setReferencia] = useState('');
+  const [custo, setCusto] = useState('');
+  const [aGuardar, setAGuardar] = useState(false);
+  const [aRemover, setARemover] = useState<string | null>(null);
+
+  const { data: produto, isLoading } = useQuery({
+    queryKey: ['produto-detalhe', produtoId],
+    queryFn: () => catalogApi.getProduct(produtoId),
+  });
+
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ['fornecedores'],
+    queryFn: () => suppliersApi.getSuppliers(),
+    enabled: aAdicionar,
+  });
+
+  const vinculados = produto?.fornecedores ?? [];
+  const disponiveis = fornecedores.filter(
+    (f) => f.isActive && !vinculados.some((v) => v.fornecedorId === f.id),
+  );
+
+  const invalidar = () => queryClient.invalidateQueries({ queryKey: ['produto-detalhe', produtoId] });
+
+  const adicionar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fornecedorId) return toast.error('Escolha o fornecedor.');
+    const valor = Number(custo);
+    if (!(valor >= 0)) return toast.error('O custo de compra tem de ser um número válido.');
+
+    setAGuardar(true);
+    try {
+      await catalogApi.addFornecedorProduto(produtoId, {
+        fornecedorId,
+        referenciaFornecedor: referencia.trim() || undefined,
+        custoCompra: valor,
+      });
+      toast.success('Fornecedor vinculado.');
+      invalidar();
+      setAAdicionar(false);
+      setFornecedorId('');
+      setReferencia('');
+      setCusto('');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao vincular o fornecedor.');
+    } finally {
+      setAGuardar(false);
+    }
+  };
+
+  const remover = async (fId: string) => {
+    setARemover(fId);
+    try {
+      await catalogApi.removeFornecedorProduto(produtoId, fId);
+      toast.success('Fornecedor removido do produto.');
+      invalidar();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao remover o fornecedor.');
+    } finally {
+      setARemover(null);
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Truck className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-700">Fornecedores</h3>
+        </div>
+        {!aAdicionar && (
+          <button
+            type="button"
+            onClick={() => setAAdicionar(true)}
+            className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+          >
+            <Plus size={13} /> Vincular
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        Um produto pode ter mais do que um fornecedor. A sugestão de compras usa o custo
+        mais baixo entre eles.
+      </p>
+
+      {isLoading ? (
+        <p className="mt-3 text-sm text-slate-500">A carregar...</p>
+      ) : vinculados.length === 0 ? (
+        <p className="mt-3 text-xs text-slate-400">Nenhum fornecedor vinculado.</p>
+      ) : (
+        <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-3 py-2 font-medium">Fornecedor</th>
+                <th className="px-3 py-2 font-medium">Referência</th>
+                <th className="px-3 py-2 text-right font-medium">Custo</th>
+                <th className="w-10 px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {vinculados.map((v) => (
+                <tr key={v.fornecedorId}>
+                  <td className="px-3 py-2 text-slate-800">{v.fornecedor.nome}</td>
+                  <td className="px-3 py-2 text-slate-500">{v.referenciaFornecedor || '—'}</td>
+                  <td className="px-3 py-2 text-right text-slate-700">{moeda(v.custoCompra)}</td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => remover(v.fornecedorId)}
+                      disabled={aRemover === v.fornecedorId}
+                      className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-50"
+                      title="Remover"
+                    >
+                      {aRemover === v.fornecedorId ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {aAdicionar && (
+        <form
+          onSubmit={adicionar}
+          className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-[1fr_1fr_100px_auto]"
+        >
+          <select
+            value={fornecedorId}
+            onChange={(e) => setFornecedorId(e.target.value)}
+            className="rounded border border-slate-200 px-2 py-1.5 text-sm"
+          >
+            <option value="">Fornecedor...</option>
+            {disponiveis.map((f) => (
+              <option key={f.id} value={f.id}>{f.nome}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={referencia}
+            onChange={(e) => setReferencia(e.target.value)}
+            placeholder="Referência (opcional)"
+            className="rounded border border-slate-200 px-2 py-1.5 text-sm"
+          />
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={custo}
+            onChange={(e) => setCusto(e.target.value)}
+            placeholder="Custo"
+            className="rounded border border-slate-200 px-2 py-1.5 text-sm"
+          />
+          <div className="flex gap-1">
+            <button
+              type="submit"
+              disabled={aGuardar}
+              className="flex-1 rounded bg-indigo-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {aGuardar ? '...' : 'Guardar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAAdicionar(false)}
+              className="rounded border border-slate-200 px-2 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

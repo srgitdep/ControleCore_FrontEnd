@@ -28,6 +28,7 @@ import {
   PackageCheck,
   Layers3,
   MapPin,
+  Tag,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStockList, useAllMovements } from '@/features/stock';
@@ -42,16 +43,18 @@ import { RetencaoModal, type TipoRetencao } from '../components/RetencaoModal';
 import { FefoModal } from '../components/FefoModal';
 import { LocalizacaoStockModal } from '../components/LocalizacaoStockModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
+import { CategoriasTab } from '@/features/produtos/components/CategoriasTab';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'produtos' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'categorias' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario';
 
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
 // existem depois de haver produtos.
 const TABS: TabDefinition<StockTab>[] = [
   { id: 'produtos', label: 'Produtos', icon: Boxes },
+  { id: 'categorias', label: 'Categorias', icon: Tag },
   { id: 'estoque', label: 'Stock', icon: Package },
   { id: 'reservas', label: 'Reservas', icon: Timer },
   { id: 'saude', label: 'Saúde do stock', icon: HeartPulse },
@@ -801,6 +804,7 @@ export function StockListPage() {
 
         <div className="p-4 sm:p-6">
           {activeTab === 'produtos' && <ProductsTab />}
+          {activeTab === 'categorias' && <CategoriasTab />}
           {activeTab === 'estoque' && <StockCurrentTab />}
           {activeTab === 'reservas' && <ReservasTab />}
           {activeTab === 'saude' && <SaudeStockTab />}

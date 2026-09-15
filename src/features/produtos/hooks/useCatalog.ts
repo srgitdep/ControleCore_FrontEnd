@@ -69,6 +69,52 @@ export function useCreateProduct() {
   });
 }
 
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: catalogApi.createCategory,
+    onSuccess: () => {
+      toast.success('Categoria criada.');
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao criar a categoria.');
+    },
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, dto }: { id: string; dto: Parameters<typeof catalogApi.updateCategory>[1] }) =>
+      catalogApi.updateCategory(id, dto),
+    onSuccess: () => {
+      toast.success('Categoria actualizada.');
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao actualizar a categoria.');
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: catalogApi.deleteCategory,
+    onSuccess: () => {
+      toast.success('Categoria apagada.');
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao apagar a categoria.');
+    },
+  });
+}
+
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
 

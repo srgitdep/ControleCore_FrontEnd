@@ -1,6 +1,31 @@
 import { api } from '@/shared/config';
 import type { Product, Category } from '@/features/produtos';
 
+export interface ProdutoFornecedor {
+  produtoId: string;
+  fornecedorId: string;
+  referenciaFornecedor?: string | null;
+  custoCompra: number;
+  fornecedor: { nome: string };
+}
+
+export interface ProductDetail extends Product {
+  fornecedores?: ProdutoFornecedor[];
+}
+
+export interface AddFornecedorProdutoDto {
+  fornecedorId: string;
+  referenciaFornecedor?: string;
+  custoCompra: number;
+}
+
+export interface CategoriaDto {
+  nome: string;
+  descricao?: string;
+  imagemUrl?: string;
+  isActive?: boolean;
+}
+
 /**
  * Os campos que se conseguem ler de uma fotografia de produto.
  *
@@ -131,6 +156,12 @@ export const catalogApi = {
     );
   },
 
+  /** O produto com as suas relações — inclui `fornecedores`, que a listagem não traz. */
+  getProduct: async (id: string): Promise<ProductDetail> => {
+    const { data } = await api.get<ProductDetail>(`/produtos/${id}`);
+    return data;
+  },
+
   updateProduct: async (id: string, productData: Partial<Product>) => {
     const { data } = await api.patch<Product>(`/produtos/${id}`, productData);
     return data;
@@ -144,5 +175,49 @@ export const catalogApi = {
   deleteProduct: async (id: string) => {
     const { data } = await api.delete(`/produtos/${id}`);
     return data;
-  }
+  },
+
+  // ─── Fornecedores do produto ────────────────────────────────────────────────
+  //
+  // Um produto pode ter mais do que um fornecedor, cada um com o seu preço de custo e
+  // referência. É informação de compra e não aparece na listagem do catálogo — só no
+  // detalhe, e só interessa a quem decide onde comprar.
+
+  addFornecedorProduto: async (produtoId: string, dto: AddFornecedorProdutoDto) => {
+    const { data } = await api.post<ProdutoFornecedor>(`/produtos/${produtoId}/fornecedores`, dto);
+    return data;
+  },
+
+  updateFornecedorProduto: async (
+    produtoId: string,
+    fornecedorId: string,
+    dto: AddFornecedorProdutoDto,
+  ) => {
+    const { data } = await api.put<ProdutoFornecedor>(
+      `/produtos/${produtoId}/fornecedores/${fornecedorId}`,
+      dto,
+    );
+    return data;
+  },
+
+  removeFornecedorProduto: async (produtoId: string, fornecedorId: string) => {
+    await api.delete(`/produtos/${produtoId}/fornecedores/${fornecedorId}`);
+  },
+
+  // ─── Categorias ──────────────────────────────────────────────────────────────
+
+  createCategory: async (dto: CategoriaDto) => {
+    const { data } = await api.post<Category>('/categorias', dto);
+    return data;
+  },
+
+  updateCategory: async (id: string, dto: Partial<CategoriaDto>) => {
+    const { data } = await api.patch<Category>(`/categorias/${id}`, dto);
+    return data;
+  },
+
+  /** Recusado pelo backend se houver produtos na categoria. */
+  deleteCategory: async (id: string) => {
+    await api.delete(`/categorias/${id}`);
+  },
 };
