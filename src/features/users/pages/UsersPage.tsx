@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BarraDaPagina } from '@/shared/ui';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History } from 'lucide-react';
+import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History, KeyRound } from 'lucide-react';
 import { getUsers, deleteUser, deactivateUser, activateUser } from '@/features/users';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
@@ -10,6 +10,7 @@ import { UserDialog } from '../components/UserDialog';
 import { ConfirmDialog } from '@/shared/ui';
 import { UserDetailsModal } from '../components/UserDetailsModal';
 import { UserAuditLogModal } from '../components/UserAuditLogModal';
+import { ResetPinModal } from '../components/ResetPinModal';
 import { useAuth } from '@/features/auth';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +23,7 @@ export function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<UserDetail | null>(null);
   const [userToView, setUserToView] = useState<UserDetail | null>(null);
   const [userToAudit, setUserToAudit] = useState<UserDetail | null>(null);
+  const [userToResetPin, setUserToResetPin] = useState<UserDetail | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -276,6 +278,13 @@ export function UsersPage() {
                     <History size={17} />
                   </button>
                   <button
+                    onClick={() => setUserToResetPin(u)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600"
+                    aria-label={`Redefinir PIN de ${u.name}`}
+                  >
+                    <KeyRound size={17} />
+                  </button>
+                  <button
                     onClick={() => handleToggleStatus(u)}
                     disabled={u.id === currentUser?.id}
                     className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-30"
@@ -397,6 +406,13 @@ export function UsersPage() {
                           <History size={15} />
                         </button>
                         <button
+                          onClick={() => setUserToResetPin(u)}
+                          className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          title="Redefinir PIN"
+                        >
+                          <KeyRound size={15} />
+                        </button>
+                        <button
                           onClick={() => handleToggleStatus(u)}
                           className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
                           title={u.isActive ? 'Suspender Acesso' : 'Ativar Acesso'}
@@ -479,6 +495,13 @@ export function UsersPage() {
         <UserAuditLogModal
           user={userToAudit}
           onClose={() => setUserToAudit(null)}
+        />
+      )}
+
+      {userToResetPin && (
+        <ResetPinModal
+          user={userToResetPin}
+          onClose={() => setUserToResetPin(null)}
         />
       )}
 

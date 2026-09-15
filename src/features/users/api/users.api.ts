@@ -37,3 +37,8 @@ export const resendPassword = async (id: string): Promise<{ message: string }> =
   const { data } = await api.post(`/users/${id}/reenviar-senha`);
   return data;
 };
+
+/** O PIN de 4 a 6 dígitos usado para entrar rapidamente no caixa/POS. */
+export const updateUserPin = async (id: string, pin: string): Promise<void> => {
+  await api.patch(`/users/${id}/pin`, { pin });
+};
