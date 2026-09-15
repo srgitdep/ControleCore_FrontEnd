@@ -15,6 +15,7 @@ import {
   Smartphone,
   Sparkles,
   Trash2,
+  Settings2,
   X,
 } from 'lucide-react';
 import {
@@ -25,6 +26,7 @@ import {
   useSaldoPontos,
   useHistoricoPontos,
   useAjustarPontos,
+  useGuardarPreferencia,
 } from '../hooks/useClientes';
 import type {
   CanalComunicacao,
@@ -268,6 +270,7 @@ export function Visao360Panel({
   const consentimento = useRegistarConsentimento(clienteId);
   const novaIdentidade = useAdicionarIdentidade(clienteId);
   const removerId = useRemoverIdentidade(clienteId);
+  const guardarPreferencia = useGuardarPreferencia(clienteId);
 
   if (isLoading) {
     return (
@@ -325,6 +328,14 @@ export function Visao360Panel({
               consentimento.mutate({ finalidade: 'MARKETING', canal, concedido })
             }
             aGuardar={consentimento.isPending}
+          />
+        </Seccao>
+
+        <Seccao titulo="Preferências">
+          <Preferencias
+            visao={visao}
+            onGuardar={(chave, valor) => guardarPreferencia.mutate({ chave, valor })}
+            aGuardar={guardarPreferencia.isPending}
           />
         </Seccao>
 
@@ -879,6 +890,106 @@ function Consentimentos({
         Marketing por canal. Avisos de conta e cobrança não dependem destes consentimentos.
       </p>
     </>
+  );
+}
+
+/** Sugestões de chave — o backend aceita qualquer texto, isto é só para não começar em branco. */
+const CHAVES_SUGERIDAS = ['canal_preferido', 'loja_habitual', 'idioma'];
+
+/**
+ * Preferências de relacionamento: pares chave/valor livres — canal preferido, loja
+ * habitual, idioma. Não é consentimento de contacto (isso é a secção anterior); é o que o
+ * cliente prefere, não o que autorizou.
+ */
+function Preferencias({
+  visao,
+  onGuardar,
+  aGuardar,
+}: {
+  visao: Visao360;
+  onGuardar: (chave: string, valor: string) => void;
+  aGuardar: boolean;
+}) {
+  const [aAdicionar, setAAdicionar] = useState(false);
+  const [chave, setChave] = useState('');
+  const [valor, setValor] = useState('');
+
+  const entradas = Object.entries(visao.preferencias);
+
+  const submeter = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chave.trim() || !valor.trim()) return;
+    onGuardar(chave.trim(), valor.trim());
+    setAAdicionar(false);
+    setChave('');
+    setValor('');
+  };
+
+  return (
+    <div className="space-y-3">
+      {entradas.length === 0 && !aAdicionar ? (
+        <p className="text-sm text-slate-400">Sem preferências registadas.</p>
+      ) : (
+        <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {entradas.map(([k, v]) => (
+            <div key={k} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+              <dt className="text-xs capitalize text-slate-400">{k.replace(/_/g, ' ')}</dt>
+              <dd className="text-sm font-medium text-slate-800">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {aAdicionar ? (
+        <form onSubmit={submeter} className="flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[140px]">
+            <label className="mb-1 block text-xs font-medium text-slate-600">Chave</label>
+            <input
+              list="chaves-preferencia"
+              value={chave}
+              onChange={(e) => setChave(e.target.value)}
+              placeholder="Ex.: canal_preferido"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+            <datalist id="chaves-preferencia">
+              {CHAVES_SUGERIDAS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+          <div className="flex-1 min-w-[140px]">
+            <label className="mb-1 block text-xs font-medium text-slate-600">Valor</label>
+            <input
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="Ex.: WHATSAPP"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setAAdicionar(false)}
+            className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={aGuardar}
+            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+          >
+            Guardar
+          </button>
+        </form>
+      ) : (
+        <button
+          onClick={() => setAAdicionar(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          <Settings2 size={13} /> Definir preferência
+        </button>
+      )}
+    </div>
   );
 }
 

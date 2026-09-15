@@ -11,6 +11,10 @@ import {
   adicionarIdentidade,
   removerIdentidade,
   registarClienteNoBalcao,
+  guardarPreferencia,
+  listarCandidatosFusao,
+  resolverCandidatoFusao,
+  fundirClientes,
   listarSegmentos,
   listarMembrosSegmento,
   recalcularSegmentos,
@@ -37,6 +41,7 @@ import {
   type DimensaoSegmento,
   type FinalidadeConsentimento,
   type TipoIdentidade,
+  type EstadoCandidatoFusao,
 } from '../api/clientes.api';
 import toast from 'react-hot-toast';
 
@@ -192,6 +197,72 @@ export function useRegistarClienteNoBalcao() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao registar cliente.');
+    },
+  });
+}
+
+export function useGuardarPreferencia(clienteId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { chave: string; valor: string }) =>
+      guardarPreferencia(clienteId, payload),
+    onSuccess: () => {
+      toast.success('Preferência guardada.');
+      queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao guardar a preferência.');
+    },
+  });
+}
+
+// ──── Fusão de clientes duplicados ────────────────────────────────────────────
+
+export function useCandidatosFusao(estado?: EstadoCandidatoFusao) {
+  return useQuery({
+    queryKey: ['crm-candidatos-fusao', estado ?? 'todos'],
+    queryFn: () => listarCandidatosFusao(estado),
+  });
+}
+
+export function useResolverCandidatoFusao() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      estado: 'CONFIRMADO' | 'REJEITADO';
+      principalId?: string;
+    }) => resolverCandidatoFusao(id, payload),
+    onSuccess: (_, variaveis) => {
+      toast.success(
+        variaveis.estado === 'CONFIRMADO' ? 'Clientes fundidos.' : 'Candidato rejeitado.',
+      );
+      queryClient.invalidateQueries({ queryKey: ['crm-candidatos-fusao'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao decidir o candidato.');
+    },
+  });
+}
+
+export function useFundirClientes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: fundirClientes,
+    onSuccess: () => {
+      toast.success('Clientes fundidos.');
+      queryClient.invalidateQueries({ queryKey: ['crm-candidatos-fusao'] });
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao fundir os clientes.');
     },
   });
 }

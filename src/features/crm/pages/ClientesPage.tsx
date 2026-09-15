@@ -8,6 +8,7 @@ import {
   Megaphone,
   Sparkles,
   SlidersHorizontal,
+  GitMerge,
   Trash2,
   Edit2,
   X,
@@ -26,9 +27,11 @@ import { SegmentosPanel } from '../components/SegmentosPanel';
 import { CampanhasPanel } from '../components/CampanhasPanel';
 import { AnalisePanel } from '../components/AnalisePanel';
 import { ConfiguracaoPanel } from '../components/ConfiguracaoPanel';
+import { FusaoDuplicadosPanel } from '../components/FusaoDuplicadosPanel';
 import { cn } from '@/shared/utils';
 import toast from 'react-hot-toast';
 import { TableScroll, ConfirmDialog } from '@/shared/ui';
+import { usePermissions } from '@/features/auth';
 
 // ──â”€ Debounce hook ────────────────────────────────────────────────────────────
 function useDebounce<T>(value: T, delay: number): T {
@@ -41,7 +44,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
-type Tab = 'clientes' | 'analise' | 'segmentos' | 'campanhas' | 'definicoes' | 'detalhes';
+type Tab = 'clientes' | 'analise' | 'segmentos' | 'campanhas' | 'duplicados' | 'definicoes' | 'detalhes';
 
 // ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
@@ -118,6 +121,8 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
 
 // ──â”€ Main Page ────────────────────────────────────────────────────────────────
 export function ClientesPage() {
+  const { hasPermission } = usePermissions();
+  const podeFundir = hasPermission('manage', 'clientes');
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -176,6 +181,9 @@ export function ClientesPage() {
     { id: 'analise', label: 'MAYRA', icon: Sparkles },
     { id: 'segmentos', label: 'Segmentos', icon: PieChart },
     { id: 'campanhas', label: 'Campanhas', icon: Megaphone },
+    // Quem decide fusões é quem tem `manage` sobre clientes — a mesma permissão que
+    // apaga um cliente, e não a de o editar: fundir apaga um dos dois de facto.
+    ...(podeFundir ? [{ id: 'duplicados' as Tab, label: 'Duplicados', icon: GitMerge }] : []),
     { id: 'definicoes', label: 'Definições', icon: SlidersHorizontal },
     { id: 'detalhes', label: 'Detalhes', icon: UserSquare },
   ];
@@ -427,6 +435,9 @@ export function ClientesPage() {
 
         {/* Tab: Campanhas */}
         {activeTab === 'campanhas' && <CampanhasPanel />}
+
+        {/* Tab: Duplicados */}
+        {activeTab === 'duplicados' && podeFundir && <FusaoDuplicadosPanel />}
 
         {/* Tab: Definicoes */}
         {activeTab === 'definicoes' && <ConfiguracaoPanel />}

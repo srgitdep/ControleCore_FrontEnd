@@ -361,6 +361,72 @@ export const removerIdentidade = async (identidadeId: string): Promise<void> => 
   await api.delete(`/crm/identidade/identidades/${identidadeId}`);
 };
 
+export const guardarPreferencia = async (
+  clienteId: string,
+  payload: { chave: string; valor: string },
+): Promise<void> => {
+  await api.put(`/crm/identidade/clientes/${clienteId}/preferencias`, payload);
+};
+
+// ──── Fusão de clientes duplicados ────────────────────────────────────────────
+//
+// Um candidato nasce sozinho: ao ligar uma identidade (telefone, email, NUIT...) já
+// pertencente a outro cliente, o backend não funde — regista o par como candidato e
+// devolve 409 a quem tentou. Fundir directamente (sem passar por um candidato) também é
+// possível, para o duplicado que o operador encontra sozinho.
+
+export type EstadoCandidatoFusao = 'PENDENTE' | 'CONFIRMADO' | 'REJEITADO';
+
+export interface ClienteResumoFusao extends Cliente {
+  fundidoEmId?: string | null;
+}
+
+export interface CandidatoFusao {
+  id: string;
+  empresaId: string;
+  clienteAId: string;
+  clienteBId: string;
+  motivo: string;
+  /** 0 a 1. Hoje sempre 0.9 — o único critério é identidade partilhada exacta. */
+  pontuacao: number;
+  estado: EstadoCandidatoFusao;
+  revistoPorId?: string | null;
+  revistoEm?: string | null;
+  createdAt: string;
+  clienteA: ClienteResumoFusao;
+  clienteB: ClienteResumoFusao;
+}
+
+export const listarCandidatosFusao = async (
+  estado?: EstadoCandidatoFusao,
+): Promise<CandidatoFusao[]> => {
+  const { data } = await api.get('/crm/identidade/candidatos-fusao', {
+    params: estado ? { estado } : {},
+  });
+  return data;
+};
+
+export const resolverCandidatoFusao = async (
+  id: string,
+  payload: { estado: 'CONFIRMADO' | 'REJEITADO'; principalId?: string },
+): Promise<void> => {
+  await api.post(`/crm/identidade/candidatos-fusao/${id}/resolver`, payload);
+};
+
+/**
+ * Funde dois clientes directamente, sem passar por um candidato sugerido.
+ *
+ * Irreversível pela API actual: o absorvido fica marcado `fundidoEmId` e as suas vendas,
+ * identidades, consentimentos e pontos migram para o principal.
+ */
+export const fundirClientes = async (payload: {
+  principalId: string;
+  absorvidoId: string;
+  motivo?: string;
+}): Promise<void> => {
+  await api.post('/crm/identidade/fusoes', payload);
+};
+
 /**
  * Regista o cliente com identidades e consentimentos numa só chamada.
  *
