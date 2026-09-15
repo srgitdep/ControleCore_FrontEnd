@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Plus, MapPin, Search, Edit2, Box, MonitorSmartphone, X } from 'lucide-react';
-import { getLojas, createLoja, updateLoja } from '@/features/lojas';
+import { Store, Plus, MapPin, Search, Edit2, Box, MonitorSmartphone, X, Ban, CheckCircle2 } from 'lucide-react';
+import { getLojas, createLoja, updateLoja, deleteLoja } from '@/features/lojas';
 import { getAllCaixas, removerCaixa } from '@/features/vendas';
 import { getUsers } from '@/features/users';
 import toast from 'react-hot-toast';
 import { LojaDetailsModal } from '../components/LojaDetailsModal';
+import { ConfirmDialog } from '@/shared/ui';
 import { mensagemDeErro } from '@/shared/utils';
 
 export function LojasPage() {
@@ -25,6 +26,8 @@ export function LojasPage() {
   const [newCaixa, setNewCaixa] = useState({ nome: '', lojaId: '' });
   
   const [selectedLoja, setSelectedLoja] = useState<any | null>(null);
+  const [lojaADesactivar, setLojaADesactivar] = useState<any | null>(null);
+  const [aDesactivar, setADesactivar] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -91,6 +94,21 @@ export function LojasPage() {
       fetchData();
     } catch (error) {
       toast.error(mensagemDeErro(error, 'Não foi possível actualizar a loja.'));
+    }
+  };
+
+  const desactivarLoja = async () => {
+    if (!lojaADesactivar) return;
+    setADesactivar(true);
+    try {
+      await deleteLoja(lojaADesactivar.id);
+      toast.success('Loja desactivada.');
+      setLojaADesactivar(null);
+      fetchData();
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível desactivar a loja.'));
+    } finally {
+      setADesactivar(false);
     }
   };
 
@@ -251,12 +269,29 @@ export function LojasPage() {
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => setSelectedLoja(loja)}
                           className="text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                         >
                           Gerir Infraestrutura
                         </button>
+                        {loja.isActive ? (
+                          <button
+                            onClick={() => setLojaADesactivar(loja)}
+                            className="text-slate-400 hover:text-rose-600 p-2 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Desactivar loja"
+                          >
+                            <Ban size={16} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => updateLoja(loja.id, { isActive: true }).then(() => { toast.success('Loja reactivada.'); fetchData(); }).catch((error) => toast.error(mensagemDeErro(error, 'Não foi possível reactivar a loja.')))}
+                            className="text-slate-400 hover:text-emerald-600 p-2 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Reactivar loja"
+                          >
+                            <CheckCircle2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -462,6 +497,20 @@ export function LojasPage() {
         </div>
       )}
 
+      <ConfirmDialog
+        isOpen={lojaADesactivar !== null}
+        title="Desactivar loja"
+        message={
+          lojaADesactivar
+            ? `Desactivar "${lojaADesactivar.nome}"? Deixa de aparecer nas escolhas de venda e requisição, mas o histórico mantém-se.`
+            : ''
+        }
+        confirmText="Desactivar"
+        variant="warning"
+        isLoading={aDesactivar}
+        onConfirm={desactivarLoja}
+        onCancel={() => setLojaADesactivar(null)}
+      />
     </div>
   );
 }
