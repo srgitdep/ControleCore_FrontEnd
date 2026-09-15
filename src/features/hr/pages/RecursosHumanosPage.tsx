@@ -1,12 +1,14 @@
 import { useSearchParams } from 'react-router-dom';
-import { Users, CalendarDays, Wallet } from 'lucide-react';
+import { Users, CalendarDays, Wallet, FileText, Clock } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { usePermissions, useAuth } from '@/features/auth';
 import { EmployeeListPage } from './EmployeeListPage';
 import { ShiftManagementPage } from './ShiftManagementPage';
 import { SalariosPage } from './SalariosPage';
+import { ContratosPage } from './ContratosPage';
+import { TurnosPage } from './TurnosPage';
 
-type Aba = 'colaboradores' | 'escalas' | 'salarios';
+type Aba = 'colaboradores' | 'contratos' | 'turnos' | 'escalas' | 'salarios';
 
 /**
  * Recursos Humanos: colaboradores, escalas e salários.
@@ -38,6 +40,12 @@ export function RecursosHumanosPage() {
     ...(podeVerColaboradores
       ? [{ id: 'colaboradores' as Aba, label: 'Colaboradores', icon: Users }]
       : []),
+    // Contratos mostra cargo e salário-base — a mesma informação sensível de
+    // Colaboradores, condicionada pela mesma permissão.
+    ...(podeVerColaboradores
+      ? [{ id: 'contratos' as Aba, label: 'Contratos', icon: FileText }]
+      : []),
+    { id: 'turnos', label: 'Turnos', icon: Clock },
     { id: 'escalas', label: 'Escalas', icon: CalendarDays },
     { id: 'salarios', label: 'Salários', icon: Wallet },
   ];
@@ -64,6 +72,8 @@ export function RecursosHumanosPage() {
             abre a secção. */}
         <div className="p-4 sm:p-6">
           {aba === 'colaboradores' && <EmployeeListPage />}
+          {aba === 'contratos' && <ContratosPage />}
+          {aba === 'turnos' && <TurnosPage />}
           {aba === 'escalas' && <ShiftManagementPage />}
           {aba === 'salarios' && <SalariosPage />}
         </div>
