@@ -20,6 +20,7 @@ import {
   Sparkles,
   ClipboardList,
   Inbox,
+  Blocks,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -65,6 +66,8 @@ const navGroups: NavGroup[] = [
       { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       // Ao lado de Empresas porque é a origem delas: um pedido aprovado é uma empresa nova.
       { label: 'Adesões', icon: Inbox, path: '/adesoes', roles: ['SUPER_ADMIN'] },
+      // O catálogo global do que uma empresa pode contratar — plataforma, não operação.
+      { label: 'Módulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
       { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ]

@@ -5,6 +5,7 @@ import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/aut
 import { LandingPage } from '@/pages/LandingPage';
 import { DashboardPage } from '@/features/dashboard';
 import { EmpresasPage } from '@/features/empresas';
+import { ModulosPage } from '@/features/modulos';
 import { UsersPage } from '@/features/users';
 import { HistoryPage } from '@/features/history';
 import { ProductListPage } from '@/features/produtos';
@@ -16,7 +17,7 @@ import { StockDetailsPage } from '@/features/stock';
 import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
-import { RequisicoesPage } from '@/features/b2b';
+import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
   RegistarFornecedorPage,
@@ -123,10 +124,17 @@ export const router = createBrowserRouter([
           },
 
           // Gestão do Sistema
-          { 
-            path: '/empresas', 
+          {
+            path: '/empresas',
             element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
             children: [{ index: true, element: <EmpresasPage /> }]
+          },
+          // O catálogo global de módulos que as empresas contratam — plataforma, não
+          // uma empresa, por isso ao lado de Empresas e não dentro do RH/Operação.
+          {
+            path: '/modulos',
+            element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
+            children: [{ index: true, element: <ModulosPage /> }]
           },
           // A fila de adesões vive ao lado das empresas porque é a origem delas: um
           // pedido aprovado **é** uma empresa nova. Só SUPER_ADMIN, e não por escolha do
@@ -170,6 +178,7 @@ export const router = createBrowserRouter([
           // fornecedor — e enterrá-las num separador de «Compras» faria parecer que são mais
           // uma vista das ordens. A permissão é verificada no backend; aqui basta a rota.
           { path: '/requisicoes',   element: <RequisicoesPage /> },
+          { path: '/requisicoes/pesos', element: <PesosSourcingPage /> },
           // Conferência é secção própria e não separador das Compras: quem regista a
           // factura não a pode aprovar, e juntá-las no mesmo ecrã convidaria a que fosse
           // a mesma pessoa a fazer as duas coisas.
