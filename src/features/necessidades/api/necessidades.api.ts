@@ -59,6 +59,20 @@ export const necessidadesApi = {
     return data;
   },
 
+  /**
+   * Solicitar uma transferência a partir da necessidade (DT01 §11 e §15.1).
+   *
+   * O backend revalida a oportunidade em tempo real: a rede pode ter mudado desde
+   * que o detalhe foi calculado.
+   */
+  criarTransferencia: async (
+    necessidadeId: string,
+    dados: { origemLojaId: string; quantidade?: number },
+  ) => {
+    const { data } = await api.post(`/necessidades/${necessidadeId}/transferencia`, dados);
+    return data;
+  },
+
   /** Tirar da fila sem comprar. O motivo é obrigatório (DT01 5 e 24). */
   ignorar: async (necessidadeId: string, motivo: string) => {
     const { data } = await api.post(`/necessidades/${necessidadeId}/ignorar`, { motivo });

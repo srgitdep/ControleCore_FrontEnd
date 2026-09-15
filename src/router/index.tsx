@@ -18,6 +18,7 @@ import { ClientesPage } from '@/features/crm';
 import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { NecessidadesPage } from '@/features/necessidades';
+import { TransferenciasPage } from '@/features/transferencias';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -175,6 +176,7 @@ export const router = createBrowserRouter([
           // Necessidades vive antes de Compras: é o painel que detecta o que precisa de
           // decisão e encaminha para a requisição — DT01 1.
           { path: '/compras/necessidades', element: <NecessidadesPage /> },
+          { path: '/transferencias', element: <TransferenciasPage /> },
           { path: '/compras',       element: <PurchasesPage /> },
           // As requisições vivem em rota própria e não como separador de Compras.
           //

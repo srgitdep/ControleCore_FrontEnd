@@ -22,6 +22,7 @@ import {
   Inbox,
   Blocks,
   AlertTriangle,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -82,6 +83,9 @@ const navGroups: NavGroup[] = [
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
       { label: 'Produtos & Stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
       { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // O workflow real por trás das oportunidades que o painel de Necessidades
+      // mostra (DT01 §12/§15.1): aprovar, expedir, receber.
+      { label: 'Transferências', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).

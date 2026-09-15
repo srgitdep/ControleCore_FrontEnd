@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { X, Loader2, Package, ArrowRightLeft, ShoppingCart, Truck, History } from 'lucide-react';
 import { formatMoeda } from '@/shared/utils';
 import { cn } from '@/shared/utils';
-import { useDetalheNecessidade, useCriarRequisicaoDeNecessidade, useIgnorarNecessidade } from '../hooks/useNecessidades';
+import {
+  useDetalheNecessidade,
+  useCriarRequisicaoDeNecessidade,
+  useCriarTransferenciaDeNecessidade,
+  useIgnorarNecessidade,
+} from '../hooks/useNecessidades';
 import { RECOMENDACAO_LABEL, URGENCIA_LABEL } from '../types/necessidade.types';
 import { IgnorarNecessidadeModal } from './IgnorarNecessidadeModal';
 
@@ -26,6 +31,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
   const [aIgnorar, setAIgnorar] = useState(false);
   const { data: detalhe, isLoading } = useDetalheNecessidade(necessidadeId);
   const criarRequisicao = useCriarRequisicaoDeNecessidade();
+  const criarTransferencia = useCriarTransferenciaDeNecessidade();
   const ignorar = useIgnorarNecessidade();
 
   const isOpen = !!necessidadeId;
@@ -137,12 +143,30 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                     {detalhe.rede.oportunidades.map((o) => (
                       <div
                         key={o.origemArmazemId}
-                        className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm"
                       >
                         <span className="text-slate-700">{o.origemLojaNome}</span>
-                        <span className="tabular-nums font-medium text-slate-800">
-                          {o.quantidadeDisponivel} un disponíveis
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="tabular-nums font-medium text-slate-800">
+                            {o.quantidadeDisponivel} un disponíveis
+                          </span>
+                          {podeAgir && (
+                            <button
+                              type="button"
+                              disabled={criarTransferencia.isPending}
+                              onClick={() =>
+                                criarTransferencia.mutate({
+                                  necessidadeId: detalhe.id,
+                                  origemLojaId: o.origemLojaId,
+                                  quantidade: o.quantidadeDisponivel,
+                                })
+                              }
+                              className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                            >
+                              Transferir
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

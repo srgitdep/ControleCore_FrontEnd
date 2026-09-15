@@ -72,6 +72,35 @@ export function useCriarRequisicaoDeNecessidade() {
   });
 }
 
+/**
+ * Solicitar uma transferência a partir da necessidade.
+ *
+ * Também invalida a lista de transferências: a nova aparece lá, à espera de
+ * aprovação, no ecrã próprio de Transferências entre Lojas.
+ */
+export function useCriarTransferenciaDeNecessidade() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      necessidadeId,
+      ...dados
+    }: {
+      necessidadeId: string;
+      origemLojaId: string;
+      quantidade?: number;
+    }) => necessidadesApi.criarTransferencia(necessidadeId, dados),
+    onSuccess: () => {
+      toast.success('Transferência solicitada. Acompanhe-a em Transferências entre Lojas.');
+      queryClient.invalidateQueries({ queryKey: ['necessidades'] });
+      queryClient.invalidateQueries({ queryKey: ['transferencias'] });
+    },
+    onError: (erro: any) => {
+      toast.error(erro?.response?.data?.message ?? 'Não foi possível solicitar a transferência.');
+    },
+  });
+}
+
 export function useIgnorarNecessidade() {
   const queryClient = useQueryClient();
 
