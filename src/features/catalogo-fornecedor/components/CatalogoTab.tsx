@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileSpreadsheet, Loader2, Upload, ChevronRight, Info } from 'lucide-react';
+import { FileSpreadsheet, Loader2, Upload, ChevronRight, Info, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import { suppliersApi } from '@/features/fornecedores';
 import { catalogoFornecedorApi, ROTULO_ESTADO_IMPORTACAO } from '../api/catalogo.api';
 import type { EstadoImportacao } from '../api/catalogo.api';
 import { RevisaoImportacaoModal } from './RevisaoImportacaoModal';
+import { MapeamentosModal } from './MapeamentosModal';
 
 /**
  * Importação de catálogos de fornecedor.
@@ -28,6 +29,7 @@ export function CatalogoTab() {
   const [fornecedorId, setFornecedorId] = useState('');
   const [aImportar, setAImportar] = useState(false);
   const [aRever, setARever] = useState<string | null>(null);
+  const [aVerMapeamentos, setAVerMapeamentos] = useState(false);
   const ficheiroRef = useRef<HTMLInputElement>(null);
 
   const { data: fornecedores = [] } = useQuery({
@@ -120,6 +122,15 @@ export function CatalogoTab() {
           </select>
         </div>
 
+        {fornecedorId && (
+          <button
+            onClick={() => setAVerMapeamentos(true)}
+            className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Package size={16} /> Ver catálogo mapeado
+          </button>
+        )}
+
         <input
           ref={ficheiroRef}
           type="file"
@@ -211,6 +222,14 @@ export function CatalogoTab() {
           importacaoId={aRever}
           onClose={() => setARever(null)}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['importacoes'] })}
+        />
+      )}
+
+      {aVerMapeamentos && fornecedorId && (
+        <MapeamentosModal
+          fornecedorId={fornecedorId}
+          nomeFornecedor={fornecedores.find((f) => f.id === fornecedorId)?.nome ?? ''}
+          onClose={() => setAVerMapeamentos(false)}
         />
       )}
     </div>
