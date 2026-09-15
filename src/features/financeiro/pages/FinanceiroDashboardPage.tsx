@@ -38,6 +38,7 @@ import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro
 import { CardCarousel, KpiCard as SharedKpiCard, TableScroll } from '@/shared/ui';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { NovoRegistroModal } from '../components/NovoRegistroModal';
 
 // ─── Helpers ───
 
@@ -565,6 +566,7 @@ function RegistrosTable({
   const { data, isLoading } = query;
   const registros: RegistroFinanceiro[] = data?.data ?? [];
   const lastPage: number = data?.lastPage ?? 1;
+  const [aCriar, setACriar] = useState(false);
 
   const isVencido = (r: RegistroFinanceiro) =>
     r.estado === 'OVERDUE' || (r.estado === 'PENDING' && new Date(r.dataVencimento) < new Date());
@@ -577,12 +579,15 @@ function RegistrosTable({
         </h2>
         <button
           id={`btn-novo-${tipo.toLowerCase()}`}
+          onClick={() => setACriar(true)}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
         >
           <PlusCircle className="h-4 w-4" />
           Novo
         </button>
       </div>
+
+      {aCriar && <NovoRegistroModal tipo={tipo} onClose={() => setACriar(false)} />}
 
       {isLoading && (
         <div className="flex h-40 items-center justify-center">
