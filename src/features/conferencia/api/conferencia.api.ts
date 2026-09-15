@@ -305,6 +305,14 @@ export const conferenciaApi = {
     return data;
   },
 
+  /** A ordem de especificidade dos âmbitos — do mais geral ao mais específico. */
+  hierarquiaTolerancias: async () => {
+    const { data } = await api.get<{ escopo: EscopoTolerancia; nivel: number }[]>(
+      '/b2b/tolerancias/hierarquia',
+    );
+    return data;
+  },
+
   guardarTolerancia: async (dto: Omit<PoliticaTolerancia, 'id'>) => {
     const { data } = await api.post<PoliticaTolerancia>('/b2b/tolerancias', dto);
     return data;

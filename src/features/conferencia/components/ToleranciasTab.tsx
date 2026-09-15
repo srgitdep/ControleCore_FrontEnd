@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus, Trash2, ShieldAlert, X } from 'lucide-react';
+import { Loader2, Plus, Trash2, ShieldAlert, ChevronRight, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import {
@@ -43,6 +43,14 @@ export function ToleranciasTab() {
     queryFn: () => conferenciaApi.listarTolerancias(),
   });
 
+  const { data: hierarquia = [] } = useQuery({
+    queryKey: ['tolerancias-hierarquia'],
+    queryFn: () => conferenciaApi.hierarquiaTolerancias(),
+    // A ordem de especificidade não muda entre empresas nem com o tempo — não vale a
+    // pena pedi-la de novo em cada visita ao separador.
+    staleTime: Infinity,
+  });
+
   const apagar = async (p: PoliticaTolerancia) => {
     try {
       await conferenciaApi.apagarTolerancia(p.id);
@@ -73,10 +81,30 @@ export function ToleranciasTab() {
             pode resultar em ausência de controlo.
           </p>
           <p className="mt-1.5 text-xs">
-            A regra mais específica prevalece — Produto sobre Fornecedor, sobre Categoria, sobre
-            Empresa — e as políticas <strong>não se combinam</strong>: a de maior especificidade
-            vale inteira, por dimensão.
+            A regra mais específica prevalece, e as políticas <strong>não se combinam</strong>:
+            a de maior especificidade vale inteira, por dimensão.
           </p>
+          {hierarquia.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-slate-500">
+              {[...hierarquia]
+                .sort((a, b) => a.nivel - b.nivel)
+                .map((h, i, arr) => (
+                  <span key={h.escopo} className="flex items-center gap-1">
+                    <span
+                      className={cn(
+                        'rounded px-1.5 py-0.5 font-medium',
+                        i === arr.length - 1
+                          ? 'bg-slate-800 text-white'
+                          : 'bg-white text-slate-600',
+                      )}
+                    >
+                      {ROTULO_ESCOPO[h.escopo]}
+                    </span>
+                    {i < arr.length - 1 && <ChevronRight size={12} className="text-slate-300" />}
+                  </span>
+                ))}
+            </div>
+          )}
         </div>
       </div>
 

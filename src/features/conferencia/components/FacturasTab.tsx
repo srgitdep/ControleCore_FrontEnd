@@ -9,11 +9,14 @@ import {
   X,
   AlertTriangle,
   Lock,
+  Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import { conferenciaApi, EstadoFactura, ROTULO_TIPO } from '../api/conferencia.api';
 import type { Factura, ResultadoConferencia } from '../api/conferencia.api';
+import { RegistarFacturaModal } from './RegistarFacturaModal';
+import { DetalheFacturaModal } from './DetalheFacturaModal';
 
 const mt = (v: number) =>
   `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
@@ -34,6 +37,8 @@ export function FacturasTab() {
     null,
   );
   const [aConferir, setAConferir] = useState<string | null>(null);
+  const [aRegistar, setARegistar] = useState(false);
+  const [aVerDetalhe, setAVerDetalhe] = useState<string | null>(null);
 
   const { data: facturas = [], isLoading } = useQuery({
     queryKey: ['facturas-fornecedor'],
@@ -72,12 +77,34 @@ export function FacturasTab() {
           Uma factura registada não gera obrigação de pagamento: fica em análise até ser
           conferida contra a ordem e a recepção.
         </p>
+        <button
+          onClick={() => setARegistar(true)}
+          className="mx-auto mt-4 flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          <Plus size={16} /> Registar factura
+        </button>
+
+        {aRegistar && (
+          <RegistarFacturaModal
+            onClose={() => setARegistar(false)}
+            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['facturas-fornecedor'] })}
+          />
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <button
+          onClick={() => setARegistar(true)}
+          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          <Plus size={16} /> Registar factura
+        </button>
+      </div>
+
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -98,7 +125,7 @@ export function FacturasTab() {
               <tr key={f.id} className="hover:bg-slate-50/60">
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => setAVer(f)}
+                    onClick={() => setAVerDetalhe(f.id)}
                     className="font-medium text-slate-900 hover:text-blue-600 hover:underline"
                   >
                     {f.numero}
@@ -178,6 +205,17 @@ export function FacturasTab() {
           onClose={() => setAVer(null)}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['facturas-fornecedor'] })}
         />
+      )}
+
+      {aRegistar && (
+        <RegistarFacturaModal
+          onClose={() => setARegistar(false)}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['facturas-fornecedor'] })}
+        />
+      )}
+
+      {aVerDetalhe && (
+        <DetalheFacturaModal facturaId={aVerDetalhe} onClose={() => setAVerDetalhe(null)} />
       )}
     </div>
   );
