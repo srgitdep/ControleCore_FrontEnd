@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { BarraDaPagina } from '@/shared/ui';
 
-import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from 'lucide-react';
+import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Palette } from 'lucide-react';
 import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
 import { EmpresaDialog } from '../components/EmpresaDialog';
 import { ConfirmDialog } from '@/shared/ui';
 import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
+import { BrandingModal } from '../components/BrandingModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -16,6 +17,7 @@ export function EmpresasPage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [empresaToEdit, setEmpresaToEdit] = useState<Empresa | null>(null);
   const [empresaToView, setEmpresaToView] = useState<Empresa | null>(null);
+  const [empresaToBrand, setEmpresaToBrand] = useState<Empresa | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -188,6 +190,13 @@ export function EmpresasPage() {
                     <Eye size={17} />
                   </button>
                   <button
+                    onClick={() => setEmpresaToBrand(empresa)}
+                    className="rounded-lg p-2 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
+                    aria-label={`Identidade visual de ${empresa.nome}`}
+                  >
+                    <Palette size={17} />
+                  </button>
+                  <button
                     onClick={() => handleEdit(empresa)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
                     aria-label={`Editar ${empresa.nome}`}
@@ -273,6 +282,13 @@ export function EmpresasPage() {
                           <Eye size={15} />
                         </button>
                         <button
+                          onClick={() => setEmpresaToBrand(empresa)}
+                          className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
+                          title="Identidade visual"
+                        >
+                          <Palette size={15} />
+                        </button>
+                        <button
                           onClick={() => handleEdit(empresa)}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           title="Editar"
@@ -339,6 +355,13 @@ export function EmpresasPage() {
         <EmpresaDetailsModal
           empresa={empresaToView}
           onClose={() => setIsDetailsOpen(false)}
+        />
+      )}
+
+      {empresaToBrand && (
+        <BrandingModal
+          empresa={empresaToBrand}
+          onClose={() => setEmpresaToBrand(null)}
         />
       )}
 

@@ -33,6 +33,24 @@ export type UpdateEmpresaPayload = Partial<Omit<Empresa, 'id' | 'createdAt' | 'u
 // Mantido para compatibilidade
 export type CreateEmpresaPayload = OnboardingPayload;
 
+export type TemaBranding = 'CLARO' | 'ESCURO' | 'AUTO';
+
+export interface BrandingEmpresa {
+  corPrimaria?: string | null;
+  corSecundaria?: string | null;
+  corAcento?: string | null;
+  corTexto?: string | null;
+  corFundo?: string | null;
+  tipografiaTitulo?: string | null;
+  tipografiaCorpo?: string | null;
+  logoUrl?: string | null;
+  logoBrancoUrl?: string | null;
+  faviconUrl?: string | null;
+  tema: TemaBranding;
+}
+
+export type UpdateBrandingPayload = Partial<Omit<BrandingEmpresa, 'tema'>> & { tema?: TemaBranding };
+
 export interface EmpresaDetails extends Empresa {
   users: Array<{
     id: string;

@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getEmpresas, 
-  getEmpresaDetails, 
-  createEmpresa, 
-  updateEmpresa, 
-  deleteEmpresa 
+import {
+  getEmpresas,
+  getEmpresaDetails,
+  createEmpresa,
+  updateEmpresa,
+  deleteEmpresa,
+  updateBranding,
 } from '../api/empresa.api';
+import type { UpdateBrandingPayload } from '../types';
 import toast from 'react-hot-toast';
 
 export function useEmpresas() {
@@ -51,6 +53,22 @@ export function useUpdateEmpresa() {
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Erro ao atualizar empresa.');
     }
+  });
+}
+
+export function useUpdateBranding() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateBrandingPayload }) => updateBranding(id, data),
+    onSuccess: (_, variables) => {
+      toast.success('Identidade visual actualizada.');
+      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      queryClient.invalidateQueries({ queryKey: ['empresa', variables.id] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erro ao actualizar a identidade visual.');
+    },
   });
 }
 
