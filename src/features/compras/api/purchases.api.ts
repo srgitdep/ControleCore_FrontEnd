@@ -296,6 +296,31 @@ export const purchasesApi = {
     const { data } = await api.get<VersaoPedido[]>(`/compras/pedidos/${id}/versoes`);
     return data;
   },
+
+  /**
+   * Altera as linhas de uma ordem, criando uma versão nova — a anterior fica guardada por
+   * inteiro. Se a alteração for material e a ordem estiver aprovada, a aprovação é anulada
+   * e ela volta à fila. Linhas com mercadoria já recebida não podem ser removidas nem
+   * reduzidas abaixo do que entrou.
+   */
+  alterarLinhas: async (
+    id: string,
+    dto: {
+      linhas: {
+        produtoId: string;
+        quantidadePedida: number;
+        custoUnitario: number;
+        taxaIva?: number;
+        desconto?: number;
+      }[];
+      dataPrevista?: string;
+      observacoes?: string;
+      motivo?: string;
+    },
+  ) => {
+    const { data } = await api.patch<PurchaseOrder>(`/compras/pedidos/${id}/linhas`, dto);
+    return data;
+  },
 };
 
 // ─── Governação da ordem de compra (§8) ──────────────────────────────────────
@@ -428,4 +453,26 @@ export function podeConfirmar(p: PurchaseOrder): boolean {
 /** O que falta confirmar de uma linha. Zero quando o fornecedor confirmou tudo. */
 export function saldoPorConfirmar(item: PurchaseOrderItem): number {
   return Math.max(item.quantidadePedida - (item.quantidadeConfirmada ?? 0), 0);
+}
+
+/**
+ * Se as linhas da ordem podem ser alteradas.
+ *
+ * Uma ordem encerrada ou já cancelada não tem mais o que mudar. O backend continua a ser
+ * quem decide — inclusive recusando a remoção de uma linha já recebida — isto só evita
+ * mostrar a acção quando ela claramente não se aplica.
+ */
+export function podeAlterarLinhas(p: PurchaseOrder): boolean {
+  if (p.cancelamento === 'CANCELADA') return false;
+  if (p.estadoCumprimento === EstadoCumprimentoOC.ENCERRADA) return false;
+  return true;
+}
+
+/** Se a ordem ainda pode ser cancelada. Uma ordem já recebida não volta atrás por aqui. */
+export function podeCancelarPedido(p: PurchaseOrder): boolean {
+  if (p.cancelamento === 'CANCELADA') return false;
+  return (
+    p.estadoCumprimento !== EstadoCumprimentoOC.TOTALMENTE_RECEBIDA &&
+    p.estadoCumprimento !== EstadoCumprimentoOC.ENCERRADA
+  );
 }

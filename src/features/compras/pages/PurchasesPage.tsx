@@ -15,6 +15,9 @@ import {
   UserCheck,
   FileSpreadsheet,
   ShieldCheck,
+  FileEdit,
+  History,
+  XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -26,6 +29,8 @@ import {
   podeDecidir,
   podeEnviar,
   podeConfirmar,
+  podeAlterarLinhas,
+  podeCancelarPedido,
 } from '../api/purchases.api';
 import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
 import { FornecedoresTab } from '@/features/fornecedores';
@@ -42,6 +47,8 @@ import { AvisosExpedicaoTab } from '../components/AvisosExpedicaoTab';
 import { CatalogoTab } from '@/features/catalogo-fornecedor';
 import { QualificacaoTab } from '@/features/b2b';
 import { CriarAvisoModal } from '../components/CriarAvisoModal';
+import { AlterarLinhasPedidoModal } from '../components/AlterarLinhasPedidoModal';
+import { VersoesPedidoModal } from '../components/VersoesPedidoModal';
 
 // «qualificacao» vive aqui e não numa entrada de menu própria: é a fila de fornecedores
 // por verificar, e quem a trata é quem trata de fornecedores. Uma entrada de menu para
@@ -123,6 +130,10 @@ export function PurchasesPage() {
   const [aConfirmar, setAConfirmar] = useState<PurchaseOrder | null>(null);
   const [aSubmeter, setASubmeter] = useState<string | null>(null);
   const [aExpedir, setAExpedir] = useState<PurchaseOrder | null>(null);
+  const [aAlterar, setAAlterar] = useState<PurchaseOrder | null>(null);
+  const [aVerVersoes, setAVerVersoes] = useState<PurchaseOrder | null>(null);
+  const [aCancelarPedido, setACancelarPedido] = useState<PurchaseOrder | null>(null);
+  const [aCancelar, setACancelarBusy] = useState(false);
   const [mostrarSugestao, setMostrarSugestao] = useState(false);
   const [aCriar, setACriar] = useState<{
     linhas?: { produtoId: string; nome: string; quantidade: number; custoUnitario: number }[];
@@ -180,6 +191,21 @@ export function PurchasesPage() {
       toast.error(error?.response?.data?.message || 'Erro ao submeter o pedido.');
     } finally {
       setASubmeter(null);
+    }
+  };
+
+  const cancelarPedido = async () => {
+    if (!aCancelarPedido) return;
+    setACancelarBusy(true);
+    try {
+      await purchasesApi.updateOrderStatus(aCancelarPedido.id, 'CANCELADO');
+      toast.success('Pedido cancelado.');
+      recarregar();
+      setACancelarPedido(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Erro ao cancelar o pedido.');
+    } finally {
+      setACancelarBusy(false);
     }
   };
 
@@ -269,6 +295,9 @@ export function PurchasesPage() {
               onEnviar={enviarAoFornecedor}
               onConfirmar={setAConfirmar}
               onExpedir={setAExpedir}
+              onAlterar={setAAlterar}
+              onVerVersoes={setAVerVersoes}
+              onCancelar={setACancelarPedido}
               aSubmeter={aSubmeter}
             />
           )}
@@ -338,6 +367,51 @@ export function PurchasesPage() {
           onCreated={recarregar}
         />
       )}
+
+      {aAlterar && (
+        <AlterarLinhasPedidoModal
+          order={aAlterar}
+          onClose={() => setAAlterar(null)}
+          onSuccess={recarregar}
+        />
+      )}
+
+      {aVerVersoes && (
+        <VersoesPedidoModal order={aVerVersoes} onClose={() => setAVerVersoes(null)} />
+      )}
+
+      {aCancelarPedido && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
+            <div className="px-5 py-4">
+              <h2 className="text-base font-semibold text-slate-900">
+                Cancelar pedido #{aCancelarPedido.id.slice(0, 8)}?
+              </h2>
+              <p className="mt-1.5 text-sm text-slate-500">
+                {aCancelarPedido.fornecedor?.nome ?? 'Fornecedor n/d'}. Um pedido cancelado não
+                pode voltar atrás — se ainda for preciso comprar, cria-se um pedido novo.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
+              <button
+                onClick={() => setACancelarPedido(null)}
+                disabled={aCancelar}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-50"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={cancelarPedido}
+                disabled={aCancelar}
+                className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                {aCancelar && <Loader2 size={15} className="animate-spin" />}
+                Cancelar pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -354,6 +428,9 @@ function ListaDePedidos({
   onEnviar,
   onConfirmar,
   onExpedir,
+  onAlterar,
+  onVerVersoes,
+  onCancelar,
   aSubmeter,
 }: {
   pedidos: PurchaseOrder[];
@@ -365,6 +442,9 @@ function ListaDePedidos({
   onEnviar: (p: PurchaseOrder) => void;
   onConfirmar: (p: PurchaseOrder) => void;
   onExpedir: (p: PurchaseOrder) => void;
+  onAlterar: (p: PurchaseOrder) => void;
+  onVerVersoes: (p: PurchaseOrder) => void;
+  onCancelar: (p: PurchaseOrder) => void;
   /** O id do pedido a ser submetido, para desactivar só esse botão. */
   aSubmeter: string | null;
 }) {
@@ -526,6 +606,31 @@ function ListaDePedidos({
                     >
                       <Truck size={16} />
                     </button>
+                    {podeAlterarLinhas(p) && (
+                      <button
+                        onClick={() => onAlterar(p)}
+                        title="Alterar linhas"
+                        className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      >
+                        <FileEdit size={16} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onVerVersoes(p)}
+                      title="Ver histórico de versões"
+                      className="p-2 text-slate-400 transition-colors hover:text-slate-600"
+                    >
+                      <History size={16} />
+                    </button>
+                    {podeCancelarPedido(p) && (
+                      <button
+                        onClick={() => onCancelar(p)}
+                        title="Cancelar pedido"
+                        className="p-2 text-slate-400 transition-colors hover:text-rose-600"
+                      >
+                        <XCircle size={16} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
