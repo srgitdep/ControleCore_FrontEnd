@@ -182,3 +182,11 @@ export const URGENCIA_LABEL: Record<UrgenciaNecessidade, string> = {
   ALTA: 'Alta',
   MEDIA: 'Média',
 };
+
+/** A recomendação principal da MAYRA sobre a fila (DT01 §14). */
+export interface AnaliseMayra {
+  recomendacaoPrincipal: string;
+  /** 0 a 1 — quão bem sustentada a recomendação está pelos dados recebidos. */
+  confianca: number;
+  geradaEm: string;
+}

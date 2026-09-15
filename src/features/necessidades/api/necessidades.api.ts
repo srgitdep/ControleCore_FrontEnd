@@ -1,5 +1,6 @@
 import { api } from '@/shared/config';
 import type {
+  AnaliseMayra,
   DetalheNecessidade,
   FiltrosNecessidade,
   KpisNecessidades,
@@ -70,6 +71,18 @@ export const necessidadesApi = {
     dados: { origemLojaId: string; quantidade?: number },
   ) => {
     const { data } = await api.post(`/necessidades/${necessidadeId}/transferencia`, dados);
+    return data;
+  },
+
+  /**
+   * A recomendação principal da MAYRA sobre a fila (DT01 §14).
+   *
+   * Pode devolver 400 quando a MAYRA não está configurada neste ambiente — o painel
+   * operacional continua funcional sem ela (DT01 §6); o chamador trata isso como
+   * indisponibilidade, não como erro a propagar para o utilizador.
+   */
+  getAnaliseMayra: async (lojaId?: string) => {
+    const { data } = await api.get<AnaliseMayra>('/necessidades/mayra/analise', { params: { lojaId } });
     return data;
   },
 

@@ -205,7 +205,7 @@ export function NecessidadesPage() {
 
         <div className="space-y-4">
           <CoberturaCard kpis={kpis} isLoading={aCarregarKpis} />
-          <PainelMayra kpis={kpis} isLoading={aCarregarKpis} />
+          <PainelMayra kpis={kpis} isLoading={aCarregarKpis} lojaId={lojaId || undefined} />
         </div>
       </div>
 

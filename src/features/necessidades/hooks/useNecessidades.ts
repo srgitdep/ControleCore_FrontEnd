@@ -39,6 +39,24 @@ export function useDetalheNecessidade(id: string | null) {
 }
 
 /**
+ * A análise da MAYRA (DT01 §14).
+ *
+ * Um 400 aqui significa "MAYRA não configurada neste ambiente" (ver
+ * `AnalisarNecessidadesMayraUseCase`), não um erro de rede — `retry: false` evita
+ * três tentativas inúteis contra uma configuração que não vai mudar durante a
+ * sessão, e `PainelMayra` lê `isError` para mostrar indisponibilidade em vez de um
+ * estado de carregamento eterno.
+ */
+export function useAnaliseMayra(lojaId?: string) {
+  return useQuery({
+    queryKey: ['necessidades', 'mayra-analise', lojaId],
+    queryFn: () => necessidadesApi.getAnaliseMayra(lojaId),
+    retry: false,
+    staleTime: UM_MINUTO * 5,
+  });
+}
+
+/**
  * Criar Requisição a partir da necessidade.
  *
  * O toast distingue os dois desfechos do DT01 13: uma requisição nova, ou uma já

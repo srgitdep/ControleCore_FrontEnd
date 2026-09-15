@@ -1,32 +1,33 @@
-import { Sparkles, ChevronRight } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { Card } from '@/shared/ui';
+import { useAnaliseMayra } from '../hooks/useNecessidades';
 import type { KpisNecessidades } from '../types/necessidade.types';
 
 interface PainelMayraProps {
   kpis: KpisNecessidades | undefined;
   isLoading?: boolean;
+  lojaId?: string;
 }
 
 /**
- * MAYRA — Assistente de Abastecimento — DT01 14.
+ * MAYRA — Assistente de Abastecimento — DT01 §14.
  *
- * ## O que este componente é, e o que ainda não é
+ * Os cinco números vêm de `ListarNecessidadesUseCase.kpis` — contagens, sem IA
+ * nenhuma envolvida. A recomendação principal, essa sim, é gerada por
+ * `AnalisarNecessidadesMayraUseCase` (Fase 4): uma síntese em linguagem natural que,
+ * por definição, não é uma contagem que se possa calcular no cliente.
  *
- * O DT01 pede cinco números accionáveis e uma recomendação priorizada, vindos de uma
- * análise de IA sobre Stock, Vendas, Compras, Fornecedores, Recepções, Inventários,
- * Transferências, Validades, Custos e Commerce.
+ * ## Indisponibilidade explícita, não um botão desactivado
  *
- * Isso é o módulo `ai-copilot`/MAYRA, que hoje não tem uma leitura agregada por
- * necessidades — é a Fase 4 do plano. O que este componente mostra enquanto isso não
- * existe é a mesma contagem dos KPIs, reorganizada na forma que o DT01 pede (quantos em
- * risco, quantos resolvíveis por transferência, quantos já cobertos, quantos por
- * decidir), **sem** o texto de recomendação gerado por IA — que seria inventado se
- * aparecesse aqui.
- *
- * "Ver análise completa" fica desactivado pela mesma razão do cartão de cobertura: um
- * botão que abre vazio é pior do que a ausência dele.
+ * Sem `GEMINI_API_KEY` configurada no backend, o endpoint devolve 400 — tratado aqui
+ * como "MAYRA indisponível", nunca como um erro genérico. O DT01 §6 e §25 são
+ * explícitos: "se a MAYRA estiver indisponível, o painel operacional continua
+ * funcional e indica apenas indisponibilidade da análise inteligente". Os quatro
+ * números continuam visíveis mesmo quando a recomendação falha.
  */
-export function PainelMayra({ kpis, isLoading }: PainelMayraProps) {
+export function PainelMayra({ kpis, isLoading, lojaId }: PainelMayraProps) {
+  const { data: analise, isLoading: aCarregarAnalise, isError } = useAnaliseMayra(lojaId);
+
   if (isLoading || !kpis) {
     return (
       <Card className="animate-pulse" padding="lg">
@@ -76,22 +77,22 @@ export function PainelMayra({ kpis, isLoading }: PainelMayraProps) {
         </li>
       </ul>
 
-      {resolveisPorTransferencia > 0 && (
-        <div className="mt-4 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900">
-          Considere transferir {resolveisPorTransferencia} produto
-          {resolveisPorTransferencia === 1 ? '' : 's'} de outras lojas antes de criar novas
-          compras.
-        </div>
-      )}
-
-      <button
-        type="button"
-        disabled
-        title="Análise completa da MAYRA — por vir"
-        className="mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-300"
-      >
-        Ver análise completa <ChevronRight size={14} />
-      </button>
+      {/* A recomendação principal — DT01 §14. Três estados, nunca escondidos: a
+          carregar, indisponível, ou o texto que a Gemini gerou sobre esta fila. */}
+      <div className="mt-4 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900">
+        {aCarregarAnalise ? (
+          <span className="flex items-center gap-2 text-indigo-700">
+            <Loader2 size={14} className="animate-spin" /> A analisar a fila...
+          </span>
+        ) : isError ? (
+          <span className="text-indigo-700/70">
+            Análise inteligente indisponível neste momento. O painel operacional
+            continua funcional.
+          </span>
+        ) : (
+          <span>{analise?.recomendacaoPrincipal}</span>
+        )}
+      </div>
     </Card>
   );
 }
