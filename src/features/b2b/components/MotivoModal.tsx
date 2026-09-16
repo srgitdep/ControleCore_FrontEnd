@@ -7,7 +7,12 @@ interface Props {
   descricao?: string;
   textoConfirmar: string;
   corConfirmar?: 'blue' | 'rose';
-  onConfirmar: (motivo: string) => Promise<void>;
+  // `Promise<unknown>` e não `Promise<void>`: os chamadores passam `mutateAsync`, que
+  // resolve com o registo actualizado (ex.: a Requisicao reaberta ou cancelada). Este
+  // componente só faz `await` — nunca lê o valor —, mas o tipo tem de aceitar o que os
+  // dois usos reais devolvem, em vez de forçar cada chamador a descartar o resultado
+  // com `.then(() => {})` só para satisfazer `void`.
+  onConfirmar: (motivo: string) => Promise<unknown>;
   onClose: () => void;
 }
 
