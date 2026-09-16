@@ -6,7 +6,6 @@ import { turnosApi } from '../api/turnos.api';
 import type { Turno, EscalaTurno } from '../api/turnos.api';
 import { getLojas } from '@/features/lojas';
 import type { Employee } from '../types';
-import { cn } from '@/shared/utils';
 
 interface Loja {
   id: string;
