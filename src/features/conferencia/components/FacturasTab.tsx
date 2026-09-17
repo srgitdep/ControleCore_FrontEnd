@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Lock,
   Plus,
+  PackageCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
@@ -17,6 +18,7 @@ import { conferenciaApi, EstadoFactura, ROTULO_TIPO } from '../api/conferencia.a
 import type { Factura, ResultadoConferencia } from '../api/conferencia.api';
 import { RegistarFacturaModal } from './RegistarFacturaModal';
 import { DetalheFacturaModal } from './DetalheFacturaModal';
+import { SessaoConferenciaModal } from './SessaoConferenciaModal';
 
 const mt = (v: number) =>
   `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
@@ -39,6 +41,7 @@ export function FacturasTab() {
   const [aConferir, setAConferir] = useState<string | null>(null);
   const [aRegistar, setARegistar] = useState(false);
   const [aVerDetalhe, setAVerDetalhe] = useState<string | null>(null);
+  const [aContar, setAContar] = useState<Factura | null>(null);
 
   const { data: facturas = [], isLoading } = useQuery({
     queryKey: ['facturas-fornecedor'],
@@ -158,6 +161,15 @@ export function FacturasTab() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    {f.estado === EstadoFactura.RECEBIDA && f.pedidoId && (
+                      <button
+                        onClick={() => setAContar(f)}
+                        title="Iniciar conferência de recepção (contagem da descarga)"
+                        className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
+                      >
+                        <PackageCheck size={16} />
+                      </button>
+                    )}
                     {f.estado !== EstadoFactura.APROVADA_PARA_PAGAMENTO &&
                       f.estado !== EstadoFactura.REJEITADA && (
                         <button
@@ -216,6 +228,14 @@ export function FacturasTab() {
 
       {aVerDetalhe && (
         <DetalheFacturaModal facturaId={aVerDetalhe} onClose={() => setAVerDetalhe(null)} />
+      )}
+
+      {aContar && (
+        <SessaoConferenciaModal
+          factura={aContar}
+          onClose={() => setAContar(null)}
+          onFinalizada={() => queryClient.invalidateQueries({ queryKey: ['facturas-fornecedor'] })}
+        />
       )}
     </div>
   );
