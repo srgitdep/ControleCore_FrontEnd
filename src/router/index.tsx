@@ -3,6 +3,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
 import { LandingPage } from '@/pages/LandingPage';
+import { PrecosPage } from '@/pages/PrecosPage';
 import { DashboardPage } from '@/features/dashboard';
 import { EmpresasPage } from '@/features/empresas';
 import { ModulosPage } from '@/features/modulos';
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
   // ──────────────── Rotas Públicas (não requerem autenticação) ───────────────────────────
   { path: '/',                 element: <RootRedirectOrLanding /> },
   { path: '/landing',          element: <LandingPage /> },
+  { path: '/precos',           element: <PrecosPage /> },
   { path: '/login',            element: <LoginPage /> },
 
   // ─── Criar conta ────────────────────────────────────────────────────────────────

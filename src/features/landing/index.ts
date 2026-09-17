@@ -5,6 +5,7 @@ export {
   OProblema,
   CadeiaViva,
   Modulos,
+  Precos,
   AMayra,
   Seguranca,
   ComoComeca,
