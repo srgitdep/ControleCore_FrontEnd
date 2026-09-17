@@ -693,16 +693,19 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   }, [endVoiceSession, startMicrophone, startFallbackRecognition, cleanTextForSpeech, state, pararDeOuvir, voltarAOuvir]);
 
   /**
-   * Envia uma mensagem de texto alternativa pelo socket ative.
+   * Envia uma mensagem de texto alternativa pelo socket ativo.
+   *
+   * Fora do modo fallback, isto emitia `audio_input` com `data: ''` — um chunk de
+   * áudio vazio, nunca o texto escrito. A Gemini Live recebia silêncio, nunca
+   * detectava fala, e a sessão ficava muda (só `sessionResumptionUpdate` de rotina,
+   * sem nenhum turno). O gateway (`ai-copilot-voice.gateway.ts`) já sabe encaminhar
+   * `text_input` para a sessão nativa via `GeminiLiveSession.sendTextMessage` quando
+   * ela existe — só faltava emitir o evento certo.
    */
   const sendTextMessage = useCallback((text: string) => {
     if (!text.trim() || !socketRef.current?.connected) return;
     setTranscript(text);
-    if (fallbackModeRef.current) {
-      socketRef.current.emit('text_input', { text: text.trim() });
-    } else {
-      socketRef.current.emit('audio_input', { data: '' }); // Ping ou mensagem textual via Socket
-    }
+    socketRef.current.emit('text_input', { text: text.trim() });
   }, []);
 
   return {
