@@ -10,6 +10,7 @@ import {
 
 import { COPY } from '@/shared/constants/copywriting';
 import { LANDING_IMAGES } from '../constants/landingImages';
+import { PLANOS } from '../precos.dados';
 
 /**
  * As secções da landing page.
@@ -491,6 +492,74 @@ export function Modulos() {
               alt={`Ecrã de ${modulo.titulo} do ControlCore.`}
             />
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Preços ───────────────────────────────────────────────────────────────────
+
+/** O preço aparece na página inicial. Não escondido atrás de «contacte-nos». */
+export function Precos() {
+  return (
+    <section id="precos" className="cc-secao">
+      <div className="cc-caixa">
+        <span className="cc-etiqueta">Preços</span>
+        <h2 className="cc-titulo" style={{ maxWidth: '24ch' }}>
+          Três escalões. Todos dão acesso à plataforma inteira.
+        </h2>
+        <p className="cc-subtitulo">
+          O que muda entre escalões é o <strong style={{ color: 'var(--tinta)' }}>âmbito</strong>,
+          não um sistema diferente por trás. Todos os planos correm no mesmo ControlCore.
+        </p>
+
+        <div
+          className="cc-desliza"
+          style={{ display: 'grid', gap: 18, marginTop: 44, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
+        >
+          {PLANOS.map((p) => (
+            <article
+              key={p.codigo}
+              className="cc-cartao"
+              style={{
+                position: 'relative',
+                borderColor: p.destacado ? 'var(--azul-linha)' : 'var(--linha)',
+                borderWidth: p.destacado ? 2 : 1,
+              }}
+            >
+              {p.destacado && (
+                <span
+                  style={{
+                    position: 'absolute', top: -11, left: 22, padding: '3px 10px',
+                    borderRadius: 999, background: 'var(--azul-fundo)', color: '#fff',
+                    fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}
+                >
+                  O mais escolhido
+                </span>
+              )}
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--tinta)' }}>
+                {p.nome}
+              </h3>
+              <p style={{ margin: '10px 0 0', minHeight: '3.2em', fontSize: 14, lineHeight: 1.5, color: 'var(--tinta-suave)' }}>
+                «{p.frase}»
+              </p>
+              <p style={{ margin: '18px 0 0', fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', color: 'var(--tinta)' }}>
+                {p.mensal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} MT
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tinta-tenue)' }}>/mês</span>
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--tinta-tenue)' }}>
+                {p.utilizadores} utilizadores incluídos · sem IVA
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 28 }}>
+          <Link to="/precos" className="cc-botao cc-botao--cheio">
+            Ver o que cada plano desbloqueia <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>

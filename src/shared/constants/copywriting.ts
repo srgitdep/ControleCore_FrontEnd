@@ -55,6 +55,7 @@ export const COPY = {
     NAV: [
       { para: '/#modulos', texto: 'Módulos' },
       { para: '/#operacao', texto: 'A operação' },
+      { para: '/precos', texto: 'Preços' },
       { para: '/#mayra', texto: 'A Mayra' },
       { para: '/#comecar', texto: 'Como começa' },
     ],
@@ -70,6 +71,7 @@ export const COPY = {
           itens: [
             { texto: 'Módulos', para: '/#modulos' },
             { texto: 'A operação', para: '/#operacao' },
+            { texto: 'Preços', para: '/precos' },
             { texto: 'A Mayra', para: '/#mayra' },
             { texto: 'Como começa', para: '/#comecar' },
           ],

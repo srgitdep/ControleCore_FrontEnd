@@ -6,6 +6,7 @@ import {
   OProblema,
   CadeiaViva,
   Modulos,
+  Precos,
   AMayra,
   Seguranca,
   ComoComeca,
@@ -24,10 +25,11 @@ import '@/features/landing/site.css';
  *  3. `OProblema` — as quatro dores. Quem não se reconhece aqui, sai daqui.
  *  4. `CadeiaViva` — a tese: sete módulos, um só movimento.
  *  5. `Modulos` — a prova, ecrã a ecrã.
- *  6. `AMayra` — a diferença, com a confirmação antes de escrever à vista.
- *  7. `Seguranca` — a objecção que vem sempre, respondida sem selos inventados.
- *  8. `ComoComeca` — «e quanto tempo até funcionar?».
- *  9. `Fecho` — a acção.
+ *  6. `Precos` — o que custa, sem esconder atrás de «contacte-nos».
+ *  7. `AMayra` — a diferença, com a confirmação antes de escrever à vista.
+ *  8. `Seguranca` — a objecção que vem sempre, respondida sem selos inventados.
+ *  9. `ComoComeca` — «e quanto tempo até funcionar?».
+ * 10. `Fecho` — a acção.
  *
  * A classe `cc-sitio` serve a regra de `prefers-reduced-motion` no `site.css`:
  * limitada a esta árvore, para não desligar as transições do resto da aplicação.
@@ -42,6 +44,7 @@ export function LandingPage() {
         <OProblema />
         <CadeiaViva />
         <Modulos />
+        <Precos />
         <AMayra />
         <Seguranca />
         <ComoComeca />

@@ -49,15 +49,19 @@ export function BarraDoSitio() {
           className="cc-nav-larga"
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 28 }}
         >
-          {COPY.SITIO.NAV.map((l) => (
-            <a
-              key={l.para}
-              href={l.para}
-              style={{ fontSize: 14, fontWeight: 500, color: 'var(--tinta-suave)', textDecoration: 'none' }}
-            >
-              {l.texto}
-            </a>
-          ))}
+          {COPY.SITIO.NAV.map((l) => {
+            const estilo: React.CSSProperties = { fontSize: 14, fontWeight: 500, color: 'var(--tinta-suave)', textDecoration: 'none' };
+            // Uma âncora `/#modulos` faz deslocar a página; só as rotas reais vão pelo `Link`.
+            return l.para.startsWith('/#') ? (
+              <a key={l.para} href={l.para} style={estilo}>
+                {l.texto}
+              </a>
+            ) : (
+              <Link key={l.para} to={l.para} style={estilo}>
+                {l.texto}
+              </Link>
+            );
+          })}
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
@@ -107,23 +111,25 @@ export function BarraDoSitio() {
             gap: 4,
           }}
         >
-          {COPY.SITIO.NAV.map((l) => (
-            <a
-              key={l.para}
-              href={l.para}
-              onClick={() => setAberto(false)}
-              style={{
-                padding: '12px 0',
-                fontSize: 15.5,
-                fontWeight: 600,
-                color: 'var(--tinta)',
-                textDecoration: 'none',
-                borderBottom: '1px solid var(--linha)',
-              }}
-            >
-              {l.texto}
-            </a>
-          ))}
+          {COPY.SITIO.NAV.map((l) => {
+            const estilo: React.CSSProperties = {
+              padding: '12px 0',
+              fontSize: 15.5,
+              fontWeight: 600,
+              color: 'var(--tinta)',
+              textDecoration: 'none',
+              borderBottom: '1px solid var(--linha)',
+            };
+            return l.para.startsWith('/#') ? (
+              <a key={l.para} href={l.para} onClick={() => setAberto(false)} style={estilo}>
+                {l.texto}
+              </a>
+            ) : (
+              <Link key={l.para} to={l.para} onClick={() => setAberto(false)} style={estilo}>
+                {l.texto}
+              </Link>
+            );
+          })}
         </nav>
       )}
     </header>
