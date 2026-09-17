@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Check, Ban, Loader2, AlertTriangle, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { purchasesApi } from '../api/purchases.api';
-import type { PurchaseOrder } from '../api/purchases.api';
+import type { PurchaseOrder, PurchaseOrderItem } from '../api/purchases.api';
 
 interface Props {
   order: PurchaseOrder;
@@ -36,7 +36,33 @@ export function AprovacaoModal({ order, utilizadorId, onClose, onSuccess }: Prop
   const [motivo, setMotivo] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const total = order.itens?.reduce(
+  // A listagem não traz `itens` — sem isto, o ecrã mostrava «Linhas: —, Valor: —» mesmo em
+  // pedidos com produtos reais, e uma decisão tomada às cegas é pior do que uma atrasada.
+  const [itens, setItens] = useState<PurchaseOrderItem[]>(order.itens ?? []);
+  const [isLoadingItens, setIsLoadingItens] = useState(!order.itens?.length);
+
+  useEffect(() => {
+    if (order.itens?.length) return;
+
+    let activo = true;
+    purchasesApi
+      .getOrderById(order.id)
+      .then((completo) => {
+        if (activo) setItens(completo.itens ?? []);
+      })
+      .catch(() => {
+        if (activo) toast.error('Não foi possível carregar as linhas do pedido.');
+      })
+      .finally(() => {
+        if (activo) setIsLoadingItens(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [order.id, order.itens]);
+
+  const total = itens.reduce(
     (soma, i) => soma + i.quantidadePedida * i.custoUnitario - (i.desconto ?? 0),
     0,
   );
@@ -98,12 +124,12 @@ export function AprovacaoModal({ order, utilizadorId, onClose, onSuccess }: Prop
             <div>
               <dt className="text-xs text-slate-500">Valor</dt>
               <dd className="font-medium text-slate-900">
-                {total !== undefined ? mt(total) : '—'}
+                {isLoadingItens ? '…' : mt(total)}
               </dd>
             </div>
             <div>
               <dt className="text-xs text-slate-500">Linhas</dt>
-              <dd className="text-slate-700">{order.itens?.length ?? '—'}</dd>
+              <dd className="text-slate-700">{isLoadingItens ? '…' : itens.length}</dd>
             </div>
             <div>
               <dt className="text-xs text-slate-500">Criada por</dt>
@@ -123,27 +149,34 @@ export function AprovacaoModal({ order, utilizadorId, onClose, onSuccess }: Prop
 
           {/* As linhas, para a decisão não ser tomada às cegas. Uma aprovação que não
               mostra o que se está a aprovar é um carimbo. */}
-          {order.itens && order.itens.length > 0 && (
-            <div className="overflow-hidden rounded-lg border border-slate-200">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Produto</th>
-                    <th className="px-3 py-2 text-right font-medium">Qtd.</th>
-                    <th className="px-3 py-2 text-right font-medium">Preço</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {order.itens.map((i) => (
-                    <tr key={i.id}>
-                      <td className="px-3 py-2 text-slate-700">{i.produto?.nome ?? i.produtoId}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{i.quantidadePedida}</td>
-                      <td className="px-3 py-2 text-right text-slate-600">{mt(i.custoUnitario)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {isLoadingItens ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              A carregar as linhas do pedido...
             </div>
+          ) : (
+            itens.length > 0 && (
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-xs text-slate-500">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Produto</th>
+                      <th className="px-3 py-2 text-right font-medium">Qtd.</th>
+                      <th className="px-3 py-2 text-right font-medium">Preço</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {itens.map((i) => (
+                      <tr key={i.id}>
+                        <td className="px-3 py-2 text-slate-700">{i.produto?.nome ?? i.produtoId}</td>
+                        <td className="px-3 py-2 text-right text-slate-600">{i.quantidadePedida}</td>
+                        <td className="px-3 py-2 text-right text-slate-600">{mt(i.custoUnitario)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
 
           <div className="grid grid-cols-2 gap-3">
