@@ -148,6 +148,36 @@ export interface PoliticaTolerancia {
   activa: boolean;
 }
 
+export const EstadoSessaoConferencia = {
+  EM_CURSO: 'EM_CURSO',
+  FINALIZADA: 'FINALIZADA',
+} as const;
+export type EstadoSessaoConferencia =
+  (typeof EstadoSessaoConferencia)[keyof typeof EstadoSessaoConferencia];
+
+export interface SessaoConferenciaRececaoItem {
+  id: string;
+  linhaFacturaId: string;
+  produtoId: string;
+  quantidadeContada: number;
+}
+
+/**
+ * A contagem da descarga em curso (ou já finalizada) para uma factura.
+ *
+ * Não traz a quantidade da factura de propósito — quem conta não deve ver o número que
+ * está a confirmar, para a contagem valer como conferência independente e não como cópia.
+ */
+export interface SessaoConferenciaRececao {
+  id: string;
+  facturaId: string;
+  estado: EstadoSessaoConferencia;
+  iniciadaEm: string;
+  finalizadaEm?: string | null;
+  rececaoId?: string | null;
+  itens: SessaoConferenciaRececaoItem[];
+}
+
 export interface RegistarFacturaDto {
   fornecedorId: string;
   pedidoId?: string;
@@ -276,6 +306,54 @@ export const conferenciaApi = {
     dto: { aprovar: boolean; motivo?: string; dataVencimento?: string },
   ) => {
     const { data } = await api.post<Factura>(`/b2b/facturas/${id}/decisao`, dto);
+    return data;
+  },
+
+  // ─── Conferência por contagem (recepção física) ─────────────────────────────
+
+  /** Abre a contagem da descarga, com um item por linha da factura, todos a 0. */
+  iniciarSessaoConferencia: async (facturaId: string) => {
+    const { data } = await api.post<SessaoConferenciaRececao>(
+      `/b2b/facturas/${facturaId}/sessao-conferencia`,
+    );
+    return data;
+  },
+
+  /** A contagem em curso ou já finalizada desta factura, se existir alguma. */
+  obterSessaoConferencia: async (facturaId: string) => {
+    const { data } = await api.get<SessaoConferenciaRececao>(
+      `/b2b/facturas/${facturaId}/sessao-conferencia`,
+    );
+    return data;
+  },
+
+  /**
+   * Soma (ou subtrai, com um `delta` negativo) à contagem de um produto.
+   *
+   * Cada chamada é um incremento atómico no servidor — nunca um valor final calculado no
+   * cliente, para duas pessoas a contar o mesmo camião não se sobrescreverem.
+   */
+  incrementarContagem: async (sessaoId: string, itemId: string, delta: number) => {
+    const { data } = await api.patch<SessaoConferenciaRececaoItem>(
+      `/b2b/sessao-conferencia/${sessaoId}/itens/${itemId}`,
+      { delta },
+    );
+    return data;
+  },
+
+  /**
+   * Fecha a contagem: gera a recepção com o que foi contado e confere-a contra a factura.
+   *
+   * O produto que ninguém tocou fica em 0 e entra na comparação como não recebido.
+   */
+  finalizarSessaoConferencia: async (
+    sessaoId: string,
+    dto: { armazemId: string; documentoRef?: string; observacoes?: string },
+  ) => {
+    const { data } = await api.post<ResultadoConferencia>(
+      `/b2b/sessao-conferencia/${sessaoId}/finalizar`,
+      dto,
+    );
     return data;
   },
 
