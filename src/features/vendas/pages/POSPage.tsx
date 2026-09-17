@@ -801,13 +801,28 @@ export function POSPage() {
                   
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
-                      <button 
+                      <button
                         onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity - 1))}
                         className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
-                      <span className="text-xs font-bold w-6 text-center text-gray-800">{item.cartQuantity}</span>
+                      {/* Editável e não só um contador: uma venda de 100 unidades não se
+                          faz a clicar «+» cem vezes. */}
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={item.cartQuantity}
+                        onChange={(e) => {
+                          const valor = Number(e.target.value);
+                          if (!Number.isNaN(valor) && valor > 0) {
+                            avisarSeRecusado(updateQuantity(item.id, valor));
+                          }
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        className="w-10 bg-transparent text-center text-xs font-bold text-gray-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
                       <button
                         onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity + 1))}
                         disabled={item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel}
