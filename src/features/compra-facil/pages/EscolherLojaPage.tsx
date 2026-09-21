@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Loader2, MapPin, Store } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Store } from 'lucide-react';
 import { useLojasCommerce } from '../hooks/useCatalogoCommerce';
 
 /**
@@ -33,6 +33,17 @@ export function EscolherLojaPage() {
 
   return (
     <div className="cc-caixa py-12">
+      {/* Este é o primeiro ecrã da loja, sem `LojaTopo` (ainda não há loja
+          escolhida) — sem este link, a única forma de sair era o botão
+          "voltar" do browser. */}
+      <Link
+        to="/"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+      >
+        <ArrowLeft size={15} />
+        Voltar ao início
+      </Link>
+
       <header className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Escolha a sua loja</h1>
         <p className="mt-1 text-sm text-slate-500">
