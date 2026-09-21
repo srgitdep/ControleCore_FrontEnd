@@ -1,9 +1,10 @@
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { Check, CheckCircle2, Clock, Loader2, PackageCheck, XCircle } from 'lucide-react';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCancelarPedido, usePedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
+import { VoltarLink } from '../components/VoltarLink';
 import { ETIQUETA_ESTADO_PEDIDO, ETIQUETA_METODO_PAGAMENTO } from '../api/pedidos.api';
 import type { EstadoPedido, MetodoPagamentoCommerce } from '../api/pedidos.api';
 
@@ -40,9 +41,7 @@ export function PedidoDetalhePage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-xl py-8">
-        <Link to={`/loja/${lojaId}/pedidos`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
-          ← Os meus pedidos
-        </Link>
+        <VoltarLink to={`/loja/${lojaId}/pedidos`}>Os meus pedidos</VoltarLink>
 
         {(isLoading || aCarregar) && (
           <div className="flex min-h-[30vh] items-center justify-center">

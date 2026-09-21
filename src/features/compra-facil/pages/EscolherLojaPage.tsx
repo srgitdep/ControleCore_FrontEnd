@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, MapPin, Store } from 'lucide-react';
+import { Loader2, MapPin, Store } from 'lucide-react';
 import { useLojasCommerce } from '../hooks/useCatalogoCommerce';
+import { VoltarLink } from '../components/VoltarLink';
 
 /**
  * A escolha da loja — o primeiro passo do Compra Fácil.
@@ -36,13 +37,7 @@ export function EscolherLojaPage() {
       {/* Este é o primeiro ecrã da loja, sem `LojaTopo` (ainda não há loja
           escolhida) — sem este link, a única forma de sair era o botão
           "voltar" do browser. */}
-      <Link
-        to="/"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
-      >
-        <ArrowLeft size={15} />
-        Voltar ao início
-      </Link>
+      <VoltarLink to="/">Voltar ao início</VoltarLink>
 
       <header className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Escolha a sua loja</h1>

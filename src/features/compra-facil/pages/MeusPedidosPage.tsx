@@ -4,6 +4,7 @@ import { formatData, formatMoeda } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useMeusPedidos } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
+import { VoltarLink } from '../components/VoltarLink';
 import { ETIQUETA_ESTADO_PEDIDO } from '../api/pedidos.api';
 
 export function MeusPedidosPage() {
@@ -22,9 +23,7 @@ export function MeusPedidosPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
-        <Link to={`/loja/${lojaId}`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
-          ← Voltar ao catálogo
-        </Link>
+        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
 
         <h1 className="mb-5 text-xl font-bold text-slate-900">Os meus pedidos</h1>
 

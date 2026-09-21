@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { mensagemDeErro } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { GoogleLoginBotao } from '../components/GoogleLoginBotao';
+import { VoltarLink } from '../components/VoltarLink';
 
 export function CriarContaPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
@@ -37,6 +38,8 @@ export function CriarContaPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
+        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />
@@ -113,13 +116,6 @@ export function CriarContaPage() {
             Entrar
           </Link>
         </p>
-
-        <Link
-          to={`/loja/${lojaId}`}
-          className="mt-2 block text-center text-xs text-slate-400 hover:underline"
-        >
-          Voltar ao catálogo
-        </Link>
       </div>
     </div>
   );
