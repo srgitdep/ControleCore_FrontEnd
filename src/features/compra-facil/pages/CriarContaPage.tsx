@@ -4,6 +4,7 @@ import { Loader2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { mensagemDeErro } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
+import { GoogleLoginBotao } from '../components/GoogleLoginBotao';
 
 export function CriarContaPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
@@ -43,6 +44,8 @@ export function CriarContaPage() {
           <h1 className="mt-3 text-lg font-semibold text-slate-900">Criar conta</h1>
           <p className="mt-1 text-sm text-slate-500">Para comprar e acompanhar os seus pedidos.</p>
         </header>
+
+        <GoogleLoginBotao lojaId={lojaId} destino={`/loja/${lojaId}`} />
 
         <form onSubmit={submeter} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
           <div>

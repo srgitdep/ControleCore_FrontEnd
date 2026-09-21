@@ -27,6 +27,7 @@ interface EstadoConta {
   aCarregar: boolean;
 
   entrar: (lojaId: string, identificador: string, password: string) => Promise<void>;
+  entrarComGoogle: (lojaId: string, credential: string) => Promise<void>;
   registar: (dados: {
     lojaId: string;
     nome: string;
@@ -53,6 +54,17 @@ export const useContaClienteStore = create<EstadoConta>((set, get) => ({
     } catch {
       /* Sem sessionStorage (privado/bloqueado): a sessão continua a funcionar pelo
          cookie, só o palpite optimista da próxima recarga é que se perde. */
+    }
+  },
+
+  entrarComGoogle: async (lojaId, credential) => {
+    const { cliente } = await conta.entrarComGoogle({ lojaId, credential });
+    set({ cliente, autenticado: true, aCarregar: false });
+
+    try {
+      sessionStorage.setItem(CHAVE, JSON.stringify(cliente));
+    } catch {
+      /* ver a nota em `entrar` */
     }
   },
 
