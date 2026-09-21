@@ -375,8 +375,10 @@ esse merge trouxe.
 ### Compra Fácil
 
 - [ ] **Fase 13 — CRM, recomendação por regras e promoções** (Compra Fácil).
-      Fonte: `Docs/plano_feature_compra_facil.md` §8.3 e linha 774. Depende do
-      núcleo do pedido estar estável (Fases 11–12, já concluídas).
+      Fonte: `plano_feature_compra_facil.md` §8.3 (documento de planeamento já
+      removido do `Docs/` por estar superado; texto completo no histórico git,
+      commit `feat/compra-facil-fase11`). Depende do núcleo do pedido estar
+      estável (Fases 11–12, já concluídas).
 - [ ] `FavoritoCliente` — pendência opcional deixada em aberto na Fase 11 (o
       modelo já existe no schema Prisma; falta a funcionalidade de topo).
 - [ ] Promoções com verificação de risco de stock (`assess_promotion_stock_risk`,
@@ -386,10 +388,11 @@ esse merge trouxe.
 
 - [ ] Configurar `GOOGLE_CLIENT_ID`/`VITE_GOOGLE_CLIENT_ID` reais em produção
       (Google Cloud Console) e testar o fluxo de ponta a ponta antes do deploy.
-      Fonte: `Docs/plano_feature_login_google_compra_facil.md` (Estado, linha 4).
+      Fonte: `plano_feature_login_google_compra_facil.md` (documento de
+      planeamento já removido do `Docs/` por estar superado; texto completo no
+      histórico git, commit `feat/login-google-compra-facil`).
 - [ ] Estados de loading/erro dedicados à volta do `<GoogleLogin>` — falta
       confirmar se o comportamento por omissão do componente chega.
-      Fonte: mesmo documento, linha 264.
 
 ### Infra / observação
 
