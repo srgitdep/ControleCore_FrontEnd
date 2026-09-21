@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Loader2, Minus, Package, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatMoeda } from '@/shared/utils';
 import { useProdutoLoja } from '../hooks/useCatalogoCommerce';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { LojaTopo } from '../components/LojaTopo';
+import { VoltarLink } from '../components/VoltarLink';
 
 export function ProdutoDetalhePage() {
   const { lojaId, produtoId } = useParams<{ lojaId: string; produtoId: string }>();
@@ -27,9 +28,9 @@ export function ProdutoDetalhePage() {
     return (
       <div className="cc-caixa py-16 text-center">
         <p className="text-sm text-slate-500">Produto não encontrado nesta loja.</p>
-        <Link to={`/loja/${lojaId}`} className="mt-2 inline-block text-sm text-blue-600 hover:underline">
-          Voltar ao catálogo
-        </Link>
+        <div className="mt-2 flex justify-center">
+          <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+        </div>
       </div>
     );
   }
@@ -51,9 +52,7 @@ export function ProdutoDetalhePage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa py-8">
-        <Link to={`/loja/${lojaId}`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
-          ← Voltar ao catálogo
-        </Link>
+        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-50">

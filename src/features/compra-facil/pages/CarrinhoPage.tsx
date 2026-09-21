@@ -5,6 +5,7 @@ import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { LojaTopo } from '../components/LojaTopo';
+import { VoltarLink } from '../components/VoltarLink';
 
 export function CarrinhoPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
@@ -30,9 +31,7 @@ export function CarrinhoPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
-        <Link to={`/loja/${lojaId}`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
-          ← Voltar ao catálogo
-        </Link>
+        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
 
         <h1 className="mb-5 text-xl font-bold text-slate-900">O meu carrinho</h1>
 

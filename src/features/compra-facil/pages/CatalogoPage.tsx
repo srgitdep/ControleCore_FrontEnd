@@ -5,6 +5,7 @@ import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useProdutosLoja } from '../hooks/useCatalogoCommerce';
 import { LojaTopo } from '../components/LojaTopo';
 import { ProdutoCartao } from '../components/ProdutoCartao';
+import { VoltarLink } from '../components/VoltarLink';
 
 /** O catálogo de uma loja: pesquisa e grelha de produtos, com disponibilidade real. */
 export function CatalogoPage() {
@@ -24,6 +25,8 @@ export function CatalogoPage() {
       <LojaTopo lojaId={lojaId} busca={busca} onBuscaChange={setBusca} />
 
       <div className="cc-caixa py-6">
+        <VoltarLink to="/loja">Trocar de loja</VoltarLink>
+
         {isLoading && (
           <div className="flex min-h-[40vh] items-center justify-center">
             <Loader2 size={22} className="animate-spin text-slate-400" />

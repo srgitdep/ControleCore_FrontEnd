@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCriarPedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
+import { VoltarLink } from '../components/VoltarLink';
 import { ETIQUETA_METODO_PAGAMENTO } from '../api/pedidos.api';
 import type { MetodoPagamentoCommerce } from '../api/pedidos.api';
 
@@ -66,9 +67,7 @@ export function CheckoutPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
-        <Link to={`/loja/${lojaId}/carrinho`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
-          ← Voltar ao carrinho
-        </Link>
+        <VoltarLink to={`/loja/${lojaId}/carrinho`}>Voltar ao carrinho</VoltarLink>
 
         <h1 className="mb-5 text-xl font-bold text-slate-900">Confirmar pedido</h1>
 
