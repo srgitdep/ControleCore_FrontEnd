@@ -389,6 +389,10 @@ esse merge trouxe.
   - style(compra-facil): redesenha o carrinho ao padrão moderno de
     e-commerce — duas colunas (itens + resumo do pedido fixo), stepper de
     quantidade em pílula, CTA em destaque
+- **2026-09-21 · [FE] · Antonio Mambo** — `style/checkout-moderno`
+  - style(compra-facil): redesenha o checkout ao mesmo padrão do carrinho —
+    mesmo cartão de "Resumo do pedido", método de pagamento como cartões
+    seleccionáveis com ícone (Numerário/M-Pesa/E-Mola)
 
   > Decisões de arquitectura do mercado: um cartão por produto, nunca por
   > (produto × loja) — evita mostrar o mesmo artigo duplicado pelas várias
