@@ -89,6 +89,14 @@ export const conta = {
     const { data } = await contaApi.get<ContaCliente>(`${BASE}/eu`);
     return data;
   },
+
+  /** As lojas onde esta conta já comprou — só as da mesma empresa desta sessão. */
+  lojasCompradas: async () => {
+    const { data } = await contaApi.get<{ lojaId: string; lojaNome: string }[]>(
+      `${BASE}/lojas-compradas`,
+    );
+    return data;
+  },
 };
 
 export { contaApi };
