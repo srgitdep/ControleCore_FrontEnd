@@ -58,6 +58,9 @@ export const COPY = {
       { para: '/precos', texto: 'Preços' },
       { para: '/#mayra', texto: 'A Mayra' },
       { para: '/#comecar', texto: 'Como começa' },
+      // Único link do site público para o Compra Fácil — sem ele, um cliente final
+      // só chega a `/loja` escrevendo o URL de cor (não há outro ponto de entrada).
+      { para: '/loja', texto: 'Comprar online' },
     ],
     ENTRAR: 'Entrar',
     DEMONSTRACAO: 'Pedir demonstração',
@@ -74,6 +77,7 @@ export const COPY = {
             { texto: 'Preços', para: '/precos' },
             { texto: 'A Mayra', para: '/#mayra' },
             { texto: 'Como começa', para: '/#comecar' },
+            { texto: 'Comprar online', para: '/loja' },
           ],
         },
         {
@@ -398,6 +402,11 @@ export const COPY = {
     ERRO_GENERICO: 'Não foi possível comunicar com o servidor. Tente novamente.',
     MOSTRAR_SENHA: 'Mostrar senha',
     OCULTAR_SENHA: 'Ocultar senha',
+    // Este ecrã só autentica `User` (comprador/fornecedor) — um cliente final de
+    // uma loja não tem código de acesso nenhum aqui, e sem este link não havia
+    // nenhuma pista de para onde ir.
+    QUER_COMPRAR: 'Quer comprar numa loja?',
+    IR_A_LOJA: 'Ir à loja online',
 
     /* O painel da esquerda roda entre estas quatro. São as mesmas quatro dores da
      * landing, ditas em duas linhas: quem chega ao login vindo do sítio reconhece a
