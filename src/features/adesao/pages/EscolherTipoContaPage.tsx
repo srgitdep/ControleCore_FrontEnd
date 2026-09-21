@@ -102,6 +102,17 @@ export function EscolherTipoContaPage() {
             Ver os fornecedores da plataforma
           </Link>
         </p>
+
+        {/* Nem comprador nem fornecedor: quem só quer comprar numa loja não está a
+            aderir à plataforma, por isso não é um terceiro cartão acima — é uma
+            terceira pessoa que passa por aqui à procura de "criar conta" e não
+            encontrava nada para ela. */}
+        <p className="mt-1.5 text-center text-xs text-slate-400">
+          Só quer comprar numa loja?{' '}
+          <Link to="/loja" className="hover:underline">
+            Ir à loja online
+          </Link>
+        </p>
       </div>
     </div>
   );

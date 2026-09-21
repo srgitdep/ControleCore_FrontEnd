@@ -240,6 +240,13 @@ export function LoginPage() {
               <ArrowLeft size={14} />
               {copy.VOLTAR}
             </Link>
+
+            <p style={{ marginTop: 14, fontSize: 12.5, color: 'var(--tinta-tenue)' }}>
+              {copy.QUER_COMPRAR}{' '}
+              <Link to="/loja" style={{ fontWeight: 600, color: 'var(--azul-fundo)', textDecoration: 'none' }}>
+                {copy.IR_A_LOJA}
+              </Link>
+            </p>
           </div>
         </div>
     </div>
