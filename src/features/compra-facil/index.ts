@@ -4,6 +4,7 @@ export * from './api/pedidos.api';
 export * from './store/useContaClienteStore';
 export * from './store/useCarrinhoStore';
 export * from './components/CompraFacilSessao';
+export * from './components/LojaPublicaLayout';
 export * from './pages/EscolherLojaPage';
 export * from './pages/CatalogoPage';
 export * from './pages/ProdutoDetalhePage';
