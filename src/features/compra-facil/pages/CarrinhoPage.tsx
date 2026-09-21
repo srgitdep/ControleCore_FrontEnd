@@ -30,6 +30,10 @@ export function CarrinhoPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
+        <Link to={`/loja/${lojaId}`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
+          ← Voltar ao catálogo
+        </Link>
+
         <h1 className="mb-5 text-xl font-bold text-slate-900">O meu carrinho</h1>
 
         {itens.length === 0 ? (
