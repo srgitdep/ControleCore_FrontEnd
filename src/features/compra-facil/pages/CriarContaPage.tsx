@@ -110,6 +110,13 @@ export function CriarContaPage() {
             Entrar
           </Link>
         </p>
+
+        <Link
+          to={`/loja/${lojaId}`}
+          className="mt-2 block text-center text-xs text-slate-400 hover:underline"
+        >
+          Voltar ao catálogo
+        </Link>
       </div>
     </div>
   );
