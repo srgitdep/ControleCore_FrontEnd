@@ -4,6 +4,7 @@ import { Loader2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { mensagemDeErro } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
+import { GoogleLoginBotao } from '../components/GoogleLoginBotao';
 
 /**
  * A entrada na conta de cliente — ecrã próprio, molde de `EntrarPortalPage`.
@@ -49,6 +50,8 @@ export function EntrarContaPage() {
           <h1 className="mt-3 text-lg font-semibold text-slate-900">Entrar na sua conta</h1>
           <p className="mt-1 text-sm text-slate-500">Para continuar a sua compra.</p>
         </header>
+
+        <GoogleLoginBotao lojaId={lojaId} destino={destino} />
 
         <form onSubmit={submeter} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
           <div>

@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import '@/features/landing/site.css';
 
 /**
@@ -15,11 +16,20 @@ import '@/features/landing/site.css';
  * Mantém o import de `site.css` e a classe `cc-sitio`: as páginas da loja
  * dependem das suas classes (`cc-caixa`) e variáveis (`--tinta`), definidas
  * aí, não neste layout.
+ *
+ * `GoogleOAuthProvider` fica aqui, um único sítio para todas as rotas da
+ * loja, em vez de em cada página que usa `<GoogleLogin>`
+ * (`Docs/plano_feature_login_google_compra_facil.md`, backend
+ * `ControleCore_BackEnd`). Sem `VITE_GOOGLE_CLIENT_ID`, o provider monta na
+ * mesma (`clientId=''`) — é o botão em si (`GoogleLoginBotao`) que não se
+ * mostra nesse caso, não este layout.
  */
 export function LojaPublicaLayout() {
   return (
-    <div className="cc-sitio" style={{ background: '#fff', color: 'var(--tinta)', minHeight: '100vh' }}>
-      <Outlet />
-    </div>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''}>
+      <div className="cc-sitio" style={{ background: '#fff', color: 'var(--tinta)', minHeight: '100vh' }}>
+        <Outlet />
+      </div>
+    </GoogleOAuthProvider>
   );
 }

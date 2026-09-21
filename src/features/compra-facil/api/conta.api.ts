@@ -32,7 +32,10 @@ contaApi.interceptors.response.use(
   (resposta) => resposta,
   (erro) => {
     const url: string = erro.config?.url ?? '';
-    const eEntrada = url.includes('/commerce/conta/entrar') || url.includes('/commerce/conta/registar');
+    const eEntrada =
+      url.includes('/commerce/conta/entrar') ||
+      url.includes('/commerce/conta/registar') ||
+      url.includes('/commerce/conta/google');
 
     if (erro.response?.status === 401 && !eEntrada) {
       aoPerderSessao?.();
@@ -70,6 +73,11 @@ export const conta = {
 
   entrar: async (payload: { lojaId: string; identificador: string; password: string }) => {
     const { data } = await contaApi.post<{ cliente: ContaCliente }>(`${BASE}/entrar`, payload);
+    return data;
+  },
+
+  entrarComGoogle: async (payload: { lojaId: string; credential: string }) => {
+    const { data } = await contaApi.post<{ cliente: ContaCliente }>(`${BASE}/google`, payload);
     return data;
   },
 
