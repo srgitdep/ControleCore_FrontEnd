@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Loader2, PackageSearch, Search, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Loader2, LogOut, PackageSearch, Search, ShoppingCart, Sparkles, UserCircle2 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { useDebounce } from '@/shared/hooks/useDebounce';
-import { useCategoriasMercado, useProdutosMercado } from '../hooks/useCatalogoCommerce';
+import { useCategoriasMercado, useLojasCommerce, useProdutosMercado } from '../hooks/useCatalogoCommerce';
+import { useCarrinhoStore } from '../store/useCarrinhoStore';
+import { useContaClienteStore } from '../store/useContaClienteStore';
 import { LojaListaLateral } from '../components/LojaListaLateral';
 import { ProdutoCartao } from '../components/ProdutoCartao';
 import { VoltarLink } from '../components/VoltarLink';
+import { SugestoesBusca } from '../components/SugestoesBusca';
 import { corDaCategoria } from '../utils/corCategoria';
 
 /**
@@ -25,6 +29,7 @@ import { corDaCategoria } from '../utils/corCategoria';
 export function LojaHomePage() {
   const [busca, setBusca] = useState('');
   const [categoria, setCategoria] = useState<string | undefined>(undefined);
+  const [buscaFocada, setBuscaFocada] = useState(false);
   const buscaComDebounce = useDebounce(busca, 300);
 
   const { data, isLoading, isError } = useProdutosMercado({
@@ -32,7 +37,28 @@ export function LojaHomePage() {
     categoria,
     limit: 24,
   });
+
+  // As sugestões reaproveitam o mesmo endpoint, só com um `limit` pequeno — sem rota
+  // nova. `enabled` evita disparar com um termo demasiado curto para dizer alguma coisa.
+  const termoSugestoes = buscaComDebounce.trim();
+  const { data: sugestoesData, isFetching: aCarregarSugestoes } = useProdutosMercado(
+    { search: termoSugestoes, limit: 6 },
+    { enabled: buscaFocada && termoSugestoes.length >= 2 },
+  );
+
   const { data: categorias } = useCategoriasMercado();
+  const { data: lojas } = useLojasCommerce();
+
+  const totalItensCarrinho = useCarrinhoStore((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
+  const carrinhoLojaId = useCarrinhoStore((s) => s.lojaId);
+  const { autenticado, cliente, sair } = useContaClienteStore();
+
+  // Sem escolher uma loja ainda, "Entrar"/"Criar conta" tem de apontar para alguma —
+  // a conta é sempre de uma empresa concreta (ContaCliente.empresaId). Usa-se a
+  // primeira loja da lista (a mesma ordem alfabética de `listarLojas`) como destino
+  // por omissão: entrar por aqui continua a funcionar, mesmo sem o cliente ainda ter
+  // escolhido em que loja quer comprar.
+  const primeiraLoja = lojas?.[0];
 
   return (
     <div className="bg-slate-50">
@@ -55,11 +81,68 @@ export function LojaHomePage() {
         />
 
         <div className="cc-caixa relative">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-blue-100">
-            <Sparkles size={13} />
-            Compra Fácil
-          </p>
-          <h1 className="mt-1.5 text-2xl font-extrabold sm:text-3xl">
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-blue-100">
+              <Sparkles size={13} />
+              Compra Fácil
+            </p>
+
+            <div className="flex items-center gap-2">
+              {carrinhoLojaId ? (
+                <Link
+                  to={`/loja/${carrinhoLojaId}/carrinho`}
+                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
+                  title="O meu carrinho"
+                >
+                  <ShoppingCart size={16} />
+                  {totalItensCarrinho > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                      {totalItensCarrinho}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <span
+                  title="O carrinho aparece assim que adicionar um produto"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/50"
+                >
+                  <ShoppingCart size={16} />
+                </span>
+              )}
+
+              {autenticado ? (
+                <button
+                  type="button"
+                  onClick={() => void sair()}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/25"
+                  title={cliente?.nome}
+                >
+                  <UserCircle2 size={14} />
+                  <span className="hidden sm:inline">{cliente?.nome?.split(' ')[0]}</span>
+                  <LogOut size={13} />
+                </button>
+              ) : (
+                primeiraLoja && (
+                  <>
+                    <Link
+                      to={`/loja/${primeiraLoja.id}/entrar`}
+                      className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-white hover:bg-white/15 sm:inline-flex sm:items-center"
+                    >
+                      Entrar
+                    </Link>
+                    <Link
+                      to={`/loja/${primeiraLoja.id}/criar-conta`}
+                      className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm hover:bg-blue-50"
+                    >
+                      Criar conta
+                    </Link>
+                  </>
+                )
+              )}
+            </div>
+          </div>
+
+          <h1 className="mt-4 text-2xl font-extrabold sm:text-3xl">
             Encontre tudo o que precisa
           </h1>
           <p className="mt-1 text-sm text-blue-100">
@@ -75,8 +158,18 @@ export function LojaHomePage() {
               type="search"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
+              onFocus={() => setBuscaFocada(true)}
+              onBlur={() => setTimeout(() => setBuscaFocada(false), 120)}
               placeholder="Pesquisar produtos…"
               className="w-full rounded-full border-0 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-lg shadow-blue-900/25 focus:outline-none focus:ring-2 focus:ring-white"
+            />
+
+            <SugestoesBusca
+              aberto={buscaFocada}
+              aCarregar={aCarregarSugestoes}
+              termo={termoSugestoes}
+              sugestoes={sugestoesData?.data ?? []}
+              onEscolher={() => setBuscaFocada(false)}
             />
           </div>
         </div>

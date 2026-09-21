@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
+import { useProdutosLoja } from '../hooks/useCatalogoCommerce';
+import { SugestoesBusca } from './SugestoesBusca';
 
 interface LojaTopoProps {
   lojaId: string;
@@ -21,6 +25,14 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
   const { cliente, autenticado, sair } = useContaClienteStore();
   const totalItens = useCarrinhoStore((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
 
+  const [buscaFocada, setBuscaFocada] = useState(false);
+  const termoSugestoes = useDebounce((busca ?? '').trim(), 300);
+  const { data: sugestoesData, isFetching: aCarregarSugestoes } = useProdutosLoja(
+    lojaId,
+    { search: termoSugestoes, limit: 6 },
+    { enabled: buscaFocada && termoSugestoes.length >= 2 },
+  );
+
   return (
     <div className="border-b border-slate-200 bg-white">
       <div className="cc-caixa flex flex-wrap items-center gap-3 py-3">
@@ -38,8 +50,18 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
               type="search"
               value={busca ?? ''}
               onChange={(e) => onBuscaChange(e.target.value)}
+              onFocus={() => setBuscaFocada(true)}
+              onBlur={() => setTimeout(() => setBuscaFocada(false), 120)}
               placeholder="Pesquisar produtos…"
               className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none"
+            />
+
+            <SugestoesBusca
+              aberto={buscaFocada}
+              aCarregar={aCarregarSugestoes}
+              termo={termoSugestoes}
+              sugestoes={(sugestoesData?.data ?? []).map((p) => ({ ...p, lojaId }))}
+              onEscolher={() => setBuscaFocada(false)}
             />
           </div>
         )}
