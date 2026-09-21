@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, PackagePlus, Warehouse, Truck, Plus, Trash2, Loader2 } from 'lucide-react';
+import { X, PackagePlus, Warehouse, Truck, Plus, Trash2, Loader2, Image as ImageIcon, Upload } from 'lucide-react';
 import type { Product } from '../types';
-import { useCreateProduct, useUpdateProduct, useCategories } from '../hooks/useCatalog';
+import {
+  useCreateProduct,
+  useUpdateProduct,
+  useCategories,
+  useCarregarImagemProduto,
+  useRemoverImagemProduto,
+} from '../hooks/useCatalog';
 import { useArmazens } from '@/features/lojas';
 import { stockApi } from '@/features/stock';
 import { suppliersApi } from '@/features/fornecedores';
@@ -365,7 +371,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL da Imagem (Para visualização no POS)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  URL externo da imagem {productToEdit && '(alternativa a carregar um ficheiro, abaixo)'}
+                </label>
                 <input
                   type="url"
                   {...register('imagemUrl')}
@@ -373,6 +381,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   placeholder="https://exemplo.com/imagem.png"
                 />
                 {errors.imagemUrl && <p className="text-xs text-rose-500 mt-1">{errors.imagemUrl.message}</p>}
+                {!productToEdit && (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Para carregar um ficheiro em vez de colar um link, crie o produto primeiro e depois edite-o.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -552,6 +565,8 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 formulário de catálogo esconderia um movimento de inventário, que
                 tem de ter autor e motivo próprios. Para isso há os ajustes na
                 secção Stock. */}
+            {productToEdit && <ImagemDoProduto produtoId={productToEdit.id} />}
+
             {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
 
             {/* ── Ao editar: os fornecedores do produto ───────────────────────
@@ -841,6 +856,88 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
 
 const moeda = (v: number) =>
   v.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
+
+/**
+ * A imagem real do produto — Docs/plano_feature_compra_facil.md §4.10.
+ *
+ * Substitui o "cole aqui um URL": o ficheiro escolhido vai para o object
+ * storage (o servidor converte sempre para WebP, ver `GerirImagensProdutoUseCase`)
+ * e fica associado ao produto como a imagem principal. Carregar uma nova
+ * substitui a anterior.
+ */
+function ImagemDoProduto({ produtoId }: { produtoId: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const carregar = useCarregarImagemProduto();
+  const remover = useRemoverImagemProduto();
+
+  const { data: produto } = useQuery({
+    queryKey: ['produto-detalhe', produtoId],
+    queryFn: () => catalogApi.getProduct(produtoId),
+  });
+
+  const imagemPrincipal = produto?.imagens?.find((i) => i.isPrincipal) ?? null;
+
+  const aoEscolherFicheiro = (evento: React.ChangeEvent<HTMLInputElement>) => {
+    const ficheiro = evento.target.files?.[0];
+    evento.target.value = '';
+    if (!ficheiro) return;
+    carregar.mutate({ produtoId, ficheiro });
+  };
+
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="flex items-center gap-2">
+        <ImageIcon className="h-4 w-4 text-slate-400" />
+        <h3 className="text-sm font-semibold text-slate-700">Imagem do produto</h3>
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          {imagemPrincipal?.url ? (
+            <img src={imagemPrincipal.url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <ImageIcon size={22} className="text-slate-300" />
+          )}
+        </div>
+
+        <div className="flex flex-col items-start gap-1">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={carregar.isPending}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {carregar.isPending ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Upload size={13} />
+            )}
+            {carregar.isPending ? 'A carregar...' : imagemPrincipal ? 'Substituir imagem' : 'Carregar imagem'}
+          </button>
+          {imagemPrincipal && (
+            <button
+              type="button"
+              disabled={remover.isPending}
+              onClick={() => remover.mutate({ produtoId, imagemId: imagemPrincipal.id })}
+              className="text-xs font-medium text-rose-600 hover:underline disabled:opacity-50"
+            >
+              Remover
+            </button>
+          )}
+          <p className="text-xs text-slate-400">JPEG, PNG ou WEBP até 5MB — convertida para WebP.</p>
+        </div>
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={aoEscolherFicheiro}
+        />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Os fornecedores deste produto, cada um com o seu preço de custo.

@@ -23,6 +23,7 @@ import {
   Blocks,
   AlertTriangle,
   ArrowLeftRight,
+  PackageCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -86,6 +87,9 @@ const navGroups: NavGroup[] = [
       // O workflow real por trás das oportunidades que o painel de Necessidades
       // mostra (DT01 §12/§15.1): aprovar, expedir, receber.
       { label: 'Transferências', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      // A fila de pedidos do Compra Fácil (Fase 12) — visível a quem também vê o POS,
+      // porque o levantamento fecha exactamente como uma venda de balcão.
+      { label: 'Pedidos Compra Fácil', icon: PackageCheck, path: '/commerce/pedidos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).

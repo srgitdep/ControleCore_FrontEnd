@@ -36,6 +36,40 @@ export function useUpdateProduct() {
   });
 }
 
+export function useCarregarImagemProduto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ produtoId, ficheiro }: { produtoId: string; ficheiro: File }) =>
+      catalogApi.carregarImagemProduto(produtoId, ficheiro),
+    onSuccess: () => {
+      toast.success('Imagem carregada.');
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Não foi possível carregar a imagem.');
+    },
+  });
+}
+
+export function useRemoverImagemProduto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ produtoId, imagemId }: { produtoId: string; imagemId: string }) =>
+      catalogApi.removerImagemProduto(produtoId, imagemId),
+    onSuccess: () => {
+      toast.success('Imagem removida.');
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Não foi possível remover a imagem.');
+    },
+  });
+}
+
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 
