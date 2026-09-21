@@ -22,6 +22,10 @@ export function MeusPedidosPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
+        <Link to={`/loja/${lojaId}`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
+          ← Voltar ao catálogo
+        </Link>
+
         <h1 className="mb-5 text-xl font-bold text-slate-900">Os meus pedidos</h1>
 
         {(isLoading || aCarregar) && (

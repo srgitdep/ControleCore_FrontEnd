@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
@@ -66,6 +66,10 @@ export function CheckoutPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
+        <Link to={`/loja/${lojaId}/carrinho`} className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700">
+          ← Voltar ao carrinho
+        </Link>
+
         <h1 className="mb-5 text-xl font-bold text-slate-900">Confirmar pedido</h1>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4">
