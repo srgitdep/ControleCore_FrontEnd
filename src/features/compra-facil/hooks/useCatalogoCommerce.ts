@@ -17,11 +17,12 @@ export function useLojasCommerce() {
 export function useProdutosLoja(
   lojaId: string | undefined,
   filtros: { search?: string; categoryId?: string; page?: number; limit?: number },
+  opcoes?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: [CHAVE, lojaId, 'produtos', filtros],
     queryFn: () => catalogo.listarProdutos(lojaId!, filtros),
-    enabled: !!lojaId,
+    enabled: !!lojaId && (opcoes?.enabled ?? true),
     placeholderData: (anterior) => anterior,
   });
 }
@@ -35,16 +36,15 @@ export function useProdutoLoja(lojaId: string | undefined, produtoId: string | u
 }
 
 /** Produtos de todas as lojas — a página inicial do mercado. */
-export function useProdutosMercado(filtros: {
-  search?: string;
-  categoria?: string;
-  page?: number;
-  limit?: number;
-}) {
+export function useProdutosMercado(
+  filtros: { search?: string; categoria?: string; page?: number; limit?: number },
+  opcoes?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: [CHAVE, 'mercado', 'produtos', filtros],
     queryFn: () => catalogo.listarProdutosMercado(filtros),
     placeholderData: (anterior) => anterior,
+    enabled: opcoes?.enabled ?? true,
   });
 }
 
