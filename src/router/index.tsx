@@ -35,6 +35,7 @@ import {
 import { MercadoPage, FichaFornecedorPage } from '@/features/mercado';
 import {
   CompraFacilSessao,
+  LojaPublicaLayout,
   EscolherLojaPage,
   CatalogoPage,
   ProdutoDetalhePage,
@@ -45,7 +46,6 @@ import {
   MeusPedidosPage,
   PedidoDetalhePage,
 } from '@/features/compra-facil';
-import { PublicLayout } from '@/app/layout/PublicLayout';
 import {
   AdesoesPage,
   EscolherTipoContaPage,
@@ -122,7 +122,7 @@ export const router = createBrowserRouter([
   // já faz para o fornecedor.
   {
     path: '/loja',
-    element: <PublicLayout />,
+    element: <LojaPublicaLayout />,
     children: [
       {
         element: <CompraFacilSessao />,
