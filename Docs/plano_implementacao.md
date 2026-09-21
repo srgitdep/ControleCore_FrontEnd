@@ -361,8 +361,41 @@ esse merge trouxe.
   - feat(commerce): implementa entrar/criar conta com Google no Compra Fácil
   - fix(prisma): remove reformatação não intencional do schema
 - **2026-09-21 · [FE] · Antonio Mambo** — `feat/login-google-compra-facil`
-  (branch actual, em curso — ver `git status`)
   - feat(compra-facil): adiciona "Continuar com Google" ao entrar/criar conta
+
+### Fase 13 — Mercado entre lojas, pesquisa sem acentos e UI moderna do Compra Fácil (21 Set 2026)
+
+- **2026-09-21 · [BE] · Antonio Mambo** — `feat/mercado-compra-facil`
+  - feat(commerce): adiciona catálogo de mercado entre lojas ao Compra Fácil
+    (`GET /commerce/produtos`, `GET /commerce/categorias`,
+    `GET /commerce/conta/lojas-compradas`)
+- **2026-09-21 · [FE] · Antonio Mambo** — `feat/mercado-compra-facil`
+  - feat(compra-facil): página inicial (`/loja`) vira um mercado entre lojas —
+    `LojaHomePage` substitui `EscolherLojaPage`; produtos de todas as lojas à
+    vista de imediato, com pesquisa, filtro de categoria e barra lateral de
+    lojas, em vez de obrigar a escolher uma loja primeiro
+- **2026-09-21 · [FE] · Antonio Mambo** — `feat/mercado-visual-premium`
+  - style(compra-facil): dá cor e profundidade à página inicial do mercado
+    (hero em gradiente, categorias como chips de cor, cartões de produto com
+    elevação)
+  - feat(compra-facil): repõe o ícone de carrinho e "Entrar"/"Criar conta" no
+    cabeçalho do mercado (tinham desaparecido com a troca do `LojaTopo` pelo
+    cabeçalho novo), e adiciona sugestões de pesquisa ao digitar
+- **2026-09-21 · [BE] · Antonio Mambo** — `fix/busca-produtos-sem-acento`
+  - fix(commerce): pesquisa de produtos deixa de depender de acentuação
+    ("agua" passa a encontrar "Água") — filtra do lado da aplicação em vez de
+    `ILIKE`, tanto no catálogo de uma loja como no mercado
+- **2026-09-21 · [FE] · Antonio Mambo** — `style/carrinho-moderno`
+  - style(compra-facil): redesenha o carrinho ao padrão moderno de
+    e-commerce — duas colunas (itens + resumo do pedido fixo), stepper de
+    quantidade em pílula, CTA em destaque
+
+  > Decisões de arquitectura do mercado: um cartão por produto, nunca por
+  > (produto × loja) — evita mostrar o mesmo artigo duplicado pelas várias
+  > lojas da mesma empresa; escolhe-se a loja com maior disponibilidade.
+  > "Lojas onde já comprei" fica limitado à empresa da conta autenticada
+  > actual — `ContaCliente` é isolado por empresa neste sistema, sem
+  > identidade de cliente entre empresas diferentes (ver Backlog).
 
 ---
 
@@ -374,23 +407,27 @@ esse merge trouxe.
 
 ### Compra Fácil
 
-- [ ] **Fase 13 — CRM, recomendação por regras e promoções** (Compra Fácil).
-      Fonte: `plano_feature_compra_facil.md` §8.3 (documento de planeamento já
+- [ ] **CRM, recomendação por regras e promoções** (Compra Fácil). Fonte:
+      `plano_feature_compra_facil.md` §8.3 (documento de planeamento já
       removido do `Docs/` por estar superado; texto completo no histórico git,
       commit `feat/compra-facil-fase11`). Depende do núcleo do pedido estar
       estável (Fases 11–12, já concluídas).
 - [ ] `FavoritoCliente` — pendência opcional deixada em aberto na Fase 11 (o
       modelo já existe no schema Prisma; falta a funcionalidade de topo).
 - [ ] Promoções com verificação de risco de stock (`assess_promotion_stock_risk`,
-      tool da MAYRA prevista para a Fase 13+).
+      tool da MAYRA prevista para uma fase futura).
+- [ ] Histórico de compras entre empresas diferentes — hoje "lojas onde já
+      comprei" só vê a empresa da `ContaCliente` autenticada actual (Fase 13);
+      exigiria um projecto de identidade de cliente entre empresas, fora do
+      âmbito do mercado.
+- [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
+      produto, herdado da Fase 11).
 
 ### Login com Google (Compra Fácil)
 
-- [ ] Configurar `GOOGLE_CLIENT_ID`/`VITE_GOOGLE_CLIENT_ID` reais em produção
-      (Google Cloud Console) e testar o fluxo de ponta a ponta antes do deploy.
-      Fonte: `plano_feature_login_google_compra_facil.md` (documento de
-      planeamento já removido do `Docs/` por estar superado; texto completo no
-      histórico git, commit `feat/login-google-compra-facil`).
+- [x] Configurar `GOOGLE_CLIENT_ID`/`VITE_GOOGLE_CLIENT_ID` reais em produção
+      (Google Cloud Console) — configurado e confirmado funcional em produção
+      em 2026-09-21 (Fase 12).
 - [ ] Estados de loading/erro dedicados à volta do `<GoogleLogin>` — falta
       confirmar se o comportamento por omissão do componente chega.
 
