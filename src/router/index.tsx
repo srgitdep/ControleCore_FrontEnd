@@ -36,7 +36,7 @@ import { MercadoPage, FichaFornecedorPage } from '@/features/mercado';
 import {
   CompraFacilSessao,
   LojaPublicaLayout,
-  EscolherLojaPage,
+  LojaHomePage,
   CatalogoPage,
   ProdutoDetalhePage,
   CarrinhoPage,
@@ -127,7 +127,7 @@ export const router = createBrowserRouter([
       {
         element: <CompraFacilSessao />,
         children: [
-          { index: true, element: <EscolherLojaPage /> },
+          { index: true, element: <LojaHomePage /> },
           { path: ':lojaId', element: <CatalogoPage /> },
           { path: ':lojaId/produtos/:produtoId', element: <ProdutoDetalhePage /> },
           { path: ':lojaId/carrinho', element: <CarrinhoPage /> },
