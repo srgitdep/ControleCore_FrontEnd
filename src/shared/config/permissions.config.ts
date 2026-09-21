@@ -12,6 +12,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'rh', label: 'Recursos Humanos' },
   { id: 'vendas', label: 'Vendas' },
   { id: 'clientes', label: 'Clientes / CRM' },
+  { id: 'pedidos_commerce', label: 'Pedidos Compra Fácil' },
 ];
 
 export const AVAILABLE_ACTIONS = [
@@ -25,5 +26,9 @@ export const AVAILABLE_ACTIONS = [
 export const IGNORED_PERMISSIONS = [
   'write:dashboard',
   'delete:dashboard',
-  'manage:dashboard'
+  'manage:dashboard',
+  // Só existem `read`/`manage` para este recurso na base de dados (migração
+  // commerce_permissoes_gestao) — não há um "criar" ou "apagar" pedido pela gestão.
+  'write:pedidos_commerce',
+  'delete:pedidos_commerce',
 ];

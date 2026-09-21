@@ -9,8 +9,17 @@ export interface ProdutoFornecedor {
   fornecedor: { nome: string };
 }
 
+export interface ProdutoImagem {
+  id: string;
+  url: string | null;
+  ordem: number;
+  isPrincipal: boolean;
+}
+
 export interface ProductDetail extends Product {
   fornecedores?: ProdutoFornecedor[];
+  /** A imagem carregada por upload real (Docs/plano_feature_compra_facil.md §4.10). */
+  imagens?: ProdutoImagem[];
 }
 
 export interface AddFornecedorProdutoDto {
@@ -175,6 +184,25 @@ export const catalogApi = {
   deleteProduct: async (id: string) => {
     const { data } = await api.delete(`/produtos/${id}`);
     return data;
+  },
+
+  /**
+   * Carrega a imagem principal do produto para o object storage — substitui o
+   * "cole aqui um URL" (Docs/plano_feature_compra_facil.md §4.10). Servidor
+   * converte sempre para WebP; devolve já um URL pronto a mostrar.
+   */
+  carregarImagemProduto: async (produtoId: string, ficheiro: File): Promise<ProdutoImagem> => {
+    const form = new FormData();
+    form.append('imagem', ficheiro);
+
+    const { data } = await api.post<ProdutoImagem>(`/produtos/${produtoId}/imagens`, form, {
+      headers: { 'Content-Type': undefined as unknown as string },
+    });
+    return data;
+  },
+
+  removerImagemProduto: async (produtoId: string, imagemId: string) => {
+    await api.delete(`/produtos/${produtoId}/imagens/${imagemId}`);
   },
 
   // ─── Fornecedores do produto ────────────────────────────────────────────────

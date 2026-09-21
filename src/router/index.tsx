@@ -20,6 +20,7 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/features/necessidades';
 import { TransferenciasPage } from '@/features/transferencias';
+import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -32,6 +33,19 @@ import {
   ImportarCatalogoPage,
 } from '@/features/portal-fornecedor';
 import { MercadoPage, FichaFornecedorPage } from '@/features/mercado';
+import {
+  CompraFacilSessao,
+  EscolherLojaPage,
+  CatalogoPage,
+  ProdutoDetalhePage,
+  CarrinhoPage,
+  CheckoutPage,
+  EntrarContaPage,
+  CriarContaPage,
+  MeusPedidosPage,
+  PedidoDetalhePage,
+} from '@/features/compra-facil';
+import { PublicLayout } from '@/app/layout/PublicLayout';
 import {
   AdesoesPage,
   EscolherTipoContaPage,
@@ -97,6 +111,35 @@ export const router = createBrowserRouter([
   // repositório partilhado.
   { path: '/mercado',                          element: <MercadoPage /> },
   { path: '/mercado/fornecedores/:organizacaoId', element: <FichaFornecedorPage /> },
+
+  // ── Compra Fácil ──────────────────────────────────────────────────────────
+  //
+  // Fora do `ProtectedRoute` de propósito, pela mesma razão do portal do fornecedor:
+  // esse guarda exige um `User` do lado funcionário, e um cliente final não tem um
+  // nem nunca vai ter — a sua sessão é a `ContaCliente`, com cookie e guarda
+  // próprios no backend (Docs/plano_compra_facil.md §4.7). `CompraFacilSessao`
+  // confirma essa sessão contra o servidor a cada montagem, como o `PortalLayout`
+  // já faz para o fornecedor.
+  {
+    path: '/loja',
+    element: <PublicLayout />,
+    children: [
+      {
+        element: <CompraFacilSessao />,
+        children: [
+          { index: true, element: <EscolherLojaPage /> },
+          { path: ':lojaId', element: <CatalogoPage /> },
+          { path: ':lojaId/produtos/:produtoId', element: <ProdutoDetalhePage /> },
+          { path: ':lojaId/carrinho', element: <CarrinhoPage /> },
+          { path: ':lojaId/checkout', element: <CheckoutPage /> },
+          { path: ':lojaId/entrar', element: <EntrarContaPage /> },
+          { path: ':lojaId/criar-conta', element: <CriarContaPage /> },
+          { path: ':lojaId/pedidos', element: <MeusPedidosPage /> },
+          { path: ':lojaId/pedidos/:pedidoId', element: <PedidoDetalhePage /> },
+        ],
+      },
+    ],
+  },
 
   { path: '/fornecedor/registar', element: <RegistarFornecedorPage /> },
   { path: '/fornecedor/entrar',   element: <EntrarPortalPage /> },
@@ -184,6 +227,10 @@ export const router = createBrowserRouter([
           { path: '/compras/necessidades/historico', element: <HistoricoNecessidadesPage /> },
           { path: '/compras/necessidades/alertas', element: <AlertasPage /> },
           { path: '/transferencias', element: <TransferenciasPage /> },
+          // A fila de pedidos do Compra Fácil (Fase 12) — protecção fina é do backend
+          // (@ModuloNecessario('commerce') + @Permissao) e do <Can> dentro da página;
+          // aqui só a rota, como as restantes desta secção.
+          { path: '/commerce/pedidos', element: <PedidosCommercePage /> },
           { path: '/compras',       element: <PurchasesPage /> },
           // As requisições vivem em rota própria e não como separador de Compras.
           //
