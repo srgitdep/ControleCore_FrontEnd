@@ -439,6 +439,30 @@ esse merge trouxe.
   >   reserva para sempre. Não é opcional depois da correcção anterior — é o que
   >   lhe dá saída. `PATCH /commerce/gestao/pedidos/:id/cancelar`.
 
+- **2026-09-22 · [BE] · Antonio Mambo** — `fix/anulacao-venda-reverte-pedido`
+  - fix(vendas): anular a venda reverte o pedido do Compra Fácil para
+    `CANCELADO`, dentro da transacção de anulação, e a devolução passa a
+    registar-se no CRM com o canal da compra que desfaz
+  - **Migração**: `20260922230000_devolucao_ecommerce` — acrescenta
+    `DEVOLUCAO_ECOMMERCE` a `TipoEventoCliente`. Aditiva, com
+    `ADD VALUE IF NOT EXISTS`; nenhuma linha existente é tocada e as devoluções
+    já gravadas continuam `DEVOLUCAO_POS`, porque reclassificá-las exigiria
+    adivinhar a origem de cada venda antiga.
+
+  > As duas incoerências tinham a mesma raiz: a `Venda` não guarda por onde
+  > entrou, e `AnularVendaUseCase` não conhecia a tabela `Pedido`. Uma só
+  > consulta resolve ambas — `Pedido.vendaId` é único e só é preenchido ao
+  > confirmar o levantamento, pelo que a existência de um pedido é a prova do
+  > canal. Não foi preciso campo novo na `Venda`.
+  >
+  > Sem alterações no frontend: a página de detalhe do pedido do cliente já
+  > mostrava `motivoCancelamento`, pelo que ele passa a ver a explicação (número
+  > da factura e motivo) sem uma linha nova.
+  >
+  > `calcular-medidas.ts` passou a contar os dois tipos de devolução. Sem isso, a
+  > taxa de devolução da visão 360 ignorava as devoluções online — a correcção da
+  > classificação teria aberto um buraco nas métricas.
+
   > **Porquê**: um pedido online só produz factos no ERP quando o levantamento é
   > confirmado (`ConfirmarLevantamentoUseCase` — exige estado `PRONTO` e sessão
   > de caixa aberta). Até lá vive só em `Pedido`/`PedidoItem`/`ReservaStock` e
@@ -487,15 +511,11 @@ esse merge trouxe.
       desconta as reservas ao vender (Fase 11), mas a listagem de stock mostra
       `currentQuantity` cru: o gestor vê 10 unidades sem saber que 3 estão
       prometidas a pedidos por levantar. Não é defeito de venda — é de leitura.
-- [ ] Devolução de uma compra online entra no CRM como `DEVOLUCAO_POS`/canal
-      `POS`. O evento `venda.anulada` não leva canal, e desde a Fase 14 a compra
-      é registada como `COMPRA_ECOMMERCE` — a devolução da mesma venda diz POS.
-      Corrigir exige `DEVOLUCAO_ECOMMERCE` no enum `TipoEventoCliente`, logo
-      migração.
-- [ ] Anular a venda não reverte o pedido. `AnularVendaUseCase` não conhece a
-      tabela `Pedido`: anulada a venda, o pedido fica `CONCLUIDO` com `vendaId` a
-      apontar para uma venda anulada, e o cliente continua a ver "entregue" no
-      histórico dele.
+- [x] Devolução de uma compra online entrava no CRM como `DEVOLUCAO_POS`/canal
+      `POS` — resolvido em 2026-09-22 (Fase 14), com `DEVOLUCAO_ECOMMERCE` novo
+      no enum `TipoEventoCliente`.
+- [x] Anular a venda não revertia o pedido — resolvido em 2026-09-22 (Fase 14):
+      o pedido passa a `CANCELADO` dentro da transacção de anulação.
 - [ ] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
       mas nenhum código os escreve — o frontend tem etiquetas para eles que nunca
       aparecem. Decidir entre usá-los ou removê-los do enum.
