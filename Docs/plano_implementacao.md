@@ -401,6 +401,36 @@ esse merge trouxe.
   > actual — `ContaCliente` é isolado por empresa neste sistema, sem
   > identidade de cliente entre empresas diferentes (ver Backlog).
 
+### Fase 14 — Visibilidade dos pedidos do Compra Fácil no ERP (22 Set 2026)
+
+- **2026-09-22 · [BE] · Antonio Mambo** — `feat/visibilidade-pedidos-ecommerce`
+  - feat(dashboard): acrescenta aos KPIs o contador de pedidos do Compra Fácil
+    por atender (`ESTADOS_PENDENTES`, sem filtro de data)
+  - feat(crm): a venda vinda do Compra Fácil passa a registar-se na timeline como
+    `COMPRA_ECOMMERCE`/canal `ECOMMERCE`, em vez de `COMPRA_POS`/`POS`
+- **2026-09-22 · [FE] · Antonio Mambo** — `feat/kpi-pedidos-pendentes`
+  - feat(dashboard): cartão "Pedidos Compra Fácil por atender", clicável para
+    `/commerce/pedidos` quando há pedidos em espera
+
+  > **Porquê**: um pedido online só produz factos no ERP quando o levantamento é
+  > confirmado (`ConfirmarLevantamentoUseCase` — exige estado `PRONTO` e sessão
+  > de caixa aberta). Até lá vive só em `Pedido`/`PedidoItem`/`ReservaStock` e
+  > não aparece na facturação, no caixa nem no financeiro. Isto é deliberado — o
+  > modelo é *click & collect*, sem gateway, e o dinheiro entra fisicamente no
+  > levantamento —, mas o pedido pendente não tinha indicador nenhum: quem não
+  > abrisse a fila por iniciativa própria não sabia que havia encomendas.
+  >
+  > **Achado durante a análise**: o POS **já respeitava** as reservas do Compra
+  > Fácil desde a Fase 11 — `findProdutosComStock` subtrai `reservas_stock`
+  > activas ao saldo vendível (`prisma-venda.repository.ts`). Uma primeira
+  > análise concluiu o contrário por procurar o nome do modelo Prisma
+  > (`reservaStock`) numa query que é SQL cru e usa o nome da tabela. Não houve
+  > correcção a fazer aqui.
+  >
+  > `CanalVenda` fica fora do `ProcessarVendaDto` de propósito: se viajasse no
+  > corpo do pedido HTTP, um cliente do POS podia declarar-se `ECOMMERCE` e
+  > enviesar a segmentação do CRM.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -426,6 +456,16 @@ esse merge trouxe.
       âmbito do mercado.
 - [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
       produto, herdado da Fase 11).
+- [ ] Mostrar no ecrã de stock quanto está reservado por pedidos online. O POS já
+      desconta as reservas ao vender (Fase 11), mas a listagem de stock mostra
+      `currentQuantity` cru: o gestor vê 10 unidades sem saber que 3 estão
+      prometidas a pedidos por levantar. Não é defeito de venda — é de leitura.
+- [ ] Cobrança no checkout com gateway M-Pesa/e-Mola. Hoje o método de pagamento
+      do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é
+      cobrado fisicamente no levantamento. Passar a cobrar no checkout torna o
+      pedido um facto financeiro imediato, mas traz reembolsos, conciliação de
+      pagamentos e tratamento de pagamento falhado — é projecto próprio, não
+      correcção.
 
 ### Login com Google (Compra Fácil)
 
