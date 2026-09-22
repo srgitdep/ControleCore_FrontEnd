@@ -5,6 +5,7 @@ import { Can } from '@/features/auth';
 import { BadgeEstadoPedidoCommerce } from './BadgeEstadoPedidoCommerce';
 import { SubstituirItemModal } from './SubstituirItemModal';
 import {
+  useCancelarPedidoCommerce,
   useConferirPedidoCommerce,
   useConfirmarLevantamentoCommerce,
   useConfirmarPedidoCommerce,
@@ -32,6 +33,8 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [itemASubstituir, setItemASubstituir] = useState<PedidoItemCommerce | null>(null);
   const [aConfirmarLevantamento, setAConfirmarLevantamento] = useState(false);
+  const [aCancelar, setACancelar] = useState(false);
+  const [motivoCancelamento, setMotivoCancelamento] = useState('');
   // A sugestão de sequência de picking (por localização no armazém) só vem na
   // resposta de `iniciarPreparacao` — a lista normal não a traz. Guardada aqui
   // porque é do momento, não um dado persistido no Pedido.
@@ -42,6 +45,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
   const conferir = useConferirPedidoCommerce();
   const substituirItem = useSubstituirItemCommerce();
   const confirmarLevantamento = useConfirmarLevantamentoCommerce();
+  const cancelarPedido = useCancelarPedidoCommerce();
 
   // Só reinicia ao abrir um pedido *diferente* — não a cada refetch automático
   // da lista (30s) ou depois de cada mutação, que trocam a referência do objecto
@@ -51,6 +55,8 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
     if (!pedido) return;
     setQuantidades(Object.fromEntries(pedido.itens.map((item) => [item.id, item.quantidade])));
     setAConfirmarLevantamento(false);
+    setACancelar(false);
+    setMotivoCancelamento('');
     setSequenciaPickingIds(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedido?.id]);
@@ -292,6 +298,71 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                   )}
                 </>
               )}
+
+              {/*
+                A única saída para um pedido que já passou de CONFIRMADO: o cliente
+                só cancela até aí, e a expiração automática só apanha os que ninguém
+                confirmou. Sem isto, um pedido abandonado em preparação segurava a
+                reserva de stock para sempre — e somava ao contador de pedidos por
+                atender do painel, sem forma de o limpar.
+              */}
+              <div className="mt-3 border-t border-slate-100 pt-3">
+                {!aCancelar ? (
+                  <button
+                    type="button"
+                    onClick={() => setACancelar(true)}
+                    className="w-full rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50"
+                  >
+                    Cancelar pedido
+                  </button>
+                ) : (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+                    <p className="text-sm text-rose-800">
+                      Isto cancela a encomenda e liberta a reserva de stock. O cliente é avisado com o motivo.
+                    </p>
+                    <textarea
+                      value={motivoCancelamento}
+                      onChange={(e) => setMotivoCancelamento(e.target.value)}
+                      rows={2}
+                      placeholder="Motivo — ex.: cliente não levantou em três dias"
+                      className="mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setACancelar(false);
+                          setMotivoCancelamento('');
+                        }}
+                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        Voltar
+                      </button>
+                      <button
+                        type="button"
+                        // O motivo é obrigatório no servidor; desactivar aqui evita o
+                        // percurso de ida e volta só para receber um 400.
+                        disabled={cancelarPedido.isPending || !motivoCancelamento.trim()}
+                        onClick={() =>
+                          cancelarPedido.mutate(
+                            { id: pedido.id, payload: { motivo: motivoCancelamento.trim() } },
+                            { onSuccess: () => setACancelar(false) },
+                          )
+                        }
+                        className="flex-1 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                      >
+                        {cancelarPedido.isPending ? (
+                          <span className="flex items-center justify-center gap-1.5">
+                            <Loader2 size={14} className="animate-spin" /> A cancelar...
+                          </span>
+                        ) : (
+                          'Cancelar pedido'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             )}
           </Can>

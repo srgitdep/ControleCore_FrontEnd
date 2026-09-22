@@ -1,5 +1,6 @@
 import { api } from '@/shared/config';
 import type {
+  CancelarPedidoPayload,
   ConferirPedidoPayload,
   FiltrosPedidoCommerce,
   PedidoCommerceGestao,
@@ -20,6 +21,11 @@ export const pedidosCommerceGestaoApi = {
 
   confirmar: async (id: string) => {
     const { data } = await api.patch<PedidoCommerceGestao>(`${BASE}/${id}/confirmar`);
+    return data;
+  },
+
+  cancelar: async (id: string, payload: CancelarPedidoPayload) => {
+    const { data } = await api.patch<PedidoCommerceGestao>(`${BASE}/${id}/cancelar`, payload);
     return data;
   },
 

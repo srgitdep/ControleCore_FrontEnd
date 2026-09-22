@@ -81,6 +81,11 @@ export interface FiltrosPedidoCommerce {
   lojaId?: string;
 }
 
+export interface CancelarPedidoPayload {
+  /** Vai no aviso ao cliente e fica gravado no pedido — o backend recusa vazio. */
+  motivo: string;
+}
+
 export interface ConferirPedidoPayload {
   itens?: { pedidoItemId: string; quantidadeConferida: number }[];
 }
