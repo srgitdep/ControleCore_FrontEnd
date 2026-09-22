@@ -401,6 +401,63 @@ esse merge trouxe.
   > actual — `ContaCliente` é isolado por empresa neste sistema, sem
   > identidade de cliente entre empresas diferentes (ver Backlog).
 
+### Fase 14 — Visibilidade dos pedidos do Compra Fácil no ERP (22 Set 2026)
+
+- **2026-09-22 · [BE] · Antonio Mambo** — `feat/visibilidade-pedidos-ecommerce`
+  - feat(dashboard): acrescenta aos KPIs o contador de pedidos do Compra Fácil
+    por atender (`ESTADOS_PENDENTES`, sem filtro de data)
+  - feat(crm): a venda vinda do Compra Fácil passa a registar-se na timeline como
+    `COMPRA_ECOMMERCE`/canal `ECOMMERCE`, em vez de `COMPRA_POS`/`POS`
+- **2026-09-22 · [FE] · Antonio Mambo** — `feat/kpi-pedidos-pendentes`
+  - feat(dashboard): cartão "Pedidos Compra Fácil por atender", clicável para
+    `/commerce/pedidos` quando há pedidos em espera
+  - feat(compra-facil-gestao): selector de loja na fila de pedidos — a
+    canalização do filtro já existia toda (controlador, use-case, tipo e camada
+    de API); faltava só o controlo no ecrã
+  - feat(compra-facil-gestao): cancelar um pedido a partir do drawer, com motivo
+    obrigatório e confirmação em dois passos
+
+  > **Correcções encontradas na auditoria de integração** (mesma entrega, a
+  > seguir aos dois pontos acima):
+  >
+  > - `fix(commerce)`: **o levantamento passa a recusar um pedido de outra loja.**
+  >   A reserva sai do armazém da loja do pedido, mas `ProcessarVendaUseCase`
+  >   abate do armazém da loja do caixa de quem confirma — e nada ligava os dois.
+  >   Com lojas diferentes, a reserva libertava-se numa loja sem lhe descontar o
+  >   stock e a venda saía da outra: duas posições erradas e a venda na loja que
+  >   não a fez. Não exigia má intenção — a fila mostra os pedidos de toda a
+  >   empresa, porque o token do funcionário não tem `lojaId`.
+  > - `fix(commerce)`: **a reserva deixa de expirar com o pedido já em
+  >   preparação.** `expiraEm` é escrito uma vez, na criação, e nunca renovado; a
+  >   tarefa libertava a reserva ao fim dos 30 minutos iniciais fosse qual fosse o
+  >   estado do pedido. Uma encomenda confirmada e separada perdia a protecção de
+  >   stock, o POS voltava a poder vender o artigo, e o levantamento falhava com o
+  >   cliente ao balcão. Num *click & collect* isso é o caso normal, não o raro.
+  > - `feat(commerce)`: **a loja passa a poder cancelar um pedido em preparação.**
+  >   O cliente só cancela até `CONFIRMADO` e a expiração só apanha `CRIADO`; um
+  >   pedido em `EM_PREPARACAO`/`PRONTO` não tinha saída nenhuma e segurava a
+  >   reserva para sempre. Não é opcional depois da correcção anterior — é o que
+  >   lhe dá saída. `PATCH /commerce/gestao/pedidos/:id/cancelar`.
+
+  > **Porquê**: um pedido online só produz factos no ERP quando o levantamento é
+  > confirmado (`ConfirmarLevantamentoUseCase` — exige estado `PRONTO` e sessão
+  > de caixa aberta). Até lá vive só em `Pedido`/`PedidoItem`/`ReservaStock` e
+  > não aparece na facturação, no caixa nem no financeiro. Isto é deliberado — o
+  > modelo é *click & collect*, sem gateway, e o dinheiro entra fisicamente no
+  > levantamento —, mas o pedido pendente não tinha indicador nenhum: quem não
+  > abrisse a fila por iniciativa própria não sabia que havia encomendas.
+  >
+  > **Achado durante a análise**: o POS **já respeitava** as reservas do Compra
+  > Fácil desde a Fase 11 — `findProdutosComStock` subtrai `reservas_stock`
+  > activas ao saldo vendível (`prisma-venda.repository.ts`). Uma primeira
+  > análise concluiu o contrário por procurar o nome do modelo Prisma
+  > (`reservaStock`) numa query que é SQL cru e usa o nome da tabela. Não houve
+  > correcção a fazer aqui.
+  >
+  > `CanalVenda` fica fora do `ProcessarVendaDto` de propósito: se viajasse no
+  > corpo do pedido HTTP, um cliente do POS podia declarar-se `ECOMMERCE` e
+  > enviesar a segmentação do CRM.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -426,6 +483,33 @@ esse merge trouxe.
       âmbito do mercado.
 - [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
       produto, herdado da Fase 11).
+- [ ] Mostrar no ecrã de stock quanto está reservado por pedidos online. O POS já
+      desconta as reservas ao vender (Fase 11), mas a listagem de stock mostra
+      `currentQuantity` cru: o gestor vê 10 unidades sem saber que 3 estão
+      prometidas a pedidos por levantar. Não é defeito de venda — é de leitura.
+- [ ] Devolução de uma compra online entra no CRM como `DEVOLUCAO_POS`/canal
+      `POS`. O evento `venda.anulada` não leva canal, e desde a Fase 14 a compra
+      é registada como `COMPRA_ECOMMERCE` — a devolução da mesma venda diz POS.
+      Corrigir exige `DEVOLUCAO_ECOMMERCE` no enum `TipoEventoCliente`, logo
+      migração.
+- [ ] Anular a venda não reverte o pedido. `AnularVendaUseCase` não conhece a
+      tabela `Pedido`: anulada a venda, o pedido fica `CONCLUIDO` com `vendaId` a
+      apontar para uma venda anulada, e o cliente continua a ver "entregue" no
+      histórico dele.
+- [ ] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
+      mas nenhum código os escreve — o frontend tem etiquetas para eles que nunca
+      aparecem. Decidir entre usá-los ou removê-los do enum.
+- [ ] Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis das
+      lojas. A migração `20260920070000_commerce_permissoes_gestao` cria as
+      permissões mas não as liga a perfil nenhum, e o `seed.ts` não as menciona:
+      hoje só ADMIN e SUPER_ADMIN (que têm bypass) conseguem abrir a fila de
+      pedidos. É configuração por empresa, não código.
+- [ ] Cobrança no checkout com gateway M-Pesa/e-Mola. Hoje o método de pagamento
+      do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é
+      cobrado fisicamente no levantamento. Passar a cobrar no checkout torna o
+      pedido um facto financeiro imediato, mas traz reembolsos, conciliação de
+      pagamentos e tratamento de pagamento falhado — é projecto próprio, não
+      correcção.
 
 ### Login com Google (Compra Fácil)
 

@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
+import { getLojas } from '@/features/lojas';
 import { cn, mensagemDeErro } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaPedidosCommerce } from '../components/TabelaPedidosCommerce';
@@ -24,9 +26,14 @@ const ESTADOS: EstadoPedidoCommerce[] = [
  */
 export function PedidosCommercePage() {
   const [estado, setEstado] = useState<EstadoPedidoCommerce | undefined>(undefined);
+  const [lojaId, setLojaId] = useState('');
   const [pedidoAberto, setPedidoAberto] = useState<PedidoCommerceGestao | null>(null);
 
-  const { data: pedidos, isLoading, isError, error } = usePedidosCommerceGestao({ estado });
+  const { data: lojas } = useQuery({ queryKey: ['lojas'], queryFn: getLojas });
+  const { data: pedidos, isLoading, isError, error } = usePedidosCommerceGestao({
+    estado,
+    lojaId: lojaId || undefined,
+  });
 
   // O drawer segue os dados mais recentes da lista (cada mutação invalida-a),
   // em vez de ficar preso à cópia do momento em que foi aberto.
@@ -37,6 +44,25 @@ export function PedidosCommercePage() {
       <BarraDaPagina resumo={pedidos ? `${pedidos.length} pedido(s)` : undefined} />
 
       <div className="flex flex-wrap items-center gap-2">
+        {/*
+          A fila mostra os pedidos de toda a empresa — `ListarPedidosGestaoUseCase`
+          filtra por `empresaId`, e o token do funcionário não tem loja. Este
+          selector é conveniência, não segregação: quem fecha o levantamento na
+          loja errada é recusado pelo servidor, não por ter escolhido aqui.
+        */}
+        <select
+          value={lojaId}
+          onChange={(e) => setLojaId(e.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+        >
+          <option value="">Todas as lojas</option>
+          {(lojas ?? []).map((loja: { id: string; nome: string }) => (
+            <option key={loja.id} value={loja.id}>
+              {loja.nome}
+            </option>
+          ))}
+        </select>
+
         <button
           type="button"
           onClick={() => setEstado(undefined)}

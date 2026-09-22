@@ -3,6 +3,8 @@
   vendasTotalFaturas: number;
   produtosBaixoStock: number;
   funcionariosPresentes: number;
+  /** Pedidos do Compra Fácil por atender — sem filtro de data, ao contrário dos de vendas. */
+  pedidosPendentes: number;
 }
 
 export interface ChartData {

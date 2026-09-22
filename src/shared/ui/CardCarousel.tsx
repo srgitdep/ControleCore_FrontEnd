@@ -38,7 +38,7 @@ interface CardCarouselProps {
    * Colunas na grelha a partir de `lg`. Com 3 indicadores, quatro colunas deixariam
    * uma lacuna.
    */
-  colunas?: 2 | 3 | 4;
+  colunas?: 2 | 3 | 4 | 5;
   className?: string;
 }
 
@@ -96,6 +96,7 @@ export function CardCarousel({ children, label, colunas = 4, className }: CardCa
           colunas === 2 && 'grid-cols-2',
           colunas === 3 && 'grid-cols-3',
           colunas === 4 && 'grid-cols-4',
+          colunas === 5 && 'grid-cols-5',
           className,
         )}
       >

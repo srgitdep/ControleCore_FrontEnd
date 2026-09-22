@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { mensagemDeErro } from '@/shared/utils';
 import { pedidosCommerceGestaoApi } from '../api/pedidos-commerce-gestao.api';
 import type {
+  CancelarPedidoPayload,
   ConferirPedidoPayload,
   FiltrosPedidoCommerce,
   SubstituirItemPayload,
@@ -38,6 +39,24 @@ export function useConfirmarPedidoCommerce() {
       invalidar();
     },
     onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível confirmar o pedido.')),
+  });
+}
+
+/**
+ * A única saída para um pedido que já passou de CONFIRMADO — o cliente só cancela
+ * até aí, e a expiração automática só apanha os que ninguém confirmou. Sem isto, um
+ * pedido abandonado em preparação segurava a reserva de stock indefinidamente.
+ */
+export function useCancelarPedidoCommerce() {
+  const invalidar = useInvalidarPedidosCommerce();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: CancelarPedidoPayload }) =>
+      pedidosCommerceGestaoApi.cancelar(id, payload),
+    onSuccess: () => {
+      toast.success('Pedido cancelado — a reserva de stock foi libertada.');
+      invalidar();
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível cancelar o pedido.')),
   });
 }
 
