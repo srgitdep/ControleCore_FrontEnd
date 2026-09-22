@@ -1,5 +1,5 @@
 import { useAdminDashboard } from '@/features/dashboard';
-import { DollarSign, FileText, Package, Users } from 'lucide-react';
+import { DollarSign, FileText, Package, PackageCheck, Users } from 'lucide-react';
 import { CardCarousel, KpiCard } from '@/shared/ui';
 import { useNavigate } from 'react-router-dom';
 import { SalesChart } from './SalesChart';
@@ -9,9 +9,11 @@ import { SalesChart } from './SalesChart';
  *
  * ## Os indicadores deslizam em vez de empilhar
  *
- * A grelha era `grid-cols-1 md:grid-cols-2 lg:grid-cols-4`: num telemóvel, quatro
- * cartões um debaixo do outro, cerca de 520px de altura antes de o gráfico começar. O
- * `CardCarousel` põe-nos na horizontal em `<lg` e mantém a grelha acima disso.
+ * A grelha era `grid-cols-1 md:grid-cols-2 lg:grid-cols-4`: num telemóvel, os cartões
+ * empilhavam-se um debaixo do outro, mais de 500px de altura antes de o gráfico
+ * começar. O `CardCarousel` põe-nos na horizontal em `<lg` e mantém a grelha acima
+ * disso — o que também é o que permite acrescentar um indicador sem empurrar o
+ * gráfico para fora do ecrã no telemóvel.
  *
  * ## As variações inventadas saíram
  *
@@ -33,8 +35,8 @@ export function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <CardCarousel label="Indicadores" colunas={4}>
-          {[0, 1, 2, 3].map((i) => (
+        <CardCarousel label="Indicadores" colunas={5}>
+          {[0, 1, 2, 3, 4].map((i) => (
             <KpiCard key={i} title="" value="" isLoading />
           ))}
         </CardCarousel>
@@ -46,7 +48,7 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <CardCarousel label="Indicadores do mês" colunas={4}>
+      <CardCarousel label="Indicadores do mês" colunas={5}>
         <KpiCard
           title="Faturação (mês atual)"
           value={`${(data.kpis.vendasTotalMeticais || 0).toLocaleString('pt-MZ')} MT`}
@@ -90,6 +92,26 @@ export function AdminDashboard() {
           title="Funcionários presentes hoje"
           value={data.kpis.funcionariosPresentes.toLocaleString('pt-MZ')}
           icon={Users}
+        />
+        <KpiCard
+          title="Pedidos Compra Fácil por atender"
+          value={(data.kpis.pedidosPendentes ?? 0).toLocaleString('pt-MZ')}
+          icon={PackageCheck}
+          // Um pedido online só entra na facturação e no caixa quando o levantamento
+          // é confirmado. Enquanto ninguém o fecha, não aparece em mais nenhum
+          // indicador deste painel — daí o cartão levar directamente à fila onde se
+          // avança o pedido, pelo mesmo princípio do cartão de stock baixo.
+          onClick={
+            (data.kpis.pedidosPendentes ?? 0) > 0
+              ? () => navigate('/commerce/pedidos')
+              : undefined
+          }
+          accent={(data.kpis.pedidosPendentes ?? 0) > 0 ? 'warning' : 'success'}
+          description={
+            (data.kpis.pedidosPendentes ?? 0) > 0
+              ? 'À espera de preparação ou levantamento'
+              : 'Nenhum pedido em espera'
+          }
         />
       </CardCarousel>
 
