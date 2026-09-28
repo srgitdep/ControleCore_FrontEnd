@@ -516,6 +516,27 @@ esse merge trouxe.
   > apareciam juntas por serem duas chamadas Gemini na mesma pedida, não uma a
   > bloquear a outra).
 
+- **2026-09-28 · [BE] · Antonio Mambo** — `docs/gemini-3.8-flash-e-chave`
+  - docs: regista a troca de modelo para `gemini-3.8-flash` e a chave do Gemini
+    corrigida em produção (`.env.example`, `TRD.md`)
+
+  > **A causa real não era o modelo — era a chave.** O retry (v58) e a troca para
+  > `gemini-3.8-flash` (v59) não resolveram: a Mayra continuou a falhar. Um teste
+  > feito dentro da máquina do Fly mostrou que o segredo `GEMINI_API_KEY` tinha
+  > **7 caracteres** — não era uma chave — e a Google recusava-o com
+  > `400 "API key not valid"` em qualquer modelo. Com a chave correcta (v60/v61) a
+  > Mayra voltou a responder, confirmado por pedido real.
+  >
+  > **Por explicar:** com a chave inválida, a aplicação registava `503 "high
+  > demand"` e não `400`. Não se chegou a ver a chave que o processo tinha em
+  > memória (leitura de produção não autorizada). Se o 503 voltar com a chave
+  > actual, há uma segunda causa e deve investigar-se.
+  >
+  > Sem alterações de configuração no Fly além dos segredos `GEMINI_MODEL` e
+  > `GEMINI_API_KEY`, ambos alterados à mão pelo utilizador. O
+  > `gemini-2.5-flash`, a primeira alternativa considerada, aparece na lista de
+  > modelos mas devolve `404` — não usar.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -579,6 +600,14 @@ esse merge trouxe.
       (Fases 8–9) resolveram definitivamente a latência e os turnos perdidos na
       Gemini Live API — as últimas entradas da Fase 8 são `diag(...)`, ainda a
       confirmar por logs, não uma correcção fechada com certeza absoluta.
+- [ ] Trocar o modelo por defeito do Gemini no código: 9 chamadas recorrem a
+      `'gemini-2.0-flash'` quando `GEMINI_MODEL` falta, e esse modelo já não
+      existe na API. Centralizar num só sítio e falhar no arranque com mensagem
+      clara em vez de recorrer a um modelo retirado. Encontrado em 28/09/2026,
+      fora do âmbito da correcção do 503.
+- [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
+      facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
+      desenvolvimento para repor a Mayra.
 
 ---
 
