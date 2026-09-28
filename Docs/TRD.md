@@ -143,10 +143,16 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 ## 5. IA — Assistente "Mayra"
 
 - **SDK:** `@google/genai`, módulo `ai-copilot`.
-- **Modelo de texto:** `GEMINI_MODEL` (configurável por variável de ambiente, ex.
-  `gemini-3.1-flash-lite`), com *function calling* sobre tools internas (ex.
-  `get_warehouse_stock`, `get_my_daily_sales`, `list_supplier_products`,
-  `receive_goods`) — todas com escopo por `empresaId`.
+- **Modelo de texto:** `GEMINI_MODEL` (configurável por variável de ambiente; em
+  produção `gemini-3.8-flash` desde 28/09/2026, antes `gemini-3.1-flash-lite`), com
+  *function calling* sobre tools internas (ex. `get_warehouse_stock`,
+  `get_my_daily_sales`, `list_supplier_products`, `receive_goods`) — todas com
+  escopo por `empresaId`. Sem a variável, o código recorre a `gemini-2.0-flash`, que
+  já não existe na API — por isso tem de estar sempre definida.
+- **Resiliência:** as chamadas de texto passam por `comRetryGemini`
+  (`src/shared/gemini-retry.ts`) — até duas repetições (500 ms, 2 s) quando o
+  Gemini devolve 503 por sobrecarga. Outros erros (chave inválida, modelo
+  inexistente) não se repetem.
 - **Voz em tempo real:** `GEMINI_LIVE_MODEL` (Live API, `bidiGenerateContent`),
   entregue ao frontend via WebSocket (`socket.io`).
 - **Persistência de sessão:** `CopilotSession` / `CopilotMessage` no Postgres.
