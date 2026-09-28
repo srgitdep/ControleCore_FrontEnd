@@ -482,6 +482,36 @@ esse merge trouxe.
   > corpo do pedido HTTP, um cliente do POS podia declarar-se `ECOMMERCE` e
   > enviesar a segmentação do CRM.
 
+### Fase 15 — Retry para 503 transitório do Gemini na Mayra (28 Set 2026)
+
+- **2026-09-28 · [BE] · Antonio Mambo** — `fix/mayra-retry-gemini-503`
+  - fix(ai-copilot): repete a chamada ao Gemini até duas vezes (500ms, 2s) quando
+    a resposta é 503 "UNAVAILABLE" — cobre o chat, a geração do título da sessão
+    e a análise da fila de necessidades
+
+  > **Porquê**: os logs de produção de 28/09/2026 mostraram seis picos de
+  > `ApiError 503 "This model is currently experiencing high demand"` ao longo
+  > do dia (12:03–17:53), cada um resolvido horas depois sem qualquer alteração
+  > de código — sinal de sobrecarga transitória do lado do Google, não de
+  > configuração errada. Nenhuma das três chamadas ao Gemini
+  > (`AiCopilotSessionService.getOrCreateSession`, `AiCopilotService.chat`,
+  > `AnalisarNecessidadesMayraUseCase`) tinha retry; um 503 ia direto ao
+  > utilizador como erro. `generateContent` não tem efeito colateral do lado do
+  > servidor além de consumir quota, por isso repetir é sempre seguro aqui — ao
+  > contrário de uma escrita na base de dados, onde só é seguro repetir leituras
+  > (`ligacao-intermitente.ts`).
+  >
+  > Novo `src/shared/gemini-retry.ts` (`comRetryGemini`) — mesma progressão de
+  > esperas (500ms, 2s) já usada para a intermitência do Neon, para não tratar
+  > um 503 do Gemini com mais paciência do que uma ligação de base de dados a
+  > acordar.
+  >
+  > **Achado, fora de âmbito, não corrigido**: a geração do título da sessão já
+  > apanhava o próprio erro e caía em "Nova Conversa" — não bloqueava o chat,
+  > ao contrário do que uma primeira leitura dos logs sugeria (as duas falhas
+  > apareciam juntas por serem duas chamadas Gemini na mesma pedida, não uma a
+  > bloquear a outra).
+
 ---
 
 ## 3. Backlog — Por Fazer
