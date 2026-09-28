@@ -153,9 +153,23 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
   (`src/shared/gemini-retry.ts`) — até duas repetições (500 ms, 2 s) quando o
   Gemini devolve 503 por sobrecarga. Outros erros (chave inválida, modelo
   inexistente) não se repetem.
+- **Ciclo de ferramentas (chat de texto):** `AiCopilotService.chat` executa **todas**
+  as ferramentas que o modelo pede numa resposta (o Gemini pede várias de uma vez
+  em perguntas amplas) e volta a chamá-lo com os resultados, até ele responder em
+  texto — no máximo 4 voltas (`MAXIMO_VOLTAS_FERRAMENTAS`); a última vai sem
+  ferramentas, para obrigar a resposta. Cada resposta leva o `id` do pedido a que
+  corresponde. Um erro de uma ferramenta vai ao modelo como `{ erro }`, sem cortar
+  as outras; uma acção de escrita (HITL) pára o ciclo e pede confirmação ao
+  utilizador. Uma resposta sem texto fica registada nos logs com o
+  `finishReason` e mostra `PROMPTS.NO_DATA`. Perguntas amplas demoram 8–12 s.
+  Desde 28/09/2026; antes só a primeira ferramenta era executada.
 - **Voz em tempo real:** `GEMINI_LIVE_MODEL` (Live API, `bidiGenerateContent`),
   entregue ao frontend via WebSocket (`socket.io`).
 - **Persistência de sessão:** `CopilotSession` / `CopilotMessage` no Postgres.
+  `CopilotMessage.toolCall` (JSON) guarda a **lista** das ferramentas chamadas numa
+  resposta (`name`, `args`, `response`), usada para reconstruir o histórico enviado
+  ao Gemini nos turnos seguintes; as mensagens anteriores a 28/09/2026 têm um só
+  objecto e continuam a ser lidas.
 - **Custo:** Google AI Studio / Gemini API — tem lote gratuito, cobrança por uso
   acima disso. Chave em `GEMINI_API_KEY`.
 
