@@ -537,6 +537,35 @@ esse merge trouxe.
   > `gemini-2.5-flash`, a primeira alternativa considerada, aparece na lista de
   > modelos mas devolve `404` — não usar.
 
+- **2026-09-28 · [BE] · Antonio Mambo** — `fix/mayra-varias-ferramentas`
+  - fix(ai-copilot): executa todas as ferramentas que o Gemini pede numa resposta e
+    repete até ele responder (máximo 4 voltas; na última, sem ferramentas)
+
+  > **Porquê**: depois de corrigida a chave, a Mayra respondia "Não encontrei dados
+  > suficientes" a qualquer pergunta ampla ("como aumentar as vendas", "auditoria
+  > anti-fraude") e acertava nas simples ("vendas do mês"). Reproduzido com as
+  > instruções e ferramentas reais: numa pergunta ampla o Gemini pede **3 a 5
+  > ferramentas na mesma resposta**, e `AiCopilotService.chat` só executava a
+  > primeira (`parts.find`). O modelo voltava a pedir as outras, o serviço não fazia
+  > mais nenhuma volta, a resposta chegava sem texto e caía em `PROMPTS.NO_DATA`.
+  > Não tinha relação com o modelo nem com a chave.
+  >
+  > Mudanças de comportamento:
+  >
+  > - Um erro de uma ferramenta (ex.: sem permissão) deixa de cortar a conversa:
+  >   vai ao modelo como resultado `{ erro }` e as restantes ferramentas contam.
+  > - `CopilotMessage.toolCall` passa a guardar uma **lista** de chamadas;
+  >   `getGeminiHistory` continua a ler as mensagens antigas, com um só objecto.
+  >   Sem migração — a coluna é JSON. O frontend não lê este campo.
+  > - Uma resposta sem texto passa a ficar registada nos logs com o
+  >   `finishReason` — antes não deixava rasto nenhum.
+  > - Perguntas amplas demoram mais (8–12 s medidos), porque passam de facto a
+  >   recolher todos os dados.
+  >
+  > Testes novos: `ai-copilot.service.spec.ts` (várias ferramentas na mesma
+  > resposta, voltas encadeadas, limite de voltas, erro de uma ferramenta, HITL) e
+  > `ai-copilot-session.service.spec.ts` (histórico nos dois formatos).
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -608,6 +637,12 @@ esse merge trouxe.
 - [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
       facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
       desenvolvimento para repor a Mayra.
+- [ ] Teste instável `bater-ponto.use-case.spec.ts` › "marca PRESENTE dentro da
+      tolerância": cria um turno "daqui a uma hora" pelo relógio real, e depois das
+      23:00 esse turno passa para as 00:xx — o código conclui atraso e o teste falha.
+      O GitHub Actions corre em UTC, por isso **um push entre as 01:00 e as 02:00 de
+      Maputo falha o gate de deploy**. Corrigir fixando o relógio no teste
+      (`jest.useFakeTimers().setSystemTime(...)`). Encontrado em 28/09/2026.
 
 ---
 
