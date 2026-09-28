@@ -488,6 +488,10 @@ esse merge trouxe.
   - fix(ai-copilot): repete a chamada ao Gemini até duas vezes (500ms, 2s) quando
     a resposta é 503 "UNAVAILABLE" — cobre o chat, a geração do título da sessão
     e a análise da fila de necessidades
+- **2026-09-28 · [BE] · Antonio Mambo** — `fix/gemini-retry-sem-instanceof`
+  - fix(shared): detecta o 503 do Gemini pelo `status`, sem `instanceof` — com o
+    `@google/genai` simulado nos testes, o `instanceof ApiError` lançava um
+    `TypeError` que escondia o erro original; acrescenta `gemini-retry.spec.ts`
 
   > **Porquê**: os logs de produção de 28/09/2026 mostraram seis picos de
   > `ApiError 503 "This model is currently experiencing high demand"` ao longo
