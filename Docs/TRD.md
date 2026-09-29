@@ -56,6 +56,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | Markdown | react-markdown + remark-gfm | ^10.1.0 / ^4.0.1 | respostas da Mayra |
 | Login social | @react-oauth/google | ^0.13.5 | "Continuar com Google" no Compra Fácil (Google Identity Services) |
 | Datas | date-fns | ^4.4.0 | |
+| Tradução (i18n) | i18next + react-i18next + i18next-browser-languagedetector | ^26.4.2 / ^17.0.15 / ^8.2.1 | português e inglês; ver «Multilínguas» abaixo |
 | Utilitários CSS | clsx + tailwind-merge + class-variance-authority | — | |
 | Lint | oxlint | ^1.71.0 | `npm run lint` |
 | Testes | vitest | ^4.1.10 | `npm test` |
@@ -63,6 +64,17 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 
 **Porta de desenvolvimento:** `5273` (fixa, `strictPort`; libertada por
 `scripts/libertar-porto.mjs` antes de arrancar).
+
+**Multilínguas (frontend):** configuração em `src/i18n/index.ts`; textos em
+`src/locales/<língua>/<namespace>.json` (um namespace por feature; `comum` vai no
+bundle inicial, os outros carregam-se por `import()` quando um ecrã os pede). Chaves
+tipadas contra o catálogo português (`src/i18n/tipos.d.ts`). Língua activa: a da sessão
+(vem no login — a escolha da pessoa ou a da empresa) → a guardada no browser
+(`localStorage.idioma`) → a do browser → português. Todas as instâncias do axios enviam
+`Accept-Language` com a língua activa (`enviarLinguaActiva`). `formatMoeda`/`formatData`
+seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdioma`
+(`src/shared/ui/`) no ERP, na loja, no portal e nas páginas públicas. Teste de paridade
+(`src/i18n/paridade.test.ts`) falha se uma chave faltar numa das línguas.
 
 ---
 
@@ -90,6 +102,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | Folhas de cálculo | exceljs | ^4.4.0 | exportações |
 | Documentação de API | @nestjs/swagger + swagger-ui-express | — | `/api/docs` |
 | Datas | date-fns | ^4.4.0 | |
+| Tradução (i18n) | nestjs-i18n | ^10.8.5 | mensagens do servidor em português e inglês; ver «Multilínguas» abaixo |
 | Identificadores | uuid | ^14.0.1 | |
 | Testes | jest + ts-jest + jest-mock-extended + supertest | ^30.x | `*.spec.ts`, `npm test` / `test:e2e` |
 | Lint | eslint + typescript-eslint + prettier | ^9.x | `npm run lint` |
@@ -97,6 +110,21 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 
 **Porta de desenvolvimento:** `3100` (fixa; `scripts/libertar-porto.mjs`).
 **Prefixo global da API:** `/api/v1`. **Node:** `>=20 <23`.
+
+**Multilínguas (backend):** catálogo em `src/i18n/<língua>/*.json` (copiado para
+`dist/src/i18n` pelo `nest-cli.json`), configuração em `src/shared/configuracao-i18n.ts`.
+A língua de um pedido vem **só** do `Accept-Language` — o `nestjs-i18n` resolve-a num
+middleware, antes do `JwtAuthGuard`. Sem pedido (e-mails, crons), `resolverIdioma`
+(`src/shared/idiomas.ts`) sobre `User.idioma` / `ContaCliente.idioma` /
+`UtilizadorFornecedor.idioma` (NULL = não escolheu) e `Empresa.idiomaPadrao`.
+Mensagens do `ValidationPipe` traduzidas pela regra (`src/shared/traduzir-validacao.ts`;
+as escritas à mão num DTO ficam). Erros com chave estável:
+`throw new XException({ codigo, message, parametros })`, traduzido por
+`TraduzirExcecaoFilter` (`erros.<codigo>`; sem `codigo`, o tratamento de sempre).
+`traduzir(chave, textoPt)` para mensagens fora de excepções. Rotas da preferência:
+`PATCH /auth/eu/idioma`, `PATCH /commerce/conta/eu/idioma`, `idioma` no
+`PATCH /portal-fornecedor/perfil`, `idiomaPadrao` no `PATCH /empresas/:id`; a língua
+vem na resposta do login dos três tipos de conta.
 
 ---
 
