@@ -7,3 +7,4 @@ export * from './ResponsiveTable';
 export * from './TableScroll';
 export * from './Tabs';
 export * from './CapturaPorFoto';
+export * from './SelectorIdioma';

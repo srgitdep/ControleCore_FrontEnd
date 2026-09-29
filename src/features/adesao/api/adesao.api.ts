@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { api } from '@/shared/config';
+import { api, enviarLinguaActiva } from '@/shared/config';
 
 /**
  * Os pedidos de adesão: a porta pela qual um comprador se torna cliente.
@@ -21,6 +21,7 @@ const publicoApi = axios.create({
   withCredentials: false,
   headers: { 'Content-Type': 'application/json' },
 });
+enviarLinguaActiva(publicoApi);
 
 export const EstadoPedidoAdesao = {
   PENDENTE: 'PENDENTE',

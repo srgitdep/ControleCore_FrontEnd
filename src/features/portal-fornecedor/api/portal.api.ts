@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { api } from '@/shared/config';
+import { api, enviarLinguaActiva } from '@/shared/config';
 
 /**
  * O portal do fornecedor: instância de axios própria, e porquê.
@@ -34,6 +34,7 @@ const portalApi = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
+enviarLinguaActiva(portalApi);
 
 /**
  * O que fazer quando a sessão do portal cai.
@@ -100,6 +101,8 @@ export interface UtilizadorPortal {
   cargo?: string | null;
   principal: boolean;
   organizacaoId: string;
+  /** NULL = nunca escolheu: o portal fica com a língua do browser. */
+  idioma?: string | null;
   /** O nome comercial (ou a razão social) da fornecedora — para o cabeçalho do portal. */
   organizacaoNome?: string;
   /** A logomarca, quando existe — também para o cabeçalho. */
@@ -348,7 +351,12 @@ export const portal = {
   },
 
   /** Sem `email` nem `codigo`: são os identificadores de login, editáveis noutro fluxo. */
-  actualizarPerfil: async (payload: { nome?: string; telefone?: string; cargo?: string }) => {
+  actualizarPerfil: async (payload: {
+    nome?: string;
+    telefone?: string;
+    cargo?: string;
+    idioma?: string;
+  }) => {
     const { data } = await portalApi.patch<UtilizadorPortal>(`${BASE}/perfil`, payload);
     return data;
   },

@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { reduzirParaCaminhoSeOutroSitio } from './enderecoApi';
+import { idiomaActivo } from '@/i18n';
 
 /**
  * O endereço da API.
@@ -55,6 +56,23 @@ export const api = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
+
+// ── Língua dos pedidos ───────────────────────────────────────────────────────
+// O servidor responde na língua deste cabeçalho (mensagens de erro, validação). É a
+// língua activa da interface, que já parte da preferência da pessoa; sem ele o browser
+// mandava a sua, e quem escolheu inglês num browser em português via erros em português.
+//
+// Exportado porque há instâncias do axios à parte (Compra Fácil, portal, mercado, adesão —
+// cookies e tratamento de 401 próprios): cada uma tem de o chamar, senão responde na
+// língua do browser e não na escolhida.
+export function enviarLinguaActiva(instancia: AxiosInstance) {
+  instancia.interceptors.request.use((config) => {
+    config.headers.set('Accept-Language', idiomaActivo());
+    return config;
+  });
+}
+
+enviarLinguaActiva(api);
 
 // ── Lógica de fila para pedidos que falham durante o refresh ────────────────
 let isRefreshing = false;

@@ -1,3 +1,4 @@
+import { aplicarIdiomaGuardado } from '@/i18n';
 import { create } from 'zustand';
 import { portal, registarQuedaDeSessao } from '../api/portal.api';
 import type { Conformidade, UtilizadorPortal } from '../api/portal.api';
@@ -60,6 +61,7 @@ export const usePortalStore = create<EstadoPortal>((set, get) => ({
     // que já se tem para o ecrã reagir de imediato, e chama-se `carregar()` a seguir, que
     // lê `/eu` e traz o resto — nome da organização e conformidade incluídos.
     const { utilizador } = await portal.entrar({ identificador, password });
+    aplicarIdiomaGuardado(utilizador.idioma);
 
     set({ fornecedor: utilizador, autenticado: true, aCarregar: false });
 
@@ -67,6 +69,7 @@ export const usePortalStore = create<EstadoPortal>((set, get) => ({
   },
 
   entrarComSessao: async (utilizador) => {
+    aplicarIdiomaGuardado(utilizador.idioma);
     set({ fornecedor: utilizador, autenticado: true, aCarregar: false });
     await get().carregar();
   },

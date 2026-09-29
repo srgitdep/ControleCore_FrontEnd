@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
 import './app/index.css';
+// Antes da aplicação: o primeiro render já sai na língua certa, e o `lang` da página
+// fica certo antes de qualquer leitor de ecrã o ler.
+import './i18n';
 import App from './App';
 
 export const queryClient = new QueryClient({

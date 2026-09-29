@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 import { COPY } from '@/shared/constants/copywriting';
+import { SelectorIdioma } from '@/shared/ui';
 
 /**
  * A barra, a marca e o rodapé do sítio público.
@@ -65,6 +66,8 @@ export function BarraDoSitio() {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
+          {/* Sem sessão: a escolha fica neste browser, e o login aplica depois a da conta. */}
+          <SelectorIdioma />
           <Link
             to="/login"
             className="cc-botao cc-botao--contorno"

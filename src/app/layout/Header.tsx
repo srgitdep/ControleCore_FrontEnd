@@ -7,6 +7,8 @@ import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
 import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 import { PesquisaGlobal } from '@/features/pesquisa';
 import { useAlertas, TIPO_ALERTA_LABEL } from '@/features/necessidades';
+import { definirIdiomaApi } from '@/features/auth/api/auth.api';
+import { SelectorIdioma } from '@/shared/ui';
 
 /**
  * Título por rota. A resolução tenta o caminho exacto e depois o primeiro segmento,
@@ -110,7 +112,9 @@ export function Header({ isCollapsed = false }: HeaderProps) {
       </div>
 
       {/* ── Lado direito: Centro de Alertas (DT01 §15.4) ─────────────────── */}
-      <div ref={alertasRef} className="relative flex items-center">
+      <div ref={alertasRef} className="relative flex items-center gap-1">
+        {/* Escondido no telemóvel: o cabeçalho do POS não tem espaço para ele. */}
+        <SelectorIdioma aoMudar={definirIdiomaApi} className="hidden sm:inline-flex" />
         <button
           onClick={() => setAlertasAbertos((a) => !a)}
           className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
