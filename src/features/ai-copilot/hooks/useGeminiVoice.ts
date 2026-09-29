@@ -54,6 +54,14 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
    */
   const mayraAFalarRef = useRef(false);
   /**
+   * Se o Gemini já acabou de gerar o turno em curso (`turn_complete`).
+   *
+   * Na voz nativa, a Mayra só deixa de estar a falar quando o turno terminou **e** o
+   * player esvaziou a fila — o `turn_complete` chega com segundos de áudio ainda por
+   * tocar, e um intervalo entre dois blocos esvazia a fila a meio de uma frase.
+   */
+  const turnoDoModeloTerminadoRef = useRef(false);
+  /**
    * O MP3 da ElevenLabs que está a tocar.
    *
    * Era uma variável local dentro do handler, fora do alcance de `endVoiceSession` —
@@ -86,7 +94,14 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
   // Inicializar PCMPlayer (24kHz para Gemini Live Audio)
   useEffect(() => {
-    pcmPlayerRef.current = new PCMPlayer(24000);
+    const player = new PCMPlayer(24000);
+    player.aoFicarEmSilencio = () => {
+      // Fila vazia antes do fim do turno é só um intervalo entre blocos: ela continua.
+      if (!turnoDoModeloTerminadoRef.current) return;
+      mayraAFalarRef.current = false;
+      setState('LISTENING');
+    };
+    pcmPlayerRef.current = player;
     return () => {
       if (pcmPlayerRef.current) {
         pcmPlayerRef.current.destroy();
@@ -526,6 +541,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     // 1. Chunk de Áudio Nativo (Gemini Live 24kHz)
     socket.on('audio_chunk', (payload: { mimeType: string; data: string }) => {
+      // Sem marcar `mayraAFalarRef` aqui, o barge-in do `onaudioprocess` nunca via a
+      // Mayra a falar na voz nativa — só no MP3 de recurso, que o marcava — e falar por
+      // cima dela não a cortava.
+      turnoDoModeloTerminadoRef.current = false;
+      mayraAFalarRef.current = true;
       setState('SPEAKING');
       if (pcmPlayerRef.current) {
         pcmPlayerRef.current.feed(payload.data);
@@ -636,13 +656,30 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     });
 
     // 5. Outros eventos de ciclo de vida
+    // Decide por `ref`s, não por `state`: este handler fecha sobre o `state` do render em
+    // que o socket foi criado (ainda «A ligar…») e nunca via o valor actual — a condição
+    // `state !== 'SPEAKING'` era sempre verdadeira, e o ecrã passava a «a ouvir» com a
+    // Mayra ainda a falar. É o mesmo defeito que já tinha partido o barge-in.
     socket.on('turn_complete', () => {
-      if (state !== 'SPEAKING') {
+      turnoDoModeloTerminadoRef.current = true;
+
+      if (fallbackModeRef.current) {
+        // No recurso quem sabe quando ela se calou é o `onended` do MP3 ou da síntese.
+        // Mexer aqui em `mayraAFalarRef` reabria o microfone a meio da frase dela.
+        if (!mayraAFalarRef.current) setState('LISTENING');
+        return;
+      }
+
+      if (!pcmPlayerRef.current?.aTocar) {
+        mayraAFalarRef.current = false;
         setState('LISTENING');
       }
+      // Com áudio ainda em fila, é o `aoFicarEmSilencio` do player que fecha o turno.
     });
 
     socket.on('interrupted', () => {
+      mayraAFalarRef.current = false;
+      blocosDeFalaRef.current = 0;
       if (pcmPlayerRef.current) {
         pcmPlayerRef.current.stop();
       }

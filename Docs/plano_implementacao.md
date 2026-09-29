@@ -566,6 +566,36 @@ esse merge trouxe.
   > resposta, voltas encadeadas, limite de voltas, erro de uma ferramenta, HITL) e
   > `ai-copilot-session.service.spec.ts` (histórico nos dois formatos).
 
+- **2026-09-29 · [FE] · Antonio Mambo** — `fix/voz-mayra-a-falar`
+  - fix(ai-copilot): a voz nativa marca a Mayra como "a falar" em cada bloco de
+    áudio — falar por cima dela volta a interrompê-la; o fim do turno passa a
+    esperar que o áudio em fila acabe de tocar; aviso na consola quando o browser
+    não deixa tocar o áudio
+
+  > **Porquê**: um utilizador em Chrome, no computador, relatou que a Mayra "não
+  > falou nada". Nos logs do Fly o Gemini gerou o áudio e o servidor reenviou-o ao
+  > browser — o caminho servidor → browser estava bem, e nada no código cortava o
+  > som. A causa mais provável é o **som do site bloqueado no Chrome**, que descarta
+  > o áudio sem erro nenhum; ainda por confirmar pelo utilizador. Como não deixava
+  > rasto, o `PCMPlayer` passa a avisar na consola quando o `AudioContext` não
+  > arranca.
+  >
+  > Na mesma análise, dois defeitos em `useGeminiVoice.ts`:
+  >
+  > - **O barge-in nunca funcionava na voz nativa.** `audio_chunk` punha o ecrã em
+  >   `SPEAKING` mas não marcava `mayraAFalarRef` — só o MP3 de recurso o marcava —,
+  >   e o `onaudioprocess` só interrompe com essa marca.
+  > - **O ecrã passava a "a ouvir" com ela ainda a falar.** O `turn_complete` lia um
+  >   `state` fechado no render em que o socket foi criado, e a condição era sempre
+  >   verdadeira. Passa a decidir por `ref`s, e só dá a Mayra como calada quando o
+  >   turno terminou **e** o `PCMPlayer` esvaziou a fila (`aoFicarEmSilencio`) — o
+  >   `turn_complete` chega com segundos de áudio ainda por tocar. O modo de recurso
+  >   mantém o seu comportamento: lá quem sabe que ela se calou é o `onended` do MP3,
+  >   e mexer em `mayraAFalarRef` no `turn_complete` reabria o microfone a meio da
+  >   frase dela.
+  >
+  > Teste novo: `src/shared/utils/pcm-player.test.ts`.
+
 ---
 
 ## 3. Backlog — Por Fazer

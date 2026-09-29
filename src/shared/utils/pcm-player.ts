@@ -8,9 +8,27 @@ export class PCMPlayer {
   private nextStartTime: number = 0;
   private activeSources: AudioBufferSourceNode[] = [];
   private isStopped: boolean = false;
+  private avisouBloqueio = false;
+
+  /**
+   * Chamado quando o último bloco em fila acaba de tocar.
+   *
+   * O `turn_complete` do Gemini chega quando ele acaba de **gerar** a resposta, não
+   * quando ela acaba de **tocar**: ainda há segundos de áudio em fila no browser. Quem
+   * precisa de saber que a Mayra se calou mesmo (para deixar de a poder interromper, e
+   * para o ecrã voltar a "a ouvir") só o sabe por aqui.
+   *
+   * Não é chamado por `stop()`: aí quem parou já sabe que parou.
+   */
+  aoFicarEmSilencio: (() => void) | null = null;
 
   constructor(sampleRate: number = 24000) {
     this.sampleRate = sampleRate;
+  }
+
+  /** Se ainda há áudio em fila ou a tocar. */
+  get aTocar(): boolean {
+    return this.activeSources.length > 0;
   }
 
   private initAudioContext() {
@@ -19,7 +37,21 @@ export class PCMPlayer {
       this.audioCtx = new AudioCtxClass({ sampleRate: this.sampleRate });
     }
     if (this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
+      // Com o som do site bloqueado no Chrome, o `resume()` não liga o contexto e o
+      // áudio é descartado sem erro nenhum — a Mayra "não fala" e não fica rasto. O
+      // aviso na consola é a única pista para quem estiver a diagnosticar.
+      const ctx = this.audioCtx;
+      ctx
+        .resume()
+        .catch(() => undefined)
+        .then(() => {
+          if (ctx.state !== 'running' && !this.avisouBloqueio) {
+            this.avisouBloqueio = true;
+            console.warn(
+              `[Voz] O browser não deixou tocar o áudio da Mayra (AudioContext em "${ctx.state}"). Verifique se o som deste site está bloqueado ou silenciado.`,
+            );
+          }
+        });
     }
   }
 
@@ -70,8 +102,12 @@ export class PCMPlayer {
 
       source.onended = () => {
         const idx = this.activeSources.indexOf(source);
-        if (idx !== -1) {
-          this.activeSources.splice(idx, 1);
+        // `stop()` esvazia a lista antes de os `onended` dispararem, por isso um bloco
+        // parado à força não chega aqui e não conta como "ficou em silêncio".
+        if (idx === -1) return;
+        this.activeSources.splice(idx, 1);
+        if (this.activeSources.length === 0) {
+          this.aoFicarEmSilencio?.();
         }
       };
     } catch (e) {

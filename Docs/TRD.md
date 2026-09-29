@@ -164,7 +164,15 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
   `finishReason` e mostra `PROMPTS.NO_DATA`. Perguntas amplas demoram 8–12 s.
   Desde 28/09/2026; antes só a primeira ferramenta era executada.
 - **Voz em tempo real:** `GEMINI_LIVE_MODEL` (Live API, `bidiGenerateContent`),
-  entregue ao frontend via WebSocket (`socket.io`).
+  entregue ao frontend via WebSocket (`socket.io`). O browser envia o microfone em
+  PCM 16 kHz de forma contínua (evento `audio_input`) e recebe a voz em PCM 24 kHz
+  (`audio_chunk`), tocada pelo `PCMPlayer` (`src/shared/utils/pcm-player.ts`) num
+  `AudioContext` próprio. A Mayra conta como "a falar" desde o primeiro bloco até o
+  Gemini terminar o turno **e** o player esvaziar a fila; nesse intervalo, som
+  contínuo no microfone (`escuta.ts`: RMS > 0,08 em 2 blocos seguidos) interrompe-a.
+  Se o Chrome não deixar arrancar o `AudioContext` (som do site bloqueado), o áudio é
+  descartado sem erro — o player deixa um aviso na consola. Cada turno de voz reenvia
+  as instruções da Mayra: ~24 mil tokens por turno, ~21 mil deles de texto.
 - **Persistência de sessão:** `CopilotSession` / `CopilotMessage` no Postgres.
   `CopilotMessage.toolCall` (JSON) guarda a **lista** das ferramentas chamadas numa
   resposta (`name`, `args`, `response`), usada para reconstruir o histórico enviado
