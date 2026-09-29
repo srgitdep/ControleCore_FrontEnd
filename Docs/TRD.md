@@ -224,6 +224,14 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
   exige novo deploy.
 - **Portas fixas:** `3100` (backend) e `5273` (frontend), por causa da lista
   explícita de CORS (`CORS_ORIGINS`).
+- **Fuso horário:** `TZ = "Africa/Maputo"` no `[env]` do `fly.toml` (desde
+  29/09/2026; antes a máquina corria em UTC). O código que usa a hora local do
+  processo — o ponto monta o início do turno com `setHours` — e os `@Cron` diários
+  seguem este fuso: inadimplência 00:00, segmentos do CRM 01:00, documentos B2B
+  03:00, hora de Maputo. Os testes do backend correm no mesmo fuso
+  (`test/definir-fuso-horario.js`, `globalSetup` do Jest), porque o GitHub Actions
+  corre em UTC. As datas `@db.Date` continuam guardadas à meia-noite UTC do dia
+  local (`Date.UTC(ano, mês, dia)`). Um fuso por empresa ainda não existe.
 
 ---
 
