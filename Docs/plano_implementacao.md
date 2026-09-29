@@ -40,28 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-### Fuso horário de Maputo no servidor, teste do ponto e acentos
-
-**Início:** 2026-09-29 · **Âmbito:** backend + infra.
-**Fecha na Secção 3:** «Teste instável `bater-ponto.use-case.spec.ts`».
-
-**Problema:** a máquina do Fly corre em **UTC** (`TZ` vazio, confirmado em produção), e
-`BaterPontoUseCase` monta o início do turno com a hora local do processo, assumindo
-que é a de Maputo. Um turno das 08:00 era tratado como 08:00 UTC (10:00 em Maputo):
-todos ganhavam 2 h de tolerância, e entre as 00:00 e as 02:00 o dia era o anterior.
-Sem impacto real ainda — não há nenhum registo de ponto em produção. O teste falhava
-entre as 23:00 e as 00:00 do relógio da máquina (01:00–02:00 em Maputo, no CI).
-
-- [x] `fly.toml`: `TZ = "Africa/Maputo"` em `[env]` (verificado na máquina: o Node
-      da imagem aceita o fuso). Crons diários passam a correr 2 h mais cedo, todos de
-      noite: inadimplência 00:00, segmentos 01:00, documentos B2B 03:00.
-- [x] Testes do backend no mesmo fuso que a produção (`globalSetup` do Jest).
-- [x] `bater-ponto.use-case.spec.ts` com relógio fixo; caso novo: turno das 08:00,
-      entrada às 09:30 de Maputo → atraso de 90 min.
-- [x] Acentos das 5 mensagens de `bater-ponto.use-case.ts`.
-- [x] Build e testes do backend.
-- [x] Documentação: Secção 2, Secção 3, `TRD.md` (§7 Infra).
-- [ ] Deploy e verificação na máquina: `TZ` definido e hora de Maputo.
+Nenhuma fase em curso.
 
 ---
 
@@ -727,6 +706,9 @@ esse merge trouxe.
   >   03:00.
   > - As 5 mensagens de `bater-ponto.use-case.ts` tinham os acentos apagados
   >   («O funcionrio no est associado…») e chegavam assim ao funcionário.
+  >
+  > **Verificado em produção** (v67, 2026-09-29): `TZ=Africa/Maputo` na máquina,
+  > hora local GMT+0200, e os logs passaram a sair na hora de Maputo.
 
 ---
 
@@ -904,12 +886,13 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 - [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
       facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
       desenvolvimento para repor a Mayra.
-- [ ] Teste instável `bater-ponto.use-case.spec.ts` › "marca PRESENTE dentro da
-      tolerância": cria um turno "daqui a uma hora" pelo relógio real, e depois das
-      23:00 esse turno passa para as 00:xx — o código conclui atraso e o teste falha.
-      O GitHub Actions corre em UTC, por isso **um push entre as 01:00 e as 02:00 de
-      Maputo falha o gate de deploy**. Corrigir fixando o relógio no teste
-      (`jest.useFakeTimers().setSystemTime(...)`). Encontrado em 28/09/2026.
+- [x] Teste instável `bater-ponto.use-case.spec.ts` — resolvido em 2026-09-29 (Fase 17):
+      relógio fixo no teste, testes no fuso de Maputo e `TZ` no servidor, que
+      corria em UTC e calculava o atraso do ponto 2 h ao lado.
+- [ ] Fuso horário por empresa — hoje o servidor inteiro corre em
+      `Africa/Maputo` (`fly.toml`). Só é preciso se o SaaS for vendido fora de
+      Moçambique; entra com a §4.2 (Multilínguas) ou antes, se aparecer um cliente
+      noutro fuso.
 
 ---
 
