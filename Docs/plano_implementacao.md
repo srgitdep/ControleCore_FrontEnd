@@ -40,7 +40,39 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-Nenhuma fase em curso.
+### Permissões do Compra Fácil para Gestor e Funcionário / Caixa
+
+**Início:** 2026-09-29 · **Âmbito:** backend (o frontend já está pronto — o editor de
+perfis mostra `pedidos_commerce` e o menu já aparece a MANAGER, CASHIER e STOCK_KEEPER).
+**Fecha na Secção 3:** «Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos
+perfis das lojas» e a parte do commerce de «Ligar as permissões novas da entrega **e
+as do commerce** aos perfis».
+
+**Problema:** a migração `20260920070000_commerce_permissoes_gestao` criou as duas
+permissões e não as ligou a perfil nenhum. Quem depende do perfil recebe 403 na fila
+de pedidos; só ADMIN e SUPER_ADMIN (bypass) a abrem.
+
+**Decisão** (a mesma da §4.1, §3.1 — «Ligação a perfis»): `Gestor` e
+`Funcionário / Caixa` recebem `read` e `manage` sobre `pedidos_commerce`.
+`Armazenista` não recebe (assunção 10 da §4.1).
+
+- [x] Migração `20260929090000_commerce_permissoes_perfis_sistema`: liga as permissões
+      aos perfis de sistema por nome, idempotente, e não faz nada se os perfis não
+      existirem (são criados só pelo `seed.ts`, que não corre em produção).
+- [x] `prisma/seed.ts`: `pedidos_commerce` nas listas do Gestor e do Funcionário /
+      Caixa — sem isto, correr o seed em desenvolvimento desfazia a migração.
+- [x] Cache de permissões (24 h no Redis): versão na chave, para as permissões novas
+      valerem logo a seguir ao deploy e não um dia depois.
+- [x] Teste: `VER_PEDIDOS_COMMERCE` e `GERIR_PEDIDOS_COMMERCE` com as permissões da
+      migração; leitura não dá gestão.
+- [x] Build e testes do backend.
+- [x] Documentação: Secção 2, itens da Secção 3, `TRD.md` (§8 Segurança).
+- [ ] Deploy e verificação: um utilizador **não** ADMIN (perfil Gestor ou Caixa) abre
+      a fila de pedidos.
+
+**Por confirmar pelo utilizador:** se as empresas usam os perfis de sistema ou perfis
+próprios. Nos perfis próprios a permissão atribui-se no editor de perfis (já possível);
+a migração só toca nos de sistema.
 
 ---
 
@@ -614,6 +646,36 @@ esse merge trouxe.
   >   frase dela.
   >
   > Teste novo: `src/shared/utils/pcm-player.test.ts`.
+
+### Fase 16 — Fila de pedidos do Compra Fácil para Gestor e Caixa (29 Set 2026)
+
+- **2026-09-29 · [BE] · Antonio Mambo** — `fix/permissoes-commerce-perfis`
+  - fix(commerce): liga `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis
+    de sistema `Gestor` e `Funcionário / Caixa`
+  - **Migração**: `20260929090000_commerce_permissoes_perfis_sistema` — só
+    acrescenta linhas a `perfil_permissoes`, por nome de perfil de sistema,
+    idempotente (`ON CONFLICT DO NOTHING`); se os perfis não existirem não faz
+    nada, em vez de falhar e impedir o contentor de arrancar.
+
+  > **Porquê**: a migração `20260920070000` criou as duas permissões sem as ligar a
+  > perfil nenhum. Quem não é ADMIN via "Pedidos Compra Fácil" no menu (que filtra
+  > por role) e recebia 403 ao abrir — a fila só funcionava para ADMIN e
+  > SUPER_ADMIN, que têm bypass no `PermissoesGuard`.
+  >
+  > - `prisma/seed.ts`: `pedidos_commerce` nas listas do Gestor e do Caixa. O seed
+  >   apaga e recria as ligações dos perfis de sistema; sem isto, corrê-lo em
+  >   desenvolvimento desfazia a migração.
+  > - `src/utils/redis.service.ts`: a chave da cache de permissões passa a
+  >   `permissions:v2:<userId>`. A cache dura 24 h e não sabe que a base de dados
+  >   mudou; subir a versão torna as permissões novas válidas logo após o deploy.
+  > - `Armazenista` fica de fora (assunção 10 da §4.1). O menu continua a mostrar a
+  >   fila a STOCK_KEEPER, que recebe 403 — a corrigir se o picking passar a ser
+  >   deles.
+  > - Perfis **próprios** de cada empresa não são tocados: recebem a permissão no
+  >   editor de perfis, que já a mostra ("Pedidos Compra Fácil").
+  >
+  > Testes: 3 casos novos em `permissoes.guard.spec.ts` (ver e gerir com as
+  > permissões da migração; ver não dá gerir).
 
 ---
 
