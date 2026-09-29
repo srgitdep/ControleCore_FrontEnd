@@ -40,58 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-### Permissões do Compra Fácil para Gestor e Funcionário / Caixa
-
-**Início:** 2026-09-29 · **Âmbito:** backend (o frontend já está pronto — o editor de
-perfis mostra `pedidos_commerce` e o menu já aparece a MANAGER, CASHIER e STOCK_KEEPER).
-**Fecha na Secção 3:** «Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos
-perfis das lojas» e a parte do commerce de «Ligar as permissões novas da entrega **e
-as do commerce** aos perfis».
-
-**Problema:** a migração `20260920070000_commerce_permissoes_gestao` criou as duas
-permissões e não as ligou a perfil nenhum. Quem depende do perfil recebe 403 na fila
-de pedidos; só ADMIN e SUPER_ADMIN (bypass) a abrem.
-
-**Decisão** (a mesma da §4.1, §3.1 — «Ligação a perfis»): `Gestor` e
-`Funcionário / Caixa` recebem `read` e `manage` sobre `pedidos_commerce`.
-`Armazenista` não recebe (assunção 10 da §4.1).
-
-- [x] Migração `20260929090000_commerce_permissoes_perfis_sistema`: liga as permissões
-      aos perfis de sistema por nome, idempotente, e não faz nada se os perfis não
-      existirem (são criados só pelo `seed.ts`, que não corre em produção).
-- [x] `prisma/seed.ts`: `pedidos_commerce` nas listas do Gestor e do Funcionário /
-      Caixa — sem isto, correr o seed em desenvolvimento desfazia a migração.
-- [x] Cache de permissões (24 h no Redis): versão na chave, para as permissões novas
-      valerem logo a seguir ao deploy e não um dia depois.
-- [x] Teste: `VER_PEDIDOS_COMMERCE` e `GERIR_PEDIDOS_COMMERCE` com as permissões da
-      migração; leitura não dá gestão.
-- [x] Build e testes do backend.
-- [x] Documentação: Secção 2, itens da Secção 3, `TRD.md` (§8 Segurança).
-- [ ] Deploy e verificação: um utilizador **não** ADMIN (perfil Gestor ou Caixa) abre
-      a fila de pedidos.
-
-**Desvio, 2026-09-29** (aprovado pelo utilizador): o teste com um Caixa deu «O
-utilizador não tem nenhum perfil atribuído». Em produção existem os 4 perfis de sistema
-(criados pelo seed), mas **nenhum utilizador está ligado a eles** — o ecrã de
-utilizadores grava só o cargo, e não há forma de atribuir um perfil. Não há perfis
-próprios de empresa. Por isso a migração, sozinha, não chegava a ninguém. A fase passa a
-incluir:
-
-- [x] O cargo escolhe o perfil de sistema do mesmo nome quando o utilizador não tem
-      perfil próprio (`src/shared/perfil-por-cargo.ts`): Caixa → «Funcionário / Caixa»,
-      Gerente → «Gestor», Armazenista → «Armazenista». «Funcionário Geral» fica sem.
-- [x] `jwt.strategy.ts` passa o `perfilId` ao pedido — sem ele, um perfil atribuído
-      nunca era lido pelo guard.
-- [x] Permissões carregadas por uma só função (`permissoes-do-utilizador.ts`), usada pelo
-      guard e pelo login: o login passa a devolver `permissions`, e o frontend deixa de
-      esconder os botões de acção (`<Can>`) a quem tem a permissão.
-- [x] Só o SUPER_ADMIN altera perfis de sistema: com o cargo a usá-los, o ADMIN de uma
-      empresa mudaria as permissões dos funcionários das outras (há 3 empresas). O ecrã
-      de Permissões passa a mostrar o motivo da recusa (`mensagemDeErro`).
-- [x] Editar um perfil de sistema invalida a cache de quem o usa pelo cargo.
-
-Continua fora: um ecrã para criar perfis próprios de empresa e atribuí-los — não existe
-endpoint para isso.
+Nenhuma fase em curso.
 
 ---
 
@@ -726,7 +675,8 @@ esse merge trouxe.
   >   também a cache de quem o usa pelo cargo.
   >
   > Quem já tinha sessão tem de sair e voltar a entrar para o ecrã receber as
-  > permissões. Testes novos: 4 em `permissoes.guard.spec.ts` (perfil do cargo,
+  > permissões. **Verificado em produção** (v65, 2026-09-29) pelo utilizador: um
+  > Caixa abre a fila de pedidos do Compra Fácil. Testes novos: 4 em `permissoes.guard.spec.ts` (perfil do cargo,
   > prioridade do perfil próprio, perfil inexistente) e
   > `assign-permissions.use-case.spec.ts` (4).
 
@@ -767,11 +717,18 @@ esse merge trouxe.
 - [ ] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
       mas nenhum código os escreve — o frontend tem etiquetas para eles que nunca
       aparecem. Decidir entre usá-los ou removê-los do enum.
-- [ ] Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis das
-      lojas. A migração `20260920070000_commerce_permissoes_gestao` cria as
-      permissões mas não as liga a perfil nenhum, e o `seed.ts` não as menciona:
-      hoje só ADMIN e SUPER_ADMIN (que têm bypass) conseguem abrir a fila de
-      pedidos. É configuração por empresa, não código.
+- [x] Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis das
+      lojas — resolvido em 2026-09-29 (Fase 16): migração
+      `20260929090000`, e o cargo passa a escolher o perfil de sistema. Verificado
+      em produção com um Caixa.
+- [ ] Criar perfis próprios de empresa e atribuí-los a utilizadores. Hoje o ecrã
+      de utilizadores só grava o cargo e não há endpoint para ligar um utilizador a
+      um perfil; os perfis de sistema, que o cargo usa, são comuns a todas as
+      empresas e só a SRG os altera. Uma empresa que queira permissões diferentes
+      das do perfil do seu cargo não tem como. Encontrado em 2026-09-29.
+- [ ] O menu mostra «Pedidos Compra Fácil» a Armazenistas, que recebem 403 — o
+      perfil «Armazenista» não tem `pedidos_commerce` (assunção 10 da §4.1). Ou se
+      tira o item do menu a esse cargo, ou se dá a permissão se o picking for dele.
 - [ ] Cobrança no checkout com gateway M-Pesa/e-Mola. Hoje o método de pagamento
       do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é
       cobrado fisicamente no levantamento. Passar a cobrar no checkout torna o
@@ -823,11 +780,11 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria.
-- [ ] Ligar as permissões novas da entrega **e as do commerce** aos perfis de
-      sistema `Gestor` e `Funcionário / Caixa`, **na migração e no `seed.ts`** — o
-      seed apaga e recria as ligações dos perfis de sistema, e desfaria a migração.
-      Fecha também o item das permissões do commerce (acima): "Despachar" é uma
-      acção de `pedidos_commerce`, sem ela a entrega não é operável fora do ADMIN.
+- [ ] Ligar as permissões novas da entrega aos perfis de sistema `Gestor` e
+      `Funcionário / Caixa`, **na migração e no `seed.ts`** — o seed apaga e recria
+      as ligações dos perfis de sistema, e desfaria a migração. A parte do commerce
+      (`pedidos_commerce`, que o "Despachar" exige) ficou feita em 2026-09-29 —
+      Fase 16; seguir o mesmo padrão da migração `20260929090000`.
 - [ ] Defeito pré-existente, encontrado no planeamento e **fora do âmbito** desta
       funcionalidade: `TransitarEstadoPedidoUseCase.transitar` lê o pedido e só
       depois o actualiza, sem update condicional atómico. Dois funcionários a
