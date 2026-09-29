@@ -253,6 +253,15 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
   nome, e também nas listas do seed (que apaga e recria as ligações dos perfis de
   sistema). Desde 29/09/2026, `Gestor` e `Funcionário / Caixa` têm `read` e
   `manage` sobre `pedidos_commerce` (fila de pedidos do Compra Fácil).
+- **O perfil de cada utilizador:** o `perfilId` dele; sem perfil próprio, o perfil de
+  sistema do **cargo** (`src/shared/perfil-por-cargo.ts`: `CASHIER` → «Funcionário /
+  Caixa», `MANAGER` → «Gestor», `STOCK_KEEPER` → «Armazenista»; `USER` não tem). O
+  ecrã de utilizadores só grava o cargo — não há ainda forma de atribuir um perfil
+  próprio. As permissões carregam-se em `src/middlewares/permissoes-do-utilizador.ts`,
+  usado pelo guard (autorizar) e pelo login (`user.permissions`, que o frontend usa
+  para esconder o que o utilizador não pode fazer).
+- **Perfis de sistema são comuns às empresas:** só o SUPER_ADMIN os altera
+  (`AssignPermissionsUseCase`); o ADMIN de uma empresa recebe 403.
 - **Cache de permissões:** Redis, 24 h por utilizador, chave
   `permissions:v<N>:<userId>` (`src/utils/redis.service.ts`). A versão sobe quando
   uma migração muda permissões de perfis em uso — sem isso, quem já tinha sessão só
