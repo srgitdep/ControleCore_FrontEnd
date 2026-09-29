@@ -243,6 +243,21 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 - Guards por rota: `JwtAuthGuard`, `PermissoesGuard` (`@Permissao(...)`),
   `ModuloAccessGuard` (`@ModuloNecessario(...)`), `RolesGuard`. Rota pública exige
   `@Public()` explícito.
+- **Permissões por perfil.** Tabela `permissoes` (`action` + `resource`, ex.
+  `read`/`pedidos_commerce`) ligada a `perfis` por `perfil_permissoes`. O
+  `PermissoesGuard` traduz o `@Permissao('VER_X')` do controller para
+  `read`/`manage` sobre o recurso (comparação pela raiz de 5 letras); ADMIN e
+  SUPER_ADMIN têm bypass. Os perfis de sistema (`Administrador`, `Gestor`,
+  `Funcionário / Caixa`, `Armazenista`) são criados pelo `prisma/seed.ts`, que não
+  corre em produção — uma permissão nova para eles liga-se **numa migração**, por
+  nome, e também nas listas do seed (que apaga e recria as ligações dos perfis de
+  sistema). Desde 29/09/2026, `Gestor` e `Funcionário / Caixa` têm `read` e
+  `manage` sobre `pedidos_commerce` (fila de pedidos do Compra Fácil).
+- **Cache de permissões:** Redis, 24 h por utilizador, chave
+  `permissions:v<N>:<userId>` (`src/utils/redis.service.ts`). A versão sobe quando
+  uma migração muda permissões de perfis em uso — sem isso, quem já tinha sessão só
+  veria a mudança um dia depois. Editar um perfil no ERP invalida a cache dos seus
+  utilizadores.
 - Erros de base de dados traduzidos pelo `PrismaExcecaoFilter` global — base
   inalcançável dá **503 + `Retry-After`**, não 500 (o Neon acorda em alguns
   segundos).
