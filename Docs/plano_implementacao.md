@@ -780,12 +780,11 @@ contas do dinheiro cobrado na porta. O levantamento em loja não muda.
 confirma o turno pode já estar fechado). O dinheiro cobrado na porta **não** entra
 no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 
-- [ ] **Fase 0 — Desbloquear.** Quatro decisões do Product Owner antes de qualquer
-      código: (1) fornecedor de mapas — Leaflet/OpenStreetMap gratuito ou Google
-      Maps pago; (2) se `Pedido.estado` espelha a entrega ou fica em `EXPEDIDO`
-      até ao fim; (3) se um estafeta pode servir várias lojas da empresa;
-      (4) remover ou usar `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` — a
-      pendência acima, decidida na mesma migração porque mexe no mesmo enum.
+- [x] **Fase 0 — Desbloquear.** Decidido pelo Product Owner em 2026-09-29 (§4.1, §7):
+      (1) **Leaflet + OpenStreetMap** (gratuito; o Google Maps chegou a
+      ser escolhido e foi trocado no mesmo dia); (2) `Pedido.estado` **espelha** a entrega;
+      (3) um estafeta **pode servir várias lojas** da empresa; (4) **remover**
+      `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO`, na migração da entrega.
 - [ ] **Fase 0 — Preparar.** Migração `entrega_domicilio` (não destrutiva);
       `JWT_ESTAFETA_SECRET` nos `fly secrets` antes do deploy; coordenadas nas
       lojas piloto — hoje não há nenhuma coordenada no schema.
@@ -841,11 +840,9 @@ erros com chave estável (`codigo`) traduzida por um filtro global, para
 `mensagemDeErro()` não mudar; preferência `idioma` por utilizador, com recurso à
 língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
-- [ ] **Fase 0 — Decidir.** Três perguntas ao Product Owner: (1) que línguas —
-      proposta português + inglês; (2) quem precisa da outra língua, que decide se
-      se começa pelas superfícies públicas (recomendado) ou pelo ERP; (3) se a
-      infraestrutura entra **antes** da entrega ao domicílio (recomendado — o código
-      da entrega nasce já traduzível).
+- [x] **Fase 0 — Decidir.** Decidido pelo Product Owner em 2026-09-29 (§4.2, §7):
+      (1) **português e inglês**; (2) começar pelo **Compra Fácil e pelo portal do
+      fornecedor**; (3) a infraestrutura entra **antes** da entrega ao domicílio.
 - [ ] **Fase 1 — Infraestrutura.** Migração `idioma_utilizadores` (não destrutiva:
       `idioma` em `User`, `ContaCliente`, `UtilizadorFornecedor`; `idiomaPadrao` em
       `Empresa`); `nestjs-i18n`, filtro de tradução e `ValidationPipe` traduzido
@@ -908,13 +905,14 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Rascunho — 4 decisões em aberto | Secção 3 → «Entrega ao domicílio» |
-| 4.2 | Multilínguas (internacionalização) | Rascunho — 3 decisões em aberto | Secção 3 → «Multilínguas» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Aprovado — decisões de 2026-09-29; começa depois da Fase 1 da §4.2 | Secção 3 → «Entrega ao domicílio» |
+| 4.2 | Multilínguas (internacionalização) | Aprovado — decisões de 2026-09-29; Fase 1 é a próxima | Secção 3 → «Multilínguas» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
 - **Data**: 2026-09-22 · **revisto** 2026-09-24 (ver §0)
-- **Estado**: Rascunho — 4 decisões bloqueantes em aberto (§7)
+- **Estado**: Aprovado — decisões do Product Owner de 2026-09-29 (§7). Começa depois da
+  Fase 1 da §4.2 (infraestrutura de tradução), para os ecrãs novos nascerem traduzíveis.
 - **Âmbito**: Fullstack (Backend + Frontend + Infra)
 - **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Backlog da equipa**: no fim desta secção (histórias e sprints)
@@ -1171,7 +1169,7 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
 - [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**.
-- [ ] **[obrigatório — depende da pergunta 4]** `AGUARDA_CONFIRMACAO` e
+- [ ] **[obrigatório — decidido: remover]** `AGUARDA_CONFIRMACAO` e
       `AGUARDA_LEVANTAMENTO`. Se a decisão for **remover** (recomendado), é a parte
       destrutiva da migração e a estratégia fica escrita aqui, como o `CLAUDE.md` exige:
       1. Mapear antes de remover, sem falhar: `UPDATE pedidos SET estado = 'CRIADO'
@@ -1486,23 +1484,27 @@ Pela regra do projecto: código → autorização do merge → documentação �
 
 #### 7. Perguntas em aberto
 
-**Bloqueantes — antes da migração:**
+Nenhuma bloqueante. Decididas pelo Product Owner em **2026-09-29**:
 
-1. **Fornecedor de mapas.** Leaflet + OpenStreetMap (gratuito, sem chave) ou Google Maps
-   (melhor cobertura de MZ, **pago**, entra no TRD §6). *Recomendação:* Leaflet, com o
-   cliente a marcar o pino — evita geocodificar na v1.
-2. **`Pedido.estado` espelha a entrega (`EM_ROTA`, `FALHADA`) ou fica em `EXPEDIDO` até
-   ao fim?** Este plano assume que espelha: duplica, mas o código que já lê
-   `Pedido.estado` (painel, KPIs, CRM, anulação) funciona sem *join*. Muda o enum.
-3. **Um estafeta pode servir várias lojas da empresa?** Afecta a atribuição automática.
-4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO`: remover ou usar?** *Nova nesta
-   revisão* (vinha do backlog). Nenhum código os escreve; o frontend tem etiquetas que
-   nunca aparecem.
-   - **Remover (recomendado):** esta migração já mexe no enum e em todas as listas de
-     `pedido-estado.ts` — levar dois estados mortos para um enum maior aumenta a
-     confusão exactamente onde a equipa vai estar a trabalhar. Custo: é a parte
-     destrutiva da migração (estratégia na §4.1).
-   - **Manter:** migração 100 % aditiva, mas continua a pendência.
+1. **Fornecedor de mapas → Leaflet + OpenStreetMap**, como recomendado. O Product Owner
+   escolheu primeiro o Google Maps e trocou no mesmo dia, para experimentar a opção
+   gratuita. Consequências para a implementação:
+   - **Sem custo e sem chave de API** — nada entra no `.env.example` nem nos segredos.
+   - Os *tiles* públicos do OpenStreetMap têm uma política de uso justo (identificar a
+     aplicação, sem tráfego pesado). Se o uso crescer, troca-se o servidor de *tiles*
+     (auto-alojado ou um fornecedor pago) sem mudar o resto — é um URL.
+   - **Sem pesquisa de moradas escritas na v1:** o cliente marca o pino no mapa. A
+     geocodificação (Nominatim) fica como melhoria, se a marcação à mão se revelar
+     difícil.
+   - `MapaEntrega.tsx` continua a ser o único ficheiro a conhecer a biblioteca: se o
+     OpenStreetMap não servir, voltar ao Google Maps mexe só aí e numa variável nova.
+2. **`Pedido.estado` espelha a entrega → sim**, como o plano assumia (`EXPEDIDO`,
+   `EM_ROTA`, `FALHADA`).
+3. **Um estafeta pode servir várias lojas da empresa → sim.** `Estafeta` liga-se à
+   empresa, não a uma loja; a atribuição (manual ou automática) escolhe entre os
+   estafetas activos da empresa, e a loja fica na `EntregaPedido`.
+4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` → remover**, na migração da
+   entrega, com a estratégia da §4.1 (mapear antes de remover, recriar o tipo).
 
 **Não bloqueantes:** tudo o que está na §6.
 
@@ -1668,19 +1670,15 @@ escala, não viabilidade.
 
 > Não é um sprint de funcionalidades. São 2 a 3 dias antes do Sprint 1.
 
-###### T-00.1 · Fechar as quatro decisões bloqueantes · [Product Owner]
+###### T-00.1 · Fechar as quatro decisões bloqueantes · [Product Owner] — ✅ feita em 2026-09-29
 
-Nenhuma linha de código antes disto — a primeira muda o enum, logo muda a migração.
+1. **Mapas:** Leaflet + OpenStreetMap, com o cliente a marcar o pino.
+2. **`Pedido.estado` espelha a entrega:** sim.
+3. **Um estafeta serve várias lojas da mesma empresa:** sim.
+4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO`:** remover nesta migração, com
+   mapeamento para `CRIADO`/`PRONTO` antes, para a migração nunca falhar no arranque.
 
-1. **Fornecedor de mapas.** Leaflet + OpenStreetMap (grátis, sem chave) ou Google Maps
-   (melhor cobertura de Moçambique, **pago**). Recomendação técnica: Leaflet, com o cliente
-   a marcar o pino em vez de geocodificarmos.
-2. **`Pedido.estado` espelha a entrega, ou fica em `EXPEDIDO` até ao fim?** Espelhar duplica
-   informação mas evita mexer em todo o código que já lê `Pedido.estado`.
-3. **Um estafeta serve várias lojas da mesma empresa?** Afecta a atribuição automática.
-4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO`: remover ou usar?** Existem no enum e
-   nenhum código os escreve. Recomendação: remover nesta migração, que já mexe no enum —
-   com mapeamento para `CRIADO`/`PRONTO` antes, para a migração nunca falhar no arranque.
+O porquê de cada uma está no plano técnico, §7.
 
 ###### T-00.2 · Migração base · 5 pts · [BE]
 
@@ -2060,7 +2058,8 @@ Sempre a correr, com `npm run start:dev` (3100) e `npm run dev` (5273).
 ### 4.2 Multilínguas (internacionalização)
 
 - **Data**: 2026-09-28
-- **Estado**: Rascunho — 3 decisões bloqueantes em aberto (§7)
+- **Estado**: Aprovado — decisões do Product Owner de 2026-09-29 (§7). A Fase 1
+  (infraestrutura) é a próxima fase do projecto, antes da entrega ao domicílio.
 - **Âmbito**: Fullstack (Backend + Frontend + Base de dados)
 - **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relacionado**: Entrega ao domicílio, §4.1 deste documento (por fazer) — ver §2.4 abaixo
@@ -2415,20 +2414,13 @@ ficam `'pt'`.
 
 #### 7. Perguntas em aberto
 
-**Bloqueantes — antes da Fase 1:**
+Nenhuma bloqueante. Decididas pelo Product Owner em **2026-09-29**:
 
-1. **Que línguas?** *Recomendação:* português + inglês na v1. Acrescentar uma língua
-   nacional agora não muda a infraestrutura, mas quase duplica o trabalho de tradução e
-   exige tradutores que a equipa talvez não tenha.
-2. **Quem é o utilizador que precisa da outra língua — e portanto por onde começar?**
-   - **Clientes e fornecedores estrangeiros** → começar pelas superfícies públicas
-     (Compra Fácil, portal do fornecedor, e-mails ao cliente). *É a recomendação*: é onde
-     a língua é hoje uma barreira, e são cerca de 45 ficheiros, não 176.
-   - **Empresas fora de Moçambique a usar o ERP** → começar pelo ERP e pelo POS; a
-     extracção maior fica logo no início.
-3. **A infraestrutura (Fase 1) entra antes da entrega ao domicílio?** *Recomendação:*
-   sim — cerca de 1 a 2 semanas, e todo o código da entrega nasce traduzível (§2.4).
-   Se não, a entrega avança primeiro e os seus textos entram na extracção da Fase 3.
+1. **Que línguas → português e inglês** na v1.
+2. **Por onde começar → Compra Fácil e portal do fornecedor** (superfícies públicas).
+   O ERP e o POS ficam para a Fase 3.
+3. **A infraestrutura entra antes da entrega ao domicílio → sim.** Todo o código da
+   entrega (§4.1) usa chaves de tradução desde o início.
 
 **Não bloqueantes:** tudo o que está na §6.
 
