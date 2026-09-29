@@ -18,6 +18,10 @@ export const loginApi = (payload: LoginPayload) =>
 export const entrarApi = (payload: EntrarPayload) =>
   api.post<RespostaEntrar>('/auth/entrar', payload).then((r) => r.data);
 
+// PATCH /auth/eu/idioma — grava a língua de quem está autenticado (acompanha-o noutro browser)
+export const definirIdiomaApi = (idioma: string) =>
+  api.patch<{ idioma: string }>('/auth/eu/idioma', { idioma }).then((r) => r.data);
+
 // POST /auth/logout — invalida o token actual no Redis
 export const logoutApi = () =>
   api.post('/auth/logout').then((r) => r.data);

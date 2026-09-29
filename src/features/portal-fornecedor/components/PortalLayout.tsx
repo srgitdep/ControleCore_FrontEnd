@@ -12,6 +12,8 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { usePortalStore } from '../store/usePortalStore';
+import { portal } from '../api/portal.api';
+import { SelectorIdioma } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 /**
@@ -115,13 +117,16 @@ export function PortalLayout() {
             </div>
           </div>
 
-          <button
-            onClick={() => void sair()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <LogOut size={13} />
-            Sair
-          </button>
+          <div className="flex items-center gap-2">
+            <SelectorIdioma aoMudar={(idioma) => portal.actualizarPerfil({ idioma })} />
+            <button
+              onClick={() => void sair()}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <LogOut size={13} />
+              Sair
+            </button>
+          </div>
         </div>
 
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4">

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
+import { SelectorIdioma } from '@/shared/ui';
+import { conta } from '../api/conta.api';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useProdutosLoja } from '../hooks/useCatalogoCommerce';
@@ -67,6 +69,9 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          {/* Com sessão grava na conta (também a língua dos e-mails de pedido); sem ela, só
+              neste browser. */}
+          <SelectorIdioma aoMudar={autenticado ? conta.definirIdioma : undefined} />
           {autenticado ? (
             <>
               <Link

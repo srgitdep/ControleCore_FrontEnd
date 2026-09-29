@@ -1,0 +1,13 @@
+{
+  "idioma": {
+    "rotulo": "Language",
+    "erro_ao_gravar": "Could not save your language. It is kept in this browser only."
+  },
+  "tempo": {
+    "agora": "just now",
+    "ha_minutos": "{{n}} min ago",
+    "ha_horas": "{{n}}h ago",
+    "ha_dias_one": "{{count}} day ago",
+    "ha_dias_other": "{{count}} days ago"
+  }
+}

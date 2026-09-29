@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { api } from '@/shared/config';
+import { api, enviarLinguaActiva } from '@/shared/config';
 
 /**
  * O catálogo público do Compra Fácil: instância própria, sem credenciais.
@@ -13,6 +13,7 @@ const catalogoApi = axios.create({
   withCredentials: false,
   headers: { 'Content-Type': 'application/json' },
 });
+enviarLinguaActiva(catalogoApi);
 
 export interface LojaCommerce {
   id: string;

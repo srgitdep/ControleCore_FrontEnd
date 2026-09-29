@@ -1,0 +1,13 @@
+{
+  "idioma": {
+    "rotulo": "Língua",
+    "erro_ao_gravar": "Não foi possível gravar a língua. Fica só neste browser."
+  },
+  "tempo": {
+    "agora": "agora",
+    "ha_minutos": "há {{n}} min",
+    "ha_horas": "há {{n}}h",
+    "ha_dias_one": "há {{count}} dia",
+    "ha_dias_other": "há {{count}} dias"
+  }
+}

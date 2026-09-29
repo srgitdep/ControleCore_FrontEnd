@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { api } from '@/shared/config';
+import { api, enviarLinguaActiva } from '@/shared/config';
 
 /**
  * O mercado público: busca de fornecedores sem autenticação.
@@ -20,6 +20,7 @@ const mercadoApi = axios.create({
   withCredentials: false,
   headers: { 'Content-Type': 'application/json' },
 });
+enviarLinguaActiva(mercadoApi);
 
 export interface ArtigoAmostra {
   id: string;

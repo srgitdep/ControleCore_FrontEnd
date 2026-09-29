@@ -39,6 +39,8 @@ export interface AuthUser {
   email: string;
   role: Role;
   permissions?: string[];
+  /** Já resolvida no servidor: a escolha da pessoa ou a língua da empresa. */
+  idioma?: string;
 }
 
 // Resposta completa do POST /auth/login

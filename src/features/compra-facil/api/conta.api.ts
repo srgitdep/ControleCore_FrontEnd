@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { api } from '@/shared/config';
+import { api, enviarLinguaActiva } from '@/shared/config';
 
 /**
  * A conta de cliente do Compra Fácil: instância própria, com cookie próprio.
@@ -20,6 +20,7 @@ const contaApi = axios.create({
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
+enviarLinguaActiva(contaApi);
 
 /** Injectado pelo store, para este ficheiro não depender dele (evita ciclo de import). */
 let aoPerderSessao: (() => void) | null = null;
@@ -52,6 +53,8 @@ export interface ContaCliente {
   email: string;
   telefone?: string | null;
   pontos?: number;
+  /** NULL = nunca escolheu: a loja fica com a língua do browser. */
+  idioma?: string | null;
 }
 
 const BASE = '/commerce/conta';
@@ -87,6 +90,12 @@ export const conta = {
 
   eu: async () => {
     const { data } = await contaApi.get<ContaCliente>(`${BASE}/eu`);
+    return data;
+  },
+
+  /** Grava a língua da loja e dos e-mails de pedido deste cliente. */
+  definirIdioma: async (idioma: string) => {
+    const { data } = await contaApi.patch<{ idioma: string }>(`${BASE}/eu/idioma`, { idioma });
     return data;
   },
 

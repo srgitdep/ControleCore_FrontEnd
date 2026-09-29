@@ -40,7 +40,74 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-Nenhuma fase em curso.
+### Multilínguas — Fase 1: infraestrutura de tradução (§4.2)
+
+**Início:** 2026-09-29 · **Âmbito:** backend + frontend · **Estimativa:** 1–2 semanas.
+**Fecha na Secção 3:** «Multilínguas → Fase 1 — Infraestrutura» e o defeito do
+`lang="en"` no `index.html`.
+
+**Objectivo:** no fim desta fase, o sistema **sabe** em que língua está cada pessoa e
+**consegue** mostrar português ou inglês — mas os ecrãs ainda não estão traduzidos
+(isso é a Fase 2, Compra Fácil e portal do fornecedor). O que já muda à vista: o
+selector de língua, os erros de validação (hoje saem em inglês) e o `lang` da página.
+
+**Desvios à §4.2, decididos ao abrir a fase:**
+
+1. **A preferência vem no login**, não de `GET /auth/eu` — o frontend não chama essa rota.
+2. **`idioma` dos utilizadores é opcional** (`NULL` = «segue a empresa»), e não
+   `@default("pt")`: com um valor por omissão, `Empresa.idiomaPadrao` nunca seria usada.
+3. **O backend lê a língua do `Accept-Language`**, que o frontend envia com a língua
+   activa. O `nestjs-i18n` resolve a língua num middleware, antes de o `JwtAuthGuard`
+   identificar o utilizador; e o frontend já sabe a preferência. A preferência guardada
+   só é lida pelo backend onde não há pedido (e-mails e crons — Fase 2).
+4. **As 143 chamadas `toLocale*` espalhadas mudam com cada ecrã**, nas fases de
+   extracção (2 e 3), e não aqui: mexer agora em 72 ficheiros que essas fases voltam a
+   tocar seria fazer o trabalho duas vezes. Nesta fase mudam os formatadores
+   partilhados.
+
+**Backend**
+
+- [x] Migração `idioma_utilizadores` (não destrutiva): `idioma String?` em `User`,
+      `ContaCliente` e `UtilizadorFornecedor`; `idiomaPadrao String @default("pt")` em
+      `Empresa`.
+- [x] `src/shared/idiomas.ts` + testes: línguas suportadas (`pt`, `en`), validação e
+      `resolverIdioma` (preferência → língua da empresa → língua do browser → `pt`).
+- [x] `nestjs-i18n` com catálogo em `src/i18n/{pt,en}/*.json`, recurso a `pt`, língua
+      pelo `Accept-Language`; `src/i18n/` copiado para `dist/` (`nest-cli.json`).
+- [x] Mensagens do `ValidationPipe` traduzidas (hoje em inglês): as mensagens por
+      omissão do `class-validator` traduzem-se pela regra (`isNotEmpty`, `isUUID`…);
+      as 51 mensagens próprias, já em português, ficam como estão.
+- [x] Erros com chave estável: `throw new XException({ codigo, parametros })` traduzido
+      para `message` na língua do pedido; sem `codigo`, a mensagem passa igual. As duas
+      mensagens do `PrismaExcecaoFilter` passam a chaves.
+- [x] Preferência: `idioma` na resposta do login (comprador, cliente do Compra Fácil,
+      portal do fornecedor) e rotas para a gravar: `PATCH /auth/eu/idioma`,
+      `PATCH /commerce/conta/eu/idioma`, `idioma` no `PATCH /portal-fornecedor/perfil`,
+      `idiomaPadrao` no `PATCH /empresas/:id`.
+- [ ] Build e testes do backend; deploy (backend primeiro).
+
+**Frontend**
+
+- [x] `i18next` + `react-i18next` + `i18next-browser-languagedetector`; namespaces
+      carregados sob pedido; chaves tipadas a partir de `src/locales/pt`.
+- [x] `lang` da página segue a língua activa (hoje `lang="en"` com a interface em
+      português).
+- [x] `Accept-Language` em todos os pedidos (`src/shared/config/axios.ts`).
+- [x] Preferência: ao entrar, a língua vem do login; sem sessão, do `localStorage` ou
+      do browser. Mudar no selector grava no servidor quando há sessão.
+- [x] `SelectorIdioma` (`src/shared/ui/`) no `Header` do ERP, na loja do Compra Fácil,
+      no portal do fornecedor e nas páginas públicas.
+- [x] `formatMoeda`, `formatMoedaCompacta`, `formatData`, `formatDataHora`,
+      `formatDataRelativa` pela língua activa (moeda sempre MZN).
+- [x] Teste de paridade: falha se uma chave existir em `pt` e faltar em `en`.
+- [ ] Build, testes e lint do frontend; deploy.
+
+**Documentação e verificação**
+
+- [x] `TRD.md`: bibliotecas novas, catálogos, regra de resolução da língua.
+- [ ] Verificar: browser em inglês sem sessão abre em inglês (selector); erro de
+      validação sai em português e em inglês conforme a língua; a preferência
+      acompanha o utilizador noutro browser; `lang` da página correcto.
 
 ---
 
@@ -710,6 +777,41 @@ esse merge trouxe.
   > **Verificado em produção** (v67, 2026-09-29): `TZ=Africa/Maputo` na máquina,
   > hora local GMT+0200, e os logs passaram a sair na hora de Maputo.
 
+
+### Fase 18 — Multilínguas, Fase 1: infraestrutura de tradução (29 Set 2026)
+
+- **2026-09-29 · [BE] · Antonio Mambo** — `feat/multilinguas-infraestrutura`
+  - feat(i18n): infraestrutura de tradução no backend
+  - **Migração**: `20260929150000_idioma_utilizadores` — não destrutiva: `idioma`
+    (texto, NULL = não escolheu) em `users`, `contas_cliente` e
+    `utilizadores_fornecedor`; `idiomaPadrao` (`'pt'`) em `empresas`. Toda a gente
+    fica em português no dia do deploy.
+- **2026-09-29 · [FE] · Antonio Mambo** — `feat/multilinguas-infraestrutura`
+  - feat(i18n): infraestrutura de tradução no frontend
+
+  > **O que muda à vista nesta fase:** o selector de língua (ERP, loja, portal,
+  > páginas públicas), os erros de validação dos formulários — que saíam em **inglês**
+  > para toda a gente («lojaId should not be empty») e passam a sair em português, ou
+  > em inglês para quem o escolhe —, os formatadores partilhados de moeda e data, e o
+  > `lang` da página (era `en`). **Os ecrãs continuam em português:** traduzi-los é a
+  > Fase 2 (§4.2).
+  >
+  > - Backend: `nestjs-i18n`, língua pelo `Accept-Language`
+  >   (`src/shared/configuracao-i18n.ts`); `mensagensDeValidacao` traduz as mensagens
+  >   por omissão do `class-validator` pela regra e deixa as escritas à mão;
+  >   `TraduzirExcecaoFilter` traduz os erros com `codigo` e deixa os outros como
+  >   sempre; `resolverIdioma` para onde não há pedido; a língua vem no login dos três
+  >   tipos de conta; `PATCH /auth/eu/idioma` e `PATCH /commerce/conta/eu/idioma`.
+  > - Frontend: `i18next` com chaves tipadas; `Accept-Language` nas **6** instâncias
+  >   do axios (5 eram independentes e teriam ficado de fora); `SelectorIdioma`;
+  >   `formatMoeda`/`formatData` pela língua (em português, o mesmo resultado de antes —
+  >   há teste); teste de paridade de chaves.
+  > - Achado: o nome da regra do `class-validator` não é o do decorador (`@IsUUID` gera
+  >   `isUuid`). Um teste passou a confirmar que cada chave do catálogo é uma regra real.
+  > - Testes: backend 1828 (novos: `idiomas`, `traduzir-validacao`,
+  >   `traduzir-excecao.filter` e `multilinguas.integracao`, este com pedidos HTTP
+  >   reais em `pt`, `en-GB` e `fr-FR`); frontend 116 (formatadores e paridade).
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -843,7 +945,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 - [x] **Fase 0 — Decidir.** Decidido pelo Product Owner em 2026-09-29 (§4.2, §7):
       (1) **português e inglês**; (2) começar pelo **Compra Fácil e pelo portal do
       fornecedor**; (3) a infraestrutura entra **antes** da entrega ao domicílio.
-- [ ] **Fase 1 — Infraestrutura.** Migração `idioma_utilizadores` (não destrutiva:
+- [x] **Fase 1 — Infraestrutura.** Migração `idioma_utilizadores` (não destrutiva:
       `idioma` em `User`, `ContaCliente`, `UtilizadorFornecedor`; `idiomaPadrao` em
       `Empresa`); `nestjs-i18n`, filtro de tradução e `ValidationPipe` traduzido
       (hoje as mensagens do `class-validator` saem em inglês); `i18next` com
@@ -857,7 +959,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 - [ ] **Fase 4 — Servidor e Mayra.** Excepções dos restantes módulos; língua
       preferida no prompt da Mayra; cache da análise de necessidades separada por
       língua.
-- [ ] Defeito pré-existente, encontrado no planeamento: `index.html` declara
+- [x] Defeito pré-existente, encontrado no planeamento: `index.html` declara
       `lang="en"` com a interface em português — afecta leitores de ecrã e a
       tradução automática do browser. Corrige-se na Fase 1.
 
@@ -2058,8 +2160,18 @@ Sempre a correr, com `npm run start:dev` (3100) e `npm run dev` (5273).
 ### 4.2 Multilínguas (internacionalização)
 
 - **Data**: 2026-09-28
-- **Estado**: Aprovado — decisões do Product Owner de 2026-09-29 (§7). A Fase 1
-  (infraestrutura) é a próxima fase do projecto, antes da entrega ao domicílio.
+- **Estado**: Em implementação — Fase 1 concluída em 2026-09-29 (Secção 2, Fase 18);
+  Fase 2 a seguir.
+- **Desvios feitos na Fase 1** (prevalecem sobre o texto abaixo onde divergem):
+  1. **A língua do servidor vem só do `Accept-Language`**, que o frontend envia com a
+     língua activa — e não do utilizador autenticado (D2): o `nestjs-i18n` resolve a
+     língua num middleware, antes do `JwtAuthGuard`.
+  2. **`idioma` é opcional** (`NULL` = não escolheu), e não `@default("pt")` (§4.1):
+     com um valor por omissão, `Empresa.idiomaPadrao` nunca seria usada.
+  3. **A preferência vem na resposta do login**, e não de `GET /auth/eu` (§4.2/§4.3): o
+     frontend não chama essa rota.
+  4. **As 143 chamadas `toLocale*` espalhadas mudam com cada ecrã**, nas Fases 2 e 3, e
+     não na Fase 1 (§4.3): esses 72 ficheiros são tocados de qualquer forma na extracção.
 - **Âmbito**: Fullstack (Backend + Frontend + Base de dados)
 - **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relacionado**: Entrega ao domicílio, §4.1 deste documento (por fazer) — ver §2.4 abaixo

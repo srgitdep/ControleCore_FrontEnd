@@ -1,3 +1,4 @@
+import { aplicarIdiomaGuardado } from '@/i18n';
 import { create } from 'zustand';
 import { conta, registarQuedaDeSessao } from '../api/conta.api';
 import type { ContaCliente } from '../api/conta.api';
@@ -47,6 +48,7 @@ export const useContaClienteStore = create<EstadoConta>((set, get) => ({
 
   entrar: async (lojaId, identificador, password) => {
     const { cliente } = await conta.entrar({ lojaId, identificador, password });
+    aplicarIdiomaGuardado(cliente.idioma);
     set({ cliente, autenticado: true, aCarregar: false });
 
     try {
@@ -59,6 +61,7 @@ export const useContaClienteStore = create<EstadoConta>((set, get) => ({
 
   entrarComGoogle: async (lojaId, credential) => {
     const { cliente } = await conta.entrarComGoogle({ lojaId, credential });
+    aplicarIdiomaGuardado(cliente.idioma);
     set({ cliente, autenticado: true, aCarregar: false });
 
     try {
@@ -88,6 +91,7 @@ export const useContaClienteStore = create<EstadoConta>((set, get) => ({
   carregar: async () => {
     try {
       const cliente = await conta.eu();
+      aplicarIdiomaGuardado(cliente.idioma);
 
       try {
         sessionStorage.setItem(CHAVE, JSON.stringify(cliente));
