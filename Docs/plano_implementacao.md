@@ -20,11 +20,27 @@
 - **A Secção 4 são os planos das funcionalidades por fazer**, completos, uma
   subsecção por funcionalidade. Não há ficheiros de plano separados — um plano novo
   entra aqui, e o seu resumo em checklist na Secção 3.
+- **Cada fase tem um plano próprio enquanto dura** — na secção «Fase em curso», logo
+  abaixo. Ao começar uma fase, escreve-se lá o plano detalhado dela (tarefas,
+  ficheiros, como verificar). Cada tarefa concluída passa a `- [x]`. Ao terminar a
+  fase, no mesmo commit: o item da fase na Secção 3 passa a `- [x]`, entra a entrada
+  na Secção 2, e **o plano da fase é apagado** da «Fase em curso». O que foi feito
+  fica na Secção 2 e no git; o plano da fase só servia para a executar.
 - Fonte de verdade para "o que já existe": `git log --merges` dos dois
   repositórios. Este documento é a leitura human-friendly desse histórico; se
   divergirem, o `git log` é que manda — corrigir aqui.
 - Para a stack técnica, APIs e serviços de terceiros (pagos ou não), ver
   [`TRD.md`](./TRD.md). Este documento não repete essa informação.
+
+---
+
+## Fase em curso
+
+> Plano detalhado da fase que está a ser implementada. Só existe enquanto a fase
+> dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
+> Secção 2 e marca o item na Secção 3.
+
+Nenhuma fase em curso.
 
 ---
 
