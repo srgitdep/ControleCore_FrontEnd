@@ -70,9 +70,28 @@ de pedidos; só ADMIN e SUPER_ADMIN (bypass) a abrem.
 - [ ] Deploy e verificação: um utilizador **não** ADMIN (perfil Gestor ou Caixa) abre
       a fila de pedidos.
 
-**Por confirmar pelo utilizador:** se as empresas usam os perfis de sistema ou perfis
-próprios. Nos perfis próprios a permissão atribui-se no editor de perfis (já possível);
-a migração só toca nos de sistema.
+**Desvio, 2026-09-29** (aprovado pelo utilizador): o teste com um Caixa deu «O
+utilizador não tem nenhum perfil atribuído». Em produção existem os 4 perfis de sistema
+(criados pelo seed), mas **nenhum utilizador está ligado a eles** — o ecrã de
+utilizadores grava só o cargo, e não há forma de atribuir um perfil. Não há perfis
+próprios de empresa. Por isso a migração, sozinha, não chegava a ninguém. A fase passa a
+incluir:
+
+- [x] O cargo escolhe o perfil de sistema do mesmo nome quando o utilizador não tem
+      perfil próprio (`src/shared/perfil-por-cargo.ts`): Caixa → «Funcionário / Caixa»,
+      Gerente → «Gestor», Armazenista → «Armazenista». «Funcionário Geral» fica sem.
+- [x] `jwt.strategy.ts` passa o `perfilId` ao pedido — sem ele, um perfil atribuído
+      nunca era lido pelo guard.
+- [x] Permissões carregadas por uma só função (`permissoes-do-utilizador.ts`), usada pelo
+      guard e pelo login: o login passa a devolver `permissions`, e o frontend deixa de
+      esconder os botões de acção (`<Can>`) a quem tem a permissão.
+- [x] Só o SUPER_ADMIN altera perfis de sistema: com o cargo a usá-los, o ADMIN de uma
+      empresa mudaria as permissões dos funcionários das outras (há 3 empresas). O ecrã
+      de Permissões passa a mostrar o motivo da recusa (`mensagemDeErro`).
+- [x] Editar um perfil de sistema invalida a cache de quem o usa pelo cargo.
+
+Continua fora: um ecrã para criar perfis próprios de empresa e atribuí-los — não existe
+endpoint para isso.
 
 ---
 
@@ -676,6 +695,40 @@ esse merge trouxe.
   >
   > Testes: 3 casos novos em `permissoes.guard.spec.ts` (ver e gerir com as
   > permissões da migração; ver não dá gerir).
+
+- **2026-09-29 · [BE+FE] · Antonio Mambo** — `fix/perfil-por-cargo`
+  - fix(permissoes): o cargo escolhe o perfil de sistema quando o utilizador não tem
+    perfil próprio; o login devolve as permissões; só o SUPER_ADMIN altera perfis de
+    sistema
+
+  > **Porquê**: com a migração acima aplicada, um Caixa continuava a receber «O
+  > utilizador não tem nenhum perfil atribuído». Em produção (3 empresas) existiam os
+  > 4 perfis de sistema — `Administrador` com os 4 administradores, e `Gestor`,
+  > `Funcionário / Caixa` e `Armazenista` com **zero** utilizadores —, e os 2 Caixas
+  > sem perfil. O ecrã de utilizadores chama «Perfil de Acesso» ao **cargo** e não liga
+  > ninguém a um perfil; o backend não tem endpoint para isso. O RBAC por perfil nunca
+  > chegou a ninguém que não fosse ADMIN.
+  >
+  > - `src/shared/perfil-por-cargo.ts`: Caixa → «Funcionário / Caixa», Gerente →
+  >   «Gestor», Armazenista → «Armazenista»; «Funcionário Geral» (`USER`) fica sem, por
+  >   não haver perfil com permissões decididas para ele. Um `perfilId` explícito tem
+  >   prioridade. A excepção do POS para Caixas mantém-se.
+  > - `jwt.strategy.ts`: o `perfilId` passa a chegar ao pedido. Antes o guard lia
+  >   `user.perfilId`, que nunca existia — o ramo do perfil era código morto.
+  > - `src/middlewares/permissoes-do-utilizador.ts`: uma só função carrega as
+  >   permissões (com a cache) para o guard **e** para o `LoginUseCase`, que passa a
+  >   devolver `user.permissions`. O frontend escondia os botões de acção (`<Can>`,
+  >   `usePermissions`) a quem não era ADMIN porque o login nunca enviava a lista.
+  > - `AssignPermissionsUseCase`: um perfil de sistema só o SUPER_ADMIN o altera. Com o
+  >   cargo a usá-los, o ADMIN de uma empresa passaria a mudar as permissões dos
+  >   funcionários das outras. `PermissionsPage` mostra o motivo (`mensagemDeErro`).
+  > - `PrismaPerfilRepository.assignPermissions`: editar um perfil de sistema invalida
+  >   também a cache de quem o usa pelo cargo.
+  >
+  > Quem já tinha sessão tem de sair e voltar a entrar para o ecrã receber as
+  > permissões. Testes novos: 4 em `permissoes.guard.spec.ts` (perfil do cargo,
+  > prioridade do perfil próprio, perfil inexistente) e
+  > `assign-permissions.use-case.spec.ts` (4).
 
 ---
 

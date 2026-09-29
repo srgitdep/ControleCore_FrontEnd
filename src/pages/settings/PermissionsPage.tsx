@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/shared/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
 import { api } from '@/shared/config';
+import { mensagemDeErro } from '@/shared/utils';
 
 interface Role {
   id: string;
@@ -103,7 +104,9 @@ export function PermissionsPage() {
       await api.post(`/perfis/${selectedRoleId}/permissoes`, { permissionIds: flatPermissions });
       toast.success('Permissões atualizadas com sucesso!');
     } catch (error) {
-      toast.error('Erro ao atualizar permissões.');
+      // O servidor explica a recusa — ex.: um perfil de sistema só a SRG o pode alterar.
+      // A mensagem fixa escondia o motivo e deixava o ADMIN a tentar outra vez.
+      toast.error(mensagemDeErro(error, 'Erro ao atualizar permissões.'));
     } finally {
       setIsSaving(false);
     }
