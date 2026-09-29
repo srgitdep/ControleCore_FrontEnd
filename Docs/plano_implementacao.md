@@ -17,6 +17,9 @@
   correspondente na Secção 2 (data, repositório, autor, branch, o que foi feito),
   no mesmo commit que fecha a funcionalidade — a mesma disciplina que a Secção 8 do
   `CLAUDE.md` pede para os planos de feature.
+- **A Secção 4 são os planos das funcionalidades por fazer**, completos, uma
+  subsecção por funcionalidade. Não há ficheiros de plano separados — um plano novo
+  entra aqui, e o seu resumo em checklist na Secção 3.
 - Fonte de verdade para "o que já existe": `git log --merges` dos dois
   repositórios. Este documento é a leitura human-friendly desse histórico; se
   divergirem, o `git log` é que manda — corrigir aqui.
@@ -645,6 +648,104 @@ esse merge trouxe.
       pagamentos e tratamento de pagamento falhado — é projecto próprio, não
       correcção.
 
+### Entrega ao domicílio (Compra Fácil)
+
+Funcionalidade nova, planeada em 2026-09-22 — ainda **sem código**. Acrescenta ao
+Compra Fácil a opção "receber em casa", com estafeta, rastreio no mapa e acerto de
+contas do dinheiro cobrado na porta. O levantamento em loja não muda.
+
+- Plano técnico (decisões, alternativas, riscos) e backlog da equipa (22 histórias,
+  6 sprints, 124 pontos — revisto em 2026-09-24): **§4.1** deste documento.
+
+**Decisão central, já tomada:** a venda nasce na **expedição**, não na entrega
+(`ProcessarVendaUseCase` exige sessão de caixa aberta, e quando a entrega se
+confirma o turno pode já estar fechado). O dinheiro cobrado na porta **não** entra
+no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
+
+- [ ] **Fase 0 — Desbloquear.** Quatro decisões do Product Owner antes de qualquer
+      código: (1) fornecedor de mapas — Leaflet/OpenStreetMap gratuito ou Google
+      Maps pago; (2) se `Pedido.estado` espelha a entrega ou fica em `EXPEDIDO`
+      até ao fim; (3) se um estafeta pode servir várias lojas da empresa;
+      (4) remover ou usar `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` — a
+      pendência acima, decidida na mesma migração porque mexe no mesmo enum.
+- [ ] **Fase 0 — Preparar.** Migração `entrega_domicilio` (não destrutiva);
+      `JWT_ESTAFETA_SECRET` nos `fly secrets` antes do deploy; coordenadas nas
+      lojas piloto — hoje não há nenhuma coordenada no schema.
+- [ ] **Fase 1 — O cliente escolhe entrega.** Moradas do cliente, zonas de entrega
+      por loja com taxa e prazo, cotação da taxa, e escolha entrega/levantamento no
+      checkout com a taxa como linha própria no resumo.
+- [ ] **Fase 2 — A loja despacha.** Registo de estafetas, acção "Despachar" (nasce
+      a venda, sai o stock), painel de entregas em curso, marcar entregue/falhada,
+      devolução com reposição de stock e anulação da venda (reutiliza
+      `AnularVendaUseCase`). Inclui fechar dois buracos do código actual: o
+      cancelamento pela loja e a anulação da venda passam a recusar pedidos com a
+      mercadoria já com o estafeta. **A partir daqui já se opera entregas a
+      sério**, com o gestor a marcar os estados à mão.
+- [ ] **Fase 3 — As contas batem.** Valor cobrado na entrega, acerto de contas do
+      estafeta a gerar `MovimentoCaixa(REFORCO)`, visão do que cada estafeta deve.
+- [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:
+      aceitar, recolher, entregar, falhar. Atribuição automática por proximidade
+      é opcional e corta-se sob pressão de prazo.
+- [ ] **Fase 5 — Rastreio ao vivo.** Namespace WebSocket `/entregas` que aceita
+      funcionário, cliente e estafeta, cada um na sua sala; mapa no detalhe do
+      pedido, com recurso a consulta periódica quando não há WebSocket.
+- [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
+      exponencial) e entrada assinada e idempotente, para um operador de entregas
+      externo poder substituir a frota própria.
+- [ ] Ligar as permissões novas da entrega **e as do commerce** aos perfis de
+      sistema `Gestor` e `Funcionário / Caixa`, **na migração e no `seed.ts`** — o
+      seed apaga e recria as ligações dos perfis de sistema, e desfaria a migração.
+      Fecha também o item das permissões do commerce (acima): "Despachar" é uma
+      acção de `pedidos_commerce`, sem ela a entrega não é operável fora do ADMIN.
+- [ ] Defeito pré-existente, encontrado no planeamento e **fora do âmbito** desta
+      funcionalidade: `TransitarEstadoPedidoUseCase.transitar` lê o pedido e só
+      depois o actualiza, sem update condicional atómico. Dois funcionários a
+      avançar o mesmo pedido ao mesmo tempo passam os dois. Corrigir em `fix/`
+      próprio; o código novo da entrega já nasce com o update condicional.
+- [ ] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
+      Fase 4 — **não existe hoje** e não está estimada no plano da entrega.
+      Encontrado no planeamento multilíngue (2026-09-28).
+
+### Multilínguas (internacionalização)
+
+Funcionalidade nova, planeada em 2026-09-28 — ainda **sem código**. Interface,
+mensagens do servidor, e-mails e Mayra na língua de cada pessoa, com o português
+como origem e recurso final. Não inclui traduzir o conteúdo escrito pelos
+utilizadores (produtos, campanhas).
+
+- Plano técnico: **§4.2** deste documento.
+- Tamanho: ~2.500–3.500 textos no frontend (176 `.tsx`); ~580 mensagens de erro,
+  16 e-mails e 65 ferramentas da Mayra no backend. Hoje não há biblioteca de
+  tradução em nenhum dos lados, nem campo de língua em nenhum utilizador.
+
+**Decisões centrais propostas:** `i18next` no frontend e `nestjs-i18n` no backend;
+erros com chave estável (`codigo`) traduzida por um filtro global, para
+`mensagemDeErro()` não mudar; preferência `idioma` por utilizador, com recurso à
+língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
+
+- [ ] **Fase 0 — Decidir.** Três perguntas ao Product Owner: (1) que línguas —
+      proposta português + inglês; (2) quem precisa da outra língua, que decide se
+      se começa pelas superfícies públicas (recomendado) ou pelo ERP; (3) se a
+      infraestrutura entra **antes** da entrega ao domicílio (recomendado — o código
+      da entrega nasce já traduzível).
+- [ ] **Fase 1 — Infraestrutura.** Migração `idioma_utilizadores` (não destrutiva:
+      `idioma` em `User`, `ContaCliente`, `UtilizadorFornecedor`; `idiomaPadrao` em
+      `Empresa`); `nestjs-i18n`, filtro de tradução e `ValidationPipe` traduzido
+      (hoje as mensagens do `class-validator` saem em inglês); `i18next` com
+      `Accept-Language` no axios; selector de língua; `formatMoeda`/`formatData`
+      pela língua activa, substituindo as 143 chamadas `toLocale*` com cinco locales
+      diferentes; testes de paridade de chaves.
+- [ ] **Fase 2 — Superfícies públicas.** Compra Fácil, mercado, landing
+      (`copywriting.ts`), portal do fornecedor, e-mails e notificações ao cliente,
+      erros de `commerce`, `b2b` e `auth`.
+- [ ] **Fase 3 — ERP e POS.** Extracção por feature, POS primeiro (telemóvel).
+- [ ] **Fase 4 — Servidor e Mayra.** Excepções dos restantes módulos; língua
+      preferida no prompt da Mayra; cache da análise de necessidades separada por
+      língua.
+- [ ] Defeito pré-existente, encontrado no planeamento: `index.html` declara
+      `lang="en"` com a interface em português — afecta leitores de ecrã e a
+      tradução automática do browser. Corrige-se na Fase 1.
+
 ### Login com Google (Compra Fácil)
 
 - [x] Configurar `GOOGLE_CLIENT_ID`/`VITE_GOOGLE_CLIENT_ID` reais em produção
@@ -676,7 +777,1588 @@ esse merge trouxe.
 
 ---
 
-## 4. Convenção para novas entradas
+## 4. Planos de funcionalidades
+
+> Cada funcionalidade planeada e por concluir tem aqui o seu plano completo — análise,
+> decisões, riscos, plano técnico e, quando existe, o backlog da equipa. **Não há
+> ficheiros de plano separados:** este documento é o único sítio onde os planos vivem,
+> e por isso são iguais nos dois repositórios.
+>
+> Dentro de cada subsecção, as referências «§N» são à numeração do próprio plano, que
+> os títulos mantêm. O item correspondente na Secção 3 é o resumo em checklist.
+
+| # | Funcionalidade | Estado | Checklist |
+| --- | --- | --- | --- |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Rascunho — 4 decisões em aberto | Secção 3 → «Entrega ao domicílio» |
+| 4.2 | Multilínguas (internacionalização) | Rascunho — 3 decisões em aberto | Secção 3 → «Multilínguas» |
+
+### 4.1 Entrega ao domicílio (Compra Fácil)
+
+- **Data**: 2026-09-22 · **revisto** 2026-09-24 (ver §0)
+- **Estado**: Rascunho — 4 decisões bloqueantes em aberto (§7)
+- **Âmbito**: Fullstack (Backend + Frontend + Infra)
+- **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Backlog da equipa**: no fim desta secção (histórias e sprints)
+
+---
+
+#### 0. Revisão de 2026-09-24 — o que mudou e porquê
+
+A primeira versão foi escrita antes de quatro commits que tocam directamente nas peças
+que este plano usa (`cfd1eb9`, `2b5f83c`, `a6d8ad1`, `af68cdd`), e antes de se ler o
+backlog do `plano_implementacao.md`. A revisão confrontou cada afirmação com o código
+actual de `main`. Correcções:
+
+| # | O que estava | O que passa a estar | Origem |
+| --- | --- | --- | --- |
+| 1 | Diagrama com `PRONTO → AGUARDA_LEVANTAMENTO → CONCLUIDO` | `PRONTO → CONCLUIDO`. `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem no enum mas **nenhum código os escreve**. Decisão sobre eles passa a pergunta bloqueante 4 | `grep` em `src/` · backlog |
+| 2 | 4 valores novos em `EstadoPedido` (incl. `ENTREGUE`) | **3**: `EXPEDIDO`, `EM_ROTA`, `FALHADA`. `ENTREGUE` vive só na `EntregaPedido`; o pedido fecha em `CONCLUIDO`, como o levantamento | Simplificação |
+| 3 | "Pagamento na entrega vira conta a receber do estafeta" — sem dizer como se regista na venda | Método de pagamento novo **`A_COBRAR_NA_ENTREGA`**, e conta a receber **sem `clienteId`** (D3) | `FecharSessaoCaixaUseCase` · `InadimplenciaScheduler` |
+| 4 | `DevolverEntregaUseCase` reimplementava stock + venda + pedido, assinado por `SYSTEM_COMMERCE` | **Reutiliza `AnularVendaUseCase`**, que já faz tudo isso desde `af68cdd`. Exige gestor. Dois ajustes nele (D11) | `af68cdd` |
+| 5 | — | `AnularVendaUseCase` passa a **recusar** enquanto a mercadoria está com o estafeta (risco R11) | `af68cdd` |
+| 6 | — | `CancelarPedidoGestaoUseCase` passa a recusar a partir de `EXPEDIDO` (risco R12) | `2b5f83c` |
+| 7 | — | A expedição reutiliza a verificação "caixa da mesma loja do pedido" | `a6d8ad1` |
+| 8 | Regra 7: "a reserva não expira depois de confirmado — já é assim" | **Agora** é assim (não era quando foi escrito). Os estados novos não entram em `ESTADOS_QUE_A_EXPIRACAO_LIBERTA` | `cfd1eb9` |
+| 9 | Permissões `VER_ENTREGAS`… sem ligação ao mecanismo real | Convenção real documentada (§3.1), `ACERTAR_CONTAS_ESTAFETA` → `GERIR_ACERTOS_ESTAFETA`, ligação a perfis na migração **e** no seed | Migração `20260920070000` · `PermissoesGuard` · `seed.ts` |
+| 10 | Referências por número de linha | Referências por símbolo. O schema mudou e as linhas deslocaram-se (ex.: `enum EstadoEntrega` passou de 918 para 922) | — |
+
+---
+
+#### 1. Objectivo
+
+O Compra Fácil v1 só sabe uma coisa: o cliente compra online e vai levantar à loja.
+Isso limita o e-commerce ao raio de quem está disposto a deslocar-se, e deixa a loja
+sem o canal que mais cresce em Maputo — a entrega ao domicílio. Este plano abre esse
+canal: o cliente escolhe uma morada no checkout, paga a taxa correspondente à zona,
+acompanha o estafeta no mapa e recebe em casa; a loja despacha, sabe onde está cada
+entrega, e acerta contas com o estafeta no fim do turno.
+
+A decisão de adiar isto está escrita no próprio schema, no comentário do bloco
+*COMMERCE — COMPRA FÁCIL*: *«A entrega ao domicílio foi deliberadamente adiada para
+uma fase própria, desenhada sobre a lógica de aplicações de entrega (estafeta com
+localização em tempo real), em vez de um campo de texto que teria de ser substituído
+mais tarde.»* **Este documento é essa fase.**
+
+---
+
+#### 2. Requisito interpretado
+
+Construir o *last-mile* do Compra Fácil: uma entidade de entrega com ciclo de vida
+próprio (`EntregaPedido`), atrelada ao `Pedido` mas não confundida com ele; moradas
+de cliente georreferenciadas; zonas de entrega com taxa e raio por loja; estafetas
+com uma aplicação web própria (PWA) que emite posição; rastreio em tempo real para o
+cliente; e uma camada de webhooks — de saída e de entrada — que permite que um
+operador de entregas externo substitua a frota própria sem reescrever o domínio.
+
+**Onde a leitura diverge do literal do pedido:** o pedido fala de «como funciona o
+webhook» como se o webhook fosse o mecanismo de comunicação com o estafeta. Não é:
+
+| Quem comunica | Mecanismo | Porquê |
+| --- | --- | --- |
+| Estafeta da frota própria (PWA) | REST + WebSocket (`socket.io`) já existentes | É código nosso, autenticado por token nosso. Um webhook aqui seria uma volta ao quarteirão. |
+| Operador de entregas **externo** (Fase 6) | Webhook de **entrada** (ele chama-nos) + webhook de **saída** (nós chamamo-lo) | É código de terceiros, que não pode manter uma ligação persistente à nossa API nem conhecer os nossos tokens internos. |
+| Sistemas do próprio lojista (ERP, BI, bot de WhatsApp) | Webhook de **saída** | Integração sem *polling*. |
+
+**O webhook é a fronteira com o mundo exterior, não o transporte interno.** A §4.2.4
+descreve o mecanismo completo.
+
+##### Modelo de referência: iFood vs Amazon
+
+| Eixo | iFood | Amazon | Escolha aqui |
+| --- | --- | --- | --- |
+| Horizonte | Minutos. Uma entrega, um estafeta | Dias. Rede de armazéns, transportadoras | **iFood** — a loja entrega da sua loja, no mesmo dia |
+| Facto financeiro | Nasce na aceitação | Nasce na expedição (*shipment*) | **Amazon** — a venda nasce na expedição (D2) |
+| Rastreio | Posição ao vivo | Eventos discretos (*scan events*) | **Ambos** — eventos persistidos, posição efémera (D6) |
+| Falha de entrega | Devolve à origem | Reagenda, ponto de recolha | **iFood** — devolve à loja, com reposição de stock |
+| Cobrança | Pré-paga | Pré-paga | **Nenhum** — em MZ paga-se na porta, e é o caso difícil (D3) |
+
+##### Actores e permissões
+
+Nomes de permissão na forma do controller; a correspondência com a base de dados está
+na §3.1.
+
+| Actor / perfil | O que pode fazer | Permissão |
+| --- | --- | --- |
+| **Cliente final** (`ContaCliente`) | Gerir moradas; escolher entrega ou levantamento; ver a taxa antes de confirmar; acompanhar no mapa | `@ContaCliente()` |
+| **Operador de balcão** | Despachar um pedido — é quem entrega a mercadoria ao estafeta, com a sua sessão de caixa aberta **na loja do pedido** | `GERIR_PEDIDOS_COMMERCE` (já existe) |
+| **Gestor de loja** | Atribuir/reatribuir estafeta, ver o painel, marcar desfecho, **devolver entrega falhada** (anula a venda — exige perfil `MANAGER`+, como qualquer anulação) | `VER_ENTREGAS`, `GERIR_ENTREGAS`, `GERIR_ESTAFETAS` |
+| **Quem fecha o turno do estafeta** | Acerto de contas: dinheiro cobrado na rua → caixa | `GERIR_ACERTOS_ESTAFETA` |
+| **Estafeta** (principal novo) | Ver as suas entregas; aceitar; emitir posição; recolher/entregar/falhar; registar o valor cobrado | `@Estafeta()` |
+| **ADMIN** | Zonas de entrega, taxas, raio; subscrições de webhook | `GERIR_ZONAS_ENTREGA`, `GERIR_WEBHOOKS` |
+| **Operador externo** (Fase 6) | Só via webhook assinado — nunca sessão interactiva | assinatura HMAC |
+
+##### Regras de negócio
+
+1. **Uma `EntregaPedido` por `Pedido`, e só para pedidos `tipoEntrega = ENTREGA`.** Um
+   pedido de levantamento continua exactamente como está hoje.
+2. **A taxa de entrega é fixada no checkout** e não muda depois — como
+   `PedidoItemSubstituicao` fixa preço: o cliente autoriza um valor concreto.
+3. **Uma morada fora de qualquer zona activa não permite entrega.** O checkout oferece
+   levantamento, não recusa o pedido.
+4. **A venda nasce na expedição, não na entrega** (D2). O stock sai quando a mercadoria
+   sai fisicamente da loja.
+5. *(Implícita)* **O dinheiro só entra no caixa quando entra fisicamente no caixa.** A
+   venda da expedição regista o pagamento como `A_COBRAR_NA_ENTREGA`, que
+   `FecharSessaoCaixaUseCase` não soma à gaveta (só soma `NUMERARIO`). Entra no acerto.
+6. **Uma entrega falhada devolve stock e anula a venda**, pelo caminho que já existe
+   (`AnularVendaUseCase`) — não há segunda forma de desfazer uma venda.
+7. **A reserva de stock só expira com o pedido em `CRIADO`** — regra em vigor desde
+   `cfd1eb9` (`ESTADOS_QUE_A_EXPIRACAO_LIBERTA`). Na entrega a reserva é **consumida**
+   na expedição, por isso os estados novos não entram nessa lista. Um pedido de entrega
+   parado em `PRONTO` segura a reserva até alguém o despachar ou cancelar — e é por isso
+   que `CancelarPedidoGestaoUseCase` existe.
+8. *(Implícita)* **Depois de a mercadoria sair, o pedido já não se cancela** — nem pelo
+   cliente, nem pela loja, nem anulando a venda. O único caminho é: entrega `FALHADA` →
+   mercadoria regressa → devolver. Cancelar com a mercadoria na mota do estafeta daria
+   stock reposto sem a mercadoria estar na loja.
+9. **A expedição exige o caixa aberto na loja do pedido** — mesma regra que o
+   levantamento ganhou em `a6d8ad1`, pela mesma razão: senão o stock sai da loja errada.
+10. *(Implícita)* **A posição do estafeta é dado pessoal.** Só é visível ao cliente
+    enquanto a entrega dele estiver `EM_ROTA`, e nunca a outro cliente.
+11. **Todo o acesso a `EntregaPedido`, `Estafeta`, `EnderecoCliente` e `ZonaEntregaLoja`
+    filtra por `empresaId`.**
+12. **Um webhook de entrada nunca é aceite sem assinatura válida nem processado duas
+    vezes.**
+
+##### Fora de âmbito
+
+- **Cobrança online no checkout** (gateway M-Pesa/e-Mola) — projecto próprio no backlog.
+  O modelo não atrapalha quando chegar (assunção 4).
+- **Conciliação de pagamentos M-Pesa/e-Mola recebidos na porta.** O estafeta regista a
+  referência; conciliar com o extracto da carteira é o mesmo problema do gateway.
+- **Devolução depois de entregue** (cliente recebe e devolve dias depois). É uma anulação
+  de venda normal, pelo `AnularVendaUseCase`, com as regras que já tem.
+- **Optimização de rota multi-paragem**, **previsão estatística de tempo**, **entrega
+  entre empresas** (mercado, Fase 13), **app nativa** — como na versão anterior.
+
+---
+
+#### 3. Análise técnica
+
+##### 3.1 Como funcionam as permissões neste código — a convenção a seguir
+
+Há **duas nomenclaturas legítimas**, reconciliadas pelo `PermissoesGuard`:
+
+| Onde | Forma | Exemplo existente |
+| --- | --- | --- |
+| Tabela `permissoes` | `codigo` + `action` + `resource` + `modulo` | `commerce.pedido.ler` · `read` · `pedidos_commerce` · `commerce` |
+| Controller | `@Permissao('VERBO_RECURSO')` | `VER_PEDIDOS_COMMERCE` |
+| Frontend (editor de perfis) | `AVAILABLE_RESOURCES` + `IGNORED_PERMISSIONS` | `pedidos_commerce`; `write:`/`delete:` ignorados |
+
+O guarda traduz o verbo (`ver` → `read`/`manage`, `gerir` → `manage`) e compara o
+recurso **pela raiz** (primeiros 5 caracteres, sem plural). Um verbo que não esteja em
+`ACOES_POR_VERBO` cai só no `manage` — o comentário do guarda diz que isso funciona
+**por acidente**. Por isso `ACERTAR_CONTAS_ESTAFETA` passa a `GERIR_ACERTOS_ESTAFETA`.
+
+**Permissões novas** (todas `modulo = commerce`; só `read`/`manage`, como as do
+commerce — sem `write`/`delete`):
+
+| `codigo` | `action` | `resource` | Controller | Raiz |
+| --- | --- | --- | --- | --- |
+| `commerce.entrega.ler` | `read` | `entregas` | `VER_ENTREGAS` | `entre` |
+| `commerce.entrega.gerir` | `manage` | `entregas` | `GERIR_ENTREGAS` | `entre` |
+| `commerce.estafeta.gerir` | `manage` | `estafetas` | `GERIR_ESTAFETAS` | `estaf` |
+| `commerce.acerto.gerir` | `manage` | `acertos_estafeta` | `GERIR_ACERTOS_ESTAFETA` | `acert` |
+| `commerce.zona_entrega.gerir` | `manage` | `zonas_entrega` | `GERIR_ZONAS_ENTREGA` | `zonas` |
+| `commerce.webhook.gerir` | `manage` | `webhooks` | `GERIR_WEBHOOKS` | `webho` |
+
+*Colisão de raízes verificada* contra todos os recursos das migrações e do seed
+(`adeso`, `audit`, `aviso`, `pedid`, `stock`, `user`, `rh`, …): nenhuma raiz nova começa
+por uma existente nem o contrário.
+
+**Ligação a perfis — o buraco a não repetir.** A migração `20260920070000` criou as
+permissões do commerce e não as ligou a perfil nenhum; hoje só ADMIN/SUPER_ADMIN (com
+*bypass*) abrem a fila de pedidos. Como **"Despachar" é uma acção de
+`pedidos_commerce`**, a entrega não é operável por um operador de balcão sem fechar esse
+buraco. Esta funcionalidade fecha-o:
+
+| Perfil de sistema | Recebe |
+| --- | --- |
+| `Gestor` | `pedidos_commerce` (read, manage) · `entregas` (read, manage) · `estafetas` · `acertos_estafeta` |
+| `Funcionário / Caixa` | `pedidos_commerce` (read, manage) · `entregas` (read) |
+| `Administrador` | tudo (já recebe tudo pelo seed; ADMIN tem *bypass*) |
+
+Três armadilhas no mecanismo:
+
+- **O seed desfaz a migração.** `seed.ts` apaga todas as ligações dos perfis de sistema
+  (`perfilPermissao.deleteMany({ perfil: { isSystem: true } })`) e recria-as a partir de
+  listas de recursos. Se os recursos novos não entrarem nessas listas, correr o seed em
+  desenvolvimento remove o que a migração ligou.
+- **O seed não corre em produção** (o `Dockerfile` só faz `prisma migrate deploy`). A
+  ligação para produção tem de estar **na migração**, por nome de perfil de sistema
+  (`@@unique([nome, isSystem])` garante que o nome identifica o perfil).
+- **Cache de permissões de 24 h** no Redis (`permissions:<userId>`). Sem invalidar,
+  quem tinha sessão continua sem as permissões novas até um dia depois do deploy.
+
+##### 3.2 Impacto no sistema
+
+| Camada | Criar | Alterar |
+| --- | --- | --- |
+| **Dados** | `EnderecoCliente`, `ZonaEntregaLoja`, `Estafeta`, `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`, `WebhookSubscricao`, `WebhookEnvio`, `WebhookEventoRecebido` + enums `TipoEntregaPedido`, `EstadoEntregaPedido`, `EstadoEstafeta`, `EstadoAcerto`, `EstadoWebhookEnvio` | `EstadoPedido` (+3; e ver pergunta 4), `Pedido`, `Venda` (+`taxaEntrega`), `Loja` (+coordenadas), `ComercioConfiguracao`; linhas em `permissoes` e `perfil_permissoes` |
+| **Backend** | `src/modules/entrega/`, `src/modules/webhooks/` | `pedido-estado.ts`, `CriarPedidoUseCase`, `ConfirmarLevantamentoUseCase` (extracção), `CancelarPedidoGestaoUseCase`, `AnularVendaUseCase` + `anularVendaTransacional`, `ProcessarVendaUseCase` + DTO, `main.ts`, `seed.ts` |
+| **Frontend** | `features/entrega/`, `features/estafeta/`, `MoradasPage`, `SelectorMorada`, `MapaEntrega` | `CheckoutPage`, `PedidoDetalhePage`, `PedidosCommercePage`, `pedidos.api.ts`, `useSocket.ts`, `permissions.config.ts`, `router/index.tsx` |
+
+##### 3.3 Decisões de arquitectura
+
+| # | Decisão | Alternativa descartada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | Módulo `entrega/` separado de `commerce/` | Campos de entrega em `Pedido` | Ciclo de vida, actores e eventos próprios; e um dia serve também o POS. |
+| **D2** | **A venda nasce na expedição** (`PRONTO → EXPEDIDO`), pelo funcionário que entrega a mercadoria ao estafeta | Nascer na confirmação de entrega | `ProcessarVendaUseCase` exige sessão de caixa aberta; na confirmação — horas depois, por webhook ou PWA — pode já não haver nenhuma. E mercadoria a circular precisa de documento. |
+| **D3** | **Pagamento `A_COBRAR_NA_ENTREGA`** na venda + `RegistroFinanceiro` `RECEITA`/`PENDING` com `vendaId` e **`clienteId` nulo**; o elo ao estafeta vive em `EntregaPedido` | (a) `NUMERARIO` na expedição; (b) `CREDITO` | (a) `FecharSessaoCaixaUseCase` somaria à gaveta dinheiro que está no bolso do estafeta — quebra certa no fecho. (b) `CREDITO` exige cliente e prazo e faz do **cliente** o devedor: o `InadimplenciaScheduler` (filtra `clienteId: { not: null }`) iria cobrá-lo por uma dívida que é do estafeta. Com `clienteId` nulo o motor não lhe toca. |
+| **D4** | `taxaEntrega` como campo em `Venda` e `Pedido`, `@default(0)`, fora de COGS e margem | Produto de serviço "Taxa de entrega" | `ProcessarVendaUseCase` move stock por item; um produto de serviço iria a stock negativo. O default 0 deixa o POS igual. |
+| **D5** | Frota própria primeiro; operador externo como adaptador (`CanalEntrega`) | Integrar já com operador externo | Não há em MZ um operador com API pública estável; o domínio fica atrás de uma interface desde o dia um. |
+| **D6** | Posição efémera no WebSocket, eventos discretos na BD (`EventoEntrega`) | Gravar cada ponto de GPS | ~2.900 linhas/dia/estafeta. O valor de auditoria está nos eventos. |
+| **D7** | Zonas por bairro/cidade/província + raio em km | PostGIS | O raio resolve o caso real; uma extensão espacial é custo desproporcionado. |
+| **D8** | Webhooks de saída pelo padrão *outbox*, na mesma transacção da mudança de estado | `fetch` dentro do use-case | Não prender a ligação ao Neon à latência de terceiros; uma falha de rede não reverte uma entrega real. |
+| **D9** | `fetch` nativo, sem biblioteca HTTP | `axios` / `@nestjs/axios` | O backend não tem cliente HTTP e não precisa. |
+| **D10** | `Estafeta` como principal próprio (`JWT_ESTAFETA_SECRET`) | `User` com `Role.COURIER` | Mesma razão de `cliente-token.ts` e `fornecedor-token.ts`: `users.empresaId` é chave de tenant em ~30 módulos. |
+| **D11** | **Devolução reutiliza `AnularVendaUseCase`**, com dois ajustes: (i) sessão fechada **deixa de bloquear** quando a venda é de entrega **e** não há numerário a devolver; (ii) a reversão do pedido passa a aceitar `FALHADA` além de `CONCLUIDO` | Reimplementar a anulação em `entrega/` | Uma segunda forma de desfazer uma venda divergiria da primeira. (i) A regra da sessão protege a conferência de um caixa fechado; uma venda `A_COBRAR_NA_ENTREGA` não pôs nada na gaveta, logo anulá-la não mexe nessa conferência. Limitado a vendas de entrega para **não mudar o comportamento do POS**. |
+| **D12** | **Três predicados novos** em `pedido-estado.ts`, escritos por extenso: `lojaPodeCancelar` (até `PRONTO`), `ESTADOS_EM_ENTREGA` (`EXPEDIDO`, `EM_ROTA`) e `FALHADA` em `ESTADOS_PENDENTES` | Deixar `estaConcluido` decidir tudo | `estaConcluido` só conhece `CONCLUIDO`/`CANCELADO`; com os estados novos, tudo o que o usa passaria a tratar um pedido na rua como "ainda em curso na loja". `FALHADA` é trabalho à espera na loja (receber e devolver); `EXPEDIDO`/`EM_ROTA` não — está com o estafeta, e não deve somar aos "pedidos por atender" do painel. |
+
+##### 3.4 Riscos e pontos sensíveis
+
+| # | Risco | Impacto | Mitigação |
+| --- | --- | --- | --- |
+| **R1** | Já existe `enum EstadoEntrega` — estado de entrega de **mensagens** do CRM | Alto | Enum novo chama-se `EstadoEntregaPedido`. Não renomear o existente. |
+| **R2** | `EventsGateway` só aceita `JWT_ACCESS_SECRET` e só junta a `empresa_<id>`; um cliente na sala da empresa veria todos os pedidos | Alto | Namespace `/entregas` próprio; salas `empresa_<id>`, `pedido_<id>`, `estafeta_<id>`. Não tocar no namespace raiz (configura o Engine.IO para todos). |
+| **R3** | `TransitarEstadoPedidoUseCase.transitar` lê-e-depois-escreve; dois despachos concorrentes criariam duas vendas | Alto | Código novo usa `updateMany` condicional + `count === 1`. Defeito pré-existente, fora de âmbito — registado no backlog. |
+| **R4** | Nenhuma coordenada no schema; `Loja` sem ponto | Alto | `Loja.latitude/longitude`; loja sem coordenadas não activa entrega, com erro claro. |
+| **R5** | `main.ts` sem `rawBody: true` | Médio | `NestFactory.create(AppModule, { rawBody: true })`. Não altera o `ValidationPipe`. |
+| **R6** | Expedição falhada a meio (reserva consumida, venda criada, entrega não) | Médio | Criar `EntregaPedido` **antes** da venda. Sobra uma entrega órfã visível, não uma venda sem entrega invisível. |
+| **R7** | Operador externo repete o mesmo evento | Médio | `@@unique([operadorId, eventoExternoId])`; duplicado responde `200`, nunca `409`. |
+| **R8** | Posições em memória com mais de uma instância Fly | Médio | Última posição na BD; adaptador Redis do `socket.io` quando houver >1 instância. |
+| **R9** | `ALTER TYPE ... ADD VALUE` | Baixo | Postgres do Neon suporta; uma instrução por valor. Se a pergunta 4 decidir remover valores, passa a **Alto** — ver §4.1. |
+| **R10** | Bateria e dados do telemóvel | Baixo | Emissão só entre recolha e entrega, 15 s, só se andou >25 m. |
+| **R11** | **`AnularVendaUseCase` reverte o pedido só `WHERE estado = CONCLUIDO`.** Anular a venda com o pedido `EXPEDIDO`/`EM_ROTA` repunha o stock e cancelava a venda, e o pedido continuava "a caminho" com a mercadoria na mota — a incoerência que `af68cdd` acabou de corrigir | **Alto** | `AnularVendaUseCase` recusa (`409`) quando o pedido associado está em `ESTADOS_EM_ENTREGA`, com mensagem: registar a entrega como falhada e devolver. |
+| **R12** | **`CancelarPedidoGestaoUseCase` só recusa `estaConcluido`.** Com os estados novos cancelaria um pedido `EXPEDIDO` — venda feita, stock abatido — e "não reverte stock" (está escrito nele), porque até hoje o stock só descia no levantamento | **Alto** | Passa a usar `lojaPodeCancelar` (D12). Teste: cancelar um pedido `EXPEDIDO` dá `400`. |
+| **R13** | Devolução de entrega falhada que regressa **depois do fecho do caixa** de quem despachou: `AnularVendaUseCase` recusa sessões fechadas | **Alto** | D11 (i). Sem este ajuste, toda a entrega falhada ao fim do dia exigiria ajuste manual de stock e financeiro. |
+| **R14** | Seed apaga ligações de perfis de sistema e desfaz a migração; cache de permissões 24 h | Médio | §3.1: recursos novos nas listas do seed; invalidar `permissions:*` no deploy. |
+| **R15** | `A_COBRAR_NA_ENTREGA` usado no POS por engano | Médio | `ProcessarVendaUseCase` só o aceita com `canal = 'ECOMMERCE'` (o parâmetro já existe). |
+
+---
+
+#### 4. Plano de implementação
+
+Cada passo **[obrigatório]** ou **[opcional]**.
+
+##### 4.1 Dados
+
+Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
+**Não destrutiva** na versão base — só adiciona. Os pedidos existentes ficam
+`tipoEntrega = 'LEVANTAMENTO'`.
+
+- [ ] **[obrigatório]** Enums novos: `TipoEntregaPedido { LEVANTAMENTO, ENTREGA }` ·
+      `EstadoEntregaPedido { AGUARDA_RECOLHA, ATRIBUIDA, RECOLHIDA, EM_ROTA, ENTREGUE,
+      FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
+      `EstadoWebhookEnvio`.
+- [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**.
+- [ ] **[obrigatório — depende da pergunta 4]** `AGUARDA_CONFIRMACAO` e
+      `AGUARDA_LEVANTAMENTO`. Se a decisão for **remover** (recomendado), é a parte
+      destrutiva da migração e a estratégia fica escrita aqui, como o `CLAUDE.md` exige:
+      1. Mapear antes de remover, sem falhar: `UPDATE pedidos SET estado = 'CRIADO'
+         WHERE estado = 'AGUARDA_CONFIRMACAO'` e `… = 'PRONTO' WHERE estado =
+         'AGUARDA_LEVANTAMENTO'`. Nenhum código os escreve, por isso o esperado é zero
+         linhas; mapear em vez de abortar porque uma migração que falha impede o
+         contentor de arrancar (`migrate deploy` corre no `CMD`).
+      2. Recriar o tipo (Postgres não remove valores de enum): renomear o antigo, criar
+         o novo, `ALTER TABLE pedidos ALTER COLUMN estado TYPE … USING estado::text::…`,
+         repor o `DEFAULT`, apagar o antigo.
+      3. No mesmo commit: tirar os dois de `pedido-estado.ts` e de
+         `ETIQUETA_ESTADO_PEDIDO` no frontend.
+- [ ] **[obrigatório]** `EnderecoCliente`, `ZonaEntregaLoja` (espelha
+      `ZonaEntregaFornecedor`, incluindo a nota sobre índices únicos parciais no SQL),
+      `Estafeta`, `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`,
+      `WebhookSubscricao`, `WebhookEnvio`, `WebhookEventoRecebido` — campos como na
+      versão anterior. `EntregaPedido` ganha `metodoCobrado?` e `referenciaPagamento?`
+      (M-Pesa/e-Mola recebidos na porta).
+- [ ] **[obrigatório]** `Pedido`: `tipoEntrega @default(LEVANTAMENTO)`, `enderecoId?`,
+      `taxaEntrega Float @default(0)`, relação `entrega`.
+- [ ] **[obrigatório]** `Venda.taxaEntrega Float @default(0)`, com comentário no schema
+      a dizer que não entra em `totalCogs` nem `grossMargin`.
+- [ ] **[obrigatório]** `Loja.latitude/longitude` opcionais;
+      `ComercioConfiguracao` + `entregaActiva`, `tempoPreparacaoMinutos`,
+      `raioMaximoKm?`, `permiteAgendamento`.
+- [ ] **[obrigatório]** **Permissões na migração**: `INSERT INTO permissoes` das seis
+      linhas da §3.1 com `ON CONFLICT DO NOTHING` **sem alvo** (a tabela tem duas
+      restrições de unicidade — mesma nota da migração `20260920070000`); e
+      `INSERT INTO perfil_permissoes … SELECT` a ligar aos perfis de sistema por nome
+      (`Gestor`, `Funcionário / Caixa`, `Administrador`), **incluindo `pedidos_commerce`**.
+- [ ] **[obrigatório]** `prisma/seed.ts`: `pedidos_commerce`, `entregas`, `estafetas`,
+      `acertos_estafeta` nas listas de `permissoesGestor`; `pedidos_commerce` e
+      `entregas` na de `permissoesCaixa`. Sem isto, o seed desfaz a migração (R14).
+- [ ] **[opcional]** Seed de zonas de Maputo num script de desenvolvimento, não numa
+      migração.
+
+##### 4.2 Backend
+
+Módulo novo `src/modules/entrega/`, na estrutura de `commerce` e `b2b` (controllers de
+gestão, estafeta, moradas e zonas; `domain/` com funções puras; `application/`;
+`infrastructure/` com auth, adaptadores, gateway e tasks). Controllers de gestão com
+`@UseGuards(PermissoesGuard, ModuloAccessGuard)` e `@ModuloNecessario('commerce')`, como
+`PedidoGestaoController`.
+
+###### 4.2.1 Domínio — [obrigatório]
+
+- [ ] `distancia-haversine.ts` e `calcular-taxa.ts` — funções puras, testadas antes de
+      existir controller (casos: sem coordenadas, sobreposição, fora de área, inactiva,
+      abaixo do mínimo).
+- [ ] `entrega-estado.ts` — transições da `EntregaPedido`, escritas por extenso.
+- [ ] **`pedido-estado.ts`** (D12):
+  - `ESTADOS_CANCELAVEIS_PELA_LOJA` / `lojaPodeCancelar`: `CRIADO`, `CONFIRMADO`,
+    `EM_PREPARACAO`, `PRONTO`.
+  - `ESTADOS_EM_ENTREGA`: `EXPEDIDO`, `EM_ROTA`.
+  - `ESTADOS_PENDENTES` += `FALHADA`; **não** `EXPEDIDO`/`EM_ROTA`.
+  - `ESTADOS_QUE_A_EXPIRACAO_LIBERTA` **não muda** (continua só `CRIADO`).
+  - `ESTADOS_CANCELAVEIS_PELO_CLIENTE` não muda.
+
+###### 4.2.2 Ciclo de vida — [obrigatório]
+
+O que existe hoje em cima, o que é novo a **negrito**:
+
+```
+CRIADO ─confirmar─→ CONFIRMADO ─iniciarPreparacao─→ EM_PREPARACAO ─conferir─→ PRONTO
+                                                                               │
+                  ┌────────────────────────────────────────────────────────────┤
+                  │ tipoEntrega = LEVANTAMENTO                                 │ tipoEntrega = ENTREGA
+                  │ confirmarLevantamento                                      │ **despachar**
+                  │  (venda nasce aqui — como hoje)                            │  (**venda nasce aqui**,
+                  ▼                                                            ▼   A_COBRAR_NA_ENTREGA)
+              CONCLUIDO                                                  **EXPEDIDO**
+                                                                               │ estafeta recolhe
+                                                                               ▼
+                                                                          **EM_ROTA**
+                                                                         ┌─────┴─────┐
+                                                                entregue │           │ falhou
+                                                                         ▼           ▼
+                                                                    CONCLUIDO   **FALHADA**
+                                                                                     │ devolver
+                                                                                     │ (AnularVendaUseCase)
+                                                                                     ▼
+                                                                                 CANCELADO
+Cancelável: cliente até CONFIRMADO · loja até PRONTO · a partir de EXPEDIDO, só FALHADA → devolver.
+```
+
+- [ ] **Extrair de `ConfirmarLevantamentoUseCase`** para um serviço partilhado:
+      `itensFinais` (quantidades da conferência e substituições) e
+      `recusarLojaDiferenteDaDoCaixa`. **Extrair, não copiar** — a regra da loja do
+      caixa foi corrigida há dois dias e duas cópias voltariam a divergir.
+- [ ] `ExpedirPedidoUseCase` — por ordem: (1) loja do caixa = loja do pedido;
+      (2) `updateMany` condicional `PRONTO → EXPEDIDO`, `count === 1`; (3) reservas →
+      `CONSUMIDA`; (4) `EntregaPedido` em `AGUARDA_RECOLHA` (R6); (5)
+      `ProcessarVendaUseCase(..., 'ECOMMERCE')` com `taxaEntrega` e pagamento
+      `A_COBRAR_NA_ENTREGA` (ou o método pré-pago, quando o gateway existir);
+      (6) `RegistroFinanceiro` `RECEITA`/`PENDING`, `vendaId`, `clienteId` nulo;
+      (7) `WebhookEnvio`; (8) notificação.
+- [ ] `AtribuirEstafetaUseCase`, `RegistarRecolhaUseCase`, `RegistarPosicaoUseCase`
+      (não grava evento — D6), `ExpirarAtribuicoesTask`.
+- [ ] `ConfirmarEntregaUseCase` — entrega `EM_ROTA → ENTREGUE`, pedido
+      `EM_ROTA → CONCLUIDO`; regista `valorCobrado`, `metodoCobrado` e, se não for
+      numerário, `referenciaPagamento`.
+- [ ] `RegistarFalhaEntregaUseCase` — `EM_ROTA → FALHADA`, motivo obrigatório.
+- [ ] `DevolverEntregaUseCase` (D11) — exige `MANAGER`+ (herdado da anulação). Por ordem:
+      (1) `AnularVendaUseCase` — a parte irreversível, com a sua própria guarda de
+      concorrência (`updateMany … estado: CONCLUIDA`); (2) numa transacção:
+      `EntregaPedido FALHADA → DEVOLVIDA` e `RegistroFinanceiro → CANCELLED`, ambos
+      condicionais e por isso seguros de repetir se (2) falhar depois de (1).
+- [ ] `AcertarContasEstafetaUseCase` — só soma entregas com `metodoCobrado = NUMERARIO`
+      (M-Pesa/e-Mola não passam pelo bolso do estafeta); `AcertoEstafeta` +
+      `MovimentoCaixa(REFORCO)` na sessão de quem recebe + `RegistroFinanceiro → PAID`.
+      Diferença regista-se, não bloqueia.
+
+###### 4.2.3 Alterações a código existente — [obrigatório]
+
+- [ ] **`CancelarPedidoGestaoUseCase`**: trocar `estaConcluido` por `lojaPodeCancelar`;
+      mensagem para `EXPEDIDO`/`EM_ROTA`/`FALHADA` a dizer o caminho certo (R12).
+- [ ] **`AnularVendaUseCase`**: recusar com `409` se o pedido associado estiver em
+      `ESTADOS_EM_ENTREGA` (R11); aceitar sessão fechada quando o pedido associado é
+      `tipoEntrega = ENTREGA` **e** `numerarioADevolver === 0` (R13). Os dois ajustes
+      só disparam quando há pedido de entrega — o POS não muda.
+- [ ] **`anularVendaTransacional`**: a reversão do pedido passa de
+      `estado: CONCLUIDO` para `estado: { in: [CONCLUIDO, FALHADA] }`.
+- [ ] **`ProcessarVendaUseCase` + `processar-venda.dto.ts`**: `A_COBRAR_NA_ENTREGA` em
+      `MetodoPagamento`, aceite só com `canal = 'ECOMMERCE'` (R15), sem troco (tratar
+      como o `CREDITO` já é tratado no cálculo do troco); `taxaEntrega?` fora de COGS.
+      `PagamentoVenda.metodo` é texto — **não há migração** para o método.
+- [ ] **`CriarPedidoUseCase` + DTO**: `tipoEntrega`, `enderecoId`, taxa no `totalFinal`.
+- [ ] **`main.ts`**: `{ rawBody: true }` (R5).
+
+###### 4.2.4 Autenticação do estafeta, webhooks e tempo real
+
+Sem alterações de fundo face à versão anterior:
+
+- [ ] **[obrigatório]** `estafeta-token.ts` — cópia estrutural de `cliente-token.ts`:
+      cookie `tokenEstafeta`, audience `controlcore-estafeta`, `segredoEstafeta()` que
+      **lança** sem `JWT_ESTAFETA_SECRET`, validade 12 h. `EstafetaGuard` +
+      `@Estafeta()`, com verificação em BD a cada pedido.
+- [ ] **[obrigatório na Fase 6]** **Webhooks de saída** — *outbox* na mesma transacção;
+      `EnviarWebhooksTask` a cada minuto; `POST` com `X-ControlCore-Evento`,
+      `X-ControlCore-Id` (idempotência do lado de lá) e
+      `X-ControlCore-Assinatura: t=<ts>,v1=HMAC-SHA256(segredo, "<ts>.<corpo cru>")`;
+      *timeout* 10 s; recuo 1 min · 5 · 15 · 60 · 6 h · 24 h; à 7.ª `ABANDONADO`.
+      Eventos: `pedido.criado`, `pedido.expedido`, `entrega.atribuida`,
+      `entrega.recolhida`, `entrega.em_rota`, `entrega.entregue`, `entrega.falhada`,
+      `entrega.cancelada`.
+- [ ] **[obrigatório na Fase 6]** **Webhook de entrada** —
+      `POST /webhooks/entrega/:operadorId`, `@Public()`; assinatura sobre o corpo cru
+      com `crypto.timingSafeEqual`; desfasamento >5 min recusado; duplicado → `200`;
+      responde `202` antes de processar; evento de outra empresa ou transição inválida é
+      registado em `erro` e ignorado.
+- [ ] **[obrigatório]** `entrega.gateway.ts` — namespace `/entregas`, três segredos,
+      três salas; nunca um cliente em `empresa_<id>` (R2).
+
+###### Endpoints
+
+| Método | Rota | Entrada | Resposta | Erros | Permissão |
+| --- | --- | --- | --- | --- | --- |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/commerce/enderecos[/:id]` | `EnderecoDto` | `EnderecoCliente` | `400`, `404`, `409` (em uso) | `@ContaCliente()` |
+| `POST` | `/commerce/entrega/cotacao` | `{ lojaId, enderecoId, subtotal }` | `{ disponivel, taxa, prazoMinutos, motivo? }` | `400`, `404` | `@ContaCliente()` |
+| `POST` | `/commerce/pedidos` | `CriarPedidoDto` + `tipoEntrega`, `enderecoId?` | `Pedido` | `400`, `404`, `409` | `@ContaCliente()` |
+| `GET` | `/commerce/pedidos/:id/entrega` | — | `EntregaPublica` | `404` | `@ContaCliente()` |
+| `POST` | `/commerce/gestao/pedidos/:id/expedir` | `{ estafetaId? }` | `{ pedido, entrega, venda }` | `400` (não `PRONTO`, loja do caixa ≠ loja do pedido), `409` (sem caixa) | `GERIR_PEDIDOS_COMMERCE` |
+| `GET` | `/entregas` | filtros | `Entrega[]` paginado | `403` | `VER_ENTREGAS` |
+| `PATCH` | `/entregas/:id/atribuir` · `/:id/cancelar` | `{ estafetaId }` · `{ motivo }` | `Entrega` | `400`, `404`, `409` | `GERIR_ENTREGAS` |
+| `POST` | `/entregas/:id/devolver` | `{ motivo }` | `{ entrega, vendaAnulada }` | `400`, `403` (não é gestor), `404`, `409` | `GERIR_ENTREGAS` + perfil `MANAGER`+ |
+| `GET`/`POST` | `/entregas/estafetas` | `EstafetaDto` | `Estafeta` | `400`, `403` | `GERIR_ESTAFETAS` |
+| `POST` | `/entregas/acertos` | `{ estafetaId, totalEntregue }` | `AcertoEstafeta` | `400`, `409` (sem caixa) | `GERIR_ACERTOS_ESTAFETA` |
+| `GET`/`POST`/`PATCH` | `/entregas/zonas` | `ZonaEntregaDto` | `ZonaEntregaLoja` | `400`, `403` | `GERIR_ZONAS_ENTREGA` |
+| `POST` | `/estafeta/auth/entrar` | `{ telefone, password }` | cookie `tokenEstafeta` | `401` | `@Public()` |
+| `GET` | `/estafeta/entregas` | — | as suas | `401` | `@Estafeta()` |
+| `POST` | `/estafeta/entregas/:id/{aceitar,recolher,entregar,falhar}` | conforme a acção | `Entrega` | `400`, `409` | `@Estafeta()` |
+| `POST` | `/estafeta/posicao` | `{ latitude, longitude, precisao? }` | `{ ok: true }` | `400` | `@Estafeta()` |
+| `POST` | `/webhooks/entrega/:operadorId` | corpo do operador | `202` \| `200` (duplicado) | `401`, `400` | `@Public()` + assinatura |
+| `GET`/`POST`/`DELETE` | `/webhooks/subscricoes` | `SubscricaoDto` | `WebhookSubscricao` | `400`, `403` | `GERIR_WEBHOOKS` |
+
+##### 4.3 Frontend
+
+- [ ] **[obrigatório]** **Checkout** — selector levantar/entregar, `SelectorMorada`,
+      cotação a cada mudança; taxa como linha própria antes do botão; fora de área →
+      frase concreta e volta a levantamento. Estados: skeleton na linha da taxa, erro
+      via `mensagemDeErro()`, sem morada, fora de área.
+- [ ] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no
+      mapa; geolocalização **escondida** fora de contexto seguro.
+- [ ] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`;
+      namespace `/entregas`; sem WebSocket, consulta a cada 30 s.
+- [ ] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e
+      `ETIQUETA_ESTADO_PEDIDO` com `EXPEDIDO` ("A caminho"), `EM_ROTA` ("O estafeta está a
+      caminho"), `FALHADA` ("Não foi possível entregar"); sem os `AGUARDA_*` se a
+      pergunta 4 decidir remover. `ETIQUETA_METODO_PAGAMENTO` hoje diz "no
+      levantamento" — passa a depender de `tipoEntrega`.
+- [ ] **[obrigatório]** **PWA do estafeta** — `/estafeta/*` fora do `ProtectedRoute`
+      (como `/loja` e `/fornecedor`); telemóvel primeiro, uma mão, alvos grandes;
+      `useEmitirPosicao` com *throttle* 15 s / 25 m. Fila offline **[opcional]**, mas o
+      único que não cortaria.
+- [ ] **[obrigatório]** **Gestão** — `EntregasPage` (mapa + colunas por estado, socket);
+      "Despachar" em `PedidosCommercePage` para pedidos de entrega em `PRONTO`;
+      `ZonasEntregaPage`, `EstafetasPage`, `AcertoEstafetaPage`. O botão "Cancelar" some
+      a partir de `EXPEDIDO`; o de devolver só aparece em `FALHADA` e só a gestor.
+- [ ] **[obrigatório]** **`permissions.config.ts`** — `AVAILABLE_RESOURCES` +=
+      `entregas`, `estafetas`, `acertos_estafeta`, `zonas_entrega`, `webhooks`;
+      `IGNORED_PERMISSIONS` += `write:`/`delete:` de cada um (só existem `read`/`manage`,
+      como em `pedidos_commerce`). Sem isto, perfis personalizados não conseguem receber
+      as permissões novas — o editor de perfis não as mostra.
+- [ ] **[obrigatório]** **`useSocket.ts`** aceita namespace (hoje fixo na raiz).
+- [ ] **[obrigatório]** `MapaEntrega.tsx` único — a biblioteca de mapas (pergunta 1) não
+      se espalha por seis ficheiros.
+
+##### 4.4 Transversal
+
+- [ ] **[obrigatório]** Testes backend, além dos da versão anterior
+      (taxa, haversine, estados, expedição concorrente, confirmar entrega, acerto,
+      assinatura de webhook):
+  - `pedido-estado.spec.ts` — `lojaPodeCancelar` recusa `EXPEDIDO`/`EM_ROTA`/`FALHADA`;
+    `FALHADA` está em `ESTADOS_PENDENTES`; `EXPEDIDO` não.
+  - `cancelar-pedido-gestao.use-case.spec.ts` — pedido `EXPEDIDO` dá `400`.
+  - `anular-venda.use-case.spec.ts` — recusa com pedido `EM_ROTA`; aceita sessão fechada
+    só com pedido de entrega e numerário zero; **uma venda de POS com sessão fechada
+    continua recusada** (regressão).
+  - `processar-venda.use-case.spec.ts` — `A_COBRAR_NA_ENTREGA` recusado com canal `POS`;
+    não gera troco.
+  - `expedir-pedido.use-case.spec.ts` — caixa de outra loja dá `400`; a gaveta não sobe.
+  - `devolver-entrega.use-case.spec.ts` — repetir depois de falha parcial não duplica.
+- [ ] **[obrigatório]** Frontend: etiqueta para todo o `EstadoPedido` (falha se faltar).
+- [ ] **[obrigatório]** Auditoria em expedição, atribuição, entrega, falha, devolução e
+      acerto (dinheiro e stock).
+- [ ] **[obrigatório]** `.env.example`: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`,
+      `WEBHOOK_TIMEOUT_MS`, `WEBHOOK_MAX_TENTATIVAS`, e do lado do frontend a variável do
+      mapa — cada uma com o que acontece se faltar.
+- [ ] **[opcional]** Métricas no dashboard; ferramenta MAYRA `consultar_entregas_em_curso`.
+
+##### 4.5 Documentação — [obrigatório]
+
+Pela regra do projecto: código → autorização do merge → documentação → merge.
+
+- [ ] `Docs/plano_implementacao.md` (duas cópias idênticas): Secção 2 por fase fechada;
+      fechar na Secção 3 o item das permissões do commerce (resolvido aqui) e, conforme a
+      pergunta 4, o dos `AGUARDA_*`.
+- [ ] `Docs/TRD.md` (duas cópias): fornecedor de mapas, variáveis novas, namespace
+      `/entregas`.
+- [ ] Esta secção (plano e backlog da equipa) actualizada a cada desvio, no commit
+      que o introduz.
+
+---
+
+#### 5. Ficheiros afectados
+
+##### `ControleCore_BackEnd`
+
+| Ficheiro | Acção | Porquê |
+| --- | --- | --- |
+| `prisma/schema.prisma` | alterar | Modelos e enums novos; `EstadoPedido`; colunas em `Pedido`/`Venda`/`Loja`/`ComercioConfiguracao` |
+| `prisma/migrations/<ts>_entrega_domicilio/migration.sql` | criar | DDL, permissões e ligação a perfis; parte destrutiva só se a pergunta 4 o decidir |
+| `prisma/seed.ts` | alterar | Recursos novos + `pedidos_commerce` nas listas dos perfis de sistema |
+| `src/modules/entrega/**`, `src/modules/webhooks/**` | criar | Módulos novos |
+| `src/modules/commerce/domain/pedido-estado.ts` | alterar | Predicados D12 |
+| `src/modules/commerce/application/services/<fecho-de-pedido>.service.ts` | criar | `itensFinais` + `recusarLojaDiferenteDaDoCaixa` extraídos |
+| `src/modules/commerce/application/use-cases/confirmar-levantamento.use-case.ts` | alterar | Passa a usar o serviço extraído |
+| `src/modules/commerce/application/use-cases/cancelar-pedido-gestao.use-case.ts` | alterar | `lojaPodeCancelar` (R12) |
+| `src/modules/commerce/application/use-cases/criar-pedido.use-case.ts` + `dto/pedido.dto.ts` | alterar | Tipo de entrega, morada, taxa |
+| `src/modules/commerce/pedido-gestao.controller.ts` | alterar | Rota `:id/expedir` |
+| `src/modules/vendas/application/use-cases/anular-venda.use-case.ts` | alterar | R11, R13 |
+| `src/modules/vendas/infrastructure/database/prisma-venda.repository.ts` | alterar | Reversão aceita `FALHADA` |
+| `src/modules/vendas/application/use-cases/processar-venda.use-case.ts` + `dto/processar-venda.dto.ts` | alterar | `A_COBRAR_NA_ENTREGA`, `taxaEntrega` |
+| `src/main.ts` | alterar | `rawBody: true` |
+| `src/app.module.ts` | alterar | Registar os módulos novos |
+| `.env.example` | alterar | Variáveis novas |
+
+##### `ControleCore_FrontEnd`
+
+| Ficheiro | Acção | Porquê |
+| --- | --- | --- |
+| `src/features/estafeta/**`, `src/features/entrega/**` | criar | PWA e gestão |
+| `src/features/compra-facil/pages/MoradasPage.tsx` | criar | Moradas |
+| `src/features/compra-facil/components/SelectorMorada.tsx`, `MapaEntrega.tsx` | criar | Reutilizados em três ecrãs |
+| `src/features/compra-facil/pages/CheckoutPage.tsx`, `PedidoDetalhePage.tsx` | alterar | Entrega, taxa, rastreio |
+| `src/features/compra-facil/api/pedidos.api.ts` | alterar | Estados, etiquetas, método de pagamento |
+| `src/features/compra-facil-gestao/pages/PedidosCommercePage.tsx` | alterar | "Despachar"; cancelar escondido a partir de `EXPEDIDO` |
+| `src/shared/hooks/useSocket.ts` | alterar | Namespace como parâmetro |
+| `src/shared/config/permissions.config.ts` | alterar | Recursos novos |
+| `src/router/index.tsx` | alterar | `/estafeta/*` e rotas de gestão |
+
+---
+
+#### 6. Assunções
+
+1. **A entrega sai da loja que prepara o pedido.** Sem consolidação entre lojas.
+2. **Uma entrega, uma viagem** na v1.
+3. **O estafeta tem telemóvel com dados e GPS.** Sem isso funciona na mesma, sem rastreio.
+4. **O pagamento continua a ser cobrado fisicamente.** Quando o gateway entrar, a venda da
+   expedição passa a levar o método pré-pago em vez de `A_COBRAR_NA_ENTREGA`, não se cria
+   `RegistroFinanceiro` a receber, e o acerto ignora esses pedidos — por isso
+   `valorACobrar` é campo e não derivado.
+5. **A taxa de entrega tem IVA de serviço**, não decomposto na v1. Confirmar com a
+   facturação.
+6. **O estafeta é da empresa ou subcontratado por ela** — `Estafeta.empresaId`
+   obrigatório.
+7. **`Pedido.taxaEntrega` entra em `totalFinal`.**
+8. **Devolver uma entrega falhada é acção de gestor** (`MANAGER`+), porque anula uma
+   venda. O operador de balcão recebe a mercadoria; um gestor confirma a devolução.
+   *Nova nesta revisão* — consequência de reutilizar `AnularVendaUseCase`.
+9. **O acerto de contas é feito pelo perfil `Gestor`**, não por um perfil financeiro
+   dedicado — em regra uma loja não tem um. Proposta de regra nova em
+   `REGRAS_SEGREGACAO` (`src/shared/segregacao-funcoes.ts`): `ACERTO_ESTAFETA_PROPRIO` —
+   ninguém fecha o acerto de um estafeta ligado ao seu próprio `userId` — em modo
+   `EXCEPCAO_AUTORIZADA`, como `REQ_CRIAR_APROVAR`: uma loja de uma pessoa tem de
+   conseguir operar, mas fica registado. *Nova nesta revisão.*
+10. **`Armazenista` não recebe permissões de entrega nem de `pedidos_commerce`.** Se o
+    picking for feito por armazenistas, acrescenta-se `pedidos_commerce` a esse perfil.
+    *Nova nesta revisão.*
+
+---
+
+#### 7. Perguntas em aberto
+
+**Bloqueantes — antes da migração:**
+
+1. **Fornecedor de mapas.** Leaflet + OpenStreetMap (gratuito, sem chave) ou Google Maps
+   (melhor cobertura de MZ, **pago**, entra no TRD §6). *Recomendação:* Leaflet, com o
+   cliente a marcar o pino — evita geocodificar na v1.
+2. **`Pedido.estado` espelha a entrega (`EM_ROTA`, `FALHADA`) ou fica em `EXPEDIDO` até
+   ao fim?** Este plano assume que espelha: duplica, mas o código que já lê
+   `Pedido.estado` (painel, KPIs, CRM, anulação) funciona sem *join*. Muda o enum.
+3. **Um estafeta pode servir várias lojas da empresa?** Afecta a atribuição automática.
+4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO`: remover ou usar?** *Nova nesta
+   revisão* (vinha do backlog). Nenhum código os escreve; o frontend tem etiquetas que
+   nunca aparecem.
+   - **Remover (recomendado):** esta migração já mexe no enum e em todas as listas de
+     `pedido-estado.ts` — levar dois estados mortos para um enum maior aumenta a
+     confusão exactamente onde a equipa vai estar a trabalhar. Custo: é a parte
+     destrutiva da migração (estratégia na §4.1).
+   - **Manter:** migração 100 % aditiva, mas continua a pendência.
+
+**Não bloqueantes:** tudo o que está na §6.
+
+---
+
+#### 8. Ordem de execução e verificação
+
+| Fase | Conteúdo | Depende de |
+| --- | --- | --- |
+| **0 — Desbloquear e preparar** | 4 decisões; migração (incl. permissões e perfis); segredos; coordenadas | — |
+| **1 — O cliente escolhe entrega** | Moradas, zonas, cotação, checkout | 0 |
+| **2 — A loja despacha** | Estafetas, expedição, painel, desfecho, devolução + alterações a `CancelarPedidoGestao`/`AnularVenda` | 1 |
+| **3 — As contas batem** | Valor cobrado, acerto, visão do que cada estafeta deve | 2 |
+| **4 — O estafeta na rua** | PWA, auth, atribuição | 2 |
+| **5 — Rastreio ao vivo** | Namespace, posição, mapa | 4 |
+| **6 — Webhooks** | Saída, entrada, adaptador | 2 |
+
+**Como verificar no fim da Fase 2/3** (o resto como na versão anterior):
+
+```bash
+cd C:/Documentos/SRG/ControlCore/ControleCore_BackEnd && npm run lint && npm run build && npm test
+cd C:/Documentos/SRG/ControlCore/ControleCore_FrontEnd && npm run lint && npm run build && npm test
+```
+
+1. Com um utilizador **de perfil `Funcionário / Caixa`** (não ADMIN — o ADMIN tem
+   *bypass* e esconderia um erro de permissões), abrir a fila de pedidos e despachar.
+2. Despachar com o caixa aberto noutra loja → `400` com o nome das duas lojas.
+3. Despachar certo: venda com `taxaEntrega` e pagamento `A_COBRAR_NA_ENTREGA`; stock
+   desce; `RegistroFinanceiro` a receber **sem cliente**; saldo calculado do caixa
+   **não sobe**.
+4. Com o pedido `EM_ROTA`: tentar cancelar pela gestão → `400`; tentar anular a venda →
+   `409`.
+5. Marcar falhada; **fechar o caixa de quem despachou**; como gestor, devolver → aceita;
+   stock reposto, venda `CANCELADA`, pedido `CANCELADO`, registo financeiro `CANCELLED`.
+6. Anular uma venda de **POS** com a sessão fechada → continua recusada.
+7. Entregar em numerário, fazer o acerto com 50 MZN de diferença → fecha, diferença
+   registada, `MovimentoCaixa(REFORCO)` na sessão de quem recebe.
+8. Pedido de levantamento de ponta a ponta → nada mudou.
+
+**Notas de deploy:**
+
+- Migração corre no arranque do contentor. Se a pergunta 4 decidir remover, é destrutiva
+  — correr primeiro numa *branch* do Neon com cópia de produção.
+- `fly secrets set JWT_ESTAFETA_SECRET=…` **antes** do deploy — sem ele o módulo lança e
+  o contentor não sobe.
+- **Invalidar a cache de permissões** depois do deploy (`permissions:*` no Redis), senão
+  as permissões novas só aparecem a quem tinha sessão ao fim de 24 h.
+- Backend primeiro, frontend depois. Variável do mapa na Vercel exige novo build.
+- Coordenadas das lojas preenchidas antes de activar a entrega por empresa.
+
+#### Backlog da equipa — histórias e sprints
+
+**Épico:** levar as compras do Compra Fácil a casa do cliente.
+**Equipa:** desenvolvimento ControlCore · **Sprints:** 6 × 2 semanas · **Total:** 124 pontos · *revisto em 2026-09-24*
+
+> **Como usar este documento.** É o que se lê no refinamento e se tem aberto durante o
+> sprint. Cada história diz o que entregar, quando está pronta e que tarefas tem.
+> O **porquê** de cada decisão técnica está no plano técnico acima, nesta mesma
+> secção — o backlog não repete essas razões, remete para elas.
+
+---
+
+##### 1. O que vamos construir, em linguagem simples
+
+Hoje o cliente compra no Compra Fácil e vai buscar à loja. Vamos acrescentar a
+alternativa: escolher uma morada, pagar uma taxa, e receber em casa por um estafeta
+que ele acompanha no mapa — como no iFood.
+
+**O percurso completo, do princípio ao fim:**
+
+1. O cliente guarda uma morada ("Casa — Sommerschield, prédio azul ao lado da farmácia").
+2. No checkout escolhe **Entregar em casa** em vez de **Levantar na loja**.
+3. O sistema vê em que zona cai a morada e mostra a taxa (ex.: 150 MZN). O cliente confirma.
+4. A loja recebe o pedido, prepara e confere — **exactamente como já faz hoje**.
+5. Em vez de "Confirmar levantamento", o funcionário carrega em **Despachar** e escolhe o
+   estafeta. **É aqui que nasce a venda** e o stock sai.
+6. O estafeta vê a entrega no telemóvel, aceita, recolhe na loja e segue.
+7. O cliente vê o estafeta a mover-se no mapa. Recebe, paga (se for na entrega), confirma.
+8. No fim do turno, o estafeta entrega o dinheiro e faz o **acerto de contas** — só nesse
+   momento o dinheiro entra no caixa.
+
+**Se a entrega falhar** (cliente ausente, morada errada): a mercadoria volta à loja, o
+stock é reposto e a venda é anulada. Não fica dinheiro nem stock por explicar.
+
+---
+
+##### 2. Vocabulário — as palavras novas
+
+| Palavra | O que significa aqui |
+| --- | --- |
+| **Pedido** | O que já existe. O processo entre o checkout e a venda. |
+| **Entrega** (`EntregaPedido`) | A viagem até casa do cliente. Tem vida própria: um pedido pode existir sem entrega (levantamento), uma entrega nunca existe sem pedido. |
+| **Estafeta** | Quem faz a entrega. Não é um `User` do ControlCore — é um tipo de utilizador novo, com login e token próprios. |
+| **Zona de entrega** | Onde a loja entrega e por quanto. Definida por bairro/cidade ou por raio em km à volta da loja. |
+| **Cotação** | A pergunta "quanto custa entregar nesta morada?", respondida antes de o cliente confirmar. |
+| **Acerto de contas** | O fecho do turno do estafeta: o dinheiro que ele cobrou na rua entra no caixa. |
+| **Webhook** | Como um sistema **de fora** nos avisa, ou é avisado. Não é como o nosso estafeta comunica — esse usa a API normal. |
+| **Expedir / despachar** | O momento em que a mercadoria sai da loja para o estafeta. |
+
+---
+
+##### 3. Decisões já fechadas — não reabrir em refinamento
+
+Estão justificadas no plano técnico (§3, "Decisões de arquitectura"). Quem discordar
+levanta no retro, não a meio do sprint.
+
+1. **A venda nasce na expedição, não na entrega.** Porque `ProcessarVendaUseCase` exige
+   sessão de caixa aberta, e quando a entrega se confirma o turno pode já estar fechado.
+2. **O dinheiro cobrado na rua não entra no caixa na expedição.** A venda regista o
+   pagamento como `A_COBRAR_NA_ENTREGA` — o fecho de caixa só soma `NUMERARIO`, por isso
+   a gaveta não espera dinheiro que está no bolso do estafeta. Fica uma conta a receber
+   **sem cliente** (senão o motor de inadimplência cobrava o cliente por uma dívida do
+   estafeta), e entra no caixa no acerto.
+3. **A taxa de entrega é um campo em `Venda` e `Pedido`**, com `@default(0)`. Não é um
+   produto de serviço (iria a stock negativo).
+4. **O estafeta tem token próprio** (`JWT_ESTAFETA_SECRET`), como já acontece com o
+   fornecedor e com a conta de cliente.
+5. **Módulo novo `src/modules/entrega/`**, não campos dentro de `commerce`.
+6. **Devolver uma entrega falhada é anular a venda** pelo `AnularVendaUseCase` que já
+   existe — não se escreve uma segunda forma de desfazer uma venda.
+
+---
+
+##### 4. Definição de Pronto (vale para todas as histórias)
+
+Uma história só se dá por fechada quando **tudo** isto se verifica:
+
+- [ ] Compila: `npm run build` nos dois repositórios que tocou.
+- [ ] `npm run lint` limpo.
+- [ ] `npm test` verde, **incluindo testes novos** para as regras de negócio da história —
+      não só o caminho feliz.
+- [ ] Toda a consulta filtra por `empresaId`. Sem excepção.
+- [ ] A rota declara o seu guarda (`@Permissao`, `@ContaCliente()`, `@Estafeta()`).
+- [ ] No frontend: os quatro estados tratados — a carregar (skeleton), erro, lista vazia,
+      sucesso. Erros passam por `mensagemDeErro()`.
+- [ ] Identificadores e mensagens em português; comentários explicam o *porquê*.
+- [ ] Demonstrada na review, a correr, não em slides.
+- [ ] `Docs/plano_implementacao.md` actualizado **nas duas cópias**.
+
+---
+
+##### 5. O caminho — visão de conjunto
+
+| Sprint | Objectivo numa frase | Demo no fim | Pontos |
+| --- | --- | --- | --- |
+| **0** | Desbloquear e preparar o terreno | Migração aplicada, permissões ligadas, segredos no Fly | 11 |
+| **1** | O cliente consegue escolher entrega e ver a taxa | Pedido criado com morada e taxa | 21 |
+| **2** | A loja despacha e a venda nasce | Pedido ponta a ponta, sem estafeta na rua | 29 |
+| **3** | As contas batem | Dinheiro da rua a entrar no caixa pelo acerto | 18 |
+| **4** | O estafeta trabalha pelo telemóvel | Entrega feita inteira pela PWA | 23 |
+| **5** | O cliente vê onde está a sua encomenda | Mapa ao vivo no detalhe do pedido | 13 |
+| **6** | Um operador externo pode substituir a frota | Webhook assinado a mudar o estado | 9 |
+
+**Cada sprint entrega valor sozinho e vai para produção.** O Sprint 2 já permite operar
+entregas a sério — com o gestor a marcar os estados à mão. Do 4 em diante é conforto e
+escala, não viabilidade.
+
+**Regra de deploy, todos os sprints: backend primeiro, frontend depois.**
+
+---
+
+##### 6. Sprint 0 — Preparar o terreno · 11 pontos
+
+> Não é um sprint de funcionalidades. São 2 a 3 dias antes do Sprint 1.
+
+###### T-00.1 · Fechar as quatro decisões bloqueantes · [Product Owner]
+
+Nenhuma linha de código antes disto — a primeira muda o enum, logo muda a migração.
+
+1. **Fornecedor de mapas.** Leaflet + OpenStreetMap (grátis, sem chave) ou Google Maps
+   (melhor cobertura de Moçambique, **pago**). Recomendação técnica: Leaflet, com o cliente
+   a marcar o pino em vez de geocodificarmos.
+2. **`Pedido.estado` espelha a entrega, ou fica em `EXPEDIDO` até ao fim?** Espelhar duplica
+   informação mas evita mexer em todo o código que já lê `Pedido.estado`.
+3. **Um estafeta serve várias lojas da mesma empresa?** Afecta a atribuição automática.
+4. **`AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO`: remover ou usar?** Existem no enum e
+   nenhum código os escreve. Recomendação: remover nesta migração, que já mexe no enum —
+   com mapeamento para `CRIADO`/`PRONTO` antes, para a migração nunca falhar no arranque.
+
+###### T-00.2 · Migração base · 5 pts · [BE]
+
+- Modelos novos e alterações de `schema.prisma` conforme §4.1 do plano técnico.
+- `npx prisma migrate dev --name entrega_domicilio` · `npx prisma generate`.
+- **Não destrutiva:** os pedidos existentes ficam `tipoEntrega = LEVANTAMENTO`, que é o que
+  já são. Confirmar com um pedido antigo em base de dados de desenvolvimento.
+- **Excepção:** se a decisão 4 for remover os `AGUARDA_*`, essa parte é destrutiva —
+  estratégia no plano técnico §4.1; ensaiar numa *branch* do Neon com cópia de produção.
+- ⚠️ O enum novo chama-se **`EstadoEntregaPedido`** e não `EstadoEntrega` — esse nome já
+  está ocupado pelo estado de entrega de mensagens do CRM, e reutilizá-lo parte o CRM.
+
+###### T-00.3 · Segredos e configuração · 3 pts · [BE/Infra]
+
+- `fly secrets set JWT_ESTAFETA_SECRET=$(openssl rand -base64 48)` **antes** do deploy do
+  código — se faltar, o módulo lança no arranque e o contentor não sobe.
+- `.env.example` com as variáveis novas, **cada uma com o comentário do que acontece se
+  faltar**.
+- Preencher `latitude`/`longitude` das lojas piloto. Sem isso, todas as moradas caem em
+  "fora de área" — falha visível, mas confusa se ninguém souber a causa.
+
+###### T-00.4 · Permissões ligadas a perfis · 3 pts · [BE + FE]
+
+Hoje as permissões do commerce existem mas **não estão ligadas a perfil nenhum**: só ADMIN
+abre a fila de pedidos. Como "Despachar" é uma acção dessa fila, a entrega não funciona
+para um operador de balcão sem fechar isto primeiro.
+
+- Na migração: inserir as seis permissões novas (tabela no plano técnico §3.1) **e** ligá-las,
+  junto com `pedidos_commerce`, aos perfis de sistema `Gestor` e `Funcionário / Caixa`.
+- No `seed.ts`: os mesmos recursos nas listas de cada perfil. ⚠️ **O seed apaga as ligações
+  dos perfis de sistema e recria-as** — se os recursos novos não estiverem nas listas, correr
+  o seed desfaz a migração.
+- No frontend: recursos novos em `AVAILABLE_RESOURCES` e `write:`/`delete:` em
+  `IGNORED_PERMISSIONS` — senão o editor de perfis não os mostra.
+- Nomes: `GERIR_ACERTOS_ESTAFETA`, não `ACERTAR_CONTAS_ESTAFETA` — `acertar` não é um verbo
+  que o `PermissoesGuard` conheça, e funcionaria só por acidente.
+- No deploy: invalidar a cache de permissões no Redis, senão só aparecem ao fim de 24 h.
+
+---
+
+##### 7. Sprint 1 — O cliente escolhe entrega · 21 pontos
+
+**Objectivo:** no fim deste sprint um cliente consegue criar um pedido com morada e taxa.
+Ninguém entrega nada ainda — o pedido fica em `PRONTO` como hoje.
+
+###### US-01 · Guardar as minhas moradas · 5 pts · [BE + FE]
+
+**Como** cliente do Compra Fácil, **quero** guardar as minhas moradas, **para** não as
+escrever a cada compra.
+
+**Pronto quando:**
+- Crio, edito e apago moradas em `/loja/:lojaId/moradas`, e escolho uma como predefinida.
+- Cada morada tem província, cidade, bairro, linha de morada e **referência** — em Maputo
+  "casa amarela depois da bomba" vale mais do que um número de porta.
+- Consigo marcar a localização: botão "Usar a minha localização" **ou** arrastar um pino
+  no mapa.
+- O botão de geolocalização **esconde-se** fora de contexto seguro (HTTP), não falha — a
+  mesma restrição que a câmara do POS já tem.
+- Não consigo apagar uma morada que está a ser usada por um pedido em curso (erro `409`
+  com explicação).
+
+**Tarefas:** modelo `EnderecoCliente` · `endereco-cliente.controller.ts` com `@ContaCliente()`
+· `MoradasPage.tsx` + react-hook-form + Zod · `SelectorMorada.tsx` (reutilizado no checkout)
+· `MapaEntrega.tsx` em modo selecção.
+
+###### US-02 · Configurar onde a loja entrega · 5 pts · [BE + FE]
+
+**Como** administrador, **quero** definir zonas com taxa e prazo, **para** controlar onde e
+por quanto entregamos.
+
+**Pronto quando:**
+- Crio zonas por bairro, cidade ou província, e/ou por raio em km à volta da loja.
+- Cada zona tem taxa, prazo estimado em minutos, valor mínimo de pedido (opcional) e
+  interruptor activa/inactiva.
+- Uma loja **sem coordenadas** não deixa activar entrega, com mensagem clara a dizer porquê.
+- Zonas sobrepostas: ganha a mais específica (bairro > raio > cidade > província).
+
+**Tarefas:** modelo `ZonaEntregaLoja` (espelha `ZonaEntregaFornecedor`, que já existe —
+**ler esse modelo antes de escrever este**) · índices únicos parciais no SQL da migração,
+não no `@@unique` do Prisma · `ZonasEntregaPage.tsx`.
+
+###### US-03 · Saber quanto custa entregar · 5 pts · [BE]
+
+**Como** cliente, **quero** ver a taxa antes de confirmar, **para** não ter surpresas.
+
+**Pronto quando:**
+- `POST /commerce/entrega/cotacao` devolve `{ disponivel, taxa, prazoMinutos, motivo? }`.
+- Morada fora de todas as zonas → `disponivel: false` com motivo legível.
+- Subtotal abaixo do mínimo da zona → `disponivel: false` com o valor em falta.
+- Zona inactiva é tratada como inexistente.
+
+**Tarefas:** `domain/distancia-haversine.ts` e `domain/calcular-taxa.ts` — **funções puras,
+com os testes a passar antes de existir controller** · `calcular-taxa.spec.ts` cobre: sem
+coordenadas, zonas sobrepostas, fora de todas, inactiva, abaixo do mínimo.
+
+###### US-04 · Escolher entrega no checkout · 6 pts · [BE + FE]
+
+**Como** cliente, **quero** escolher entre levantar e receber em casa, **para** decidir como
+me dá mais jeito.
+
+**Pronto quando:**
+- O checkout mostra dois botões: **Levantar na loja** / **Entregar em casa**.
+- Escolhida a entrega: lista das minhas moradas e a taxa aparece como **linha própria** no
+  resumo, antes do botão de confirmar.
+- Morada fora de área → mensagem concreta ("Ainda não entregamos em Matola-Rio. Pode
+  levantar na loja.") e volta a levantamento. **Nunca um botão desactivado sem explicação.**
+- O pedido guarda `tipoEntrega`, `enderecoId` e `taxaEntrega`; a taxa entra no `totalFinal`.
+- 🔴 **Um pedido de levantamento comporta-se exactamente como antes.** Teste de regressão
+  obrigatório.
+
+**Tarefas:** `CriarPedidoDto` + `CriarPedidoUseCase` · `CheckoutPage.tsx` · tipos em
+`pedidos.api.ts`.
+
+---
+
+##### 8. Sprint 2 — A loja despacha · 29 pontos
+
+**Objectivo:** uma entrega completa, operada pelo painel de gestão. Sem app de estafeta
+ainda — o gestor marca os estados à mão. **Já dá para operar a sério.**
+
+###### US-05 · Registar estafetas · 3 pts · [BE + FE]
+
+**Como** gestor, **quero** registar quem faz entregas, **para** poder atribuir-lhes trabalho.
+
+**Pronto quando:** CRUD de estafetas com nome, telefone, veículo, matrícula e loja
+(opcional = serve todas) · password definida no registo · estafeta inactivo não aparece nas
+atribuições.
+
+###### US-06 · Despachar um pedido · 8 pts · [BE + FE]
+
+**Como** funcionário de loja, **quero** entregar a mercadoria ao estafeta e fechar a saída,
+**para** a encomenda seguir caminho.
+
+**Pronto quando:**
+- Um pedido em `PRONTO` com `tipoEntrega = ENTREGA` mostra **Despachar**, não "Confirmar
+  levantamento".
+- Despachar, por esta ordem: (1) muda o estado com **update condicional atómico**;
+  (2) reservas → `CONSUMIDA`; (3) cria a `EntregaPedido` em `AGUARDA_RECOLHA`;
+  (4) só então chama `ProcessarVendaUseCase` com a `taxaEntrega`.
+- 🔴 **Dois funcionários a despachar o mesmo pedido ao mesmo tempo criam UMA venda.** O
+  segundo recebe `400`. Teste obrigatório — é o defeito mais caro deste épico.
+- Sem sessão de caixa aberta → `409` com mensagem que diz o que fazer.
+- Caixa aberto **noutra loja** → `400` com o nome das duas lojas. É a regra que o
+  levantamento ganhou há dois dias, pela mesma razão: senão o stock sai da loja errada.
+- A venda leva o pagamento `A_COBRAR_NA_ENTREGA` e cria uma conta a receber sem cliente.
+  🔴 **O saldo calculado do caixa não sobe.** Verificar na demo.
+- A venda usa o que a conferência decidiu (`quantidadeConferida`, substituições), nunca o
+  que foi pedido no checkout.
+
+**Tarefas:** `ExpedirPedidoUseCase` · extrair `itensFinais` **e**
+`recusarLojaDiferenteDaDoCaixa` de `ConfirmarLevantamentoUseCase` para um serviço
+partilhado — **extrair, não copiar** · `A_COBRAR_NA_ENTREGA` em `MetodoPagamento`, aceite
+só com canal `ECOMMERCE` ·
+`taxaEntrega` opcional em `ProcessarVendaUseCase`, fora do cálculo de COGS e margem ·
+teste que prova que o POS não mudou.
+
+###### US-07 · Ver as entregas em curso · 5 pts · [FE]
+
+**Como** gestor, **quero** um painel com as entregas por estado, **para** saber o que está
+a acontecer sem telefonar a ninguém.
+
+**Pronto quando:** coluna por estado · filtros por loja, estafeta e data · actualiza pelo
+socket · lista vazia diz "Nenhuma entrega em curso", não um ecrã em branco.
+
+###### US-08 · Marcar entregue ou falhada · 5 pts · [BE + FE]
+
+**Como** gestor, **quero** registar o desfecho da entrega, **para** fechar o pedido.
+
+**Pronto quando:** marcar entregue fecha o pedido em `CONCLUIDO` · marcar falhada exige
+motivo de uma lista fechada (cliente ausente, morada errada, recusou, inacessível, outro) ·
+cada mudança grava um `EventoEntrega` **imutável** (quem, quando, onde) · o cliente é
+notificado por e-mail, pelo caminho que já existe.
+
+###### US-09 · Devolver uma entrega falhada · 8 pts · [BE + FE]
+
+**Como** gestor, **quero** que a mercadoria devolvida volte ao stock, **para** as contas
+não ficarem penduradas.
+
+**Pronto quando:**
+- Devolver chama o `AnularVendaUseCase` que já existe: repõe o stock, anula a venda e põe
+  o pedido em `CANCELADO`. Depois, a entrega passa a `DEVOLVIDA` e a conta a receber a
+  `CANCELLED`. Repetir depois de uma falha a meio não duplica nada.
+- Só um **gestor** pode devolver — a anulação já exige esse perfil, e é uma venda que se
+  desfaz.
+- 🔴 **Funciona com o caixa de quem despachou já fechado.** Hoje a anulação recusa sessões
+  fechadas; passa a aceitar quando a venda é de entrega **e** não há numerário a devolver
+  (a venda não pôs nada na gaveta, logo não mexe na conferência). **Uma venda de POS com
+  sessão fechada continua recusada** — teste de regressão obrigatório.
+- 🔴 **Com a mercadoria na rua, nada cancela o pedido.** Com o pedido `EXPEDIDO` ou
+  `EM_ROTA`: cancelar pela gestão dá `400`, anular a venda dá `409`. Os dois com
+  mensagem a dizer o caminho certo: marcar falhada e devolver.
+
+**Tarefas:** `DevolverEntregaUseCase` · em `AnularVendaUseCase`, os dois ajustes acima ·
+em `anularVendaTransacional`, a reversão do pedido passa a aceitar `FALHADA` além de
+`CONCLUIDO` · em `CancelarPedidoGestaoUseCase`, trocar `estaConcluido` por
+`lojaPodeCancelar` · em `pedido-estado.ts`, `lojaPodeCancelar`, `ESTADOS_EM_ENTREGA` e
+`FALHADA` em `ESTADOS_PENDENTES` (conta nos "por atender" do painel; `EXPEDIDO` e
+`EM_ROTA` não — estão com o estafeta).
+
+---
+
+##### 9. Sprint 3 — As contas batem · 18 pontos
+
+**Objectivo:** o dinheiro cobrado na porta chega ao caixa por um caminho rastreável.
+
+###### US-10 · Registar o valor cobrado · 5 pts · [BE + FE]
+
+**Como** quem confirma a entrega, **quero** registar quanto recebi, **para** o acerto ter
+base.
+
+**Pronto quando:** confirmar entrega pede o valor **e o método** cobrados · numerário
+fica como dívida do estafeta; M-Pesa/e-Mola pedem a referência e **não** entram no acerto
+(o dinheiro foi para a carteira da loja, não para o bolso do estafeta) · valor diferente do
+esperado **não bloqueia** — regista-se a diferença e fica visível.
+
+###### US-11 · Acerto de contas do estafeta · 8 pts · [BE + FE]
+
+**Como** gestor, **quero** fechar as contas do turno, **para** o dinheiro entrar no caixa.
+
+**Pronto quando:**
+- O ecrã soma as entregas do estafeta ainda por acertar e mostra o total esperado.
+- Registo o que ele entregou de facto. A diferença **não impede fechar** — fica registada e
+  visível. Bloquear o fecho por 50 MZN deixava o estafeta sem poder acabar o turno.
+- Fechar cria `MovimentoCaixa(REFORCO)` na sessão de quem recebe e passa os registos
+  financeiros a `PAID`.
+- Sem sessão de caixa aberta → `409`.
+- Auditado, com segregação de funções.
+
+###### US-12 · Quanto é que cada estafeta deve · 5 pts · [FE]
+
+**Como** gestor, **quero** ver o que está por acertar, **para** saber quem tem dinheiro meu
+na rua.
+
+**Pronto quando:** lista por estafeta com valor em aberto, entregas pendentes e data do
+último acerto · ordenada pelo maior valor em aberto.
+
+---
+
+##### 10. Sprint 4 — O estafeta na rua · 23 pontos
+
+**Objectivo:** a entrega deixa de ser marcada pelo gestor e passa a ser feita pelo estafeta,
+no telemóvel dele.
+
+> **Desenhar para telemóvel primeiro, para ser usado com uma mão, na rua, ao sol.** Alvos de
+> toque grandes, contraste alto, sem tabelas. Se precisa de zoom, está errado.
+
+###### US-13 · Entrar na app do estafeta · 5 pts · [BE + FE]
+
+**Pronto quando:** `/estafeta/entrar` com telefone e password · token próprio,
+**cookie próprio**, validade 12h (um turno) · rotas `/estafeta/*` **fora do
+`ProtectedRoute`**, como `/loja` e `/fornecedor` já estão · o guarda confirma na base de
+dados a cada pedido que a conta continua activa.
+
+**Tarefa:** `estafeta-token.ts` é uma cópia estrutural de `cliente-token.ts` — **ler esse
+ficheiro primeiro**, incluindo o comentário que explica porque não cai para
+`JWT_ACCESS_SECRET`.
+
+###### US-14 · Ver e aceitar as minhas entregas · 5 pts · [BE + FE]
+
+**Pronto quando:** vejo só as minhas · aceitar uma já aceite por outro dá `409` com
+mensagem clara · uma atribuição não aceite em N minutos volta à fila (tarefa agendada, ao
+lado da que expira reservas) · morada com botão que abre o mapa do telemóvel.
+
+###### US-15 · Recolher, entregar, falhar · 8 pts · [BE + FE]
+
+**Pronto quando:** três botões grandes, um por passo · entregar pede o valor cobrado quando
+aplicável · falhar exige motivo · foto de prova opcional, para o bucket S3 que já existe ·
+cada acção grava `EventoEntrega` · transição inválida (entregar sem ter recolhido) é
+recusada com mensagem, não com erro genérico.
+
+###### US-16 · Atribuição automática · 5 pts · [BE] · **opcional**
+
+Atribui ao estafeta `DISPONIVEL` mais próximo da loja. Por proximidade e não por leilão:
+um leilão precisa de uma massa de estafetas que uma loja não tem. **Corta-se sob pressão de
+prazo** — o gestor continua a atribuir à mão.
+
+---
+
+##### 11. Sprint 5 — O cliente vê onde está · 13 pontos
+
+###### US-17 · Canal de tempo real para três tipos de utilizador · 5 pts · [BE]
+
+**Pronto quando:**
+- Namespace novo `/entregas` aceita os três tokens: funcionário, cliente e estafeta.
+- 🔴 **Um cliente nunca entra na sala da empresa** — veria as entregas de toda a gente.
+  Cada um na sua sala: `empresa_<id>`, `pedido_<id>`, `estafeta_<id>`.
+- O namespace raiz **não se toca**: é ele que configura o Engine.IO e os seus cabeçalhos
+  valem para todos os namespaces (está comentado no ficheiro).
+
+###### US-18 · Emitir a posição · 3 pts · [FE + BE]
+
+**Pronto quando:** a PWA emite de 15 em 15 segundos, **só** se andou mais de 25 m e **só**
+entre recolher e entregar · pára quando a entrega fecha · a última posição guarda-se no
+estafeta (sobrescrita), o rasto contínuo **não se grava** — são ~2.900 linhas por dia por
+estafeta e o valor de auditoria está nos eventos, não no rasto.
+
+###### US-19 · Mapa e linha do tempo · 5 pts · [FE]
+
+**Pronto quando:** o detalhe do pedido mostra a linha do tempo dos eventos e, em rota, o
+mapa com o estafeta · **sem WebSocket, degrada para consulta de 30 em 30 segundos** — um
+mapa parado sem aviso é pior do que um mapa lento · etiquetas em linguagem de cliente ("O
+estafeta está a caminho"), nunca o nome do estado do sistema.
+
+---
+
+##### 12. Sprint 6 — Integrações externas · 9 pontos
+
+**Objectivo:** um operador de entregas externo pode substituir a frota própria sem
+reescrever nada do domínio.
+
+###### US-20 · Avisar sistemas de fora · 5 pts · [BE]
+
+**Pronto quando:**
+- Uma subscrição diz que URL avisar e de que eventos.
+- A linha da fila é criada **na mesma transacção** da mudança de estado. Se o envio falhar,
+  o facto fica na mesma; se a transacção falhar, não se avisa ninguém de algo que não
+  aconteceu.
+- Uma tarefa agendada envia com assinatura HMAC-SHA256 e recuo exponencial
+  (1 min, 5, 15, 60, 6 h, 24 h). À 7.ª tentativa desiste e alerta.
+- ⚠️ **Nunca chamar o URL externo dentro do use-case** — prendia a transacção do Neon à
+  latência de um servidor alheio.
+
+###### US-21 · Receber avisos de fora · 4 pts · [BE]
+
+**Pronto quando:**
+- `POST /webhooks/entrega/:operadorId` verifica a assinatura sobre o **corpo cru**
+  (exige `rawBody: true` no `main.ts` — hoje não está), em comparação de tempo constante.
+- Assinatura inválida → `401`. Desfasamento de mais de 5 minutos → recusado.
+- 🔴 **O mesmo evento duas vezes responde `200` e não faz nada.** Nunca `409` — um erro faz
+  o operador insistir mais.
+- Responde `202` **antes** de processar. Um operador que espera 30 s pela nossa lógica marca
+  o webhook como falhado e repete.
+
+---
+
+##### 13. O que a equipa tem de saber antes de começar
+
+**Cinco armadilhas conhecidas.** Estão em detalhe no plano técnico (§3.4, "Riscos"):
+
+1. **`EstadoEntrega` já existe** e é do CRM. O nosso chama-se `EstadoEntregaPedido`.
+2. **`TransitarEstadoPedidoUseCase` lê-e-depois-escreve** — defeito **já existente**, que
+   não corrigimos neste épico. O código novo usa update condicional atómico. Quem lhe mexer
+   por engano, abre um `fix/` próprio.
+3. **Não há uma única coordenada no schema.** A `Loja` não tem ponto. Sem isso não há raio
+   nem mapa — por isso a T-00.3 vem antes de tudo.
+4. **O código que já existe não conhece os estados novos.** `CancelarPedidoGestaoUseCase` e
+   `AnularVendaUseCase` aceitariam um pedido com a mercadoria na mota do estafeta. A US-09
+   fecha os dois — não é opcional.
+5. **Testar com um utilizador que não seja ADMIN.** O ADMIN tem *bypass* de permissões e
+   esconde qualquer erro de ligação a perfis. Usar um `Funcionário / Caixa`.
+
+**Convenções que não se negoceiam:** branch por alteração (nunca `main` directo, que faz
+deploy automático) · Conventional Commits em português no imperativo · reutilizar antes de
+criar (procurar em `src/shared/` primeiro) · `Docs/plano_implementacao.md` actualizado nas
+duas cópias, no mesmo PR que fecha a história.
+
+---
+
+##### 14. Como demonstrar no fim de cada sprint
+
+Sempre a correr, com `npm run start:dev` (3100) e `npm run dev` (5273).
+
+| Sprint | O guião da demo |
+| --- | --- |
+| **1** | Criar morada dentro do raio → taxa aparece. Criar morada fora → mensagem, volta a levantamento. Fazer um pedido de **levantamento** e provar que nada mudou. |
+| **2** | Com um **Funcionário / Caixa**: confirmar → preparar → conferir → **Despachar**. Mostrar a venda com a taxa, o stock em baixa e o caixa **na mesma**. Com o pedido na rua, tentar cancelar e anular — ambos recusados. Marcar entregue. Depois repetir, marcar falhada, **fechar o caixa**, e devolver como gestor → stock reposto, venda anulada. |
+| **3** | Fechar o acerto de um estafeta com uma diferença de 50 MZN: fecha à mesma, a diferença fica registada, o caixa sobe. |
+| **4** | Fazer uma entrega inteira só pelo telemóvel, com a app de gestão aberta ao lado a actualizar sozinha. |
+| **5** | Dois ecrãs: o estafeta a andar, o cliente a ver o pino mexer. |
+| **6** | `curl` com assinatura válida muda o estado; assinatura errada dá `401`; o mesmo evento repetido não duplica nada. |
+
+**A demo do Sprint 2 é a que importa.** Se aquela correr, a funcionalidade existe — o resto
+é torná-la confortável.
+
+---
+
+### 4.2 Multilínguas (internacionalização)
+
+- **Data**: 2026-09-28
+- **Estado**: Rascunho — 3 decisões bloqueantes em aberto (§7)
+- **Âmbito**: Fullstack (Backend + Frontend + Base de dados)
+- **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relacionado**: Entrega ao domicílio, §4.1 deste documento (por fazer) — ver §2.4 abaixo
+
+---
+
+#### 1. Objectivo
+
+Hoje todo o sistema fala uma só língua: o português, escrito à mão em cada ecrã, em
+cada erro do servidor e em cada e-mail. Isso fecha a porta a três públicos que já
+tocam no produto ou vão tocar: clientes do Compra Fácil que não lêem português,
+fornecedores da região (África do Sul, Essuatíni, Zimbabué) no portal B2B, e empresas
+fora de Moçambique a quem o SaaS se possa vender. Esta funcionalidade cria a estrutura
+para o sistema mostrar a interface, as mensagens, os e-mails e as respostas da Mayra na
+língua de cada pessoa, e acrescentar uma língua nova sem mexer em código.
+
+---
+
+#### 2. Requisito interpretado
+
+Construir **a infraestrutura de tradução** e **traduzir o sistema existente**, com o
+português como língua de origem e por defeito. Na prática são dois trabalhos de tamanho
+muito diferente:
+
+1. **Infraestrutura** (pequena, fixa): biblioteca de tradução no frontend e no backend,
+   preferência de língua guardada por utilizador, detecção da língua do browser,
+   selector de língua, formatação de datas e números pela língua activa.
+2. **Extracção e tradução** (grande, proporcional ao código): tirar do código cerca de
+   **2.500–3.500 textos** do frontend e **~580 mensagens de erro, 16 e-mails e 65
+   ferramentas da Mayra** do backend, e escrevê-los noutra língua.
+
+**Onde a leitura diverge do literal do pedido:** "MultiLínguas" não inclui traduzir o
+**conteúdo que os utilizadores escrevem** — nomes de produtos, descrições, textos de
+campanhas do CRM, observações. Isso é conteúdo multilíngue (cada produto com o nome em
+várias línguas), um projecto diferente e muito mais caro. Fica fora de âmbito (§2.3).
+
+##### 2.1 Actores e permissões
+
+Não há permissões novas: escolher a própria língua é algo que qualquer pessoa com sessão
+pode fazer sobre si mesma.
+
+| Actor | O que pode fazer |
+| --- | --- |
+| **Funcionário** (`User`, qualquer perfil) | Escolher a sua língua da interface |
+| **ADMIN da empresa** | Definir a língua por defeito da empresa (para quem ainda não escolheu) |
+| **Cliente do Compra Fácil** (`ContaCliente`) | Escolher a língua da loja e dos e-mails de pedido |
+| **Utilizador do portal** (`UtilizadorFornecedor`) | Escolher a língua do portal e dos e-mails do portal |
+| **Visitante sem sessão** (landing, mercado, loja) | Muda a língua no selector; fica guardada no browser |
+
+##### 2.2 Regras de negócio
+
+1. **O português é a língua de origem e o recurso final.** Uma chave que falte noutra
+   língua mostra o texto em português, nunca a chave crua (`checkout.titulo`).
+2. **A língua de cada pessoa decide-se por esta ordem:** preferência guardada da pessoa
+   → língua da empresa (`Empresa.idiomaPadrao`) → língua do browser, se for suportada →
+   português.
+3. **A moeda nunca muda com a língua.** É sempre MZN (`Empresa.moeda`). Muda só a
+   formatação: `1 234,50 MT` em português, `MT 1,234.50` em inglês.
+4. *(Implícita)* **Os e-mails vão na língua do destinatário, não na de quem dispara a
+   acção.** Um gestor em inglês que confirma um pedido manda ao cliente o e-mail na
+   língua do cliente.
+5. *(Implícita)* **Nomes próprios, códigos e valores de enum não se traduzem na base de
+   dados.** A API continua a devolver `EM_PREPARACAO`; a etiqueta ("Em preparação" /
+   "Being prepared") é do frontend. Já é esta a regra que a Mayra segue
+   (`base.persona.ts`).
+6. *(Implícita)* **Uma tarefa agendada ou um listener não tem pedido HTTP.** A língua de
+   um e-mail enviado por cron vem da preferência guardada do destinatário, não de um
+   cabeçalho.
+
+##### 2.3 Fora de âmbito
+
+- **Conteúdo escrito pelos utilizadores** em várias línguas (produtos, categorias,
+  campanhas). Projecto próprio, se um dia for pedido.
+- **Textos já gravados na base de dados em português** (ex.: descrições geradas em
+  `listar-alertas.use-case.ts`, histórico de auditoria). Ficam como estão; só os novos
+  passam a ser gerados a partir de códigos.
+- **Documentos fiscais noutra língua.** O recibo continua em português (assunção 3).
+- **Línguas da direita para a esquerda** (árabe). Nenhuma está pedida; o Tailwind v4
+  suporta-as depois, sem refazer o que este plano cria.
+- **Tradução automática em tempo real** do que não tiver tradução.
+
+##### 2.4 Relação com a entrega ao domicílio
+
+A entrega ao domicílio (§4.1 deste documento) está por fazer e cria
+**muitos textos novos**: cerca de 15 ecrãs, a aplicação do estafeta, etiquetas de
+`EstadoPedido` (`EXPEDIDO`, `EM_ROTA`, `FALHADA`), notificações ao cliente e mensagens de
+erro dos casos novos (R11, R12).
+
+- **Se a Fase 1 deste plano (infraestrutura) entrar antes da Fase 1 da entrega**, todo
+  esse código já nasce com chaves de tradução, e traduzi-lo é só escrever mais um ficheiro.
+  **É a ordem recomendada** (pergunta 3).
+- Se a entrega vier primeiro, os textos dela entram na extracção em massa da Fase 3 —
+  mais trabalho repetido, e sobre código acabado de escrever.
+- **Pontos de contacto concretos**, para não esquecer em nenhum dos dois planos:
+  - `ETIQUETA_ESTADO_PEDIDO` e `ETIQUETA_METODO_PAGAMENTO` (`pedidos.api.ts`) passam a
+    chaves; os estados novos da entrega entram directamente como chaves.
+  - As notificações de pedido (`notificar-cliente-pedido.service.ts` e os use-cases que o
+    chamam) passam a ir na língua do cliente. A entrega acrescenta notificações — devem
+    usar o mesmo mecanismo desde o início.
+  - A aplicação do estafeta escolhe a língua pela preferência do `Estafeta` (campo
+    `idioma`, a acrescentar ao modelo novo da entrega, com a mesma regra da §4.1).
+- **Achado para o plano da entrega:** o frontend **não tem nenhuma base de PWA** (sem
+  `vite-plugin-pwa`, sem manifest, sem service worker). A Fase 4 da entrega pressupõe uma
+  PWA; esse trabalho não está estimado lá.
+
+---
+
+#### 3. Análise técnica
+
+##### 3.1 Estado actual — o que já existe
+
+| Área | Situação | Onde |
+| --- | --- | --- |
+| Bibliotecas de tradução | **Nenhuma**, nos dois lados | `package.json` |
+| Língua no HTML | `<html lang="en">` com a interface em português — errado hoje | `index.html` |
+| Preferência de língua | **Nenhum campo** em `User`, `ContaCliente`, `UtilizadorFornecedor`, `Empresa`, `Cliente` | `prisma/schema.prisma` |
+| Formatação de moeda e data | Centralizada em `formatMoeda.ts` e `formatData.ts` (fixas em `pt-MZ`), mas contornada em **143 chamadas `toLocale*` espalhadas por 72 ficheiros**, com 5 locales diferentes (`pt-PT` ×99, `pt-MZ` ×74, `en-US` ×12, `pt-BR` ×4, `en-GB` ×2) | `src/shared/utils/` |
+| Moeda escrita à mão | ~43 `MT` concatenados no frontend; **86 em 34 ficheiros** no backend | vários |
+| Textos centralizados | Só o site público e o login: `src/shared/constants/copywriting.ts` (433 linhas) | frontend |
+| Erros do servidor | **576 `throw new ...Exception('...')`** em português. O `ValidationPipe` global não tem `exceptionFactory` → as mensagens do class-validator saem **em inglês** hoje | `src/main.ts`, módulos |
+| E-mails | 16 modelos HTML em template strings, `lang="pt"` fixo | `src/utils/email.templates.ts` |
+| Mayra | As personas já mandam **responder na língua do utilizador**; a voz não fixa `languageCode` (detecta pelo áudio). O frontend adivinha `pt-PT`/`en-US` pelo texto (`utils/idioma.ts`) mas **não envia a língua ao backend** | `base.persona.ts`, `voice.persona.ts`, `useGeminiVoice.ts` |
+| Preferências do cliente CRM | Tabela chave/valor `ClientePreferencia`, com `idioma` já documentado como exemplo de chave | `schema.prisma` · `identidade.dto.ts` |
+| Rotas "a minha conta" | `GET /auth/eu`, `GET /commerce/conta/eu`, `PATCH /portal-fornecedor/perfil` | controllers respectivos |
+| Testes | Frontend: Vitest, 7 ficheiros. Backend: Jest, 143 specs | — |
+
+##### 3.2 Impacto no sistema
+
+| Camada | Criar | Alterar |
+| --- | --- | --- |
+| **Dados** | Migração `idioma_utilizadores` | `User`, `ContaCliente`, `UtilizadorFornecedor` (+`idioma`); `Empresa` (+`idiomaPadrao`) |
+| **Backend** | `src/i18n/<lingua>/*.json`; `src/shared/idiomas.ts`; resolvedor da língua | `app.module.ts`, `main.ts` (`ValidationPipe`), `prisma-excecao.filter.ts`, `email.templates.ts`, `mailer.service.ts`, `notificar-cliente-pedido.service.ts`, `ai-copilot-prompt.service.ts`, prompts Gemini, ~576 excepções (Fase 4, por módulo) |
+| **Frontend** | `src/i18n/` (configuração), `src/locales/<lingua>/<ns>.json`, `SelectorIdioma` | `main.tsx`, `index.html`, `axios.ts`, `formatMoeda.ts`, `formatData.ts`, `mensagemDeErro.ts`, `useAuthStore.ts`, `useContaClienteStore.ts`, `usePortalStore.ts`, `Header`, schemas Zod (6 ficheiros), 176 `.tsx` de `features/` (Fase 3) |
+| **Permissões** | Nenhuma | — |
+
+##### 3.3 Decisões de arquitectura
+
+| # | Decisão | Alternativa descartada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Frontend: `i18next` + `react-i18next`**, com ficheiros JSON por língua e por *namespace* (um por feature), carregados sob pedido | `react-intl` (FormatJS); Lingui | A maior base de utilizadores em React; chaves tipadas em TypeScript; plurais; carregamento por namespace encaixa no *code-splitting* do Vite. `react-intl` obriga a mensagens ICU em todo o lado; Lingui exige um passo de compilação. |
+| **D2** | **Backend: `nestjs-i18n`**, com a língua resolvida pelo `AsyncLocalStorage` que o projecto já usa | Traduzir erros só no frontend, por código | O backend precisa de traduzir de qualquer forma: e-mails, notificações e respostas de cron não passam pelo frontend. Um catálogo único no backend evita duas cópias. Traduz também as mensagens do `class-validator` (hoje em inglês). Lê o contexto por ALS, logo os use-cases continuam a não importar nada do Express (regra da Secção 3 do `CLAUDE.md`). |
+| **D3** | **Erros ganham uma chave estável**: `throw new NotFoundException({ codigo: 'compra.pedido_nao_encontrado', parametros })`; o filtro global traduz para `message` | Traduzir a string portuguesa como chave | A frase portuguesa como chave parte a tradução sempre que alguém corrige um acento. Com o `message` preenchido pelo filtro, **`mensagemDeErro()` no frontend não muda**. |
+| **D4** | **Migração das 576 excepções por módulo, progressiva**; uma excepção sem `codigo` continua a sair em português | Converter todas de uma vez | Um PR com 576 alterações não é revisível. O sistema funciona durante a migração: o que falta traduzir aparece em português, como hoje. |
+| **D5** | **`idioma` como `String` validada** contra uma lista em `src/shared/idiomas.ts` (`'pt' \| 'en'`), `@default("pt")` | `enum Idioma` no Prisma | Acrescentar uma língua passa a ser uma linha de código e um ficheiro de traduções, sem migração nem `ALTER TYPE`. |
+| **D6** | **Cliente do CRM (`Cliente`) usa `ClientePreferencia` com a chave `idioma`**, sem coluna nova | Coluna `Cliente.idioma` | A tabela existe para isto e o próprio schema dá `idioma` como exemplo. Uma coluna nova duplicaria o conceito. |
+| **D7** | **Formatação só por `formatMoeda`/`formatData`/`formatNumero`**, que lêem a língua activa; as 143 chamadas `toLocale*` e os `MT` concatenados passam a usar estas funções | Deixar cada ecrã escolher o locale | Hoje já há cinco locales diferentes no mesmo sistema. Centralizar é o que faz a troca de língua ser real. |
+| **D8** | **Personas da Mayra ficam em português**; o backend passa a indicar a língua preferida (`Responde em: <língua>`) no prompt | Traduzir as 9 personas | As personas são instruções para o modelo, não texto para o utilizador; o Gemini segue-as em qualquer língua. Traduzi-las duplicava a manutenção sem ganho. |
+| **D9** | **O recibo de venda fica em português** na v1 | Recibo na língua do cliente | É um documento fiscal (NUIT, IVA). Em caso de dúvida legal, o português é a escolha segura (assunção 3). |
+
+##### 3.4 Riscos e pontos sensíveis
+
+| # | Risco | Impacto | Mitigação |
+| --- | --- | --- | --- |
+| **R1** | **Tamanho da extracção** (2.500–3.500 textos): regressões visuais, textos esquecidos | Alto | Por feature, uma de cada vez; regra de lint que proíbe texto solto em JSX nas features já migradas; teste que falha se uma chave existir em `pt` e faltar em `en`. |
+| **R2** | **Textos em inglês são mais longos ou mais curtos**: botões partidos no POS em telemóvel | Médio | Verificar o POS e o checkout em 360 px nas duas línguas antes de fechar cada fase. |
+| **R3** | **Cache da análise da Mayra por língua**: `AnalisarNecessidadesMayraUseCase` guarda a análise por `empresa:loja` durante 5 min; um gestor em inglês receberia a análise em português de outro | Médio | A chave de cache passa a incluir a língua. |
+| **R4** | **E-mails de cron sem destinatário conhecido** (ex.: relatórios para todos os ADMIN) | Médio | Um e-mail por língua de destinatário; recurso a `Empresa.idiomaPadrao`. |
+| **R5** | **Cache de sessão no frontend**: `useAuthStore` guarda o utilizador em `sessionStorage`; quem já tinha sessão não vê o campo `idioma` até voltar a entrar | Baixo | Ler `idioma` de `GET /auth/eu`, que já é chamado ao arrancar. |
+| **R6** | **Mensagens de erro já traduzidas pelo filtro chegam a testes que comparam o texto** | Baixo | Os testes passam a comparar `codigo`, não a frase. |
+| **R7** | **Ferramentas da Mayra devolvem texto em português** (31 ficheiros) e dinheiro formatado à mão (26) | Baixo | O modelo reformula na língua do utilizador; aceitável na v1. Converter só se aparecerem respostas mistas. |
+| **R8** | **Tamanho do bundle** se todas as línguas forem carregadas de uma vez | Baixo | Namespaces carregados sob pedido (D1). |
+
+---
+
+#### 4. Plano de implementação
+
+Cada passo **[obrigatório]** ou **[opcional]**. As fases estão na §8.
+
+##### 4.1 Dados
+
+Migração `prisma/migrations/<timestamp>_idioma_utilizadores/migration.sql`.
+**Não destrutiva** — só acrescenta colunas com valor por defeito. As linhas existentes
+ficam `'pt'`.
+
+- [ ] **[obrigatório]** `User.idioma String @default("pt")`.
+- [ ] **[obrigatório]** `ContaCliente.idioma String @default("pt")`.
+- [ ] **[obrigatório]** `UtilizadorFornecedor.idioma String @default("pt")`.
+- [ ] **[obrigatório]** `Empresa.idiomaPadrao String @default("pt")`.
+- [ ] **[opcional]** Nada para `Cliente` — usa `ClientePreferencia` (D6).
+- [ ] **[obrigatório, na entrega ao domicílio]** `Estafeta.idioma` no modelo novo, com a
+      mesma regra (§2.4).
+
+##### 4.2 Backend
+
+- [ ] **[obrigatório]** `src/shared/idiomas.ts`: `IDIOMAS_SUPORTADOS`, `IDIOMA_PADRAO`,
+      `eIdiomaSuportado()` e `resolverIdioma(preferencia, empresa, cabecalho)` com a
+      ordem da regra 2. Função pura, testada.
+- [ ] **[obrigatório]** `nestjs-i18n` em `app.module.ts`: catálogo em `src/i18n/pt/*.json`
+      e `src/i18n/en/*.json`, recurso a `pt`, resolvedor que lê primeiro o utilizador
+      autenticado e depois o `Accept-Language`. Copiar `src/i18n/` para `dist/` no build
+      (`nest-cli.json` → `assets`).
+- [ ] **[obrigatório]** `ValidationPipe` com `exceptionFactory` que traduz as mensagens do
+      `class-validator` (hoje em inglês).
+- [ ] **[obrigatório]** Filtro global que traduz `{ codigo, parametros }` para `message`
+      na língua do pedido; **sem `codigo`, deixa a mensagem como está** (D4).
+      `PrismaExcecaoFilter` passa as suas duas mensagens a chaves.
+- [ ] **[obrigatório]** Endpoints para guardar a preferência (tabela abaixo) e `idioma`
+      nas respostas de `GET /auth/eu` e `GET /commerce/conta/eu`.
+- [ ] **[obrigatório]** E-mails: `email.templates.ts` recebe a língua e lê os textos do
+      catálogo; `<html lang>` dinâmico; `mailer.service.ts` resolve a língua do
+      destinatário (regra 4). O recibo fica em português (D9).
+- [ ] **[obrigatório]** Notificações de pedido do Compra Fácil (`transitar-estado-pedido`,
+      `cancelar-pedido-gestao`, `conferir-pedido`, `confirmar-levantamento` →
+      `notificar-cliente-pedido.service.ts`) na língua de `ContaCliente.idioma`.
+- [ ] **[obrigatório]** Mayra: `ai-copilot-prompt.service.ts` acrescenta a língua preferida
+      e formata a data com ela; `AnalisarNecessidadesMayraUseCase` e
+      `AnalisarExcecaoMayraUseCase` pedem a resposta nessa língua e a cache passa a
+      incluí-la (R3); `voice_error` do gateway de voz passa a chaves.
+      O `assistente-campanha.use-case.ts` **mantém** o português europeu fixo quando a
+      campanha é em português — é regra de negócio do CRM, não da interface.
+- [ ] **[obrigatório, Fase 4]** Converter as excepções por módulo, pela ordem de
+      exposição ao cliente final: `commerce` (38), `b2b` (60), `auth` (12), depois
+      `compra` (93), `inventory` (59), `crm` (46) e os restantes.
+- [ ] **[opcional]** Converter os textos das 65 ferramentas da Mayra (R7).
+
+###### Endpoints
+
+| Método | Rota | Entrada | Resposta | Erros | Permissão |
+| --- | --- | --- | --- | --- | --- |
+| `PATCH` | `/auth/eu/idioma` | `{ idioma: 'pt' \| 'en' }` | `{ idioma }` | `400` (não suportada), `401` | `JwtAuthGuard` (o próprio) |
+| `PATCH` | `/commerce/conta/eu/idioma` | `{ idioma }` | `{ idioma }` | `400`, `401` | `@ContaCliente()` |
+| `PATCH` | `/portal-fornecedor/perfil` (existente) | `+ idioma?` no DTO | perfil | `400`, `401` | guarda do portal (existente) |
+| `PATCH` | `/empresas/:id` (existente) | `+ idiomaPadrao?` no DTO | empresa | `400`, `403` | a que já protege a edição da empresa |
+| `GET` | `/auth/eu`, `/commerce/conta/eu` (existentes) | — | `+ idioma` | — | existentes |
+
+##### 4.3 Frontend
+
+- [ ] **[obrigatório]** `src/i18n/index.ts`: `i18next` + `react-i18next` +
+      `i18next-browser-languagedetector`; recurso a `pt`; namespaces carregados com
+      `import()` do Vite (D1). Inicializado em `main.tsx`, antes do router.
+- [ ] **[obrigatório]** Tipos: declaração de `react-i18next` a partir de
+      `src/locales/pt/*.json`, para que uma chave mal escrita seja erro de `tsc`.
+- [ ] **[obrigatório]** `index.html` e `document.documentElement.lang` seguem a língua
+      activa (hoje `lang="en"` com a interface em português).
+- [ ] **[obrigatório]** `axios.ts`: interceptor que envia `Accept-Language` com a língua
+      activa — é o que faz o servidor responder na língua certa a quem não tem sessão.
+- [ ] **[obrigatório]** Preferência: ao entrar, a língua vem de `idioma` em `/auth/eu`,
+      `/commerce/conta/eu` ou do portal; sem sessão, do `localStorage` (via
+      `useLocalStorage`) ou do browser. **Não** guardar a língua em Zustand além do que
+      o `i18next` já guarda — duplicaria o estado.
+- [ ] **[obrigatório]** `SelectorIdioma` em `src/shared/ui/`, usado no `Header` do ERP, no
+      `LojaPublicaLayout`, no `PortalLayout` e na landing. Com sessão, grava pelo
+      endpoint; sem sessão, só localmente.
+- [ ] **[obrigatório]** `formatMoeda`, `formatMoedaCompacta`, `formatData`,
+      `formatDataRelativa` (hoje com "agora"/"há X min" escritos à mão) e um
+      `formatNumero` novo passam a ler a língua activa (D7). Depois, substituir as 143
+      chamadas `toLocale*` e os `MT` concatenados. Remover os imports de locale do
+      `date-fns` (`ptBR`, `pt`) em favor de um mapa por língua.
+- [ ] **[obrigatório]** Zod: os 6 ficheiros de schemas passam a mensagens por chave
+      (`t('validacao.obrigatorio')`), com os schemas criados dentro do componente ou
+      com `errorMap` global.
+- [ ] **[obrigatório]** Etiquetas de enum (`ETIQUETA_ESTADO_PEDIDO`,
+      `ETIQUETA_METODO_PAGAMENTO` e as restantes) passam a chaves.
+- [ ] **[obrigatório, Fase 2–3]** Extracção por feature, com `copywriting.ts` a ser o
+      primeiro (já está centralizado). Ordem na §8.
+- [ ] **[obrigatório]** Mayra: `sendChatMessageApi` e o socket de voz enviam a língua
+      activa; `detectarIdioma()` continua a servir o reconhecimento de voz, mas a língua
+      por defeito passa a ser a preferência.
+- [ ] **[opcional]** Pseudo-língua de teste (`[!! Ţéxţö !!]`) para encontrar à vista os
+      textos que ficaram por extrair.
+
+##### 4.4 Transversal
+
+- [ ] **[obrigatório]** Testes backend: `idiomas.spec.ts` (ordem de resolução, língua não
+      suportada cai em `pt`); filtro traduz `codigo` e deixa passar excepções sem ele;
+      e-mail de pedido sai na língua do cliente, não na de quem dispara; cache da análise
+      separada por língua (R3).
+- [ ] **[obrigatório]** Testes frontend: paridade de chaves `pt` ↔ `en` (falha se faltar
+      uma); `formatMoeda` nas duas línguas; `mensagemDeErro` sem alterações de
+      comportamento.
+- [ ] **[obrigatório]** Lint: proibir texto solto em JSX nas pastas já migradas (regra do
+      oxlint ou script simples no CI).
+- [ ] **[obrigatório]** Tradução: o `en` é revisto por uma pessoa fluente antes de cada
+      fase ir para produção. Tradução automática serve de rascunho, não de entrega.
+- [ ] **[opcional]** Sem variáveis de ambiente novas.
+
+##### 4.5 Documentação — [obrigatório]
+
+- [ ] `Docs/plano_implementacao.md` (duas cópias idênticas): entrada por fase fechada.
+- [ ] `Docs/TRD.md` (duas cópias): `i18next`, `react-i18next`,
+      `i18next-browser-languagedetector`, `nestjs-i18n`.
+- [ ] Guia curto para a equipa (neste plano ou no `README`): como criar uma chave, onde
+      fica cada namespace, como acrescentar uma língua.
+- [ ] Este plano actualizado a cada desvio, no commit que o introduz.
+
+---
+
+#### 5. Ficheiros afectados
+
+##### `ControleCore_BackEnd`
+
+| Ficheiro | Acção | Porquê |
+| --- | --- | --- |
+| `prisma/schema.prisma` | alterar | `idioma` em `User`, `ContaCliente`, `UtilizadorFornecedor`; `idiomaPadrao` em `Empresa` |
+| `prisma/migrations/<ts>_idioma_utilizadores/migration.sql` | criar | Colunas novas, não destrutiva |
+| `src/shared/idiomas.ts` + `idiomas.spec.ts` | criar | Línguas suportadas e ordem de resolução |
+| `src/i18n/pt/*.json`, `src/i18n/en/*.json` | criar | Catálogo de mensagens |
+| `nest-cli.json` | alterar | Copiar `src/i18n/` para `dist/` |
+| `src/app.module.ts` | alterar | Registar `nestjs-i18n` |
+| `src/main.ts` | alterar | `exceptionFactory` no `ValidationPipe`; filtro de tradução |
+| `src/shared/prisma-excecao.filter.ts` | alterar | Mensagens por chave |
+| `src/utils/email.templates.ts`, `src/utils/mailer.service.ts` | alterar | Língua do destinatário |
+| `src/modules/commerce/application/services/notificar-cliente-pedido.service.ts` + 4 use-cases | alterar | Notificações na língua do cliente |
+| `src/modules/auth/auth.controller.ts` (+ DTO) | alterar | `PATCH eu/idioma`; `idioma` em `GET eu` |
+| `src/modules/commerce/conta-cliente.controller.ts` (+ DTO) | alterar | `PATCH eu/idioma`; `idioma` em `GET eu` |
+| `src/modules/b2b/portal-fornecedor.controller.ts` (+ DTO de perfil) | alterar | `idioma` no `PATCH perfil` |
+| `src/modules/ai-copilot/application/services/ai-copilot-prompt.service.ts` | alterar | Língua preferida no prompt |
+| `src/modules/necessidade/.../analisar-necessidades-mayra.use-case.ts`, `src/modules/inventory/.../analisar-excecao-mayra.use-case.ts` | alterar | Língua da resposta e da cache |
+| `src/modules/ai-copilot/infrastructure/gateways/ai-copilot-voice.gateway.ts` | alterar | `voice_error` por chave |
+| `src/modules/**` (excepções) | alterar | Fase 4, por módulo |
+| `package.json` | alterar | `nestjs-i18n` |
+
+##### `ControleCore_FrontEnd`
+
+| Ficheiro | Acção | Porquê |
+| --- | --- | --- |
+| `package.json` | alterar | `i18next`, `react-i18next`, `i18next-browser-languagedetector` |
+| `src/i18n/index.ts`, `src/i18n/tipos.d.ts` | criar | Configuração e chaves tipadas |
+| `src/locales/pt/*.json`, `src/locales/en/*.json` | criar | Textos por namespace |
+| `src/main.tsx`, `index.html` | alterar | Inicialização; `lang` dinâmico |
+| `src/shared/config/axios.ts` | alterar | `Accept-Language` |
+| `src/shared/utils/formatMoeda.ts`, `formatData.ts` | alterar | Língua activa |
+| `src/shared/ui/SelectorIdioma.tsx` | criar | Selector reutilizado em 4 sítios |
+| `src/app/layout/Header.tsx`, layouts da loja e do portal | alterar | Selector |
+| `src/features/auth/types/index.ts`, `useAuthStore.ts`, `useContaClienteStore.ts`, `usePortalStore.ts` | alterar | `idioma` do utilizador |
+| `src/shared/constants/copywriting.ts` | alterar | Primeira extracção (já centralizado) |
+| `src/features/compra-facil/api/pedidos.api.ts` e restantes mapas de etiquetas | alterar | Etiquetas por chave |
+| 6 ficheiros com schemas Zod (`auth/pages/*`, `EmpresaDialog`, `ProductFormModal`, `UserDialog`) | alterar | Mensagens por chave |
+| `src/features/ai-copilot/api/*`, `hooks/useGeminiVoice.ts` | alterar | Enviar a língua ao backend |
+| `src/features/**/*.tsx` (176 ficheiros) | alterar | Extracção de textos, Fases 2–3 |
+
+---
+
+#### 6. Assunções
+
+1. **Línguas da v1: português (`pt`, grafia europeia, como hoje) e inglês (`en`).** As
+   línguas nacionais (changana, macua, sena…) ficam para depois; a estrutura aceita-as
+   sem alterações. Ver pergunta 1.
+2. **O português continua a ser a língua em que a equipa escreve o código e as chaves.**
+   Os identificadores das chaves são em português (`checkout.confirmar_pedido`), seguindo
+   a Secção 2 do `CLAUDE.md`.
+3. **O recibo de venda fica em português**, por ser documento fiscal (D9). Confirmar com
+   a contabilidade antes da Fase 2.
+4. **A tradução para inglês é feita ou revista por uma pessoa fluente**, não só por
+   tradução automática.
+5. **A Mayra continua a detectar a língua pelo que o utilizador escreve ou diz**; a
+   preferência só decide a língua por defeito.
+6. **Os textos das campanhas do CRM continuam a ser escritos por quem cria a campanha**,
+   na língua que escolher. O sistema não os traduz.
+
+---
+
+#### 7. Perguntas em aberto
+
+**Bloqueantes — antes da Fase 1:**
+
+1. **Que línguas?** *Recomendação:* português + inglês na v1. Acrescentar uma língua
+   nacional agora não muda a infraestrutura, mas quase duplica o trabalho de tradução e
+   exige tradutores que a equipa talvez não tenha.
+2. **Quem é o utilizador que precisa da outra língua — e portanto por onde começar?**
+   - **Clientes e fornecedores estrangeiros** → começar pelas superfícies públicas
+     (Compra Fácil, portal do fornecedor, e-mails ao cliente). *É a recomendação*: é onde
+     a língua é hoje uma barreira, e são cerca de 45 ficheiros, não 176.
+   - **Empresas fora de Moçambique a usar o ERP** → começar pelo ERP e pelo POS; a
+     extracção maior fica logo no início.
+3. **A infraestrutura (Fase 1) entra antes da entrega ao domicílio?** *Recomendação:*
+   sim — cerca de 1 a 2 semanas, e todo o código da entrega nasce traduzível (§2.4).
+   Se não, a entrega avança primeiro e os seus textos entram na extracção da Fase 3.
+
+**Não bloqueantes:** tudo o que está na §6.
+
+---
+
+#### 8. Ordem de execução e verificação
+
+| Fase | Conteúdo | Tamanho aproximado | Depende de |
+| --- | --- | --- | --- |
+| **0 — Decidir** | Perguntas 1–3; revisor de inglês identificado | — | — |
+| **1 — Infraestrutura** | Migração; `idiomas.ts`; `nestjs-i18n` + filtro + `ValidationPipe`; `i18next`; `Accept-Language`; selector; formatadores; endpoints de preferência; testes de paridade e de resolução | 1–2 semanas | 0 |
+| **2 — Superfícies públicas** | `copywriting.ts`; Compra Fácil (26 ficheiros); mercado; portal do fornecedor (14); e-mails e notificações ao cliente; erros de `commerce`, `b2b` e `auth` | 2–3 semanas | 1 |
+| **3 — ERP e POS** | Extracção por feature: POS (`vendas`) primeiro, por correr em telemóvel; depois `stock`, `compras`, `necessidades`, `crm`, `hr`, `financeiro` e as restantes. Os ecrãs da entrega ao domicílio entram aqui se tiverem sido feitos antes da Fase 1 | 4–6 semanas | 1 |
+| **4 — Mensagens do servidor e Mayra** | Excepções dos módulos restantes; língua preferida no prompt da Mayra; cache por língua | 2–3 semanas, em paralelo com a 3 | 1 |
+
+A Fase 2 e a 3 podem correr em paralelo com pessoas diferentes; a 4 também.
+
+**Como verificar no fim de cada fase:**
+
+```bash
+cd C:/Documentos/SRG/ControlCore/ControleCore_BackEnd && npm run lint && npm run build && npm test
+cd C:/Documentos/SRG/ControlCore/ControleCore_FrontEnd && npm run lint && npm run build && npm test
+```
+
+1. Browser em inglês, sem sessão: a landing e a loja abrem em inglês; mudar para
+   português no selector e recarregar → continua em português.
+2. Entrar como funcionário, mudar para inglês, sair e voltar a entrar noutro browser →
+   abre em inglês (a preferência vem do servidor).
+3. Provocar um erro de validação num formulário → mensagem na língua activa, sem
+   `lojaIdshould not be empty`.
+4. Cliente com a conta em inglês faz um pedido; um gestor em português confirma → o
+   e-mail do cliente chega em inglês.
+5. Valores em MZN nas duas línguas: `1 234,50 MT` / `MT 1,234.50`; datas no formato de
+   cada língua.
+6. POS e checkout num telemóvel de 360 px, nas duas línguas: nenhum botão partido.
+7. Mayra: utilizador com preferência inglês → saudação e análise de necessidades em
+   inglês; outro em português na mesma loja → a análise dele em português (R3).
+
+**Notas de deploy:**
+
+- A migração corre no arranque do contentor e não é destrutiva.
+- Sem variáveis de ambiente novas.
+- Backend primeiro, frontend depois: o frontend passa a ler `idioma` de `/auth/eu`.
+- Confirmar que `src/i18n/` foi copiado para `dist/` na imagem — sem isso o backend
+  arranca, mas todas as traduções caem no recurso em português.
+
+---
+
+## 5. Convenção para novas entradas
 
 Ao fechar um merge novo (feature, fix, refactor — qualquer um que altere
 comportamento), acrescentar à Secção 2, na fase correspondente ou numa fase nova:
