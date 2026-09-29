@@ -40,74 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-### Multilínguas — Fase 1: infraestrutura de tradução (§4.2)
-
-**Início:** 2026-09-29 · **Âmbito:** backend + frontend · **Estimativa:** 1–2 semanas.
-**Fecha na Secção 3:** «Multilínguas → Fase 1 — Infraestrutura» e o defeito do
-`lang="en"` no `index.html`.
-
-**Objectivo:** no fim desta fase, o sistema **sabe** em que língua está cada pessoa e
-**consegue** mostrar português ou inglês — mas os ecrãs ainda não estão traduzidos
-(isso é a Fase 2, Compra Fácil e portal do fornecedor). O que já muda à vista: o
-selector de língua, os erros de validação (hoje saem em inglês) e o `lang` da página.
-
-**Desvios à §4.2, decididos ao abrir a fase:**
-
-1. **A preferência vem no login**, não de `GET /auth/eu` — o frontend não chama essa rota.
-2. **`idioma` dos utilizadores é opcional** (`NULL` = «segue a empresa»), e não
-   `@default("pt")`: com um valor por omissão, `Empresa.idiomaPadrao` nunca seria usada.
-3. **O backend lê a língua do `Accept-Language`**, que o frontend envia com a língua
-   activa. O `nestjs-i18n` resolve a língua num middleware, antes de o `JwtAuthGuard`
-   identificar o utilizador; e o frontend já sabe a preferência. A preferência guardada
-   só é lida pelo backend onde não há pedido (e-mails e crons — Fase 2).
-4. **As 143 chamadas `toLocale*` espalhadas mudam com cada ecrã**, nas fases de
-   extracção (2 e 3), e não aqui: mexer agora em 72 ficheiros que essas fases voltam a
-   tocar seria fazer o trabalho duas vezes. Nesta fase mudam os formatadores
-   partilhados.
-
-**Backend**
-
-- [x] Migração `idioma_utilizadores` (não destrutiva): `idioma String?` em `User`,
-      `ContaCliente` e `UtilizadorFornecedor`; `idiomaPadrao String @default("pt")` em
-      `Empresa`.
-- [x] `src/shared/idiomas.ts` + testes: línguas suportadas (`pt`, `en`), validação e
-      `resolverIdioma` (preferência → língua da empresa → língua do browser → `pt`).
-- [x] `nestjs-i18n` com catálogo em `src/i18n/{pt,en}/*.json`, recurso a `pt`, língua
-      pelo `Accept-Language`; `src/i18n/` copiado para `dist/` (`nest-cli.json`).
-- [x] Mensagens do `ValidationPipe` traduzidas (hoje em inglês): as mensagens por
-      omissão do `class-validator` traduzem-se pela regra (`isNotEmpty`, `isUUID`…);
-      as 51 mensagens próprias, já em português, ficam como estão.
-- [x] Erros com chave estável: `throw new XException({ codigo, parametros })` traduzido
-      para `message` na língua do pedido; sem `codigo`, a mensagem passa igual. As duas
-      mensagens do `PrismaExcecaoFilter` passam a chaves.
-- [x] Preferência: `idioma` na resposta do login (comprador, cliente do Compra Fácil,
-      portal do fornecedor) e rotas para a gravar: `PATCH /auth/eu/idioma`,
-      `PATCH /commerce/conta/eu/idioma`, `idioma` no `PATCH /portal-fornecedor/perfil`,
-      `idiomaPadrao` no `PATCH /empresas/:id`.
-- [ ] Build e testes do backend; deploy (backend primeiro).
-
-**Frontend**
-
-- [x] `i18next` + `react-i18next` + `i18next-browser-languagedetector`; namespaces
-      carregados sob pedido; chaves tipadas a partir de `src/locales/pt`.
-- [x] `lang` da página segue a língua activa (hoje `lang="en"` com a interface em
-      português).
-- [x] `Accept-Language` em todos os pedidos (`src/shared/config/axios.ts`).
-- [x] Preferência: ao entrar, a língua vem do login; sem sessão, do `localStorage` ou
-      do browser. Mudar no selector grava no servidor quando há sessão.
-- [x] `SelectorIdioma` (`src/shared/ui/`) no `Header` do ERP, na loja do Compra Fácil,
-      no portal do fornecedor e nas páginas públicas.
-- [x] `formatMoeda`, `formatMoedaCompacta`, `formatData`, `formatDataHora`,
-      `formatDataRelativa` pela língua activa (moeda sempre MZN).
-- [x] Teste de paridade: falha se uma chave existir em `pt` e faltar em `en`.
-- [ ] Build, testes e lint do frontend; deploy.
-
-**Documentação e verificação**
-
-- [x] `TRD.md`: bibliotecas novas, catálogos, regra de resolução da língua.
-- [ ] Verificar: browser em inglês sem sessão abre em inglês (selector); erro de
-      validação sai em português e em inglês conforme a língua; a preferência
-      acompanha o utilizador noutro browser; `lang` da página correcto.
+Nenhuma fase em curso.
 
 ---
 
@@ -811,6 +744,13 @@ esse merge trouxe.
   > - Testes: backend 1828 (novos: `idiomas`, `traduzir-validacao`,
   >   `traduzir-excecao.filter` e `multilinguas.integracao`, este com pedidos HTTP
   >   reais em `pt`, `en-GB` e `fr-FR`); frontend 116 (formatadores e paridade).
+  >
+  > **Verificado em produção** (backend v68, frontend no Vercel, 2026-09-29): catálogos
+  > em `dist/src/i18n`, migrações aplicadas; `POST /auth/entrar` com um campo a mais
+  > responde «o campo intruso não é aceite» sem língua e «the field intruso is not
+  > accepted» com `Accept-Language: en-GB`; o site publicado serve `lang="pt"`. A troca
+  > de língua no browser (selector, preferência noutro browser) fica por confirmar pelo
+  > utilizador — não há forma de a exercitar daqui.
 
 ---
 
