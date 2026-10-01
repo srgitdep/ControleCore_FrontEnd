@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
@@ -25,6 +26,7 @@ interface LojaTopoProps {
 export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoProps) {
   const navegar = useNavigate();
   const { cliente, autenticado, sair } = useContaClienteStore();
+  const { t } = useTranslation('loja');
   const totalItens = useCarrinhoStore((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
 
   const [buscaFocada, setBuscaFocada] = useState(false);
@@ -39,7 +41,7 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
     <div className="border-b border-slate-200 bg-white">
       <div className="cc-caixa flex flex-wrap items-center gap-3 py-3">
         <Link to={`/loja/${lojaId}`} className="shrink-0 font-semibold text-slate-900">
-          {lojaNome ?? 'A minha loja'}
+          {lojaNome ?? t('topo.a_minha_loja')}
         </Link>
 
         {onBuscaChange && (
@@ -54,7 +56,7 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
               onChange={(e) => onBuscaChange(e.target.value)}
               onFocus={() => setBuscaFocada(true)}
               onBlur={() => setTimeout(() => setBuscaFocada(false), 120)}
-              placeholder="Pesquisar produtos…"
+              placeholder={t('busca.placeholder')}
               className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none"
             />
 
@@ -78,7 +80,7 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
                 to={`/loja/${lojaId}/pedidos`}
                 className="hidden text-sm text-slate-600 hover:text-blue-600 sm:inline"
               >
-                Os meus pedidos
+                {t('pedidos.os_meus')}
               </Link>
               <button
                 type="button"
@@ -97,7 +99,7 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
               className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               <UserCircle2 size={14} />
-              Entrar
+              {t('conta.entrar')}
             </Link>
           )}
 
@@ -106,7 +108,7 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
             className="relative inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
           >
             <ShoppingCart size={14} />
-            Carrinho
+            {t('topo.carrinho')}
             {totalItens > 0 && (
               <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
                 {totalItens}

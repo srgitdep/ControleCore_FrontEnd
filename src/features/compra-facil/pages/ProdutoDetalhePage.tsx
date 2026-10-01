@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Minus, Package, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { formatMoeda } from '@/shared/utils';
 import { useProdutoLoja } from '../hooks/useCatalogoCommerce';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
@@ -13,6 +14,7 @@ export function ProdutoDetalhePage() {
   const { data: produto, isLoading, isError } = useProdutoLoja(lojaId, produtoId);
   const adicionar = useCarrinhoStore((s) => s.adicionar);
   const [quantidade, setQuantidade] = useState(1);
+  const { t } = useTranslation('loja');
 
   if (!lojaId || !produtoId) return null;
 
@@ -27,9 +29,9 @@ export function ProdutoDetalhePage() {
   if (isError || !produto) {
     return (
       <div className="cc-caixa py-16 text-center">
-        <p className="text-sm text-slate-500">Produto não encontrado nesta loja.</p>
+        <p className="text-sm text-slate-500">{t('produto.nao_encontrado')}</p>
         <div className="mt-2 flex justify-center">
-          <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+          <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
         </div>
       </div>
     );
@@ -38,10 +40,10 @@ export function ProdutoDetalhePage() {
   const handleAdicionar = () => {
     const resultado = adicionar(lojaId, produto, quantidade);
     if (!resultado.ok) {
-      toast.error(`Apenas ${resultado.disponivel} disponível(is).`);
+      toast.error(t('carrinho.apenas_disponiveis', { count: resultado.disponivel }));
       return;
     }
-    toast.success(`${produto.nome} adicionado ao carrinho.`);
+    toast.success(t('produto.adicionado', { nome: produto.nome }));
     setQuantidade(1);
   };
 
@@ -52,7 +54,7 @@ export function ProdutoDetalhePage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa py-8">
-        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-50">
@@ -69,7 +71,7 @@ export function ProdutoDetalhePage() {
             )}
             <h1 className="mt-1 text-2xl font-bold text-slate-900">{produto.nome}</h1>
             <p className="mt-3 text-3xl font-bold text-slate-900">{formatMoeda(produto.precoVenda)}</p>
-            <p className="text-sm text-slate-400">por {produto.unidadeMedida.toLowerCase()}</p>
+            <p className="text-sm text-slate-400">{t('produto.por_unidade', { unidade: produto.unidadeMedida.toLowerCase() })}</p>
 
             {produto.descricao && (
               <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-600">
@@ -101,7 +103,7 @@ export function ProdutoDetalhePage() {
                       </button>
                     </div>
                     <p className="text-xs text-slate-400">
-                      {produto.quantidadeDisponivel} disponível(is)
+                      {t('produto.disponiveis', { count: produto.quantidadeDisponivel })}
                     </p>
                   </div>
 
@@ -110,12 +112,12 @@ export function ProdutoDetalhePage() {
                     onClick={handleAdicionar}
                     className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700"
                   >
-                    Adicionar ao carrinho
+                    {t('produto.adicionar')}
                   </button>
                 </>
               ) : (
                 <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                  Sem stock nesta loja de momento.
+                  {t('produto.sem_stock')}
                 </p>
               )}
             </div>

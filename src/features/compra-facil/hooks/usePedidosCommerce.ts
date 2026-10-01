@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { mensagemDeErro } from '@/shared/utils';
 import { pedidos } from '../api/pedidos.api';
 import type { MetodoPagamentoCommerce } from '../api/pedidos.api';
@@ -27,6 +28,8 @@ export function usePedido(id: string | undefined) {
 export function useCriarPedido() {
   const queryClient = useQueryClient();
 
+  const { t } = useTranslation('loja');
+
   return useMutation({
     mutationFn: (payload: {
       lojaId: string;
@@ -36,19 +39,20 @@ export function useCriarPedido() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'pedidos'] });
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível criar o pedido.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('pedido.erro_criar'))),
   });
 }
 
 export function useCancelarPedido() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation('loja');
 
   return useMutation({
     mutationFn: (id: string) => pedidos.cancelar(id),
     onSuccess: () => {
-      toast.success('Pedido cancelado.');
+      toast.success(t('pedido.cancelado'));
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'pedidos'] });
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível cancelar o pedido.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('pedido.erro_cancelar'))),
   });
 }

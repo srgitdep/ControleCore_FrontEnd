@@ -1,5 +1,7 @@
 import 'i18next';
 import type comum from '../locales/pt/comum.json';
+import type loja from '../locales/pt/loja.json';
+import type auth from '../locales/pt/auth.json';
 
 // As chaves do `t()` passam a ser verificadas pelo `tsc` contra o catálogo português, que
 // é a língua de origem: uma chave mal escrita é erro de compilação, e não um texto em
@@ -9,6 +11,8 @@ declare module 'i18next' {
     defaultNS: 'comum';
     resources: {
       comum: typeof comum;
+      loja: typeof loja;
+      auth: typeof auth;
     };
   }
 }

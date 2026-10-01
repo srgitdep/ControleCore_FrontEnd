@@ -1,16 +1,17 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, PackageSearch } from 'lucide-react';
 import { formatData, formatMoeda } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useMeusPedidos } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import { ETIQUETA_ESTADO_PEDIDO } from '../api/pedidos.api';
 
 export function MeusPedidosPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const { autenticado, aCarregar } = useContaClienteStore();
   const { data: pedidos, isLoading } = useMeusPedidos();
+  const { t } = useTranslation('loja');
 
   if (!lojaId) return null;
 
@@ -23,9 +24,9 @@ export function MeusPedidosPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-2xl py-8">
-        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
 
-        <h1 className="mb-5 text-xl font-bold text-slate-900">Os meus pedidos</h1>
+        <h1 className="mb-5 text-xl font-bold text-slate-900">{t('pedidos.os_meus')}</h1>
 
         {(isLoading || aCarregar) && (
           <div className="flex min-h-[30vh] items-center justify-center">
@@ -36,7 +37,7 @@ export function MeusPedidosPage() {
         {pedidos && pedidos.length === 0 && (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-200 py-16 text-center">
             <PackageSearch size={28} className="text-slate-300" />
-            <p className="text-sm text-slate-500">Ainda não fez nenhum pedido nesta loja.</p>
+            <p className="text-sm text-slate-500">{t('pedidos.nenhum')}</p>
           </div>
         )}
 
@@ -53,7 +54,7 @@ export function MeusPedidosPage() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-900">{formatMoeda(pedido.totalFinal)}</p>
-                <p className="text-xs text-slate-500">{ETIQUETA_ESTADO_PEDIDO[pedido.estado]}</p>
+                <p className="text-xs text-slate-500">{t(`estadoPedido.${pedido.estado}`)}</p>
               </div>
             </Link>
           ))}

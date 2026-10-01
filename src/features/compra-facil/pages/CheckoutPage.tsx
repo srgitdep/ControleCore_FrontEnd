@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Banknote, Check, Loader2, Smartphone } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
@@ -7,7 +8,6 @@ import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCriarPedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import { ETIQUETA_METODO_PAGAMENTO } from '../api/pedidos.api';
 import type { MetodoPagamentoCommerce } from '../api/pedidos.api';
 
 const METODOS: MetodoPagamentoCommerce[] = ['NUMERARIO', 'MPESA', 'EMOLA'];
@@ -36,6 +36,7 @@ export function CheckoutPage() {
   const { itens, lojaId: lojaDoCarrinho, getSubtotal, limpar } = useCarrinhoStore();
   const { autenticado, aCarregar } = useContaClienteStore();
   const criarPedido = useCriarPedido();
+  const { t } = useTranslation('loja');
 
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamentoCommerce>('NUMERARIO');
 
@@ -80,16 +81,16 @@ export function CheckoutPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-5xl py-8">
-        <VoltarLink to={`/loja/${lojaId}/carrinho`}>Voltar ao carrinho</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}/carrinho`}>{t('navegacao.voltar_carrinho')}</VoltarLink>
 
-        <h1 className="mb-6 text-2xl font-extrabold text-slate-900">Confirmar pedido</h1>
+        <h1 className="mb-6 text-2xl font-extrabold text-slate-900">{t('checkout.titulo')}</h1>
 
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           <div className="space-y-6 lg:col-span-2">
             {/* Itens do pedido */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {totalItens} {totalItens === 1 ? 'artigo' : 'artigos'}
+                {t('artigos', { count: totalItens })}
               </h2>
               <ul className="mt-3 divide-y divide-slate-100">
                 {itens.map((item) => (
@@ -108,7 +109,7 @@ export function CheckoutPage() {
             {/* Método de pagamento */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                Pagamento no levantamento
+                {t('checkout.pagamento_no_levantamento')}
               </h2>
 
               <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
@@ -138,7 +139,7 @@ export function CheckoutPage() {
                       )}
                       <Icone size={20} className={seleccionado ? 'text-blue-700' : 'text-slate-400'} />
                       <span className={cn('text-xs font-semibold', seleccionado ? 'text-blue-700' : 'text-slate-600')}>
-                        {ETIQUETA_METODO_PAGAMENTO[metodo]}
+                        {t(`metodoPagamento.${metodo}`)}
                       </span>
                     </label>
                   );
@@ -146,7 +147,7 @@ export function CheckoutPage() {
               </div>
 
               <p className="mt-4 text-xs text-slate-400">
-                Não é cobrado agora. Paga na loja, no momento em que levantar o pedido.
+                {t('checkout.nao_cobrado_agora')}
               </p>
             </div>
           </div>
@@ -154,21 +155,21 @@ export function CheckoutPage() {
           {/* Resumo do pedido — o mesmo cartão do carrinho, o passo seguinte do mesmo fluxo */}
           <div className="lg:col-span-1">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-4">
-              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">Resumo do pedido</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('resumo.titulo')}</h2>
 
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>{totalItens} {totalItens === 1 ? 'artigo' : 'artigos'}</span>
+                  <span>{t('artigos', { count: totalItens })}</span>
                   <span>{formatMoeda(getSubtotal())}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Pagamento</span>
-                  <span>{ETIQUETA_METODO_PAGAMENTO[metodoPagamento]}</span>
+                  <span>{t('resumo.pagamento')}</span>
+                  <span>{t(`metodoPagamento.${metodoPagamento}`)}</span>
                 </div>
               </div>
 
               <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-4">
-                <span className="text-sm font-semibold text-slate-900">Total</span>
+                <span className="text-sm font-semibold text-slate-900">{t('resumo.total')}</span>
                 <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(getSubtotal())}</span>
               </div>
 
@@ -179,11 +180,11 @@ export function CheckoutPage() {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-transform hover:scale-[1.02] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
               >
                 {criarPedido.isPending && <Loader2 size={16} className="animate-spin" />}
-                Confirmar pedido
+                {t('checkout.confirmar')}
               </button>
 
               <p className="mt-3 text-center text-[11px] text-slate-400">
-                Não é cobrado agora — paga na loja, no momento do levantamento.
+                {t('checkout.nao_cobrado_agora_curto')}
               </p>
             </div>
           </div>

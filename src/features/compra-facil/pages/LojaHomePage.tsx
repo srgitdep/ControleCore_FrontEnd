@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, LogOut, PackageSearch, Search, ShoppingCart, Sparkles, UserCircle2 } from 'lucide-react';
 import { cn } from '@/shared/utils';
+import { SelectorIdioma } from '@/shared/ui';
+import { conta } from '../api/conta.api';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useCategoriasMercado, useLojasCommerce, useProdutosMercado } from '../hooks/useCatalogoCommerce';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
@@ -52,6 +55,7 @@ export function LojaHomePage() {
   const totalItensCarrinho = useCarrinhoStore((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
   const carrinhoLojaId = useCarrinhoStore((s) => s.lojaId);
   const { autenticado, cliente, sair } = useContaClienteStore();
+  const { t } = useTranslation('loja');
 
   // Sem escolher uma loja ainda, "Entrar"/"Criar conta" tem de apontar para alguma —
   // a conta é sempre de uma empresa concreta (ContaCliente.empresaId). Usa-se a
@@ -64,7 +68,7 @@ export function LojaHomePage() {
     <div className="bg-slate-50">
       <div className="border-b border-slate-200 bg-white">
         <div className="cc-caixa py-3">
-          <VoltarLink to="/">Voltar ao início</VoltarLink>
+          <VoltarLink to="/">{t('navegacao.voltar_inicio')}</VoltarLink>
         </div>
       </div>
 
@@ -88,11 +92,17 @@ export function LojaHomePage() {
             </p>
 
             <div className="flex items-center gap-2">
+              {/* A página inicial da loja tem o seu próprio topo (não o `LojaTopo`), por isso o
+                  selector vem aqui também — é por onde entra quem não fala português. */}
+              <SelectorIdioma
+                aoMudar={autenticado ? conta.definirIdioma : undefined}
+                className="text-white hover:bg-white/15"
+              />
               {carrinhoLojaId ? (
                 <Link
                   to={`/loja/${carrinhoLojaId}/carrinho`}
                   className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
-                  title="O meu carrinho"
+                  title={t('carrinho.titulo')}
                 >
                   <ShoppingCart size={16} />
                   {totalItensCarrinho > 0 && (
@@ -103,7 +113,7 @@ export function LojaHomePage() {
                 </Link>
               ) : (
                 <span
-                  title="O carrinho aparece assim que adicionar um produto"
+                  title={t('carrinho.aparece_ao_adicionar')}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/50"
                 >
                   <ShoppingCart size={16} />
@@ -128,13 +138,13 @@ export function LojaHomePage() {
                       to={`/loja/${primeiraLoja.id}/entrar`}
                       className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-white hover:bg-white/15 sm:inline-flex sm:items-center"
                     >
-                      Entrar
+                      {t('conta.entrar')}
                     </Link>
                     <Link
                       to={`/loja/${primeiraLoja.id}/criar-conta`}
                       className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-blue-700 shadow-sm hover:bg-blue-50"
                     >
-                      Criar conta
+                      {t('conta.criar')}
                     </Link>
                   </>
                 )
@@ -143,10 +153,10 @@ export function LojaHomePage() {
           </div>
 
           <h1 className="mt-4 text-2xl font-extrabold sm:text-3xl">
-            Encontre tudo o que precisa
+            {t('inicio.titulo')}
           </h1>
           <p className="mt-1 text-sm text-blue-100">
-            Produtos de todas as lojas do sistema, num único sítio.
+            {t('inicio.subtitulo')}
           </p>
 
           <div className="relative mt-5 max-w-xl">
@@ -160,7 +170,7 @@ export function LojaHomePage() {
               onChange={(e) => setBusca(e.target.value)}
               onFocus={() => setBuscaFocada(true)}
               onBlur={() => setTimeout(() => setBuscaFocada(false), 120)}
-              placeholder="Pesquisar produtos…"
+              placeholder={t('busca.placeholder')}
               className="w-full rounded-full border-0 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-lg shadow-blue-900/25 focus:outline-none focus:ring-2 focus:ring-white"
             />
 
@@ -187,7 +197,7 @@ export function LojaHomePage() {
               !categoria ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
             )}
           >
-            Todas as categorias
+            {t('inicio.todas_categorias')}
           </button>
 
           {categorias?.map((nome) => {
@@ -222,7 +232,7 @@ export function LojaHomePage() {
 
           {isError && (
             <p className="py-16 text-center text-sm text-slate-500">
-              Não foi possível carregar os produtos. Tente novamente dentro de momentos.
+              {t('catalogo.erro_carregar')}
             </p>
           )}
 
@@ -231,8 +241,8 @@ export function LojaHomePage() {
               <PackageSearch size={28} className="text-slate-300" />
               <p className="text-sm text-slate-500">
                 {busca || categoria
-                  ? 'Sem resultados para esta pesquisa.'
-                  : 'Ainda não há produtos publicados no sistema.'}
+                  ? t('catalogo.sem_resultados')
+                  : t('inicio.sem_produtos')}
               </p>
             </div>
           )}

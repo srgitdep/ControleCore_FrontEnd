@@ -53,7 +53,7 @@ export function SelectorIdioma({ aoMudar, className }: SelectorIdiomaProps) {
         className="cursor-pointer bg-transparent text-sm font-medium focus:outline-none"
       >
         {IDIOMAS.map((lingua) => (
-          <option key={lingua} value={lingua}>
+          <option key={lingua} value={lingua} className="text-slate-900">
             {NOME_DA_LINGUA[lingua]}
           </option>
         ))}

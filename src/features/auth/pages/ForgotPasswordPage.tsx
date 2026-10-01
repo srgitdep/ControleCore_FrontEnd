@@ -1,20 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { Mail, ArrowLeft, SendHorizonal, ShieldAlert } from 'lucide-react';
 import { forgotPasswordApi } from '../api/auth.api';
 import { cn } from '@/shared/utils';
+import { SelectorIdioma } from '@/shared/ui';
 
-const schema = z.object({
-  email: z.string().email('Introduza um endereço de e-mail válido'),
-});
+const criarSchema = (t: (chave: 'validacao.email_invalido') => string) =>
+  z.object({ email: z.string().email(t('validacao.email_invalido')) });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<ReturnType<typeof criarSchema>>;
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation('auth');
+  const schema = useMemo(() => criarSchema(t), [t]);
   const [sent, setSent] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -30,13 +33,16 @@ export function ForgotPasswordPage() {
       setFeedback(res.message);
       setSent(true);
     } catch {
-      toast.error('Ocorreu um erro. Tente novamente.');
+      toast.error(t('recuperar.erro'));
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-sm">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -48,16 +54,16 @@ export function ForgotPasswordPage() {
         {!sent ? (
           <>
             <div className="mb-6 text-center">
-              <h1 className="text-2xl font-bold text-slate-900 mb-1">Recuperar Password</h1>
+              <h1 className="text-2xl font-bold text-slate-900 mb-1">{t('recuperar.titulo')}</h1>
               <p className="text-slate-500 text-sm">
-                Introduza o e-mail associado à sua conta e enviaremos os novos dados de acesso.
+                {t('recuperar.descricao')}
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                  Endereço de E-mail
+                  {t('recuperar.campo_email')}
                 </label>
                 <div className="relative">
                   <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -66,7 +72,7 @@ export function ForgotPasswordPage() {
                     type="email"
                     autoFocus
                     autoComplete="email"
-                    placeholder="email@empresa.com"
+                    placeholder={t('recuperar.placeholder_email')}
                     {...register('email')}
                     className={cn(
                       'w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
@@ -90,7 +96,7 @@ export function ForgotPasswordPage() {
                 ) : (
                   <>
                     <SendHorizonal size={16} />
-                    Recuperar Senha
+                    {t('recuperar.submeter')}
                   </>
                 )}
               </button>
@@ -102,16 +108,14 @@ export function ForgotPasswordPage() {
             <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
               <Mail size={28} className="text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Verifique o seu e-mail</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">{t('recuperar.verifique_email')}</h2>
             <p className="text-slate-500 text-sm">
               {feedback}
             </p>
             <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-left">
               <ShieldAlert size={16} className="mt-0.5 shrink-0 text-amber-600" />
               <p className="text-xs text-amber-800">
-                Por segurança, a recuperação por conta própria é limitada a 3 vezes.
-                Depois disso, terá de contactar o administrador da sua empresa para
-                repor o acesso.
+                {t('recuperar.limite')}
               </p>
             </div>
           </div>
@@ -123,7 +127,7 @@ export function ForgotPasswordPage() {
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft size={14} />
-            Voltar ao login
+            {t('recuperar.voltar_login')}
           </Link>
         </div>
       </div>

@@ -1,0 +1,132 @@
+{
+  "artigos_one": "{{count}} item",
+  "artigos_other": "{{count}} items",
+  "navegacao": {
+    "voltar_carrinho": "Back to cart",
+    "voltar_catalogo": "Back to catalogue",
+    "voltar_inicio": "Back to home",
+    "trocar_loja": "Change shop"
+  },
+  "topo": {
+    "a_minha_loja": "My shop",
+    "carrinho": "Cart"
+  },
+  "busca": {
+    "placeholder": "Search products…",
+    "a_procurar": "Searching…"
+  },
+  "inicio": {
+    "titulo": "Find everything you need",
+    "subtitulo": "Products from every shop, all in one place.",
+    "todas_categorias": "All categories",
+    "sem_produtos": "There are no products published yet."
+  },
+  "lojas": {
+    "as_minhas": "My shops",
+    "todas": "All shops",
+    "a_carregar": "Loading…"
+  },
+  "catalogo": {
+    "erro_carregar": "We could not load the products. Please try again in a moment.",
+    "erro_carregar_catalogo": "We could not load the catalogue. Please try again in a moment.",
+    "sem_resultados": "No results for this search.",
+    "sem_resultados_para": "No results for \"{{termo}}\".",
+    "loja_sem_produtos": "This shop hasn't published any products yet."
+  },
+  "produto": {
+    "nao_encontrado": "Product not found in this shop.",
+    "adicionado": "{{nome}} added to cart.",
+    "adicionar": "Add to cart",
+    "por_unidade": "per {{unidade}}",
+    "disponiveis_one": "{{count}} available",
+    "disponiveis_other": "{{count}} available",
+    "esgotado": "Sold out",
+    "sem_stock": "Out of stock in this shop right now.",
+    "sem_stock_curto": "Out of stock in this shop"
+  },
+  "carrinho": {
+    "titulo": "My cart",
+    "vazio": "Your cart is empty.",
+    "vazio_dica": "Add products from the catalogue to get started.",
+    "ver_catalogo": "Browse the catalogue",
+    "aparece_ao_adicionar": "Your cart appears as soon as you add a product",
+    "preco_por_unidade": "{{preco}} per {{unidade}}",
+    "diminuir": "Decrease quantity of {{nome}}",
+    "aumentar": "Increase quantity of {{nome}}",
+    "remover": "Remove",
+    "no_levantamento": "On collection",
+    "continuar_checkout": "Continue to checkout",
+    "entrar_para_continuar": "Sign in to continue",
+    "apenas_disponiveis_one": "Only {{count}} available.",
+    "apenas_disponiveis_other": "Only {{count}} available.",
+    "apenas_disponiveis_de_one": "{{nome}}: only {{count}} available.",
+    "apenas_disponiveis_de_other": "{{nome}}: only {{count}} available."
+  },
+  "estadoPedido": {
+    "CRIADO": "Received",
+    "AGUARDA_CONFIRMACAO": "Awaiting confirmation",
+    "CONFIRMADO": "Confirmed",
+    "EM_PREPARACAO": "Being prepared",
+    "PRONTO": "Ready",
+    "AGUARDA_LEVANTAMENTO": "Ready for collection",
+    "CONCLUIDO": "Completed",
+    "CANCELADO": "Cancelled"
+  },
+  "passoPedido": {
+    "recebido": "Received",
+    "confirmado": "Confirmed",
+    "em_preparacao": "Being prepared",
+    "pronto": "Ready to collect",
+    "entregue": "Collected"
+  },
+  "metodoPagamento": {
+    "NUMERARIO": "Cash on collection",
+    "MPESA": "M-Pesa on collection",
+    "EMOLA": "e-Mola on collection"
+  },
+  "resumo": {
+    "titulo": "Order summary",
+    "pagamento": "Payment",
+    "total": "Total"
+  },
+  "checkout": {
+    "titulo": "Confirm your order",
+    "confirmar": "Place order",
+    "pagamento_no_levantamento": "Pay on collection",
+    "nao_cobrado_agora": "You are not charged now. You pay in store when you collect your order.",
+    "nao_cobrado_agora_curto": "Not charged now — you pay in store when you collect."
+  },
+  "pedidos": {
+    "os_meus": "My orders",
+    "nenhum": "You haven't placed any orders in this shop yet."
+  },
+  "pedido": {
+    "linha_produto": "{{quantidade}}× product",
+    "ajuste": "We adjusted this item: {{aceite}} of {{quantidade}}",
+    "ajuste_substituto": "(replacement product)",
+    "cancelar": "Cancel order",
+    "cancelado": "Order cancelled.",
+    "erro_criar": "We could not place the order.",
+    "erro_cancelar": "We could not cancel the order."
+  },
+  "conta": {
+    "entrar": "Sign in",
+    "criar": "Create account",
+    "entrar_titulo": "Sign in to your account",
+    "entrar_subtitulo": "To continue shopping.",
+    "criar_subtitulo": "To shop and track your orders.",
+    "campo_identificador": "Email or phone",
+    "campo_nome": "Name",
+    "campo_email": "Email",
+    "campo_telefone": "Phone (optional)",
+    "campo_senha": "Password",
+    "senha_minimo": "At least 8 characters.",
+    "sem_conta": "Don't have an account?",
+    "ja_tem_conta": "Already have an account?",
+    "criada": "Account created.",
+    "erro_entrar": "We could not sign you in.",
+    "erro_criar": "We could not create your account.",
+    "erro_google": "We could not sign you in with Google.",
+    "ou": "or"
+  }
+}

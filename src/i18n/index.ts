@@ -1,9 +1,7 @@
 import i18n from 'i18next';
-import type { BackendModule } from 'i18next';
+import type { Resource } from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import comumPt from '../locales/pt/comum.json';
-import comumEn from '../locales/en/comum.json';
 
 /**
  * Tradução da interface.
@@ -17,11 +15,14 @@ import comumEn from '../locales/en/comum.json';
  *
  * ## Namespaces
  *
- * Um ficheiro por feature em `src/locales/<língua>/<namespace>.json`. O `comum` vai no
- * bundle inicial, nas duas línguas: é o que o selector e os formatadores usam logo no
- * primeiro ecrã, e é pequeno. Os outros carregam-se quando um ecrã os pede, por
- * `import()` — cada namespace vira um ficheiro à parte no build do Vite, e quem nunca abre
- * o portal nunca descarrega as traduções do portal.
+ * Um ficheiro por feature em `src/locales/<língua>/<namespace>.json`, **todos no bundle
+ * inicial**, juntos pelo `import.meta.glob` abaixo — um namespace novo entra sozinho.
+ *
+ * Carregá-los só quando um ecrã os pede (por `import()`) foi a primeira versão, e deixava
+ * o ecrã a mostrar as chaves cruas («checkout.titulo») enquanto o ficheiro descarregava:
+ * a aplicação não tem nenhum `Suspense` onde esperar. As traduções são pequenas (o `loja`
+ * tem ~5 KB por língua); se o ERP (Fase 3) as fizer crescer muito, volta-se ao
+ * carregamento sob pedido com uma espera no layout de cada superfície.
  */
 export const IDIOMAS = ['pt', 'en'] as const;
 export type Idioma = (typeof IDIOMAS)[number];
@@ -34,34 +35,28 @@ export function eIdioma(valor: unknown): valor is Idioma {
   return typeof valor === 'string' && (IDIOMAS as readonly string[]).includes(valor);
 }
 
-// O build avisa `INEFFECTIVE_DYNAMIC_IMPORT` para `comum.json`: o `import()` abaixo apanha
-// todos os namespaces, e o `comum` também vem por import estático no topo. É o pretendido
-// — o `comum` fica no bundle inicial — e o aviso não afecta os outros namespaces.
-const carregarNamespace: BackendModule = {
-  type: 'backend',
-  init() {},
-  read(lingua, namespace, devolver) {
-    import(`../locales/${lingua}/${namespace}.json`)
-      .then((modulo) => devolver(null, modulo.default))
-      .catch((erro) => devolver(erro, false));
-  },
-};
+const ficheiros = import.meta.glob<Record<string, unknown>>('../locales/*/*.json', {
+  eager: true,
+  import: 'default',
+});
+
+const traducoes: Resource = {};
+for (const [caminho, conteudo] of Object.entries(ficheiros)) {
+  const [, lingua, namespace] = caminho.match(/locales\/([^/]+)\/([^/]+)\.json$/)!;
+  (traducoes[lingua] ??= {})[namespace] = conteudo;
+}
 
 i18n
-  .use(carregarNamespace)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { pt: { comum: comumPt }, en: { comum: comumEn } },
-    // Com `resources` e um backend ao mesmo tempo: o que está em `resources` não se volta
-    // a pedir, o resto carrega-se sob pedido.
-    partialBundledLanguages: true,
+    resources: traducoes,
     supportedLngs: [...IDIOMAS],
     // `en-GB` e `pt-MZ` do browser contam como `en` e `pt`.
     load: 'languageOnly',
     nonExplicitSupportedLngs: true,
     fallbackLng: IDIOMA_PADRAO,
-    ns: ['comum'],
+    ns: Object.keys(traducoes[IDIOMA_PADRAO] ?? {}),
     defaultNS: 'comum',
     interpolation: { escapeValue: false }, // o React já escapa
     detection: {

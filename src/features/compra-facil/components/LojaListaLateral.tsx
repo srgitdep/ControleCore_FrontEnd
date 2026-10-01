@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { History, MapPin, Store } from 'lucide-react';
 import { useLojasCommerce, useLojasCompradas } from '../hooks/useCatalogoCommerce';
 
@@ -21,6 +22,7 @@ function iniciaisDaLoja(nome: string): string {
 export function LojaListaLateral() {
   const { data: lojas, isLoading } = useLojasCommerce();
   const { data: lojasCompradas } = useLojasCompradas();
+  const { t } = useTranslation('loja');
 
   return (
     <aside className="w-full shrink-0 md:w-64">
@@ -28,7 +30,7 @@ export function LojaListaLateral() {
         <div className="mb-5 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-3">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-blue-700">
             <History size={13} />
-            As minhas lojas
+            {t('lojas.as_minhas')}
           </p>
           <ul className="flex flex-wrap gap-1.5 md:flex-col md:flex-nowrap md:gap-1">
             {lojasCompradas.map((loja) => (
@@ -51,10 +53,10 @@ export function LojaListaLateral() {
       <div>
         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-400">
           <Store size={13} />
-          Todas as lojas
+          {t('lojas.todas')}
         </p>
 
-        {isLoading && <p className="px-1 text-sm text-slate-400">A carregar…</p>}
+        {isLoading && <p className="px-1 text-sm text-slate-400">{t('lojas.a_carregar')}</p>}
 
         <ul className="flex flex-wrap gap-1.5 md:flex-col md:flex-nowrap md:gap-1.5">
           {lojas?.map((loja) => (
