@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Package, Plus, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { corDaCategoria } from '../utils/corCategoria';
@@ -22,15 +23,16 @@ interface ProdutoCartaoProps {
  */
 export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps) {
   const adicionar = useCarrinhoStore((s) => s.adicionar);
+  const { t } = useTranslation('loja');
   const cor = produto.categoria ? corDaCategoria(produto.categoria.nome) : null;
 
   const handleAdicionar = () => {
     const resultado = adicionar(lojaId, produto, 1);
     if (!resultado.ok) {
-      toast.error(`${resultado.nome}: apenas ${resultado.disponivel} disponível(is).`);
+      toast.error(t('carrinho.apenas_disponiveis_de', { nome: resultado.nome, count: resultado.disponivel }));
       return;
     }
-    toast.success(`${produto.nome} adicionado ao carrinho.`);
+    toast.success(t('produto.adicionado', { nome: produto.nome }));
   };
 
   return (
@@ -61,7 +63,7 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
 
         {!produto.disponivel && (
           <span className="absolute right-2 top-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
-            Esgotado
+            {t('produto.esgotado')}
           </span>
         )}
       </Link>
@@ -87,14 +89,14 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div>
             <p className="text-lg font-extrabold text-blue-700">{formatMoeda(produto.precoVenda)}</p>
-            <p className="text-[11px] text-slate-400">por {produto.unidadeMedida.toLowerCase()}</p>
+            <p className="text-[11px] text-slate-400">{t('produto.por_unidade', { unidade: produto.unidadeMedida.toLowerCase() })}</p>
           </div>
 
           <button
             type="button"
             onClick={handleAdicionar}
             disabled={!produto.disponivel}
-            title={produto.disponivel ? 'Adicionar ao carrinho' : 'Sem stock nesta loja'}
+            title={produto.disponivel ? t('produto.adicionar') : t('produto.sem_stock_curto')}
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm shadow-blue-600/30 transition-transform hover:scale-110 hover:shadow-md disabled:cursor-not-allowed disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:hover:scale-100"
           >
             <Plus size={16} />

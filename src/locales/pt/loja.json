@@ -1,0 +1,132 @@
+{
+  "artigos_one": "{{count}} artigo",
+  "artigos_other": "{{count}} artigos",
+  "navegacao": {
+    "voltar_carrinho": "Voltar ao carrinho",
+    "voltar_catalogo": "Voltar ao catálogo",
+    "voltar_inicio": "Voltar ao início",
+    "trocar_loja": "Trocar de loja"
+  },
+  "topo": {
+    "a_minha_loja": "A minha loja",
+    "carrinho": "Carrinho"
+  },
+  "busca": {
+    "placeholder": "Pesquisar produtos…",
+    "a_procurar": "A procurar…"
+  },
+  "inicio": {
+    "titulo": "Encontre tudo o que precisa",
+    "subtitulo": "Produtos de todas as lojas do sistema, num único sítio.",
+    "todas_categorias": "Todas as categorias",
+    "sem_produtos": "Ainda não há produtos publicados no sistema."
+  },
+  "lojas": {
+    "as_minhas": "As minhas lojas",
+    "todas": "Todas as lojas",
+    "a_carregar": "A carregar…"
+  },
+  "catalogo": {
+    "erro_carregar": "Não foi possível carregar os produtos. Tente novamente dentro de momentos.",
+    "erro_carregar_catalogo": "Não foi possível carregar o catálogo. Tente novamente dentro de momentos.",
+    "sem_resultados": "Sem resultados para esta pesquisa.",
+    "sem_resultados_para": "Sem resultados para \"{{termo}}\".",
+    "loja_sem_produtos": "Esta loja ainda não tem produtos publicados."
+  },
+  "produto": {
+    "nao_encontrado": "Produto não encontrado nesta loja.",
+    "adicionado": "{{nome}} adicionado ao carrinho.",
+    "adicionar": "Adicionar ao carrinho",
+    "por_unidade": "por {{unidade}}",
+    "disponiveis_one": "{{count}} disponível",
+    "disponiveis_other": "{{count}} disponíveis",
+    "esgotado": "Esgotado",
+    "sem_stock": "Sem stock nesta loja de momento.",
+    "sem_stock_curto": "Sem stock nesta loja"
+  },
+  "carrinho": {
+    "titulo": "O meu carrinho",
+    "vazio": "O carrinho está vazio.",
+    "vazio_dica": "Adicione produtos do catálogo para começar.",
+    "ver_catalogo": "Ver o catálogo",
+    "aparece_ao_adicionar": "O carrinho aparece assim que adicionar um produto",
+    "preco_por_unidade": "{{preco}} por {{unidade}}",
+    "diminuir": "Diminuir quantidade de {{nome}}",
+    "aumentar": "Aumentar quantidade de {{nome}}",
+    "remover": "Remover",
+    "no_levantamento": "No levantamento",
+    "continuar_checkout": "Continuar para o checkout",
+    "entrar_para_continuar": "Entrar para continuar",
+    "apenas_disponiveis_one": "Apenas {{count}} disponível.",
+    "apenas_disponiveis_other": "Apenas {{count}} disponíveis.",
+    "apenas_disponiveis_de_one": "{{nome}}: apenas {{count}} disponível.",
+    "apenas_disponiveis_de_other": "{{nome}}: apenas {{count}} disponíveis."
+  },
+  "estadoPedido": {
+    "CRIADO": "Recebido",
+    "AGUARDA_CONFIRMACAO": "A aguardar confirmação",
+    "CONFIRMADO": "Confirmado",
+    "EM_PREPARACAO": "Em preparação",
+    "PRONTO": "Pronto",
+    "AGUARDA_LEVANTAMENTO": "Pronto para levantar",
+    "CONCLUIDO": "Concluído",
+    "CANCELADO": "Cancelado"
+  },
+  "passoPedido": {
+    "recebido": "Recebido",
+    "confirmado": "Confirmado",
+    "em_preparacao": "Em preparação",
+    "pronto": "Pronto a levantar",
+    "entregue": "Entregue"
+  },
+  "metodoPagamento": {
+    "NUMERARIO": "Numerário no levantamento",
+    "MPESA": "M-Pesa no levantamento",
+    "EMOLA": "e-Mola no levantamento"
+  },
+  "resumo": {
+    "titulo": "Resumo do pedido",
+    "pagamento": "Pagamento",
+    "total": "Total"
+  },
+  "checkout": {
+    "titulo": "Confirmar pedido",
+    "confirmar": "Confirmar pedido",
+    "pagamento_no_levantamento": "Pagamento no levantamento",
+    "nao_cobrado_agora": "Não é cobrado agora. Paga na loja, no momento em que levantar o pedido.",
+    "nao_cobrado_agora_curto": "Não é cobrado agora — paga na loja, no momento do levantamento."
+  },
+  "pedidos": {
+    "os_meus": "Os meus pedidos",
+    "nenhum": "Ainda não fez nenhum pedido nesta loja."
+  },
+  "pedido": {
+    "linha_produto": "{{quantidade}}× produto",
+    "ajuste": "Ajustámos este artigo: {{aceite}} de {{quantidade}}",
+    "ajuste_substituto": "(produto de substituição)",
+    "cancelar": "Cancelar pedido",
+    "cancelado": "Pedido cancelado.",
+    "erro_criar": "Não foi possível criar o pedido.",
+    "erro_cancelar": "Não foi possível cancelar o pedido."
+  },
+  "conta": {
+    "entrar": "Entrar",
+    "criar": "Criar conta",
+    "entrar_titulo": "Entrar na sua conta",
+    "entrar_subtitulo": "Para continuar a sua compra.",
+    "criar_subtitulo": "Para comprar e acompanhar os seus pedidos.",
+    "campo_identificador": "E-mail ou telefone",
+    "campo_nome": "Nome",
+    "campo_email": "E-mail",
+    "campo_telefone": "Telefone (opcional)",
+    "campo_senha": "Senha",
+    "senha_minimo": "Mínimo de 8 caracteres.",
+    "sem_conta": "Ainda não tem conta?",
+    "ja_tem_conta": "Já tem conta?",
+    "criada": "Conta criada.",
+    "erro_entrar": "Não foi possível entrar.",
+    "erro_criar": "Não foi possível criar a conta.",
+    "erro_google": "Não foi possível entrar com a Google.",
+    "ou": "ou"
+  }
+}

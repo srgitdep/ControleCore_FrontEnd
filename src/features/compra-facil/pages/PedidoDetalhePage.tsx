@@ -1,11 +1,11 @@
 import { Navigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Check, CheckCircle2, Clock, Loader2, PackageCheck, XCircle } from 'lucide-react';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCancelarPedido, usePedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import { ETIQUETA_ESTADO_PEDIDO, ETIQUETA_METODO_PAGAMENTO } from '../api/pedidos.api';
 import type { EstadoPedido, MetodoPagamentoCommerce } from '../api/pedidos.api';
 
 /** Estados a partir dos quais o cliente ainda pode desistir — espelha o backend. */
@@ -16,19 +16,20 @@ const CANCELAVEL: EstadoPedido[] = ['CRIADO', 'AGUARDA_CONFIRMACAO', 'CONFIRMADO
  * "Recebido" e `AGUARDA_LEVANTAMENTO` como "Pronto a levantar": são variações
  * internas do mesmo momento visto de fora, não passos extra.
  */
-const PASSOS: { estados: EstadoPedido[]; label: string }[] = [
-  { estados: ['CRIADO', 'AGUARDA_CONFIRMACAO'], label: 'Recebido' },
-  { estados: ['CONFIRMADO'], label: 'Confirmado' },
-  { estados: ['EM_PREPARACAO'], label: 'Em preparação' },
-  { estados: ['PRONTO', 'AGUARDA_LEVANTAMENTO'], label: 'Pronto a levantar' },
-  { estados: ['CONCLUIDO'], label: 'Entregue' },
-];
+const PASSOS = [
+  { estados: ['CRIADO', 'AGUARDA_CONFIRMACAO'], chave: 'recebido' },
+  { estados: ['CONFIRMADO'], chave: 'confirmado' },
+  { estados: ['EM_PREPARACAO'], chave: 'em_preparacao' },
+  { estados: ['PRONTO', 'AGUARDA_LEVANTAMENTO'], chave: 'pronto' },
+  { estados: ['CONCLUIDO'], chave: 'entregue' },
+] as const satisfies readonly { estados: EstadoPedido[]; chave: string }[];
 
 export function PedidoDetalhePage() {
   const { lojaId, pedidoId } = useParams<{ lojaId: string; pedidoId: string }>();
   const { autenticado, aCarregar } = useContaClienteStore();
   const { data: pedido, isLoading } = usePedido(pedidoId);
   const cancelar = useCancelarPedido();
+  const { t } = useTranslation('loja');
 
   if (!lojaId || !pedidoId) return null;
 
@@ -41,7 +42,7 @@ export function PedidoDetalhePage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-xl py-8">
-        <VoltarLink to={`/loja/${lojaId}/pedidos`}>Os meus pedidos</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}/pedidos`}>{t('pedidos.os_meus')}</VoltarLink>
 
         {(isLoading || aCarregar) && (
           <div className="flex min-h-[30vh] items-center justify-center">
@@ -72,13 +73,16 @@ export function PedidoDetalhePage() {
                 {pedido.itens.map((item) => (
                   <li key={item.id}>
                     <div className="flex justify-between">
-                      <span>{item.quantidade}× produto</span>
+                      <span>{t('pedido.linha_produto', { quantidade: item.quantidade })}</span>
                       <span>{formatMoeda(item.subtotal)}</span>
                     </div>
                     {item.substituicao && (
                       <p className="mt-1 rounded-lg bg-orange-50 px-2.5 py-1.5 text-xs text-orange-800">
-                        Ajustámos este artigo: {item.substituicao.quantidadeAceite} de {item.quantidade}
-                        {item.substituicao.produtoSubstitutoId ? ' (produto de substituição)' : ''} —{' '}
+                        {t('pedido.ajuste', {
+                          aceite: item.substituicao.quantidadeAceite,
+                          quantidade: item.quantidade,
+                        })}
+                        {item.substituicao.produtoSubstitutoId ? ` ${t('pedido.ajuste_substituto')}` : ''} —{' '}
                         {item.substituicao.motivo}
                       </p>
                     )}
@@ -87,12 +91,12 @@ export function PedidoDetalhePage() {
               </ul>
 
               <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
-                <span>Total</span>
+                <span>{t('resumo.total')}</span>
                 <span>{formatMoeda(pedido.totalFinal)}</span>
               </div>
 
               <p className="mt-2 text-xs text-slate-400">
-                {ETIQUETA_METODO_PAGAMENTO[pedido.metodoPagamento as MetodoPagamentoCommerce]}
+                {t(`metodoPagamento.${pedido.metodoPagamento as MetodoPagamentoCommerce}`)}
               </p>
             </div>
 
@@ -104,7 +108,7 @@ export function PedidoDetalhePage() {
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 hover:underline disabled:opacity-50"
               >
                 <XCircle size={14} />
-                Cancelar pedido
+                {t('pedido.cancelar')}
               </button>
             )}
           </>
@@ -116,7 +120,8 @@ export function PedidoDetalhePage() {
 
 /** A linha do tempo do acompanhamento — Fase 12. Nunca mostrada para um pedido cancelado. */
 function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
-  const passoActual = PASSOS.findIndex((passo) => passo.estados.includes(estado));
+  const { t } = useTranslation('loja');
+  const passoActual = PASSOS.findIndex((passo) => (passo.estados as readonly EstadoPedido[]).includes(estado));
 
   return (
     <ol className="mt-4 flex items-center border-t border-slate-100 pt-4">
@@ -124,7 +129,7 @@ function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
         const concluido = indice < passoActual;
         const actual = indice === passoActual;
         return (
-          <li key={passo.label} className="flex flex-1 items-center last:flex-none">
+          <li key={passo.chave} className="flex flex-1 items-center last:flex-none">
             <div className="flex flex-col items-center gap-1">
               <div
                 className={cn(
@@ -142,7 +147,7 @@ function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
                   actual ? 'font-semibold text-slate-700' : 'text-slate-400',
                 )}
               >
-                {passo.label}
+                {t(`passoPedido.${passo.chave}`)}
               </span>
             </div>
             {indice < PASSOS.length - 1 && (
@@ -156,6 +161,7 @@ function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
 }
 
 function EstadoBadge({ estado }: { estado: EstadoPedido }) {
+  const { t } = useTranslation('loja');
   const config: Record<EstadoPedido, { cor: string; icone: typeof Clock }> = {
     CRIADO: { cor: 'bg-amber-100 text-amber-800', icone: Clock },
     AGUARDA_CONFIRMACAO: { cor: 'bg-amber-100 text-amber-800', icone: Clock },
@@ -172,7 +178,7 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   return (
     <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${cor}`}>
       <Icone size={12} />
-      {ETIQUETA_ESTADO_PEDIDO[estado]}
+      {t(`estadoPedido.${estado}`)}
     </span>
   );
 }

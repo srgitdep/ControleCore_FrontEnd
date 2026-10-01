@@ -1,28 +1,35 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 import { resetPasswordApi } from '../api/auth.api';
 import { cn } from '@/shared/utils';
+import { SelectorIdioma } from '@/shared/ui';
 
-const schema = z
-  .object({
-    newPassword: z.string().min(6, 'A password deve ter pelo menos 6 caracteres'),
-    confirmPassword: z.string().min(1, 'Confirme a nova password'),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'As passwords não coincidem',
-    path: ['confirmPassword'],
-  });
+type ChavesDoSchema = 'validacao.password_minimo_6' | 'validacao.confirme_password' | 'validacao.passwords_nao_coincidem';
 
-type FormData = z.infer<typeof schema>;
+const criarSchema = (t: (chave: ChavesDoSchema) => string) =>
+  z
+    .object({
+      newPassword: z.string().min(6, t('validacao.password_minimo_6')),
+      confirmPassword: z.string().min(1, t('validacao.confirme_password')),
+    })
+    .refine((d) => d.newPassword === d.confirmPassword, {
+      message: t('validacao.passwords_nao_coincidem'),
+      path: ['confirmPassword'],
+    });
+
+type FormData = z.infer<ReturnType<typeof criarSchema>>;
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
+  const schema = useMemo(() => criarSchema(t), [t]);
   const token = searchParams.get('token') ?? '';
   const [showPw, setShowPw] = useState(false);
   const [done, setDone] = useState(false);
@@ -35,7 +42,7 @@ export function ResetPasswordPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!token) {
-      toast.error('Token inválido ou em falta. Solicite uma nova recuperação.');
+      toast.error(t('redefinir.token_invalido'));
       return;
     }
     try {
@@ -44,7 +51,7 @@ export function ResetPasswordPage() {
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? 'Código inválido ou expirado.';
+        ?? t('redefinir.codigo_invalido');
       toast.error(message);
     }
   };
@@ -52,6 +59,9 @@ export function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-sm">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -63,15 +73,15 @@ export function ResetPasswordPage() {
         {!done ? (
           <>
             <div className="mb-6 text-center">
-              <h1 className="text-2xl font-bold text-slate-900 mb-1">Nova Password</h1>
-              <p className="text-slate-500 text-sm">Defina a sua nova password de acesso.</p>
+              <h1 className="text-2xl font-bold text-slate-900 mb-1">{t('redefinir.titulo')}</h1>
+              <p className="text-slate-500 text-sm">{t('redefinir.descricao')}</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* Nova password */}
               <div className="space-y-1.5">
                 <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700">
-                  Nova Password
+                  {t('redefinir.campo_nova')}
                 </label>
                 <div className="relative">
                   <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -79,7 +89,7 @@ export function ResetPasswordPage() {
                     id="newPassword"
                     type={showPw ? 'text' : 'password'}
                     autoFocus
-                    placeholder="MÍnimo 6 caracteres"
+                    placeholder={t('redefinir.campo_nova_dica')}
                     {...register('newPassword')}
                     className={cn(
                       'w-full pl-10 pr-12 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
@@ -104,14 +114,14 @@ export function ResetPasswordPage() {
               {/* Confirmar password */}
               <div className="space-y-1.5">
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700">
-                  Confirmar Password
+                  {t('redefinir.campo_confirmar')}
                 </label>
                 <div className="relative">
                   <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     id="confirmPassword"
                     type={showPw ? 'text' : 'password'}
-                    placeholder="Repita a password"
+                    placeholder={t('redefinir.campo_confirmar_dica')}
                     {...register('confirmPassword')}
                     className={cn(
                       'w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border bg-white text-slate-900 placeholder:text-slate-400',
@@ -132,7 +142,7 @@ export function ResetPasswordPage() {
               >
                 {isSubmitting ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : 'Definir Nova Password'}
+                ) : t('redefinir.submeter')}
               </button>
             </form>
           </>
@@ -142,15 +152,15 @@ export function ResetPasswordPage() {
             <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={32} className="text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Password redefinida!</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">{t('redefinir.sucesso_titulo')}</h2>
             <p className="text-slate-500 text-sm mb-6">
-              A sua password foi alterada com sucesso. Pode agora iniciar sessão.
+              {t('redefinir.sucesso_texto')}
             </p>
             <button
               onClick={() => navigate('/login', { replace: true })}
               className="w-full py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
             >
-              Ir para o Login
+              {t('redefinir.ir_login')}
             </button>
           </div>
         )}
@@ -161,7 +171,7 @@ export function ResetPasswordPage() {
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft size={14} />
-            Voltar ao login
+            {t('recuperar.voltar_login')}
           </Link>
         </div>
       </div>

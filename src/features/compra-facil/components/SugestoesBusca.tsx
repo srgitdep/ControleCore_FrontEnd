@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, Package, Search } from 'lucide-react';
 import { formatMoeda } from '@/shared/utils';
 
@@ -25,6 +26,8 @@ interface SugestoesBuscaProps {
  * clicar dentro de si mesmo nunca deixaria seleccionar uma sugestão.
  */
 export function SugestoesBusca({ aberto, aCarregar, termo, sugestoes, onEscolher }: SugestoesBuscaProps) {
+  // Antes do `return` antecipado: um hook não pode ficar depois dele.
+  const { t } = useTranslation('loja');
   if (!aberto || termo.trim().length < 2) return null;
 
   return (
@@ -32,14 +35,14 @@ export function SugestoesBusca({ aberto, aCarregar, termo, sugestoes, onEscolher
       {aCarregar && (
         <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-400">
           <Loader2 size={14} className="animate-spin" />
-          A procurar…
+          {t('busca.a_procurar')}
         </div>
       )}
 
       {!aCarregar && sugestoes.length === 0 && (
         <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-400">
           <Search size={14} />
-          Sem resultados para "{termo}".
+          {t('catalogo.sem_resultados_para', { termo })}
         </div>
       )}
 

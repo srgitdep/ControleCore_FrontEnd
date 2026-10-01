@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, PackageSearch } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useProdutosLoja } from '../hooks/useCatalogoCommerce';
@@ -12,6 +13,7 @@ export function CatalogoPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const [busca, setBusca] = useState('');
   const buscaComDebounce = useDebounce(busca, 300);
+  const { t } = useTranslation('loja');
 
   const { data, isLoading, isError } = useProdutosLoja(lojaId, {
     search: buscaComDebounce || undefined,
@@ -25,7 +27,7 @@ export function CatalogoPage() {
       <LojaTopo lojaId={lojaId} busca={busca} onBuscaChange={setBusca} />
 
       <div className="cc-caixa py-6">
-        <VoltarLink to="/loja">Trocar de loja</VoltarLink>
+        <VoltarLink to="/loja">{t('navegacao.trocar_loja')}</VoltarLink>
 
         {isLoading && (
           <div className="flex min-h-[40vh] items-center justify-center">
@@ -35,7 +37,7 @@ export function CatalogoPage() {
 
         {isError && (
           <p className="py-16 text-center text-sm text-slate-500">
-            Não foi possível carregar o catálogo. Tente novamente dentro de momentos.
+            {t('catalogo.erro_carregar_catalogo')}
           </p>
         )}
 
@@ -43,7 +45,7 @@ export function CatalogoPage() {
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <PackageSearch size={28} className="text-slate-300" />
             <p className="text-sm text-slate-500">
-              {busca ? `Sem resultados para "${busca}".` : 'Esta loja ainda não tem produtos publicados.'}
+              {busca ? t('catalogo.sem_resultados_para', { termo: busca }) : t('catalogo.loja_sem_produtos')}
             </p>
           </div>
         )}

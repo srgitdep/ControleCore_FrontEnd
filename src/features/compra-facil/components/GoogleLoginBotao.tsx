@@ -1,5 +1,6 @@
 import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { mensagemDeErro } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
@@ -21,6 +22,7 @@ interface GoogleLoginBotaoProps {
 export function GoogleLoginBotao({ lojaId, destino }: GoogleLoginBotaoProps) {
   const navegar = useNavigate();
   const entrarComGoogle = useContaClienteStore((s) => s.entrarComGoogle);
+  const { t } = useTranslation('loja');
 
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
     return null;
@@ -32,22 +34,22 @@ export function GoogleLoginBotao({ lojaId, destino }: GoogleLoginBotaoProps) {
         text="continue_with"
         shape="rectangular"
         width="320"
-        onError={() => toast.error('Não foi possível entrar com a Google.')}
+        onError={() => toast.error(t('conta.erro_google'))}
         onSuccess={(resposta) => {
           if (!resposta.credential) {
-            toast.error('Não foi possível entrar com a Google.');
+            toast.error(t('conta.erro_google'));
             return;
           }
 
           entrarComGoogle(lojaId, resposta.credential)
             .then(() => navegar(destino, { replace: true }))
-            .catch((erro) => toast.error(mensagemDeErro(erro, 'Não foi possível entrar com a Google.')));
+            .catch((erro) => toast.error(mensagemDeErro(erro, t('conta.erro_google'))));
         }}
       />
 
       <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
         <div className="h-px flex-1 bg-slate-200" />
-        ou
+        {t('conta.ou')}
         <div className="h-px flex-1 bg-slate-200" />
       </div>
     </div>

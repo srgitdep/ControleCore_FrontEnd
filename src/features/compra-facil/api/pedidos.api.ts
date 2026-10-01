@@ -72,20 +72,5 @@ export const pedidos = {
   },
 };
 
-/** O que cada estado significa para o cliente — v1 é só levantamento em loja. */
-export const ETIQUETA_ESTADO_PEDIDO: Record<EstadoPedido, string> = {
-  CRIADO: 'Recebido',
-  AGUARDA_CONFIRMACAO: 'A aguardar confirmação',
-  CONFIRMADO: 'Confirmado',
-  EM_PREPARACAO: 'Em preparação',
-  PRONTO: 'Pronto',
-  AGUARDA_LEVANTAMENTO: 'Pronto para levantar',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-};
-
-export const ETIQUETA_METODO_PAGAMENTO: Record<MetodoPagamentoCommerce, string> = {
-  NUMERARIO: 'Numerário no levantamento',
-  MPESA: 'M-Pesa no levantamento',
-  EMOLA: 'e-Mola no levantamento',
-};
+// As etiquetas de cada estado e método de pagamento estão em `src/locales/<língua>/loja.json`
+// (`estadoPedido.*`, `metodoPagamento.*`) — v1 é só levantamento em loja.

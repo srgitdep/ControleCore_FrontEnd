@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { mensagemDeErro } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { GoogleLoginBotao } from '../components/GoogleLoginBotao';
@@ -11,6 +12,7 @@ export function CriarContaPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const navegar = useNavigate();
   const registar = useContaClienteStore((s) => s.registar);
+  const { t } = useTranslation('loja');
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -27,9 +29,9 @@ export function CriarContaPage() {
     try {
       await registar({ lojaId, nome, email: email.trim(), telefone: telefone.trim() || undefined, password });
       navegar(`/loja/${lojaId}`, { replace: true });
-      toast.success('Conta criada.');
+      toast.success(t('conta.criada'));
     } catch (erro) {
-      toast.error(mensagemDeErro(erro, 'Não foi possível criar a conta.'));
+      toast.error(mensagemDeErro(erro, t('conta.erro_criar')));
     } finally {
       setARegistar(false);
     }
@@ -38,21 +40,21 @@ export function CriarContaPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
 
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />
           </div>
-          <h1 className="mt-3 text-lg font-semibold text-slate-900">Criar conta</h1>
-          <p className="mt-1 text-sm text-slate-500">Para comprar e acompanhar os seus pedidos.</p>
+          <h1 className="mt-3 text-lg font-semibold text-slate-900">{t('conta.criar')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t('conta.criar_subtitulo')}</p>
         </header>
 
         <GoogleLoginBotao lojaId={lojaId} destino={`/loja/${lojaId}`} />
 
         <form onSubmit={submeter} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
           <div>
-            <label className="block text-xs font-medium text-slate-700">Nome</label>
+            <label className="block text-xs font-medium text-slate-700">{t('conta.campo_nome')}</label>
             <input
               type="text"
               value={nome}
@@ -64,7 +66,7 @@ export function CriarContaPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">E-mail</label>
+            <label className="block text-xs font-medium text-slate-700">{t('conta.campo_email')}</label>
             <input
               type="email"
               value={email}
@@ -76,7 +78,7 @@ export function CriarContaPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">Telefone (opcional)</label>
+            <label className="block text-xs font-medium text-slate-700">{t('conta.campo_telefone')}</label>
             <input
               type="tel"
               value={telefone}
@@ -87,7 +89,7 @@ export function CriarContaPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">Senha</label>
+            <label className="block text-xs font-medium text-slate-700">{t('conta.campo_senha')}</label>
             <input
               type="password"
               value={password}
@@ -97,7 +99,7 @@ export function CriarContaPage() {
               autoComplete="new-password"
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
-            <p className="mt-1 text-[11px] text-slate-400">Mínimo de 8 caracteres.</p>
+            <p className="mt-1 text-[11px] text-slate-400">{t('conta.senha_minimo')}</p>
           </div>
 
           <button
@@ -106,14 +108,14 @@ export function CriarContaPage() {
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aRegistar && <Loader2 size={15} className="animate-spin" />}
-            Criar conta
+            {t('conta.criar')}
           </button>
         </form>
 
         <p className="mt-4 text-center text-xs text-slate-500">
-          Já tem conta?{' '}
+          {t('conta.ja_tem_conta')}{' '}
           <Link to={`/loja/${lojaId}/entrar`} className="font-medium text-blue-600 hover:underline">
-            Entrar
+            {t('conta.entrar')}
           </Link>
         </p>
       </div>

@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Minus, Package, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
@@ -23,13 +24,14 @@ export function CarrinhoPage() {
   const navegar = useNavigate();
   const { itens, actualizarQuantidade, remover, getSubtotal } = useCarrinhoStore();
   const { autenticado } = useContaClienteStore();
+  const { t } = useTranslation('loja');
 
   if (!lojaId) return null;
 
   const handleQuantidade = (produtoId: string, quantidade: number) => {
     const resultado = actualizarQuantidade(produtoId, quantidade);
     if (!resultado.ok) {
-      toast.error(`Apenas ${resultado.disponivel} disponível(is).`);
+      toast.error(t('carrinho.apenas_disponiveis', { count: resultado.disponivel }));
     }
   };
 
@@ -44,22 +46,22 @@ export function CarrinhoPage() {
       <LojaTopo lojaId={lojaId} />
 
       <div className="cc-caixa max-w-5xl py-8">
-        <VoltarLink to={`/loja/${lojaId}`}>Voltar ao catálogo</VoltarLink>
+        <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
 
-        <h1 className="mb-6 text-2xl font-extrabold text-slate-900">O meu carrinho</h1>
+        <h1 className="mb-6 text-2xl font-extrabold text-slate-900">{t('carrinho.titulo')}</h1>
 
         {itens.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
               <ShoppingBag size={26} className="text-slate-300" />
             </div>
-            <p className="text-sm font-medium text-slate-600">O carrinho está vazio.</p>
-            <p className="text-xs text-slate-400">Adicione produtos do catálogo para começar.</p>
+            <p className="text-sm font-medium text-slate-600">{t('carrinho.vazio')}</p>
+            <p className="text-xs text-slate-400">{t('carrinho.vazio_dica')}</p>
             <Link
               to={`/loja/${lojaId}`}
               className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:shadow-md"
             >
-              Ver o catálogo
+              {t('carrinho.ver_catalogo')}
               <ArrowRight size={14} />
             </Link>
           </div>
@@ -81,7 +83,10 @@ export function CarrinhoPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">{item.nome}</p>
                       <p className="mt-0.5 text-xs text-slate-400">
-                        {formatMoeda(item.precoVenda)} por {item.unidadeMedida.toLowerCase()}
+                        {t('carrinho.preco_por_unidade', {
+                          preco: formatMoeda(item.precoVenda),
+                          unidade: item.unidadeMedida.toLowerCase(),
+                        })}
                       </p>
 
                       <div className="mt-2.5 flex items-center gap-3">
@@ -90,7 +95,7 @@ export function CarrinhoPage() {
                             type="button"
                             onClick={() => handleQuantidade(item.produtoId, item.quantidade - 1)}
                             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-50"
-                            aria-label={`Diminuir quantidade de ${item.nome}`}
+                            aria-label={t('carrinho.diminuir', { nome: item.nome })}
                           >
                             <Minus size={12} />
                           </button>
@@ -99,7 +104,7 @@ export function CarrinhoPage() {
                             type="button"
                             onClick={() => handleQuantidade(item.produtoId, item.quantidade + 1)}
                             className="flex h-7 w-7 items-center justify-center rounded-full text-slate-600 hover:bg-slate-50"
-                            aria-label={`Aumentar quantidade de ${item.nome}`}
+                            aria-label={t('carrinho.aumentar', { nome: item.nome })}
                           >
                             <Plus size={12} />
                           </button>
@@ -111,7 +116,7 @@ export function CarrinhoPage() {
                           className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500"
                         >
                           <Trash2 size={13} />
-                          Remover
+                          {t('carrinho.remover')}
                         </button>
                       </div>
                     </div>
@@ -128,22 +133,22 @@ export function CarrinhoPage() {
             <div className="lg:col-span-1">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-4">
                 <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Resumo do pedido
+                  {t('resumo.titulo')}
                 </h2>
 
                 <div className="mt-4 space-y-2 text-sm">
                   <div className="flex justify-between text-slate-600">
-                    <span>{totalItens} {totalItens === 1 ? 'artigo' : 'artigos'}</span>
+                    <span>{t('artigos', { count: totalItens })}</span>
                     <span>{formatMoeda(getSubtotal())}</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
-                    <span>Pagamento</span>
-                    <span>No levantamento</span>
+                    <span>{t('resumo.pagamento')}</span>
+                    <span>{t('carrinho.no_levantamento')}</span>
                   </div>
                 </div>
 
                 <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-4">
-                  <span className="text-sm font-semibold text-slate-900">Total</span>
+                  <span className="text-sm font-semibold text-slate-900">{t('resumo.total')}</span>
                   <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(getSubtotal())}</span>
                 </div>
 
@@ -152,12 +157,12 @@ export function CarrinhoPage() {
                   onClick={avancar}
                   className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-transform hover:scale-[1.02] hover:shadow-md"
                 >
-                  {autenticado ? 'Continuar para o checkout' : 'Entrar para continuar'}
+                  {autenticado ? t('carrinho.continuar_checkout') : t('carrinho.entrar_para_continuar')}
                   <ArrowRight size={15} />
                 </button>
 
                 <p className="mt-3 text-center text-[11px] text-slate-400">
-                  Não é cobrado agora — paga na loja, no momento do levantamento.
+                  {t('checkout.nao_cobrado_agora_curto')}
                 </p>
               </div>
             </div>

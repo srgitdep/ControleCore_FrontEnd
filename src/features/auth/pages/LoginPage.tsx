@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { useAuth } from '../index';
@@ -11,6 +12,7 @@ import { entrarApi } from '../api/auth.api';
 import { usePortal } from '@/features/portal-fornecedor/store/usePortalStore';
 import { cn } from '@/shared/utils';
 import { useBreakpoint } from '@/shared/hooks';
+import { SelectorIdioma } from '@/shared/ui';
 import { COPY } from '@/shared/constants/copywriting';
 import { Marca } from '@/features/landing';
 
@@ -32,7 +34,7 @@ import '@/features/landing/site.css';
  *    estava escrito à mão dentro do JSX, sem passar por sítio nenhum onde se lesse.
  *
  * Agora o painel da esquerda é o **mesmo escuro** das secções invertidas da landing,
- * com a marca em cima, e roda entre as quatro promessas de `COPY.AUTH.SLIDES` — que
+ * com a marca em cima, e roda entre as quatro promessas de `auth:login.slides` — que
  * são as quatro dores da landing ditas em duas linhas. O formulário fica à direita,
  * em branco, porque um campo de texto sobre fundo escuro custa a ler.
  *
@@ -42,19 +44,22 @@ import '@/features/landing/site.css';
  * caminho de regresso era o botão do browser. É a mesma razão do `Link` na marca.
  */
 
-const loginSchema = z.object({
-  code: z.string().trim().min(1, 'O código de acesso é obrigatório'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
-});
+// As mensagens do Zod vêm da língua activa: o schema constrói-se dentro do componente.
+const criarLoginSchema = (t: (chave: 'validacao.codigo_obrigatorio' | 'validacao.senha_minimo_6') => string) =>
+  z.object({
+    code: z.string().trim().min(1, t('validacao.codigo_obrigatorio')),
+    password: z.string().min(6, t('validacao.senha_minimo_6')),
+  });
 
-type LoginForm = z.infer<typeof loginSchema>;
+type LoginForm = z.infer<ReturnType<typeof criarLoginSchema>>;
 
 export function LoginPage() {
   const { entrarComSessao } = useAuth();
   const { entrarComSessao: entrarNoPortal } = usePortal();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const copy = COPY.AUTH;
+  const { t } = useTranslation('auth');
+  const loginSchema = useMemo(() => criarLoginSchema(t), [t]);
   const emEcraLargo = useBreakpoint('sm');
 
   const {
@@ -73,18 +78,18 @@ export function LoginPage() {
 
       if (resposta.tipo === 'FORNECEDOR') {
         await entrarNoPortal(resposta.utilizador);
-        toast.success(copy.SUCESSO, { duration: 2000 });
+        toast.success(t('login.sucesso'), { duration: 2000 });
         navigate('/fornecedor', { replace: true });
         return;
       }
 
       entrarComSessao(resposta.user);
-      toast.success(copy.SUCESSO, { duration: 2000 });
+      toast.success(t('login.sucesso'), { duration: 2000 });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
       let message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       if (Array.isArray(message)) message = message[0];
-      toast.error(message || copy.ERRO_GENERICO);
+      toast.error(message || t('login.erro_generico'));
     }
   };
 
@@ -106,6 +111,11 @@ export function LoginPage() {
           }}
         >
           <div style={{ width: '100%', maxWidth: 380 }}>
+            {/* Sem sessão ainda: a escolha fica neste browser, e o login aplica depois a da conta. */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+              <SelectorIdioma />
+            </div>
+
             {/* A marca repete-se aqui, e só aparece quando o painel escuro
                 desaparece — em telemóvel, sem isto, o ecrã não diz onde se está. */}
             <Link
@@ -128,16 +138,16 @@ export function LoginPage() {
                 color: 'var(--tinta)',
               }}
             >
-              {copy.TITULO}
+              {t('login.titulo')}
             </h1>
             <p style={{ margin: '8px 0 0', fontSize: 14.5, lineHeight: 1.55, color: 'var(--tinta-suave)' }}>
-              {copy.SUBTITULO}
+              {t('login.subtitulo')}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: 'grid', gap: 18, marginTop: 30 }}>
               <div style={{ display: 'grid', gap: 7 }}>
                 <label htmlFor="code" style={etiquetaCampo}>
-                  {copy.CAMPO_CODIGO}
+                  {t('login.campo_codigo')}
                 </label>
                 <input
                   id="code"
@@ -153,7 +163,7 @@ export function LoginPage() {
                   autoCapitalize="characters"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder={copy.CAMPO_CODIGO_DICA}
+                  placeholder={t('login.campo_codigo_dica')}
                   aria-invalid={!!errors.code}
                   {...register('code')}
                   className={cn('cc-campo', errors.code && 'cc-campo--erro')}
@@ -164,13 +174,13 @@ export function LoginPage() {
               <div style={{ display: 'grid', gap: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <label htmlFor="password" style={etiquetaCampo}>
-                    {copy.CAMPO_SENHA}
+                    {t('login.campo_senha')}
                   </label>
                   <Link
                     to="/recuperar-senha"
                     style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--azul-fundo)', textDecoration: 'none' }}
                   >
-                    {copy.ESQUECEU}
+                    {t('login.esqueceu')}
                   </Link>
                 </div>
                 <div style={{ position: 'relative' }}>
@@ -178,7 +188,7 @@ export function LoginPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
-                    placeholder={copy.CAMPO_SENHA_DICA}
+                    placeholder={t('login.campo_senha_dica')}
                     aria-invalid={!!errors.password}
                     {...register('password')}
                     className={cn('cc-campo', 'cc-campo--com-botao', errors.password && 'cc-campo--erro')}
@@ -187,7 +197,7 @@ export function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     tabIndex={-1}
-                    aria-label={showPassword ? copy.OCULTAR_SENHA : copy.MOSTRAR_SENHA}
+                    aria-label={showPassword ? t('login.ocultar_senha') : t('login.mostrar_senha')}
                     style={{
                       position: 'absolute',
                       right: 12,
@@ -217,10 +227,10 @@ export function LoginPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 size={16} className="cc-gira" />
-                    {copy.A_SUBMETER}
+                    {t('login.a_submeter')}
                   </>
                 ) : (
-                  copy.SUBMETER
+                  t('login.submeter')
                 )}
               </button>
             </form>
@@ -238,13 +248,13 @@ export function LoginPage() {
               }}
             >
               <ArrowLeft size={14} />
-              {copy.VOLTAR}
+              {t('login.voltar')}
             </Link>
 
             <p style={{ marginTop: 14, fontSize: 12.5, color: 'var(--tinta-tenue)' }}>
-              {copy.QUER_COMPRAR}{' '}
+              {t('login.quer_comprar')}{' '}
               <Link to="/loja" style={{ fontWeight: 600, color: 'var(--azul-fundo)', textDecoration: 'none' }}>
-                {copy.IR_A_LOJA}
+                {t('login.ir_a_loja')}
               </Link>
             </p>
           </div>
@@ -261,7 +271,12 @@ export function LoginPage() {
  * de comprimentos diferentes fazem os pontos saltar de posição.
  */
 function PainelDaMarca() {
-  const slides = COPY.AUTH.SLIDES;
+  const { t } = useTranslation('auth');
+  // O `0|1|2|3` fixa os índices no tipo: o catálogo guarda os slides como `slides.0`…`slides.3`.
+  const slides = ([0, 1, 2, 3] as const).map((i) => ({
+    titulo: t(`login.slides.${i}.titulo`),
+    descricao: t(`login.slides.${i}.descricao`),
+  }));
   const [actual, setActual] = useState(0);
 
   useEffect(() => {
@@ -376,7 +391,7 @@ function PainelDaMarca() {
           ))}
         </div>
 
-        <div role="tablist" aria-label="Destaques" style={{ display: 'flex', gap: 7, marginTop: 26 }}>
+        <div role="tablist" aria-label={t('login.destaques')} style={{ display: 'flex', gap: 7, marginTop: 26 }}>
           {slides.map((s, i) => (
             <button
               key={s.titulo}
@@ -401,7 +416,7 @@ function PainelDaMarca() {
       </div>
 
       <p style={{ position: 'relative', margin: 0, fontSize: 12, color: '#617ea6' }}>
-        © {new Date().getFullYear()} {COPY.MARCA.EMPRESA}. {COPY.SITIO.RODAPE.DIREITOS}
+        © {new Date().getFullYear()} {COPY.MARCA.EMPRESA}. {t('login.direitos')}
       </p>
     </div>
   );
