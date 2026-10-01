@@ -40,62 +40,8 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-### Multilínguas — Fase 2A: Compra Fácil e login em inglês (§4.2)
+Nenhuma fase em curso.
 
-**Início:** 2026-09-29 · **Âmbito:** frontend + backend.
-**Fase 2 dividida em três blocos**, cada um com merge e deploy próprios (o inventário
-deu ~1.300 textos, mais do que a §4.2 estimava): **A** — Compra Fácil, login e
-notificações de pedido; **B** — portal do fornecedor e mercado; **C** — landing, preços
-e adesão.
-**Tradução:** escrita por Claude; a revisão por uma pessoa fluente em inglês (§4.4)
-fica **pendente**, por decisão do utilizador, para depois do deploy — os textos estão
-todos em `src/locales/en/` e `src/i18n/en/`, e corrigi-los não mexe em código.
-
-**Frontend**
-
-- [x] Namespace `loja` (`src/locales/{pt,en}/loja.json`): as 9 páginas e os 5
-      componentes de `src/features/compra-facil`, as etiquetas de estado e de método de
-      pagamento (`pedidos.api.ts`) e os toasts de `usePedidosCommerce.ts`.
-- [x] Namespace `auth`: `LoginPage`, `ForgotPasswordPage`, `ResetPasswordPage` e as
-      mensagens Zod deles; `COPY.AUTH` sai do `copywriting.ts` para o namespace.
-- [x] `CarrinhoPage`: «{preço} por {unidade}» montado por concatenação → chave com
-      parâmetros.
-
-**Backend**
-
-- [x] Erros do lado do cliente do Compra Fácil (~20: guarda da conta, Google, criar e
-      cancelar pedido, loja, catálogo) com `codigo` e catálogo `erros.commerce.*`.
-- [x] Erros do login e da recuperação de senha (~12) e as mensagens escritas à mão nos
-      DTOs de auth (7) com `codigo`/chaves.
-- [x] Notificações de pedido ao cliente (confirmado, pronto, entregue, cancelado) na
-      língua do cliente: `ContaCliente.idioma` pelo `clienteId`, sem conta → português.
-- [x] Testes (notificação na língua do cliente; erros traduzidos), build.
-
-**Documentação, deploy e verificação**
-
-- [x] `TRD.md`, Secção 2.
-- [ ] Deploy backend → frontend.
-- [ ] Verificar: loja em inglês de ponta a ponta (catálogo → carrinho → checkout →
-      pedido), login e recuperação de senha em inglês, e em português tudo igual a
-      antes.
-
-
-**Desvios e achados durante a fase**
-
-- As traduções passaram a ir **todas no bundle inicial** (`import.meta.glob` em
-  `src/i18n/index.ts`), e não por `import()` sob pedido como na Fase 1: sem nenhum
-  `Suspense` na aplicação, o ecrã mostrava as chaves cruas enquanto o ficheiro
-  descarregava. O `loja` tem ~5 KB por língua.
-- O botão «Continuar com a Google» é desenhado pela Google e o script só lê o `locale`
-  quando carrega: aplica-se à carga da página. Remontar o provider a cada mudança
-  apagava o que a pessoa já escrevera nos formulários.
-- As mensagens escritas à mão nos DTOs só se traduzem com `mensagemTraduzida()`
-  (o `class-validator` aceita uma função em `message` e chama-a ao validar, já dentro do
-  pedido). Uma string fixa seria resolvida ao carregar o módulo, sem língua.
-- As notificações de pedido passaram de «texto pronto» para «tipo + parâmetros»:
-  quem dispara é o funcionário, e o texto tem de sair na língua do **cliente**.
-- Um erro de digitação em `MÍnimo 6 caracteres` (`ResetPasswordPage`) foi corrigido ao
-  mover o texto para o catálogo.
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -841,6 +787,16 @@ esse merge trouxe.
   >   mexe em código: está em `src/locales/en/` e `src/i18n/en/`.
   > - Fica por fazer nesta área: os erros do lado de **gestão** do Compra Fácil (conferir,
   >   confirmar levantamento, transitar — 19 excepções) pertencem ao ERP, Fase 4.
+  >
+  > **Verificado em produção** (backend v69, frontend no Vercel, 2026-10-01):
+  > `POST /auth/login` com um código inexistente responde «Código Inválido. Usuário não
+  > existe.» sem língua e «Invalid code. User does not exist.» com `Accept-Language: en-GB`;
+  > a validação escrita à mão num DTO («The access code is required») e o erro da conta de
+  > cliente («Session not found. Please sign in again.») saem em inglês; o catálogo
+  > `notificacoes.json` está no `dist`; o bundle publicado contém os textos ingleses da
+  > loja. **Por confirmar pelo utilizador**, que não consigo exercitar daqui: percorrer a
+  > loja em inglês no browser (catálogo, carrinho, checkout, conta, pedidos) e receber o
+  > e-mail de um pedido na língua escolhida.
 
 ---
 
