@@ -40,8 +40,62 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-Nenhuma fase em curso.
+### Multilínguas — Fase 2A: Compra Fácil e login em inglês (§4.2)
 
+**Início:** 2026-09-29 · **Âmbito:** frontend + backend.
+**Fase 2 dividida em três blocos**, cada um com merge e deploy próprios (o inventário
+deu ~1.300 textos, mais do que a §4.2 estimava): **A** — Compra Fácil, login e
+notificações de pedido; **B** — portal do fornecedor e mercado; **C** — landing, preços
+e adesão.
+**Tradução:** escrita por Claude; a revisão por uma pessoa fluente em inglês (§4.4)
+fica **pendente**, por decisão do utilizador, para depois do deploy — os textos estão
+todos em `src/locales/en/` e `src/i18n/en/`, e corrigi-los não mexe em código.
+
+**Frontend**
+
+- [x] Namespace `loja` (`src/locales/{pt,en}/loja.json`): as 9 páginas e os 5
+      componentes de `src/features/compra-facil`, as etiquetas de estado e de método de
+      pagamento (`pedidos.api.ts`) e os toasts de `usePedidosCommerce.ts`.
+- [x] Namespace `auth`: `LoginPage`, `ForgotPasswordPage`, `ResetPasswordPage` e as
+      mensagens Zod deles; `COPY.AUTH` sai do `copywriting.ts` para o namespace.
+- [x] `CarrinhoPage`: «{preço} por {unidade}» montado por concatenação → chave com
+      parâmetros.
+
+**Backend**
+
+- [x] Erros do lado do cliente do Compra Fácil (~20: guarda da conta, Google, criar e
+      cancelar pedido, loja, catálogo) com `codigo` e catálogo `erros.commerce.*`.
+- [x] Erros do login e da recuperação de senha (~12) e as mensagens escritas à mão nos
+      DTOs de auth (7) com `codigo`/chaves.
+- [x] Notificações de pedido ao cliente (confirmado, pronto, entregue, cancelado) na
+      língua do cliente: `ContaCliente.idioma` pelo `clienteId`, sem conta → português.
+- [x] Testes (notificação na língua do cliente; erros traduzidos), build.
+
+**Documentação, deploy e verificação**
+
+- [x] `TRD.md`, Secção 2.
+- [ ] Deploy backend → frontend.
+- [ ] Verificar: loja em inglês de ponta a ponta (catálogo → carrinho → checkout →
+      pedido), login e recuperação de senha em inglês, e em português tudo igual a
+      antes.
+
+
+**Desvios e achados durante a fase**
+
+- As traduções passaram a ir **todas no bundle inicial** (`import.meta.glob` em
+  `src/i18n/index.ts`), e não por `import()` sob pedido como na Fase 1: sem nenhum
+  `Suspense` na aplicação, o ecrã mostrava as chaves cruas enquanto o ficheiro
+  descarregava. O `loja` tem ~5 KB por língua.
+- O botão «Continuar com a Google» é desenhado pela Google e o script só lê o `locale`
+  quando carrega: aplica-se à carga da página. Remontar o provider a cada mudança
+  apagava o que a pessoa já escrevera nos formulários.
+- As mensagens escritas à mão nos DTOs só se traduzem com `mensagemTraduzida()`
+  (o `class-validator` aceita uma função em `message` e chama-a ao validar, já dentro do
+  pedido). Uma string fixa seria resolvida ao carregar o módulo, sem língua.
+- As notificações de pedido passaram de «texto pronto» para «tipo + parâmetros»:
+  quem dispara é o funcionário, e o texto tem de sair na língua do **cliente**.
+- Um erro de digitação em `MÍnimo 6 caracteres` (`ResetPasswordPage`) foi corrigido ao
+  mover o texto para o catálogo.
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -752,6 +806,42 @@ esse merge trouxe.
   > de língua no browser (selector, preferência noutro browser) fica por confirmar pelo
   > utilizador — não há forma de a exercitar daqui.
 
+
+### Fase 19 — Multilínguas, Fase 2A: Compra Fácil e login em inglês (1 Out 2026)
+
+- **2026-10-01 · [BE] · Antonio Mambo** — `feat/multilinguas-fase-2a`
+  - feat(i18n): erros do cliente e notificações de pedido traduzidos
+- **2026-10-01 · [FE] · Antonio Mambo** — `feat/multilinguas-fase-2a`
+  - feat(i18n): loja online e login em inglês
+
+  > **A Fase 2 da §4.2 divide-se em três blocos** (o inventário deu ~1.300 textos, mais do
+  > que a §4.2 estimava), cada um com merge e deploy próprios: **A** — Compra Fácil, login
+  > e notificações de pedido (esta entrada); **B** — portal do fornecedor e mercado; **C** —
+  > landing, preços e adesão.
+  >
+  > **O que passa a existir em inglês:** a loja online do princípio ao fim (catálogo,
+  > produto, carrinho, checkout, conta, pedidos), o login, a recuperação e a redefinição
+  > de senha, os erros do servidor dessas áreas, e os e-mails de confirmação, preparação,
+  > entrega e cancelamento do pedido — que saem na língua **do cliente** (a da conta, ou a
+  > da empresa, ou português). O selector aparece também no login e na página inicial da
+  > loja, que tem um topo próprio.
+  >
+  > - Frontend: namespaces `loja` (98 textos) e `auth` (53), 9 páginas e 5 componentes da
+  >   loja, 3 páginas de autenticação, schemas Zod por língua, `COPY.AUTH` removido do
+  >   `copywriting.ts`. As etiquetas `ETIQUETA_ESTADO_PEDIDO` e
+  >   `ETIQUETA_METODO_PAGAMENTO` da loja passaram a chaves (as do ERP ficam para a Fase 3).
+  > - Backend: 35 chaves em `erros.json` (Compra Fácil, autenticação e DTOs de auth) e
+  >   `notificacoes.json`; `mensagemTraduzida()`; `NotificarClientePedidoService` recebe
+  >   tipo + parâmetros em vez do texto.
+  > - Testes: backend 1878 (novos: consistência dos catálogos — cada `codigo` usado no
+  >   código existe nas duas línguas —, o serviço de notificação com o `I18nService` e os
+  >   catálogos reais, e dois casos no teste HTTP); frontend 118.
+  > - **Tradução do inglês escrita por Claude, ainda sem revisão por uma pessoa fluente**
+  >   (§4.4) — decisão do utilizador: publica-se e revê-se depois. Corrigir um texto não
+  >   mexe em código: está em `src/locales/en/` e `src/i18n/en/`.
+  > - Fica por fazer nesta área: os erros do lado de **gestão** do Compra Fácil (conferir,
+  >   confirmar levantamento, transitar — 19 excepções) pertencem ao ERP, Fase 4.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -892,9 +982,20 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       `Accept-Language` no axios; selector de língua; `formatMoeda`/`formatData`
       pela língua activa, substituindo as 143 chamadas `toLocale*` com cinco locales
       diferentes; testes de paridade de chaves.
-- [ ] **Fase 2 — Superfícies públicas.** Compra Fácil, mercado, landing
-      (`copywriting.ts`), portal do fornecedor, e-mails e notificações ao cliente,
-      erros de `commerce`, `b2b` e `auth`.
+- [x] **Fase 2A — Compra Fácil e login.** Concluída em 2026-10-01 (Fase 19).
+- [ ] **Fase 2B — Portal do fornecedor e mercado.** ~485 textos: o portal (~434, o maior
+      bloco — `ArtigoFormModal`, `ImportarCatalogoPage`, `VitrinePage`, `PerfilPage`,
+      `RegistarFornecedorPage`, zonas, documentos, preços), o mercado público (~51), as
+      etiquetas de `portal.api.ts` e `mercado.api.ts`, os formatadores locais (`fmt` com
+      `pt-PT` + «MT») para `formatMoeda`/`formatData`, ~30 erros do `b2b` e o e-mail de
+      boas-vindas ao fornecedor (que ainda não leva `idioma`: o registo público não o
+      pergunta).
+- [ ] **Fase 2C — Site público e adesão.** ~443 textos: o `copywriting.ts` (~178) e
+      `precos.dados.ts` (104) com o seu `PrecosPage` (47), a landing (~38), o pedido de
+      adesão público (~60) e os e-mails de adesão (`PedidoAdesao` só tem `gestorEmail`:
+      sem língua, usar a do browser no momento do pedido).
+- [ ] Revisão das traduções em inglês por uma pessoa fluente (§4.4), das Fases 1, 2A, 2B
+      e 2C — decisão de 2026-10-01: publicar com a tradução de Claude e rever depois.
 - [ ] **Fase 3 — ERP e POS.** Extracção por feature, POS primeiro (telemóvel).
 - [ ] **Fase 4 — Servidor e Mayra.** Excepções dos restantes módulos; língua
       preferida no prompt da Mayra; cache da análise de necessidades separada por

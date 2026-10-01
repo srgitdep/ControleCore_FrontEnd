@@ -73,8 +73,16 @@ tipadas contra o catálogo português (`src/i18n/tipos.d.ts`). Língua activa: a
 (`localStorage.idioma`) → a do browser → português. Todas as instâncias do axios enviam
 `Accept-Language` com a língua activa (`enviarLinguaActiva`). `formatMoeda`/`formatData`
 seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdioma`
-(`src/shared/ui/`) no ERP, na loja, no portal e nas páginas públicas. Teste de paridade
-(`src/i18n/paridade.test.ts`) falha se uma chave faltar numa das línguas.
+(`src/shared/ui/`) no ERP, na loja (também na página inicial, que tem topo próprio), no
+portal, no login e nas páginas públicas. Teste de paridade (`src/i18n/paridade.test.ts`)
+falha se uma chave faltar numa das línguas.
+
+Namespaces existentes: `comum`, `loja` (Compra Fácil) e `auth` (login, recuperação e
+redefinição de senha). **Todos vão no bundle inicial**, juntos por `import.meta.glob`:
+carregá-los sob pedido deixava o ecrã com as chaves cruas enquanto o ficheiro descarregava
+(não há `Suspense`). Os schemas do Zod constroem-se dentro do componente, com `t`, para a
+mensagem de erro seguir a língua. O botão «Continuar com a Google» recebe o `locale` no
+`GoogleOAuthProvider` e aplica-o à carga da página (o script lê-o uma só vez).
 
 ---
 
@@ -121,7 +129,14 @@ Mensagens do `ValidationPipe` traduzidas pela regra (`src/shared/traduzir-valida
 as escritas à mão num DTO ficam). Erros com chave estável:
 `throw new XException({ codigo, message, parametros })`, traduzido por
 `TraduzirExcecaoFilter` (`erros.<codigo>`; sem `codigo`, o tratamento de sempre).
-`traduzir(chave, textoPt)` para mensagens fora de excepções. Rotas da preferência:
+`traduzir(chave, textoPt)` para mensagens fora de excepções. Mensagens escritas à mão num
+DTO traduzem-se com `mensagemTraduzida(chave, textoPt)` em `message` (o `class-validator`
+chama a função ao validar, já dentro do pedido). Um teste (`codigos-de-erro.spec.ts`)
+confirma que cada `codigo` e cada `mensagemTraduzida` usados no código existem nos dois
+catálogos, e que todos os ficheiros de `src/i18n/` têm as mesmas chaves em `pt` e `en`.
+**Notificações ao cliente** (`NotificarClientePedidoService`): recebem tipo + parâmetros
+(`notificacoes.pedido.<tipo>`) e escrevem na língua do cliente — `ContaCliente.idioma`, depois
+`Empresa.idiomaPadrao`, depois português —, porque quem as dispara é um funcionário. Rotas da preferência:
 `PATCH /auth/eu/idioma`, `PATCH /commerce/conta/eu/idioma`, `idioma` no
 `PATCH /portal-fornecedor/perfil`, `idiomaPadrao` no `PATCH /empresas/:id`; a língua
 vem na resposta do login dos três tipos de conta.
