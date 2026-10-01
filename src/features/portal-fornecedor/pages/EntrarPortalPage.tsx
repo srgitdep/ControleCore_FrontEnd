@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { SelectorIdioma } from '@/shared/ui';
 import { mensagemDeErro } from '@/shared/utils';
 import { usePortalStore } from '../store/usePortalStore';
 
@@ -18,6 +20,7 @@ import { usePortalStore } from '../store/usePortalStore';
  * próprio, e daí a instância de axios própria em `portal.api.ts`.
  */
 export function EntrarPortalPage() {
+  const { t } = useTranslation('portal');
   const navegar = useNavigate();
   const entrar = usePortalStore((s) => s.entrar);
 
@@ -36,7 +39,7 @@ export function EntrarPortalPage() {
       // O backend responde sempre «Credenciais inválidas» — não distingue e-mail inexistente
       // de senha errada, para não servir de oráculo sobre quem está na plataforma. A
       // mensagem é mostrada como vem.
-      toast.error(mensagemDeErro(erro, 'Não foi possível entrar.'));
+      toast.error(mensagemDeErro(erro, t('entrar.erro_entrar')));
     } finally {
       setAEntrar(false);
     }
@@ -45,20 +48,24 @@ export function EntrarPortalPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
+
         <Link
           to="/criar-conta"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
         >
           <ArrowLeft size={15} />
-          Voltar
+          {t('comum.voltar')}
         </Link>
 
         <header className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
             <Store size={22} className="text-white" />
           </div>
-          <h1 className="mt-3 text-lg font-semibold text-slate-900">Portal do Fornecedor</h1>
-          <p className="mt-1 text-sm text-slate-500">Gerir a sua vitrine e os seus preços.</p>
+          <h1 className="mt-3 text-lg font-semibold text-slate-900">{t('comum.portal_fornecedor')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t('entrar.subtitulo')}</p>
         </header>
 
         <form
@@ -78,7 +85,7 @@ export function EntrarPortalPage() {
           */}
           <div>
             <label className="block text-xs font-medium text-slate-700">
-              E-mail ou código de acesso
+              {t('entrar.identificador')}
             </label>
             <input
               type="text"
@@ -86,16 +93,16 @@ export function EntrarPortalPage() {
               onChange={(e) => setIdentificador(e.target.value)}
               required
               autoComplete="username"
-              placeholder="F4821 ou o seu e-mail"
+              placeholder={t('entrar.identificador_exemplo')}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              O código veio no e-mail do registo, no formato F seguido de quatro dígitos.
+              {t('entrar.identificador_ajuda')}
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">Senha</label>
+            <label className="block text-xs font-medium text-slate-700">{t('entrar.senha')}</label>
             <input
               type="password"
               value={password}
@@ -112,14 +119,14 @@ export function EntrarPortalPage() {
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aEntrar && <Loader2 size={15} className="animate-spin" />}
-            Entrar
+            {t('entrar.entrar')}
           </button>
         </form>
 
         <p className="mt-4 text-center text-xs text-slate-500">
-          Ainda não tem conta?{' '}
+          {t('entrar.ainda_sem_conta')}{' '}
           <Link to="/fornecedor/registar" className="font-medium text-blue-600 hover:underline">
-            Registar a minha empresa
+            {t('entrar.registar_empresa')}
           </Link>
         </p>
 
@@ -127,9 +134,9 @@ export function EntrarPortalPage() {
             saída, quem chega aqui por engano — um utilizador da empresa compradora que abriu
             o link errado — fica sem forma de voltar. */}
         <p className="mt-2 text-center text-xs text-slate-400">
-          É utilizador de uma empresa compradora?{' '}
+          {t('entrar.utilizador_comprador')}{' '}
           <Link to="/login" className="hover:underline">
-            Entrar no ControlCore
+            {t('entrar.entrar_controlcore')}
           </Link>
         </p>
       </div>

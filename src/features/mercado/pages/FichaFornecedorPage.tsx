@@ -12,7 +12,9 @@ import {
   Store,
   Users,
 } from 'lucide-react';
-import { ETIQUETA_DOCUMENTO_PUBLICO, mercado } from '../api/mercado.api';
+import { useTranslation } from 'react-i18next';
+import { TIPOS_DOCUMENTO_PUBLICO, mercado } from '../api/mercado.api';
+import { SelectorIdioma } from '@/shared/ui';
 
 /**
  * A ficha pública de um fornecedor.
@@ -30,7 +32,14 @@ import { ETIQUETA_DOCUMENTO_PUBLICO, mercado } from '../api/mercado.api';
  * página é pública. O ecrã tem de dizer «não divulgado» e nunca «0», que seria falso.
  */
 export function FichaFornecedorPage() {
+  const { t } = useTranslation('mercado');
   const { organizacaoId } = useParams<{ organizacaoId: string }>();
+
+  // O tipo vem do servidor como texto livre: um tipo desconhecido mostra-se tal como chegou.
+  const etiqueta = (tipo: string) =>
+    (TIPOS_DOCUMENTO_PUBLICO as readonly string[]).includes(tipo)
+      ? t(`documento.${tipo as (typeof TIPOS_DOCUMENTO_PUBLICO)[number]}`)
+      : tipo;
 
   const { data: ficha, isLoading, isError } = useQuery({
     queryKey: ['mercado-ficha', organizacaoId],
@@ -48,14 +57,17 @@ export function FichaFornecedorPage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft size={15} />
-            Mercado
+            {t('ficha.voltar')}
           </Link>
-          <Link
-            to="/fornecedor/registar"
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Sou fornecedor
-          </Link>
+          <div className="flex items-center gap-2">
+            <SelectorIdioma />
+            <Link
+              to="/fornecedor/registar"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('cabecalho.sou_fornecedor')}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -67,9 +79,9 @@ export function FichaFornecedorPage() {
         ) : isError || !ficha ? (
           <div className="rounded-lg border border-dashed border-slate-300 py-16 text-center">
             <Building2 size={26} className="mx-auto text-slate-300" />
-            <p className="mt-2 text-sm text-slate-600">Fornecedor não encontrado.</p>
+            <p className="mt-2 text-sm text-slate-600">{t('ficha.nao_encontrado')}</p>
             <Link to="/mercado" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
-              Voltar ao mercado
+              {t('ficha.voltar_ao_mercado')}
             </Link>
           </div>
         ) : (
@@ -118,22 +130,22 @@ export function FichaFornecedorPage() {
               <Indicador
                 icone={Package}
                 valor={String(ficha.artigosPublicados)}
-                etiqueta={`artigo${ficha.artigosPublicados === 1 ? '' : 's'} publicado${ficha.artigosPublicados === 1 ? '' : 's'}`}
+                etiqueta={t('ficha.artigos_publicados', { count: ficha.artigosPublicados })}
               />
               <Indicador
                 icone={MapPin}
                 valor={String(ficha.provinciasServidas.length)}
-                etiqueta={`província${ficha.provinciasServidas.length === 1 ? '' : 's'} servida${ficha.provinciasServidas.length === 1 ? '' : 's'}`}
+                etiqueta={t('ficha.provincias_servidas', { count: ficha.provinciasServidas.length })}
               />
               <Indicador
                 icone={Users}
                 valor={ficha.compradoresActivos !== null ? String(ficha.compradoresActivos) : '—'}
-                etiqueta="compradores activos"
+                etiqueta={t('ficha.compradores_activos')}
                 // A distinção entre «não divulgado» e «nenhum» é a razão de este campo
                 // poder vir nulo. Um «0» aqui seria uma afirmação falsa.
                 nota={
                   ficha.compradoresActivos === null
-                    ? 'Não divulgado — abaixo de cinco compradores o número não é publicado, por anonimato.'
+                    ? t('ficha.compradores_nota')
                     : undefined
                 }
               />
@@ -143,10 +155,10 @@ export function FichaFornecedorPage() {
               <section className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
                 <h2 className="flex items-center gap-1.5 text-sm font-semibold text-emerald-900">
                   <ShieldCheck size={15} />
-                  Documentação verificada
+                  {t('ficha.documentacao_titulo')}
                 </h2>
                 <p className="mt-0.5 text-[11px] leading-snug text-emerald-800">
-                  Verificada pela plataforma e dentro da validade nesta data.
+                  {t('ficha.documentacao_texto')}
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {ficha.documentosValidos.map((tipo) => (
@@ -155,7 +167,7 @@ export function FichaFornecedorPage() {
                       className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-800"
                     >
                       <CheckCircle2 size={11} />
-                      {ETIQUETA_DOCUMENTO_PUBLICO[tipo] ?? tipo}
+                      {etiqueta(tipo)}
                     </li>
                   ))}
                 </ul>
@@ -164,7 +176,7 @@ export function FichaFornecedorPage() {
 
             {ficha.categorias.length > 0 && (
               <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                <h2 className="text-sm font-semibold text-slate-900">O que fornece</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t('ficha.o_que_fornece')}</h2>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {ficha.categorias.map((categoria) => (
                     <li
@@ -180,7 +192,7 @@ export function FichaFornecedorPage() {
 
             {ficha.provinciasServidas.length > 0 && (
               <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                <h2 className="text-sm font-semibold text-slate-900">Onde entrega</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t('ficha.onde_entrega')}</h2>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {ficha.provinciasServidas.map((provincia) => (
                     <li
@@ -197,18 +209,16 @@ export function FichaFornecedorPage() {
 
             <section className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5 text-center">
               <p className="text-sm font-medium text-blue-900">
-                Quer comprar a este fornecedor?
+                {t('ficha.cta_titulo')}
               </p>
               <p className="mx-auto mt-1 max-w-md text-xs leading-snug text-blue-800">
-                No ControlCore, cria uma requisição com o que precisa e o sistema compara este
-                fornecedor com todos os outros — preço por unidade, prazo, fiabilidade e custo
-                de entrega — e diz-lhe qual sai melhor, e porquê.
+                {t('ficha.cta_texto')}
               </p>
               <Link
                 to="/login"
                 className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >
-                Entrar no ControlCore
+                {t('ficha.entrar')}
               </Link>
             </section>
           </>

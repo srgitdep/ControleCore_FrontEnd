@@ -10,12 +10,11 @@ import {
   Search,
   Store,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { PROVINCIAS_MERCADO, mercado } from '../api/mercado.api';
 import { useDebounce } from '@/shared/hooks';
-import { cn } from '@/shared/utils';
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+import { SelectorIdioma } from '@/shared/ui';
+import { cn, formatMoeda } from '@/shared/utils';
 
 /**
  * O directório público de fornecedores.
@@ -36,6 +35,7 @@ const mt = (v: number) =>
  * Os preços que mostra são os de tabela que o próprio fornecedor publicou para serem vistos.
  */
 export function MercadoPage() {
+  const { t } = useTranslation('mercado');
   const [parametros, setParametros] = useSearchParams();
 
   // O estado vive no URL e não no componente. Uma busca no mercado é para ser partilhada —
@@ -72,24 +72,25 @@ export function MercadoPage() {
             </div>
             <div>
               <p className="text-sm font-semibold leading-tight text-slate-900">
-                Mercado de Fornecedores
+                {t('cabecalho.titulo')}
               </p>
               <p className="text-xs leading-tight text-slate-500">SRG ControlCore</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-2">
+            <SelectorIdioma />
             <Link
               to="/fornecedor/registar"
               className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
-              Sou fornecedor
+              {t('cabecalho.sou_fornecedor')}
             </Link>
             <Link
               to="/login"
               className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
             >
-              Entrar
+              {t('cabecalho.entrar')}
             </Link>
           </div>
         </div>
@@ -98,11 +99,10 @@ export function MercadoPage() {
       <main className="mx-auto max-w-5xl px-4 py-6">
         <div className="mb-5">
           <h1 className="text-lg font-semibold text-slate-900">
-            Quem fornece o quê, e onde entrega
+            {t('lista.titulo')}
           </h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Fornecedores com catálogo publicado na plataforma. Os preços são os de tabela que
-            cada um publicou.
+            {t('lista.subtitulo')}
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export function MercadoPage() {
                 setTermo(e.target.value);
                 actualizarUrl('termo', e.target.value);
               }}
-              placeholder="Arroz, óleo, detergente, bebidas…"
+              placeholder={t('lista.placeholder_busca')}
               className="w-full rounded-md border border-slate-300 py-2.5 pl-9 pr-3 text-sm focus:border-blue-500 focus:outline-none"
             />
             {isFetching && (
@@ -134,7 +134,7 @@ export function MercadoPage() {
             onChange={(e) => actualizarUrl('provincia', e.target.value)}
             className="rounded-md border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
           >
-            <option value="">Todas as províncias</option>
+            <option value="">{t('lista.todas_provincias')}</option>
             {PROVINCIAS_MERCADO.map((p) => (
               <option key={p} value={p}>
                 {p}
@@ -152,27 +152,28 @@ export function MercadoPage() {
             <Building2 size={26} className="mx-auto text-slate-300" />
             <p className="mt-2 text-sm text-slate-600">
               {termoAtrasado || provincia
-                ? 'Nenhum fornecedor com esses critérios.'
-                : 'Ainda não há fornecedores com catálogo publicado.'}
+                ? t('lista.vazio_filtrado')
+                : t('lista.vazio_geral')}
             </p>
             <p className="mx-auto mt-1 max-w-sm text-xs leading-snug text-slate-500">
               {termoAtrasado || provincia
-                ? 'Tente um termo mais geral, ou remova o filtro de província.'
-                : 'O mercado cresce com quem publica. Se fornece a supermercados, registe-se — não paga nada.'}
+                ? t('lista.vazio_dica_filtrado')
+                : t('lista.vazio_dica_geral')}
             </p>
             <Link
               to="/fornecedor/registar"
               className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline"
             >
-              Registar a minha empresa
+              {t('lista.registar_empresa')}
               <ArrowRight size={14} />
             </Link>
           </div>
         ) : (
           <>
             <p className="mb-2 text-xs text-slate-500">
-              {fornecedores.length} fornecedor{fornecedores.length === 1 ? '' : 'es'}
-              {provincia ? ` a entregar em ${provincia}` : ''}
+              {provincia
+                ? t('lista.fornecedores_em', { count: fornecedores.length, provincia })
+                : t('lista.fornecedores', { count: fornecedores.length })}
             </p>
 
             <ul className="space-y-3">
@@ -196,14 +197,14 @@ export function MercadoPage() {
                       <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                         <span className="inline-flex items-center gap-1">
                           <Package size={11} />
-                          {f.artigosPublicados} artigo{f.artigosPublicados === 1 ? '' : 's'}
+                          {t('lista.artigos', { count: f.artigosPublicados })}
                         </span>
                         {f.provinciasServidas.length > 0 && (
                           <span className="inline-flex items-center gap-1">
                             <MapPin size={11} />
                             {f.provinciasServidas.slice(0, 3).join(', ')}
                             {f.provinciasServidas.length > 3 &&
-                              ` +${f.provinciasServidas.length - 3}`}
+                              t('lista.mais_provincias', { count: f.provinciasServidas.length - 3 })}
                           </span>
                         )}
                       </p>
@@ -213,7 +214,7 @@ export function MercadoPage() {
                       to={`/mercado/fornecedores/${f.organizacaoId}`}
                       className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     >
-                      Ver ficha
+                      {t('lista.ver_ficha')}
                       <ArrowRight size={13} />
                     </Link>
                   </div>
@@ -243,7 +244,7 @@ export function MercadoPage() {
                           >
                             {/* «Sob consulta» e não «0»: o fornecedor pode publicar o artigo
                                 sem publicar preço, e um zero leria-se como grátis. */}
-                            {artigo.precoBase !== null ? mt(artigo.precoBase) : 'sob consulta'}
+                            {artigo.precoBase !== null ? formatMoeda(artigo.precoBase) : t('lista.sob_consulta')}
                           </span>
                         </li>
                       ))}
@@ -256,16 +257,15 @@ export function MercadoPage() {
         )}
 
         <footer className="mt-10 border-t border-slate-200 pt-5 text-center">
-          <p className="text-sm font-medium text-slate-700">Fornece a supermercados?</p>
+          <p className="text-sm font-medium text-slate-700">{t('lista.rodape_titulo')}</p>
           <p className="mx-auto mt-1 max-w-md text-xs leading-snug text-slate-500">
-            Publique o seu catálogo uma vez e fique visível a todos os compradores da
-            plataforma. O registo é gratuito.
+            {t('lista.rodape_texto')}
           </p>
           <Link
             to="/fornecedor/registar"
             className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Registar a minha empresa
+            {t('lista.registar_empresa')}
             <ArrowRight size={15} />
           </Link>
         </footer>

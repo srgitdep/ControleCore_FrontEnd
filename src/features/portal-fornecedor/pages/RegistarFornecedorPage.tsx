@@ -12,11 +12,13 @@ import {
   User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   avisoDeNuitAoEscrever,
   diagnosticarNuit,
   mensagemDeErro,
 } from '@/shared/utils';
+import { SelectorIdioma } from '@/shared/ui';
 import { portal } from '../api/portal.api';
 import type { RegistoResultado } from '../api/portal.api';
 
@@ -40,6 +42,7 @@ import type { RegistoResultado } from '../api/portal.api';
  * burocracia.
  */
 export function RegistarFornecedorPage() {
+  const { t } = useTranslation('portal');
   const navegar = useNavigate();
   const [aGravar, setAGravar] = useState(false);
   const [resultado, setResultado] = useState<RegistoResultado | null>(null);
@@ -78,7 +81,7 @@ export function RegistarFornecedorPage() {
     e.preventDefault();
 
     if (!empresa.razaoSocial.trim()) {
-      toast.error('A razão social é obrigatória.');
+      toast.error(t('comum.razao_social_obrigatoria'));
       return;
     }
 
@@ -91,9 +94,7 @@ export function RegistarFornecedorPage() {
     }
 
     if (!responsavel.email.trim()) {
-      toast.error(
-        'O e-mail do responsável é obrigatório — é para lá que vai o código de acesso.',
-      );
+      toast.error(t('registar.email_responsavel_obrigatorio'));
       return;
     }
 
@@ -119,7 +120,7 @@ export function RegistarFornecedorPage() {
     } catch (erro: any) {
       // O 409 do NUIT já registado traz uma mensagem que explica o que fazer — vale mais
       // mostrá-la do que um «erro ao registar» que não diz nada.
-      toast.error(mensagemDeErro(erro, 'Não foi possível concluir o registo.'));
+      toast.error(mensagemDeErro(erro, t('registar.erro_registo')));
     } finally {
       setAGravar(false);
     }
@@ -132,12 +133,16 @@ export function RegistarFornecedorPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
+
         <Link
           to="/criar-conta"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
         >
           <ArrowLeft size={15} />
-          Voltar
+          {t('comum.voltar')}
         </Link>
 
         <header className="mb-6 text-center">
@@ -145,11 +150,10 @@ export function RegistarFornecedorPage() {
             <Store size={22} className="text-white" />
           </div>
           <h1 className="mt-3 text-xl font-semibold text-slate-900">
-            Registar a sua empresa como fornecedor
+            {t('registar.titulo')}
           </h1>
           <p className="mx-auto mt-1 max-w-lg text-sm text-slate-500">
-            Publique o seu catálogo uma vez e fique visível a todos os compradores da
-            plataforma. Não paga para se registar.
+            {t('registar.subtitulo')}
           </p>
         </header>
 
@@ -158,56 +162,56 @@ export function RegistarFornecedorPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Building2 size={15} className="text-slate-400" />
-              A empresa
+              {t('comum.a_empresa')}
             </h2>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Campo
-                etiqueta="Razão social"
+                etiqueta={t('comum.razao_social')}
                 obrigatorio
                 valor={empresa.razaoSocial}
                 onChange={(v) => setEmpresa({ ...empresa, razaoSocial: v })}
                 exemplo="Distribuidora Zambeze, Lda"
               />
               <Campo
-                etiqueta="Nome comercial"
+                etiqueta={t('comum.nome_comercial')}
                 valor={empresa.nomeComercial}
                 onChange={(v) => setEmpresa({ ...empresa, nomeComercial: v })}
                 exemplo="Zambeze"
-                ajuda="O nome por que é conhecido, se for diferente."
+                ajuda={t('registar.nome_comercial_ajuda')}
               />
               <div className="sm:col-span-2">
                 <Campo
-                  etiqueta="NUIT"
+                  etiqueta={t('comum.nuit')}
                   obrigatorio
                   valor={empresa.nuit}
                   onChange={(v) => setEmpresa({ ...empresa, nuit: v })}
                   exemplo="400 123 456"
                   erro={avisoDoNuit}
-                  ajuda="É por ele que evitamos cadastros duplicados da mesma empresa. Se a sua empresa já foi cadastrada por um cliente, encontramo-la e ligamos a conta a esse registo — com o histórico de compras todo."
+                  ajuda={t('registar.nuit_ajuda')}
                 />
               </div>
               <Campo
-                etiqueta="Sede"
+                etiqueta={t('comum.sede')}
                 valor={empresa.sede}
                 onChange={(v) => setEmpresa({ ...empresa, sede: v })}
                 exemplo="Av. 25 de Setembro, Maputo"
               />
               <Campo
-                etiqueta="Telefone"
+                etiqueta={t('comum.telefone')}
                 valor={empresa.telefone}
                 onChange={(v) => setEmpresa({ ...empresa, telefone: v })}
                 exemplo="+258 84 000 0000"
               />
               <Campo
-                etiqueta="E-mail da empresa"
+                etiqueta={t('comum.email_empresa')}
                 tipo="email"
                 valor={empresa.emailEmpresa}
                 onChange={(v) => setEmpresa({ ...empresa, emailEmpresa: v })}
                 exemplo="geral@zambeze.co.mz"
               />
               <Campo
-                etiqueta="Website"
+                etiqueta={t('comum.website')}
                 valor={empresa.website}
                 onChange={(v) => setEmpresa({ ...empresa, website: v })}
                 exemplo="www.zambeze.co.mz"
@@ -219,36 +223,35 @@ export function RegistarFornecedorPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <User size={15} className="text-slate-400" />
-              Quem vai administrar a conta
+              {t('registar.administrar_titulo')}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Esta conta fica com a administração da vitrine. Pode convidar mais pessoas
-              depois.
+              {t('registar.administrar_nota')}
             </p>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Campo
-                etiqueta="Nome"
+                etiqueta={t('comum.nome')}
                 obrigatorio
                 valor={responsavel.nome}
                 onChange={(v) => setResponsavel({ ...responsavel, nome: v })}
               />
               <Campo
-                etiqueta="Cargo"
+                etiqueta={t('comum.cargo')}
                 valor={responsavel.cargo}
                 onChange={(v) => setResponsavel({ ...responsavel, cargo: v })}
-                exemplo="Director comercial"
+                exemplo={t('registar.cargo_exemplo')}
               />
               <Campo
-                etiqueta="E-mail"
+                etiqueta={t('registar.email')}
                 tipo="email"
                 obrigatorio
                 valor={responsavel.email}
                 onChange={(v) => setResponsavel({ ...responsavel, email: v })}
-                ajuda="Recebe aqui o código de acesso e a senha. Pode entrar com o e-mail ou com o código."
+                ajuda={t('registar.email_ajuda')}
               />
               <Campo
-                etiqueta="Telefone"
+                etiqueta={t('comum.telefone')}
                 valor={responsavel.telefone}
                 onChange={(v) => setResponsavel({ ...responsavel, telefone: v })}
               />
@@ -264,18 +267,17 @@ export function RegistarFornecedorPage() {
                 documentos e avisar de uma adjudicação.
               */}
               <div className="rounded-lg bg-blue-50 px-3 py-2.5 text-xs text-blue-900 sm:col-span-2">
-                <strong className="font-semibold">Não escolhe senha aqui.</strong> Enviamos o
-                código de acesso e a senha inicial para o e-mail que indicar acima. Confirme
-                que está correcto — é por lá que entra no portal.
+                <strong className="font-semibold">{t('registar.sem_senha_titulo')}</strong>{' '}
+                {t('registar.sem_senha_texto')}
               </div>
             </div>
           </section>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-slate-500">
-              Já tem conta?{' '}
+              {t('registar.ja_tem_conta')}{' '}
               <Link to="/fornecedor/entrar" className="font-medium text-blue-600 hover:underline">
-                Entrar no portal
+                {t('registar.entrar_no_portal')}
               </Link>
             </p>
             <button
@@ -284,7 +286,7 @@ export function RegistarFornecedorPage() {
               className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {aGravar ? <Loader2 size={16} className="animate-spin" /> : null}
-              Criar conta
+              {t('registar.criar_conta')}
             </button>
           </div>
         </form>
@@ -310,6 +312,8 @@ function RegistoConcluido({
   resultado: RegistoResultado;
   onEntrar: () => void;
 }) {
+  const { t } = useTranslation('portal');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 text-center">
@@ -317,7 +321,7 @@ function RegistoConcluido({
           <CheckCircle2 size={24} className="text-emerald-600" />
         </div>
 
-        <h1 className="mt-3 text-lg font-semibold text-slate-900">Conta criada</h1>
+        <h1 className="mt-3 text-lg font-semibold text-slate-900">{t('registar.conta_criada')}</h1>
 
         {/*
           O código no ecrã e a senha só no e-mail.
@@ -328,7 +332,7 @@ function RegistoConcluido({
         */}
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            O seu código de acesso
+            {t('registar.codigo_titulo')}
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-slate-900">
             {resultado.codigo}
@@ -336,9 +340,8 @@ function RegistoConcluido({
           <p className="mt-2 flex items-start gap-1.5 text-xs leading-snug text-slate-600">
             <Mail size={13} className="mt-0.5 shrink-0 text-slate-400" />
             <span>
-              Enviámos este código e a <strong>senha inicial</strong> para o e-mail que
-              indicou. Verifique a caixa de entrada — e o lixo, se não estiver lá. Pode entrar
-              com o código ou com o e-mail.
+              {t('registar.codigo_enviado_antes')} <strong>{t('registar.senha_inicial')}</strong>{' '}
+              {t('registar.codigo_enviado_depois')}
             </span>
           </p>
         </div>
@@ -348,9 +351,8 @@ function RegistoConcluido({
             <p className="flex items-start gap-2 text-xs leading-snug text-blue-900">
               <Info size={13} className="mt-0.5 shrink-0" />
               <span>
-                <strong>Encontrámos a sua empresa.</strong> Já estava registada por um dos
-                seus clientes, e a sua conta ficou ligada a esse registo — com o histórico de
-                compras que já existe. Confirme os dados no portal.
+                <strong>{t('registar.reivindicacao_titulo')}</strong>{' '}
+                {t('registar.reivindicacao_texto')}
               </span>
             </p>
           </div>
@@ -358,7 +360,7 @@ function RegistoConcluido({
 
         <div className="mt-5 text-left">
           <p className="text-sm font-medium text-slate-700">
-            Falta isto para poder receber ordens de compra:
+            {t('registar.falta_isto')}
           </p>
           <ol className="mt-2 space-y-2">
             {resultado.proximosPassos.map((passo, i) => (
@@ -371,9 +373,7 @@ function RegistoConcluido({
             ))}
           </ol>
           <p className="mt-3 text-xs leading-snug text-slate-500">
-            Os documentos são verificados pela plataforma antes de a sua vitrine entrar nas
-            comparações. Pode carregar os artigos e os preços entretanto — ficam guardados
-            como rascunho.
+            {t('registar.verificacao_nota')}
           </p>
         </div>
 
@@ -381,7 +381,7 @@ function RegistoConcluido({
           onClick={onEntrar}
           className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Entrar no portal
+          {t('registar.entrar_no_portal')}
           <ArrowRight size={15} />
         </button>
       </div>

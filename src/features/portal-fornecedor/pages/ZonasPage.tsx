@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { PROVINCIAS, portal } from '../api/portal.api';
 import type { ZonaEntrega } from '../api/portal.api';
-import { cn, mensagemDeErro } from '@/shared/utils';
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 /**
  * As zonas onde o fornecedor entrega.
@@ -28,6 +26,7 @@ const mt = (v: number) =>
  * agrupa por província para isso ficar legível.
  */
 export function ZonasPage() {
+  const { t } = useTranslation('portal');
   const queryClient = useQueryClient();
   const [aDefinir, setADefinir] = useState<ZonaEntrega | 'nova' | null>(null);
 
@@ -41,10 +40,10 @@ export function ZonasPage() {
   const remover = useMutation({
     mutationFn: (zonaId: string) => portal.removerZona(zonaId),
     onSuccess: () => {
-      toast.success('Zona removida.');
+      toast.success(t('zonas.removida'));
       recarregar();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao remover.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('zonas.erro_remover'))),
   });
 
   const activas = zonas?.filter((z) => z.activa) ?? [];
@@ -54,9 +53,9 @@ export function ZonasPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-base font-semibold text-slate-900">Zonas de entrega</h1>
+          <h1 className="text-base font-semibold text-slate-900">{t('zonas.titulo')}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Onde entrega, em quanto tempo, e a que custo.
+            {t('zonas.subtitulo')}
           </p>
         </div>
         <button
@@ -64,7 +63,7 @@ export function ZonasPage() {
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           <Plus size={15} />
-          Declarar zona
+          {t('zonas.declarar')}
         </button>
       </header>
 
@@ -76,19 +75,18 @@ export function ZonasPage() {
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-5 py-8 text-center">
           <AlertTriangle size={24} className="mx-auto text-amber-600" />
           <p className="mt-2 text-sm font-medium text-amber-900">
-            Não declarou nenhuma zona de entrega
+            {t('zonas.vazio_titulo')}
           </p>
           <p className="mx-auto mt-1 max-w-md text-xs leading-snug text-amber-800">
-            Enquanto isso, a sua vitrine fica fora de <strong>todas</strong> as comparações — e
-            é uma exclusão silenciosa: não aparece, e não recebe aviso. O sistema não pode
-            presumir que entrega numa província que não declarou.
+            {t('zonas.vazio_antes')} <strong>{t('zonas.vazio_todas')}</strong>{' '}
+            {t('zonas.vazio_depois')}
           </p>
           <button
             onClick={() => setADefinir('nova')}
             className="mt-4 inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
           >
             <Plus size={15} />
-            Declarar a primeira zona
+            {t('zonas.declarar_primeira')}
           </button>
         </div>
       ) : (
@@ -109,36 +107,36 @@ export function ZonasPage() {
                         zona.activa ? 'text-slate-900' : 'text-slate-400 line-through',
                       )}
                     >
-                      {zona.cidade ?? 'Toda a província'}
+                      {zona.cidade ?? t('zonas.toda_provincia')}
                     </span>
 
                     {zona.cidade && (
                       <span
                         className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700"
-                        title="Uma zona de cidade prevalece sobre a da província: a loja nesta cidade recebe estas condições."
+                        title={t('zonas.prevalece_ajuda')}
                       >
-                        prevalece
+                        {t('zonas.prevalece')}
                       </span>
                     )}
 
                     {!zona.activa && (
                       <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                        inactiva
+                        {t('zonas.inactiva')}
                       </span>
                     )}
 
                     <span className="ml-auto flex flex-wrap items-center gap-x-3 text-[11px] text-slate-500">
                       <span>
                           {zona.prazoDias != null
-                          ? `${zona.prazoDias} dias de trânsito`
-                          : 'prazo não declarado'}
+                          ? t('zonas.dias_transito', { count: zona.prazoDias })
+                          : t('zonas.prazo_nao_declarado')}
                       </span>
                       <span>
-                        {zona.custoEntrega > 0 ? mt(zona.custoEntrega) : 'entrega incluída'}
+                        {zona.custoEntrega > 0 ? formatMoeda(zona.custoEntrega) : t('zonas.entrega_incluida')}
                       </span>
                       {zona.valorMinimoEntrega != null && (
                         <span className="font-medium text-slate-600">
-                          mín. {mt(zona.valorMinimoEntrega)}
+                          {t('zonas.minimo', { valor: formatMoeda(zona.valorMinimoEntrega) })}
                         </span>
                       )}
                     </span>
@@ -148,7 +146,7 @@ export function ZonasPage() {
                         onClick={() => setADefinir(zona)}
                         className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                       >
-                        Editar
+                        {t('comum.editar')}
                       </button>
                       <button
                         onClick={() => remover.mutate(zona.id)}
@@ -186,6 +184,7 @@ function ZonaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const [f, setF] = useState({
     provincia: zona?.provincia ?? (PROVINCIAS[0] as string),
     cidade: zona?.cidade ?? '',
@@ -208,11 +207,11 @@ function ZonaModal({
         activa: f.activa,
       }),
     onSuccess: () => {
-      toast.success('Zona guardada.');
+      toast.success(t('zonas.guardada'));
       onSuccess();
       onClose();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao guardar a zona.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('zonas.erro_guardar'))),
   });
 
   return (
@@ -226,13 +225,13 @@ function ZonaModal({
       >
         <header className="border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {zona ? 'Editar zona' : 'Declarar zona de entrega'}
+            {zona ? t('zonas.modal_editar') : t('zonas.modal_declarar')}
           </h2>
         </header>
 
         <div className="space-y-4 px-5 py-5">
           <div>
-            <label className="block text-xs font-medium text-slate-700">Província *</label>
+            <label className="block text-xs font-medium text-slate-700">{t('zonas.provincia')}</label>
             <select
               value={f.provincia}
               onChange={(e) => setF({ ...f, provincia: e.target.value })}
@@ -250,30 +249,28 @@ function ZonaModal({
                 para a base de dados. Um erro de escrita fá-lo desaparecer das comparações
                 daquela província, sem aviso nenhum. */}
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              Lista fixa de propósito: um erro de escrita aqui fá-lo-ia desaparecer das
-              comparações daquela província, sem aviso.
+              {t('zonas.provincia_ajuda')}
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">Cidade</label>
+            <label className="block text-xs font-medium text-slate-700">{t('zonas.cidade')}</label>
             <input
               value={f.cidade}
               onChange={(e) => setF({ ...f, cidade: e.target.value })}
               disabled={!!zona}
-              placeholder="Vazio = toda a província"
+              placeholder={t('zonas.cidade_exemplo')}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none disabled:bg-slate-50"
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              Uma zona de cidade prevalece sobre a da província. Declare as duas se as
-              condições forem diferentes na capital.
+              {t('zonas.cidade_ajuda')}
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-slate-700">
-                Dias de trânsito
+                {t('zonas.dias')}
               </label>
               <input
                 type="number"
@@ -283,12 +280,12 @@ function ZonaModal({
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                Somados ao prazo de expedição do artigo.
+                {t('zonas.dias_ajuda')}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700">Custo da entrega</label>
+              <label className="block text-xs font-medium text-slate-700">{t('zonas.custo')}</label>
               <input
                 type="number"
                 step="any"
@@ -298,14 +295,14 @@ function ZonaModal({
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                Zero = incluída no preço.
+                {t('zonas.custo_ajuda')}
               </p>
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-700">
-              Valor mínimo por entrega
+              {t('zonas.minimo_label')}
             </label>
             <input
               type="number"
@@ -313,12 +310,11 @@ function ZonaModal({
               min="0"
               value={f.valorMinimoEntrega}
               onChange={(e) => setF({ ...f, valorMinimoEntrega: e.target.value })}
-              placeholder="Vazio = sem mínimo"
+              placeholder={t('zonas.minimo_exemplo')}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              Por entrega, não por artigo. Uma requisição cuja parte que lhe cabe fique
-              abaixo deste valor é assinalada ao comprador.
+              {t('zonas.minimo_ajuda')}
             </p>
           </div>
 
@@ -329,7 +325,7 @@ function ZonaModal({
               onChange={(e) => setF({ ...f, activa: e.target.checked })}
               className="rounded border-slate-300"
             />
-            Zona activa — desmarque para suspender temporariamente sem apagar
+            {t('zonas.activa')}
           </label>
         </div>
 
@@ -339,7 +335,7 @@ function ZonaModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('comum.cancelar')}
           </button>
           <button
             type="submit"
@@ -347,7 +343,7 @@ function ZonaModal({
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {gravar.isPending && <Loader2 size={15} className="animate-spin" />}
-            Guardar
+            {t('comum.guardar')}
           </button>
         </footer>
       </form>

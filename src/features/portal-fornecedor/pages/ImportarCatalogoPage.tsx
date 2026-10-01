@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { portal } from '../api/portal.api';
 import type {
   ArtigoExtraidoDeCatalogo,
@@ -68,6 +69,7 @@ interface LinhaRevisao extends ArtigoExtraidoDeCatalogo {
  * pelo fornecedor.
  */
 export function ImportarCatalogoPage() {
+  const { t } = useTranslation('portal');
   const navegar = useNavigate();
   const inputFicheiro = useRef<HTMLInputElement>(null);
   const inputCamara = useRef<HTMLInputElement>(null);
@@ -93,7 +95,7 @@ export function ImportarCatalogoPage() {
     if (!f) return;
 
     if (f.size > MAX_BYTES) {
-      toast.error(`"${f.name}" excede ${MAX_BYTES / 1024 / 1024} MB.`);
+      toast.error(t('importar.erro_tamanho', { nome: f.name, mb: MAX_BYTES / 1024 / 1024 }));
       return;
     }
 
@@ -108,10 +110,7 @@ export function ImportarCatalogoPage() {
       const r = await portal.extrairCatalogoDeDocumento(ficheiro);
 
       if (r.semResultado) {
-        toast.error(
-          'Não foi possível ler produtos neste documento. Tente um ficheiro mais nítido, ' +
-            'ou confirme que tem uma lista de produtos.',
-        );
+        toast.error(t('importar.erro_sem_resultado'));
         return;
       }
 
@@ -125,11 +124,9 @@ export function ImportarCatalogoPage() {
       setRecusadas(r.recusadas);
       setFase('revisao');
 
-      toast.success(
-        `${r.artigos.length} produto${r.artigos.length === 1 ? '' : 's'} encontrado${r.artigos.length === 1 ? '' : 's'}.`,
-      );
+      toast.success(t('importar.n_encontrados_toast', { count: r.artigos.length }));
     } catch (erro) {
-      toast.error(mensagemDeErro(erro, 'Não foi possível analisar o documento.'));
+      toast.error(mensagemDeErro(erro, t('importar.erro_analisar')));
     } finally {
       setAAnalisar(false);
     }
@@ -151,15 +148,12 @@ export function ImportarCatalogoPage() {
 
   const confirmarImportacao = async () => {
     if (seleccionadas.length === 0) {
-      toast.error('Seleccione ao menos um produto.');
+      toast.error(t('importar.erro_seleccione'));
       return;
     }
 
     if (semPreco > 0) {
-      toast.error(
-        `${semPreco} produto${semPreco === 1 ? '' : 's'} sem preço. Preencha o preço ou ` +
-          'desmarque essa linha antes de continuar.',
-      );
+      toast.error(t('importar.erro_sem_preco', { count: semPreco }));
       return;
     }
 
@@ -185,10 +179,10 @@ export function ImportarCatalogoPage() {
       setFase('concluido');
 
       if (r.criados > 0) {
-        toast.success(`${r.criados} produto${r.criados === 1 ? '' : 's'} importado${r.criados === 1 ? '' : 's'}.`);
+        toast.success(t('importar.n_importados_toast', { count: r.criados }));
       }
     } catch (erro) {
-      toast.error(mensagemDeErro(erro, 'Não foi possível concluir a importação.'));
+      toast.error(mensagemDeErro(erro, t('importar.erro_importar')));
     } finally {
       setAImportar(false);
     }
@@ -212,9 +206,9 @@ export function ImportarCatalogoPage() {
           <ArrowLeft size={16} />
         </button>
         <div>
-          <h1 className="text-base font-semibold text-slate-900">Importar catálogo</h1>
+          <h1 className="text-base font-semibold text-slate-900">{t('importar.titulo')}</h1>
           <p className="text-xs text-slate-500">
-            Carregue um documento com a sua lista de produtos — nós lemos e organizamos.
+            {t('importar.subtitulo')}
           </p>
         </div>
       </header>
@@ -273,10 +267,11 @@ export function ImportarCatalogoPage() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function Passos({ fase }: { fase: Fase }) {
+  const { t } = useTranslation('portal');
   const PASSOS: { chave: Fase; etiqueta: string }[] = [
-    { chave: 'upload', etiqueta: 'Carregar' },
-    { chave: 'revisao', etiqueta: 'Revisão' },
-    { chave: 'concluido', etiqueta: 'Conclusão' },
+    { chave: 'upload', etiqueta: t('importar.passo_carregar') },
+    { chave: 'revisao', etiqueta: t('importar.passo_revisao') },
+    { chave: 'concluido', etiqueta: t('importar.passo_conclusao') },
   ];
   const indiceActual = PASSOS.findIndex((p) => p.chave === fase);
 
@@ -328,14 +323,14 @@ function ZonaDeUpload({
   inputRef: React.RefObject<HTMLInputElement | null>;
   inputCamaraRef: React.RefObject<HTMLInputElement | null>;
 }) {
+  const { t } = useTranslation('portal');
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-4 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50/50 p-3">
         <Sparkles size={14} className="mt-0.5 shrink-0 text-blue-600" />
         <p className="text-xs leading-snug text-blue-900">
-          Carregue a sua lista de preços tal como já a tem — PDF, uma folha de Excel, um
-          documento Word ou até uma fotografia das páginas. Nós lemos os produtos, os preços
-          e as quantidades, e você revê tudo antes de confirmar.
+          {t('importar.upload_intro')}
         </p>
       </div>
 
@@ -386,11 +381,11 @@ function ZonaDeUpload({
           >
             <Upload size={28} className={aArrastar ? 'text-blue-500' : 'text-slate-300'} />
             <p className="mt-3 text-sm font-medium text-slate-700">
-              Arraste e solte o seu ficheiro aqui
+              {t('importar.arraste')}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">ou clique para seleccionar</p>
+            <p className="mt-0.5 text-xs text-slate-500">{t('importar.ou_clique')}</p>
             <p className="mt-3 text-[11px] text-slate-400">
-              PDF, Word (.docx), Excel (.xlsx), ou uma fotografia — até {MAX_BYTES / 1024 / 1024} MB
+              {t('importar.formatos', { mb: MAX_BYTES / 1024 / 1024 })}
             </p>
           </div>
 
@@ -403,7 +398,7 @@ function ZonaDeUpload({
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
           >
             <Camera size={16} />
-            Tirar fotografia da lista de preços
+            {t('importar.tirar_foto')}
           </button>
         </div>
       ) : (
@@ -432,12 +427,12 @@ function ZonaDeUpload({
           {aAnalisar ? (
             <>
               <Loader2 size={15} className="animate-spin" />
-              A analisar…
+              {t('importar.a_analisar')}
             </>
           ) : (
             <>
               <Sparkles size={15} />
-              Analisar documento
+              {t('importar.analisar')}
             </>
           )}
         </button>
@@ -501,31 +496,35 @@ function TabelaDeRevisao({
   onCancelar: () => void;
   onConfirmar: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const seleccionadas = linhas.filter((l) => l.incluir).length;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Contador etiqueta="Produtos lidos" valor={linhas.length} cor="slate" />
-        <Contador etiqueta="Seleccionados" valor={seleccionadas} cor="blue" />
-        <Contador etiqueta="Com preço" valor={comPreco} cor="emerald" />
-        <Contador etiqueta="Sem preço" valor={semPreco} cor={semPreco > 0 ? 'amber' : 'slate'} />
+        <Contador etiqueta={t('importar.produtos_lidos')} valor={linhas.length} cor="slate" />
+        <Contador etiqueta={t('importar.seleccionados')} valor={seleccionadas} cor="blue" />
+        <Contador etiqueta={t('importar.com_preco')} valor={comPreco} cor="emerald" />
+        <Contador
+          etiqueta={t('importar.sem_preco')}
+          valor={semPreco}
+          cor={semPreco > 0 ? 'amber' : 'slate'}
+        />
       </div>
 
       {recusadas.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
             <AlertTriangle size={13} />
-            {recusadas.length} linha{recusadas.length === 1 ? '' : 's'} do documento não
-            {recusadas.length === 1 ? ' foi lida' : ' foram lidas'}
+            {t('importar.recusadas_titulo', { count: recusadas.length })}
           </p>
           <p className="mt-1 text-[11px] leading-snug text-amber-800">
             {recusadas
               .slice(0, 3)
-              .map((r) => `linha ${r.linha} (${r.motivo})`)
+              .map((r) => t('importar.recusadas_linha', { linha: r.linha, motivo: r.motivo }))
               .join(', ')}
-            {recusadas.length > 3 ? `, e mais ${recusadas.length - 3}` : ''}. Acrescente-as à
-            mão depois, em «Novo artigo».
+            {recusadas.length > 3 ? t('importar.recusadas_mais', { n: recusadas.length - 3 }) : ''}
+            {t('importar.recusadas_acrescentar')}
           </p>
         </div>
       )}
@@ -535,11 +534,11 @@ function TabelaDeRevisao({
           <thead className="border-b border-slate-100 bg-slate-50 text-left text-[11px] font-medium uppercase tracking-wide text-slate-500">
             <tr>
               <th className="w-8 px-3 py-2.5"></th>
-              <th className="px-3 py-2.5">Produto</th>
-              <th className="px-3 py-2.5">Embalagem</th>
-              <th className="px-3 py-2.5">Qtd./emb.</th>
-              <th className="px-3 py-2.5">Preço (MZN)</th>
-              <th className="px-3 py-2.5">Stock</th>
+              <th className="px-3 py-2.5">{t('importar.th_produto')}</th>
+              <th className="px-3 py-2.5">{t('importar.th_embalagem')}</th>
+              <th className="px-3 py-2.5">{t('importar.th_qtd_emb')}</th>
+              <th className="px-3 py-2.5">{t('importar.th_preco')}</th>
+              <th className="px-3 py-2.5">{t('importar.th_stock')}</th>
               <th className="w-16 px-3 py-2.5"></th>
             </tr>
           </thead>
@@ -563,7 +562,7 @@ function TabelaDeRevisao({
           disabled={aImportar}
           className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-50"
         >
-          Cancelar
+          {t('importar.cancelar')}
         </button>
         <button
           onClick={onConfirmar}
@@ -571,7 +570,7 @@ function TabelaDeRevisao({
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {aImportar && <Loader2 size={15} className="animate-spin" />}
-          Confirmar importação ({seleccionadas})
+          {t('importar.confirmar', { n: seleccionadas })}
         </button>
       </div>
     </div>
@@ -613,6 +612,7 @@ function LinhaDaTabela({
   onRemover: () => void;
   onEditarImagem: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const vendeAUnidade = !linha.tipoEmbalagem;
   const semPreco = linha.preco === undefined || linha.preco <= 0;
 
@@ -642,9 +642,9 @@ function LinhaDaTabela({
           disabled={!linha.incluir}
           className="w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-xs hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none"
         >
-          {TIPOS_DE_EMBALAGEM.map((t) => (
-            <option key={t.valor} value={t.valor}>
-              {t.etiqueta}
+          {TIPOS_DE_EMBALAGEM.map((tp) => (
+            <option key={tp.valor} value={tp.valor}>
+              {t(`embalagem.${tp.chave}`)}
             </option>
           ))}
         </select>
@@ -657,10 +657,10 @@ function LinhaDaTabela({
             disabled={!linha.incluir}
             className="w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-xs hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none"
           >
-            <option value="">Unidade…</option>
+            <option value="">{t('importar.unidade_placeholder')}</option>
             {UNIDADES_COMUNS.map((u) => (
               <option key={u.valor} value={u.valor}>
-                {u.etiqueta}
+                {t(`unidade.${u.chave}`)}
               </option>
             ))}
           </select>
@@ -690,7 +690,7 @@ function LinhaDaTabela({
               disabled={!linha.incluir}
               className="rounded border border-transparent bg-transparent px-1 py-1 text-xs hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none"
             >
-              <option value="">un.</option>
+              <option value="">{t('importar.un')}</option>
               {UNIDADES_COMUNS.map((u) => (
                 <option key={u.valor} value={u.valor}>
                   {u.valor}
@@ -734,7 +734,7 @@ function LinhaDaTabela({
       <td className="px-3 py-2 text-right">
         <button
           onClick={onEditarImagem}
-          title={linha.imagemUrl ? 'Mudar a imagem' : 'Adicionar imagem a este produto'}
+          title={linha.imagemUrl ? t('importar.mudar_imagem') : t('importar.adicionar_imagem')}
           className={`mr-1 rounded p-1 hover:bg-slate-100 ${
             linha.imagemUrl ? 'text-blue-600' : 'text-slate-400 hover:text-blue-600'
           }`}
@@ -743,7 +743,7 @@ function LinhaDaTabela({
         </button>
         <button
           onClick={onRemover}
-          title="Remover da lista"
+          title={t('importar.remover_lista')}
           className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-red-600"
         >
           <X size={14} />
@@ -762,6 +762,7 @@ function ResumoConclusao({
   onNovaImportacao: () => void;
   onVerVitrine: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const falhas = resultado.resultados.filter((r) => !r.sucesso);
   const criadosSemPreco = resultado.resultados.filter((r) => r.sucesso && r.erro);
 
@@ -772,19 +773,16 @@ function ResumoConclusao({
       </div>
 
       <h2 className="mt-3 text-lg font-semibold text-slate-900">
-        {resultado.criados} produto{resultado.criados === 1 ? '' : 's'} importado
-        {resultado.criados === 1 ? '' : 's'}
+        {t('importar.n_importados_titulo', { count: resultado.criados })}
       </h2>
       <p className="mt-1 text-sm text-slate-500">
-        Os novos artigos entraram em rascunho — publique-os na sua vitrine quando estiver
-        pronto.
+        {t('importar.concluido_sub')}
       </p>
 
       {criadosSemPreco.length > 0 && (
         <div className="mx-auto mt-4 max-w-md rounded-lg border border-amber-200 bg-amber-50 p-3 text-left">
           <p className="text-xs font-medium text-amber-900">
-            {criadosSemPreco.length} produto{criadosSemPreco.length === 1 ? '' : 's'} criado
-            {criadosSemPreco.length === 1 ? '' : 's'} sem preço
+            {t('importar.criados_sem_preco', { count: criadosSemPreco.length })}
           </p>
           <ul className="mt-1 space-y-0.5">
             {criadosSemPreco.map((l) => (
@@ -799,8 +797,7 @@ function ResumoConclusao({
       {falhas.length > 0 && (
         <div className="mx-auto mt-3 max-w-md rounded-lg border border-red-200 bg-red-50 p-3 text-left">
           <p className="text-xs font-medium text-red-900">
-            {falhas.length} produto{falhas.length === 1 ? '' : 's'} não importado
-            {falhas.length === 1 ? '' : 's'}
+            {t('importar.falhas', { count: falhas.length })}
           </p>
           <ul className="mt-1 space-y-0.5">
             {falhas.map((l, i) => (
@@ -817,13 +814,13 @@ function ResumoConclusao({
           onClick={onNovaImportacao}
           className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Importar outro documento
+          {t('importar.importar_outro')}
         </button>
         <button
           onClick={onVerVitrine}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          Ver a minha vitrine
+          {t('importar.ver_vitrine')}
         </button>
       </div>
     </div>
@@ -848,6 +845,7 @@ function ModalImagemLinha({
   onFechar: () => void;
   onGravar: (imagemUrl: string) => void;
 }) {
+  const { t } = useTranslation('portal');
   const [url, setUrl] = useState(linha.imagemUrl ?? '');
   const [falhou, setFalhou] = useState(false);
 
@@ -855,7 +853,9 @@ function ModalImagemLinha({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h3 className="text-sm font-semibold text-slate-900">Imagem — {linha.nome}</h3>
+          <h3 className="text-sm font-semibold text-slate-900">
+            {t('importar.modal_titulo', { nome: linha.nome })}
+          </h3>
           <button onClick={onFechar} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={16} />
           </button>
@@ -877,11 +877,11 @@ function ModalImagemLinha({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">URL da imagem</label>
+            <label className="block text-xs font-medium text-slate-700">{t('importar.url_imagem')}</label>
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://exemplo.com/produto.png"
+              placeholder={t('importar.exemplo_url')}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -892,13 +892,13 @@ function ModalImagemLinha({
             onClick={onFechar}
             className="rounded-md border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('importar.cancelar')}
           </button>
           <button
             onClick={() => onGravar(url)}
             className="rounded-md bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-700"
           >
-            Guardar
+            {t('importar.guardar')}
           </button>
         </footer>
       </div>

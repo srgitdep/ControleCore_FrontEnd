@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, Info, Loader2, Pencil, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { portal } from '../api/portal.api';
 import type { OrganizacaoFornecedor } from '../api/portal.api';
 import { usePortalStore } from '../store/usePortalStore';
@@ -33,6 +34,7 @@ import { mensagemDeErro } from '@/shared/utils';
  * aparecem como texto, não como campo, para não parecerem esquecidos.
  */
 export function PerfilPage() {
+  const { t } = useTranslation('portal');
   const queryClient = useQueryClient();
   const carregarSessao = usePortalStore((s) => s.carregar);
 
@@ -59,10 +61,9 @@ export function PerfilPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-base font-semibold text-slate-900">Dados da empresa e do responsável</h1>
+        <h1 className="text-base font-semibold text-slate-900">{t('perfil.titulo')}</h1>
         <p className="mt-0.5 text-xs text-slate-500">
-          A sua organização e a sua conta. Podem ser diferentes pessoas — uma organização
-          pode ter mais do que uma conta de portal.
+          {t('perfil.subtitulo')}
         </p>
       </header>
 
@@ -83,6 +84,7 @@ function SeccaoOrganizacao({
   organizacao: OrganizacaoFornecedor;
   onGravado: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const [aEditar, setAEditar] = useState(false);
   const [f, setF] = useState(camposDaOrganizacao(organizacao));
 
@@ -97,18 +99,18 @@ function SeccaoOrganizacao({
     mutationFn: (payload: Parameters<typeof portal.actualizarOrganizacao>[0]) =>
       portal.actualizarOrganizacao(payload),
     onSuccess: () => {
-      toast.success('Dados da empresa actualizados.');
+      toast.success(t('perfil.empresa_actualizada'));
       setAEditar(false);
       onGravado();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao gravar os dados da empresa.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('perfil.erro_gravar_empresa'))),
   });
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!f.razaoSocial.trim()) {
-      toast.error('A razão social é obrigatória.');
+      toast.error(t('comum.razao_social_obrigatoria'));
       return;
     }
 
@@ -128,7 +130,7 @@ function SeccaoOrganizacao({
       <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
         <div className="flex items-center gap-2">
           <Building2 size={15} className="text-slate-400" />
-          <h2 className="text-sm font-semibold text-slate-900">A empresa</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('comum.a_empresa')}</h2>
         </div>
         {!aEditar && (
           <button
@@ -136,7 +138,7 @@ function SeccaoOrganizacao({
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
             <Pencil size={12} />
-            Editar
+            {t('comum.editar')}
           </button>
         )}
       </header>
@@ -147,55 +149,55 @@ function SeccaoOrganizacao({
             <PreviaLogo url={f.logoUrl} />
             <div className="flex-1">
               <Campo
-                etiqueta="Logomarca"
+                etiqueta={t('perfil.logomarca')}
                 valor={f.logoUrl}
                 onChange={(v) => setF({ ...f, logoUrl: v })}
-                exemplo="https://exemplo.com/logo.png"
-                ajuda="O URL de uma imagem já publicada algures. Aparece no cabeçalho do portal e na ficha pública do mercado."
+                exemplo={t('perfil.logo_exemplo')}
+                ajuda={t('perfil.logo_ajuda')}
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo
-              etiqueta="Razão social"
+              etiqueta={t('comum.razao_social')}
               obrigatorio
               valor={f.razaoSocial}
               onChange={(v) => setF({ ...f, razaoSocial: v })}
             />
             <Campo
-              etiqueta="Nome comercial"
+              etiqueta={t('comum.nome_comercial')}
               valor={f.nomeComercial}
               onChange={(v) => setF({ ...f, nomeComercial: v })}
-              ajuda="Se for diferente. Aparece no cabeçalho e no mercado público."
+              ajuda={t('perfil.nome_comercial_ajuda')}
             />
           </div>
 
-          <Campo etiqueta="Sede" valor={f.sede} onChange={(v) => setF({ ...f, sede: v })} />
+          <Campo etiqueta={t('comum.sede')} valor={f.sede} onChange={(v) => setF({ ...f, sede: v })} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo
-              etiqueta="E-mail da empresa"
+              etiqueta={t('comum.email_empresa')}
               tipo="email"
               valor={f.email}
               onChange={(v) => setF({ ...f, email: v })}
-              ajuda="O de facturação — não o de login."
+              ajuda={t('perfil.email_empresa_ajuda')}
             />
             <Campo
-              etiqueta="Telefone"
+              etiqueta={t('comum.telefone')}
               valor={f.telefone}
               onChange={(v) => setF({ ...f, telefone: v })}
             />
           </div>
 
-          <Campo etiqueta="Website" valor={f.website} onChange={(v) => setF({ ...f, website: v })} />
+          <Campo etiqueta={t('comum.website')} valor={f.website} onChange={(v) => setF({ ...f, website: v })} />
 
           <div className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5">
             <Info size={13} className="mt-0.5 shrink-0 text-slate-400" />
             <p className="text-[11px] leading-snug text-slate-600">
-              O NUIT (<strong>{organizacao.nuit ?? 'não indicado'}</strong>) não se edita
-              aqui — é a chave que impede cadastros duplicados da mesma empresa. Para
-              corrigir um NUIT errado, contacte o suporte.
+              {t('perfil.nuit_nota_antes')}
+              <strong>{organizacao.nuit ?? t('perfil.nuit_nao_indicado')}</strong>
+              {t('perfil.nuit_nota_depois')}
             </p>
           </div>
 
@@ -206,7 +208,7 @@ function SeccaoOrganizacao({
               className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               <X size={12} />
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               type="submit"
@@ -214,7 +216,7 @@ function SeccaoOrganizacao({
               className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {gravar.isPending && <Loader2 size={12} className="animate-spin" />}
-              Guardar
+              {t('comum.guardar')}
             </button>
           </div>
         </form>
@@ -223,17 +225,17 @@ function SeccaoOrganizacao({
           {organizacao.logoUrl && (
             <div className="flex items-center gap-3">
               <PreviaLogo url={organizacao.logoUrl} />
-              <p className="text-xs text-slate-500">Logomarca actual</p>
+              <p className="text-xs text-slate-500">{t('perfil.logomarca_actual')}</p>
             </div>
           )}
           <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-            <Dado etiqueta="Razão social" valor={organizacao.razaoSocial} />
-            <Dado etiqueta="Nome comercial" valor={organizacao.nomeComercial} />
-            <Dado etiqueta="NUIT" valor={organizacao.nuit} />
-            <Dado etiqueta="Sede" valor={organizacao.sede} />
-            <Dado etiqueta="E-mail da empresa" valor={organizacao.email} />
-            <Dado etiqueta="Telefone" valor={organizacao.telefone} />
-            <Dado etiqueta="Website" valor={organizacao.website} />
+            <Dado etiqueta={t('comum.razao_social')} valor={organizacao.razaoSocial} />
+            <Dado etiqueta={t('comum.nome_comercial')} valor={organizacao.nomeComercial} />
+            <Dado etiqueta={t('comum.nuit')} valor={organizacao.nuit} />
+            <Dado etiqueta={t('comum.sede')} valor={organizacao.sede} />
+            <Dado etiqueta={t('comum.email_empresa')} valor={organizacao.email} />
+            <Dado etiqueta={t('comum.telefone')} valor={organizacao.telefone} />
+            <Dado etiqueta={t('comum.website')} valor={organizacao.website} />
           </div>
         </div>
       )}
@@ -258,6 +260,7 @@ function camposDaOrganizacao(organizacao: OrganizacaoFornecedor) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
+  const { t } = useTranslation('portal');
   const fornecedor = usePortalStore((s) => s.fornecedor);
   const [aEditar, setAEditar] = useState(false);
   const [f, setF] = useState({
@@ -276,18 +279,18 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
     mutationFn: (payload: Parameters<typeof portal.actualizarPerfil>[0]) =>
       portal.actualizarPerfil(payload),
     onSuccess: () => {
-      toast.success('Os seus dados foram actualizados.');
+      toast.success(t('perfil.dados_actualizados'));
       setAEditar(false);
       onGravado();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao gravar o seu perfil.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('perfil.erro_gravar_perfil'))),
   });
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!f.nome.trim()) {
-      toast.error('O nome é obrigatório.');
+      toast.error(t('perfil.nome_obrigatorio'));
       return;
     }
 
@@ -305,7 +308,7 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
       <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
         <div className="flex items-center gap-2">
           <User size={15} className="text-slate-400" />
-          <h2 className="text-sm font-semibold text-slate-900">O responsável</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('perfil.o_responsavel')}</h2>
         </div>
         {!aEditar && (
           <button
@@ -313,7 +316,7 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
             <Pencil size={12} />
-            Editar
+            {t('comum.editar')}
           </button>
         )}
       </header>
@@ -322,16 +325,16 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
         <form onSubmit={submeter} className="space-y-4 px-5 py-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo
-              etiqueta="Nome"
+              etiqueta={t('comum.nome')}
               obrigatorio
               valor={f.nome}
               onChange={(v) => setF({ ...f, nome: v })}
             />
-            <Campo etiqueta="Cargo" valor={f.cargo} onChange={(v) => setF({ ...f, cargo: v })} />
+            <Campo etiqueta={t('comum.cargo')} valor={f.cargo} onChange={(v) => setF({ ...f, cargo: v })} />
           </div>
 
           <Campo
-            etiqueta="Telefone"
+            etiqueta={t('comum.telefone')}
             valor={f.telefone}
             onChange={(v) => setF({ ...f, telefone: v })}
           />
@@ -339,9 +342,11 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
           <div className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5">
             <Info size={13} className="mt-0.5 shrink-0 text-slate-400" />
             <p className="text-[11px] leading-snug text-slate-600">
-              O e-mail de login (<strong>{fornecedor.email}</strong>) e o código de acesso (
-              <strong>{fornecedor.codigo ?? '—'}</strong>) não se editam aqui. Mudar o
-              e-mail de login é uma operação de segurança à parte.
+              {t('perfil.login_nota_1')}
+              <strong>{fornecedor.email}</strong>
+              {t('perfil.login_nota_2')}
+              <strong>{fornecedor.codigo ?? '—'}</strong>
+              {t('perfil.login_nota_3')}
             </p>
           </div>
 
@@ -352,7 +357,7 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
               className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               <X size={12} />
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               type="submit"
@@ -360,17 +365,17 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
               className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {gravar.isPending && <Loader2 size={12} className="animate-spin" />}
-              Guardar
+              {t('comum.guardar')}
             </button>
           </div>
         </form>
       ) : (
         <div className="grid gap-x-6 gap-y-2.5 px-5 py-4 sm:grid-cols-2">
-          <Dado etiqueta="Nome" valor={fornecedor.nome} />
-          <Dado etiqueta="Cargo" valor={fornecedor.cargo} />
-          <Dado etiqueta="Telefone" valor={fornecedor.telefone} />
-          <Dado etiqueta="E-mail de login" valor={fornecedor.email} />
-          <Dado etiqueta="Código de acesso" valor={fornecedor.codigo} />
+          <Dado etiqueta={t('comum.nome')} valor={fornecedor.nome} />
+          <Dado etiqueta={t('comum.cargo')} valor={fornecedor.cargo} />
+          <Dado etiqueta={t('comum.telefone')} valor={fornecedor.telefone} />
+          <Dado etiqueta={t('perfil.email_login')} valor={fornecedor.email} />
+          <Dado etiqueta={t('perfil.codigo_acesso')} valor={fornecedor.codigo} />
         </div>
       )}
     </section>
@@ -382,11 +387,12 @@ function SeccaoPerfil({ onGravado }: { onGravado: () => void }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function Dado({ etiqueta, valor }: { etiqueta: string; valor?: string | null }) {
+  const { t } = useTranslation('portal');
   return (
     <div>
       <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{etiqueta}</p>
       <p className={valor ? 'mt-0.5 text-sm text-slate-800' : 'mt-0.5 text-sm text-slate-400'}>
-        {valor || 'Não indicado'}
+        {valor || t('comum.nao_indicado')}
       </p>
     </div>
   );

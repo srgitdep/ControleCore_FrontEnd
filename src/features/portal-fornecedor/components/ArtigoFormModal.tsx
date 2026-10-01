@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { ImageOff, Info, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { CapturaPorFoto } from '@/shared/ui';
-import { mensagemDeErro } from '@/shared/utils';
+import { formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { portal } from '../api/portal.api';
 import type { ArtigoVitrine } from '../api/portal.api';
 import { OUTRA, TIPOS_DE_EMBALAGEM, UNIDADES_COMUNS } from '../constants/embalagem';
@@ -74,8 +75,22 @@ const hoje = () => new Date().toISOString().slice(0, 10);
  * sabe quantas unidades há dentro da caixa.
  */
 export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('portal');
   const aEditar = artigo !== null;
   const [aGravar, setAGravar] = useState(false);
+
+  // `tipoEmbalagem` guarda o valor em português (dado gravado) — quando é um dos conhecidos,
+  // mostra-se a etiqueta traduzida em minúsculas; um texto livre mostra-se como foi escrito.
+  const nomeEmbalagem = (valor: string) => {
+    const tp = TIPOS_DE_EMBALAGEM.find((x) => x.valor === valor);
+    return tp && tp.valor ? t(`embalagem.${tp.chave}`).toLowerCase() : valor;
+  };
+  const nomeEmbalagemPlural = (valor: string) => {
+    const tp = TIPOS_DE_EMBALAGEM.find((x) => x.valor === valor);
+    return tp && tp.chave !== 'sem_embalagem'
+      ? t(`artigo.embalagem_plural.${tp.chave}`)
+      : `${valor}s`;
+  };
 
   const embalagemInicial = interpretarEmbalagem(artigo);
 
@@ -165,22 +180,22 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
     e.preventDefault();
 
     if (!f.referencia.trim() || !f.nome.trim()) {
-      toast.error('A referência e o nome são obrigatórios.');
+      toast.error(t('artigo.erro_obrigatorios'));
       return;
     }
 
     if (!vendeAUnidade && !unidadesValidas) {
-      toast.error('Quantas unidades tem cada embalagem? Tem de ser maior do que zero.');
+      toast.error(t('artigo.erro_unidades_embalagem'));
       return;
     }
 
     if (!vendeAUnidade && !conteudoValido) {
-      toast.error('Quanto mede cada unidade? Tem de ser maior do que zero.');
+      toast.error(t('artigo.erro_conteudo'));
       return;
     }
 
     if (f.unidadeSelector === OUTRA && !f.unidadeOutra.trim()) {
-      toast.error('Escreva qual é a unidade base, ou escolha uma da lista.');
+      toast.error(t('artigo.erro_unidade_outra'));
       return;
     }
 
@@ -190,7 +205,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
     if (!aEditar) {
       precoNumero = Number(preco.preco);
       if (!Number.isFinite(precoNumero) || precoNumero <= 0) {
-        toast.error('O preço tem de ser maior do que zero.');
+        toast.error(t('artigo.erro_preco'));
         return;
       }
     }
@@ -226,7 +241,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
     try {
       if (aEditar) {
         await portal.actualizarArtigo(artigo.id, payload);
-        toast.success('Artigo actualizado.');
+        toast.success(t('artigo.actualizado'));
         onSuccess();
         onClose();
       } else {
@@ -237,14 +252,14 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             preco: precoNumero!,
             vigenteDe: new Date(`${hoje()}T00:00:00`).toISOString(),
           });
-          toast.success('Artigo e preço publicados.');
+          toast.success(t('artigo.publicado_com_preco'));
         } catch (erroPreco) {
           // O artigo já existe — não desfazer. O aviso da vitrine («sem preço em vigor»)
           // continua a apanhar este caso, e o modal de Preços resolve-o a seguir.
           toast.error(
             mensagemDeErro(
               erroPreco,
-              'Artigo criado, mas o preço não foi gravado. Publique-o em «Preços».',
+              t('artigo.erro_preco_nao_gravado'),
             ),
           );
         }
@@ -253,7 +268,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
         onClose();
       }
     } catch (erro) {
-      toast.error(mensagemDeErro(erro, 'Erro ao gravar o artigo.'));
+      toast.error(mensagemDeErro(erro, t('artigo.erro_gravar')));
     } finally {
       setAGravar(false);
     }
@@ -264,7 +279,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
       <form onSubmit={submeter} className="my-4 w-full max-w-2xl rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {aEditar ? 'Editar artigo' : 'Novo artigo'}
+            {aEditar ? t('artigo.titulo_editar') : t('artigo.titulo_novo')}
           </h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
@@ -278,7 +293,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             <CapturaPorFoto
               analisar={portal.extrairArtigoDeFoto}
               onExtraido={preencherDaFoto}
-              legenda="Fotografe a embalagem — o nome, a marca e o peso costumam ler-se numa só fotografia. O preço não é lido da imagem."
+              legenda={t('artigo.legenda_foto')}
             />
           )}
 
@@ -288,40 +303,40 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
 
             <div className="flex-1 space-y-3">
               <Campo
-                etiqueta="Nome"
+                etiqueta={t('artigo.nome')}
                 obrigatorio
                 valor={f.nome}
                 onChange={(v) => setF({ ...f, nome: v })}
-                exemplo="Arroz Agulha 25kg"
+                exemplo={t('artigo.exemplo_nome')}
               />
               <Campo
-                etiqueta="Referência"
+                etiqueta={t('artigo.referencia')}
                 obrigatorio
                 valor={f.referencia}
                 onChange={(v) => setF({ ...f, referencia: v })}
-                exemplo="ARZ-25"
-                ajuda="O seu código para este artigo. Único na sua vitrine."
+                exemplo={t('artigo.exemplo_referencia')}
+                ajuda={t('artigo.ajuda_referencia')}
               />
             </div>
           </div>
 
           <Campo
-            etiqueta="Imagem do produto"
+            etiqueta={t('artigo.imagem')}
             valor={f.imagemUrl}
             onChange={(v) => setF({ ...f, imagemUrl: v })}
-            exemplo="https://exemplo.com/arroz-25kg.png"
-            ajuda="O URL de uma imagem já publicada algures — no seu site, numa rede social, num serviço de imagens. É o que o comprador vê primeiro na vitrine."
+            exemplo={t('artigo.exemplo_imagem')}
+            ajuda={t('artigo.ajuda_imagem')}
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo
-              etiqueta="Categoria"
+              etiqueta={t('artigo.categoria')}
               valor={f.categoria}
               onChange={(v) => setF({ ...f, categoria: v })}
-              exemplo="Mercearia"
+              exemplo={t('artigo.exemplo_categoria')}
             />
             <Campo
-              etiqueta="Marca"
+              etiqueta={t('artigo.marca')}
               valor={f.marca}
               onChange={(v) => setF({ ...f, marca: v })}
             />
@@ -329,23 +344,21 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
 
           {/* ── Embalagem e conversão ──────────────────────────────── */}
           <section className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-            <h3 className="text-xs font-semibold text-blue-900">Como vende este artigo</h3>
+            <h3 className="text-xs font-semibold text-blue-900">{t('artigo.como_vende')}</h3>
             <p className="mt-1 text-[11px] leading-snug text-blue-800">
-              O comprador conta em unidades — quilos, litros, peças. Uma caixa com 12
-              garrafas de 1 litro cada tem 12 litros no total: diga os dois números e
-              deixe o cálculo para nós.
+              {t('artigo.como_vende_ajuda')}
             </p>
 
             <div className="mt-3">
-              <label className="block text-xs font-medium text-slate-700">Embalagem</label>
+              <label className="block text-xs font-medium text-slate-700">{t('artigo.embalagem_rotulo')}</label>
               <select
                 value={f.tipoEmbalagem}
                 onChange={(e) => setF({ ...f, tipoEmbalagem: e.target.value })}
                 className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               >
-                {TIPOS_DE_EMBALAGEM.map((t) => (
-                  <option key={t.valor} value={t.valor}>
-                    {t.etiqueta}
+                {TIPOS_DE_EMBALAGEM.map((tp) => (
+                  <option key={tp.valor} value={tp.valor}>
+                    {t(`embalagem.${tp.chave}`)}
                   </option>
                 ))}
               </select>
@@ -354,17 +367,19 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             {!vendeAUnidade && (
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 <Campo
-                  etiqueta={`Quantas unidades tem cada ${f.tipoEmbalagem || 'embalagem'}`}
+                  etiqueta={t('artigo.quantas_unidades_cada', {
+                    embalagem: nomeEmbalagem(f.tipoEmbalagem) || t('artigo.embalagem_generica'),
+                  })}
                   tipo="number"
                   obrigatorio
                   valor={f.unidadesPorEmbalagem}
                   onChange={(v) => setF({ ...f, unidadesPorEmbalagem: v })}
                   exemplo="12"
-                  ajuda="Ex.: 12 garrafas numa caixa."
+                  ajuda={t('artigo.ajuda_unidades_embalagem')}
                 />
                 <div>
                   <label className="block text-xs font-medium text-slate-700">
-                    Quanto mede cada unidade
+                    {t('artigo.quanto_mede')}
                     <span className="ml-0.5 text-red-500">*</span>
                   </label>
                   <div className="mt-1 flex gap-2">
@@ -384,29 +399,29 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
                       className="w-1/2 rounded-md border border-slate-300 bg-white px-2 py-2 text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="" disabled>
-                        Unidade…
+                        {t('artigo.unidade_placeholder')}
                       </option>
                       {UNIDADES_COMUNS.map((u) => (
                         <option key={u.valor} value={u.valor}>
-                          {u.etiqueta}
+                          {t(`unidade.${u.chave}`)}
                         </option>
                       ))}
-                      <option value={OUTRA}>Outra…</option>
+                      <option value={OUTRA}>{t('artigo.outra')}</option>
                     </select>
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                    Ex.: 1 litro por garrafa.
+                    {t('artigo.ajuda_conteudo')}
                   </p>
                 </div>
 
                 {f.unidadeSelector === OUTRA && (
                   <div className="sm:col-span-2">
                     <Campo
-                      etiqueta="Qual é a unidade"
+                      etiqueta={t('artigo.qual_unidade')}
                       obrigatorio
                       valor={f.unidadeOutra}
                       onChange={(v) => setF({ ...f, unidadeOutra: v })}
-                      exemplo="galão"
+                      exemplo={t('artigo.exemplo_unidade_outra')}
                     />
                   </div>
                 )}
@@ -416,7 +431,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             {vendeAUnidade && (
               <div className="mt-3">
                 <label className="block text-xs font-medium text-slate-700">
-                  Como se mede este produto
+                  {t('artigo.como_se_mede')}
                 </label>
                 <select
                   value={f.unidadeSelector}
@@ -424,23 +439,23 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
                   className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="" disabled>
-                    Escolha uma unidade…
+                    {t('artigo.escolha_unidade')}
                   </option>
                   {UNIDADES_COMUNS.map((u) => (
                     <option key={u.valor} value={u.valor}>
-                      {u.etiqueta}
+                      {t(`unidade.${u.chave}`)}
                     </option>
                   ))}
-                  <option value={OUTRA}>Outra…</option>
+                  <option value={OUTRA}>{t('artigo.outra')}</option>
                 </select>
                 {f.unidadeSelector === OUTRA && (
                   <div className="mt-3">
                     <Campo
-                      etiqueta="Qual é a unidade"
+                      etiqueta={t('artigo.qual_unidade')}
                       obrigatorio
                       valor={f.unidadeOutra}
                       onChange={(v) => setF({ ...f, unidadeOutra: v })}
-                      exemplo="galão"
+                      exemplo={t('artigo.exemplo_unidade_outra')}
                     />
                   </div>
                 )}
@@ -451,13 +466,16 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
               <p className="mt-3 rounded bg-white px-2.5 py-1.5 text-xs text-slate-700">
                 <Info size={11} className="mr-1 inline text-blue-600" />
                 {vendeAUnidade ? (
-                  <>Vende à unidade — o preço abaixo é o preço por {unidadeBase.trim()}.</>
+                  <>{t('artigo.vende_unidade', { unidade: unidadeBase.trim() })}</>
                 ) : (
                   <>
-                    1 {f.tipoEmbalagem} = <strong>{unidades} × {conteudo}{unidadeBase.trim()}</strong> ={' '}
-                    <strong>{arredondar(factorConversao)} {unidadeBase.trim()}</strong>. Dez{' '}
-                    {f.tipoEmbalagem}s entram no stock do comprador como{' '}
-                    {arredondar(10 * factorConversao)} {unidadeBase.trim()}.
+                    {t('artigo.conversao_igual', { embalagem: nomeEmbalagem(f.tipoEmbalagem) })}{' '}
+                    <strong>{unidades} × {conteudo}{unidadeBase.trim()}</strong> ={' '}
+                    <strong>{arredondar(factorConversao)} {unidadeBase.trim()}</strong>.{' '}
+                    {t('artigo.conversao_stock', {
+                      embalagens: nomeEmbalagemPlural(f.tipoEmbalagem),
+                      quantidade: `${arredondar(10 * factorConversao)} ${unidadeBase.trim()}`,
+                    })}
                   </>
                 )}
               </p>
@@ -465,12 +483,16 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
 
             <div className="mt-3">
               <Campo
-                etiqueta={`Quantas ${vendeAUnidade ? unidadeBase.trim() || 'unidades' : `${f.tipoEmbalagem}s`} tem em stock`}
+                etiqueta={t('artigo.quantas_em_stock', {
+                  item: vendeAUnidade
+                    ? unidadeBase.trim() || t('artigo.unidades_plural')
+                    : nomeEmbalagemPlural(f.tipoEmbalagem),
+                })}
                 tipo="number"
                 valor={f.quantidadeDisponivel}
                 onChange={(v) => setF({ ...f, quantidadeDisponivel: v })}
                 exemplo="200"
-                ajuda="Deixe vazio se preferir não publicar. Vazio não é lido como «sem stock» — só falta a informação."
+                ajuda={t('artigo.ajuda_stock')}
               />
             </div>
           </section>
@@ -478,15 +500,18 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
           {/* ── Preço — só ao criar ────────────────────────────────── */}
           {!aEditar && (
             <section className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
-              <h3 className="text-xs font-semibold text-emerald-900">Preço</h3>
+              <h3 className="text-xs font-semibold text-emerald-900">{t('artigo.preco')}</h3>
               <p className="mt-1 text-[11px] leading-snug text-emerald-800">
-                É o que o comprador vê primeiro numa comparação. Um artigo sem preço fica
-                invisível em todas as comparações, mesmo publicado.
+                {t('artigo.preco_ajuda')}
               </p>
 
               <div className="mt-3">
                 <label className="block text-xs font-medium text-slate-700">
-                  Preço por {vendeAUnidade ? unidadeBase.trim() || 'unidade' : f.tipoEmbalagem || 'embalagem'}
+                  {t('artigo.preco_por', {
+                    item: vendeAUnidade
+                      ? unidadeBase.trim() || t('artigo.unidade_singular')
+                      : nomeEmbalagem(f.tipoEmbalagem) || t('artigo.embalagem_generica'),
+                  })}
                   <span className="ml-0.5 text-red-500">*</span>
                 </label>
                 <input
@@ -501,20 +526,21 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
                 />
                 {!vendeAUnidade && factorValido && Number(preco.preco) > 0 && (
                   <p className="mt-1 text-[11px] text-emerald-700">
-                    {(Number(preco.preco) / factorConversao).toFixed(2)} MT por{' '}
-                    {unidadeBase.trim() || 'unidade'}.
+                    {t('artigo.preco_por_unidade_base', {
+                      valor: formatMoeda(Number(preco.preco) / factorConversao),
+                      unidade: unidadeBase.trim() || t('artigo.unidade_singular'),
+                    })}
                   </p>
                 )}
                 <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                  Pode publicar preços diferentes por quantidade e alterá-lo mais tarde em
-                  «Preços», na lista de artigos.
+                  {t('artigo.ajuda_preco_escaloes')}
                 </p>
               </div>
             </section>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-700">Descrição</label>
+            <label className="block text-xs font-medium text-slate-700">{t('artigo.descricao')}</label>
             <textarea
               value={f.descricao}
               onChange={(e) => setF({ ...f, descricao: e.target.value })}
@@ -522,8 +548,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              Ajuda a encontrar o artigo quando não tem código de barras. Escreva-a como o
-              comprador o procuraria.
+              {t('artigo.ajuda_descricao')}
             </p>
           </div>
         </div>
@@ -534,7 +559,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('artigo.cancelar')}
           </button>
           <button
             type="submit"
@@ -542,7 +567,7 @@ export function ArtigoFormModal({ artigo, onClose, onSuccess }: Props) {
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aGravar && <Loader2 size={15} className="animate-spin" />}
-            {aEditar ? 'Guardar' : 'Criar'}
+            {aEditar ? t('artigo.guardar') : t('artigo.criar')}
           </button>
         </footer>
       </form>

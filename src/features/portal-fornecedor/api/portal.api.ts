@@ -525,49 +525,23 @@ export const portal = {
 // Etiquetas
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const ETIQUETA_ESTADO_ARTIGO: Record<EstadoArtigoVitrine, string> = {
-  RASCUNHO: 'Rascunho',
-  PUBLICADO: 'Publicado',
-  ESGOTADO: 'Esgotado',
-  DESCONTINUADO: 'Descontinuado',
-};
-
-/**
- * O que cada estado do artigo significa para quem compra.
- *
- * `ESGOTADO` é o que mais precisa de explicação: continua visível de propósito, e o
- * fornecedor tem de saber isso — senão descontinua o artigo quando queria só marcar que
- * está sem saldo, e perde-o das comparações para sempre.
- */
-export const AJUDA_ESTADO_ARTIGO: Record<EstadoArtigoVitrine, string> = {
-  RASCUNHO: 'Só você vê. Nenhum comprador o encontra.',
-  PUBLICADO: 'Visível e comprável em todas as comparações.',
-  ESGOTADO: 'Continua visível — o comprador vê que existe e vai voltar. Não sai das buscas.',
-  DESCONTINUADO: 'Sai das comparações. Fica no histórico das compras antigas.',
-};
-
-export const ETIQUETA_DOCUMENTO: Record<TipoDocumento, string> = {
-  ALVARA: 'Alvará',
-  CERTIDAO_QUITACAO_FISCAL: 'Certidão de quitação fiscal',
-  INSCRICAO_INSS: 'Inscrição no INSS',
-  LICENCA_SANITARIA: 'Licença sanitária',
-  SEGURO_RESPONSABILIDADE: 'Seguro de responsabilidade',
-  CERTIFICADO_QUALIDADE: 'Certificado de qualidade',
-  OUTRO: 'Outro documento',
-};
+// As etiquetas de cada estado, tipo de documento e unidade estão em
+// `src/locales/<língua>/portal.json` (`estadoArtigo.*`, `ajudaEstadoArtigo.*`, `documento.*`,
+// `estadoDocumento.*`). Aqui ficam só as listas de códigos, na ordem em que se mostram — as
+// que se percorrem para montar filtros e selectores.
+//
+// `ajudaEstadoArtigo.ESGOTADO` é a que mais precisa de explicação: o artigo continua visível
+// de propósito, e o fornecedor tem de saber isso — senão descontinua-o quando queria só
+// marcar que está sem saldo, e perde-o das comparações para sempre.
+export const ESTADOS_ARTIGO = Object.values(EstadoArtigoVitrine);
+export const TIPOS_DOCUMENTO = Object.values(TipoDocumento);
+export const ESTADOS_DOCUMENTO = ['PENDENTE', 'VALIDO', 'EXPIRADO', 'RECUSADO'] as const;
 
 /** Os que impedem a compra quando faltam. Os outros só descontam na pontuação. */
 export const DOCUMENTOS_OBRIGATORIOS: TipoDocumento[] = [
   'ALVARA',
   'CERTIDAO_QUITACAO_FISCAL',
 ];
-
-export const ETIQUETA_ESTADO_DOCUMENTO: Record<DocumentoFornecedor['estado'], string> = {
-  PENDENTE: 'A aguardar verificação',
-  VALIDO: 'Válido',
-  EXPIRADO: 'Expirado',
-  RECUSADO: 'Recusado',
-};
 
 /**
  * As províncias de Moçambique, para o selector de zonas.

@@ -1,0 +1,59 @@
+{
+  "cabecalho": {
+    "titulo": "Supplier Marketplace",
+    "sou_fornecedor": "I'm a supplier",
+    "entrar": "Sign in"
+  },
+  "lista": {
+    "titulo": "Who supplies what, and where they deliver",
+    "subtitulo": "Suppliers with a published catalogue on the platform. Prices are the list prices each one has published.",
+    "placeholder_busca": "Rice, oil, detergent, drinks…",
+    "todas_provincias": "All provinces",
+    "vazio_filtrado": "No suppliers match these criteria.",
+    "vazio_geral": "There are no suppliers with a published catalogue yet.",
+    "vazio_dica_filtrado": "Try a more general term, or remove the province filter.",
+    "vazio_dica_geral": "The marketplace grows with those who publish. If you supply supermarkets, sign up — it costs nothing.",
+    "registar_empresa": "Register my company",
+    "fornecedores_one": "{{count}} supplier",
+    "fornecedores_other": "{{count}} suppliers",
+    "fornecedores_em_one": "{{count}} supplier delivering to {{provincia}}",
+    "fornecedores_em_other": "{{count}} suppliers delivering to {{provincia}}",
+    "artigos_zero": "{{count}} items",
+    "artigos_one": "{{count}} item",
+    "artigos_other": "{{count}} items",
+    "mais_provincias": "+{{count}}",
+    "ver_ficha": "View profile",
+    "sob_consulta": "on request",
+    "rodape_titulo": "Do you supply supermarkets?",
+    "rodape_texto": "Publish your catalogue once and be visible to every buyer on the platform. Registration is free."
+  },
+  "ficha": {
+    "voltar": "Marketplace",
+    "nao_encontrado": "Supplier not found.",
+    "voltar_ao_mercado": "Back to the marketplace",
+    "artigos_publicados_zero": "published items",
+    "artigos_publicados_one": "published item",
+    "artigos_publicados_other": "published items",
+    "provincias_servidas_zero": "provinces served",
+    "provincias_servidas_one": "province served",
+    "provincias_servidas_other": "provinces served",
+    "compradores_activos": "active buyers",
+    "compradores_nota": "Not disclosed — below five buyers the number is not published, for anonymity.",
+    "documentacao_titulo": "Verified documents",
+    "documentacao_texto": "Verified by the platform and valid as of today.",
+    "o_que_fornece": "What they supply",
+    "onde_entrega": "Where they deliver",
+    "cta_titulo": "Want to buy from this supplier?",
+    "cta_texto": "In ControlCore, you create a requisition with what you need and the system compares this supplier with all the others — unit price, lead time, reliability and delivery cost — and tells you which comes out best, and why.",
+    "entrar": "Sign in to ControlCore"
+  },
+  "documento": {
+    "ALVARA": "Business licence",
+    "CERTIDAO_QUITACAO_FISCAL": "Tax clearance",
+    "INSCRICAO_INSS": "INSS",
+    "LICENCA_SANITARIA": "Health licence",
+    "SEGURO_RESPONSABILIDADE": "Liability insurance",
+    "CERTIFICADO_QUALIDADE": "Quality certificate",
+    "OUTRO": "Other document"
+  }
+}
