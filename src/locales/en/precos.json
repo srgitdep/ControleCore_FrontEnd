@@ -1,0 +1,200 @@
+{
+  "plano": {
+    "loja": {
+      "nome": "Store",
+      "frase": "I know what I sold today, with what stock and with the till balanced.",
+      "ambito": "One store, one warehouse. The point of sale and the essentials around it."
+    },
+    "rede": {
+      "nome": "Network",
+      "frase": "I know what is happening in every store, without asking anyone for a report.",
+      "ambito": "Several stores and warehouses. Transfers, purchasing and customer credit."
+    },
+    "enterprise": {
+      "nome": "Enterprise",
+      "frase": "I know what it really cost and whether each store is making a profit.",
+      "ambito": "The whole network. Finance, human resources and the supplier marketplace."
+    }
+  },
+  "limite": {
+    "lojas": "Stores included",
+    "utilizadores": "Users included",
+    "armazens": "Warehouses",
+    "mayra": "Mayra questions",
+    "historico": "History available"
+  },
+  "limite_valor": {
+    "sem_limite": "unlimited",
+    "por_mes": "{{n}} / month",
+    "anos_one": "{{count}} year",
+    "anos_other": "{{count}} years"
+  },
+  "familia": {
+    "loja": "Store",
+    "cadeia": "Supply chain",
+    "gestao": "Management",
+    "governo": "Governance"
+  },
+  "modulo": {
+    "caixa": "Point of sale",
+    "catalogo": "Catalog & Stock",
+    "compras": "Purchasing & Suppliers",
+    "crm": "Customers & Credit",
+    "financeiro": "Finance",
+    "pessoas": "People — Human Resources",
+    "auditoria": "Audit"
+  },
+  "capacidade": {
+    "caixa_venda": "Sale by barcode or search",
+    "caixa_pagamentos": "Several payment methods on the same sale",
+    "caixa_recibo": "Receipt with sequential numbering",
+    "caixa_sessao": "Till session with checked opening and closing",
+    "caixa_historico_lojas": "Session history across stores",
+    "catalogo_produtos": "Products by category",
+    "catalogo_stock": "Stock per warehouse, with weighted average cost",
+    "catalogo_movimentos": "Movement history",
+    "catalogo_alerta_minimo": "Alert below minimum stock",
+    "catalogo_transferencias": "Transfers between warehouses, with an audit trail",
+    "catalogo_multi_armazem": "Unlimited multi-warehouse",
+    "compras_fornecedores": "Suppliers and the items they supply",
+    "compras_encomendas": "Purchase orders to suppliers",
+    "compras_recepcao": "Goods receipt checked line by line",
+    "compras_necessidades": "Needs and replenishment dashboard",
+    "compras_mercado": "Supplier marketplace and B2B sourcing",
+    "compras_portal": "Supplier portal, with its own catalog",
+    "crm_ficha": "Customer record and purchase history",
+    "crm_limite_credito": "Credit limit and outstanding balance",
+    "crm_venda_prazo": "Sale on credit, with a running account",
+    "financeiro_indicadores": "Indicators for what is subscribed",
+    "financeiro_margem": "Margin by store and by product",
+    "financeiro_consolidado": "Consolidated financial dashboard for the network",
+    "pessoas_cadastro": "User and role management",
+    "pessoas_permissoes": "Permissions per role, enforced on the server",
+    "pessoas_rh": "Human resources management for the network",
+    "pessoas_permissoes_granulares": "Granular permissions per screen and per action",
+    "auditoria_registo": "Log of creations, changes and deletions",
+    "auditoria_autor": "Author, time and previous values",
+    "auditoria_historico": "Extended history (see limits above)",
+    "mayra_perguntar": "Ask and get an answer based on your real data",
+    "mayra_explicar": "Explain a number — where it comes from, how it is calculated",
+    "mayra_perfil": "Sees what the asking user's role can see",
+    "mayra_escrita": "Write actions, with confirmation before saving",
+    "mayra_sem_limite": "Questions with no practical monthly limit"
+  },
+  "cabecalho": {
+    "titulo_antes": "Three tiers. The price is right here, ",
+    "titulo_realce": "no form to fill in",
+    "titulo_depois": ".",
+    "sub_antes": "What changes between tiers is the ",
+    "sub_negrito": "scope",
+    "sub_depois": ", not a different system underneath. They all run on the same ControlCore."
+  },
+  "ciclo": {
+    "aria": "Billing cycle",
+    "mensal": "Monthly",
+    "anual": "Annual",
+    "dois_meses_chip": "2 months free"
+  },
+  "cartao": {
+    "mais_escolhido": "Most popular",
+    "por_mes": "/month",
+    "por_ano": "/year",
+    "dois_meses_gratis": "Two months free",
+    "iva": "VAT is added at the statutory rate.",
+    "pedir_demo": "Request a demo",
+    "nota_sem_cartao": "No card needed to try it. A half-hour conversation tells you whether the system fits."
+  },
+  "calculadora": {
+    "titulo": "How many people will use it?",
+    "texto": "Beyond those included, the price per user drops with volume: {{p1}} up to {{a1}}, {{p2}} up to {{a2}}, {{p3}} above that.",
+    "aria_utilizadores": "Number of users",
+    "por_ano": "per year, excl. VAT",
+    "por_mes": "per month, excl. VAT",
+    "todos_incluidos": "All users included",
+    "extra": "{{n}} above the included amount, at {{preco}}/month each"
+  },
+  "capacidades": {
+    "titulo": "What each tier unlocks",
+    "subtexto": "The full table, showing what is included and what is not, module by module."
+  },
+  "tabela": {
+    "capacidade": "Capability",
+    "decide": "decisive",
+    "incluido": "included",
+    "nao_incluido": "not included"
+  },
+  "mayra": {
+    "titulo": "Mayra",
+    "familia": "Copilot — across all areas",
+    "nota_antes": "Asking is included in ",
+    "nota_negrito": "all",
+    "nota_depois": " plans. What changes is writing: an action that changes data needs confirmation before it is saved."
+  },
+  "sempre": {
+    "titulo": "Always included, never billed",
+    "subtexto": "Charging for data export is what makes a customer hesitate to sign up.",
+    "administracao": {
+      "titulo": "Full administration",
+      "porque": "Users, roles, permissions and company settings."
+    },
+    "auditoria": {
+      "titulo": "Audit",
+      "porque": "A log with previous and new values, which cannot be edited."
+    },
+    "mayra": {
+      "titulo": "Ask Mayra",
+      "porque": "The read layer comes with every plan."
+    },
+    "exportar": {
+      "titulo": "Export your data",
+      "porque": "Always, and in an open format. We never charge to leave."
+    }
+  },
+  "complementos": {
+    "titulo": "Add-ons",
+    "subtexto": "An add-on is not a withheld capability. It is another place to work, or usage with a real variable cost.",
+    "por_mes": "/month"
+  },
+  "complemento": {
+    "loja_adicional": {
+      "nome": "Additional store",
+      "descricao": "Beyond the stores included in the plan, per store.",
+      "porque": "Another counter, another till, another team."
+    },
+    "pacote_mayra": {
+      "nome": "Pack of 5,000 Mayra questions",
+      "descricao": "Adds 5,000 calls to the plan's monthly limit.",
+      "porque": "Usage with a real marginal cost."
+    }
+  },
+  "perguntas": {
+    "titulo": "Frequently asked questions"
+  },
+  "pergunta": {
+    "mudar_plano": {
+      "p": "Can I change plan mid-month?",
+      "r": "Yes. You are only charged the difference for the remaining days. When downgrading, the amount is kept as credit for the next cycle."
+    },
+    "passar_limite": {
+      "p": "What happens if I exceed the limit of stores or users?",
+      "r": "We warn you before the limit, with the tier that solves it. Once you reach the limit you can no longer create new stores or users — the existing ones keep working."
+    },
+    "deixar_pagar": {
+      "p": "What if I stop paying?",
+      "r": "First a warning, then read-only access, then suspension. Data is never deleted, and the full export is always available."
+    },
+    "iva": {
+      "p": "Do prices include VAT?",
+      "r": "No. VAT is added at the statutory rate in force in Mozambique."
+    },
+    "servidores": {
+      "p": "Do I need to install servers?",
+      "r": "No. It is a cloud service. There is an on-premises option for those who require it — in that case pricing is by quotation."
+    }
+  },
+  "fecho": {
+    "titulo": "Want to see this with your own store's data?",
+    "texto": "Half an hour, no commitment. We show the whole chain closing with one of your products.",
+    "assunto_email": "ControlCore demo request"
+  }
+}

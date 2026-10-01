@@ -14,8 +14,8 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
-  avisoDeNuitAoEscrever,
-  diagnosticarNuit,
+  diagnosticoDoNuit,
+  diagnosticoDoNuitAoEscrever,
   mensagemDeErro,
 } from '@/shared/utils';
 import { SelectorIdioma } from '@/shared/ui';
@@ -43,6 +43,7 @@ import type { RegistoResultado } from '../api/portal.api';
  */
 export function RegistarFornecedorPage() {
   const { t } = useTranslation('portal');
+  const { t: tComum } = useTranslation('comum');
   const navegar = useNavigate();
   const [aGravar, setAGravar] = useState(false);
   const [resultado, setResultado] = useState<RegistoResultado | null>(null);
@@ -75,7 +76,10 @@ export function RegistarFornecedorPage() {
    * meio não é um erro, e pintá-lo de vermelho ao quarto dígito acusa a pessoa de um
    * engano que ela ainda não cometeu.
    */
-  const avisoDoNuit = avisoDeNuitAoEscrever(empresa.nuit);
+  const diagnosticoAoEscrever = diagnosticoDoNuitAoEscrever(empresa.nuit);
+  const avisoDoNuit = diagnosticoAoEscrever
+    ? tComum(`nuit.${diagnosticoAoEscrever.chave}`, diagnosticoAoEscrever.parametros)
+    : null;
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,9 +91,9 @@ export function RegistarFornecedorPage() {
 
     // O diagnóstico completo, e não o de escrita: aqui o campo está terminado, e um NUIT
     // com dígitos a menos passa a ser um erro que tem de ser dito.
-    const erroDoNuit = diagnosticarNuit(empresa.nuit);
+    const erroDoNuit = diagnosticoDoNuit(empresa.nuit);
     if (erroDoNuit) {
-      toast.error(erroDoNuit);
+      toast.error(tComum(`nuit.${erroDoNuit.chave}`, erroDoNuit.parametros));
       return;
     }
 

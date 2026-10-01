@@ -1,0 +1,75 @@
+{
+  "comum": {
+    "voltar": "Voltar"
+  },
+  "pedido": {
+    "nome_empresa_obrigatorio": "O nome da empresa é obrigatório.",
+    "responsavel_obrigatorio": "O nome e o e-mail do responsável são obrigatórios.",
+    "erro_submeter": "Não foi possível submeter o pedido.",
+    "titulo": "Pedir adesão ao ControlCore",
+    "subtitulo": "Para lojas e cadeias de lojas. Analisamos o pedido e, se for aprovado, recebe por e-mail o código de acesso e a senha inicial.",
+    "aviso_titulo": "Este pedido não cria a conta.",
+    "aviso_corpo": "Criar uma empresa na plataforma implica um plano e um administrador com acesso aos dados — por isso passa por análise. Entramos em contacto pelo e-mail que indicar.",
+    "seccao_empresa": "A empresa",
+    "empresa_nome": "Nome da empresa",
+    "empresa_nome_exemplo": "Supermercado Xitalha, Lda.",
+    "nuit": "NUIT",
+    "nuit_exemplo": "400 123 456",
+    "nuit_ajuda": "Nove dígitos. É por ele que evitamos registos duplicados da mesma empresa.",
+    "cidade": "Cidade",
+    "cidade_exemplo": "Maputo",
+    "empresa_email": "E-mail da empresa",
+    "empresa_email_ajuda": "O endereço de facturação.",
+    "telefone": "Telefone",
+    "telefone_exemplo": "+258 84 123 4567",
+    "seccao_gestor": "Quem vai administrar a conta",
+    "gestor_nome": "Nome",
+    "gestor_nome_exemplo": "Amélia Chissano",
+    "gestor_cargo": "Cargo",
+    "gestor_cargo_exemplo": "Directora-Geral",
+    "gestor_email": "E-mail",
+    "gestor_email_ajuda": "Se o pedido for aprovado, é para aqui que vão o código de acesso e a senha inicial.",
+    "observacoes": "O que precisa resolver",
+    "observacoes_exemplo": "Temos três lojas em Maputo e queremos stock centralizado.",
+    "observacoes_ajuda": "Opcional, e é o campo que mais ajuda quem analisa o pedido — diz-nos que módulos faz sentido activar.",
+    "e_fornecedor": "É fornecedor?",
+    "registar_fornecedor": "Registar como fornecedor",
+    "submeter": "Submeter pedido"
+  },
+  "recebido": {
+    "titulo": "Pedido recebido",
+    "referencia": "A sua referência",
+    "referencia_ajuda": "Guarde-a. Se nos contactar sobre este pedido, é por ela que o encontramos.",
+    "a_seguir": "O que acontece a seguir:",
+    "voltar_inicio": "Voltar ao início"
+  },
+  "tipo": {
+    "titulo": "Criar conta no ControlCore",
+    "subtitulo": "Duas formas de estar na plataforma. Escolha a que descreve o seu negócio — o registo é diferente em cada caso.",
+    "comprador": {
+      "titulo": "Tenho uma loja ou cadeia de lojas",
+      "frase": "Vendo aos meus clientes",
+      "descricao": "Gestão de caixa, stock, compras e contabilidade. Cada loja registada no sistema é um comprador, e pode requisitar a fornecedores da plataforma.",
+      "ponto_1": "Caixa, stock e armazéns em vários locais",
+      "ponto_2": "Requisições comparadas entre fornecedores",
+      "ponto_3": "Pedido analisado antes de a conta ser criada",
+      "botao": "Pedir adesão"
+    },
+    "fornecedor": {
+      "titulo": "Sou fornecedor ou distribuidor",
+      "frase": "Vendo a outras empresas",
+      "descricao": "Publique o catálogo e os preços uma vez e fique visível a todos os compradores da plataforma. Não paga para se registar.",
+      "ponto_1": "Vitrine com artigos, preços e escalões",
+      "ponto_2": "Aparece nas comparações de quem compra",
+      "ponto_3": "Conta criada na hora, por e-mail",
+      "botao": "Registar a minha empresa"
+    },
+    "ja_tem_conta": "Já tem conta?",
+    "entrar": "Entrar no ControlCore",
+    "entrar_portal": "Entrar no portal do fornecedor",
+    "so_explorar": "Só a explorar?",
+    "ver_fornecedores": "Ver os fornecedores da plataforma",
+    "so_comprar": "Só quer comprar numa loja?",
+    "ir_loja": "Ir à loja online"
+  }
+}

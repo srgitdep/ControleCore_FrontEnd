@@ -4,6 +4,9 @@ import type loja from '../locales/pt/loja.json';
 import type auth from '../locales/pt/auth.json';
 import type portal from '../locales/pt/portal.json';
 import type mercado from '../locales/pt/mercado.json';
+import type site from '../locales/pt/site.json';
+import type precos from '../locales/pt/precos.json';
+import type adesao from '../locales/pt/adesao.json';
 
 // As chaves do `t()` passam a ser verificadas pelo `tsc` contra o catálogo português, que
 // é a língua de origem: uma chave mal escrita é erro de compilação, e não um texto em
@@ -17,6 +20,9 @@ declare module 'i18next' {
       auth: typeof auth;
       portal: typeof portal;
       mercado: typeof mercado;
+      site: typeof site;
+      precos: typeof precos;
+      adesao: typeof adesao;
     };
   }
 }

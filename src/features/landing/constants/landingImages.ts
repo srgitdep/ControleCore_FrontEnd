@@ -8,7 +8,7 @@ import sessoesCaixaImg from '@/assets/HeroPages/SessoesCaixa.png';
 /**
  * As capturas do produto usadas na landing.
  *
- * Separadas do copy de propósito: `shared/constants/copywriting.ts` é um ficheiro
+ * Separadas do copy de propósito: `locales/<língua>/site.json` é um ficheiro
  * de **texto**, e um ficheiro de texto que importa de `@/assets` deixa de o ser —
  * passa a depender do bundler, e quem edita uma frase precisa de saber o que é um
  * `import` de imagem. O copy guarda a chave (`'dashboard'`), este mapa resolve-a.

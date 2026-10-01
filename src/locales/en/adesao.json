@@ -1,0 +1,75 @@
+{
+  "comum": {
+    "voltar": "Back"
+  },
+  "pedido": {
+    "nome_empresa_obrigatorio": "The company name is required.",
+    "responsavel_obrigatorio": "The manager's name and email are required.",
+    "erro_submeter": "Could not submit the request.",
+    "titulo": "Request access to ControlCore",
+    "subtitulo": "For shops and retail chains. We review the request and, if approved, you receive the access code and the initial password by email.",
+    "aviso_titulo": "This request does not create the account.",
+    "aviso_corpo": "Creating a company on the platform involves a plan and an administrator with access to the data — which is why it goes through review. We will contact you at the email you provide.",
+    "seccao_empresa": "The company",
+    "empresa_nome": "Company name",
+    "empresa_nome_exemplo": "Xitalha Supermarket, Lda.",
+    "nuit": "NUIT",
+    "nuit_exemplo": "400 123 456",
+    "nuit_ajuda": "Nine digits. We use it to avoid duplicate registrations of the same company.",
+    "cidade": "City",
+    "cidade_exemplo": "Maputo",
+    "empresa_email": "Company email",
+    "empresa_email_ajuda": "The billing address.",
+    "telefone": "Phone",
+    "telefone_exemplo": "+258 84 123 4567",
+    "seccao_gestor": "Who will manage the account",
+    "gestor_nome": "Name",
+    "gestor_nome_exemplo": "Amélia Chissano",
+    "gestor_cargo": "Job title",
+    "gestor_cargo_exemplo": "General Manager",
+    "gestor_email": "Email",
+    "gestor_email_ajuda": "If the request is approved, the access code and the initial password are sent here.",
+    "observacoes": "What you need to solve",
+    "observacoes_exemplo": "We have three shops in Maputo and want centralised stock.",
+    "observacoes_ajuda": "Optional, and the field that helps the reviewer most — it tells us which modules make sense to enable.",
+    "e_fornecedor": "Are you a supplier?",
+    "registar_fornecedor": "Register as a supplier",
+    "submeter": "Submit request"
+  },
+  "recebido": {
+    "titulo": "Request received",
+    "referencia": "Your reference",
+    "referencia_ajuda": "Keep it. If you contact us about this request, we use it to find it.",
+    "a_seguir": "What happens next:",
+    "voltar_inicio": "Back to home"
+  },
+  "tipo": {
+    "titulo": "Create a ControlCore account",
+    "subtitulo": "Two ways to be on the platform. Choose the one that describes your business — registration is different in each case.",
+    "comprador": {
+      "titulo": "I have a shop or a chain of shops",
+      "frase": "I sell to my customers",
+      "descricao": "Cash register, stock, purchasing and accounting management. Each shop registered in the system is a buyer, and can place requisitions with the platform's suppliers.",
+      "ponto_1": "Cash register, stock and warehouses across multiple locations",
+      "ponto_2": "Requisitions compared across suppliers",
+      "ponto_3": "Request reviewed before the account is created",
+      "botao": "Request access"
+    },
+    "fornecedor": {
+      "titulo": "I am a supplier or distributor",
+      "frase": "I sell to other businesses",
+      "descricao": "Publish your catalogue and prices once and be visible to all buyers on the platform. Registration is free.",
+      "ponto_1": "Storefront with items, prices and price tiers",
+      "ponto_2": "Appears in buyers' comparisons",
+      "ponto_3": "Account created instantly, by email",
+      "botao": "Register my company"
+    },
+    "ja_tem_conta": "Already have an account?",
+    "entrar": "Sign in to ControlCore",
+    "entrar_portal": "Sign in to the supplier portal",
+    "so_explorar": "Just browsing?",
+    "ver_fornecedores": "View the platform's suppliers",
+    "so_comprar": "Just want to buy from a shop?",
+    "ir_loja": "Go to the online shop"
+  }
+}

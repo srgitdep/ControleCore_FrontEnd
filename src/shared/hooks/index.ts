@@ -4,3 +4,4 @@ export * from './useDebounce';
 export * from './useLocalStorage';
 export * from './useBreakpoint';
 export * from './useLeitorDeCodigo';
+export * from './useCopy';

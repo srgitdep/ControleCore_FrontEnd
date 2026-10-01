@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
-import { COPY } from '@/shared/constants/copywriting';
+import { useCopy } from '@/shared/hooks/useCopy';
 import { SelectorIdioma } from '@/shared/ui';
 
 /**
@@ -15,6 +15,7 @@ import { SelectorIdioma } from '@/shared/ui';
  */
 
 export function BarraDoSitio() {
+  const COPY = useCopy();
   const [aberto, setAberto] = useState(false);
   const [deslocou, setDeslocou] = useState(false);
 
@@ -46,7 +47,7 @@ export function BarraDoSitio() {
         </Link>
 
         <nav
-          aria-label="Principal"
+          aria-label={COPY.OUTROS.NAV_PRINCIPAL}
           className="cc-nav-larga"
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 28 }}
         >
@@ -105,7 +106,7 @@ export function BarraDoSitio() {
 
       {aberto && (
         <nav
-          aria-label="Principal, em telemóvel"
+          aria-label={COPY.OUTROS.NAV_PRINCIPAL_MOVEL}
           style={{
             borderTop: '1px solid var(--linha)',
             background: '#fff',
@@ -147,6 +148,7 @@ export function BarraDoSitio() {
  * o `alt`/`title` em qualquer outro sítio ficaria a dizer outra coisa.
  */
 function NomeDaMarca({ tamanho = 19 }: { tamanho?: number }) {
+  const COPY = useCopy();
   const { NOME, NOME_DESTAQUE } = COPY.MARCA;
   const corte = NOME.lastIndexOf(NOME_DESTAQUE);
   const inicio = corte > 0 ? NOME.slice(0, corte) : NOME;
@@ -203,6 +205,7 @@ export function Marca({ tamanho = 32 }: { tamanho?: number }) {
  * aprende que o sítio não é de confiança. Ficam as que funcionam.
  */
 export function RodapeDoSitio() {
+  const COPY = useCopy();
   const copy = COPY.SITIO.RODAPE;
 
   return (

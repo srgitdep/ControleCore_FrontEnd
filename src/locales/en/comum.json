@@ -9,5 +9,10 @@
     "ha_horas": "{{n}}h ago",
     "ha_dias_one": "{{count}} day ago",
     "ha_dias_other": "{{count}} days ago"
+  },
+  "nuit": {
+    "obrigatorio": "The NUIT is required and has {{digitos}} digits.",
+    "a_mais": "A NUIT has {{digitos}} digits and you entered {{escritos}} — {{excesso}} too many. Check the number on your taxpayer card.",
+    "a_menos": "A NUIT has {{digitos}} digits and you entered {{escritos}} — {{faltam}} missing. Check the number on your taxpayer card."
   }
 }

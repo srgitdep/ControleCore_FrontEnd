@@ -13,7 +13,7 @@ import { usePortal } from '@/features/portal-fornecedor/store/usePortalStore';
 import { cn } from '@/shared/utils';
 import { useBreakpoint } from '@/shared/hooks';
 import { SelectorIdioma } from '@/shared/ui';
-import { COPY } from '@/shared/constants/copywriting';
+import { useCopy } from '@/shared/hooks/useCopy';
 import { Marca } from '@/features/landing';
 
 import '@/features/landing/site.css';
@@ -54,6 +54,7 @@ const criarLoginSchema = (t: (chave: 'validacao.codigo_obrigatorio' | 'validacao
 type LoginForm = z.infer<ReturnType<typeof criarLoginSchema>>;
 
 export function LoginPage() {
+  const COPY = useCopy();
   const { entrarComSessao } = useAuth();
   const { entrarComSessao: entrarNoPortal } = usePortal();
   const navigate = useNavigate();
@@ -271,6 +272,7 @@ export function LoginPage() {
  * de comprimentos diferentes fazem os pontos saltar de posição.
  */
 function PainelDaMarca() {
+  const COPY = useCopy();
   const { t } = useTranslation('auth');
   // O `0|1|2|3` fixa os índices no tipo: o catálogo guarda os slides como `slides.0`…`slides.3`.
   const slides = ([0, 1, 2, 3] as const).map((i) => ({
