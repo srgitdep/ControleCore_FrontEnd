@@ -14,12 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  b2bApi,
-  DESCRICAO_ESTRATEGIA,
-  ETIQUETA_ESTRATEGIA,
-  ETIQUETA_EXCLUSAO,
-} from '../api/b2b.api';
+import { useTranslation } from 'react-i18next';
+import { b2bApi, eMotivoExclusao } from '../api/b2b.api';
 import type {
   Candidato,
   CenarioResumo,
@@ -27,7 +23,7 @@ import type {
   Requisicao,
   SourcingRun,
 } from '../api/b2b.api';
-import { cn } from '@/shared/utils';
+import { cn, formatMoeda } from '@/shared/utils';
 
 interface Props {
   requisicao: Requisicao;
@@ -36,10 +32,7 @@ interface Props {
   onAdjudicado: () => void;
 }
 
-const mt = (v: number | null | undefined) =>
-  v === null || v === undefined
-    ? '—'
-    : `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+const mt = (v: number | null | undefined) => (v === null || v === undefined ? '—' : formatMoeda(v));
 
 /**
  * A comparação de fornecedores, e a decisão.
@@ -67,6 +60,7 @@ const mt = (v: number | null | undefined) =>
  * linhas — e a coluna tem a explicação ao lado.
  */
 export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado }: Props) {
+  const { t } = useTranslation('b2b');
   const [expandido, setExpandido] = useState<string | null>(null);
   const [estrategia, setEstrategia] = useState<EstrategiaAdjudicacao | null>(
     run.estrategiaRecomendada ?? null,
@@ -96,15 +90,12 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
 
   const adjudicar = async () => {
     if (!estrategia) {
-      toast.error('Escolha um cenário antes de adjudicar.');
+      toast.error(t('sourcing.erro_cenario'));
       return;
     }
 
     if (haDesvio && motivoDesvio.trim().length < 10) {
-      toast.error(
-        'Escolher um cenário diferente do recomendado exige um motivo. É o que distingue ' +
-          'uma boa razão de um favor, seis meses depois.',
-      );
+      toast.error(t('sourcing.erro_desvio'));
       return;
     }
 
@@ -123,7 +114,7 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
       onAdjudicado();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao adjudicar.');
+      toast.error(error?.response?.data?.message || t('sourcing.erro_adjudicar'));
     } finally {
       setAAdjudicar(false);
     }
@@ -134,16 +125,12 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
       <div className="my-4 w-full max-w-5xl rounded-xl bg-white shadow-xl">
         <header className="sticky top-0 z-10 flex items-start justify-between rounded-t-xl border-b border-slate-100 bg-white px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              Comparação de fornecedores
-            </h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('sourcing.titulo')}</h2>
             <p className="mt-0.5 text-xs text-slate-500">
-              Requisição{' '}
+              {t('sourcing.requisicao')}{' '}
               <span className="font-mono font-medium text-slate-700">{requisicao.numero}</span> ·{' '}
-              {requisicao.linhas.length} linha{requisicao.linhas.length === 1 ? '' : 's'} ·{' '}
-              {run.candidatosAvaliados} fornecedor
-              {run.candidatosAvaliados === 1 ? '' : 'es'} avaliado
-              {run.candidatosAvaliados === 1 ? '' : 's'} ·{' '}
+              {t('req.linhas', { count: requisicao.linhas.length })} ·{' '}
+              {t('sourcing.avaliados', { count: run.candidatosAvaliados })} ·{' '}
               <span className="font-mono text-slate-400">{run.versaoAlgoritmo}</span>
             </p>
           </div>
@@ -182,20 +169,17 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
                     <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-amber-900">
-                        Está a escolher {ETIQUETA_ESTRATEGIA[estrategia!]} e a comparação
-                        recomendou {ETIQUETA_ESTRATEGIA[run.estrategiaRecomendada!]}.
+                        {t('sourcing.desvio_titulo', {
+                          escolhido: t(`req.estrategia.${estrategia!}`),
+                          recomendado: t(`req.estrategia.${run.estrategiaRecomendada!}`),
+                        })}
                       </p>
-                      <p className="mt-1 text-xs text-amber-800">
-                        Desviar-se é legítimo — a pontuação não sabe que o fornecedor em
-                        segundo está em litígio, nem que o primeiro entregou mal na semana
-                        passada e ainda não há factura para o provar. O motivo é o que
-                        permite distinguir isso de um favor, meses depois.
-                      </p>
+                      <p className="mt-1 text-xs text-amber-800">{t('sourcing.desvio_ajuda')}</p>
                       <textarea
                         value={motivoDesvio}
                         onChange={(e) => setMotivoDesvio(e.target.value)}
                         rows={2}
-                        placeholder="Porque é que este cenário e não o recomendado?"
+                        placeholder={t('sourcing.desvio_ph')}
                         className="mt-2 w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
                       />
                     </div>
@@ -208,16 +192,13 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
 
         {elegiveis.length > 0 && (
           <footer className="sticky bottom-0 flex items-center justify-between gap-3 rounded-b-xl border-t border-slate-100 bg-slate-50 px-5 py-4">
-            <p className="text-xs text-slate-500">
-              A adjudicação escolhe o fornecedor. As ordens nascem em rascunho e a despesa
-              continua por aprovar.
-            </p>
+            <p className="text-xs text-slate-500">{t('sourcing.rodape')}</p>
             <div className="flex gap-2">
               <button
                 onClick={onClose}
                 className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
               >
-                Fechar
+                {t('acao.fechar')}
               </button>
               <button
                 onClick={adjudicar}
@@ -225,7 +206,7 @@ export function SourcingComparacaoModal({ requisicao, run, onClose, onAdjudicado
                 className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {aAdjudicar ? <Loader2 size={16} className="animate-spin" /> : <Gavel size={16} />}
-                Adjudicar
+                {t('req.adjudicar')}
               </button>
             </div>
           </footer>
@@ -252,11 +233,12 @@ function Ranking({
   expandido: string | null;
   onExpandir: (id: string) => void;
 }) {
+  const { t } = useTranslation('b2b');
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Trophy size={15} className="text-amber-500" />
-        Ranking
+        {t('sourcing.ranking')}
       </h3>
 
       <div className="space-y-2">
@@ -295,12 +277,15 @@ function Ranking({
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1">
                       <Package size={11} />
-                      {candidato.linhasCobertas} de {linhasTotais} linhas
+                      {t('sourcing.linhas_cobertas', {
+                        cobertas: candidato.linhasCobertas,
+                        total: linhasTotais,
+                      })}
                     </span>
                     {candidato.prazoEstimadoDias !== null && (
                       <span className="inline-flex items-center gap-1">
                         <TruckIcon size={11} />
-                        {candidato.prazoEstimadoDias} dias
+                        {t('sourcing.dias', { count: candidato.prazoEstimadoDias })}
                       </span>
                     )}
                     {indice !== null && (
@@ -312,16 +297,11 @@ function Ranking({
                         // O índice é o número que decide, e a maioria das pessoas nunca viu
                         // um. A explicação no `title` é mais barata do que uma legenda que
                         // ninguém lê — e é o único sítio do ecrã onde este conceito aparece.
-                        title={
-                          'Quanto custa nas linhas que cobre, dividido pelo melhor preço ' +
-                          'disponível para essas mesmas linhas. 1,00 é o melhor preço em tudo. ' +
-                          'É este número que se compara, e não o custo total: um fornecedor ' +
-                          'que cobre pouco tem custo total baixo por comprar pouco.'
-                        }
+                        title={t('sourcing.indice_ajuda')}
                       >
                         {indice <= 1.001
-                          ? 'melhor preço'
-                          : `${((indice - 1) * 100).toFixed(1)}% acima do melhor`}
+                          ? t('sourcing.melhor_preco')
+                          : t('sourcing.acima_melhor', { pct: ((indice - 1) * 100).toFixed(1) })}
                       </span>
                     )}
                   </p>
@@ -330,7 +310,7 @@ function Ranking({
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-semibold text-slate-900">{mt(candidato.custoTotal)}</p>
                   <p className="text-xs text-slate-500">
-                    {candidato.pontuacao?.toFixed(1)} pontos
+                    {t('sourcing.pontos', { valor: candidato.pontuacao?.toFixed(1) })}
                   </p>
                 </div>
 
@@ -358,6 +338,7 @@ function Ranking({
  * em número, porque é o que soma ao total.
  */
 function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<string, number> }) {
+  const { t } = useTranslation('b2b');
   const factores = candidato.factores?.factores ?? [];
   const somaPesos = Object.entries(pesos)
     .filter(([chave]) => chave.startsWith('peso'))
@@ -366,7 +347,7 @@ function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<st
   if (factores.length === 0) {
     return (
       <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-        Esta corrida não guardou a decomposição dos factores deste candidato.
+        {t('sourcing.sem_decomposicao')}
       </div>
     );
   }
@@ -384,10 +365,10 @@ function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<st
                   // A marca não é cosmética. «Sem histórico» e «50% de pontualidade» dão o
                   // mesmo 0,5, e sem esta distinção o utilizador leria um juízo onde há uma
                   // ausência de dados.
-                  title="Sem dados para avaliar este factor. Ficou no ponto neutro — nem premiado nem castigado."
+                  title={t('sourcing.sem_dados_ajuda')}
                 >
                   <HelpCircle size={9} />
-                  sem dados
+                  {t('sourcing.sem_dados')}
                 </span>
               )}
             </p>
@@ -395,7 +376,12 @@ function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<st
               <span className="font-medium text-slate-700">{factor.valorLegivel}</span>
               {' · '}
               {factor.contribuicao.toFixed(1)}/{factor.peso.toFixed(0)}
-              {somaPesos > 0 && <span className="text-slate-400"> de {somaPesos.toFixed(0)}</span>}
+              {somaPesos > 0 && (
+                <span className="text-slate-400">
+                  {' '}
+                  {t('sourcing.de_total', { total: somaPesos.toFixed(0) })}
+                </span>
+              )}
             </p>
           </div>
 
@@ -421,14 +407,15 @@ function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<st
 
       {candidato.factores?.conformidade && (
         <p className="border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-          <span className="font-medium text-slate-600">Conformidade:</span>{' '}
+          <span className="font-medium text-slate-600">{t('sourcing.conformidade')}:</span>{' '}
           {candidato.factores.conformidade}
         </p>
       )}
 
       {candidato.factores?.zona && (
         <p className="text-[11px] text-slate-500">
-          <span className="font-medium text-slate-600">Entrega:</span> {candidato.factores.zona}
+          <span className="font-medium text-slate-600">{t('sourcing.entrega')}:</span>{' '}
+          {candidato.factores.zona}
         </p>
       )}
 
@@ -454,6 +441,7 @@ function Factores({ candidato, pesos }: { candidato: Candidato; pesos: Record<st
  * «não há mais fornecedores» — que é uma afirmação diferente, e falsa.
  */
 function Excluidos({ candidatos }: { candidatos: Candidato[] }) {
+  const { t } = useTranslation('b2b');
   const [aberto, setAberto] = useState(false);
 
   return (
@@ -464,7 +452,7 @@ function Excluidos({ candidatos }: { candidatos: Candidato[] }) {
       >
         <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
           <Ban size={14} className="text-slate-400" />
-          {candidatos.length} fornecedor{candidatos.length === 1 ? '' : 'es'} fora da comparação
+          {t('sourcing.fora_comparacao', { count: candidatos.length })}
         </span>
         {aberto ? (
           <ChevronDown size={16} className="text-slate-400" />
@@ -482,7 +470,9 @@ function Excluidos({ candidatos }: { candidatos: Candidato[] }) {
                   {c.organizacao.nomeComercial ?? c.organizacao.razaoSocial}
                 </p>
                 <span className="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-                  {ETIQUETA_EXCLUSAO[c.motivoExclusao ?? ''] ?? c.motivoExclusao}
+                  {eMotivoExclusao(c.motivoExclusao)
+                    ? t(`req.exclusao.${c.motivoExclusao}`)
+                    : (c.motivoExclusao ?? '')}
                 </span>
               </div>
               {c.detalheExclusao && (
@@ -523,11 +513,12 @@ function Cenarios({
   escolhido: EstrategiaAdjudicacao | null;
   onEscolher: (e: EstrategiaAdjudicacao) => void;
 }) {
+  const { t } = useTranslation('b2b');
   const validos = cenarios.filter((c) => c.fornecedores.length > 0);
 
   return (
     <section>
-      <h3 className="mb-3 text-sm font-semibold text-slate-900">Como distribuir a compra</h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('sourcing.distribuir')}</h3>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {validos.map((cenario) => {
@@ -547,14 +538,14 @@ function Cenarios({
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-medium text-slate-900">
-                  {ETIQUETA_ESTRATEGIA[cenario.estrategia]}
+                  {t(`req.estrategia.${cenario.estrategia}`)}
                 </p>
                 {eEscolhido && <Check size={14} className="shrink-0 text-blue-600" />}
               </div>
 
               {eRecomendado && (
                 <span className="mt-1 inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
-                  recomendado
+                  {t('sourcing.recomendado')}
                 </span>
               )}
 
@@ -562,19 +553,15 @@ function Cenarios({
 
               <dl className="mt-1.5 space-y-0.5 text-[11px] text-slate-500">
                 <div className="flex justify-between gap-2">
-                  <dt>Mercadoria</dt>
+                  <dt>{t('sourcing.mercadoria')}</dt>
                   <dd className="font-medium text-slate-600">{mt(cenario.custoMercadoria)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt>
-                    Processamento
+                    {t('sourcing.processamento')}
                     <span
                       className="ml-1 cursor-help text-slate-400"
-                      title={
-                        'Mais uma ordem, mais uma entrega para conferir, mais uma factura ' +
-                        'para conciliar. É o número que decide entre único e repartido — sem ' +
-                        'ele, repartir ganharia sempre por construção.'
-                      }
+                      title={t('sourcing.processamento_ajuda')}
                     >
                       ⓘ
                     </span>
@@ -584,20 +571,19 @@ function Cenarios({
                   </dd>
                 </div>
                 <div className="flex justify-between gap-2 pt-0.5">
-                  <dt>Fornecedores</dt>
+                  <dt>{t('sourcing.fornecedores')}</dt>
                   <dd className="font-medium text-slate-600">{cenario.fornecedores.length}</dd>
                 </div>
               </dl>
 
               {cenario.linhasNaoCobertas > 0 && (
                 <p className="mt-2 rounded bg-amber-50 px-1.5 py-1 text-[10px] leading-snug text-amber-800">
-                  {cenario.linhasNaoCobertas} linha
-                  {cenario.linhasNaoCobertas === 1 ? '' : 's'} sem fornecedor neste cenário
+                  {t('sourcing.sem_fornecedor_cenario', { count: cenario.linhasNaoCobertas })}
                 </p>
               )}
 
               <p className="mt-2 text-[11px] leading-snug text-slate-500">
-                {DESCRICAO_ESTRATEGIA[cenario.estrategia]}
+                {t(`req.estrategia_descricao.${cenario.estrategia}`)}
               </p>
             </button>
           );
@@ -614,20 +600,20 @@ function Cenarios({
 }
 
 function ListaDeFornecedores({ cenario }: { cenario?: CenarioResumo }) {
+  const { t } = useTranslation('b2b');
   if (!cenario) return null;
 
   return (
     <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
       <p className="text-xs font-medium text-slate-600">
-        Vai gerar {cenario.fornecedores.length} ordem
-        {cenario.fornecedores.length === 1 ? '' : 's'} de compra:
+        {t('sourcing.vai_gerar', { count: cenario.fornecedores.length })}
       </p>
       <ul className="mt-2 space-y-1">
         {cenario.fornecedores.map((f) => (
           <li key={f.organizacaoId} className="flex items-baseline justify-between gap-3 text-xs">
             <span className="text-slate-800">{f.nome}</span>
             <span className="shrink-0 text-slate-500">
-              {f.linhas} linha{f.linhas === 1 ? '' : 's'} ·{' '}
+              {t('req.linhas', { count: f.linhas })} ·{' '}
               <span className="font-medium text-slate-700">{mt(f.custo)}</span>
             </span>
           </li>
@@ -648,19 +634,16 @@ function SemCandidatos({
   motivo?: string;
   excluidos: Candidato[];
 }) {
+  const { t } = useTranslation('b2b');
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
         <div className="flex items-start gap-2">
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
           <div>
-            <p className="text-sm font-medium text-amber-900">
-              Nenhum fornecedor elegível para esta requisição.
-            </p>
+            <p className="text-sm font-medium text-amber-900">{t('sourcing.sem_candidatos')}</p>
             <p className="mt-1 text-xs text-amber-800">
-              {motivo ??
-                'Os fornecedores encontrados foram todos excluídos. Os motivos estão abaixo — ' +
-                  'a maioria resolve-se com um telefonema ou uma verificação de documento.'}
+              {motivo ?? t('sourcing.sem_candidatos_ajuda')}
             </p>
           </div>
         </div>

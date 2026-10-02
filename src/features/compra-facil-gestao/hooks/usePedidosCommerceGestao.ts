@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { mensagemDeErro } from '@/shared/utils';
 import { pedidosCommerceGestaoApi } from '../api/pedidos-commerce-gestao.api';
 import type {
@@ -31,14 +32,15 @@ function useInvalidarPedidosCommerce() {
 }
 
 export function useConfirmarPedidoCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: (id: string) => pedidosCommerceGestaoApi.confirmar(id),
     onSuccess: () => {
-      toast.success('Pedido confirmado.');
+      toast.success(t('mensagens.confirmado'));
       invalidar();
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível confirmar o pedido.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_confirmar'))),
   });
 }
 
@@ -48,50 +50,48 @@ export function useConfirmarPedidoCommerce() {
  * pedido abandonado em preparação segurava a reserva de stock indefinidamente.
  */
 export function useCancelarPedidoCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: CancelarPedidoPayload }) =>
       pedidosCommerceGestaoApi.cancelar(id, payload),
     onSuccess: () => {
-      toast.success('Pedido cancelado — a reserva de stock foi libertada.');
+      toast.success(t('mensagens.cancelado'));
       invalidar();
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível cancelar o pedido.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_cancelar'))),
   });
 }
 
 export function useIniciarPreparacaoCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: (id: string) => pedidosCommerceGestaoApi.iniciarPreparacao(id),
     onSuccess: () => {
-      toast.success('Preparação iniciada.');
+      toast.success(t('mensagens.preparacao_iniciada'));
       invalidar();
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível iniciar a preparação.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_iniciar_preparacao'))),
   });
 }
 
 export function useConferirPedidoCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: ConferirPedidoPayload }) =>
       pedidosCommerceGestaoApi.conferir(id, payload),
     onSuccess: () => {
-      toast.success('Conferência fechada — pedido pronto para levantamento.');
+      toast.success(t('mensagens.conferencia_fechada'));
       invalidar();
     },
-    onError: (erro) =>
-      toast.error(
-        mensagemDeErro(
-          erro,
-          'Ainda há artigos por resolver — confirme a quantidade ou registe uma substituição.',
-        ),
-      ),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_conferir'))),
   });
 }
 
 export function useSubstituirItemCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: ({
@@ -104,27 +104,22 @@ export function useSubstituirItemCommerce() {
       payload: SubstituirItemPayload;
     }) => pedidosCommerceGestaoApi.substituirItem(id, itemId, payload),
     onSuccess: () => {
-      toast.success('Substituição registada.');
+      toast.success(t('mensagens.substituicao_registada'));
       invalidar();
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, 'Não foi possível registar a substituição.')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_substituir'))),
   });
 }
 
 export function useConfirmarLevantamentoCommerce() {
+  const { t } = useTranslation('lojaGestao');
   const invalidar = useInvalidarPedidosCommerce();
   return useMutation({
     mutationFn: (id: string) => pedidosCommerceGestaoApi.confirmarLevantamento(id),
     onSuccess: () => {
-      toast.success('Levantamento confirmado — venda criada.');
+      toast.success(t('mensagens.levantamento_confirmado'));
       invalidar();
     },
-    onError: (erro) =>
-      toast.error(
-        mensagemDeErro(
-          erro,
-          'Não foi possível confirmar o levantamento — verifique se tem uma sessão de caixa aberta.',
-        ),
-      ),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_confirmar_levantamento'))),
   });
 }

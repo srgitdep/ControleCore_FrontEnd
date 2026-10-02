@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Lock, LockOpen, PackageCheck, ShieldQuestion, Timer } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { useReservaMutations } from '../hooks/useReservas';
@@ -30,52 +31,37 @@ interface RetencaoModalProps {
 }
 
 interface ConfiguracaoOperacao {
-  titulo: string;
   icone: React.ElementType;
-  explicacao: string;
   motivoObrigatorio: boolean;
   /** Uma libertação devolve ao disponível em vez de o consumir — muda o limite e o texto. */
   liberta: boolean;
 }
 
+// O título e a explicação de cada operação vêm do catálogo i18n
+// (`retencao.<TIPO>.titulo` / `.explicacao`), para existirem em português e em inglês.
 const CONFIGURACAO: Record<TipoRetencao, ConfiguracaoOperacao> = {
   RESERVAR: {
-    titulo: 'Reservar mercadoria',
     icone: Timer,
-    explicacao:
-      'A mercadoria continua no armazém e continua a valer no inventário, mas deixa de estar disponível para outro pedido. Não gera movimento de stock.',
     motivoObrigatorio: false,
     liberta: false,
   },
   QUARENTENA: {
-    titulo: 'Reter em quarentena',
     icone: ShieldQuestion,
-    explicacao:
-      'Para mercadoria recebida à espera de aprovação, ou que precisa de análise. Sai do disponível sem sair do armazém.',
     motivoObrigatorio: true,
     liberta: false,
   },
   BLOQUEIO: {
-    titulo: 'Bloquear mercadoria',
     icone: Lock,
-    explicacao:
-      'Para mercadoria que não deve sair por decisão: litígio com o fornecedor, suspeita de qualidade, mercadoria de um cliente. Distinto da quarentena, que é uma fase da recepção.',
     motivoObrigatorio: true,
     liberta: false,
   },
   LIBERTAR_QUARENTENA: {
-    titulo: 'Libertar da quarentena',
     icone: PackageCheck,
-    explicacao:
-      'Análise concluída e mercadoria aprovada: volta ao stock disponível. Para REJEITAR mercadoria, liberte-a e registe depois a saída por ajuste negativo — a rejeição é uma saída de stock, não uma libertação, e confundir as duas deixaria stock a mais no sistema.',
     motivoObrigatorio: false,
     liberta: true,
   },
   LIBERTAR_BLOQUEIO: {
-    titulo: 'Desbloquear mercadoria',
     icone: LockOpen,
-    explicacao:
-      'A razão do bloqueio deixou de se aplicar. A mercadoria volta ao stock disponível e pode ser vendida.',
     motivoObrigatorio: false,
     liberta: true,
   },
@@ -99,6 +85,7 @@ export function RetencaoModal({
   estados,
   unidade = 'UN',
 }: RetencaoModalProps) {
+  const { t } = useTranslation('stock');
   const [quantidade, setQuantidade] = useState<number | ''>('');
   const [motivo, setMotivo] = useState('');
   const [referencia, setReferencia] = useState('');
@@ -111,6 +98,8 @@ export function RetencaoModal({
 
   const config = CONFIGURACAO[tipo];
   const Icone = config.icone;
+  const titulo = t(`retencao.${tipo}.titulo`);
+  const explicacao = t(`retencao.${tipo}.explicacao`);
 
   const q = Number(quantidade);
 
@@ -172,7 +161,7 @@ export function RetencaoModal({
           <div className="flex items-start gap-3">
             <Icone className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-500" />
             <div>
-              <h2 className="font-bold text-slate-800">{config.titulo}</h2>
+              <h2 className="font-bold text-slate-800">{titulo}</h2>
               {produtoNome && <p className="text-sm text-slate-500">{produtoNome}</p>}
             </div>
           </div>
@@ -180,7 +169,7 @@ export function RetencaoModal({
             type="button"
             onClick={onClose}
             className="text-xl leading-none text-slate-400 hover:text-slate-700"
-            aria-label="Fechar"
+            aria-label={t('retencao.fechar')}
           >
             ×
           </button>
@@ -188,7 +177,7 @@ export function RetencaoModal({
 
         <form onSubmit={submeter} className="space-y-4 p-5">
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-            {config.explicacao}
+            {explicacao}
           </p>
 
           {estados && (
@@ -198,10 +187,10 @@ export function RetencaoModal({
               <div className="rounded-lg border border-slate-200 px-3 py-2">
                 <span className="block text-[11px] uppercase tracking-wide text-slate-400">
                   {tipo === 'LIBERTAR_QUARENTENA'
-                    ? 'Em quarentena'
+                    ? t('retencao.em_quarentena')
                     : tipo === 'LIBERTAR_BLOQUEIO'
-                      ? 'Bloqueado'
-                      : 'Disponível'}
+                      ? t('retencao.bloqueado')
+                      : t('retencao.disponivel')}
                 </span>
                 <span className="font-semibold tabular-nums text-slate-800">
                   {limite ?? 0} {unidade}
@@ -209,7 +198,7 @@ export function RetencaoModal({
               </div>
               <div className="rounded-lg border border-slate-200 px-3 py-2">
                 <span className="block text-[11px] uppercase tracking-wide text-slate-400">
-                  {config.liberta ? 'Disponível agora' : 'Em armazém'}
+                  {config.liberta ? t('retencao.disponivel_agora') : t('retencao.em_armazem')}
                 </span>
                 <span className="font-semibold tabular-nums text-slate-800">
                   {config.liberta ? estados.disponivel : estados.fisico} {unidade}
@@ -220,14 +209,14 @@ export function RetencaoModal({
 
           <label className="block">
             <span className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
-              Quantidade
+              {t('retencao.quantidade')}
               {config.liberta && !!limite && (
                 <button
                   type="button"
                   onClick={preencherTudo}
                   className="text-xs font-medium text-blue-600 hover:text-blue-800"
                 >
-                  Libertar tudo ({limite})
+                  {t('retencao.libertar_tudo', { n: limite })}
                 </button>
               )}
             </span>
@@ -246,8 +235,8 @@ export function RetencaoModal({
               <span className="mt-1 flex items-start gap-1.5 text-xs text-rose-600">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
                 {config.liberta
-                  ? `Apenas ${limite} ${unidade} estão retidas — não há mais para libertar.`
-                  : `Apenas ${limite} ${unidade} estão disponíveis. O resto está em armazém mas comprometido.`}
+                  ? t('retencao.excede_retidas', { n: limite, unidade })
+                  : t('retencao.excede_disponiveis', { n: limite, unidade })}
               </span>
             )}
           </label>
@@ -256,18 +245,17 @@ export function RetencaoModal({
             <>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-slate-700">
-                  Referência <span className="font-normal text-slate-400">(recomendado)</span>
+                  {t('retencao.referencia')} <span className="font-normal text-slate-400">{t('retencao.recomendado')}</span>
                 </span>
                 <input
                   type="text"
-                  placeholder="ex: PED-2026-00412"
+                  placeholder={t('retencao.exemplo_referencia')}
                   value={referencia}
                   onChange={(e) => setReferencia(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 />
                 <span className="mt-1 block text-xs text-slate-400">
-                  O pedido que originou a reserva. Sem isto, uma reserva encontrada dentro de
-                  duas semanas não tem como ser explicada a ninguém.
+                  {t('retencao.referencia_dica')}
                 </span>
               </label>
 
@@ -280,10 +268,9 @@ export function RetencaoModal({
                     className="mt-0.5 h-4 w-4 rounded border-slate-300"
                   />
                   <span className="text-sm text-slate-700">
-                    Sem prazo
+                    {t('retencao.sem_prazo')}
                     <span className="mt-0.5 block text-xs font-normal text-slate-500">
-                      Para mercadoria já separada à espera de recolha, onde caducar sozinha
-                      devolveria ao disponível caixas que estão num palete à porta.
+                      {t('retencao.sem_prazo_dica')}
                     </span>
                   </span>
                 </label>
@@ -291,7 +278,7 @@ export function RetencaoModal({
                 {!semPrazo && (
                   <label className="block">
                     <span className="mb-1 block text-sm font-medium text-slate-700">
-                      Caduca em <span className="font-normal text-slate-400">(horas)</span>
+                      {t('retencao.caduca_em')} <span className="font-normal text-slate-400">{t('retencao.horas')}</span>
                     </span>
                     <input
                       type="number"
@@ -302,8 +289,7 @@ export function RetencaoModal({
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                     />
                     <span className="mt-1 block text-xs text-slate-400">
-                      Vazio usa 48 horas. Passado o prazo, a mercadoria volta ao disponível
-                      automaticamente.
+                      {t('retencao.caduca_dica')}
                     </span>
                   </label>
                 )}
@@ -313,11 +299,11 @@ export function RetencaoModal({
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">
-              Motivo
+              {t('retencao.motivo')}
               {config.motivoObrigatorio ? (
-                <span className="ml-1 text-rose-600">obrigatório</span>
+                <span className="ml-1 text-rose-600">{t('retencao.obrigatorio')}</span>
               ) : (
-                <span className="ml-1 font-normal text-slate-400">opcional</span>
+                <span className="ml-1 font-normal text-slate-400">{t('retencao.opcional')}</span>
               )}
             </span>
             <textarea
@@ -330,18 +316,17 @@ export function RetencaoModal({
             />
             {config.motivoObrigatorio && (
               <span className="mt-1 block text-xs text-slate-400">
-                Mercadoria retida sem motivo não é libertada por ninguém, por medo de desfazer
-                uma decisão que ninguém sabe qual foi.
+                {t('retencao.motivo_dica')}
               </span>
             )}
           </label>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <Button type="button" variant="ghost" onClick={onClose}>
-              Cancelar
+              {t('retencao.cancelar')}
             </Button>
             <Button type="submit" disabled={!podeSubmeter}>
-              {mutacoes.aDecorrer ? 'A gravar...' : 'Confirmar'}
+              {mutacoes.aDecorrer ? t('retencao.a_gravar') : t('retencao.confirmar')}
             </Button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import { Children, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 import { useBreakpoint } from '@/shared/hooks';
 
@@ -43,6 +44,7 @@ interface CardCarouselProps {
 }
 
 export function CardCarousel({ children, label, colunas = 4, className }: CardCarouselProps) {
+  const { t } = useTranslation('shell');
   const slides = Children.toArray(children).filter(Boolean);
   const pista = useRef<HTMLDivElement>(null);
   const [activo, setActivo] = useState(0);
@@ -148,7 +150,7 @@ export function CardCarousel({ children, label, colunas = 4, className }: CardCa
             key={i}
             type="button"
             onClick={() => irPara(i)}
-            aria-label={`Ir para o cartão ${i + 1} de ${slides.length}`}
+            aria-label={t('carrossel.ir_para', { n: i + 1, total: slides.length })}
             aria-current={i === activo}
             className={cn(
               'h-1.5 rounded-full transition-all duration-300',

@@ -8,16 +8,16 @@ import {
   useSearchClientes,
 } from '../hooks/useClientes';
 import type { CandidatoFusao, EstadoCandidatoFusao, Cliente } from '../api/clientes.api';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatData, formatMoeda } from '@/shared/utils';
 
-const mt = (v: number) =>
-  Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT';
+const mt = (v: number) => formatMoeda(Number(v));
 
-const ROTULO_ESTADO: Record<EstadoCandidatoFusao, string> = {
-  PENDENTE: 'Por decidir',
-  CONFIRMADO: 'Fundidos',
-  REJEITADO: 'Rejeitado',
-};
+const ROTULO_ESTADO = {
+  PENDENTE: 'fusao.estado_pendente',
+  CONFIRMADO: 'fusao.estado_confirmado',
+  REJEITADO: 'fusao.estado_rejeitado',
+} as const satisfies Record<EstadoCandidatoFusao, string>;
 
 /**
  * Clientes que parecem ser o mesmo, e a fusão manual.
@@ -34,6 +34,7 @@ const ROTULO_ESTADO: Record<EstadoCandidatoFusao, string> = {
  * Não há operação de desfazer na API. O aviso no modal de confirmação não é decorativo.
  */
 export function FusaoDuplicadosPanel() {
+  const { t } = useTranslation('crm');
   const [filtro, setFiltro] = useState<EstadoCandidatoFusao>('PENDENTE');
   const [aResolver, setAResolver] = useState<{ candidato: CandidatoFusao; aceitar: boolean } | null>(
     null,
@@ -49,10 +50,10 @@ export function FusaoDuplicadosPanel() {
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <GitMerge size={18} className="text-blue-600" />
-            Duplicados
+            {t('fusao.titulo')}
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Clientes que partilham um telefone, email ou NUIT — pode ser a mesma pessoa.
+            {t('fusao.subtitulo')}
           </p>
         </div>
         <button
@@ -60,7 +61,7 @@ export function FusaoDuplicadosPanel() {
           className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
           <GitMerge size={15} />
-          Fundir manualmente
+          {t('fusao.fundir_manualmente')}
         </button>
       </div>
 
@@ -76,7 +77,7 @@ export function FusaoDuplicadosPanel() {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
             )}
           >
-            {ROTULO_ESTADO[f]}
+            {t(ROTULO_ESTADO[f])}
           </button>
         ))}
       </div>
@@ -90,8 +91,8 @@ export function FusaoDuplicadosPanel() {
           <GitMerge size={26} className="mx-auto text-slate-300" />
           <p className="mt-2 text-sm text-slate-500">
             {filtro === 'PENDENTE'
-              ? 'Nenhum duplicado por decidir.'
-              : `Nenhum candidato em «${ROTULO_ESTADO[filtro]}».`}
+              ? t('fusao.nenhum_por_decidir')
+              : t('fusao.nenhum_no_estado', { estado: t(ROTULO_ESTADO[filtro]) })}
           </p>
         </div>
       ) : (
@@ -100,10 +101,10 @@ export function FusaoDuplicadosPanel() {
             <li key={c.id} className="rounded-lg border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                  {Math.round(c.pontuacao * 100)}% de confiança
+                  {t('fusao.confianca', { n: Math.round(c.pontuacao * 100) })}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {new Date(c.createdAt).toLocaleDateString('pt-MZ')}
+                  {formatData(c.createdAt)}
                 </span>
               </div>
 
@@ -120,21 +121,21 @@ export function FusaoDuplicadosPanel() {
                     onClick={() => setAResolver({ candidato: c, aceitar: false })}
                     className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    <Ban size={13} /> Rejeitar
+                    <Ban size={13} /> {t('fusao.rejeitar')}
                   </button>
                   <button
                     onClick={() => setAResolver({ candidato: c, aceitar: true })}
                     className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
                   >
-                    <Check size={13} /> Confirmar fusão
+                    <Check size={13} /> {t('fusao.confirmar_fusao')}
                   </button>
                 </div>
               )}
 
               {c.estado !== 'PENDENTE' && (
                 <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-400">
-                  {c.estado === 'CONFIRMADO' ? 'Fundidos' : 'Rejeitado'}
-                  {c.revistoEm && ` em ${new Date(c.revistoEm).toLocaleDateString('pt-MZ')}`}.
+                  {c.estado === 'CONFIRMADO' ? t('fusao.estado_confirmado') : t('fusao.estado_rejeitado')}
+                  {c.revistoEm && ` ${t('fusao.em_data', { data: formatData(c.revistoEm) })}`}.
                 </p>
               )}
             </li>
@@ -167,6 +168,7 @@ export function FusaoDuplicadosPanel() {
 }
 
 function ClienteResumo({ cliente }: { cliente: CandidatoFusao['clienteA'] }) {
+  const { t } = useTranslation('crm');
   return (
     <div
       className={cn(
@@ -180,12 +182,12 @@ function ClienteResumo({ cliente }: { cliente: CandidatoFusao['clienteA'] }) {
         {cliente.email && <p>{cliente.email}</p>}
         {cliente.nuit && <p>NUIT {cliente.nuit}</p>}
         <p>
-          {cliente.pontos} pts · {mt(cliente.totalGasto)}
+          {t('fusao.pontos_abrev', { n: cliente.pontos })} · {mt(cliente.totalGasto)}
         </p>
       </dl>
       {cliente.fundidoEmId && (
         <p className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-700">
-          <AlertTriangle size={11} /> Já foi fundido noutro cliente.
+          <AlertTriangle size={11} /> {t('fusao.ja_fundido_outro')}
         </p>
       )}
     </div>
@@ -205,6 +207,7 @@ function ResolverModal({
   onConfirmar: (principalId?: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('crm');
   const [principalId, setPrincipalId] = useState<string>(candidato.clienteA.id);
   const jaFundido = candidato.clienteA.fundidoEmId || candidato.clienteB.fundidoEmId;
 
@@ -213,7 +216,7 @@ function ResolverModal({
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {aceitar ? 'Confirmar fusão' : 'Rejeitar candidato'}
+            {aceitar ? t('fusao.confirmar_fusao') : t('fusao.rejeitar_candidato')}
           </h2>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
@@ -224,15 +227,14 @@ function ResolverModal({
           {jaFundido && aceitar && (
             <p className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-              Um dos dois já foi fundido noutro cliente. O servidor vai recusar esta fusão.
+              {t('fusao.um_ja_fundido')}
             </p>
           )}
 
           {aceitar ? (
             <>
               <p className="text-sm text-slate-600">
-                Escolha qual fica. O outro é absorvido: as suas vendas, pontos e identidades
-                passam para o que ficar, e ele desaparece da lista de clientes.
+                {t('fusao.escolha_qual_fica')}
               </p>
               <div className="space-y-2">
                 {[candidato.clienteA, candidato.clienteB].map((cliente) => (
@@ -255,7 +257,7 @@ function ResolverModal({
                     <div className="text-sm">
                       <p className="font-medium text-slate-900">{cliente.nome}</p>
                       <p className="text-xs text-slate-500">
-                        {cliente.telefone || cliente.email || '—'} · {cliente.pontos} pts ·{' '}
+                        {cliente.telefone || cliente.email || '—'} · {t('fusao.pontos_abrev', { n: cliente.pontos })} ·{' '}
                         {mt(cliente.totalGasto)}
                       </p>
                     </div>
@@ -265,9 +267,8 @@ function ResolverModal({
             </>
           ) : (
             <p className="text-sm text-slate-600">
-              Rejeitar diz que <strong>não</strong> são a mesma pessoa — por exemplo, um
-              telefone de família partilhado por duas pessoas diferentes. O par não volta a
-              ser sugerido.
+              {t('fusao.rejeitar_explicacao_a')} <strong>{t('fusao.rejeitar_explicacao_nao')}</strong>{' '}
+              {t('fusao.rejeitar_explicacao_b')}
             </p>
           )}
         </div>
@@ -277,7 +278,7 @@ function ResolverModal({
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
           >
-            Cancelar
+            {t('comum.cancelar')}
           </button>
           <button
             onClick={() => onConfirmar(aceitar ? principalId : undefined)}
@@ -288,7 +289,7 @@ function ResolverModal({
             )}
           >
             {isSaving && <Loader2 size={14} className="animate-spin" />}
-            {aceitar ? 'Fundir' : 'Rejeitar'}
+            {aceitar ? t('fusao.fundir') : t('fusao.rejeitar')}
           </button>
         </div>
       </div>
@@ -298,6 +299,7 @@ function ResolverModal({
 
 /** Fundir dois clientes escolhidos livremente, sem passar por um candidato sugerido. */
 function FundirManualModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('crm');
   const [pesquisaA, setPesquisaA] = useState('');
   const [pesquisaB, setPesquisaB] = useState('');
   const [principal, setPrincipal] = useState<Cliente | null>(null);
@@ -310,8 +312,8 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
   const fundir = useFundirClientes();
 
   const submeter = () => {
-    if (!principal || !absorvido) return toast.error('Escolha os dois clientes.');
-    if (principal.id === absorvido.id) return toast.error('Escolha dois clientes diferentes.');
+    if (!principal || !absorvido) return toast.error(t('fusao.escolha_dois'));
+    if (principal.id === absorvido.id) return toast.error(t('fusao.escolha_diferentes'));
 
     fundir.mutate(
       { principalId: principal.id, absorvidoId: absorvido.id, motivo: motivo.trim() || undefined },
@@ -323,7 +325,7 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Fundir clientes</h2>
+          <h2 className="text-base font-semibold text-slate-900">{t('fusao.fundir_clientes')}</h2>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
           </button>
@@ -332,11 +334,11 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
         <div className="space-y-4 px-5 py-4">
           <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-            Irreversível. O absorvido desaparece da lista de clientes.
+            {t('fusao.irreversivel')}
           </p>
 
           <ClienteSelector
-            label="Fica (principal)"
+            label={t('fusao.fica_principal')}
             pesquisa={pesquisaA}
             onPesquisa={setPesquisaA}
             resultados={resultadosA}
@@ -345,7 +347,7 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
           />
 
           <ClienteSelector
-            label="Absorvido"
+            label={t('fusao.absorvido')}
             pesquisa={pesquisaB}
             onPesquisa={setPesquisaB}
             resultados={resultadosB}
@@ -355,12 +357,12 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">
-              Motivo <span className="font-normal text-slate-400">(opcional)</span>
+              {t('fusao.motivo')} <span className="font-normal text-slate-400">{t('fusao.opcional')}</span>
             </label>
             <input
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Ex.: confirmado por telefone com o cliente"
+              placeholder={t('fusao.motivo_exemplo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
@@ -371,7 +373,7 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
           >
-            Cancelar
+            {t('comum.cancelar')}
           </button>
           <button
             onClick={submeter}
@@ -379,7 +381,7 @@ function FundirManualModal({ onClose }: { onClose: () => void }) {
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {fundir.isPending && <Loader2 size={14} className="animate-spin" />}
-            Fundir
+            {t('fusao.fundir')}
           </button>
         </div>
       </div>
@@ -402,6 +404,7 @@ function ClienteSelector({
   selecionado: Cliente | null;
   onSelecionar: (c: Cliente) => void;
 }) {
+  const { t } = useTranslation('crm');
   return (
     <div>
       <label className="mb-1 block text-xs font-medium text-slate-600">{label}</label>
@@ -412,7 +415,7 @@ function ClienteSelector({
             onClick={() => onSelecionar(null as unknown as Cliente)}
             className="text-xs text-blue-600 hover:underline"
           >
-            trocar
+            {t('fusao.trocar')}
           </button>
         </div>
       ) : (
@@ -421,7 +424,7 @@ function ClienteSelector({
           <input
             value={pesquisa}
             onChange={(e) => onPesquisa(e.target.value)}
-            placeholder="Nome, telefone, email ou NUIT..."
+            placeholder={t('fusao.pesquisar')}
             className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
           />
           {pesquisa.trim().length >= 2 && resultados.length > 0 && (

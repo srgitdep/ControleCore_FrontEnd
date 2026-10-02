@@ -77,12 +77,27 @@ seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdiom
 portal, no login e nas páginas públicas. Teste de paridade (`src/i18n/paridade.test.ts`)
 falha se uma chave faltar numa das línguas.
 
-Namespaces existentes: `comum`, `loja` (Compra Fácil) e `auth` (login, recuperação e
-redefinição de senha). **Todos vão no bundle inicial**, juntos por `import.meta.glob`:
+Namespaces existentes (29): `comum`, `loja` (Compra Fácil), `auth` (login, recuperação e
+redefinição de senha), `portal` e `mercado` (B2B), `site` (landing/login — substitui
+`copywriting.ts`; lido com `useCopy()`, `src/shared/hooks/useCopy.ts`), `precos`
+(`PrecosPage`/`TabelaDeCapacidades`; `precos.dados.ts` ficou só com números, booleanos e
+códigos), `adesao` (pedido público e fila de gestão), e as 24 áreas do ERP/POS: `pos`,
+`stock`, `armazens`, `transferencias`, `compras`, `conferencia`, `catalogo`, `crm`, `rh`,
+`financeiro`, `fornecedores`, `b2b`, `produtos`, `lojas`, `empresas`, `utilizadores`,
+`modulos`, `painel`, `historico`, `pesquisa`, `lojaGestao` (gestão do Compra Fácil no
+ERP), `copiloto` (UI da Mayra) e `shell` (layout, guards, componentes genéricos de
+`shared/ui/`). **Todos vão no bundle inicial**, juntos por `import.meta.glob`:
 carregá-los sob pedido deixava o ecrã com as chaves cruas enquanto o ficheiro descarregava
-(não há `Suspense`). Os schemas do Zod constroem-se dentro do componente, com `t`, para a
-mensagem de erro seguir a língua. O botão «Continuar com a Google» recebe o `locale` no
-`GoogleOAuthProvider` e aplica-o à carga da página (o script lê-o uma só vez).
+(não há `Suspense`) — se o ERP (crescimento futuro) fizer o bundle crescer muito, revê-se
+esta decisão. Os schemas do Zod constroem-se dentro do componente, com
+`useMemo(() => criarSchema(t), [t])`. O botão «Continuar com a Google» recebe o `locale`
+no `GoogleOAuthProvider` e aplica-o à carga da página (o script lê-o uma só vez).
+`formatInteiro`/`formatMoedaInteira` (`formatMoeda.ts`) servem valores sem casas decimais
+(preçário, contadores) sem recorrer a concatenação manual de "MT". O aviso do NUIT no
+browser (`shared/utils/nuit.ts`, `diagnosticoDoNuit`/`diagnosticoDoNuitAoEscrever`)
+devolve código + parâmetros, traduzidos pelo namespace `comum` (`nuit.*`) — as mesmas
+chaves que o backend usa em `erros.b2b.nuit.*`, por isso o aviso é idêntico ao escrever e
+ao submeter.
 
 ---
 
@@ -139,7 +154,30 @@ catálogos, e que todos os ficheiros de `src/i18n/` têm as mesmas chaves em `pt
 `Empresa.idiomaPadrao`, depois português —, porque quem as dispara é um funcionário. Rotas da preferência:
 `PATCH /auth/eu/idioma`, `PATCH /commerce/conta/eu/idioma`, `idioma` no
 `PATCH /portal-fornecedor/perfil`, `idiomaPadrao` no `PATCH /empresas/:id`; a língua
-vem na resposta do login dos três tipos de conta.
+vem na resposta do login dos três tipos de conta. `PedidoAdesao.idioma` grava a língua do
+browser no momento do pedido público (sem conta nem empresa, não há outra fonte); decide a
+língua da confirmação, da recusa e das boas-vindas da empresa aprovada, mesmo que a
+aprovação aconteça dias depois e por outra pessoa.
+
+**`codigo` + catálogo cobre todos os módulos do backend** (não só `commerce`/`b2b`/`auth`
+das fases iniciais): `compra`, `inventory`/`stock`, `armazem`, `crm`, `necessidade`
+(incl. transferências entre lojas), `fornecedor`, `vendas`, `caixa`, `financeiro`,
+`produto`, `users`, `hr`, `ponto`, `turno`, `perfil`, `modulo`, `empresa`, `contrato`,
+`salario`, `categoria`, `cliente`, `loja`, e os guards/decorators partilhados (`jwt-auth`,
+`permissoes`, `roles`, `modulo-access`, segregação de funções). `diagnosticoDoNuit()`
+(`src/modules/fornecedor/domain/nuit.ts`) devolve `{ codigo, parametros }` em vez de uma
+frase fixa, reaproveitado pelo registo do fornecedor e pelo pedido de adesão.
+
+**Mayra multilíngue:** `idiomaDoUtilizadorPorId()` (`src/shared/idiomas.ts`) resolve a
+língua de um utilizador autenticado pela mesma ordem de `resolverIdioma` — preferência →
+empresa → língua do pedido em curso → português —, e é partilhada por quatro pontos:
+o chat de texto e a voz da Mayra (`ai-copilot-prompt.service.ts`, que a acrescenta ao
+prompt do sistema só quando é inglês, sem alterar o prompt em português), a recomendação
+do painel de necessidades (`AnalisarNecessidadesMayraUseCase` — a língua entra na chave de
+cache em memória, para duas pessoas da mesma loja em línguas diferentes não partilharem a
+mesma análise) e a classificação de excepções de inventário
+(`AnalisarExcecaoMayraUseCase`). A voz chega por WebSocket, sem `Accept-Language` da
+aplicação — por isso lê sempre a preferência gravada na base de dados, nunca o cabeçalho.
 
 ---
 

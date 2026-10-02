@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, CheckCircle2, XCircle, BarChart3, ShieldCheck, Users, Users2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   useInventoryCycleDetail,
   useCobertura,
@@ -16,22 +17,6 @@ import { PainelExcecoesGestor } from './PainelExcecoesGestor';
 import { AtribuirPrateleirasModal } from './AtribuirPrateleirasModal';
 import { FecharCicloModal } from './FecharCicloModal';
 import type { InventoryCycleStatus } from '@/features/stock';
-
-const STATUS_LABEL: Record<InventoryCycleStatus, string> = {
-  RASCUNHO: 'Rascunho',
-  PREPARADO: 'Preparado',
-  EM_CONTAGEM: 'Em Contagem',
-  PAUSADO: 'Pausado',
-  VALIDACAO_DE_COBERTURA: 'A validar cobertura',
-  EM_RECONCILIACAO: 'Em Reconciliação',
-  AGUARDA_RECONTAGEM: 'Aguarda Recontagem',
-  EM_ANALISE_MAYRA: 'Em Análise (MAYRA)',
-  AGUARDA_APROVACAO: 'Aguarda Aprovação',
-  AJUSTE_APROVADO: 'Ajuste Aprovado',
-  ENCERRADO: 'Encerrado',
-  CANCELADO: 'Cancelado',
-  BLOQUEADO_POR_ERRO: 'Bloqueado por Erro',
-};
 
 const STATUS_CLASSNAME: Record<InventoryCycleStatus, string> = {
   RASCUNHO: 'bg-slate-100 text-slate-500',
@@ -50,6 +35,7 @@ const STATUS_CLASSNAME: Record<InventoryCycleStatus, string> = {
 };
 
 export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack: () => void }) {
+  const { t } = useTranslation('stock');
   const { data: cycle, isLoading } = useInventoryCycleDetail(cycleId);
   const { data: cobertura } = useCobertura(cycleId, { poll: true });
   const { data: recontagens = [] } = useRecontagensPendentes(cycleId);
@@ -71,15 +57,15 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
   const avancar = (status: InventoryCycleStatus, mensagemErro?: string) =>
     updateStatus.mutate(
       { cycleId, payload: { status } },
-      { onError: (err: any) => toast.error(err?.response?.data?.message ?? mensagemErro ?? 'Não foi possível avançar o ciclo.') },
+      { onError: (err: any) => toast.error(err?.response?.data?.message ?? mensagemErro ?? t('ciclo.erro_avancar')) },
     );
 
   const cancelar = () => {
-    const motivo = window.prompt('Motivo do cancelamento:');
+    const motivo = window.prompt(t('ciclo.prompt_motivo'));
     if (!motivo?.trim()) return;
     cancelarCiclo.mutate(
       { cycleId, payload: { motivo: motivo.trim() } },
-      { onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível cancelar.') },
+      { onError: (err: any) => toast.error(err?.response?.data?.message ?? t('ciclo.erro_cancelar')) },
     );
   };
 
@@ -88,26 +74,26 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
       onSuccess: (res) => {
         toast.success(
           res.recontagensPendentes > 0
-            ? `Reconciliado. ${res.recontagensPendentes} item(ns) precisam de recontagem.`
-            : 'Reconciliado. Nenhuma divergência excedeu a tolerância.',
+            ? t('ciclo.reconciliado_recontagem', { n: res.recontagensPendentes })
+            : t('ciclo.reconciliado_ok'),
         );
         setAba(res.recontagensPendentes > 0 ? 'recontagem' : 'excecoes');
       },
-      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível reconciliar.'),
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? t('ciclo.erro_reconciliar')),
     });
 
   const isTerminal = cycle.status === 'ENCERRADO' || cycle.status === 'CANCELADO';
   const pendentes = cobertura?.pendentes ?? 0;
 
   const TABS: TabDefinition<typeof aba>[] = [
-    { id: 'contagem', label: 'Contagem', icon: BarChart3 },
+    { id: 'contagem', label: t('ciclo.tab_contagem'), icon: BarChart3 },
     {
       id: 'recontagem',
-      label: 'Recontagem',
+      label: t('ciclo.tab_recontagem'),
       icon: ShieldCheck,
       badge: recontagens.length > 0 ? recontagens.length : undefined,
     },
-    { id: 'excecoes', label: 'Exceções', icon: Users },
+    { id: 'excecoes', label: t('ciclo.tab_excecoes'), icon: Users },
   ];
 
   return (
@@ -118,84 +104,84 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
         </button>
         <div className="flex-1">
           <h3 className="font-bold text-slate-800 text-lg">{cycle.name}</h3>
-          <p className="text-slate-500 text-sm">{cycle.counts.length} item(ns) no perímetro</p>
+          <p className="text-slate-500 text-sm">{t('ciclo.n_itens_perimetro', { n: cycle.counts.length })}</p>
         </div>
         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${STATUS_CLASSNAME[cycle.status]}`}>
-          {STATUS_LABEL[cycle.status]}
+          {t(`ciclo_estado.${cycle.status}`)}
         </span>
       </div>
 
       {!isTerminal && (
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-600 max-w-lg">
-            {cycle.status === 'PREPARADO' && 'Perímetro carregado. Inicie a contagem para os operadores poderem registar produtos.'}
+            {cycle.status === 'PREPARADO' && t('ciclo.ajuda_preparado')}
             {cycle.status === 'EM_CONTAGEM' &&
               (pendentes > 0
-                ? `Contagem a decorrer. Ainda existem ${pendentes} produto(s) por verificar.`
-                : 'Todos os produtos foram verificados. Pode avançar para validar a cobertura.')}
-            {cycle.status === 'PAUSADO' && 'Ciclo pausado. Retome para continuar a contagem.'}
-            {cycle.status === 'VALIDACAO_DE_COBERTURA' && 'A validar cobertura — avance para reconciliar.'}
-            {cycle.status === 'EM_RECONCILIACAO' && 'Execute a reconciliação para comparar físico com teórico.'}
-            {cycle.status === 'AGUARDA_RECONTAGEM' && 'Existem itens pendentes de recontagem cega.'}
+                ? t('ciclo.ajuda_em_contagem_pendentes', { n: pendentes })
+                : t('ciclo.ajuda_em_contagem_completa'))}
+            {cycle.status === 'PAUSADO' && t('ciclo.ajuda_pausado')}
+            {cycle.status === 'VALIDACAO_DE_COBERTURA' && t('ciclo.ajuda_validacao')}
+            {cycle.status === 'EM_RECONCILIACAO' && t('ciclo.ajuda_reconciliacao')}
+            {cycle.status === 'AGUARDA_RECONTAGEM' && t('ciclo.ajuda_recontagem')}
             {cycle.status === 'AJUSTE_APROVADO' &&
-              'Todas as exceções foram decididas e os ajustes de stock já foram escritos. Falta encerrar o ciclo.'}
+              t('ciclo.ajuda_ajuste_aprovado')}
           </p>
 
           <div className="flex flex-wrap gap-2">
             {(cycle.status === 'PREPARADO' || cycle.status === 'EM_CONTAGEM') && (
               <Button variant="outline" onClick={() => setDistribuirAberto(true)}>
                 <Users2 className="h-4 w-4" />
-                Distribuir prateleiras
+                {t('ciclo.distribuir_prateleiras')}
               </Button>
             )}
             {cycle.status === 'PREPARADO' && (
               <Button onClick={() => avancar('EM_CONTAGEM')} disabled={updateStatus.isPending}>
-                Iniciar contagem
+                {t('ciclo.iniciar_contagem')}
               </Button>
             )}
             {cycle.status === 'EM_CONTAGEM' && (
               <>
                 <Button variant="outline" onClick={() => avancar('PAUSADO')} disabled={updateStatus.isPending}>
-                  Pausar
+                  {t('ciclo.pausar')}
                 </Button>
                 <Button
-                  onClick={() => avancar('VALIDACAO_DE_COBERTURA', 'Conclua todos os produtos antes de finalizar o inventário.')}
+                  onClick={() => avancar('VALIDACAO_DE_COBERTURA', t('ciclo.erro_concluir_antes'))}
                   disabled={pendentes > 0 || updateStatus.isPending}
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  Concluir Inventário
+                  {t('ciclo.concluir_inventario')}
                 </Button>
               </>
             )}
             {cycle.status === 'PAUSADO' && (
               <Button onClick={() => avancar('EM_CONTAGEM')} disabled={updateStatus.isPending}>
-                Retomar contagem
+                {t('ciclo.retomar_contagem')}
               </Button>
             )}
             {cycle.status === 'VALIDACAO_DE_COBERTURA' && (
               <Button onClick={() => avancar('EM_RECONCILIACAO')} disabled={updateStatus.isPending}>
-                Avançar para reconciliação
+                {t('ciclo.avancar_reconciliacao')}
               </Button>
             )}
             {cycle.status === 'EM_RECONCILIACAO' && (
               <>
                 <Button variant="outline" onClick={() => setFecharDirectoAberto(true)}>
-                  Fechar directamente
+                  {t('ciclo.fechar_directamente')}
                 </Button>
                 <Button onClick={reconciliarAgora} disabled={reconciliar.isPending}>
-                  {reconciliar.isPending ? 'A reconciliar...' : 'Executar reconciliação'}
+                  {reconciliar.isPending ? t('ciclo.a_reconciliar') : t('ciclo.executar_reconciliacao')}
                 </Button>
               </>
             )}
             {cycle.status === 'AJUSTE_APROVADO' && (
               <Button onClick={() => avancar('ENCERRADO')} disabled={updateStatus.isPending}>
                 <CheckCircle2 className="h-4 w-4" />
-                {updateStatus.isPending ? 'A encerrar...' : 'Encerrar ciclo'}
+                {updateStatus.isPending ? t('ciclo.a_encerrar') : t('ciclo.encerrar')}
               </Button>
             )}
             <Button variant="destructive" onClick={cancelar} disabled={cancelarCiclo.isPending}>
               <XCircle className="h-4 w-4" />
-              Cancelar
+              {t('geral.cancelar')}
             </Button>
           </div>
         </div>
@@ -203,7 +189,7 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
 
       {cycle.status === 'EM_CONTAGEM' || cycle.status === 'PAUSADO' || cycle.status === 'VALIDACAO_DE_COBERTURA' ? (
         <>
-          <Tabs tabs={TABS} active={aba} onChange={setAba} label="Etapas do inventário" />
+          <Tabs tabs={TABS} active={aba} onChange={setAba} label={t('ciclo.etapas')} />
           {aba === 'contagem' && <PainelContagem cycleId={cycleId} />}
           {aba === 'recontagem' && <PainelRecontagem cycleId={cycleId} />}
           {aba === 'excecoes' && <PainelExcecoesGestor cycleId={cycleId} />}
@@ -211,10 +197,10 @@ export function CycleDetailPanel({ cycleId, onBack }: { cycleId: string; onBack:
       ) : cycle.status === 'AGUARDA_RECONTAGEM' || cycle.status === 'EM_ANALISE_MAYRA' || cycle.status === 'AGUARDA_APROVACAO' ? (
         <>
           <Tabs
-            tabs={TABS.filter((t) => t.id !== 'contagem')}
+            tabs={TABS.filter((tab) => tab.id !== 'contagem')}
             active={aba === 'contagem' ? 'recontagem' : aba}
             onChange={setAba}
-            label="Etapas do inventário"
+            label={t('ciclo.etapas')}
           />
           {aba === 'recontagem' && <PainelRecontagem cycleId={cycleId} />}
           {aba === 'excecoes' && <PainelExcecoesGestor cycleId={cycleId} />}

@@ -1,52 +1,43 @@
 
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/features/auth';
 import { useCopilotStore } from '../../store/copilotStore';
 
-const getSuggestionsByRole = (role?: string) => {
-  if (role === 'STOCK_KEEPER') {
-    return [
-      { title: 'Prever Rutura', description: 'Prever risco de ruptura de estoque', prompt: 'Prever risco de ruptura de estoque' },
-      { title: 'Capital Congelado', description: 'Analisar estoque parado nas lojas', prompt: 'Analisar estoque parado (capital congelado)' },
-      { title: 'Movimentos', description: 'Verificar últimos movimentos', prompt: 'Mostrar os últimos movimentos de estoque de hoje' },
-      { title: 'Baixo Estoque', description: 'Listar produtos no limite', prompt: 'Quais produtos estão com o estoque abaixo do mínimo?' }
-    ];
-  }
-  
-  if (role === 'CASHIER') {
-    return [
-      { title: 'Meu Turno', description: 'Resumo das minhas vendas', prompt: 'Resumir as minhas vendas de hoje' },
-      { title: 'Consultar Preço', description: 'Verificar o preço de produto', prompt: 'Consultar preço de um produto' },
-      { title: 'Meus Horários', description: 'Ver minhas marcações de ponto', prompt: 'Mostrar minhas entradas e saídas de hoje' },
-      { title: 'Top Vendas', description: 'Produtos mais vendidos', prompt: 'Quais foram os produtos mais vendidos por mim hoje?' }
-    ];
-  }
+type TFn = (chave: string) => string;
 
-  // DEFAULT (ADMIN / MANAGER)
-  return [
-    { title: 'Auditar Margens', description: 'Analisar produtos com margem de lucro baixa', prompt: 'Analisar produtos com margem de lucro baixa ou negativa' },
-    { title: 'Anti-fraude', description: 'Auditoria de ocorrências suspeitas', prompt: 'Auditoria Anti-fraude (Ocorrências suspeitas da semana)' },
-    { title: 'Fecho de Caixas', description: 'Resumir fechamentos de todos os turnos', prompt: 'Resumir fechamentos de caixa de hoje' },
-    { title: 'Capital Congelado', description: 'Analisar estoque sem saídas', prompt: 'Analisar estoque parado (capital congelado)' },
-    { title: 'Marketing + Estoque', description: 'Como escoar itens perto da validade', prompt: 'Marketing + Estoque: Como escoar itens perto da validade?' },
-    { title: 'Finanças', description: 'Resumo de quebras de caixa', prompt: 'Finanças: Resumo de quebras de caixa desta semana.' },
-    { title: 'RH + Vendas', description: 'Melhor desempenho de caixa', prompt: 'RH + Vendas: Qual operador teve o melhor desempenho hoje?' },
-    { title: 'Entregas', description: 'Tempo real de entrega', prompt: 'Compras: Qual é o tempo real de entrega do Fornecedor X?' },
-    { title: 'Melhor Preço', description: 'Quem tem o melhor preço histórico?', prompt: 'Compras: Quem tem o melhor preço histórico para o Arroz 5kg?' },
-    { title: 'Rascunho Pedido', description: 'Gerar pedido de ruptura', prompt: 'Compras: Crie um rascunho de pedido para os itens críticos de ruptura.' },
-    { title: 'Melhores Clientes', description: 'Top 5 clientes do mês', prompt: 'CRM: Quais são os nossos 5 melhores clientes este mês?' },
-    { title: 'Histórico Cliente', description: 'Buscar compras do cliente', prompt: 'CRM: Mostre o histórico de compras do cliente NUIT 123456789' }
-  ];
+/**
+ * As sugestões por perfil. Cada uma tem título, descrição e a pergunta que se envia à
+ * Mayra — as três vêm do catálogo, porque a pergunta também segue a língua activa: enviar
+ * uma pergunta em português a quem lê em inglês faria a Mayra responder em português.
+ */
+const SUGESTOES = {
+  stock: ['ruptura', 'capital', 'movimentos', 'baixo'],
+  caixa: ['turno', 'preco', 'horarios', 'top'],
+  gestao: [
+    'margens', 'fraude', 'fecho', 'capital', 'marketing', 'financas',
+    'rh_vendas', 'entregas', 'preco', 'rascunho', 'clientes', 'historico',
+  ],
+} as const;
+
+const getSuggestionsByRole = (role: string | undefined, t: TFn) => {
+  const grupo = role === 'STOCK_KEEPER' ? 'stock' : role === 'CASHIER' ? 'caixa' : 'gestao';
+  return (SUGESTOES[grupo] as readonly string[]).map((id) => ({
+    title: t(`sugestao.${grupo}.${id}.titulo`),
+    description: t(`sugestao.${grupo}.${id}.descricao`),
+    prompt: t(`sugestao.${grupo}.${id}.pergunta`),
+  }));
 };
 
 export function WelcomeScreen() {
+  const { t } = useTranslation('copiloto');
   const { user } = useAuthStore();
   const { sendMessage, isLoading } = useCopilotStore();
 
   return (
     <div className="flex flex-col items-center justify-center flex-1 h-full text-center px-2 py-6">
-      <h3 className="text-lg font-bold text-slate-900 mb-1">Olá, {user?.name || 'Gestor'}</h3>
+      <h3 className="text-lg font-bold text-slate-900 mb-1">{t('boas_vindas_ecra.ola', { nome: user?.name || t('boas_vindas_ecra.nome_padrao') })}</h3>
       <p className="text-sm text-slate-500 mb-6 max-w-sm">
-        Sou a Mayra. Escolha uma sugestão ou escreva a sua pergunta.
+        {t('boas_vindas_ecra.intro')}
       </p>
       
       {/* Uma coluna, não três.
@@ -61,7 +52,7 @@ export function WelcomeScreen() {
         className="w-full max-w-md space-y-2 overflow-y-auto px-1 pb-4 custom-scrollbar"
         style={{ maxHeight: '55vh' }}
       >
-        {getSuggestionsByRole(user?.role).map((sug, idx) => (
+        {getSuggestionsByRole(user?.role, (chave) => t(chave as never)).map((sug, idx) => (
            <button
              key={idx}
              onClick={() => sendMessage(sug.prompt)}

@@ -34,62 +34,64 @@ import type {
   ResultadoEnvioCampanha,
   SugestaoMensagem,
 } from '../api/clientes.api';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatData, formatMoeda } from '@/shared/utils';
 import { TableScroll, ConfirmDialog } from '@/shared/ui';
 
-const moeda = (v: number) =>
-  `${Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+const moeda = (v: number) => formatMoeda(Number(v));
 
-const data = (iso?: string | null) =>
-  iso
-    ? new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—';
+const data = (iso?: string | null) => (iso ? formatData(iso) : '—');
 
-const ESTADOS: Record<EstadoCampanha, { rotulo: string; classe: string }> = {
-  RASCUNHO: { rotulo: 'Rascunho', classe: 'bg-slate-100 text-slate-600 border-slate-200' },
-  A_ENVIAR: { rotulo: 'A enviar', classe: 'bg-blue-50 text-blue-700 border-blue-200' },
-  CONCLUIDA: { rotulo: 'Concluída', classe: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  CANCELADA: { rotulo: 'Cancelada', classe: 'bg-slate-100 text-slate-500 border-slate-200' },
-};
+// Os rótulos são chaves do catálogo (`as const` para o `t()` as aceitar tipadas); o
+// texto resolve-se no componente, onde a língua activa é conhecida.
+const ESTADOS = {
+  RASCUNHO: { rotulo: 'campanhas.estado_rascunho', classe: 'bg-slate-100 text-slate-600 border-slate-200' },
+  A_ENVIAR: { rotulo: 'campanhas.estado_a_enviar', classe: 'bg-blue-50 text-blue-700 border-blue-200' },
+  CONCLUIDA: { rotulo: 'campanhas.estado_concluida', classe: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  CANCELADA: { rotulo: 'campanhas.estado_cancelada', classe: 'bg-slate-100 text-slate-500 border-slate-200' },
+} as const satisfies Record<EstadoCampanha, { rotulo: string; classe: string }>;
 
 /**
  * Cada motivo diz uma coisa diferente sobre o que correu mal, e cada um tem uma
  * acção diferente. Mostrar "suprimido" sem dizer porquê deixaria o utilizador
  * sem saber o que corrigir.
  */
-const RESULTADOS: Record<ResultadoEnvioCampanha, { rotulo: string; classe: string; ajuda?: string }> = {
-  ENVIADO: { rotulo: 'Enviada', classe: 'bg-emerald-50 text-emerald-700' },
+const RESULTADOS = {
+  ENVIADO: { rotulo: 'campanhas.resultado_enviado', classe: 'bg-emerald-50 text-emerald-700', ajuda: null },
   FALHADO: {
-    rotulo: 'Falhou',
+    rotulo: 'campanhas.resultado_falhado',
     classe: 'bg-rose-50 text-rose-700',
-    ajuda: 'O fornecedor recusou a mensagem.',
+    ajuda: 'campanhas.resultado_falhado_ajuda',
   },
   SUPRIMIDO_SEM_CONSENTIMENTO: {
-    rotulo: 'Sem consentimento',
+    rotulo: 'campanhas.resultado_sem_consentimento',
     classe: 'bg-amber-50 text-amber-700',
-    ajuda: 'O cliente não aceitou ser contactado por este canal.',
+    ajuda: 'campanhas.resultado_sem_consentimento_ajuda',
   },
   SUPRIMIDO_SEM_CONTACTO: {
-    rotulo: 'Sem contacto',
+    rotulo: 'campanhas.resultado_sem_contacto',
     classe: 'bg-amber-50 text-amber-700',
-    ajuda: 'O cliente não tem telefone ou e-mail para este canal.',
+    ajuda: 'campanhas.resultado_sem_contacto_ajuda',
   },
   SUPRIMIDO_JA_COMPROU: {
-    rotulo: 'Já comprou',
+    rotulo: 'campanhas.resultado_ja_comprou',
     classe: 'bg-blue-50 text-blue-700',
-    ajuda: 'A mensagem deixou de ser relevante: o cliente já comprou.',
+    ajuda: 'campanhas.resultado_ja_comprou_ajuda',
   },
   SUPRIMIDO_LIMITE_FREQUENCIA: {
-    rotulo: 'Demasiadas mensagens',
+    rotulo: 'campanhas.resultado_limite_frequencia',
     classe: 'bg-amber-50 text-amber-700',
-    ajuda: 'O cliente já recebeu o máximo de mensagens deste período.',
+    ajuda: 'campanhas.resultado_limite_frequencia_ajuda',
   },
   SUPRIMIDO_CANAL_INDISPONIVEL: {
-    rotulo: 'Canal indisponível',
+    rotulo: 'campanhas.resultado_canal_indisponivel',
     classe: 'bg-slate-100 text-slate-600',
-    ajuda: 'O envio por este canal não está configurado no sistema.',
+    ajuda: 'campanhas.resultado_canal_indisponivel_ajuda',
   },
-};
+} as const satisfies Record<
+  ResultadoEnvioCampanha,
+  { rotulo: string; classe: string; ajuda: string | null }
+>;
 
 const CANAIS: CanalComunicacao[] = ['SMS', 'WHATSAPP', 'EMAIL'];
 
@@ -101,33 +103,33 @@ const CANAIS: CanalComunicacao[] = ['SMS', 'WHATSAPP', 'EMAIL'];
  * fora de cobertura, número inválido. Mostrar as duas como a mesma coisa faria
  * a campanha parecer bem-sucedida quando ninguém a recebeu.
  */
-const ENTREGAS: Record<EstadoEntrega, { rotulo: string; classe: string; ajuda: string }> = {
+const ENTREGAS = {
   ACEITE: {
-    rotulo: 'A caminho',
+    rotulo: 'campanhas.entrega_a_caminho',
     classe: 'bg-slate-100 text-slate-600',
-    ajuda: 'O fornecedor aceitou. Ainda não se sabe se chegou.',
+    ajuda: 'campanhas.entrega_aceite_ajuda',
   },
   ENVIADA: {
-    rotulo: 'A caminho',
+    rotulo: 'campanhas.entrega_a_caminho',
     classe: 'bg-slate-100 text-slate-600',
-    ajuda: 'Entregue ao operador de rede, a caminho do cliente.',
+    ajuda: 'campanhas.entrega_enviada_ajuda',
   },
   ENTREGUE: {
-    rotulo: 'Chegou',
+    rotulo: 'campanhas.entrega_chegou',
     classe: 'bg-emerald-50 text-emerald-700',
-    ajuda: 'Chegou ao telemóvel do cliente.',
+    ajuda: 'campanhas.entrega_entregue_ajuda',
   },
   LIDA: {
-    rotulo: 'Lida',
+    rotulo: 'campanhas.entrega_lida',
     classe: 'bg-emerald-50 text-emerald-700',
-    ajuda: 'O cliente abriu a mensagem.',
+    ajuda: 'campanhas.entrega_lida_ajuda',
   },
   NAO_ENTREGUE: {
-    rotulo: 'Não chegou',
+    rotulo: 'campanhas.entrega_nao_chegou',
     classe: 'bg-rose-50 text-rose-700',
-    ajuda: 'O operador não conseguiu entregar.',
+    ajuda: 'campanhas.entrega_nao_entregue_ajuda',
   },
-};
+} as const satisfies Record<EstadoEntrega, { rotulo: string; classe: string; ajuda: string }>;
 
 // ──── Modal de criação ────────────────────────────────────────────────────────
 
@@ -138,6 +140,7 @@ function CampanhaModal({
   onClose: () => void;
   oportunidadeInicial?: OportunidadeCampanha;
 }) {
+  const { t } = useTranslation('crm');
   const { data: segmentos } = useSegmentos();
   const criar = useCriarCampanha();
   const sugerir = useSugerirMensagens();
@@ -216,7 +219,7 @@ function CampanhaModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[6vh] backdrop-blur-sm">
       <div className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 p-5">
-          <h2 className="text-lg font-bold text-slate-900">Nova campanha</h2>
+          <h2 className="text-lg font-bold text-slate-900">{t('campanhas.nova_campanha')}</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
             <X size={18} />
           </button>
@@ -224,35 +227,35 @@ function CampanhaModal({
 
         <form onSubmit={submeter} className="space-y-4 overflow-y-auto p-5">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nome *</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('campanhas.nome')}</label>
             <input
               autoFocus
               value={form.nome}
               onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-              placeholder="Ex.: Recuperar clientes em risco"
+              placeholder={t('campanhas.nome_exemplo')}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
-            <p className="mt-1 text-xs text-slate-400">Nome interno. O cliente não o vê.</p>
+            <p className="mt-1 text-xs text-slate-400">{t('campanhas.nome_interno')}</p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Quem recebe *</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('campanhas.quem_recebe')}</label>
             <select
               value={form.segmentId}
               onChange={(e) => setForm((f) => ({ ...f, segmentId: e.target.value }))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             >
-              <option value="">Escolher segmento…</option>
+              <option value="">{t('campanhas.escolher_segmento')}</option>
               {comMembros.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nome} ({s.total}){semHistorico(s.chave) ? ' — ainda não compraram' : ''}
+                  {s.nome} ({s.total}){semHistorico(s.chave) ? ` — ${t('campanhas.ainda_nao_compraram')}` : ''}
                 </option>
               ))}
             </select>
 
             {comMembros.length === 0 ? (
               <p className="mt-1 text-xs text-amber-600">
-                Nenhum segmento tem clientes. Calcule os segmentos primeiro.
+                {t('campanhas.nenhum_segmento')}
               </p>
             ) : (
               escolhido && (
@@ -260,15 +263,14 @@ function CampanhaModal({
                 // se sabe ao enviar. Dizer o número do segmento sem esta ressalva
                 // criaria uma expectativa que o envio não cumpre.
                 <p className="mt-1 text-xs text-slate-400">
-                  {escolhido.total} cliente(s) no grupo. Recebem só os que aceitaram ser
-                  contactados por este canal.
+                  {t('campanhas.no_grupo', { n: escolhido.total })}
                 </p>
               )
             )}
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Canal *</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('campanhas.canal')}</label>
             <div className="flex gap-2">
               {CANAIS.map((c) => (
                 <button
@@ -290,7 +292,7 @@ function CampanhaModal({
 
           {form.canal === 'EMAIL' && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Assunto *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('campanhas.assunto')}</label>
               <input
                 value={form.assunto}
                 onChange={(e) => setForm((f) => ({ ...f, assunto: e.target.value }))}
@@ -301,17 +303,17 @@ function CampanhaModal({
 
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <label className="text-sm font-medium text-slate-700">Mensagem *</label>
+              <label className="text-sm font-medium text-slate-700">{t('campanhas.mensagem')}</label>
               <button
                 type="button"
                 onClick={pedirSugestoes}
                 disabled={!form.segmentId || escolhidoSemHistorico || sugerir.isPending}
                 title={
                   !form.segmentId
-                    ? 'Escolha primeiro quem recebe.'
+                    ? t('campanhas.mayra_escolha_primeiro')
                     : escolhidoSemHistorico
-                      ? 'Estes clientes ainda não compraram nada: a MAYRA não tem histórico com que escrever.'
-                      : 'A MAYRA lê o que estes clientes compram e escreve três opções.'
+                      ? t('campanhas.mayra_sem_historico_dica')
+                      : t('campanhas.mayra_dica')
                 }
                 className={cn(
                   'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
@@ -324,7 +326,7 @@ function CampanhaModal({
                 ) : (
                   <Sparkles size={13} />
                 )}
-                {sugerir.isPending ? 'A pensar…' : 'Pedir à MAYRA'}
+                {sugerir.isPending ? t('campanhas.a_pensar') : t('campanhas.pedir_mayra')}
               </button>
             </div>
 
@@ -335,12 +337,10 @@ function CampanhaModal({
                 <Sparkles size={14} className="mt-0.5 shrink-0 text-slate-400" />
                 <div className="text-xs text-slate-600">
                   <p className="font-semibold text-slate-700">
-                    A MAYRA não consegue escrever para este grupo.
+                    {t('campanhas.mayra_nao_consegue')}
                   </p>
                   <p className="mt-0.5">
-                    Estes clientes registaram-se mas ainda não compraram nada — não há histórico
-                    de compras a partir do qual escrever. Escreva a mensagem, ou escolha um grupo
-                    com compras.
+                    {t('campanhas.mayra_nao_consegue_explicacao')}
                   </p>
                 </div>
               </div>
@@ -372,7 +372,7 @@ function CampanhaModal({
                         {s.tom}
                       </span>
                       <span className="text-[11px] tabular-nums text-slate-400">
-                        {s.texto.length} caracteres
+                        {t('campanhas.caracteres', { n: s.texto.length })}
                       </span>
                     </div>
                     {s.assunto && (
@@ -389,7 +389,7 @@ function CampanhaModal({
                     onClick={() => setSugestoes(null)}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                   >
-                    <Pencil size={13} /> Escrever a minha
+                    <Pencil size={13} /> {t('campanhas.escrever_minha')}
                   </button>
                   <button
                     type="button"
@@ -398,7 +398,7 @@ function CampanhaModal({
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                   >
                     <RefreshCw size={13} className={cn(sugerir.isPending && 'animate-spin')} />
-                    Outras opções
+                    {t('campanhas.outras_opcoes')}
                   </button>
                 </div>
               </div>
@@ -408,13 +408,13 @@ function CampanhaModal({
                   rows={4}
                   value={form.texto}
                   onChange={(e) => setForm((f) => ({ ...f, texto: e.target.value }))}
-                  placeholder="Olá {{nome}}, temos novidades esta semana."
+                  placeholder={t('campanhas.texto_exemplo', { nome: '{{nome}}' })}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                 />
                 <div className="mt-1 flex items-start justify-between gap-2">
                   <p className="text-xs text-slate-400">
-                    <code className="rounded bg-slate-100 px-1">{'{{nome}}'}</code> é substituído
-                    pelo primeiro nome do cliente.
+                    <code className="rounded bg-slate-100 px-1">{'{{nome}}'}</code>{' '}
+                    {t('campanhas.nome_substituido')}
                   </p>
                   {form.texto.length > 0 && (
                     <span
@@ -428,7 +428,7 @@ function CampanhaModal({
                       )}
                     >
                       {form.texto.length}
-                      {form.canal === 'SMS' && form.texto.length > 160 && ' — 2 SMS'}
+                      {form.canal === 'SMS' && form.texto.length > 160 && ` — ${t('campanhas.dois_sms')}`}
                     </span>
                   )}
                 </div>
@@ -438,7 +438,7 @@ function CampanhaModal({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Não enviar a quem comprou nos últimos
+              {t('campanhas.nao_enviar_comprou')}
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -452,10 +452,10 @@ function CampanhaModal({
                 placeholder="—"
                 className="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
-              <span className="text-sm text-slate-500">dias</span>
+              <span className="text-sm text-slate-500">{t('campanhas.dias')}</span>
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              Evita insistir com quem já comprou entretanto. Deixe vazio para enviar a todos.
+              {t('campanhas.evita_insistir')}
             </p>
           </div>
 
@@ -465,7 +465,7 @@ function CampanhaModal({
               onClick={onClose}
               className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               type="submit"
@@ -474,13 +474,13 @@ function CampanhaModal({
               }
               className="flex-1 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              {criar.isPending ? 'A criar…' : 'Criar rascunho'}
+              {criar.isPending ? t('campanhas.a_criar') : t('campanhas.criar_rascunho')}
             </button>
           </div>
 
           {escolhido && (
             <p className="text-center text-xs text-slate-400">
-              A campanha é criada em rascunho. Só sai quando confirmar o envio.
+              {t('campanhas.criada_em_rascunho')}
             </p>
           )}
         </form>
@@ -492,6 +492,7 @@ function CampanhaModal({
 // ──── Detalhe ─────────────────────────────────────────────────────────────────
 
 function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void }) {
+  const { t } = useTranslation('crm');
   const [page, setPage] = useState(1);
   const { data: campanha, isLoading } = useCampanha(id);
   const { data: envios } = useEnviosCampanha(id, page);
@@ -526,12 +527,12 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="truncate font-bold text-slate-900">{campanha.nome}</h3>
               <span className={cn('rounded-full border px-2 py-0.5 text-xs font-semibold', estado.classe)}>
-                {estado.rotulo}
+                {t(estado.rotulo)}
               </span>
             </div>
             <p className="mt-0.5 text-sm text-slate-500">
-              {campanha.canal.toLowerCase()} · {campanha.segment?.nome ?? 'audiência fixada'}
-              {campanha.concluidaEm && ` · enviada em ${data(campanha.concluidaEm)}`}
+              {campanha.canal.toLowerCase()} · {campanha.segment?.nome ?? t('campanhas.audiencia_fixada')}
+              {campanha.concluidaEm && ` · ${t('campanhas.enviada_em', { data: data(campanha.concluidaEm) })}`}
             </p>
           </div>
         </div>
@@ -540,11 +541,11 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
           <button
             onClick={() => verificar.mutate()}
             disabled={verificar.isPending}
-            title="Pergunta ao fornecedor o que aconteceu às mensagens. Corre sozinho de 10 em 10 minutos."
+            title={t('campanhas.confirmar_entregas_dica')}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
           >
             <CheckCheck size={14} className={cn(verificar.isPending && 'animate-pulse')} />
-            {verificar.isPending ? 'A confirmar…' : 'Confirmar entregas'}
+            {verificar.isPending ? t('campanhas.a_confirmar') : t('campanhas.confirmar_entregas')}
           </button>
         )}
 
@@ -556,20 +557,20 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
               className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
             >
               <Send size={14} />
-              {enviar.isPending ? 'A enviar…' : 'Enviar agora'}
+              {enviar.isPending ? t('campanhas.a_enviar') : t('campanhas.enviar_agora')}
             </button>
             <button
               onClick={() => setAccaoPendente('cancelar')}
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
-              Cancelar
+              {t('comum.cancelar')}
             </button>
           </div>
         )}
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Mensagem</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('campanhas.mensagem_titulo')}</p>
         {campanha.assunto && (
           <p className="mt-1 text-sm font-semibold text-slate-700">{campanha.assunto}</p>
         )}
@@ -578,29 +579,29 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
 
       {campanha.estado === 'CONCLUIDA' && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Numero rotulo="Saíram" valor={String(campanha.totalEnviados)} />
+          <Numero rotulo={t('campanhas.kpi_sairam')} valor={String(campanha.totalEnviados)} />
           {/* Chegar é diferente de sair: entre as duas está o operador de rede. */}
           <Numero
-            rotulo="Chegaram"
+            rotulo={t('campanhas.kpi_chegaram')}
             valor={kpi ? String(kpi.entregues) : '—'}
             sub={
               kpi && kpi.naoEntregues > 0
-                ? `${kpi.naoEntregues} não chegaram`
+                ? t('campanhas.kpi_nao_chegaram', { n: kpi.naoEntregues })
                 : kpi && kpi.porConfirmar > 0
-                  ? `${kpi.porConfirmar} por confirmar`
+                  ? t('campanhas.kpi_por_confirmar', { n: kpi.porConfirmar })
                   : undefined
             }
             alerta={!!kpi && kpi.naoEntregues > 0}
           />
           <Numero
-            rotulo="Converteram"
+            rotulo={t('campanhas.kpi_converteram')}
             valor={kpi ? String(kpi.convertidos) : '—'}
-            sub={kpi && kpi.enviados > 0 ? `${Math.round(kpi.taxaConversao * 100)}% dos envios` : undefined}
+            sub={kpi && kpi.enviados > 0 ? t('campanhas.kpi_dos_envios', { n: Math.round(kpi.taxaConversao * 100) }) : undefined}
           />
           <Numero
-            rotulo="Receita atribuída"
+            rotulo={t('campanhas.kpi_receita')}
             valor={kpi ? moeda(kpi.receita) : '—'}
-            sub={kpi && kpi.custo > 0 ? `custou ${kpi.custo.toFixed(2)}` : undefined}
+            sub={kpi && kpi.custo > 0 ? t('campanhas.kpi_custou', { valor: kpi.custo.toFixed(2) }) : undefined}
           />
         </div>
       )}
@@ -608,7 +609,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
       {envios && envios.data.length > 0 ? (
         <div>
           <h4 className="mb-2 text-sm font-semibold text-slate-700">
-            Destinatários
+            {t('campanhas.destinatarios')}
             <span className="ml-2 font-normal text-slate-400">{envios.total}</span>
           </h4>
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -616,7 +617,13 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">
-                    {['Cliente', 'Contacto', 'Resultado', 'Chegou?', 'Converteu'].map((h) => (
+                    {[
+                      t('campanhas.col_cliente'),
+                      t('campanhas.col_contacto'),
+                      t('campanhas.col_resultado'),
+                      t('campanhas.col_chegou'),
+                      t('campanhas.col_converteu'),
+                    ].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
@@ -637,10 +644,10 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
                         </td>
                         <td className="px-4 py-2.5">
                           <span
-                            title={e.erro ?? r.ajuda}
+                            title={e.erro ?? (r.ajuda ? t(r.ajuda) : undefined)}
                             className={cn('rounded px-2 py-0.5 text-xs font-semibold', r.classe)}
                           >
-                            {r.rotulo}
+                            {t(r.rotulo)}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">
@@ -648,13 +655,13 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
                               suprimida nunca teve entrega para acompanhar. */}
                           {e.resultado === 'ENVIADO' && e.estadoEntrega ? (
                             <span
-                              title={e.erroEntrega ?? ENTREGAS[e.estadoEntrega].ajuda}
+                              title={e.erroEntrega ?? t(ENTREGAS[e.estadoEntrega].ajuda)}
                               className={cn(
                                 'rounded px-2 py-0.5 text-xs font-semibold',
                                 ENTREGAS[e.estadoEntrega].classe,
                               )}
                             >
-                              {ENTREGAS[e.estadoEntrega].rotulo}
+                              {t(ENTREGAS[e.estadoEntrega].rotulo)}
                             </span>
                           ) : (
                             <span className="text-xs text-slate-300">—</span>
@@ -674,7 +681,7 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
           {envios.lastPage > 1 && (
             <div className="mt-3 flex items-center justify-between">
               <p className="text-sm text-slate-500">
-                Página {envios.page} de {envios.lastPage}
+                {t('campanhas.pagina', { page: envios.page, lastPage: envios.lastPage })}
               </p>
               <div className="flex gap-2">
                 <button
@@ -698,21 +705,21 @@ function DetalheCampanha({ id, onVoltar }: { id: string; onVoltar: () => void })
       ) : (
         emRascunho && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 py-6 text-center text-sm text-slate-400">
-            Ainda não foi enviada.
+            {t('campanhas.ainda_nao_enviada')}
           </div>
         )
       )}
 
       <ConfirmDialog
         isOpen={accaoPendente !== null}
-        title={accaoPendente === 'enviar' ? 'Enviar campanha' : 'Cancelar campanha'}
+        title={accaoPendente === 'enviar' ? t('campanhas.enviar_campanha') : t('campanhas.cancelar_campanha')}
         message={
           accaoPendente === 'enviar'
-            ? `Enviar "${campanha.nome}"? As mensagens saem de imediato.`
-            : 'Cancelar esta campanha? Não poderá ser reactivada.'
+            ? t('campanhas.enviar_mensagem', { nome: campanha.nome })
+            : t('campanhas.cancelar_mensagem')
         }
-        confirmText={accaoPendente === 'enviar' ? 'Enviar' : 'Cancelar campanha'}
-        cancelText="Voltar"
+        confirmText={accaoPendente === 'enviar' ? t('campanhas.enviar') : t('campanhas.cancelar_campanha')}
+        cancelText={t('campanhas.voltar')}
         variant={accaoPendente === 'enviar' ? 'info' : 'danger'}
         isLoading={enviar.isPending || cancelar.isPending}
         onConfirm={() => {
@@ -762,6 +769,7 @@ function Numero({
  * ao formulário já preenchido.
  */
 function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }) {
+  const { t } = useTranslation('crm');
   const { data, isLoading } = useOportunidades();
 
   if (isLoading) return null;
@@ -772,7 +780,7 @@ function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }
       <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
         <Sparkles size={16} className="mt-0.5 shrink-0 text-amber-600" />
         <div>
-          <p className="text-sm font-semibold text-amber-900">A MAYRA ainda não tem com que trabalhar</p>
+          <p className="text-sm font-semibold text-amber-900">{t('campanhas.mayra_sem_dados')}</p>
           <p className="mt-0.5 text-sm text-amber-700">{data.aviso}</p>
         </div>
       </div>
@@ -793,7 +801,7 @@ function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }
     <section className="mb-6">
       <div className="mb-2 flex items-center gap-2">
         <Sparkles size={15} className="text-violet-600" />
-        <h3 className="text-sm font-semibold text-slate-700">A MAYRA sugere contactar</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{t('campanhas.mayra_sugere')}</h3>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">
@@ -819,7 +827,7 @@ function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }
                   {o.canalSugerido.toLowerCase()}
                 </span>
               )}
-              <span className="tabular-nums">{moeda(o.valorEmJogo)} já gastos</span>
+              <span className="tabular-nums">{t('campanhas.ja_gastos', { valor: moeda(o.valorEmJogo) })}</span>
             </div>
           </button>
         ))}
@@ -829,6 +837,7 @@ function Oportunidades({ onUsar }: { onUsar: (o: OportunidadeCampanha) => void }
 }
 
 export function CampanhasPanel() {
+  const { t } = useTranslation('crm');
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [aCriar, setACriar] = useState(false);
   const [oportunidade, setOportunidade] = useState<OportunidadeCampanha | undefined>();
@@ -856,7 +865,7 @@ export function CampanhasPanel() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
         <AlertTriangle size={36} strokeWidth={1} />
-        <p className="text-sm">Não foi possível carregar as campanhas.</p>
+        <p className="text-sm">{t('campanhas.erro_carregar')}</p>
       </div>
     );
   }
@@ -871,13 +880,13 @@ export function CampanhasPanel() {
         <>
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm text-slate-500">
-              Mensagens a um segmento de clientes, com consentimento verificado antes de cada envio.
+              {t('campanhas.intro')}
             </p>
             <button
               onClick={() => setACriar(true)}
               className="flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
-              <Plus size={15} /> Nova campanha
+              <Plus size={15} /> {t('campanhas.nova_campanha')}
             </button>
           </div>
 
@@ -887,10 +896,9 @@ export function CampanhasPanel() {
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <Megaphone size={40} strokeWidth={1} className="text-slate-300" />
               <div>
-                <p className="font-medium text-slate-600">Ainda não há campanhas.</p>
+                <p className="font-medium text-slate-600">{t('campanhas.vazio_titulo')}</p>
                 <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">
-                  Uma campanha envia a mesma mensagem a todos os clientes de um segmento — só a
-                  quem aceitou ser contactado.
+                  {t('campanhas.vazio_explicacao')}
                 </p>
               </div>
             </div>
@@ -913,11 +921,11 @@ export function CampanhasPanel() {
                             estado.classe,
                           )}
                         >
-                          {estado.rotulo}
+                          {t(estado.rotulo)}
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-sm text-slate-500">
-                        {c.canal.toLowerCase()} · {c.segment?.nome ?? 'audiência fixada'} ·{' '}
+                        {c.canal.toLowerCase()} · {c.segment?.nome ?? t('campanhas.audiencia_fixada')} ·{' '}
                         {data(c.createdAt)}
                       </p>
                     </div>
@@ -928,7 +936,7 @@ export function CampanhasPanel() {
                           {c.totalEnviados}
                         </p>
                         <p className="text-xs text-slate-400">
-                          de {c.totalDestinatarios} enviadas
+                          {t('campanhas.de_enviadas', { n: c.totalDestinatarios })}
                         </p>
                       </div>
                     )}

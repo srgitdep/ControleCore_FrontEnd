@@ -1,0 +1,212 @@
+{
+  "cabecalho": {
+    "online": "Online e pronta a ajudar",
+    "restaurar": "Restaurar Tamanho",
+    "ecra_inteiro": "Ecrã Inteiro",
+    "historico": "Histórico de Conversas",
+    "nova_conversa": "Nova conversa"
+  },
+  "entrada": {
+    "rh_escala_rotulo": "👥 Escala de amanhã",
+    "rh_escala_pergunta": "RH: Quem está escalado para o turno de amanhã na Loja Principal?",
+    "rh_anomalias_rotulo": "⏱️ Resumo de anomalias (esta semana)",
+    "rh_anomalias_pergunta": "RH: Resuma as anomalias de ponto (atrasos/faltas) desta semana.",
+    "placeholder": "Pergunte à Mayra...",
+    "voz": "Ativar Modo Voz (Gemini Live)",
+    "aviso": "A Mayra pode cometer erros. Confirme sempre os valores importantes."
+  },
+  "mensagem": {
+    "ouvir": "Ouvir em voz alta",
+    "copiar": "Copiar texto"
+  },
+  "boas_vindas": "Olá! Sou a Mayra, o seu assistente inteligente ControlCore. Como posso ajudar na gestão da sua empresa hoje?",
+  "erro": {
+    "carregar_sessao": "Erro ao carregar sessão.",
+    "comunicacao": "Ocorreu um erro de comunicação com a IA.",
+    "executar_accao": "Erro ao executar a ação solicitada."
+  },
+  "sucesso": "✅ Sucesso: {{resposta}}",
+  "boas_vindas_ecra": {
+    "ola": "Olá, {{nome}}",
+    "nome_padrao": "Gestor",
+    "intro": "Sou a Mayra. Escolha uma sugestão ou escreva a sua pergunta."
+  },
+  "sugestao": {
+    "stock": {
+      "ruptura": {
+        "titulo": "Prever Rutura",
+        "descricao": "Prever risco de ruptura de estoque",
+        "pergunta": "Prever risco de ruptura de estoque"
+      },
+      "capital": {
+        "titulo": "Capital Congelado",
+        "descricao": "Analisar estoque parado nas lojas",
+        "pergunta": "Analisar estoque parado (capital congelado)"
+      },
+      "movimentos": {
+        "titulo": "Movimentos",
+        "descricao": "Verificar últimos movimentos",
+        "pergunta": "Mostrar os últimos movimentos de estoque de hoje"
+      },
+      "baixo": {
+        "titulo": "Baixo Estoque",
+        "descricao": "Listar produtos no limite",
+        "pergunta": "Quais produtos estão com o estoque abaixo do mínimo?"
+      }
+    },
+    "caixa": {
+      "turno": {
+        "titulo": "Meu Turno",
+        "descricao": "Resumo das minhas vendas",
+        "pergunta": "Resumir as minhas vendas de hoje"
+      },
+      "preco": {
+        "titulo": "Consultar Preço",
+        "descricao": "Verificar o preço de produto",
+        "pergunta": "Consultar preço de um produto"
+      },
+      "horarios": {
+        "titulo": "Meus Horários",
+        "descricao": "Ver minhas marcações de ponto",
+        "pergunta": "Mostrar minhas entradas e saídas de hoje"
+      },
+      "top": {
+        "titulo": "Top Vendas",
+        "descricao": "Produtos mais vendidos",
+        "pergunta": "Quais foram os produtos mais vendidos por mim hoje?"
+      }
+    },
+    "gestao": {
+      "margens": {
+        "titulo": "Auditar Margens",
+        "descricao": "Analisar produtos com margem de lucro baixa",
+        "pergunta": "Analisar produtos com margem de lucro baixa ou negativa"
+      },
+      "fraude": {
+        "titulo": "Anti-fraude",
+        "descricao": "Auditoria de ocorrências suspeitas",
+        "pergunta": "Auditoria Anti-fraude (Ocorrências suspeitas da semana)"
+      },
+      "fecho": {
+        "titulo": "Fecho de Caixas",
+        "descricao": "Resumir fechamentos de todos os turnos",
+        "pergunta": "Resumir fechamentos de caixa de hoje"
+      },
+      "capital": {
+        "titulo": "Capital Congelado",
+        "descricao": "Analisar estoque sem saídas",
+        "pergunta": "Analisar estoque parado (capital congelado)"
+      },
+      "marketing": {
+        "titulo": "Marketing + Estoque",
+        "descricao": "Como escoar itens perto da validade",
+        "pergunta": "Marketing + Estoque: Como escoar itens perto da validade?"
+      },
+      "financas": {
+        "titulo": "Finanças",
+        "descricao": "Resumo de quebras de caixa",
+        "pergunta": "Finanças: Resumo de quebras de caixa desta semana."
+      },
+      "rh_vendas": {
+        "titulo": "RH + Vendas",
+        "descricao": "Melhor desempenho de caixa",
+        "pergunta": "RH + Vendas: Qual operador teve o melhor desempenho hoje?"
+      },
+      "entregas": {
+        "titulo": "Entregas",
+        "descricao": "Tempo real de entrega",
+        "pergunta": "Compras: Qual é o tempo real de entrega do Fornecedor X?"
+      },
+      "preco": {
+        "titulo": "Melhor Preço",
+        "descricao": "Quem tem o melhor preço histórico?",
+        "pergunta": "Compras: Quem tem o melhor preço histórico para o Arroz 5kg?"
+      },
+      "rascunho": {
+        "titulo": "Rascunho Pedido",
+        "descricao": "Gerar pedido de ruptura",
+        "pergunta": "Compras: Crie um rascunho de pedido para os itens críticos de ruptura."
+      },
+      "clientes": {
+        "titulo": "Melhores Clientes",
+        "descricao": "Top 5 clientes do mês",
+        "pergunta": "CRM: Quais são os nossos 5 melhores clientes este mês?"
+      },
+      "historico": {
+        "titulo": "Histórico Cliente",
+        "descricao": "Buscar compras do cliente",
+        "pergunta": "CRM: Mostre o histórico de compras do cliente NUIT 123456789"
+      }
+    }
+  },
+  "hitl": {
+    "titulo": {
+      "UPDATE_PRODUCT_PRICE": "Ação Solicitada: Atualizar Preço",
+      "ADJUST_STOCK": "Ação Solicitada: Ajuste de Stock",
+      "TRANSFER_STOCK": "Ação Solicitada: Transferência de Stock",
+      "CREATE_USER": "Ação Solicitada: Novo Funcionário",
+      "TOGGLE_USER_STATUS": "Ação Solicitada: Alterar Acesso",
+      "REGISTER_EXPENSE": "Ação Solicitada: Registar Despesa",
+      "PAY_BILL": "Ação Solicitada: Liquidar Fatura / Despesa",
+      "outra": "Ação Solicitada"
+    },
+    "produto": "Produto:",
+    "preco_atual": "Preço Atual:",
+    "novo_preco": "Novo Preço:",
+    "armazem": "Armazém:",
+    "ajuste": "Ajuste a aplicar:",
+    "novo_saldo": "Novo Saldo Esperado:",
+    "motivo": "Motivo: {{motivo}}",
+    "origem": "Origem:",
+    "destino": "Destino:",
+    "qtd_transferir": "Qtd. a Transferir:",
+    "nome": "Nome:",
+    "email": "Email:",
+    "perfil": "Perfil:",
+    "funcionario": "Funcionário:",
+    "accao": "Ação:",
+    "ativar_acesso": "Ativar Acesso",
+    "bloquear_acesso": "Bloquear/Desativar Acesso",
+    "descricao": "Descrição:",
+    "valor": "Valor:",
+    "vencimento": "Data de Vencimento:",
+    "estado_inicial": "Estado Inicial:",
+    "pago": "PAGO",
+    "pendente": "PENDENTE",
+    "conta_descricao": "Descrição da Conta:",
+    "valor_liquidar": "Valor a Liquidar:",
+    "vencimento_original": "Vencimento Original:",
+    "aviso_pagar": "Esta ação marcará a conta como PAGA no momento atual.",
+    "confirmar": "Confirmar",
+    "cancelar": "Cancelar",
+    "cancelei": "Cancelei a ação."
+  },
+  "historico": {
+    "titulo": "Histórico",
+    "nova_conversa": "Nova Conversa",
+    "vazio": "Nenhum histórico encontrado."
+  },
+  "voz": {
+    "a_ligar": "A ligar...",
+    "a_ouvir": "A ouvir",
+    "a_responder": "A responder",
+    "a_consultar": "A consultar os dados...",
+    "a_pensar": "A pensar...",
+    "nao_ligou": "Não foi possível ligar",
+    "toque_para_falar": "Toque no microfone para falar",
+    "voltar": "Voltar à conversa escrita",
+    "titulo": "Voz",
+    "placeholder": "Escreva a sua pergunta...",
+    "enviar": "Enviar",
+    "escrever": "Escrever em vez de falar",
+    "ligar_de_novo": "Ligar de novo",
+    "sair": "Sair do modo de voz",
+    "erro": {
+      "sem_reconhecimento": "O seu navegador não suporta reconhecimento de voz local.",
+      "sem_microfone": "Não foi possível aceder ao microfone. Verifique as permissões.",
+      "tempo_esgotado": "Não foi possível ligar ao servidor de voz em {{host}}. Verifique a ligação.",
+      "falha_ligar": "Falha ao ligar ao servidor de voz: {{detalhe}}",
+      "sessao_expirada": "Sessão expirada. Por favor, faça login novamente."
+    }
+  }
+}

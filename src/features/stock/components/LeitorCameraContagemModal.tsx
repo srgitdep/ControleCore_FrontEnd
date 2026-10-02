@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Camera, CameraOff, Check, Minus, Plus, ScanLine } from 'lucide-react';
 import { useLeitorDeCodigo } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
@@ -36,6 +37,7 @@ export function LeitorCameraContagemModal({
   cycleId: string;
   onFechar: () => void;
 }) {
+  const { t } = useTranslation('stock');
   const [codigoLido, setCodigoLido] = useState<string | null>(null);
   const [quantidade, setQuantidade] = useState('');
   const [modoManual, setModoManual] = useState(false);
@@ -101,12 +103,12 @@ export function LeitorCameraContagemModal({
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <div className="flex items-center gap-2">
           <ScanLine className="h-5 w-5 text-blue-400" />
-          <span className="font-semibold">Ler código de barras</span>
+          <span className="font-semibold">{t('leitor.titulo')}</span>
         </div>
         <button
           onClick={onFechar}
           className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
-          aria-label="Fechar leitor"
+          aria-label={t('leitor.fechar')}
         >
           <X size={22} />
         </button>
@@ -135,17 +137,16 @@ export function LeitorCameraContagemModal({
         {aCarregar && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300">
             <Camera className="h-8 w-8 animate-pulse" />
-            <p className="text-sm">A pedir acesso à câmara...</p>
+            <p className="text-sm">{t('leitor.a_pedir_acesso')}</p>
           </div>
         )}
 
         {semCamara && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
             <CameraOff className="h-7 w-7 text-slate-500" />
-            <p className="text-sm font-medium text-slate-300">Sem câmara neste dispositivo</p>
+            <p className="text-sm font-medium text-slate-300">{t('leitor.sem_camara')}</p>
             <p className="max-w-xs text-xs text-slate-500">
-              {detalheDoErro ??
-                'Escreva o código de barras no campo abaixo. Num telemóvel, a leitura pela câmara fica disponível.'}
+              {detalheDoErro ?? t('leitor.sem_camara_dica')}
             </p>
           </div>
         )}
@@ -179,14 +180,14 @@ export function LeitorCameraContagemModal({
             className="space-y-3"
           >
             <label className="block text-sm font-medium text-slate-700">
-              Código de barras
+              {t('leitor.codigo_barras')}
               <input
                 type="text"
                 inputMode="numeric"
                 autoFocus
                 value={codigoManual}
                 onChange={(e) => setCodigoManual(e.target.value)}
-                placeholder="Ex: 5601234567890"
+                placeholder={t('leitor.exemplo_codigo')}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-base"
               />
             </label>
@@ -197,14 +198,14 @@ export function LeitorCameraContagemModal({
                   onClick={() => setModoManual(false)}
                   className="flex-1 rounded-lg border border-slate-200 py-3 text-sm font-medium text-slate-600"
                 >
-                  Voltar à câmara
+                  {t('leitor.voltar_camara')}
                 </button>
               )}
               <button
                 type="submit"
                 className="flex-1 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white"
               >
-                Continuar
+                {t('leitor.continuar')}
               </button>
             </div>
           </form>
@@ -212,18 +213,18 @@ export function LeitorCameraContagemModal({
           // ── O código lido, à espera da quantidade contada ───────────────────
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              Código lido
+              {t('leitor.codigo_lido')}
             </p>
             <p className="font-mono text-lg font-semibold text-slate-900">{codigoLido}</p>
 
             <label className="mt-3 block text-sm font-medium text-slate-700">
-              Quantidade encontrada na prateleira
+              {t('leitor.quantidade_prateleira')}
             </label>
             <div className="mt-1.5 flex items-center gap-3">
               <button
                 onClick={() => setQuantidade((q) => String(Math.max(0, (Number(q) || 0) - 1)))}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 active:bg-slate-100"
-                aria-label="Menos um"
+                aria-label={t('leitor.menos_um')}
               >
                 <Minus size={20} />
               </button>
@@ -232,7 +233,7 @@ export function LeitorCameraContagemModal({
                 ref={campoQuantidade}
                 type="number"
                 inputMode="decimal"
-                aria-label="Quantidade"
+                aria-label={t('leitor.quantidade')}
                 min={0}
                 step="any"
                 value={quantidade}
@@ -245,7 +246,7 @@ export function LeitorCameraContagemModal({
               <button
                 onClick={() => setQuantidade((q) => String((Number(q) || 0) + 1))}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 active:bg-slate-100"
-                aria-label="Mais um"
+                aria-label={t('leitor.mais_um')}
               >
                 <Plus size={20} />
               </button>
@@ -257,22 +258,20 @@ export function LeitorCameraContagemModal({
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-3 font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
             >
               <Check size={18} />
-              {isPending ? 'A registar...' : 'Registar e continuar'}
+              {isPending ? t('leitor.a_registar') : t('leitor.registar_continuar')}
             </button>
           </div>
         ) : (
           // ── À espera de leitura ─────────────────────────────────────────────
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-slate-500">
-              {estado === 'a-ler'
-                ? 'Aponte a câmara ao código de barras do produto.'
-                : 'Leitor inactivo.'}
+              {estado === 'a-ler' ? t('leitor.aponte') : t('leitor.inactivo')}
             </p>
             <button
               onClick={() => setModoManual(true)}
               className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600"
             >
-              Escrever
+              {t('leitor.escrever')}
             </button>
           </div>
         )}
@@ -282,7 +281,7 @@ export function LeitorCameraContagemModal({
             onClick={onFechar}
             className="mt-4 w-full rounded-lg bg-slate-900 py-3 font-semibold text-white active:bg-slate-800"
           >
-            Concluir — {confirmados.length} contagem(ns) registada(s)
+            {t('leitor.concluir', { n: confirmados.length })}
           </button>
         )}
       </div>

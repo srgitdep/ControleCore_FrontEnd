@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -43,6 +44,7 @@ import { cn } from '@/shared/utils';
  * é a mesma distinção que a página «Perfil» explica na sua própria nota.
  */
 export function PortalLayout() {
+  const { t } = useTranslation('portal');
   const { fornecedor, autenticado, aCarregar, carregar, sair, conformidade } = usePortalStore();
   const localizacao = useLocation();
 
@@ -72,10 +74,10 @@ export function PortalLayout() {
   }
 
   const ABAS = [
-    { para: '/fornecedor', etiqueta: 'Vitrine', icone: Package, fim: true },
-    { para: '/fornecedor/documentos', etiqueta: 'Documentos', icone: FileText },
-    { para: '/fornecedor/zonas', etiqueta: 'Zonas de entrega', icone: MapPin },
-    { para: '/fornecedor/perfil', etiqueta: 'Perfil', icone: UserCircle2 },
+    { para: '/fornecedor', etiqueta: t('layout.vitrine'), icone: Package, fim: true },
+    { para: '/fornecedor/documentos', etiqueta: t('layout.documentos'), icone: FileText },
+    { para: '/fornecedor/zonas', etiqueta: t('layout.zonas'), icone: MapPin },
+    { para: '/fornecedor/perfil', etiqueta: t('layout.perfil'), icone: UserCircle2 },
   ];
 
   return (
@@ -105,12 +107,12 @@ export function PortalLayout() {
                   função. «Portal do Fornecedor» sozinho, sem organização a identificá-lo,
                   não diz a que empresa a sessão pertence. */}
               <p className="text-sm font-semibold leading-tight text-slate-900">
-                {fornecedor.organizacaoNome ?? 'Portal do Fornecedor'}
+                {fornecedor.organizacaoNome ?? t('comum.portal_fornecedor')}
               </p>
               <Link
                 to="/fornecedor/perfil"
                 className="text-xs leading-tight text-slate-500 hover:text-blue-600 hover:underline"
-                title="Ver e editar os dados da empresa e do responsável"
+                title={t('layout.ver_editar_dados')}
               >
                 {fornecedor.nome}
               </Link>
@@ -124,7 +126,7 @@ export function PortalLayout() {
               className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               <LogOut size={13} />
-              Sair
+              {t('layout.sair')}
             </button>
           </div>
         </div>
@@ -179,6 +181,7 @@ function PainelConformidade({
 }: {
   conformidade: NonNullable<ReturnType<typeof usePortalStore.getState>['conformidade']>;
 }) {
+  const { t } = useTranslation('portal');
   const bloqueantes = conformidade.faltas.filter((f) => f.bloqueante);
   const recomendaveis = conformidade.faltas.filter((f) => !f.bloqueante);
 
@@ -187,7 +190,7 @@ function PainelConformidade({
       <div className="mb-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
         <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
         <p className="text-sm text-emerald-900">
-          Documentação completa. A sua vitrine entra em todas as comparações.
+          {t('layout.documentacao_completa')}
         </p>
       </div>
     );
@@ -217,8 +220,8 @@ function PainelConformidade({
             )}
           >
             {bloqueantes.length > 0
-              ? 'A sua vitrine ainda não entra nas comparações'
-              : 'Habilitado a receber ordens de compra'}
+              ? t('layout.fora_comparacoes')
+              : t('layout.habilitado')}
           </p>
 
           {bloqueantes.length > 0 && (
@@ -234,9 +237,9 @@ function PainelConformidade({
 
           {recomendaveis.length > 0 && (
             <p className="mt-1.5 text-xs leading-snug text-slate-500">
-              {bloqueantes.length > 0 ? 'Também em falta, ' : 'Em falta, '}
-              sem impedir a compra — melhoram a sua pontuação:{' '}
-              {recomendaveis.map((f) => f.mensagem.replace(/ não foi entregue\.$/, '')).join(', ')}.
+              {t(bloqueantes.length > 0 ? 'layout.tambem_em_falta' : 'layout.em_falta', {
+                lista: recomendaveis.map((f) => f.mensagem.replace(/ não foi entregue\.$/, '')).join(', '),
+              })}
             </p>
           )}
         </div>

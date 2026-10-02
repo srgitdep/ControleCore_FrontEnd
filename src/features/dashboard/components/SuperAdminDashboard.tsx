@@ -1,13 +1,16 @@
 import { useSuperAdminDashboard } from '@/features/dashboard';
 import { Building2, Users, Store, ShieldCheck } from 'lucide-react';
 import { Card, CardCarousel, KpiCard } from '@/shared/ui';
+import { useTranslation } from 'react-i18next';
+import { formatInteiro } from '@/shared/utils';
 
 export function SuperAdminDashboard() {
+  const { t } = useTranslation('painel');
   const { data, isLoading } = useSuperAdminDashboard();
 
   if (isLoading) {
     return (
-      <CardCarousel label="Indicadores" colunas={4}>
+      <CardCarousel label={t('gestao.indicadores')} colunas={4}>
         {[0, 1, 2, 3].map((i) => (
           <KpiCard key={i} title="" value="" isLoading />
         ))}
@@ -21,49 +24,49 @@ export function SuperAdminDashboard() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-          Visão geral do sistema
+          {t('plataforma.titulo')}
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Estatísticas globais de todas as instâncias activas.
+          {t('plataforma.subtitulo')}
         </p>
       </div>
 
-      <CardCarousel label="Indicadores do sistema" colunas={4}>
+      <CardCarousel label={t('plataforma.indicadores')} colunas={4}>
         <KpiCard
-          title="Total de empresas"
-          value={data.kpis.totalEmpresas.toLocaleString('pt-MZ')}
+          title={t('plataforma.empresas')}
+          value={formatInteiro(data.kpis.totalEmpresas)}
           icon={Building2}
           accent="primary"
-          description="Contas activas"
+          description={t('plataforma.empresas_desc')}
         />
         <KpiCard
-          title="Total de utilizadores"
-          value={data.kpis.totalUtilizadores.toLocaleString('pt-MZ')}
+          title={t('plataforma.utilizadores')}
+          value={formatInteiro(data.kpis.totalUtilizadores)}
           icon={Users}
-          description="Membros registados"
+          description={t('plataforma.utilizadores_desc')}
         />
         <KpiCard
-          title="Lojas registadas"
-          value={data.kpis.totalLojas.toLocaleString('pt-MZ')}
+          title={t('plataforma.lojas')}
+          value={formatInteiro(data.kpis.totalLojas)}
           icon={Store}
-          description="Pontos de venda"
+          description={t('plataforma.lojas_desc')}
         />
         <KpiCard
-          title="Subscrições activas"
-          value={data.kpis.subscricoesAtivas.toLocaleString('pt-MZ')}
+          title={t('plataforma.subscricoes')}
+          value={formatInteiro(data.kpis.subscricoesAtivas)}
           icon={ShieldCheck}
           accent="success"
-          description="Planos regulares"
+          description={t('plataforma.subscricoes_desc')}
         />
       </CardCarousel>
 
       <Card padding="lg">
         <h3 className="text-[15px] font-semibold text-slate-900">
-          Actividade recente do sistema
+          {t('plataforma.actividade')}
         </h3>
         <div className="mt-4 flex h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
           <p className="px-4 text-center text-sm text-slate-400">
-            Os registos detalhados do sistema irão aparecer aqui
+            {t('plataforma.actividade_vazio')}
           </p>
         </div>
       </Card>

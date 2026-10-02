@@ -1,18 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, Search, Shield, UserCheck, UserX, Eye } from 'lucide-react';
 import { getEmployees } from '../api/hr.api';
 import type { Employee, EmployeeRole } from '../types';
 import { EmployeeProfileDrawer } from '../components/EmployeeProfileDrawer';
 import { TableScroll } from '@/shared/ui';
-
-const ROLE_LABEL: Record<EmployeeRole, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Administrador',
-  MANAGER: 'Gestor',
-  CASHIER: 'Operador de Caixa',
-  STOCK_KEEPER: 'Armazenista',
-  USER: 'Funcionário',
-};
 
 const ROLE_COLOR: Record<EmployeeRole, string> = {
   SUPER_ADMIN: 'bg-purple-100 text-purple-700',
@@ -36,6 +28,7 @@ function SkeletonRow() {
 }
 
 export function EmployeeListPage() {
+  const { t } = useTranslation('rh');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +38,9 @@ export function EmployeeListPage() {
   useEffect(() => {
     getEmployees()
       .then(setEmployees)
-      .catch(() => setError('Erro ao carregar a lista de funcionários.'))
+      .catch(() => setError(t('lista.erro_carregar')))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [t]);
 
   const filtered = employees.filter(
     (e) =>
@@ -67,9 +60,9 @@ export function EmployeeListPage() {
             <Users className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Funcionários</h2>
+            <h2 className="text-xl font-semibold text-slate-900">{t('lista.titulo')}</h2>
             <p className="text-sm text-slate-500">
-              {isLoading ? 'A carregar...' : `${employees.length} colaboradores activos`}
+              {isLoading ? t('acoes.a_carregar') : t('lista.n_colaboradores', { count: employees.length })}
             </p>
           </div>
         </div>
@@ -77,7 +70,7 @@ export function EmployeeListPage() {
         {/* Aviso de dados sensíveis ocultos */}
         <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
           <Shield className="w-3.5 h-3.5 text-slate-400" />
-          Dados sensíveis (salário, BI, NUIT) ocultos por padrão
+          {t('lista.dados_sensiveis')}
         </div>
       </div>
 
@@ -86,7 +79,7 @@ export function EmployeeListPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Pesquisar por nome ou email..."
+          placeholder={t('lista.pesquisar')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
@@ -111,7 +104,7 @@ export function EmployeeListPage() {
           ))
         ) : filtered.length === 0 ? (
           <p className="rounded-xl border border-slate-200 bg-white px-4 py-12 text-center text-sm text-slate-400">
-            {search ? `Nenhum funcionário encontrado para "${search}"` : 'Sem funcionários registados.'}
+            {search ? t('lista.nenhum_para', { termo: search }) : t('lista.sem_funcionarios')}
           </p>
         ) : (
           filtered.map((emp) => (
@@ -135,7 +128,7 @@ export function EmployeeListPage() {
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_COLOR[emp.cargo]}`}
                   >
-                    {ROLE_LABEL[emp.cargo]}
+                    {t(`cargo.${emp.cargo}`)}
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-medium ${
@@ -143,7 +136,7 @@ export function EmployeeListPage() {
                     }`}
                   >
                     {emp.isActive ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
-                    {emp.isActive ? 'Activo' : 'Inactivo'}
+                    {emp.isActive ? t('lista.activo') : t('lista.inactivo')}
                   </span>
                 </div>
               </div>
@@ -161,19 +154,19 @@ export function EmployeeListPage() {
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50">
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Nome
+                {t('lista.col_nome')}
               </th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Email
+                {t('lista.col_email')}
               </th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Cargo
+                {t('lista.col_cargo')}
               </th>
               <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Estado
+                {t('lista.col_estado')}
               </th>
               <th className="px-6 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Ações
+                {t('lista.col_acoes')}
               </th>
             </tr>
           </thead>
@@ -186,8 +179,8 @@ export function EmployeeListPage() {
                     lista vazia não ficava centrada na largura da tabela. */}
                 <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-sm">
                   {search
-                    ? `Nenhum funcionário encontrado para "${search}"`
-                    : 'Sem funcionários registados.'}
+                    ? t('lista.nenhum_para', { termo: search })
+                    : t('lista.sem_funcionarios')}
                 </td>
               </tr>
             ) : (
@@ -209,7 +202,7 @@ export function EmployeeListPage() {
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_COLOR[emp.cargo]}`}
                     >
-                      {ROLE_LABEL[emp.cargo]}
+                      {t(`cargo.${emp.cargo}`)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -223,14 +216,14 @@ export function EmployeeListPage() {
                       ) : (
                         <UserX className="w-3.5 h-3.5" />
                       )}
-                      {emp.isActive ? 'Activo' : 'Inactivo'}
+                      {emp.isActive ? t('lista.activo') : t('lista.inactivo')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setSelectedEmployeeId(emp.id)}
                       className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                      title="Ver Visão 360º"
+                      title={t('lista.ver_360')}
                     >
                       <Eye className="w-4 h-4" />
                     </button>

@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { X, CheckCircle, Truck, PackageCheck, Loader2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { purchasesApi } from '../api/purchases.api';
 import type { PurchaseOrder, PurchaseOrderItem } from '../api/purchases.api';
 import { useArmazens } from '@/features/lojas';
-import { cn } from '@/shared/utils';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 // ── Lote e validade de uma linha ─────────────────────────────────────────────
 
@@ -35,6 +33,7 @@ interface CamposDeLoteProps {
  * tanto aqui como no servidor.
  */
 function CamposDeLote({ item, valor, onChange }: CamposDeLoteProps) {
+  const { t } = useTranslation('compras');
   const exigeValidade = item.produto?.temValidade === true;
   const exigeLote = item.produto?.rastreavelPorLote === true;
 
@@ -52,8 +51,10 @@ function CamposDeLote({ item, valor, onChange }: CamposDeLoteProps) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-600">
-            Validade
-            {exigeValidade && <span className="ml-1 text-rose-600">obrigatória</span>}
+            {t('receb.validade')}
+            {exigeValidade && (
+              <span className="ml-1 text-rose-600">{t('receb.obrigatoria')}</span>
+            )}
           </span>
           <input
             type="date"
@@ -68,16 +69,18 @@ function CamposDeLote({ item, valor, onChange }: CamposDeLoteProps) {
 
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-600">
-            Lote
+            {t('receb.lote')}
             {exigeLote ? (
-              <span className="ml-1 text-rose-600">obrigatório</span>
+              <span className="ml-1 text-rose-600">{t('receb.obrigatorio')}</span>
             ) : (
-              <span className="ml-1 font-normal text-slate-400">opcional</span>
+              <span className="ml-1 font-normal text-slate-400">{t('receb.opcional')}</span>
             )}
           </span>
           <input
             type="text"
-            placeholder={valor.dataValidade ? 'deriva da validade se vazio' : 'ex: L-2026-114'}
+            placeholder={
+              valor.dataValidade ? t('receb.lote_deriva') : t('receb.lote_exemplo')
+            }
             value={valor.lote ?? ''}
             onChange={(e) => onChange({ lote: e.target.value })}
             className={cn(
@@ -90,16 +93,14 @@ function CamposDeLote({ item, valor, onChange }: CamposDeLoteProps) {
 
       {faltaValidade && (
         <p className="mt-2 text-xs text-rose-600">
-          Este produto é controlado por validade. Sem a data não há alerta possível antes da
-          perda.
+          {t('receb.aviso_validade')}
         </p>
       )}
 
       {jaExpirada && (
         <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-          A data indicada já passou. Se a mercadoria chegou fora de prazo, é legítimo — se não,
-          verifique o ano.
+          {t('receb.aviso_expirada')}
         </p>
       )}
     </div>
@@ -129,6 +130,7 @@ interface RecebimentoModalProps {
  *    `itens: []`. Passa a buscar o pedido completo com `getOrderById`.
  */
 export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModalProps) {
+  const { t } = useTranslation('compras');
   const [loading, setLoading] = useState(false);
   const [armazemId, setArmazemId] = useState('');
   const [documentoRef, setDocumentoRef] = useState('');
@@ -160,7 +162,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
         if (activo) setItens(completo.itens ?? []);
       })
       .catch(() => {
-        if (activo) toast.error('Não foi possível carregar as linhas do pedido.');
+        if (activo) toast.error(t('receb.erro_linhas'));
       })
       .finally(() => {
         if (activo) setIsLoadingItens(false);
@@ -169,7 +171,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
     return () => {
       activo = false;
     };
-  }, [order.id, order.itens]);
+  }, [order.id, order.itens, t]);
 
   // Por omissão recebe-se o que falta — o caso mais comum — mas cada linha é editável.
   const emFalta = (item: PurchaseOrderItem) => item.quantidadePedida - item.quantidadeRecebida;
@@ -200,29 +202,33 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
   );
 
   const confirmar = async () => {
-    if (!armazemId) return toast.error('Escolha o armazém de destino.');
+    if (!armazemId) return toast.error(t('receb.erro_armazem'));
 
     const aReceber = porReceber
       .map((i) => ({ item: i, quantidade: quantidadeDe(i) }))
       .filter(({ quantidade }) => quantidade > 0);
 
     if (aReceber.length === 0) {
-      return toast.error('Indique a quantidade recebida de pelo menos um produto.');
+      return toast.error(t('receb.erro_quantidade'));
     }
 
     if (linhasSemValidade.length > 0) {
       return toast.error(
-        `Falta a data de validade de: ${linhasSemValidade
-          .map((i) => i.produto?.nome ?? 'produto')
-          .join(', ')}. Sem ela não há alerta possível antes da perda.`,
+        t('receb.erro_sem_validade', {
+          produtos: linhasSemValidade
+            .map((i) => i.produto?.nome ?? t('receb.produto_generico'))
+            .join(', '),
+        }),
       );
     }
 
     if (linhasSemLote.length > 0) {
       return toast.error(
-        `Falta o código do lote de: ${linhasSemLote
-          .map((i) => i.produto?.nome ?? 'produto')
-          .join(', ')}.`,
+        t('receb.erro_sem_lote', {
+          produtos: linhasSemLote
+            .map((i) => i.produto?.nome ?? t('receb.produto_generico'))
+            .join(', '),
+        }),
       );
     }
 
@@ -246,14 +252,14 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
         }),
       });
 
-      toast.success('Mercadoria recebida. O stock, o custo médio e as contas a pagar foram actualizados.', {
+      toast.success(t('receb.toast_recebida'), {
         duration: 4000,
       });
 
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao confirmar a recepção.');
+      toast.error(mensagemDeErro(error, t('receb.erro_confirmar')));
     } finally {
       setLoading(false);
     }
@@ -269,16 +275,19 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               <Truck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Receber mercadoria</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t('receb.titulo')}</h2>
               <p className="text-sm text-slate-500">
-                Pedido #{order.id.slice(0, 8)} · {order.fornecedor?.nome ?? 'fornecedor n/d'}
+                {t('receb.pedido_fornecedor', {
+                  id: order.id.slice(0, 8),
+                  fornecedor: order.fornecedor?.nome ?? t('receb.fornecedor_nd'),
+                })}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label={t('receb.fechar')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -289,7 +298,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Armazém de destino <span className="text-rose-500">*</span>
+                {t('receb.armazem_destino')} <span className="text-rose-500">*</span>
               </label>
               <select
                 value={armazemId}
@@ -298,7 +307,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
               >
                 <option value="">
-                  {isLoadingArmazens ? 'A carregar armazéns...' : 'Escolher armazém...'}
+                  {isLoadingArmazens ? t('receb.a_carregar_armazens') : t('receb.escolher_armazem')}
                 </option>
                 {armazens.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -308,43 +317,43 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               </select>
               {!isLoadingArmazens && armazens.length === 0 && (
                 <p className="mt-1 text-xs text-amber-600">
-                  Não há armazéns activos. Crie um antes de receber mercadoria.
+                  {t('receb.sem_armazens')}
                 </p>
               )}
             </div>
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Documento de referência
+                {t('receb.documento_ref')}
               </label>
               <input
                 type="text"
                 value={documentoRef}
                 onChange={(e) => setDocumentoRef(e.target.value)}
-                placeholder="Ex: FT-2026/001"
+                placeholder={t('receb.documento_exemplo')}
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
               />
               <p className="mt-1 text-xs text-slate-400">
-                Factura ou guia de remessa. Ajuda a reconciliar depois.
+                {t('receb.documento_ajuda')}
               </p>
             </div>
           </div>
 
           <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-sm font-semibold text-slate-900">Linhas a receber</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{t('receb.linhas_a_receber')}</h3>
             <span className="text-xs text-slate-500">
-              Ajuste as quantidades para uma recepção parcial
+              {t('receb.ajuste_parcial')}
             </span>
           </div>
 
           {isLoadingItens ? (
             <div className="flex items-center justify-center gap-2 py-10 text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              A carregar as linhas do pedido...
+              {t('receb.a_carregar_linhas')}
             </div>
           ) : porReceber.length === 0 ? (
             <p className="rounded-lg bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-              Todas as linhas deste pedido já foram recebidas.
+              {t('receb.todas_recebidas')}
             </p>
           ) : (
             <>
@@ -368,18 +377,24 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                     )}
                   >
                     <p className="font-medium text-slate-900">
-                      {item.produto?.nome ?? 'Produto desconhecido'}
+                      {item.produto?.nome ?? t('receb.produto_desconhecido')}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      Falta {falta} · {moeda(item.custoUnitario)} cada
+                      {t('receb.falta_cada', {
+                        falta,
+                        custo: formatMoeda(item.custoUnitario),
+                      })}
                       {item.quantidadeRecebida > 0 &&
-                        ` · já recebido ${item.quantidadeRecebida} de ${item.quantidadePedida}`}
+                        ` · ${t('receb.ja_recebido_linha', {
+                          recebido: item.quantidadeRecebida,
+                          pedido: item.quantidadePedida,
+                        })}`}
                     </p>
 
                     <div className="mt-3 flex items-end gap-3">
                       <label className="flex-1">
                         <span className="mb-1 block text-xs font-medium text-slate-600">
-                          A receber
+                          {t('receb.a_receber')}
                         </span>
                         <input
                           type="number"
@@ -397,9 +412,9 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                         />
                       </label>
                       <div className="pb-2 text-right">
-                        <span className="block text-xs text-slate-400">Subtotal</span>
+                        <span className="block text-xs text-slate-400">{t('receb.subtotal')}</span>
                         <span className="font-semibold text-slate-900">
-                          {moeda(quantidade * item.custoUnitario)}
+                          {formatMoeda(quantidade * item.custoUnitario)}
                         </span>
                       </div>
                     </div>
@@ -424,13 +439,13 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-4 py-2.5 font-medium">Produto</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Falta</th>
-                    <th className="w-28 px-3 py-2.5 font-medium">A receber</th>
+                    <th className="px-4 py-2.5 font-medium">{t('receb.col_produto')}</th>
+                    <th className="px-3 py-2.5 text-right font-medium">{t('receb.col_falta')}</th>
+                    <th className="w-28 px-3 py-2.5 font-medium">{t('receb.a_receber')}</th>
                     <th className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">
-                      Custo unit.
+                      {t('receb.col_custo_unit')}
                     </th>
-                    <th className="px-4 py-2.5 text-right font-medium">Subtotal</th>
+                    <th className="px-4 py-2.5 text-right font-medium">{t('receb.subtotal')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -442,10 +457,13 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/60">
                         <td className="px-4 py-3 font-medium text-slate-900">
-                          {item.produto?.nome ?? 'Produto desconhecido'}
+                          {item.produto?.nome ?? t('receb.produto_desconhecido')}
                           {item.quantidadeRecebida > 0 && (
                             <p className="text-xs text-slate-400">
-                              Já recebido: {item.quantidadeRecebida} de {item.quantidadePedida}
+                              {t('receb.ja_recebido', {
+                                recebido: item.quantidadeRecebida,
+                                pedido: item.quantidadePedida,
+                              })}
                             </p>
                           )}
                         </td>
@@ -470,10 +488,10 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                           />
                         </td>
                         <td className="hidden px-3 py-3 text-right text-slate-600 sm:table-cell">
-                          {moeda(item.custoUnitario)}
+                          {formatMoeda(item.custoUnitario)}
                         </td>
                         <td className="px-4 py-3 text-right font-medium text-slate-900">
-                          {moeda(quantidade * item.custoUnitario)}
+                          {formatMoeda(quantidade * item.custoUnitario)}
                         </td>
                       </tr>
                     );
@@ -495,7 +513,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
                     className="rounded-xl border border-slate-200 bg-white px-4 py-3"
                   >
                     <p className="text-sm font-medium text-slate-800">
-                      {item.produto?.nome ?? 'Produto desconhecido'}
+                      {item.produto?.nome ?? t('receb.produto_desconhecido')}
                     </p>
                     <CamposDeLote
                       item={item}
@@ -516,17 +534,16 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
           {linhaInvalida && (
             <p className="mt-3 flex items-start gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">
               <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-              Não é possível receber mais do que o que falta em «
-              {linhaInvalida.produto?.nome ?? 'uma das linhas'}». Para receber mais, corrija o
-              pedido de compra.
+              {t('receb.excede', {
+                produto: linhaInvalida.produto?.nome ?? t('receb.uma_das_linhas'),
+              })}
             </p>
           )}
 
           <div className="mt-4 flex items-start gap-2 rounded-lg bg-blue-50 p-4 text-sm text-blue-800">
             <PackageCheck className="mt-0.5 h-5 w-5 flex-shrink-0" />
             <p>
-              Ao confirmar, o stock do armazém escolhido é aumentado, o custo médio ponderado é
-              recalculado e é criada uma conta a pagar a este fornecedor no módulo financeiro.
+              {t('receb.aviso_confirmar')}
             </p>
           </div>
         </div>
@@ -534,7 +551,8 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
         {/* ── Rodapé ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 p-4">
           <p className="text-sm text-slate-600">
-            Total a receber: <strong className="text-slate-900">{moeda(total)}</strong>
+            {t('receb.total_a_receber')}{' '}
+            <strong className="text-slate-900">{formatMoeda(total)}</strong>
           </p>
           <div className="flex gap-2">
             <button
@@ -542,7 +560,7 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               disabled={loading}
               className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Cancelar
+              {t('receb.cancelar')}
             </button>
             <button
               onClick={confirmar}
@@ -552,12 +570,12 @@ export function RecebimentoModal({ order, onClose, onSuccess }: RecebimentoModal
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  A processar...
+                  {t('receb.a_processar')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Confirmar recepção
+                  {t('receb.confirmar')}
                 </>
               )}
             </button>

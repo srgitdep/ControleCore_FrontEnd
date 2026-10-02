@@ -1,0 +1,156 @@
+{
+  "menu": {
+    "grupo": {
+      "gestao": "Management",
+      "operacao": "Operations",
+      "empresa": "Company"
+    },
+    "item": {
+      "dashboard": "Dashboard",
+      "empresas": "Companies",
+      "adesoes": "Access requests",
+      "modulos": "Modules",
+      "utilizadores": "Users",
+      "permissoes": "Permissions",
+      "vendas": "Point of Sale",
+      "crm": "CRM",
+      "financeiro": "Finance",
+      "stock": "Products & Stock",
+      "armazens": "Warehouses",
+      "transferencias": "Transfers",
+      "pedidos_commerce": "Compra Fácil Orders",
+      "necessidades": "Needs",
+      "requisicoes": "Requisitions",
+      "compras": "Purchases",
+      "conferencia": "Reconciliation",
+      "lojas": "Stores & Tills",
+      "rh": "Human Resources",
+      "historico": "System History"
+    },
+    "fechar": "Close menu",
+    "expandir": "Expand sidebar",
+    "colapsar": "Collapse sidebar",
+    "assistente_mayra": "Mayra Assistant",
+    "perfil": "Profile",
+    "terminar_sessao": "Sign out",
+    "a_terminar": "Signing out...",
+    "sessao_encerrada": "Signed out.",
+    "erro_terminar": "Could not sign out."
+  },
+  "cabecalho": {
+    "titulo": {
+      "dashboard": "Dashboard",
+      "stock": "Products & Stock",
+      "armazens": "Warehouses",
+      "compras": "Purchases",
+      "requisicoes": "Purchase Requisitions",
+      "conferencia": "Reconciliation",
+      "vendas": "Point of Sale",
+      "lojas": "Stores & Tills",
+      "crm": "CRM",
+      "financeiro": "Finance",
+      "rh": "Human Resources",
+      "empresas": "Companies",
+      "utilizadores": "Users",
+      "permissoes": "Permissions",
+      "historico": "System History"
+    },
+    "abrir_menu": "Open navigation menu",
+    "alertas": "Alerts",
+    "sem_alertas": "No active alerts.",
+    "ver_todos": "View all",
+    "tipo": {
+      "RISCO_RUPTURA": "Stock-out risk",
+      "OC_ATRASADA": "Overdue PO",
+      "RECEPCAO_PENDENTE": "Goods receipt pending"
+    },
+    "ha_dias_zero": "{{count}} days ago",
+    "ha_dias_one": "{{count}} day ago",
+    "ha_dias_other": "{{count}} days ago"
+  },
+  "rota": {
+    "a_carregar": "Loading...",
+    "sem_permissao_pagina": "You do not have permission to access this page.",
+    "sem_permissao_accao": "You do not have permission for this action."
+  },
+  "dialogo": {
+    "confirmar": "Confirm",
+    "cancelar": "Cancel",
+    "a_processar": "Processing..."
+  },
+  "tabela": {
+    "sem_registos": "No records found.",
+    "a_carregar": "Loading data..."
+  },
+  "carrossel": {
+    "ir_para": "Go to card {{n}} of {{total}}"
+  },
+  "foto": {
+    "titulo": "Fill in from photos",
+    "legenda_padrao": "Photograph the front and the back — the barcode is usually on the back. Prices are not read from the image.",
+    "maximo": "Maximum of {{max}} photos.",
+    "nao_imagem": "\"{{nome}}\" is not an image.",
+    "excede": "\"{{nome}}\" exceeds 5 MB.",
+    "sem_resultado": "Could not read any data from these photos. Try with more light, or move closer to the label.",
+    "campos_preenchidos_zero": "{{count}} fields filled in.",
+    "campos_preenchidos_one": "{{count}} field filled in.",
+    "campos_preenchidos_other": "{{count}} fields filled in.",
+    "falha_analise": "Failed to analyse the photos. Check your connection.",
+    "alt": "Photo {{n}}",
+    "remover": "Remove photo {{n}}",
+    "tirar": "Take a photo",
+    "outra": "Another photo",
+    "galeria": "Choose from gallery",
+    "a_ler_one": "Reading the photo...",
+    "a_ler_other": "Reading the {{count}} photos...",
+    "ler_dados": "Read data",
+    "nao_aproveitado": "Not used",
+    "escrever_a_mao": "Type these fields in by hand, or try a sharper photo."
+  },
+  "leitor": {
+    "sem_acesso": "This device or browser does not give access to the camera.",
+    "autorizar": "Allow camera access in the browser permissions.",
+    "nao_abriu": "Could not open the camera.",
+    "previa_falhou": "The browser would not start the camera preview. Type the code by hand.",
+    "nao_iniciou": "Could not start the scanner in this browser. Type the code by hand."
+  },
+  "permissoes": {
+    "erro_perfis": "Error loading the profiles.",
+    "erro_permissoes": "Error loading this profile's permissions.",
+    "sucesso": "Permissions updated successfully!",
+    "erro_guardar": "Error updating permissions.",
+    "perfil_acesso": "Access profile",
+    "a_carregar": "Loading...",
+    "perfis_titulo": "Access Profiles",
+    "perfis_ajuda": "Select the profile to configure its permissions.",
+    "matriz_titulo": "Permissions Matrix",
+    "matriz_ajuda": "Tick what this profile can see and do.",
+    "a_guardar": "Saving...",
+    "guardar": "Save Changes",
+    "a_carregar_servidor": "Loading permissions from the server...",
+    "coluna_recurso": "Module / Resource",
+    "escolha_perfil": "Select a profile on the left to configure it.",
+    "recurso": {
+      "dashboard": "Dashboard",
+      "empresa": "Company / Settings",
+      "users": "Users",
+      "lojas": "Stores",
+      "armazens": "Warehouses",
+      "caixas": "Tills / POS",
+      "stock": "Stock",
+      "catalogo": "Catalogue",
+      "compras": "Purchases",
+      "necessidades": "Purchase Needs",
+      "rh": "Human Resources",
+      "vendas": "Sales",
+      "clientes": "Customers / CRM",
+      "pedidos_commerce": "Compra Fácil Orders"
+    },
+    "accao": {
+      "read": "View",
+      "write": "Create / Edit",
+      "delete": "Remove",
+      "manage": "Manage All"
+    }
+  }
+}

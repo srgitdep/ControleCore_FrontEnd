@@ -1,0 +1,59 @@
+{
+  "cabecalho": {
+    "titulo": "Mercado de Fornecedores",
+    "sou_fornecedor": "Sou fornecedor",
+    "entrar": "Entrar"
+  },
+  "lista": {
+    "titulo": "Quem fornece o quê, e onde entrega",
+    "subtitulo": "Fornecedores com catálogo publicado na plataforma. Os preços são os de tabela que cada um publicou.",
+    "placeholder_busca": "Arroz, óleo, detergente, bebidas…",
+    "todas_provincias": "Todas as províncias",
+    "vazio_filtrado": "Nenhum fornecedor com esses critérios.",
+    "vazio_geral": "Ainda não há fornecedores com catálogo publicado.",
+    "vazio_dica_filtrado": "Tente um termo mais geral, ou remova o filtro de província.",
+    "vazio_dica_geral": "O mercado cresce com quem publica. Se fornece a supermercados, registe-se — não paga nada.",
+    "registar_empresa": "Registar a minha empresa",
+    "fornecedores_one": "{{count}} fornecedor",
+    "fornecedores_other": "{{count}} fornecedores",
+    "fornecedores_em_one": "{{count}} fornecedor a entregar em {{provincia}}",
+    "fornecedores_em_other": "{{count}} fornecedores a entregar em {{provincia}}",
+    "artigos_zero": "{{count}} artigos",
+    "artigos_one": "{{count}} artigo",
+    "artigos_other": "{{count}} artigos",
+    "mais_provincias": "+{{count}}",
+    "ver_ficha": "Ver ficha",
+    "sob_consulta": "sob consulta",
+    "rodape_titulo": "Fornece a supermercados?",
+    "rodape_texto": "Publique o seu catálogo uma vez e fique visível a todos os compradores da plataforma. O registo é gratuito."
+  },
+  "ficha": {
+    "voltar": "Mercado",
+    "nao_encontrado": "Fornecedor não encontrado.",
+    "voltar_ao_mercado": "Voltar ao mercado",
+    "artigos_publicados_zero": "artigos publicados",
+    "artigos_publicados_one": "artigo publicado",
+    "artigos_publicados_other": "artigos publicados",
+    "provincias_servidas_zero": "províncias servidas",
+    "provincias_servidas_one": "província servida",
+    "provincias_servidas_other": "províncias servidas",
+    "compradores_activos": "compradores activos",
+    "compradores_nota": "Não divulgado — abaixo de cinco compradores o número não é publicado, por anonimato.",
+    "documentacao_titulo": "Documentação verificada",
+    "documentacao_texto": "Verificada pela plataforma e dentro da validade nesta data.",
+    "o_que_fornece": "O que fornece",
+    "onde_entrega": "Onde entrega",
+    "cta_titulo": "Quer comprar a este fornecedor?",
+    "cta_texto": "No ControlCore, cria uma requisição com o que precisa e o sistema compara este fornecedor com todos os outros — preço por unidade, prazo, fiabilidade e custo de entrega — e diz-lhe qual sai melhor, e porquê.",
+    "entrar": "Entrar no ControlCore"
+  },
+  "documento": {
+    "ALVARA": "Alvará",
+    "CERTIDAO_QUITACAO_FISCAL": "Quitação fiscal",
+    "INSCRICAO_INSS": "INSS",
+    "LICENCA_SANITARIA": "Licença sanitária",
+    "SEGURO_RESPONSABILIDADE": "Seguro de responsabilidade",
+    "CERTIFICADO_QUALIDADE": "Certificado de qualidade",
+    "OUTRO": "Outro documento"
+  }
+}

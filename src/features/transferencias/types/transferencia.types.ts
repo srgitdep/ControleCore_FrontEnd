@@ -8,14 +8,6 @@
 
 export type EstadoTransferencia = 'SOLICITADA' | 'APROVADA' | 'EXPEDIDA' | 'RECEBIDA' | 'CANCELADA';
 
-export const ESTADO_TRANSFERENCIA_LABEL: Record<EstadoTransferencia, string> = {
-  SOLICITADA: 'Solicitada',
-  APROVADA: 'Aprovada',
-  EXPEDIDA: 'Expedida',
-  RECEBIDA: 'Recebida',
-  CANCELADA: 'Cancelada',
-};
-
 export interface LinhaTransferencia {
   id: string;
   estado: EstadoTransferencia;

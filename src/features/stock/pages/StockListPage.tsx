@@ -31,9 +31,12 @@ import {
   Tag,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useStockList, useAllMovements } from '@/features/stock';
 import { useSocket, useBreakpoint } from '@/shared/hooks';
 import { ResponsiveTable, Button, Tabs, type TabDefinition } from '@/shared/ui';
+import { formatDataHora } from '@/shared/utils';
 import { MovementModals } from '../components/MovementModals';
 import { InventoryTab } from '../components/InventoryTab';
 import { SaudeStockTab } from '../components/SaudeStockTab';
@@ -52,15 +55,16 @@ type StockTab = 'produtos' | 'categorias' | 'estoque' | 'reservas' | 'saude' | '
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
 // existem depois de haver produtos.
-const TABS: TabDefinition<StockTab>[] = [
-  { id: 'produtos', label: 'Produtos', icon: Boxes },
-  { id: 'categorias', label: 'Categorias', icon: Tag },
-  { id: 'estoque', label: 'Stock', icon: Package },
-  { id: 'reservas', label: 'Reservas', icon: Timer },
-  { id: 'saude', label: 'Saúde do stock', icon: HeartPulse },
-  { id: 'validade', label: 'Validades', icon: CalendarClock },
-  { id: 'movimentos', label: 'Movimentos', icon: BarChart3 },
-  { id: 'inventario', label: 'Balanço / Inventário', icon: ClipboardList },
+// Função e não constante: os rótulos dependem da língua activa.
+const criarTabs = (t: TFunction<'stock'>): TabDefinition<StockTab>[] => [
+  { id: 'produtos', label: t('lista.tab_produtos'), icon: Boxes },
+  { id: 'categorias', label: t('lista.tab_categorias'), icon: Tag },
+  { id: 'estoque', label: t('lista.tab_estoque'), icon: Package },
+  { id: 'reservas', label: t('lista.tab_reservas'), icon: Timer },
+  { id: 'saude', label: t('lista.tab_saude'), icon: HeartPulse },
+  { id: 'validade', label: t('lista.tab_validade'), icon: CalendarClock },
+  { id: 'movimentos', label: t('lista.tab_movimentos'), icon: BarChart3 },
+  { id: 'inventario', label: t('lista.tab_inventario'), icon: ClipboardList },
 ];
 
 // ──â”€ Column helper tipado ──────────────────────────────────────────────────────
@@ -87,6 +91,7 @@ interface ModalState {
 
 // ──â”€ Aba: Estoque Atual ──────────────────────────────────────────────────────â”€
 function StockCurrentTab() {
+  const { t } = useTranslation('stock');
   const [page, setPage] = useState(1);
 
   /**
@@ -201,7 +206,7 @@ function StockCurrentTab() {
     () => [
       stockColumnHelper.accessor('product', {
         id: 'produto',
-        header: 'Produto',
+        header: t('lista.produto'),
         cell: ({ row }) => {
           const stock = row.original;
           return (
@@ -219,10 +224,10 @@ function StockCurrentTab() {
               )}
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900">
-                  {stock.product?.nome ?? 'Produto Desconhecido'}
+                  {stock.product?.nome ?? t('lista.produto_desconhecido')}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Cód: {stock.product?.codigoBarras ?? 'N/A'}
+                  {t('lista.codigo', { codigo: stock.product?.codigoBarras ?? t('lista.sem_codigo') })}
                 </p>
               </div>
             </div>
@@ -235,7 +240,7 @@ function StockCurrentTab() {
       // (`include: { armazem: true }`) e era descartado.
       stockColumnHelper.display({
         id: 'armazem',
-        header: 'Armazém',
+        header: t('lista.armazem'),
         cell: ({ row }) => {
           const armazem = row.original.armazem;
 
@@ -247,7 +252,7 @@ function StockCurrentTab() {
             <div className="min-w-[110px]">
               <p className="text-sm text-slate-700">{armazem.nome}</p>
               {ePontoDeVenda && (
-                <p className="text-xs text-blue-600">ponto de venda</p>
+                <p className="text-xs text-blue-600">{t('lista.ponto_de_venda')}</p>
               )}
             </div>
           );
@@ -259,7 +264,7 @@ function StockCurrentTab() {
         // «Disponível» e não «Balanço Atual»: desde que a verificação de disponibilidade
         // existe no abate, é este o número que decide se uma venda passa. O físico continua
         // visível na linha de baixo quando os dois divergem.
-        header: 'Disponível',
+        header: t('lista.disponivel'),
         cell: ({ row }) => {
           const { currentQuantity, product, abaixoDoMinimo, estados } = row.original;
           // A mesma regra do painel, calculada no servidor. Ver `getRowStatus`.
@@ -276,9 +281,9 @@ function StockCurrentTab() {
 
           const detalhe = estados
             ? [
-                estados.reservado > 0 ? `${estados.reservado} reservadas` : null,
-                estados.quarentena > 0 ? `${estados.quarentena} em quarentena` : null,
-                estados.bloqueado > 0 ? `${estados.bloqueado} bloqueadas` : null,
+                estados.reservado > 0 ? t('lista.reservadas', { n: estados.reservado }) : null,
+                estados.quarentena > 0 ? t('lista.em_quarentena', { n: estados.quarentena }) : null,
+                estados.bloqueado > 0 ? t('lista.bloqueadas', { n: estados.bloqueado }) : null,
               ]
                 .filter(Boolean)
                 .join(' · ')
@@ -290,7 +295,11 @@ function StockCurrentTab() {
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
                   isCritical ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                 }`}
-                title={temComprometido ? `${currentQuantity} ${unidade} em armazém` : undefined}
+                title={
+                  temComprometido
+                    ? t('lista.em_armazem_titulo', { n: currentQuantity, unidade })
+                    : undefined
+                }
               >
                 {temComprometido && estados ? estados.disponivel : currentQuantity}
                 <span className="ml-1 text-xs opacity-75">{unidade}</span>
@@ -298,7 +307,7 @@ function StockCurrentTab() {
 
               {temComprometido && estados && (
                 <span className="text-[11px] leading-tight text-slate-500">
-                  {estados.fisico} em armazém · {detalhe}
+                  {t('lista.fisico_em_armazem', { n: estados.fisico })} · {detalhe}
                 </span>
               )}
 
@@ -306,7 +315,7 @@ function StockCurrentTab() {
                   reserva ou retenção sobreviveu a uma saída de mercadoria. */}
               {estados?.inconsistente && (
                 <span className="text-[11px] font-medium leading-tight text-amber-700">
-                  Comprometido excede o saldo em armazém — verificar
+                  {t('lista.comprometido_excede')}
                 </span>
               )}
             </div>
@@ -316,7 +325,7 @@ function StockCurrentTab() {
 
       stockColumnHelper.accessor('minQuantity', {
         id: 'minimo',
-        header: 'MÍnimo',
+        header: t('lista.minimo'),
         cell: ({ getValue }) => (
           <span className="text-slate-500 text-sm">{getValue()}</span>
         ),
@@ -324,7 +333,7 @@ function StockCurrentTab() {
 
       stockColumnHelper.display({
         id: 'acoes',
-        header: 'Ações',
+        header: t('lista.acoes'),
         cell: ({ row }) => {
           const { id, product, armazem } = row.original;
           return (
@@ -332,7 +341,7 @@ function StockCurrentTab() {
               <Link
                 to={`/stock/${id}`}
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Ver Ledger / Histórico"
+                title={t('lista.ver_ledger')}
               >
                 <FileText className="h-4 w-4" />
               </Link>
@@ -358,7 +367,7 @@ function StockCurrentTab() {
               </Button>
 
               <div className="relative group inline-block">
-                <Button variant="ghost" size="icon" title="Mais opções">
+                <Button variant="ghost" size="icon" title={t('lista.mais_opcoes')}>
                   <ArrowRightLeft className="h-4 w-4" />
                 </Button>
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 shadow-xl rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
@@ -366,20 +375,20 @@ function StockCurrentTab() {
                     onClick={() => openModal(id, 'TRANSFER', product?.id, armazem?.nome)}
                     className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg"
                   >
-                    Transferir para Armazém
+                    {t('lista.transferir_armazem')}
                   </button>
                   <div className="h-px bg-slate-100 my-1" />
                   <button
                     onClick={() => openModal(id, 'ADJUST_PLUS')}
                     className="w-full text-left px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 rounded-lg"
                   >
-                    Ajuste + (Sobra)
+                    {t('lista.ajuste_mais')}
                   </button>
                   <button
                     onClick={() => openModal(id, 'ADJUST_MINUS')}
                     className="w-full text-left px-3 py-2 text-sm text-rose-700 hover:bg-rose-50 rounded-lg"
                   >
-                    Ajuste - (Quebra)
+                    {t('lista.ajuste_menos')}
                   </button>
 
                   {/* Retenções: mexem no que o stock oferece sem mexer no que tem. Ficam
@@ -392,35 +401,35 @@ function StockCurrentTab() {
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-blue-700 hover:bg-blue-50"
                   >
                     <Timer className="h-3.5 w-3.5" />
-                    Reservar
+                    {t('lista.reservar')}
                   </button>
                   <button
                     onClick={() => setLocalizacao(row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <MapPin className="h-3.5 w-3.5" />
-                    Onde está / posições
+                    {t('lista.onde_esta')}
                   </button>
                   <button
                     onClick={() => setFefo(row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <Layers3 className="h-3.5 w-3.5" />
-                    De que lote tirar?
+                    {t('lista.de_que_lote')}
                   </button>
                   <button
                     onClick={() => abrirRetencao(id, 'QUARENTENA', row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
                   >
                     <ShieldQuestion className="h-3.5 w-3.5" />
-                    Reter em quarentena
+                    {t('lista.reter_quarentena')}
                   </button>
                   <button
                     onClick={() => abrirRetencao(id, 'BLOQUEIO', row.original)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <Lock className="h-3.5 w-3.5" />
-                    Bloquear
+                    {t('lista.bloquear')}
                   </button>
 
                   {/* As libertações só aparecem quando há de facto algo retido. Um menu com
@@ -432,7 +441,7 @@ function StockCurrentTab() {
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
                     >
                       <PackageCheck className="h-3.5 w-3.5" />
-                      Libertar da quarentena ({row.original.estados.quarentena})
+                      {t('lista.libertar_quarentena', { n: row.original.estados.quarentena })}
                     </button>
                   )}
 
@@ -442,7 +451,7 @@ function StockCurrentTab() {
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-emerald-700 hover:bg-emerald-50"
                     >
                       <LockOpen className="h-3.5 w-3.5" />
-                      Desbloquear ({row.original.estados.bloqueado})
+                      {t('lista.desbloquear', { n: row.original.estados.bloqueado })}
                     </button>
                   )}
                 </div>
@@ -453,7 +462,7 @@ function StockCurrentTab() {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [t],
   );
 
   // Ver a nota em `ProductsTab`: `window.innerWidth` não reage à rotação do
@@ -500,14 +509,14 @@ function StockCurrentTab() {
       {apenasStockBaixo && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
           <p className="text-sm font-medium text-amber-900">
-            A mostrar só as posições abaixo do mínimo definido.
+            {t('lista.filtro_stock_baixo')}
           </p>
           <button
             type="button"
             onClick={limparFiltroDeStockBaixo}
             className="text-sm font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700"
           >
-            Ver todo o stock
+            {t('lista.ver_todo_stock')}
           </button>
         </div>
       )}
@@ -528,12 +537,12 @@ function StockCurrentTab() {
             }}
             className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          Mostrar produtos sem stock
+          {t('lista.mostrar_sem_stock')}
         </label>
 
         {!incluirSemSaldo && (
           <p className="text-xs text-slate-400">
-            As posições a zero estão escondidas, excepto as que têm mínimo definido.
+            {t('lista.zero_escondidas')}
           </p>
         )}
       </div>
@@ -544,10 +553,10 @@ function StockCurrentTab() {
           isLoading={isLoading}
           emptyMessage={
             apenasStockBaixo
-              ? 'Nenhum produto abaixo do mínimo definido. Está tudo reposto.'
+              ? t('lista.vazio_tudo_reposto')
               : incluirSemSaldo
-              ? 'Nenhum stock encontrado.'
-              : 'Nenhum produto com stock. Ligue «mostrar produtos sem stock» para ver as posições a zero.'
+              ? t('lista.vazio_nenhum_stock')
+              : t('lista.vazio_sem_stock')
           }
           getRowStatus={getRowStatus}
         />
@@ -555,7 +564,7 @@ function StockCurrentTab() {
         {!isLoading && stocks.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
             <span className="text-slate-500">
-              Página {page} de {totalPages}
+              {t('lista.pagina', { pagina: page, total: totalPages })}
             </span>
             <div className="flex gap-2">
               <Button
@@ -564,7 +573,7 @@ function StockCurrentTab() {
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Anterior
+                {t('lista.anterior')}
               </Button>
               <Button
                 variant="outline"
@@ -572,7 +581,7 @@ function StockCurrentTab() {
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Próxima
+                {t('lista.proxima')}
               </Button>
             </div>
           </div>
@@ -624,6 +633,7 @@ function StockCurrentTab() {
 
 // ──â”€ Aba: Movimentos ──────────────────────────────────────────────────────────
 function MovementsTab() {
+  const { t } = useTranslation('stock');
   const [page, setPage] = useState(1);
   const { data, isLoading } = useAllMovements({ page, limit: 15 });
 
@@ -631,21 +641,18 @@ function MovementsTab() {
   const totalPages = data?.lastPage ?? 1;
 
   const TYPE_STYLES: Record<string, { label: string; icon: React.ReactNode; cls: string }> = {
-    IN: { label: 'Entrada', icon: <ArrowUp className="h-3 w-3" />, cls: 'bg-emerald-100 text-emerald-700' },
-    OUT: { label: 'SaÍda', icon: <ArrowDown className="h-3 w-3" />, cls: 'bg-rose-100 text-rose-700' },
-    ADJUSTMENT: { label: 'Ajuste', icon: <Settings2 className="h-3 w-3" />, cls: 'bg-amber-100 text-amber-700' },
+    IN: { label: t('movimento_tipo.IN'), icon: <ArrowUp className="h-3 w-3" />, cls: 'bg-emerald-100 text-emerald-700' },
+    OUT: { label: t('movimento_tipo.OUT'), icon: <ArrowDown className="h-3 w-3" />, cls: 'bg-rose-100 text-rose-700' },
+    ADJUSTMENT: { label: t('movimento_tipo.ADJUSTMENT'), icon: <Settings2 className="h-3 w-3" />, cls: 'bg-amber-100 text-amber-700' },
   };
 
   const columns = useMemo<ColumnDef<StockMovement, any>[]>(
     () => [
       movementColumnHelper.accessor('createdAt', {
-        header: 'Data/Hora',
+        header: t('lista.data_hora'),
         cell: ({ getValue }) => (
           <span className="text-xs text-slate-500 tabular-nums">
-            {new Date(getValue()).toLocaleString('pt-MZ', {
-              day: '2-digit', month: '2-digit', year: '2-digit',
-              hour: '2-digit', minute: '2-digit',
-            })}
+            {formatDataHora(getValue())}
           </span>
         ),
       }),
@@ -654,7 +661,7 @@ function MovementsTab() {
       // Num histórico geral, é a primeira coisa que se quer saber.
       movementColumnHelper.display({
         id: 'produto',
-        header: 'Produto',
+        header: t('lista.produto'),
         cell: ({ row }) => {
           const { stock, stockId } = row.original;
           const produto = stock?.product;
@@ -669,7 +676,7 @@ function MovementsTab() {
                   {produto.nome}
                 </Link>
               ) : (
-                <span className="text-sm text-slate-400">Produto removido</span>
+                <span className="text-sm text-slate-400">{t('lista.produto_removido')}</span>
               )}
               {stock?.armazem?.nome && (
                 <p className="text-xs text-slate-400">{stock.armazem.nome}</p>
@@ -679,7 +686,7 @@ function MovementsTab() {
         },
       }),
       movementColumnHelper.accessor('type', {
-        header: 'Tipo',
+        header: t('lista.tipo'),
         cell: ({ getValue }) => {
           const type = getValue() as string;
           const config = TYPE_STYLES[type] ?? { label: type, icon: null, cls: 'bg-slate-100 text-slate-600' };
@@ -692,7 +699,7 @@ function MovementsTab() {
         },
       }),
       movementColumnHelper.accessor('quantity', {
-        header: 'Qtd',
+        header: t('lista.qtd'),
         cell: ({ row }) => {
           const { quantity, type } = row.original;
           const signed = type === 'OUT' ? -quantity : quantity;
@@ -704,7 +711,7 @@ function MovementsTab() {
         },
       }),
       movementColumnHelper.accessor('balanceAfter', {
-        header: 'Saldo Após',
+        header: t('lista.saldo_apos'),
         cell: ({ getValue }) => (
           <span className="tabular-nums text-sm text-slate-700">{getValue()}</span>
         ),
@@ -714,7 +721,7 @@ function MovementsTab() {
       // sempre `undefined`. Um ajuste de stock sem autor não se pode contestar.
       movementColumnHelper.display({
         id: 'operador',
-        header: 'Por',
+        header: t('lista.por'),
         cell: ({ row }) => {
           const autor = row.original.user;
 
@@ -723,12 +730,12 @@ function MovementsTab() {
               {autor.name}
             </span>
           ) : (
-            <span className="text-xs text-slate-400">Sistema</span>
+            <span className="text-xs text-slate-400">{t('lista.sistema')}</span>
           );
         },
       }),
       movementColumnHelper.accessor('reason', {
-        header: 'Motivo',
+        header: t('lista.motivo'),
         cell: ({ getValue }) => (
           <span className="text-xs text-slate-500 truncate max-w-[200px] block" title={getValue() ?? ''}>
             {getValue() ?? '—'}
@@ -737,7 +744,7 @@ function MovementsTab() {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -752,19 +759,19 @@ function MovementsTab() {
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
         <Clock className="h-4 w-4 text-slate-400" />
-        <span className="text-sm font-medium text-slate-600">Histórico de Movimentos</span>
+        <span className="text-sm font-medium text-slate-600">{t('lista.historico_movimentos')}</span>
       </div>
       <ResponsiveTable
         table={table}
         isLoading={isLoading}
-        emptyMessage="Nenhum movimento registado."
+        emptyMessage={t('lista.nenhum_movimento')}
       />
       {!isLoading && movements.length > 0 && (
         <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
-          <span className="text-slate-500">Página {page} de {totalPages}</span>
+          <span className="text-slate-500">{t('lista.pagina', { pagina: page, total: totalPages })}</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Próxima</Button>
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{t('lista.anterior')}</Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{t('lista.proxima')}</Button>
           </div>
         </div>
       )}
@@ -783,11 +790,13 @@ function MovementsTab() {
  * guardam o estado só em memória.
  */
 export function StockListPage() {
+  const { t } = useTranslation('stock');
+  const tabs = criarTabs(t);
   useSocket();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const doUrl = searchParams.get('tab');
-  const activeTab: StockTab = TABS.some((t) => t.id === doUrl) ? (doUrl as StockTab) : 'produtos';
+  const activeTab: StockTab = tabs.some((tab) => tab.id === doUrl) ? (doUrl as StockTab) : 'produtos';
 
   const mudarTab = (id: StockTab) => {
     // `replace` para não encher o histórico: dez cliques em separadores exigiriam dez
@@ -800,7 +809,7 @@ export function StockListPage() {
 
       {/* ──â”€ Tabs ────────────────────────────────────────────────────────────â”€ */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <Tabs tabs={TABS} active={activeTab} onChange={mudarTab} label="Produtos e stock" className="px-4" />
+        <Tabs tabs={tabs} active={activeTab} onChange={mudarTab} label={t('lista.etiqueta_tabs')} className="px-4" />
 
         <div className="p-4 sm:p-6">
           {activeTab === 'produtos' && <ProductsTab />}

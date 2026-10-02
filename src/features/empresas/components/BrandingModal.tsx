@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Palette, Loader2 } from 'lucide-react';
 import { useUpdateBranding } from '../hooks/useEmpresas';
 import type { Empresa, TemaBranding } from '../types';
@@ -8,13 +9,8 @@ interface Props {
   onClose: () => void;
 }
 
-const CAMPOS_COR: { campo: keyof typeof INICIAL; rotulo: string }[] = [
-  { campo: 'corPrimaria', rotulo: 'Cor primária' },
-  { campo: 'corSecundaria', rotulo: 'Cor secundária' },
-  { campo: 'corAcento', rotulo: 'Cor de acento' },
-  { campo: 'corTexto', rotulo: 'Cor do texto' },
-  { campo: 'corFundo', rotulo: 'Cor de fundo' },
-];
+// Só os campos: a etiqueta de cada cor vem do catálogo (`branding.cor.<campo>`).
+const CAMPOS_COR = ['corPrimaria', 'corSecundaria', 'corAcento', 'corTexto', 'corFundo'] as const;
 
 const INICIAL = {
   corPrimaria: '',
@@ -44,6 +40,7 @@ const INICIAL = {
  * que a visse.
  */
 export function BrandingModal({ empresa, onClose }: Props) {
+  const { t } = useTranslation('empresas');
   const [form, setForm] = useState(INICIAL);
   const [tema, setTema] = useState<TemaBranding>('AUTO');
 
@@ -72,7 +69,7 @@ export function BrandingModal({ empresa, onClose }: Props) {
               <Palette className="h-5 w-5 text-violet-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Identidade visual</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t('branding.titulo')}</h2>
               <p className="text-xs text-slate-500">{empresa.nome}</p>
             </div>
           </div>
@@ -83,11 +80,11 @@ export function BrandingModal({ empresa, onClose }: Props) {
 
         <div className="max-h-[65vh] space-y-5 overflow-y-auto p-6">
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Cores</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('branding.cores')}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {CAMPOS_COR.map(({ campo, rotulo }) => (
+              {CAMPOS_COR.map((campo) => (
                 <div key={campo}>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">{rotulo}</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">{t(`branding.cor.${campo}`)}</label>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
@@ -109,25 +106,25 @@ export function BrandingModal({ empresa, onClose }: Props) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Tipografia</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('branding.tipografia')}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Títulos</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t('branding.titulos')}</label>
                 <input
                   type="text"
                   value={form.tipografiaTitulo}
                   onChange={(e) => setForm({ ...form, tipografiaTitulo: e.target.value })}
-                  placeholder="Ex.: Inter"
+                  placeholder={t('branding.fonte_exemplo')}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Corpo</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t('branding.corpo')}</label>
                 <input
                   type="text"
                   value={form.tipografiaCorpo}
                   onChange={(e) => setForm({ ...form, tipografiaCorpo: e.target.value })}
-                  placeholder="Ex.: Inter"
+                  placeholder={t('branding.fonte_exemplo')}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500"
                 />
               </div>
@@ -135,10 +132,10 @@ export function BrandingModal({ empresa, onClose }: Props) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Imagens</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('branding.imagens')}</h3>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Logótipo (URL)</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t('branding.logo')}</label>
                 <input
                   type="text"
                   value={form.logoUrl}
@@ -149,7 +146,7 @@ export function BrandingModal({ empresa, onClose }: Props) {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">
-                  Logótipo em branco (URL) <span className="font-normal text-slate-400">— para fundos escuros</span>
+                  {t('branding.logo_branco')} <span className="font-normal text-slate-400">{t('branding.logo_branco_dica')}</span>
                 </label>
                 <input
                   type="text"
@@ -160,7 +157,7 @@ export function BrandingModal({ empresa, onClose }: Props) {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Favicon (URL)</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t('branding.favicon')}</label>
                 <input
                   type="text"
                   value={form.faviconUrl}
@@ -173,28 +170,27 @@ export function BrandingModal({ empresa, onClose }: Props) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Tema</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t('branding.tema')}</h3>
             <div className="grid grid-cols-3 gap-2">
-              {(['CLARO', 'ESCURO', 'AUTO'] as const).map((t) => (
+              {(['CLARO', 'ESCURO', 'AUTO'] as const).map((opcao) => (
                 <button
-                  key={t}
+                  key={opcao}
                   type="button"
-                  onClick={() => setTema(t)}
+                  onClick={() => setTema(opcao)}
                   className={`rounded-lg border-2 px-3 py-2 text-xs font-medium transition-colors ${
-                    tema === t
+                    tema === opcao
                       ? 'border-violet-400 bg-violet-50 text-violet-800'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {t === 'CLARO' ? 'Claro' : t === 'ESCURO' ? 'Escuro' : 'Automático'}
+                  {t(`branding.tema_opcao.${opcao}`)}
                 </button>
               ))}
             </div>
           </div>
 
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Só os campos preenchidos são enviados — os que ficarem em branco não alteram o
-            que já estiver configurado.
+            {t('branding.aviso')}
           </p>
         </div>
 
@@ -204,7 +200,7 @@ export function BrandingModal({ empresa, onClose }: Props) {
             onClick={onClose}
             className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
-            Cancelar
+            {t('acoes.cancelar')}
           </button>
           <button
             type="submit"
@@ -212,7 +208,7 @@ export function BrandingModal({ empresa, onClose }: Props) {
             className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
           >
             {mutation.isPending && <Loader2 size={16} className="animate-spin" />}
-            Guardar
+            {t('acoes.guardar')}
           </button>
         </div>
       </form>

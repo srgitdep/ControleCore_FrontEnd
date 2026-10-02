@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Users, CalendarDays, Wallet, FileText, Clock } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { usePermissions, useAuth } from '@/features/auth';
@@ -28,6 +29,7 @@ type Aba = 'colaboradores' | 'contratos' | 'turnos' | 'escalas' | 'salarios';
  * para o gestor não perder o acesso que tinha.
  */
 export function RecursosHumanosPage() {
+  const { t } = useTranslation('rh');
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasRole } = useAuth();
   const { hasPermission } = usePermissions();
@@ -38,16 +40,16 @@ export function RecursosHumanosPage() {
 
   const ABAS: TabDefinition<Aba>[] = [
     ...(podeVerColaboradores
-      ? [{ id: 'colaboradores' as Aba, label: 'Colaboradores', icon: Users }]
+      ? [{ id: 'colaboradores' as Aba, label: t('abas.colaboradores'), icon: Users }]
       : []),
     // Contratos mostra cargo e salário-base — a mesma informação sensível de
     // Colaboradores, condicionada pela mesma permissão.
     ...(podeVerColaboradores
-      ? [{ id: 'contratos' as Aba, label: 'Contratos', icon: FileText }]
+      ? [{ id: 'contratos' as Aba, label: t('abas.contratos'), icon: FileText }]
       : []),
-    { id: 'turnos', label: 'Turnos', icon: Clock },
-    { id: 'escalas', label: 'Escalas', icon: CalendarDays },
-    { id: 'salarios', label: 'Salários', icon: Wallet },
+    { id: 'turnos', label: t('abas.turnos'), icon: Clock },
+    { id: 'escalas', label: t('abas.escalas'), icon: CalendarDays },
+    { id: 'salarios', label: t('abas.salarios'), icon: Wallet },
   ];
 
   const doUrl = searchParams.get('tab');
@@ -63,7 +65,7 @@ export function RecursosHumanosPage() {
           tabs={ABAS}
           active={aba}
           onChange={(id) => setSearchParams({ tab: id }, { replace: true })}
-          label="Recursos humanos"
+          label={t('abas.etiqueta')}
           className="px-4"
         />
 

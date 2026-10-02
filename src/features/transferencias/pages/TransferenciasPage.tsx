@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaTransferencias } from '../components/TabelaTransferencias';
@@ -15,7 +16,7 @@ import {
   useSolicitarTransferencia,
   useTransferencias,
 } from '../hooks/useTransferencias';
-import { ESTADO_TRANSFERENCIA_LABEL, type EstadoTransferencia, type LinhaTransferencia } from '../types/transferencia.types';
+import type { EstadoTransferencia, LinhaTransferencia } from '../types/transferencia.types';
 
 const ESTADOS: EstadoTransferencia[] = ['SOLICITADA', 'APROVADA', 'EXPEDIDA', 'RECEBIDA', 'CANCELADA'];
 
@@ -26,6 +27,7 @@ const ESTADOS: EstadoTransferencia[] = ['SOLICITADA', 'APROVADA', 'EXPEDIDA', 'R
  * Necessidades calcula: aqui é onde alguém aprova, expede e confirma a recepção.
  */
 export function TransferenciasPage() {
+  const { t } = useTranslation('transferencias');
   const [estados, setEstados] = useState<EstadoTransferencia[]>([]);
   const [page, setPage] = useState(1);
 
@@ -57,14 +59,14 @@ export function TransferenciasPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <BarraDaPagina
-        resumo={lista ? `${lista.total} transferências` : undefined}
+        resumo={lista ? t('pagina.resumo', { count: lista.total }) : undefined}
         acoes={
           <button
             type="button"
             onClick={() => setASolicitar(true)}
             className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
           >
-            <Plus size={16} /> Nova transferência
+            <Plus size={16} /> {t('pagina.nova')}
           </button>
         }
       />
@@ -78,7 +80,7 @@ export function TransferenciasPage() {
             estados.length === 0 ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
           )}
         >
-          Todas
+          {t('pagina.todas')}
         </button>
         {ESTADOS.map((estado) => (
           <button
@@ -92,7 +94,7 @@ export function TransferenciasPage() {
                 : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
             )}
           >
-            {ESTADO_TRANSFERENCIA_LABEL[estado]}
+            {t(`estado.${estado}`)}
           </button>
         ))}
       </div>
@@ -111,7 +113,7 @@ export function TransferenciasPage() {
 
         {lista && lista.total > 0 && (
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
-            <span>A mostrar {lista.dados.length} de {lista.total}</span>
+            <span>{t('pagina.a_mostrar', { n: lista.dados.length, total: lista.total })}</span>
             <div className="flex items-center gap-1">
               <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(p - 1, 1))} className="rounded-md px-2 py-1 disabled:opacity-30">‹</button>
               <span className="tabular-nums">{page} / {totalPaginas}</span>
@@ -124,9 +126,9 @@ export function TransferenciasPage() {
       <MotivoAccaoModal
         isOpen={!!aRecusar}
         isSubmitting={decidir.isPending}
-        titulo="Recusar transferência"
-        descricao="Explique porque esta transferência não deve avançar."
-        placeholder="Ex.: a origem precisa do stock para as próprias vendas."
+        titulo={t('pagina.recusar_titulo')}
+        descricao={t('pagina.recusar_descricao')}
+        placeholder={t('pagina.recusar_placeholder')}
         onClose={() => setARecusar(null)}
         onConfirm={(motivo) =>
           decidir.mutate(
@@ -139,8 +141,8 @@ export function TransferenciasPage() {
       <MotivoAccaoModal
         isOpen={!!aCancelar}
         isSubmitting={cancelar.isPending}
-        titulo="Cancelar transferência"
-        descricao="Só é possível cancelar antes da expedição — depois disso a mercadoria já saiu fisicamente."
+        titulo={t('pagina.cancelar_titulo')}
+        descricao={t('pagina.cancelar_descricao')}
         corBotao="danger"
         onClose={() => setACancelar(null)}
         onConfirm={(motivo) =>

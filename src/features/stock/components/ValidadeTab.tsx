@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,7 +7,7 @@ import {
 } from '@tanstack/react-table';
 import { CalendarX2, CalendarClock, CalendarCheck, Info, Lock } from 'lucide-react';
 import { ResponsiveTable, KpiCard } from '@/shared/ui';
-import { formatMoeda } from '@/shared/utils';
+import { formatData, formatMoeda } from '@/shared/utils';
 import { useSaudeResumo, useValidade } from '../hooks/useSaudeStock';
 import {
   ESTADO_VALIDADE_META,
@@ -38,6 +39,7 @@ const FILTRO_PADRAO = ESTADOS_ACCIONAVEIS.join(',');
  * mudar a meio do turno conforme a hora do relógio do posto.
  */
 export function ValidadeTab() {
+  const { t } = useTranslation('stock');
   const [estado, setEstado] = useState<string>(FILTRO_PADRAO);
   const [page, setPage] = useState(1);
 
@@ -52,18 +54,21 @@ export function ValidadeTab() {
   const colunas = useMemo(
     () => [
       helper.accessor('produtoNome', {
-        header: 'Produto',
+        header: t('validade.produto'),
         cell: (info) => (
           <div className="min-w-0">
             <p className="truncate font-medium text-slate-800">{info.getValue()}</p>
             <span className="mt-0.5 block text-[11px] text-slate-500">
-              Lote {info.row.original.codigo} · {info.row.original.armazemNome}
+              {t('validade.lote_armazem', {
+                codigo: info.row.original.codigo,
+                armazem: info.row.original.armazemNome,
+              })}
             </span>
           </div>
         ),
       }),
       helper.accessor('estado', {
-        header: 'Estado',
+        header: t('validade.estado'),
         cell: (info) => (
           <div className="flex flex-wrap items-center gap-1.5">
             <span
@@ -71,63 +76,63 @@ export function ValidadeTab() {
                 ESTADO_VALIDADE_META[info.getValue()].pastilha
               }`}
             >
-              {ESTADO_VALIDADE_META[info.getValue()].label}
+              {t(`validade_estado.${info.getValue()}`)}
             </span>
             {info.row.original.bloqueado && (
               <span
                 className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600"
-                title="Lote bloqueado: mantém o saldo mas não é recomendado para saída"
+                title={t('validade.bloqueado_titulo')}
               >
                 <Lock className="h-3 w-3" />
-                Bloqueado
+                {t('validade.bloqueado')}
               </span>
             )}
           </div>
         ),
       }),
       helper.accessor('diasParaValidade', {
-        header: 'Prazo',
+        header: t('validade.prazo'),
         cell: (info) => {
           const dias = info.getValue();
 
           if (dias === null) {
-            return <span className="text-slate-400">sem validade</span>;
+            return <span className="text-slate-400">{t('validade.sem_validade')}</span>;
           }
           if (dias < 0) {
             return (
               <span className="font-medium tabular-nums text-rose-600">
-                expirado há {Math.abs(dias)} {Math.abs(dias) === 1 ? 'dia' : 'dias'}
+                {t('validade.expirado_ha', { count: Math.abs(dias) })}
               </span>
             );
           }
           if (dias === 0) {
-            return <span className="font-medium text-orange-600">expira hoje</span>;
+            return <span className="font-medium text-orange-600">{t('validade.expira_hoje')}</span>;
           }
           return (
             <span className={`tabular-nums ${dias <= 15 ? 'font-medium text-orange-600' : 'text-slate-700'}`}>
-              {dias} dias
+              {t('validade.dias', { n: dias })}
             </span>
           );
         },
       }),
       helper.accessor('dataValidade', {
-        header: 'Data de validade',
+        header: t('validade.data_validade'),
         cell: (info) => {
           const iso = info.getValue();
           if (!iso) return <span className="text-slate-400">—</span>;
           return (
             <span className="tabular-nums text-slate-700">
-              {new Date(iso).toLocaleDateString('pt-PT')}
+              {formatData(iso)}
             </span>
           );
         },
       }),
       helper.accessor('quantidade', {
-        header: 'Quantidade',
+        header: t('validade.quantidade'),
         cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
       }),
       helper.accessor('valorEmRisco', {
-        header: 'Valor em risco',
+        header: t('validade.valor_em_risco'),
         cell: (info) => (
           <span className="font-semibold tabular-nums text-slate-800">
             {formatMoeda(info.getValue())}
@@ -135,7 +140,7 @@ export function ValidadeTab() {
         ),
       }),
     ],
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -153,11 +158,11 @@ export function ValidadeTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <KpiCard
-          title="Já expirado"
+          title={t('validade.kpi_expirado')}
           value={resumo ? formatMoeda(resumo.valorExpirado) : '—'}
           description={
             resumo
-              ? `${resumo.porEstado.EXPIRADO.lotes} ${resumo.porEstado.EXPIRADO.lotes === 1 ? 'lote' : 'lotes'} em stock`
+              ? t('validade.lotes_em_stock', { count: resumo.porEstado.EXPIRADO.lotes })
               : undefined
           }
           icon={CalendarX2}
@@ -165,21 +170,21 @@ export function ValidadeTab() {
           onClick={() => alterarEstado('EXPIRADO')}
         />
         <KpiCard
-          title="Em risco"
+          title={t('validade.kpi_em_risco')}
           value={resumo ? formatMoeda(resumo.porEstado.EM_RISCO.valor) : '—'}
           description={
-            resumo ? `expira dentro de ${resumo.opcoes.diasEmRisco} dias` : undefined
+            resumo ? t('validade.expira_dentro', { n: resumo.opcoes.diasEmRisco }) : undefined
           }
           icon={CalendarClock}
           accent="warning"
           onClick={() => alterarEstado('EM_RISCO')}
         />
         <KpiCard
-          title="Próximo da validade"
+          title={t('validade.kpi_proximo')}
           value={resumo ? formatMoeda(resumo.porEstado.PROXIMO_DA_VALIDADE.valor) : '—'}
           description={
             resumo
-              ? `${resumo.porEstado.PROXIMO_DA_VALIDADE.lotes} lotes em aviso`
+              ? t('validade.lotes_em_aviso', { count: resumo.porEstado.PROXIMO_DA_VALIDADE.lotes })
               : undefined
           }
           icon={CalendarCheck}
@@ -194,13 +199,10 @@ export function ValidadeTab() {
           <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
           <div className="min-w-0 text-sm text-amber-900">
             <p className="font-medium">
-              {semRegisto} {semRegisto === 1 ? 'produto exige' : 'produtos exigem'} validade e não{' '}
-              {semRegisto === 1 ? 'tem' : 'têm'} nenhum lote registado.
+              {t('validade.sem_registo', { count: semRegisto })}
             </p>
             <p className="mt-0.5 text-amber-800">
-              Essa mercadoria não é vigiada. A validade entra no momento da recepção — as
-              entradas seguintes passam a exigi-la, mas o stock que já cá está continua sem
-              prazo conhecido.
+              {t('validade.sem_registo_detalhe')}
             </p>
           </div>
         </div>
@@ -217,7 +219,7 @@ export function ValidadeTab() {
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           }`}
         >
-          A exigir atenção
+          {t('validade.filtro_atencao')}
         </button>
         {ESTADOS_ACCIONAVEIS.map((e) => (
           <button
@@ -230,7 +232,7 @@ export function ValidadeTab() {
                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
             }`}
           >
-            {ESTADO_VALIDADE_META[e].label}
+            {t(`validade_estado.${e}`)}
           </button>
         ))}
         <button
@@ -242,24 +244,26 @@ export function ValidadeTab() {
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
           }`}
         >
-          Todos os lotes
+          {t('validade.filtro_todos')}
         </button>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
           <h3 className="text-sm font-semibold text-slate-800">
-            Lotes
+            {t('validade.lotes')}
             {data && (
               <span className="ml-2 font-normal text-slate-400">
-                {data.paginacao.total} {data.paginacao.total === 1 ? 'lote' : 'lotes'}
+                {t('validade.n_lotes', { count: data.paginacao.total })}
               </span>
             )}
           </h3>
           {resumo && (
             <span className="text-xs text-slate-500">
-              Risco a partir de {resumo.opcoes.diasEmRisco} dias · aviso aos{' '}
-              {resumo.opcoes.diasAvisoOmissao} (ou o que o produto definir)
+              {t('validade.criterios', {
+                risco: resumo.opcoes.diasEmRisco,
+                aviso: resumo.opcoes.diasAvisoOmissao,
+              })}
             </span>
           )}
         </div>
@@ -267,7 +271,7 @@ export function ValidadeTab() {
         <ResponsiveTable
           table={table}
           isLoading={isFetching && !data}
-          emptyMessage="Nenhum lote neste estado. Se o stock não tem lotes registados, a validade não é vigiada — registe-a na entrada de mercadoria."
+          emptyMessage={t('validade.vazio')}
           getRowStatus={(row) =>
             row.estado === 'EXPIRADO'
               ? 'critical'
@@ -280,10 +284,10 @@ export function ValidadeTab() {
         {data && data.paginacao.total > 25 && (
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm">
             <span className="text-slate-500">
-              Página {page} de {totalPaginas}
+              {t('validade.pagina', { pagina: page, total: totalPaginas })}
               {data.paginacao.omitidas > 0 && (
                 <span className="ml-2 text-slate-400">
-                  ({data.paginacao.omitidas} por mostrar)
+                  {t('validade.por_mostrar', { n: data.paginacao.omitidas })}
                 </span>
               )}
             </span>
@@ -294,7 +298,7 @@ export function ValidadeTab() {
                 disabled={page <= 1}
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:opacity-40"
               >
-                Anterior
+                {t('validade.anterior')}
               </button>
               <button
                 type="button"
@@ -302,7 +306,7 @@ export function ValidadeTab() {
                 disabled={page >= totalPaginas}
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:opacity-40"
               >
-                Seguinte
+                {t('validade.seguinte')}
               </button>
             </div>
           </div>
@@ -310,9 +314,7 @@ export function ValidadeTab() {
       </div>
 
       <p className="px-1 text-xs leading-relaxed text-slate-500">
-        O sistema recomenda a saída pelo lote que expira primeiro (FEFO), mas ainda não impede
-        a venda de mercadoria fora de prazo — a escolha do lote na venda não é feita
-        automaticamente. Para retirar mercadoria expirada do stock, use um ajuste negativo.
+        {t('validade.nota')}
       </p>
     </div>
   );

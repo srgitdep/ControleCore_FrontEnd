@@ -12,8 +12,9 @@ import {
   Ban,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '@/shared/utils';
-import { avisosApi, ROTULO_ESTADO_AVISO, TRANSICOES_AVISO } from '../api/avisos.api';
+import { useTranslation } from 'react-i18next';
+import { cn, formatData, formatDataHora, mensagemDeErro } from '@/shared/utils';
+import { avisosApi, TRANSICOES_AVISO } from '../api/avisos.api';
 import type { AvisoExpedicao, EstadoAviso } from '../api/avisos.api';
 
 /** Os avisos que ainda esperam alguma coisa. É o filtro por omissão. */
@@ -33,6 +34,7 @@ const A_CAMINHO: EstadoAviso[] = ['SUBMETIDO', 'EM_TRANSITO', 'CHEGADO'];
  * que um camião encostou — a mercadoria entra na recepção, depois de contada.
  */
 export function AvisosExpedicaoTab() {
+  const { t } = useTranslation('compras');
   const queryClient = useQueryClient();
   const [filtro, setFiltro] = useState<'A_CAMINHO' | 'TODOS' | EstadoAviso>('A_CAMINHO');
   const [aVer, setAVer] = useState<AvisoExpedicao | null>(null);
@@ -55,7 +57,7 @@ export function AvisosExpedicaoTab() {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
         <Loader2 className="h-4 w-4 animate-spin" />
-        A carregar expedições...
+        {t('avisos.a_carregar')}
       </div>
     );
   }
@@ -75,10 +77,10 @@ export function AvisosExpedicaoTab() {
             )}
           >
             {f === 'A_CAMINHO'
-              ? 'A caminho'
+              ? t('avisos.filtro_a_caminho')
               : f === 'TODOS'
-                ? 'Todos'
-                : ROTULO_ESTADO_AVISO[f]}
+                ? t('avisos.filtro_todos')
+                : t(`avisos.estado.${f}`)}
           </button>
         ))}
       </div>
@@ -87,11 +89,10 @@ export function AvisosExpedicaoTab() {
         <div className="py-16 text-center">
           <Truck className="mx-auto mb-3 h-12 w-12 text-slate-300" />
           <p className="text-sm font-medium text-slate-700">
-            {filtro === 'A_CAMINHO' ? 'Nada a caminho.' : 'Nenhuma expedição neste estado.'}
+            {filtro === 'A_CAMINHO' ? t('avisos.nada_a_caminho') : t('avisos.nenhuma_neste_estado')}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Regista o que o fornecedor declara ter expedido a partir da ordem de compra, no
-            separador Pedidos.
+            {t('avisos.vazio_ajuda')}
           </p>
         </div>
       ) : (
@@ -99,12 +100,12 @@ export function AvisosExpedicaoTab() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Guia</th>
-                <th className="px-3 py-2.5 font-medium">Fornecedor</th>
-                <th className="hidden px-3 py-2.5 font-medium md:table-cell">Transporte</th>
-                <th className="hidden px-3 py-2.5 font-medium sm:table-cell">Chegada prevista</th>
-                <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Linhas</th>
-                <th className="px-3 py-2.5 font-medium">Estado</th>
+                <th className="px-4 py-2.5 font-medium">{t('avisos.col_guia')}</th>
+                <th className="px-3 py-2.5 font-medium">{t('avisos.col_fornecedor')}</th>
+                <th className="hidden px-3 py-2.5 font-medium md:table-cell">{t('avisos.col_transporte')}</th>
+                <th className="hidden px-3 py-2.5 font-medium sm:table-cell">{t('avisos.chegada_prevista')}</th>
+                <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">{t('avisos.col_linhas')}</th>
+                <th className="px-3 py-2.5 font-medium">{t('avisos.col_estado')}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -130,9 +131,7 @@ export function AvisosExpedicaoTab() {
                     )}
                   </td>
                   <td className="hidden px-3 py-3 text-slate-500 sm:table-cell">
-                    {a.dataPrevistaChegada
-                      ? new Date(a.dataPrevistaChegada).toLocaleDateString('pt-MZ')
-                      : '—'}
+                    {a.dataPrevistaChegada ? formatData(a.dataPrevistaChegada) : '—'}
                   </td>
                   <td className="hidden px-3 py-3 text-right text-slate-500 md:table-cell">
                     {a._count?.linhas ?? a.linhas?.length ?? '—'}
@@ -158,6 +157,7 @@ export function AvisosExpedicaoTab() {
 }
 
 function EstadoAvisoBadge({ estado }: { estado: EstadoAviso }) {
+  const { t } = useTranslation('compras');
   const cores: Record<EstadoAviso, string> = {
     RASCUNHO: 'bg-slate-100 text-slate-700',
     SUBMETIDO: 'bg-blue-100 text-blue-700',
@@ -174,7 +174,7 @@ function EstadoAvisoBadge({ estado }: { estado: EstadoAviso }) {
         cores[estado],
       )}
     >
-      {ROTULO_ESTADO_AVISO[estado]}
+      {t(`avisos.estado.${estado}`)}
     </span>
   );
 }
@@ -188,6 +188,7 @@ function AvisoModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('compras');
   const [aGuardar, setAGuardar] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [aCancelar, setACancelar] = useState(false);
@@ -207,11 +208,13 @@ function AvisoModal({
     setAGuardar(true);
     try {
       await avisosApi.mudarEstado(aviso.id, { estado });
-      toast.success(`Marcado como ${ROTULO_ESTADO_AVISO[estado].toLowerCase()}.`);
+      toast.success(
+        t('avisos.toast_marcado', { estado: t(`avisos.estado.${estado}`).toLowerCase() }),
+      );
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao actualizar.');
+      toast.error(mensagemDeErro(error, t('avisos.erro_actualizar')));
     } finally {
       setAGuardar(false);
     }
@@ -219,17 +222,17 @@ function AvisoModal({
 
   const cancelar = async () => {
     if (motivo.trim().length < 5) {
-      toast.error('O cancelamento exige um motivo — liberta saldo da ordem.');
+      toast.error(t('avisos.erro_motivo'));
       return;
     }
     setAGuardar(true);
     try {
       await avisosApi.mudarEstado(aviso.id, { estado: 'CANCELADO', motivo: motivo.trim() });
-      toast.success('Aviso cancelado. O saldo volta à ordem de compra.');
+      toast.success(t('avisos.toast_cancelado'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao cancelar.');
+      toast.error(mensagemDeErro(error, t('avisos.erro_cancelar')));
     } finally {
       setAGuardar(false);
     }
@@ -237,7 +240,7 @@ function AvisoModal({
 
   const guardarEntrega = async () => {
     if (entrega.recebidoPorNome.trim().length < 3) {
-      toast.error('Indica quem recebeu a carga — uma prova sem nome não prova nada.');
+      toast.error(t('avisos.erro_recebido_por'));
       return;
     }
     setAGuardar(true);
@@ -247,11 +250,11 @@ function AvisoModal({
         provaUrl: entrega.provaUrl.trim() || undefined,
         observacoes: entrega.observacoes.trim() || undefined,
       });
-      toast.success('Prova de entrega registada. O stock não muda — isso é a recepção.');
+      toast.success(t('avisos.toast_entrega'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao registar a entrega.');
+      toast.error(mensagemDeErro(error, t('avisos.erro_entrega')));
     } finally {
       setAGuardar(false);
     }
@@ -264,13 +267,17 @@ function AvisoModal({
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <Truck size={16} className="text-slate-400" />
-              {actual.numeroFornecedor ?? `Aviso #${actual.id.slice(0, 8)}`}
+              {actual.numeroFornecedor ?? t('avisos.aviso_id', { id: actual.id.slice(0, 8) })}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">{actual.fornecedor?.nome}</p>
           </div>
           <div className="flex items-center gap-3">
             <EstadoAvisoBadge estado={actual.estado} />
-            <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
+            <button
+              onClick={onClose}
+              className="p-1 text-slate-400 hover:text-slate-600"
+              aria-label={t('avisos.fechar')}
+            >
               <X size={18} />
             </button>
           </div>
@@ -279,15 +286,15 @@ function AvisoModal({
         <div className="space-y-5 px-5 py-4">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-slate-50 p-4 text-sm sm:grid-cols-3">
             <div>
-              <dt className="text-xs text-slate-500">Transportador</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.transportador')}</dt>
               <dd className="text-slate-800">{actual.transportador ?? '—'}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Viatura</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.viatura')}</dt>
               <dd className="font-mono text-slate-800">{actual.matricula ?? '—'}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Motorista</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.motorista')}</dt>
               <dd className="text-slate-800">
                 {actual.motorista ?? '—'}
                 {actual.contactoMotorista && (
@@ -302,7 +309,7 @@ function AvisoModal({
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Origem</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.origem')}</dt>
               <dd className="flex items-center gap-1 text-slate-800">
                 {actual.origem ? (
                   <>
@@ -315,19 +322,15 @@ function AvisoModal({
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Chegada prevista</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.chegada_prevista')}</dt>
               <dd className="text-slate-800">
-                {actual.dataPrevistaChegada
-                  ? new Date(actual.dataPrevistaChegada).toLocaleDateString('pt-MZ')
-                  : '—'}
+                {actual.dataPrevistaChegada ? formatData(actual.dataPrevistaChegada) : '—'}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Chegou</dt>
+              <dt className="text-xs text-slate-500">{t('avisos.chegou')}</dt>
               <dd className="text-slate-800">
-                {actual.dataChegada
-                  ? new Date(actual.dataChegada).toLocaleDateString('pt-MZ')
-                  : '—'}
+                {actual.dataChegada ? formatData(actual.dataChegada) : '—'}
               </dd>
             </div>
           </dl>
@@ -337,10 +340,10 @@ function AvisoModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs text-slate-500">
                   <tr>
-                    <th className="px-3 py-2 font-medium">Produto</th>
-                    <th className="px-3 py-2 text-right font-medium">Declarado</th>
-                    <th className="px-3 py-2 font-medium">Lote</th>
-                    <th className="px-3 py-2 font-medium">Validade</th>
+                    <th className="px-3 py-2 font-medium">{t('avisos.col_produto')}</th>
+                    <th className="px-3 py-2 text-right font-medium">{t('avisos.col_declarado')}</th>
+                    <th className="px-3 py-2 font-medium">{t('avisos.col_lote')}</th>
+                    <th className="px-3 py-2 font-medium">{t('avisos.col_validade')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -352,7 +355,7 @@ function AvisoModal({
                       <td className="px-3 py-2 text-right text-slate-700">{l.quantidade}</td>
                       <td className="px-3 py-2 text-slate-600">{l.lote ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-600">
-                        {l.validade ? new Date(l.validade).toLocaleDateString('pt-MZ') : '—'}
+                        {l.validade ? formatData(l.validade) : '—'}
                       </td>
                     </tr>
                   ))}
@@ -361,8 +364,7 @@ function AvisoModal({
               {/* O lote e a validade vêm do fornecedor e são informativos: quem decide o
                   que entra em stock é a recepção, depois de olhar para a caixa. */}
               <p className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                Lote e validade como o fornecedor os declarou. Quem decide o que entra em stock
-                é a recepção.
+                {t('avisos.nota_lote')}
               </p>
             </div>
           )}
@@ -371,11 +373,11 @@ function AvisoModal({
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
               <p className="flex items-center gap-2 text-xs font-medium text-emerald-900">
                 <ClipboardSignature size={14} />
-                Prova de entrega
+                {t('avisos.prova_entrega')}
               </p>
               <p className="mt-1 text-sm text-emerald-800">
-                Recebido por {actual.recebidoPorNome} ·{' '}
-                {new Date(actual.entregueEm).toLocaleString('pt-MZ')}
+                {t('avisos.recebido_por', { nome: actual.recebidoPorNome })} ·{' '}
+                {formatDataHora(actual.entregueEm)}
               </p>
               {actual.observacoesEntrega && (
                 <p className="mt-1 text-xs text-emerald-700">{actual.observacoesEntrega}</p>
@@ -385,22 +387,22 @@ function AvisoModal({
 
           {podeEntregar && !actual.entregueEm && (
             <div className="rounded-lg border border-slate-200 p-4">
-              <p className="text-sm font-medium text-slate-800">Registar prova de entrega</p>
+              <p className="text-sm font-medium text-slate-800">{t('avisos.registar_prova')}</p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Demonstra que a carga chegou. <strong>Não actualiza stock</strong> — quem assina
-                à porta assinou que um camião encostou.
+                {t('avisos.prova_ajuda_1')} <strong>{t('avisos.prova_ajuda_2')}</strong>{' '}
+                {t('avisos.prova_ajuda_3')}
               </p>
               <div className="mt-3 space-y-2">
                 <input
                   value={entrega.recebidoPorNome}
                   onChange={(e) => setEntrega({ ...entrega, recebidoPorNome: e.target.value })}
-                  placeholder="Quem recebeu a carga"
+                  placeholder={t('avisos.quem_recebeu')}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
                 />
                 <input
                   value={entrega.provaUrl}
                   onChange={(e) => setEntrega({ ...entrega, provaUrl: e.target.value })}
-                  placeholder="Fotografia ou assinatura (link)"
+                  placeholder={t('avisos.prova_link')}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
                 />
                 <button
@@ -408,7 +410,7 @@ function AvisoModal({
                   disabled={aGuardar}
                   className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  Registar entrega
+                  {t('avisos.registar_entrega')}
                 </button>
               </div>
             </div>
@@ -417,14 +419,12 @@ function AvisoModal({
           {aCancelar && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
               <p className="text-xs text-rose-800">
-                Cancelar liberta o saldo desta declaração, e a ordem volta a poder receber
-                avisos pelas mesmas quantidades. Sem motivo escrito, ninguém percebe meses
-                depois porque é que a mercadoria não veio.
+                {t('avisos.cancelar_ajuda')}
               </p>
               <input
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Fornecedor cancelou a expedição."
+                placeholder={t('avisos.motivo_exemplo')}
                 className="mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-sm placeholder:text-rose-300 focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-400"
               />
             </div>
@@ -436,7 +436,7 @@ function AvisoModal({
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
           >
-            Fechar
+            {t('avisos.fechar')}
           </button>
 
           {TRANSICOES_AVISO[actual.estado].includes('CANCELADO') &&
@@ -447,14 +447,14 @@ function AvisoModal({
                 className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
               >
                 {aGuardar && <Loader2 size={14} className="animate-spin" />}
-                Confirmar cancelamento
+                {t('avisos.confirmar_cancelamento')}
               </button>
             ) : (
               <button
                 onClick={() => setACancelar(true)}
                 className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
               >
-                <Ban size={14} /> Cancelar aviso
+                <Ban size={14} /> {t('avisos.cancelar_aviso')}
               </button>
             ))}
 
@@ -470,7 +470,7 @@ function AvisoModal({
               ) : (
                 <PackageCheck size={14} />
               )}
-              Marcar como {ROTULO_ESTADO_AVISO[e].toLowerCase()}
+              {t('avisos.marcar_como', { estado: t(`avisos.estado.${e}`).toLowerCase() })}
             </button>
           ))}
         </div>

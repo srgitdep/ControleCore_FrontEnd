@@ -13,6 +13,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { localeIntl } from '@/i18n';
 import { mensagemDeErro } from '@/shared/utils';
 import { api } from '@/shared/config';
 import {
@@ -52,6 +54,7 @@ interface ModuloDoCatalogo {
 }
 
 export function AdesoesPage() {
+  const { t } = useTranslation('adesao');
   const [filtro, setFiltro] = useState<EstadoPedidoAdesao | 'TODOS'>('PENDENTE');
   const [aberto, setAberto] = useState<PedidoAdesao | null>(null);
 
@@ -71,10 +74,9 @@ export function AdesoesPage() {
   return (
     <div className="p-6">
       <header className="mb-5">
-        <h1 className="text-xl font-semibold text-slate-900">Pedidos de adesão</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t('gestao.titulo')}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Empresas que pediram para ser clientes. Aprovar cria a empresa, o administrador e a
-          assinatura, e envia o código de acesso por e-mail.
+          {t('gestao.subtitulo')}
         </p>
       </header>
 
@@ -89,7 +91,7 @@ export function AdesoesPage() {
                 : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            {e === 'TODOS' ? 'Todos' : etiquetaEstado(e)}
+            {e === 'TODOS' ? t('gestao.filtro_todos') : t(`gestao.estado.${e}`)}
           </button>
         ))}
       </div>
@@ -97,15 +99,13 @@ export function AdesoesPage() {
       {isLoading ? (
         <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-8 text-sm text-slate-500">
           <Loader2 size={15} className="animate-spin" />
-          A carregar a fila…
+          {t('gestao.a_carregar')}
         </div>
       ) : contagens.total === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
           <Clock size={22} className="mx-auto text-slate-300" />
           <p className="mt-2 text-sm text-slate-500">
-            {filtro === 'PENDENTE'
-              ? 'Nenhum pedido à espera de decisão.'
-              : 'Nenhum pedido neste estado.'}
+            {filtro === 'PENDENTE' ? t('gestao.vazio_pendente') : t('gestao.vazio_estado')}
           </p>
         </div>
       ) : (
@@ -192,6 +192,7 @@ function PainelDecisao({
   pedido: PedidoAdesao;
   onFechar: () => void;
 }) {
+  const { t } = useTranslation('adesao');
   const queryClient = useQueryClient();
   const [modulos, setModulos] = useState<string[]>([]);
   const [motivo, setMotivo] = useState('');
@@ -223,7 +224,7 @@ function PainelDecisao({
       onFechar();
     },
     onError: (erro: any) => {
-      toast.error(mensagemDeErro(erro, 'Não foi possível registar a decisão.'));
+      toast.error(mensagemDeErro(erro, t('gestao.erro_decisao')));
     },
   });
 
@@ -242,7 +243,7 @@ function PainelDecisao({
               <Selo estado={pedido.estado} />
             </div>
             <p className="mt-1 font-mono text-xs uppercase text-slate-400">
-              Referência {pedido.id.slice(0, 8)}
+              {t('gestao.referencia', { ref: pedido.id.slice(0, 8) })}
             </p>
           </div>
           <button
@@ -256,27 +257,27 @@ function PainelDecisao({
         <div className="space-y-5 p-5">
           <section className="grid gap-4 sm:grid-cols-2">
             <Dado etiqueta="NUIT" valor={pedido.empresaNuit} icone={<Building2 size={12} />} />
-            <Dado etiqueta="Cidade" valor={pedido.cidade} icone={<MapPin size={12} />} />
+            <Dado etiqueta={t('gestao.dado.cidade')} valor={pedido.cidade} icone={<MapPin size={12} />} />
             <Dado
-              etiqueta="E-mail da empresa"
+              etiqueta={t('gestao.dado.empresa_email')}
               valor={pedido.empresaEmail}
               icone={<Mail size={12} />}
             />
             <Dado
-              etiqueta="Telefone da empresa"
+              etiqueta={t('gestao.dado.empresa_telefone')}
               valor={pedido.empresaTelefone}
               icone={<Phone size={12} />}
             />
-            <Dado etiqueta="Responsável" valor={pedido.gestorNome} icone={<User size={12} />} />
-            <Dado etiqueta="Cargo" valor={pedido.gestorCargo} icone={<User size={12} />} />
+            <Dado etiqueta={t('gestao.dado.gestor_nome')} valor={pedido.gestorNome} icone={<User size={12} />} />
+            <Dado etiqueta={t('gestao.dado.gestor_cargo')} valor={pedido.gestorCargo} icone={<User size={12} />} />
             <Dado
-              etiqueta="E-mail do responsável"
+              etiqueta={t('gestao.dado.gestor_email')}
               valor={pedido.gestorEmail}
               icone={<Mail size={12} />}
               destaque
             />
             <Dado
-              etiqueta="Telefone do responsável"
+              etiqueta={t('gestao.dado.gestor_telefone')}
               valor={pedido.gestorTelefone}
               icone={<Phone size={12} />}
             />
@@ -285,7 +286,7 @@ function PainelDecisao({
           {pedido.observacoes ? (
             <section className="rounded-lg bg-slate-50 p-3">
               <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                O que precisa resolver
+                {t('gestao.o_que_precisa')}
               </p>
               <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                 {pedido.observacoes}
@@ -296,8 +297,12 @@ function PainelDecisao({
           {!decidivel ? (
             <section className="rounded-lg border border-slate-200 p-3">
               <p className="text-xs font-medium text-slate-600">
-                {pedido.estado === 'APROVADO' ? 'Aprovado' : 'Recusado'}
-                {pedido.decididoPor ? ` por ${pedido.decididoPor.name}` : ''}
+                {pedido.decididoPor
+                  ? t('gestao.decidido_por', {
+                      estado: t(`gestao.estado.${pedido.estado}`),
+                      nome: pedido.decididoPor.name,
+                    })
+                  : t(`gestao.estado.${pedido.estado}`)}
                 {pedido.decididoEm ? ` · ${dataCurta(pedido.decididoEm)}` : ''}
               </p>
               {pedido.motivoDecisao ? (
@@ -305,7 +310,7 @@ function PainelDecisao({
               ) : null}
               {pedido.empresa ? (
                 <p className="mt-2 text-xs text-slate-500">
-                  Empresa criada: <strong>{pedido.empresa.nome}</strong>
+                  {t('gestao.empresa_criada')} <strong>{pedido.empresa.nome}</strong>
                 </p>
               ) : null}
             </section>
@@ -313,12 +318,11 @@ function PainelDecisao({
             <>
               <section>
                 <p className="text-xs font-medium text-slate-700">
-                  Módulos a subscrever
+                  {t('gestao.modulos_titulo')}
                   <span className="ml-0.5 text-rose-500">*</span>
                 </p>
                 <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
-                  Uma empresa sem módulos subscritos é uma empresa cujo primeiro ecrã recusa
-                  tudo. Escolha ao menos um.
+                  {t('gestao.modulos_ajuda')}
                 </p>
 
                 <div className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
@@ -352,9 +356,9 @@ function PainelDecisao({
 
               <section>
                 <label className="block text-xs font-medium text-slate-700">
-                  Motivo
+                  {t('gestao.motivo')}
                   <span className="ml-1 font-normal text-slate-400">
-                    (obrigatório ao recusar — é o que o requerente vai ler)
+                    {t('gestao.motivo_ajuda')}
                   </span>
                 </label>
                 <textarea
@@ -362,7 +366,7 @@ function PainelDecisao({
                   onChange={(e) => setMotivo(e.target.value)}
                   rows={2}
                   maxLength={1000}
-                  placeholder="O NUIT indicado não corresponde à empresa nomeada."
+                  placeholder={t('gestao.motivo_exemplo')}
                   className="mt-1 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 />
               </section>
@@ -389,16 +393,16 @@ function PainelDecisao({
                     >
                       {aConfirmar === 'APROVAR' ? (
                         <>
-                          Vai criar a empresa <strong>{pedido.empresaNome}</strong>, o
-                          administrador <strong>{pedido.gestorNome}</strong>, e uma assinatura
-                          com {modulos.length} módulo(s). O código de acesso e a senha vão para{' '}
-                          <strong>{pedido.gestorEmail}</strong>. Não se desfaz.
+                          {t('gestao.aprovar_1')} <strong>{pedido.empresaNome}</strong>
+                          {t('gestao.aprovar_2')} <strong>{pedido.gestorNome}</strong>
+                          {t('gestao.aprovar_3', { n: modulos.length })}{' '}
+                          <strong>{pedido.gestorEmail}</strong>
+                          {t('gestao.aprovar_4')}
                         </>
                       ) : (
                         <>
-                          Vai enviar o motivo para <strong>{pedido.gestorEmail}</strong>. O
-                          pedido não volta à fila — quem corrigir o que estava errado tem de
-                          submeter um pedido novo.
+                          {t('gestao.recusar_1')} <strong>{pedido.gestorEmail}</strong>
+                          {t('gestao.recusar_2')}
                         </>
                       )}
                     </p>
@@ -420,14 +424,16 @@ function PainelDecisao({
                         }`}
                       >
                         {decisao.isPending && <Loader2 size={12} className="animate-spin" />}
-                        Confirmar {aConfirmar === 'APROVAR' ? 'aprovação' : 'recusa'}
+                        {aConfirmar === 'APROVAR'
+                          ? t('gestao.confirmar_aprovacao')
+                          : t('gestao.confirmar_recusa')}
                       </button>
                       <button
                         onClick={() => setAConfirmar(null)}
                         disabled={decisao.isPending}
                         className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                       >
-                        Voltar atrás
+                        {t('gestao.voltar_atras')}
                       </button>
                     </div>
                   </div>
@@ -442,7 +448,7 @@ function PainelDecisao({
             <button
               onClick={() => {
                 if (motivo.trim().length < 5) {
-                  toast.error('Recusar exige um motivo com ao menos 5 caracteres.');
+                  toast.error(t('gestao.erro_motivo_curto'));
                   return;
                 }
                 setAConfirmar('RECUSAR');
@@ -450,12 +456,12 @@ function PainelDecisao({
               className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 px-3.5 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
             >
               <XCircle size={14} />
-              Recusar
+              {t('gestao.recusar')}
             </button>
             <button
               onClick={() => {
                 if (modulos.length === 0) {
-                  toast.error('Escolha ao menos um módulo antes de aprovar.');
+                  toast.error(t('gestao.erro_sem_modulo'));
                   return;
                 }
                 setAConfirmar('APROVAR');
@@ -463,7 +469,7 @@ function PainelDecisao({
               className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-emerald-700"
             >
               <CheckCircle2 size={14} />
-              Aprovar
+              {t('gestao.aprovar')}
             </button>
           </footer>
         ) : null}
@@ -501,6 +507,7 @@ function Dado({
 }
 
 function Selo({ estado }: { estado: EstadoPedidoAdesao }) {
+  const { t } = useTranslation('adesao');
   const estilos: Record<EstadoPedidoAdesao, string> = {
     PENDENTE: 'bg-amber-100 text-amber-800',
     APROVADO: 'bg-emerald-100 text-emerald-800',
@@ -511,21 +518,15 @@ function Selo({ estado }: { estado: EstadoPedidoAdesao }) {
     <span
       className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${estilos[estado]}`}
     >
-      {etiquetaEstado(estado)}
+      {t(`gestao.estado.${estado}`)}
     </span>
   );
 }
 
-function etiquetaEstado(estado: EstadoPedidoAdesao): string {
-  if (estado === 'PENDENTE') return 'Pendente';
-  if (estado === 'APROVADO') return 'Aprovado';
-  return 'Recusado';
-}
-
 function dataCurta(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-PT', {
+  return new Intl.DateTimeFormat(localeIntl(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  });
+  }).format(new Date(iso));
 }

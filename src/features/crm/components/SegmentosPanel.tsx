@@ -21,32 +21,35 @@ import {
   useAudiencias,
 } from '../hooks/useClientes';
 import type { DimensaoSegmento, Segmento } from '../api/clientes.api';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatData, formatMoeda } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
 
-const moeda = (v: number) =>
-  `${Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+const moeda = (v: number) => formatMoeda(Number(v));
 
-const data = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const data = (iso?: string | null) => (iso ? formatData(iso) : '—');
 
 // ──── Dimensões ───────────────────────────────────────────────────────────────
 
-const DIMENSOES: Record<
+const DIMENSOES = {
+  RECORRENCIA: {
+    rotulo: 'segmentos.dim_recorrencia',
+    icone: Clock,
+    descricao: 'segmentos.dim_recorrencia_desc',
+  },
+  VALOR: { rotulo: 'segmentos.dim_valor', icone: Wallet, descricao: 'segmentos.dim_valor_desc' },
+  CANAL: { rotulo: 'segmentos.dim_canal', icone: Store, descricao: 'segmentos.dim_canal_desc' },
+  PRODUTO: { rotulo: 'segmentos.dim_produto', icone: Layers, descricao: 'segmentos.dim_produto_desc' },
+  LOCALIZACAO: {
+    rotulo: 'segmentos.dim_localizacao',
+    icone: Store,
+    descricao: 'segmentos.dim_localizacao_desc',
+  },
+  MANUAL: { rotulo: 'segmentos.dim_manual', icone: Target, descricao: 'segmentos.dim_manual_desc' },
+} as const satisfies Record<
   DimensaoSegmento,
   { rotulo: string; icone: React.ElementType; descricao: string }
-> = {
-  RECORRENCIA: {
-    rotulo: 'Recorrência',
-    icone: Clock,
-    descricao: 'Há quanto tempo não compra, face ao hábito de cada cliente',
-  },
-  VALOR: { rotulo: 'Valor', icone: Wallet, descricao: 'Quanto gasta, face aos restantes clientes' },
-  CANAL: { rotulo: 'Canal', icone: Store, descricao: 'Por onde compra habitualmente' },
-  PRODUTO: { rotulo: 'Produto', icone: Layers, descricao: 'O que compra com frequência' },
-  LOCALIZACAO: { rotulo: 'Localização', icone: Store, descricao: 'Onde compra' },
-  MANUAL: { rotulo: 'Manuais', icone: Target, descricao: 'Listas mantidas à mão' },
-};
+>;
 
 /**
  * Cor por estado, e não por dimensão: o que precisa de atenção deve saltar à
@@ -83,14 +86,15 @@ function AudienciaModal({
   onGuardar: (nome: string) => void;
   aGuardar: boolean;
 }) {
-  const hoje = new Date().toLocaleDateString('pt-PT');
+  const { t } = useTranslation('crm');
+  const hoje = formatData(new Date());
   const [nome, setNome] = useState(`${segmento.nome} — ${hoje}`);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 p-5">
-          <h2 className="text-lg font-bold text-slate-900">Fixar audiência</h2>
+          <h2 className="text-lg font-bold text-slate-900">{t('segmentos.fixar_audiencia')}</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
             <X size={18} />
           </button>
@@ -105,20 +109,19 @@ function AudienciaModal({
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
             <p className="font-semibold text-slate-900">{segmento.nome}</p>
             <p className="mt-0.5 text-slate-500">
-              {segmento.total} {segmento.total === 1 ? 'cliente' : 'clientes'} neste momento
+              {segmento.total} {t('segmentos.neste_momento', { count: segmento.total })}
             </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nome</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('segmentos.nome')}</label>
             <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
             <p className="mt-1.5 text-xs text-slate-400">
-              Guarda quem pertence ao segmento hoje. O segmento continua a mudar; a audiência não —
-              é assim que uma campanha sabe mais tarde a quem foi enviada.
+              {t('segmentos.fixar_explicacao')}
             </p>
           </div>
 
@@ -128,14 +131,14 @@ function AudienciaModal({
               onClick={onClose}
               className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               type="submit"
               disabled={aGuardar || !nome.trim()}
               className="flex-1 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              {aGuardar ? 'A fixar…' : 'Fixar'}
+              {aGuardar ? t('segmentos.a_fixar') : t('segmentos.fixar')}
             </button>
           </div>
         </form>
@@ -151,6 +154,7 @@ export function SegmentosPanel({
 }: {
   onVerCliente: (clienteId: string) => void;
 }) {
+  const { t } = useTranslation('crm');
   const [seleccionado, setSeleccionado] = useState<Segmento | null>(null);
   const [page, setPage] = useState(1);
   const [audienciaPara, setAudienciaPara] = useState<Segmento | null>(null);
@@ -181,7 +185,7 @@ export function SegmentosPanel({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
         <AlertTriangle size={36} strokeWidth={1} />
-        <p className="text-sm">Não foi possível carregar os segmentos.</p>
+        <p className="text-sm">{t('segmentos.erro_carregar')}</p>
       </div>
     );
   }
@@ -205,10 +209,9 @@ export function SegmentosPanel({
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
         <Users size={40} strokeWidth={1} className="text-slate-300" />
         <div>
-          <p className="font-medium text-slate-600">Ainda não há segmentos calculados.</p>
+          <p className="font-medium text-slate-600">{t('segmentos.vazio_titulo')}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">
-            A classificação corre automaticamente de madrugada. Para ver já os segmentos desta
-            empresa, calcule agora.
+            {t('segmentos.vazio_explicacao')}
           </p>
         </div>
         <button
@@ -217,7 +220,7 @@ export function SegmentosPanel({
           className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
         >
           <RefreshCw size={15} className={cn(recalcular.isPending && 'animate-spin')} />
-          {recalcular.isPending ? 'A calcular…' : 'Calcular agora'}
+          {recalcular.isPending ? t('segmentos.a_calcular') : t('segmentos.calcular_agora')}
         </button>
       </div>
     );
@@ -230,10 +233,10 @@ export function SegmentosPanel({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-slate-500">
-              Os clientes são classificados automaticamente todas as noites.
+              {t('segmentos.classificacao_noites')}
             </p>
             {ultimoCalculo && (
-              <p className="mt-0.5 text-xs text-slate-400">Último cálculo: {data(ultimoCalculo)}</p>
+              <p className="mt-0.5 text-xs text-slate-400">{t('segmentos.ultimo_calculo', { data: data(ultimoCalculo) })}</p>
             )}
           </div>
           <button
@@ -242,7 +245,7 @@ export function SegmentosPanel({
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw size={14} className={cn(recalcular.isPending && 'animate-spin')} />
-            {recalcular.isPending ? 'A calcular…' : 'Recalcular'}
+            {recalcular.isPending ? t('segmentos.a_calcular') : t('segmentos.recalcular')}
           </button>
         </div>
 
@@ -256,9 +259,9 @@ export function SegmentosPanel({
               <div className="mb-3 flex items-baseline gap-2">
                 <Icone size={15} className="translate-y-0.5 text-slate-400" />
                 <h3 className="text-sm font-semibold text-slate-700">
-                  {info?.rotulo ?? dimensao}
+                  {info ? t(info.rotulo) : dimensao}
                 </h3>
-                <span className="text-xs text-slate-400">{info?.descricao}</span>
+                <span className="text-xs text-slate-400">{info ? t(info.descricao) : null}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -282,7 +285,7 @@ export function SegmentosPanel({
                         {s.total}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {s.total === 1 ? 'cliente' : 'clientes'}
+                        {t('segmentos.cliente', { count: s.total })}
                       </p>
                     </button>
                   );
@@ -299,7 +302,7 @@ export function SegmentosPanel({
               <h3 className="text-sm font-semibold text-slate-700">
                 {seleccionado.nome}
                 <span className="ml-2 font-normal text-slate-400">
-                  {membros?.total ?? seleccionado.total} clientes
+                  {t('segmentos.n_clientes', { n: membros?.total ?? seleccionado.total })}
                 </span>
               </h3>
               <div className="flex gap-2">
@@ -307,12 +310,12 @@ export function SegmentosPanel({
                   onClick={() => setAudienciaPara(seleccionado)}
                   className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
-                  <Target size={13} /> Fixar audiência
+                  <Target size={13} /> {t('segmentos.fixar_audiencia')}
                 </button>
                 <button
                   onClick={() => setSeleccionado(null)}
                   className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
-                  aria-label="Fechar lista"
+                  aria-label={t('segmentos.fechar_lista')}
                 >
                   <X size={15} />
                 </button>
@@ -330,7 +333,13 @@ export function SegmentosPanel({
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-slate-100 bg-slate-50">
-                          {['Cliente', 'Contacto', 'Total gasto', 'Última compra', 'Neste segmento desde'].map(
+                          {[
+                            t('segmentos.col_cliente'),
+                            t('segmentos.col_contacto'),
+                            t('segmentos.col_total_gasto'),
+                            t('segmentos.col_ultima_compra'),
+                            t('segmentos.col_desde'),
+                          ].map(
                             (h) => (
                               <th
                                 key={h}
@@ -370,7 +379,7 @@ export function SegmentosPanel({
                 {membros.lastPage > 1 && (
                   <div className="mt-3 flex items-center justify-between">
                     <p className="text-sm text-slate-500">
-                      Página {membros.page} de {membros.lastPage}
+                      {t('segmentos.pagina', { page: membros.page, lastPage: membros.lastPage })}
                     </p>
                     <div className="flex gap-2">
                       <button
@@ -393,7 +402,7 @@ export function SegmentosPanel({
               </>
             ) : (
               <div className="rounded-xl border border-slate-200 bg-slate-50 py-6 text-center text-sm text-slate-400">
-                Este segmento não tem clientes de momento.
+                {t('segmentos.sem_clientes')}
               </div>
             )}
           </section>
@@ -404,9 +413,9 @@ export function SegmentosPanel({
           <section>
             <div className="mb-3 flex items-baseline gap-2">
               <UserCheck size={15} className="translate-y-0.5 text-slate-400" />
-              <h3 className="text-sm font-semibold text-slate-700">Audiências fixadas</h3>
+              <h3 className="text-sm font-semibold text-slate-700">{t('segmentos.audiencias_fixadas')}</h3>
               <span className="text-xs text-slate-400">
-                Composição guardada de um segmento, num dia
+                {t('segmentos.audiencias_explicacao')}
               </span>
             </div>
 
@@ -419,7 +428,7 @@ export function SegmentosPanel({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-slate-900">{a.nome}</p>
                     <p className="text-xs text-slate-400">
-                      {a.segment?.nome ?? 'segmento removido'} · fixada em {data(a.createdAt)}
+                      {a.segment?.nome ?? t('segmentos.segmento_removido')} · {t('segmentos.fixada_em', { data: data(a.createdAt) })}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold tabular-nums text-slate-700">

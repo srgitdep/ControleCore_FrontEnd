@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Ban, Layers3 } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { useFefo } from '../hooks/useSaudeStock';
@@ -36,6 +37,7 @@ export function FefoModal({
   armazemNome,
   unidade = 'UN',
 }: FefoModalProps) {
+  const { t } = useTranslation('stock');
   const [quantidade, setQuantidade] = useState<number | ''>('');
   // Só se consulta depois de a pessoa confirmar: um pedido por cada tecla escrita no campo
   // seria uma consulta por dígito.
@@ -58,7 +60,7 @@ export function FefoModal({
           <div className="flex items-start gap-3">
             <Layers3 className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-500" />
             <div>
-              <h2 className="font-bold text-slate-800">De que lote tirar</h2>
+              <h2 className="font-bold text-slate-800">{t('fefo.titulo')}</h2>
               <p className="text-sm text-slate-500">
                 {produtoNome}
                 {armazemNome && ` · ${armazemNome}`}
@@ -69,7 +71,7 @@ export function FefoModal({
             type="button"
             onClick={onClose}
             className="text-xl leading-none text-slate-400 hover:text-slate-700"
-            aria-label="Fechar"
+            aria-label={t('fefo.fechar')}
           >
             ×
           </button>
@@ -77,8 +79,7 @@ export function FefoModal({
 
         <div className="space-y-4 p-5">
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-            Primeiro o lote que expira mais cedo (FEFO). Lotes expirados e bloqueados nunca
-            entram na recomendação — aparecem à parte, com o motivo.
+            {t('fefo.explicacao')}
           </p>
 
           <form
@@ -90,7 +91,7 @@ export function FefoModal({
           >
             <label className="flex-1">
               <span className="mb-1 block text-sm font-medium text-slate-700">
-                Quantidade a retirar
+                {t('fefo.quantidade_retirar')}
               </span>
               <input
                 type="number"
@@ -103,7 +104,7 @@ export function FefoModal({
               />
             </label>
             <Button type="submit" disabled={!(q > 0) || isFetching}>
-              {isFetching ? 'A calcular...' : 'Calcular'}
+              {isFetching ? t('fefo.a_calcular') : t('fefo.calcular')}
             </Button>
           </form>
 
@@ -114,9 +115,9 @@ export function FefoModal({
                   <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                       <tr>
-                        <th className="px-3 py-2 font-medium">Lote</th>
-                        <th className="px-3 py-2 font-medium">Validade</th>
-                        <th className="px-3 py-2 text-right font-medium">A retirar</th>
+                        <th className="px-3 py-2 font-medium">{t('fefo.lote')}</th>
+                        <th className="px-3 py-2 font-medium">{t('fefo.validade')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{t('fefo.a_retirar')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -129,13 +130,13 @@ export function FefoModal({
                                 ESTADO_VALIDADE_META[linha.estado].pastilha
                               }`}
                             >
-                              {ESTADO_VALIDADE_META[linha.estado].label}
+                              {t(`validade_estado.${linha.estado}`)}
                             </span>
                           </td>
                           <td className="px-3 py-2 text-slate-600">
                             {linha.diasParaValidade === null
-                              ? 'sem validade'
-                              : `${linha.diasParaValidade} dias`}
+                              ? t('fefo.sem_validade')
+                              : t('fefo.dias', { n: linha.diasParaValidade })}
                           </td>
                           <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-800">
                             {linha.quantidade} {unidade}
@@ -147,8 +148,7 @@ export function FefoModal({
                 </div>
               ) : (
                 <p className="rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-600">
-                  Nenhum lote elegível. Ou não há lotes registados deste produto neste armazém,
-                  ou os que existem estão expirados ou bloqueados.
+                  {t('fefo.nenhum_lote')}
                 </p>
               )}
 
@@ -157,8 +157,8 @@ export function FefoModal({
               {data.quantidadeNaoCoberta > 0 && (
                 <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
                   <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  Faltam <strong>{data.quantidadeNaoCoberta} {unidade}</strong> sem lote
-                  disponível. Os lotes elegíveis não cobrem a quantidade pedida.
+                  {t('fefo.faltam_antes')} <strong>{data.quantidadeNaoCoberta} {unidade}</strong>{' '}
+                  {t('fefo.faltam_depois')}
                 </p>
               )}
 
@@ -166,7 +166,7 @@ export function FefoModal({
                 <div className="rounded-lg border border-slate-200 px-3 py-2">
                   <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-600">
                     <Ban className="h-3.5 w-3.5" />
-                    Lotes excluídos
+                    {t('fefo.excluidos')}
                   </p>
                   <ul className="space-y-0.5 text-xs text-slate-500">
                     {data.excluidos.map((e) => (
@@ -182,14 +182,12 @@ export function FefoModal({
           )}
 
           <p className="border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
-            Isto é uma recomendação de separação: não abate stock. A escolha do lote na venda e
-            no picking ainda não é feita pelo sistema, pelo que quem separa tem de seguir estas
-            linhas manualmente.
+            {t('fefo.nao_abate')}
           </p>
 
           <div className="flex justify-end">
             <Button type="button" variant="ghost" onClick={onClose}>
-              Fechar
+              {t('fefo.fechar')}
             </Button>
           </div>
         </div>

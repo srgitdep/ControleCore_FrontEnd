@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
-import { RECOMENDACAO_LABEL, type RecomendacaoNecessidade } from '../types/necessidade.types';
+import type { RecomendacaoNecessidade } from '../types/necessidade.types';
 
 const ORDEM: RecomendacaoNecessidade[] = [
   'COMPRAR',
@@ -51,6 +52,7 @@ export function ChipsRecomendacao({
   onAlternar,
   onLimpar,
 }: ChipsRecomendacaoProps) {
+  const { t } = useTranslation('necessidades');
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
@@ -63,7 +65,7 @@ export function ChipsRecomendacao({
             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
         )}
       >
-        Todos ({total})
+        {t('chips.todos', { total })}
       </button>
 
       {ORDEM.map((recomendacao) => {
@@ -81,7 +83,7 @@ export function ChipsRecomendacao({
               !activo && 'hover:opacity-80',
             )}
           >
-            {RECOMENDACAO_LABEL[recomendacao]} ({quantidade})
+            {t(`recomendacao.${recomendacao}`)} ({quantidade})
           </button>
         );
       })}

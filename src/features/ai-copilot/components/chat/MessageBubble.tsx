@@ -3,6 +3,7 @@ import { User, Sparkles, Copy, Check, Volume2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { HitlActionCard } from './HitlActionCard';
 
 interface MessageBubbleProps {
@@ -24,6 +25,7 @@ function extrairPersona(content: string): { persona: string | null; texto: strin
 }
 
 export function MessageBubble({ msg, idx }: MessageBubbleProps) {
+  const { t } = useTranslation('copiloto');
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const isUser = msg.role === 'user';
   const { persona, texto } = isUser
@@ -95,14 +97,14 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
               <button
                 onClick={() => handleSpeak(texto)}
                 className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                title="Ouvir em voz alta"
+                title={t('mensagem.ouvir')}
               >
                 <Volume2 className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleCopy(texto, idx)}
                 className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                title="Copiar texto"
+                title={t('mensagem.copiar')}
               >
                 {copiedId === idx ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
               </button>

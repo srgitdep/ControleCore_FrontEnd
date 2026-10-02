@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Loader2, Plus, Trash2, ShoppingBag, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { purchasesApi } from '../api/purchases.api';
 import { suppliersApi } from '@/features/fornecedores';
 import { catalogApi } from '@/features/produtos';
 import { useDebounce } from '@/shared/hooks';
-import { cn } from '@/shared/utils';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
 /**
  * Quantos produtos a lista mostra de uma vez.
@@ -56,6 +54,7 @@ export function CriarPedidoModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { t } = useTranslation('compras');
   const [fornecedorId, setFornecedorId] = useState(fornecedorIdInicial ?? '');
   const [dataPrevista, setDataPrevista] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -107,7 +106,7 @@ export function CriarPedidoModal({
     if (linhas.some((l) => l.produtoId === produto.id)) {
       // O backend recusa o pedido inteiro com produtos repetidos; dizê-lo aqui evita a
       // ida ao servidor e identifica qual é.
-      return toast.error(`"${produto.nome}" já está no pedido. Ajuste a quantidade.`);
+      return toast.error(t('pedido.erro_ja_no_pedido', { nome: produto.nome }));
     }
 
     setLinhas((antes) => [
@@ -131,11 +130,11 @@ export function CriarPedidoModal({
   };
 
   const guardar = async () => {
-    if (!fornecedorId) return toast.error('Escolha o fornecedor.');
-    if (linhas.length === 0) return toast.error('Acrescente pelo menos um produto.');
+    if (!fornecedorId) return toast.error(t('pedido.erro_fornecedor'));
+    if (linhas.length === 0) return toast.error(t('pedido.erro_sem_produtos'));
 
     const invalida = linhas.find((l) => !(l.quantidade > 0));
-    if (invalida) return toast.error(`A quantidade de "${invalida.nome}" tem de ser maior que zero.`);
+    if (invalida) return toast.error(t('pedido.erro_quantidade', { nome: invalida.nome }));
 
     setIsSaving(true);
     try {
@@ -152,11 +151,11 @@ export function CriarPedidoModal({
         })),
       });
 
-      toast.success('Pedido de compra criado em rascunho.');
+      toast.success(t('pedido.toast_criado'));
       onCreated();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao criar o pedido de compra.');
+      toast.error(mensagemDeErro(error, t('pedido.erro_criar')));
     } finally {
       setIsSaving(false);
     }
@@ -171,16 +170,16 @@ export function CriarPedidoModal({
               <ShoppingBag className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Novo pedido de compra</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('pedido.titulo')}</h2>
               <p className="text-sm text-slate-500">
-                Fica em rascunho — não é enviado ao fornecedor nem afecta o stock.
+                {t('pedido.subtitulo')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label={t('pedido.fechar')}
           >
             <X size={20} />
           </button>
@@ -191,14 +190,14 @@ export function CriarPedidoModal({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Fornecedor <span className="text-rose-500">*</span>
+                {t('pedido.fornecedor')} <span className="text-rose-500">*</span>
               </label>
               <select
                 value={fornecedorId}
                 onChange={(e) => setFornecedorId(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Escolher...</option>
+                <option value="">{t('pedido.escolher')}</option>
                 {elegiveis.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.nome}
@@ -209,7 +208,7 @@ export function CriarPedidoModal({
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Data de entrega combinada
+                {t('pedido.data_entrega')}
               </label>
               <input
                 type="date"
@@ -219,7 +218,7 @@ export function CriarPedidoModal({
               />
               {!dataPrevista && (
                 <p className="mt-1 text-xs text-amber-600">
-                  Sem esta data não é possível medir a pontualidade do fornecedor.
+                  {t('pedido.sem_data')}
                 </p>
               )}
             </div>
@@ -227,7 +226,7 @@ export function CriarPedidoModal({
 
           {/* ── Produtos ─────────────────────────────────────────────────── */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Produtos</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('pedido.produtos')}</label>
             {/*
               O `onBlur` está no contentor e não no input: fecha a lista quando o foco sai
               para fora dela, e deixa-a aberta quando passa para um dos botões lá dentro —
@@ -246,7 +245,7 @@ export function CriarPedidoModal({
                 value={pesquisa}
                 onChange={(e) => setPesquisa(e.target.value)}
                 onFocus={() => setListaAberta(true)}
-                placeholder="Clicar para ver os produtos, ou escrever para procurar..."
+                placeholder={t('pedido.pesquisa_placeholder')}
                 className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500"
               />
 
@@ -255,13 +254,13 @@ export function CriarPedidoModal({
                   {aCarregarProdutos && produtos.length === 0 ? (
                     <p className="flex items-center gap-2 px-3 py-3 text-sm text-slate-500">
                       <Loader2 size={14} className="animate-spin" />
-                      A carregar produtos...
+                      {t('pedido.a_carregar_produtos')}
                     </p>
                   ) : produtos.length === 0 ? (
                     <p className="px-3 py-3 text-sm text-slate-500">
                       {termo
-                        ? `Nenhum produto encontrado para "${termo}".`
-                        : 'A empresa ainda não tem produtos no catálogo.'}
+                        ? t('pedido.nenhum_encontrado', { termo })
+                        : t('pedido.catalogo_vazio')}
                     </p>
                   ) : (
                     <>
@@ -288,10 +287,10 @@ export function CriarPedidoModal({
                                 </span>
                                 <span className="flex items-center gap-2 text-xs text-slate-500">
                                   {jaNoPedido ? (
-                                    <span className="text-slate-400">já no pedido</span>
+                                    <span className="text-slate-400">{t('pedido.ja_no_pedido')}</span>
                                   ) : (
                                     <>
-                                      {moeda(p.precoCusto ?? 0)}
+                                      {formatMoeda(p.precoCusto ?? 0)}
                                       <Plus size={13} className="text-blue-600" />
                                     </>
                                   )}
@@ -304,8 +303,11 @@ export function CriarPedidoModal({
 
                       {escondidos > 0 && (
                         <p className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                          A mostrar {produtos.length} de {totalNoCatalogo}. Escreva para
-                          encontrar os restantes {escondidos}.
+                          {t('pedido.a_mostrar', {
+                            mostrados: produtos.length,
+                            total: totalNoCatalogo,
+                            restantes: escondidos,
+                          })}
                         </p>
                       )}
                     </>
@@ -316,7 +318,7 @@ export function CriarPedidoModal({
 
             {linhas.length === 0 ? (
               <p className="mt-3 rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Nenhum produto no pedido. Clique no campo acima para ver o catálogo.
+                {t('pedido.nenhum_no_pedido')}
               </p>
             ) : (
               <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
@@ -324,10 +326,10 @@ export function CriarPedidoModal({
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-3 py-2 font-medium">Produto</th>
-                      <th className="w-28 px-3 py-2 font-medium">Quantidade</th>
-                      <th className="w-32 px-3 py-2 font-medium">Custo unit.</th>
-                      <th className="w-28 px-3 py-2 text-right font-medium">Total</th>
+                      <th className="px-3 py-2 font-medium">{t('pedido.col_produto')}</th>
+                      <th className="w-28 px-3 py-2 font-medium">{t('pedido.col_quantidade')}</th>
+                      <th className="w-32 px-3 py-2 font-medium">{t('pedido.col_custo_unit')}</th>
+                      <th className="w-28 px-3 py-2 text-right font-medium">{t('pedido.col_total')}</th>
                       <th className="w-10 px-3 py-2" />
                     </tr>
                   </thead>
@@ -363,7 +365,7 @@ export function CriarPedidoModal({
                           />
                         </td>
                         <td className="px-3 py-2 text-right text-slate-700">
-                          {moeda(l.quantidade * l.custoUnitario)}
+                          {formatMoeda(l.quantidade * l.custoUnitario)}
                         </td>
                         <td className="px-3 py-2">
                           <button
@@ -371,7 +373,7 @@ export function CriarPedidoModal({
                               setLinhas((antes) => antes.filter((x) => x.produtoId !== l.produtoId))
                             }
                             className="p-1 text-slate-400 hover:text-rose-500"
-                            title="Remover linha"
+                            title={t('pedido.remover_linha')}
                           >
                             <Trash2 size={15} />
                           </button>
@@ -387,12 +389,12 @@ export function CriarPedidoModal({
 
           {/* ── Observações ──────────────────────────────────────────────── */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Observações</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('pedido.observacoes')}</label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={2}
-              placeholder="Condições acordadas, referência da proposta..."
+              placeholder={t('pedido.observacoes_exemplo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -400,15 +402,15 @@ export function CriarPedidoModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-6 py-3">
           <p className="text-sm text-slate-600">
-            {linhas.length} {linhas.length === 1 ? 'linha' : 'linhas'} ·{' '}
-            <strong className="text-slate-900">{moeda(total)}</strong>
+            {t('pedido.n_linhas', { count: linhas.length })} ·{' '}
+            <strong className="text-slate-900">{formatMoeda(total)}</strong>
           </p>
           <div className="flex gap-2">
             <button
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
-              Cancelar
+              {t('pedido.cancelar')}
             </button>
             <button
               onClick={guardar}
@@ -416,7 +418,7 @@ export function CriarPedidoModal({
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {isSaving && <Loader2 size={16} className="animate-spin" />}
-              Criar pedido
+              {t('pedido.criar')}
             </button>
           </div>
         </div>

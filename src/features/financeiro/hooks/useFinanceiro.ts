@@ -9,6 +9,8 @@ import {
 } from '../api/finance.api';
 import type { CriarRegistroDto } from '../api/finance.api';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { mensagemDeErro } from '@/shared/utils';
 
 export function useDreSummary(mes: number, ano: number) {
   return useQuery({
@@ -39,37 +41,39 @@ export function useContasPagar(page = 1, limit = 20) {
 }
 
 export function useProcessarPagamento() {
+  const { t } = useTranslation('financeiro');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: processarPagamento,
     onSuccess: () => {
-      toast.success('Pagamento processado com sucesso!');
+      toast.success(t('mensagens.pagamento_ok'));
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
       queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
       queryClient.invalidateQueries({ queryKey: ['dre-summary'] });
       queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao processar pagamento.');
+      toast.error(mensagemDeErro(error, t('mensagens.erro_pagamento')));
     }
   });
 }
 
 export function useCriarRegistro() {
+  const { t } = useTranslation('financeiro');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CriarRegistroDto) => criarRegistro(data),
     onSuccess: () => {
-      toast.success('Registro financeiro criado com sucesso!');
+      toast.success(t('mensagens.registo_criado'));
       queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
       queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
       queryClient.invalidateQueries({ queryKey: ['dre-summary'] });
       queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar registro.');
+      toast.error(mensagemDeErro(error, t('mensagens.erro_criar')));
     }
   });
 }

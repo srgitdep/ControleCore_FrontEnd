@@ -1,0 +1,50 @@
+{
+  "acoes": {
+    "cancelar": "Cancelar",
+    "guardar": "Guardar",
+    "editar": "Editar",
+    "apagar": "Apagar"
+  },
+  "pagina": {
+    "titulo": "Módulos",
+    "subtitulo": "O catálogo do que as empresas podem contratar",
+    "novo": "Novo módulo",
+    "mostrar_desactivados": "Mostrar módulos desactivados",
+    "vazio": "Ainda não há módulos no catálogo.",
+    "col_modulo": "Módulo",
+    "col_codigo": "Código",
+    "col_preco": "Preço / mês",
+    "col_estado": "Estado",
+    "activo": "Activo",
+    "desactivado": "Desactivado",
+    "desactivar": "Desactivar",
+    "activar": "Activar",
+    "apagar_titulo": "Apagar módulo",
+    "apagar_mensagem": "Apagar «{{nome}}»? Se houver empresas com este módulo activo, o servidor recusa — desactive-o em vez disso."
+  },
+  "modal": {
+    "codigo_obrigatorio": "Indique o código do módulo.",
+    "nome_obrigatorio": "Indique o nome do módulo.",
+    "preco_invalido": "O preço mensal tem de ser um número válido.",
+    "titulo_editar": "Editar módulo",
+    "codigo": "Código",
+    "codigo_exemplo": "Ex.: pos",
+    "ordem": "Ordem",
+    "nome": "Nome",
+    "nome_exemplo": "Ex.: Ponto de Venda",
+    "descricao": "Descrição",
+    "opcional": "(opcional)",
+    "preco": "Preço mensal (MT)"
+  },
+  "mensagens": {
+    "criado": "Módulo criado.",
+    "erro_criar": "Erro ao criar o módulo.",
+    "actualizado": "Módulo actualizado.",
+    "erro_actualizar": "Erro ao actualizar o módulo.",
+    "activado": "«{{nome}}» activado.",
+    "desactivado": "«{{nome}}» desactivado.",
+    "erro_estado": "Erro ao mudar o estado do módulo.",
+    "apagado": "Módulo apagado.",
+    "erro_apagar": "Erro ao apagar o módulo."
+  }
+}

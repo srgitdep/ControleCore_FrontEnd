@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Building2, Store, Truck } from 'lucide-react';
+import { SelectorIdioma } from '@/shared/ui';
 
 /**
  * A bifurcação: comprador ou fornecedor.
@@ -29,9 +31,15 @@ import { ArrowLeft, ArrowRight, Building2, Store, Truck } from 'lucide-react';
  * errado.
  */
 export function EscolherTipoContaPage() {
+  const { t } = useTranslation('adesao');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-3xl">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
+
         {/* Sem isto, quem chega aqui pela landing page fica sem forma de recuar — a única
             saída era o botão «Voltar» do browser, que em muitos telemóveis nem está à
             vista. */}
@@ -40,56 +48,55 @@ export function EscolherTipoContaPage() {
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
         >
           <ArrowLeft size={15} />
-          Voltar
+          {t('comum.voltar')}
         </Link>
 
         <header className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-slate-900">Criar conta no ControlCore</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('tipo.titulo')}</h1>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-500">
-            Duas formas de estar na plataforma. Escolha a que descreve o seu negócio — o
-            registo é diferente em cada caso.
+            {t('tipo.subtitulo')}
           </p>
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Opcao
             icone={<Store size={22} />}
-            titulo="Tenho uma loja ou cadeia de lojas"
-            frase="Vendo aos meus clientes"
-            descricao="Gestão de caixa, stock, compras e contabilidade. Cada loja registada no sistema é um comprador, e pode requisitar a fornecedores da plataforma."
+            titulo={t('tipo.comprador.titulo')}
+            frase={t('tipo.comprador.frase')}
+            descricao={t('tipo.comprador.descricao')}
             pontos={[
-              'Caixa, stock e armazéns em vários locais',
-              'Requisições comparadas entre fornecedores',
-              'Pedido analisado antes de a conta ser criada',
+              t('tipo.comprador.ponto_1'),
+              t('tipo.comprador.ponto_2'),
+              t('tipo.comprador.ponto_3'),
             ]}
             destino="/criar-conta/comprador"
-            botao="Pedir adesão"
+            botao={t('tipo.comprador.botao')}
             realce
           />
 
           <Opcao
             icone={<Truck size={22} />}
-            titulo="Sou fornecedor ou distribuidor"
-            frase="Vendo a outras empresas"
-            descricao="Publique o catálogo e os preços uma vez e fique visível a todos os compradores da plataforma. Não paga para se registar."
+            titulo={t('tipo.fornecedor.titulo')}
+            frase={t('tipo.fornecedor.frase')}
+            descricao={t('tipo.fornecedor.descricao')}
             pontos={[
-              'Vitrine com artigos, preços e escalões',
-              'Aparece nas comparações de quem compra',
-              'Conta criada na hora, por e-mail',
+              t('tipo.fornecedor.ponto_1'),
+              t('tipo.fornecedor.ponto_2'),
+              t('tipo.fornecedor.ponto_3'),
             ]}
             destino="/fornecedor/registar"
-            botao="Registar a minha empresa"
+            botao={t('tipo.fornecedor.botao')}
           />
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          Já tem conta?{' '}
+          {t('tipo.ja_tem_conta')}{' '}
           <Link to="/login" className="font-medium text-blue-600 hover:underline">
-            Entrar no ControlCore
+            {t('tipo.entrar')}
           </Link>
           <span className="mx-2 text-slate-300">·</span>
           <Link to="/fornecedor/entrar" className="font-medium text-blue-600 hover:underline">
-            Entrar no portal do fornecedor
+            {t('tipo.entrar_portal')}
           </Link>
         </p>
 
@@ -97,9 +104,9 @@ export function EscolherTipoContaPage() {
             porta aberta para o ver antes de decidir custa um link e evita a saída de quem
             ainda não está pronto a preencher um formulário. */}
         <p className="mt-3 text-center text-xs text-slate-400">
-          Só a explorar?{' '}
+          {t('tipo.so_explorar')}{' '}
           <Link to="/mercado" className="hover:underline">
-            Ver os fornecedores da plataforma
+            {t('tipo.ver_fornecedores')}
           </Link>
         </p>
 
@@ -108,9 +115,9 @@ export function EscolherTipoContaPage() {
             terceira pessoa que passa por aqui à procura de "criar conta" e não
             encontrava nada para ela. */}
         <p className="mt-1.5 text-center text-xs text-slate-400">
-          Só quer comprar numa loja?{' '}
+          {t('tipo.so_comprar')}{' '}
           <Link to="/loja" className="hover:underline">
-            Ir à loja online
+            {t('tipo.ir_loja')}
           </Link>
         </p>
       </div>

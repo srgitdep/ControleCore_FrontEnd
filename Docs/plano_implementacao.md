@@ -798,6 +798,80 @@ esse merge trouxe.
   > loja em inglês no browser (catálogo, carrinho, checkout, conta, pedidos) e receber o
   > e-mail de um pedido na língua escolhida.
 
+
+### Fase 20 — Multilínguas, Fases 2B a 4: ERP, POS e servidor completos em inglês (3 Out 2026)
+
+- **2026-10-03 · [BE] · Antonio Mambo** — `feat/multilinguas-fase-2b`
+  - feat(i18n): erros do portal do fornecedor e e-mail de boas-vindas em inglês (Fase 2B)
+  - feat(i18n): pedido de adesão e e-mails de boas-vindas em inglês (Fase 2C)
+  - feat(i18n): código traduzível em todas as excepções do servidor (Fase 4)
+  - fix(i18n): a Mayra responde na língua do utilizador também nas análises assíncronas
+- **2026-10-03 · [FE] · Antonio Mambo** — `feat/multilinguas-fase-2b`
+  - feat(i18n): portal do fornecedor e mercado em inglês (Fase 2B)
+  - feat(i18n): site público, preços e adesão em inglês (Fase 2C)
+  - feat(i18n): ERP e POS completos em inglês (Fase 3)
+
+  > **Fecha de uma vez as Fases 2B, 2C, 3 e 4 da §4.2** — implementadas em paralelo por
+  > vários agentes, sobre a mesma branch, e verificadas e mescladas juntas.
+  >
+  > **Backend**
+  > - `codigo` + `parametros` generalizados a **todas** as excepções HTTP que faltavam:
+  >   `compra`, `inventory`/`stock`, `armazem`, `crm`, `commerce` (gestão do Compra
+  >   Fácil), `b2b` (requisições, sourcing, adjudicação, qualificação, fusão de
+  >   organizações, importação de catálogo), `necessidade` (incl. transferências entre
+  >   lojas), `fornecedor` (conta bancária), `vendas`, `caixa`, `financeiro`, `produto`,
+  >   `users`, `hr`, `ponto`, `turno`, `perfil`, `modulo`, `empresa`, `contrato`,
+  >   `salario`, `categoria`, `cliente`, `loja`, e os guards/decorators partilhados
+  >   (`jwt-auth`, `permissoes`, `roles`, `modulo-access`, segregação de funções). ~480
+  >   chaves novas em `erros.json`, confirmadas pelo teste de paridade
+  >   `codigos-de-erro.spec.ts` contra as duas línguas.
+  > - Mensagens de validação escritas à mão nos DTOs passam a `mensagemTraduzida()`.
+  > - A Mayra responde por omissão na língua preferida do utilizador
+  >   (`idiomaDoUtilizadorPorId`, em `src/shared/idiomas.ts`, partilhada pelo chat de
+  >   texto, pela voz — Gemini Live — e pelas duas análises assíncronas): a recomendação
+  >   do painel de necessidades (cache agora separada por língua, R3 do plano) e a
+  >   classificação de excepções de inventário.
+  > - `pedidos_adesao.idioma` (migração não destrutiva) e `utilizadores_fornecedor`
+  >   passam a gravar a língua de quem se regista; os e-mails de boas-vindas e de
+  >   confirmação/recusa saem nessa língua.
+  > - `diagnosticoDoNuit()` passa a devolver código + parâmetros em vez de uma frase
+  >   fixa, para o aviso do NUIT se poder traduzir também no registo público.
+  >
+  > **Frontend**
+  > - Namespaces novos: `portal`, `mercado`, `site` (substitui `copywriting.ts` —
+  >   `useCopy()` lê o catálogo activo), `precos`, `adesao`, `pos`, `stock`, `armazens`,
+  >   `transferencias`, `compras`, `conferencia`, `catalogo`, `crm`, `rh`, `financeiro`,
+  >   `fornecedores`, `b2b`, `produtos`, `lojas`, `empresas`, `utilizadores`, `modulos`,
+  >   `painel`, `historico`, `pesquisa`, `lojaGestao` (gestão do Compra Fácil no ERP),
+  >   `copiloto` (UI da Mayra) e `shell` (layout, guards, componentes genéricos) — as 24
+  >   áreas do ERP e o POS ficam todas traduzíveis.
+  > - `precos.dados.ts` reduzido a números, booleanos e códigos; os textos (nomes,
+  >   frases, limites) saem do namespace `precos`.
+  > - `formatInteiro`/`formatMoedaInteira` novos em `formatMoeda.ts`, para valores sem
+  >   casas decimais (preçário, módulos) que antes concatenavam `MT` à mão.
+  > - O aviso do NUIT no browser (`diagnosticoDoNuit`/`diagnosticoDoNuitAoEscrever` em
+  >   `shared/utils/nuit.ts`) devolve código + parâmetros, traduzidos pelo namespace
+  >   `comum` (`nuit.*`) — usado no registo do fornecedor e no pedido de adesão.
+  > - `SelectorIdioma` acessível também no menu móvel (o POS corre em telemóvel).
+  > - Etiquetas por mapa fixo (`Record<string,string>`) substituídas por código + chave
+  >   em todas as áreas tocadas — nenhuma lista de estados/tipos ficou por traduzir.
+  >
+  > **Testes**: backend 2332 (todos os suites, incl. o novo `nuit-catalogo.spec.ts` e os
+  > dois testes de língua das análises da Mayra); frontend 147 (10 ficheiros, incl. a
+  > paridade `pt`↔`en` de todos os 29 namespaces). `tsc` e `npm run build` limpos nos
+  > dois repositórios.
+  > - **Tradução do inglês escrita por Claude, ainda sem revisão por uma pessoa fluente**
+  >   (§4.4) — mesma decisão da Fase 19: publica-se e revê-se depois.
+  > - **Fica por fazer**: a regra de lint que proíbe texto solto em JSX (§4.4) não foi
+  >   implementada — a prevenção depende por agora da revisão humana. As 65 ferramentas
+  >   da Mayra continuam a devolver texto em português (R7, opcional) — o modelo
+  >   reformula na língua do utilizador.
+  >
+  > **Por confirmar pelo utilizador**, que não consigo exercitar daqui: percorrer o ERP e
+  > o POS em inglês no browser (todas as 24 áreas), confirmar o e-mail de boas-vindas do
+  > fornecedor e da adesão na língua escolhida, e pedir à Mayra uma recomendação de
+  > necessidades/classificação de excepção com a conta em inglês.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -939,23 +1013,28 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       pela língua activa, substituindo as 143 chamadas `toLocale*` com cinco locales
       diferentes; testes de paridade de chaves.
 - [x] **Fase 2A — Compra Fácil e login.** Concluída em 2026-10-01 (Fase 19).
-- [ ] **Fase 2B — Portal do fornecedor e mercado.** ~485 textos: o portal (~434, o maior
-      bloco — `ArtigoFormModal`, `ImportarCatalogoPage`, `VitrinePage`, `PerfilPage`,
-      `RegistarFornecedorPage`, zonas, documentos, preços), o mercado público (~51), as
-      etiquetas de `portal.api.ts` e `mercado.api.ts`, os formatadores locais (`fmt` com
-      `pt-PT` + «MT») para `formatMoeda`/`formatData`, ~30 erros do `b2b` e o e-mail de
-      boas-vindas ao fornecedor (que ainda não leva `idioma`: o registo público não o
-      pergunta).
-- [ ] **Fase 2C — Site público e adesão.** ~443 textos: o `copywriting.ts` (~178) e
-      `precos.dados.ts` (104) com o seu `PrecosPage` (47), a landing (~38), o pedido de
-      adesão público (~60) e os e-mails de adesão (`PedidoAdesao` só tem `gestorEmail`:
-      sem língua, usar a do browser no momento do pedido).
-- [ ] Revisão das traduções em inglês por uma pessoa fluente (§4.4), das Fases 1, 2A, 2B
-      e 2C — decisão de 2026-10-01: publicar com a tradução de Claude e rever depois.
-- [ ] **Fase 3 — ERP e POS.** Extracção por feature, POS primeiro (telemóvel).
-- [ ] **Fase 4 — Servidor e Mayra.** Excepções dos restantes módulos; língua
-      preferida no prompt da Mayra; cache da análise de necessidades separada por
-      língua.
+- [x] **Fase 2B — Portal do fornecedor e mercado.** Concluída em 2026-10-03 (Fase 20):
+      o portal e o mercado público, as etiquetas de `portal.api.ts`/`mercado.api.ts`, os
+      formatadores, 28 erros do `b2b` e o e-mail de boas-vindas ao fornecedor (ganhou
+      `idioma`, gravado no registo).
+- [x] **Fase 2C — Site público e adesão.** Concluída em 2026-10-03 (Fase 20):
+      `copywriting.ts` substituído pelo namespace `site` (`useCopy()`), `precos.dados.ts`
+      reduzido a números e códigos, a landing, o pedido de adesão público (que ganhou
+      `idioma`, gravado no pedido) e os e-mails de adesão/boas-vindas na língua de quem
+      pediu.
+- [x] **Fase 3 — ERP e POS.** Concluída em 2026-10-03 (Fase 20): extracção por feature,
+      todas as 24 áreas do ERP e o POS, com `SelectorIdioma` também acessível no menu
+      móvel.
+- [x] **Fase 4 — Servidor e Mayra.** Concluída em 2026-10-03 (Fase 20): `codigo` +
+      catálogo generalizado a todos os módulos do backend restantes; a Mayra responde
+      por omissão na língua preferida do utilizador no chat, na voz e nas duas análises
+      assíncronas (necessidades, excepções de inventário), com a cache separada por
+      língua (R3).
+- [ ] Revisão das traduções em inglês por uma pessoa fluente (§4.4), de todas as fases
+      1 a 4 — decisão de 2026-10-01: publicar com a tradução de Claude e rever depois.
+- [ ] Regra de lint que proíba texto solto em JSX nas pastas já migradas (§4.4) — não
+      implementada; as 24 áreas do ERP e o POS (Fase 3) dependem por agora só da revisão
+      humana para não reintroduzir texto fixo.
 - [x] Defeito pré-existente, encontrado no planeamento: `index.html` declara
       `lang="en"` com a interface em português — afecta leitores de ecrã e a
       tradução automática do browser. Corrige-se na Fase 1.
@@ -2157,18 +2236,28 @@ Sempre a correr, com `npm run start:dev` (3100) e `npm run dev` (5273).
 ### 4.2 Multilínguas (internacionalização)
 
 - **Data**: 2026-09-28
-- **Estado**: Em implementação — Fase 1 concluída em 2026-09-29 (Secção 2, Fase 18);
-  Fase 2 a seguir.
-- **Desvios feitos na Fase 1** (prevalecem sobre o texto abaixo onde divergem):
+- **Estado**: Concluído — Fases 0 a 4 implementadas e mescladas (Secção 2, Fases 18 a
+  20). Fica por fazer só a revisão do inglês por uma pessoa fluente e a regra de lint
+  anti-texto-solto (ambas na Secção 3), e tudo o que a Secção 2.4 deixa para a entrega
+  ao domicílio.
+- **Desvios feitos ao longo da implementação** (prevalecem sobre o texto abaixo onde
+  divergem):
   1. **A língua do servidor vem só do `Accept-Language`**, que o frontend envia com a
      língua activa — e não do utilizador autenticado (D2): o `nestjs-i18n` resolve a
-     língua num middleware, antes do `JwtAuthGuard`.
+     língua num middleware, antes do `JwtAuthGuard`. A Mayra é a excepção: o chat de
+     texto já tem o pedido HTTP, mas a voz chega por WebSocket sem `Accept-Language` da
+     aplicação, por isso as duas análises assíncronas e a voz resolvem a língua a partir
+     da base de dados (`idiomaDoUtilizadorPorId`), não do cabeçalho.
   2. **`idioma` é opcional** (`NULL` = não escolheu), e não `@default("pt")` (§4.1):
      com um valor por omissão, `Empresa.idiomaPadrao` nunca seria usada.
   3. **A preferência vem na resposta do login**, e não de `GET /auth/eu` (§4.2/§4.3): o
      frontend não chama essa rota.
   4. **As 143 chamadas `toLocale*` espalhadas mudam com cada ecrã**, nas Fases 2 e 3, e
      não na Fase 1 (§4.3): esses 72 ficheiros são tocados de qualquer forma na extracção.
+  5. **O frontend não envia explicitamente a língua à Mayra** (nem no chat nem na voz),
+     ao contrário do que a §4.3 previa: o chat de texto já vai com `Accept-Language` no
+     `axios`, e a voz lê a preferência gravada do utilizador directamente no servidor —
+     enviar a língua a mais seria um segundo caminho para a mesma decisão.
 - **Âmbito**: Fullstack (Backend + Frontend + Base de dados)
 - **Repositórios afectados**: `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relacionado**: Entrega ao domicílio, §4.1 deste documento (por fazer) — ver §2.4 abaixo
@@ -2343,46 +2432,51 @@ Migração `prisma/migrations/<timestamp>_idioma_utilizadores/migration.sql`.
 **Não destrutiva** — só acrescenta colunas com valor por defeito. As linhas existentes
 ficam `'pt'`.
 
-- [ ] **[obrigatório]** `User.idioma String @default("pt")`.
-- [ ] **[obrigatório]** `ContaCliente.idioma String @default("pt")`.
-- [ ] **[obrigatório]** `UtilizadorFornecedor.idioma String @default("pt")`.
-- [ ] **[obrigatório]** `Empresa.idiomaPadrao String @default("pt")`.
-- [ ] **[opcional]** Nada para `Cliente` — usa `ClientePreferencia` (D6).
+- [x] **[obrigatório]** `User.idioma`, `ContaCliente.idioma`, `UtilizadorFornecedor.idioma`
+      — **`String?` opcional**, não `@default("pt")` (desvio 2).
+- [x] **[obrigatório]** `Empresa.idiomaPadrao String @default("pt")`.
+- [x] **[opcional]** Nada para `Cliente` — usa `ClientePreferencia` (D6).
+- [x] **Acrescentado, fora do previsto aqui:** `PedidoAdesao.idioma` (Fase 2C) — o pedido
+      de adesão é público, sem conta nem empresa, e precisava da própria coluna.
 - [ ] **[obrigatório, na entrega ao domicílio]** `Estafeta.idioma` no modelo novo, com a
-      mesma regra (§2.4).
+      mesma regra (§2.4) — por fazer, a entrega ao domicílio continua por implementar.
 
 ##### 4.2 Backend
 
-- [ ] **[obrigatório]** `src/shared/idiomas.ts`: `IDIOMAS_SUPORTADOS`, `IDIOMA_PADRAO`,
+- [x] **[obrigatório]** `src/shared/idiomas.ts`: `IDIOMAS_SUPORTADOS`, `IDIOMA_PADRAO`,
       `eIdiomaSuportado()` e `resolverIdioma(preferencia, empresa, cabecalho)` com a
-      ordem da regra 2. Função pura, testada.
-- [ ] **[obrigatório]** `nestjs-i18n` em `app.module.ts`: catálogo em `src/i18n/pt/*.json`
-      e `src/i18n/en/*.json`, recurso a `pt`, resolvedor que lê primeiro o utilizador
-      autenticado e depois o `Accept-Language`. Copiar `src/i18n/` para `dist/` no build
-      (`nest-cli.json` → `assets`).
-- [ ] **[obrigatório]** `ValidationPipe` com `exceptionFactory` que traduz as mensagens do
+      ordem da regra 2. Função pura, testada. Ganhou também `idiomaDoUtilizadorPorId()`
+      (Fase 20), partilhada pela Mayra e pelas duas análises assíncronas.
+- [x] **[obrigatório]** `nestjs-i18n` em `app.module.ts`: catálogo em `src/i18n/pt/*.json`
+      e `src/i18n/en/*.json`, recurso a `pt`, resolvedor que lê o `Accept-Language`
+      (desvio 1). Copiado para `dist/` no build (`nest-cli.json` → `assets`).
+- [x] **[obrigatório]** `ValidationPipe` com `exceptionFactory` que traduz as mensagens do
       `class-validator` (hoje em inglês).
-- [ ] **[obrigatório]** Filtro global que traduz `{ codigo, parametros }` para `message`
+- [x] **[obrigatório]** Filtro global que traduz `{ codigo, parametros }` para `message`
       na língua do pedido; **sem `codigo`, deixa a mensagem como está** (D4).
       `PrismaExcecaoFilter` passa as suas duas mensagens a chaves.
-- [ ] **[obrigatório]** Endpoints para guardar a preferência (tabela abaixo) e `idioma`
-      nas respostas de `GET /auth/eu` e `GET /commerce/conta/eu`.
-- [ ] **[obrigatório]** E-mails: `email.templates.ts` recebe a língua e lê os textos do
-      catálogo; `<html lang>` dinâmico; `mailer.service.ts` resolve a língua do
-      destinatário (regra 4). O recibo fica em português (D9).
-- [ ] **[obrigatório]** Notificações de pedido do Compra Fácil (`transitar-estado-pedido`,
+- [x] **[obrigatório]** Endpoints para guardar a preferência (tabela abaixo); `idioma` na
+      resposta do login dos três tipos de conta (desvio 3), não de `GET /auth/eu`.
+- [x] **[obrigatório]** E-mails: `email.templates.ts` recebe a língua e lê os textos do
+      catálogo; `mailer.service.ts` resolve a língua do destinatário (regra 4). O recibo
+      fica em português (D9).
+- [x] **[obrigatório]** Notificações de pedido do Compra Fácil (`transitar-estado-pedido`,
       `cancelar-pedido-gestao`, `conferir-pedido`, `confirmar-levantamento` →
       `notificar-cliente-pedido.service.ts`) na língua de `ContaCliente.idioma`.
-- [ ] **[obrigatório]** Mayra: `ai-copilot-prompt.service.ts` acrescenta a língua preferida
-      e formata a data com ela; `AnalisarNecessidadesMayraUseCase` e
-      `AnalisarExcecaoMayraUseCase` pedem a resposta nessa língua e a cache passa a
-      incluí-la (R3); `voice_error` do gateway de voz passa a chaves.
+- [x] **[obrigatório]** Mayra: `ai-copilot-prompt.service.ts` acrescenta a língua preferida
+      (lida da base de dados, desvio 1 — não do `Accept-Language`) e formata a data com
+      ela; `AnalisarNecessidadesMayraUseCase` e `AnalisarExcecaoMayraUseCase` pedem a
+      resposta nessa língua e a cache passa a incluí-la (R3) — concluído na Fase 20,
+      depois de verificado em falta após o resto da Fase 4.
       O `assistente-campanha.use-case.ts` **mantém** o português europeu fixo quando a
       campanha é em português — é regra de negócio do CRM, não da interface.
-- [ ] **[obrigatório, Fase 4]** Converter as excepções por módulo, pela ordem de
-      exposição ao cliente final: `commerce` (38), `b2b` (60), `auth` (12), depois
-      `compra` (93), `inventory` (59), `crm` (46) e os restantes.
-- [ ] **[opcional]** Converter os textos das 65 ferramentas da Mayra (R7).
+- [x] **[obrigatório, Fase 4]** Converter as excepções por módulo — concluído para
+      **todos** os módulos (não só `commerce`/`b2b`/`auth`): `compra`, `inventory`,
+      `armazem`, `crm`, `necessidade`, `fornecedor`, `vendas`, `caixa`, `financeiro`,
+      `produto`, `users`, `hr`, `ponto`, `turno`, `perfil`, `modulo`, `empresa`,
+      `contrato`, `salario`, `categoria`, `cliente`, `loja`, e os guards partilhados.
+- [ ] **[opcional]** Converter os textos das 65 ferramentas da Mayra (R7) — não feito; o
+      modelo reformula o resultado das ferramentas na língua do utilizador.
 
 ###### Endpoints
 
@@ -2396,63 +2490,66 @@ ficam `'pt'`.
 
 ##### 4.3 Frontend
 
-- [ ] **[obrigatório]** `src/i18n/index.ts`: `i18next` + `react-i18next` +
-      `i18next-browser-languagedetector`; recurso a `pt`; namespaces carregados com
-      `import()` do Vite (D1). Inicializado em `main.tsx`, antes do router.
-- [ ] **[obrigatório]** Tipos: declaração de `react-i18next` a partir de
+- [x] **[obrigatório]** `src/i18n/index.ts`: `i18next` + `react-i18next` +
+      `i18next-browser-languagedetector`; recurso a `pt`; **todos os namespaces no bundle
+      inicial** (`import.meta.glob` eager, não `import()` sob pedido — ver a nota do
+      próprio ficheiro: sem isso o ecrã mostrava a chave crua enquanto descarregava, por
+      não haver `Suspense`). Inicializado antes do router.
+- [x] **[obrigatório]** Tipos: declaração de `react-i18next` a partir de
       `src/locales/pt/*.json`, para que uma chave mal escrita seja erro de `tsc`.
-- [ ] **[obrigatório]** `index.html` e `document.documentElement.lang` seguem a língua
+- [x] **[obrigatório]** `index.html` e `document.documentElement.lang` seguem a língua
       activa (hoje `lang="en"` com a interface em português).
-- [ ] **[obrigatório]** `axios.ts`: interceptor que envia `Accept-Language` com a língua
+- [x] **[obrigatório]** `axios.ts`: interceptor que envia `Accept-Language` com a língua
       activa — é o que faz o servidor responder na língua certa a quem não tem sessão.
-- [ ] **[obrigatório]** Preferência: ao entrar, a língua vem de `idioma` em `/auth/eu`,
-      `/commerce/conta/eu` ou do portal; sem sessão, do `localStorage` (via
-      `useLocalStorage`) ou do browser. **Não** guardar a língua em Zustand além do que
-      o `i18next` já guarda — duplicaria o estado.
-- [ ] **[obrigatório]** `SelectorIdioma` em `src/shared/ui/`, usado no `Header` do ERP, no
-      `LojaPublicaLayout`, no `PortalLayout` e na landing. Com sessão, grava pelo
-      endpoint; sem sessão, só localmente.
-- [ ] **[obrigatório]** `formatMoeda`, `formatMoedaCompacta`, `formatData`,
-      `formatDataRelativa` (hoje com "agora"/"há X min" escritos à mão) e um
-      `formatNumero` novo passam a ler a língua activa (D7). Depois, substituir as 143
-      chamadas `toLocale*` e os `MT` concatenados. Remover os imports de locale do
-      `date-fns` (`ptBR`, `pt`) em favor de um mapa por língua.
-- [ ] **[obrigatório]** Zod: os 6 ficheiros de schemas passam a mensagens por chave
-      (`t('validacao.obrigatorio')`), com os schemas criados dentro do componente ou
-      com `errorMap` global.
-- [ ] **[obrigatório]** Etiquetas de enum (`ETIQUETA_ESTADO_PEDIDO`,
-      `ETIQUETA_METODO_PAGAMENTO` e as restantes) passam a chaves.
-- [ ] **[obrigatório, Fase 2–3]** Extracção por feature, com `copywriting.ts` a ser o
-      primeiro (já está centralizado). Ordem na §8.
-- [ ] **[obrigatório]** Mayra: `sendChatMessageApi` e o socket de voz enviam a língua
-      activa; `detectarIdioma()` continua a servir o reconhecimento de voz, mas a língua
-      por defeito passa a ser a preferência.
-- [ ] **[opcional]** Pseudo-língua de teste (`[!! Ţéxţö !!]`) para encontrar à vista os
-      textos que ficaram por extrair.
+- [x] **[obrigatório]** Preferência: ao entrar, a língua vem da resposta do login (desvio
+      3); sem sessão, do `localStorage` ou do browser. **Não** guardada em Zustand além
+      do que o `i18next` já guarda.
+- [x] **[obrigatório]** `SelectorIdioma` em `src/shared/ui/`, usado no `Header` do ERP
+      (incl. o menu móvel, Fase 20 — o POS corre em telemóvel), no `LojaPublicaLayout`,
+      no `PortalLayout` e na landing/adesão.
+- [x] **[obrigatório]** `formatMoeda`, `formatMoedaCompacta`, `formatData`,
+      `formatDataRelativa` e `formatInteiro`/`formatMoedaInteira` (acrescentados na Fase
+      20, para valores sem casas decimais) passam a ler a língua activa (D7); as 143
+      chamadas `toLocale*` e os `MT` concatenados foram substituídos, feature a feature.
+- [x] **[obrigatório]** Zod: os schemas passam a mensagens por chave, criados dentro do
+      componente com `useMemo(() => criarSchema(t), [t])`.
+- [x] **[obrigatório]** Etiquetas de enum (`ETIQUETA_ESTADO_PEDIDO`,
+      `ETIQUETA_METODO_PAGAMENTO` e as restantes, em todas as features) passam a chaves.
+- [x] **[obrigatório, Fase 2–3]** Extracção por feature, com `copywriting.ts` substituído
+      pelo namespace `site` (Fase 2C) e as 24 áreas do ERP + POS (Fase 3).
+- [x] **[obrigatório, com desvio]** Mayra: a língua chega ao backend **sem** envio
+      explícito no payload (desvio 5) — o chat de texto já vai com `Accept-Language` no
+      `axios`; a voz (WebSocket, sem esse cabeçalho) lê a preferência gravada do
+      utilizador do lado do servidor. `detectarIdioma()` continua a servir o
+      reconhecimento de voz em tempo real, sem alteração.
+- [ ] **[opcional]** Pseudo-língua de teste (`[!! Ţéxţö !!]`) — não feita.
 
 ##### 4.4 Transversal
 
-- [ ] **[obrigatório]** Testes backend: `idiomas.spec.ts` (ordem de resolução, língua não
-      suportada cai em `pt`); filtro traduz `codigo` e deixa passar excepções sem ele;
-      e-mail de pedido sai na língua do cliente, não na de quem dispara; cache da análise
-      separada por língua (R3).
-- [ ] **[obrigatório]** Testes frontend: paridade de chaves `pt` ↔ `en` (falha se faltar
-      uma); `formatMoeda` nas duas línguas; `mensagemDeErro` sem alterações de
-      comportamento.
-- [ ] **[obrigatório]** Lint: proibir texto solto em JSX nas pastas já migradas (regra do
-      oxlint ou script simples no CI).
-- [ ] **[obrigatório]** Tradução: o `en` é revisto por uma pessoa fluente antes de cada
-      fase ir para produção. Tradução automática serve de rascunho, não de entrega.
-- [ ] **[opcional]** Sem variáveis de ambiente novas.
+- [x] **[obrigatório]** Testes backend: resolução de língua, filtro de tradução
+      (`codigos-de-erro.spec.ts` confirma que todo `codigo`/`mensagemTraduzida` usado
+      existe nos dois catálogos), e-mail na língua do cliente/destinatário, cache da
+      análise de necessidades separada por língua (R3).
+- [x] **[obrigatório]** Testes frontend: paridade de chaves `pt` ↔ `en` em todos os
+      namespaces (falha se faltar uma); `formatMoeda`/`formatInteiro` nas duas línguas;
+      `mensagemDeErro` sem alterações de comportamento.
+- [ ] **[obrigatório]** Lint: proibir texto solto em JSX nas pastas já migradas — **não
+      implementada** (Secção 3, backlog).
+- [ ] **[obrigatório]** Tradução: revisão do `en` por uma pessoa fluente — **não feita**;
+      decisão de 2026-10-01 foi publicar com a tradução de Claude e rever depois
+      (Secção 3, backlog).
+- [x] **[opcional]** Sem variáveis de ambiente novas.
 
 ##### 4.5 Documentação — [obrigatório]
 
-- [ ] `Docs/plano_implementacao.md` (duas cópias idênticas): entrada por fase fechada.
-- [ ] `Docs/TRD.md` (duas cópias): `i18next`, `react-i18next`,
+- [x] `Docs/plano_implementacao.md` (duas cópias idênticas): entrada por fase fechada.
+- [x] `Docs/TRD.md` (duas cópias): `i18next`, `react-i18next`,
       `i18next-browser-languagedetector`, `nestjs-i18n`.
 - [ ] Guia curto para a equipa (neste plano ou no `README`): como criar uma chave, onde
-      fica cada namespace, como acrescentar uma língua.
-- [ ] Este plano actualizado a cada desvio, no commit que o introduz.
+      fica cada namespace, como acrescentar uma língua — **não feito**; este §4.2 e o
+      padrão já em código (`gerar-catalogo.js`/`gerar-erros.js`, usados pelas Fases 2–4)
+      servem de referência por agora.
+- [x] Este plano actualizado a cada desvio, no commit que o introduz.
 
 ---
 

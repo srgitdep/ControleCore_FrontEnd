@@ -4,12 +4,14 @@ import {
   Box, Plus, Search, Edit2, X, Loader2, Store, Ban, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   getLojas, getArmazensByLoja, createArmazem, updateArmazem, deleteArmazem, TIPOS_ARMAZEM,
 } from '@/features/lojas';
 import type { Armazem } from '@/features/lojas';
 import { cn, mensagemDeErro } from '@/shared/utils';
 import { ArmazemDetailsModal } from '../components/ArmazemDetailsModal';
+import { rotuloTipoArmazem } from '../utils/rotuloTipoArmazem';
 
 /** O armazém deste tipo é o ponto de venda da loja — só pode existir um. */
 const TIPO_VENDA = 'VENDA';
@@ -21,6 +23,7 @@ interface LojaComArmazens {
 }
 
 export function ArmazensPage() {
+  const { t } = useTranslation('armazens');
   const [lojas, setLojas] = useState<LojaComArmazens[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +51,7 @@ export function ArmazensPage() {
       );
       setLojas(comArmazens);
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível carregar os armazéns.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_carregar')));
     } finally {
       setIsLoading(false);
     }
@@ -72,22 +75,22 @@ export function ArmazensPage() {
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim()) return toast.error('O nome do armazém é obrigatório.');
+    if (!form.nome.trim()) return toast.error(t('pagina.nome_obrigatorio'));
 
     setIsSaving(true);
     try {
       if (editingId) {
         await updateArmazem(editingId, { nome: form.nome, tipo: form.tipo });
-        toast.success('Armazém actualizado.');
+        toast.success(t('pagina.actualizado'));
       } else {
         await createArmazem({ lojaId: form.lojaId, nome: form.nome, tipo: form.tipo });
-        toast.success('Armazém criado.');
+        toast.success(t('pagina.criado'));
       }
       setShowModal(false);
       carregar();
     } catch (error) {
       // O backend recusa um segundo ponto de venda com mensagem explícita.
-      toast.error(mensagemDeErro(error, 'Não foi possível guardar o armazém.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_guardar')));
     } finally {
       setIsSaving(false);
     }
@@ -96,27 +99,27 @@ export function ArmazensPage() {
   const desactivar = async (a: Armazem) => {
     if (
       !confirm(
-        `Desactivar o armazém ${a.nome}? Deixa de aceitar recepções e de servir de ponto de venda, mas o histórico de stock mantém-se.`,
+        t('pagina.desactivar_confirmar', { nome: a.nome }),
       )
     )
       return;
 
     try {
       await deleteArmazem(a.id);
-      toast.success('Armazém desactivado.');
+      toast.success(t('pagina.desactivado'));
       carregar();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível desactivar o armazém.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_desactivar')));
     }
   };
 
   const reactivar = async (a: Armazem) => {
     try {
       await updateArmazem(a.id, { isActive: true });
-      toast.success('Armazém reactivado.');
+      toast.success(t('pagina.reactivado'));
       carregar();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível reactivar o armazém.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_reactivar')));
     }
   };
 
@@ -157,7 +160,10 @@ export function ArmazensPage() {
       {/* O nome da secção vive no cabeçalho da aplicação. Aqui fica só a contagem,
           que é dado e não rótulo. */}
       <BarraDaPagina
-        resumo={`${total} ${total === 1 ? 'armazém' : 'armazéns'} em ${lojas.length} ${lojas.length === 1 ? 'loja' : 'lojas'}`}
+        resumo={t('resumo.total', {
+          armazens: t('resumo.armazens', { count: total }),
+          lojas: t('resumo.lojas', { count: lojas.length }),
+        })}
       />
 
       {/* Aviso: loja sem ponto de venda não pode vender */}
@@ -166,12 +172,12 @@ export function ArmazensPage() {
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
           <div className="text-sm text-amber-800">
             <p className="font-medium">
-              {semPontoVenda.length === 1 ? 'Uma loja não tem' : `${semPontoVenda.length} lojas não têm`}{' '}
-              ponto de venda definido
+              {t('aviso.sem_ponto_venda', { count: semPontoVenda.length })}
             </p>
             <p className="text-xs mt-0.5">
-              {semPontoVenda.map((l) => l.nome).join(', ')} — o POS abate stock do armazém de tipo{' '}
-              <em>Venda</em>. Sem ele, as vendas nessa loja são recusadas.
+              {t('aviso.detalhe_1', { lojas: semPontoVenda.map((l) => l.nome).join(', ') })}{' '}
+              <em>{t('tipo_armazem.venda')}</em>
+              {t('aviso.detalhe_2')}
             </p>
           </div>
         </div>
@@ -184,7 +190,7 @@ export function ArmazensPage() {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Pesquisar por armazém, tipo ou loja..."
+          placeholder={t('pesquisa.placeholder')}
           className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
         />
       </div>
@@ -193,12 +199,12 @@ export function ArmazensPage() {
       {isLoading ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 shadow-sm">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600 mb-3" />
-          A carregar armazéns...
+          {t('lista.a_carregar')}
         </div>
       ) : lojasVisiveis.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 shadow-sm">
           <Box className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-          {termo ? `Nada corresponde a "${searchTerm}".` : 'Ainda não há lojas registadas.'}
+          {termo ? t('lista.nada_corresponde', { termo: searchTerm }) : t('lista.sem_lojas')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -212,21 +218,20 @@ export function ArmazensPage() {
                   <Store size={18} className="text-slate-400" />
                   <h2 className="font-semibold text-slate-900">{loja.nome}</h2>
                   <span className="text-xs text-slate-500">
-                    {loja.armazens.length} armazém(ns)
+                    {t('lista.armazens_da_loja', { n: loja.armazens.length })}
                   </span>
                 </div>
                 <button
                   onClick={() => abrirCriacao(loja.id)}
                   className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 flex items-center gap-2"
                 >
-                  <Plus size={16} /> Adicionar
+                  <Plus size={16} /> {t('lista.adicionar')}
                 </button>
               </div>
 
               {loja.armazens.length === 0 ? (
                 <div className="p-8 text-center text-sm text-slate-500">
-                  Esta loja não tem armazéns. Crie ao menos um de tipo <em>Venda</em> para poder
-                  vender.
+                  {t('lista.loja_vazia_1')} <em>{t('tipo_armazem.venda')}</em> {t('lista.loja_vazia_2')}
                 </div>
               ) : (
                 <ul className="divide-y divide-slate-100">
@@ -249,7 +254,7 @@ export function ArmazensPage() {
                         <button
                           type="button"
                           onClick={() => setAVer({ armazem: a, lojaNome: loja.nome })}
-                          title="Ver os produtos deste armazém"
+                          title={t('lista.ver_produtos_title')}
                           className="flex flex-1 items-center gap-3 rounded-lg p-1 -m-1 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         >
                           <div
@@ -267,17 +272,18 @@ export function ArmazensPage() {
                               {a.nome}
                               {ePontoVenda && (
                                 <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
-                                  Ponto de venda
+                                  {t('lista.ponto_venda')}
                                 </span>
                               )}
                               {inactivo && (
                                 <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                                  Inactivo
+                                  {t('lista.inactivo')}
                                 </span>
                               )}
                             </p>
                             <p className="text-xs text-slate-500">
-                              Tipo: {a.tipo || '—'} · <span className="text-blue-600">ver produtos</span>
+                              {t('lista.tipo_linha', { tipo: a.tipo ? rotuloTipoArmazem(t, a.tipo) : '—' })} ·{' '}
+                              <span className="text-blue-600">{t('lista.ver_produtos')}</span>
                             </p>
                           </div>
                         </button>
@@ -285,7 +291,7 @@ export function ArmazensPage() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => abrirEdicao(loja.id, a)}
-                            title="Editar"
+                            title={t('lista.editar')}
                             className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
                           >
                             <Edit2 size={16} />
@@ -293,7 +299,7 @@ export function ArmazensPage() {
                           {inactivo ? (
                             <button
                               onClick={() => reactivar(a)}
-                              title="Reactivar"
+                              title={t('lista.reactivar')}
                               className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
                             >
                               <CheckCircle2 size={16} />
@@ -301,7 +307,7 @@ export function ArmazensPage() {
                           ) : (
                             <button
                               onClick={() => desactivar(a)}
-                              title="Desactivar"
+                              title={t('lista.desactivar')}
                               className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
                             >
                               <Ban size={16} />
@@ -319,9 +325,9 @@ export function ArmazensPage() {
       )}
 
       <p className="text-xs text-slate-500">
-        O <strong>ponto de venda</strong> é o armazém de tipo <em>Venda</em>, de onde o POS abate
-        stock nas vendas. Só pode existir um por loja. As recepções de mercadoria e as
-        transferências usam qualquer armazém activo.
+        {t('nota.o')} <strong>{t('nota.ponto_venda')}</strong> {t('nota.e_o_armazem_de_tipo')}{' '}
+        <em>{t('tipo_armazem.venda')}</em>
+        {t('nota.resto')}
       </p>
 
       {/* O que está dentro do armazém. Chega-se aqui clicando no armazém, que antes
@@ -341,7 +347,7 @@ export function ArmazensPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
               <h2 className="text-lg font-bold text-slate-900">
-                {editingId ? 'Editar Armazém' : 'Novo Armazém'}
+                {editingId ? t('formulario.editar_titulo') : t('formulario.novo_titulo')}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -354,42 +360,44 @@ export function ArmazensPage() {
             <form onSubmit={guardar} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Nome <span className="text-rose-500">*</span>
+                  {t('formulario.nome')} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.nome}
                   onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                  placeholder="Ex: Armazém Retaguarda"
+                  placeholder={t('formulario.nome_placeholder')}
                   autoFocus
                   className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('formulario.tipo')}</label>
                 <select
                   value={form.tipo}
                   onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                   className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  {TIPOS_ARMAZEM.map((t) => {
+                  {TIPOS_ARMAZEM.map((tipo) => {
                     // "Venda" desactivado quando a loja já tem o seu ponto de venda: o
                     // servidor recusa o segundo, e oferecer a opção só para depois falhar
                     // faz o utilizador preencher o formulário duas vezes para descobrir
                     // uma regra que já se sabia de antemão.
-                    const bloqueado = t.toUpperCase() === TIPO_VENDA && lojaJaTemPontoVenda;
+                    const bloqueado = tipo.toUpperCase() === TIPO_VENDA && lojaJaTemPontoVenda;
                     return (
-                      <option key={t} value={t} disabled={bloqueado}>
-                        {bloqueado ? `${t} — já existe nesta loja` : t}
+                      <option key={tipo} value={tipo} disabled={bloqueado}>
+                        {bloqueado
+                          ? t('formulario.ja_existe_nesta_loja', { tipo: rotuloTipoArmazem(t, tipo) })
+                          : rotuloTipoArmazem(t, tipo)}
                       </option>
                     );
                   })}
                 </select>
                 <p className="text-xs text-slate-500 mt-1.5">
-                  <strong>Venda</strong> — ponto de venda de onde o POS abate stock (um por loja).{' '}
-                  <strong>Reserva</strong> — retaguarda. <strong>Quebras</strong> — mercadoria
-                  danificada.
+                  <strong>{t('tipo_armazem.venda')}</strong> {t('formulario.ajuda_venda')}{' '}
+                  <strong>{t('tipo_armazem.reserva')}</strong> {t('formulario.ajuda_reserva')}{' '}
+                  <strong>{t('tipo_armazem.quebras')}</strong> {t('formulario.ajuda_quebras')}
                 </p>
               </div>
 
@@ -399,7 +407,7 @@ export function ArmazensPage() {
                   onClick={() => setShowModal(false)}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('formulario.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -407,7 +415,7 @@ export function ArmazensPage() {
                   className="px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  {editingId ? 'Guardar' : 'Criar'}
+                  {editingId ? t('formulario.guardar') : t('formulario.criar')}
                 </button>
               </div>
             </form>

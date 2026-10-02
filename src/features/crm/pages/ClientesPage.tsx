@@ -28,8 +28,9 @@ import { CampanhasPanel } from '../components/CampanhasPanel';
 import { AnalisePanel } from '../components/AnalisePanel';
 import { ConfiguracaoPanel } from '../components/ConfiguracaoPanel';
 import { FusaoDuplicadosPanel } from '../components/FusaoDuplicadosPanel';
-import { cn } from '@/shared/utils';
+import { cn, formatData, formatMoeda } from '@/shared/utils';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { TableScroll, ConfirmDialog } from '@/shared/ui';
 import { usePermissions } from '@/features/auth';
 
@@ -55,6 +56,7 @@ interface ClienteModalProps {
 }
 
 function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps) {
+  const { t } = useTranslation('crm');
   const [form, setForm] = useState({
     nome: cliente?.nome ?? '',
     telefone: cliente?.telefone ?? '',
@@ -64,7 +66,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim()) return toast.error('O nome é obrigatório.');
+    if (!form.nome.trim()) return toast.error(t('clientes.nome_obrigatorio'));
     onSave(form);
   };
 
@@ -73,7 +75,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-900">
-            {cliente ? 'Editar Cliente' : 'Novo Cliente'}
+            {cliente ? t('clientes.editar_cliente') : t('clientes.novo_cliente')}
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
             <X size={18} />
@@ -81,10 +83,10 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {[
-            { key: 'nome', label: 'Nome Completo *', type: 'text', placeholder: 'Ex: João Silva' },
-            { key: 'telefone', label: 'Telefone', type: 'tel', placeholder: '+258 84 000 0000' },
-            { key: 'email', label: 'Email', type: 'email', placeholder: 'cliente@email.com' },
-            { key: 'nuit', label: 'NUIT', type: 'text', placeholder: '000000000' },
+            { key: 'nome', label: t('clientes.campo_nome'), type: 'text', placeholder: t('clientes.exemplo_nome') },
+            { key: 'telefone', label: t('clientes.campo_telefone'), type: 'tel', placeholder: '+258 84 000 0000' },
+            { key: 'email', label: t('clientes.campo_email'), type: 'email', placeholder: t('clientes.exemplo_email') },
+            { key: 'nuit', label: t('clientes.campo_nuit'), type: 'text', placeholder: '000000000' },
           ].map(({ key, label, type, placeholder }) => (
             <div key={key}>
               <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
@@ -103,14 +105,14 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
               onClick={onClose}
               className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               type="submit"
               disabled={isSaving}
               className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
             >
-              {isSaving ? 'A guardar…' : 'Guardar'}
+              {isSaving ? t('comum.a_guardar') : t('comum.guardar')}
             </button>
           </div>
         </form>
@@ -121,6 +123,7 @@ function ClienteModal({ cliente, onClose, onSave, isSaving }: ClienteModalProps)
 
 // ──â”€ Main Page ────────────────────────────────────────────────────────────────
 export function ClientesPage() {
+  const { t } = useTranslation('crm');
   const { hasPermission } = usePermissions();
   const podeFundir = hasPermission('manage', 'clientes');
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
@@ -177,15 +180,15 @@ export function ClientesPage() {
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: 'clientes', label: 'Clientes', icon: Users },
+    { id: 'clientes', label: t('clientes.aba_clientes'), icon: Users },
     { id: 'analise', label: 'MAYRA', icon: Sparkles },
-    { id: 'segmentos', label: 'Segmentos', icon: PieChart },
-    { id: 'campanhas', label: 'Campanhas', icon: Megaphone },
+    { id: 'segmentos', label: t('clientes.aba_segmentos'), icon: PieChart },
+    { id: 'campanhas', label: t('clientes.aba_campanhas'), icon: Megaphone },
     // Quem decide fusões é quem tem `manage` sobre clientes — a mesma permissão que
     // apaga um cliente, e não a de o editar: fundir apaga um dos dois de facto.
-    ...(podeFundir ? [{ id: 'duplicados' as Tab, label: 'Duplicados', icon: GitMerge }] : []),
-    { id: 'definicoes', label: 'Definições', icon: SlidersHorizontal },
-    { id: 'detalhes', label: 'Detalhes', icon: UserSquare },
+    ...(podeFundir ? [{ id: 'duplicados' as Tab, label: t('clientes.aba_duplicados'), icon: GitMerge }] : []),
+    { id: 'definicoes', label: t('clientes.aba_definicoes'), icon: SlidersHorizontal },
+    { id: 'detalhes', label: t('clientes.aba_detalhes'), icon: UserSquare },
   ];
 
   return (
@@ -194,14 +197,14 @@ export function ClientesPage() {
       <div className="bg-white border-b border-slate-200 px-6 pt-5 pb-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-slate-500">Gestão de Clientes e Fidelização</p>
+            <p className="text-sm text-slate-500">{t('clientes.subtitulo')}</p>
           </div>
           <button
             onClick={() => { setEditingCliente(null); setShowModal(true); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors"
           >
             <Plus size={16} />
-            Novo Cliente
+            {t('clientes.novo_cliente')}
           </button>
         </div>
 
@@ -254,7 +257,7 @@ export function ClientesPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Pesquisar por nome, email, telefone ou NUIT…"
+                  placeholder={t('clientes.pesquisar')}
                   className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                 />
               </div>
@@ -269,7 +272,7 @@ export function ClientesPage() {
               ) : clientes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-3">
                   <Users size={40} strokeWidth={1} />
-                  <p className="text-sm">Nenhum cliente encontrado.</p>
+                  <p className="text-sm">{t('clientes.nenhum')}</p>
                 </div>
               ) : (
                 <>
@@ -288,23 +291,23 @@ export function ClientesPage() {
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-slate-900">{c.nome}</p>
                           <p className="truncate text-xs text-slate-500">
-                            {c.telefone || c.email || 'sem contacto'}
+                            {c.telefone || c.email || t('clientes.sem_contacto')}
                           </p>
                         </div>
                         <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                          {c.pontos} pts
+                          {t('clientes.pontos_abrev', { n: c.pontos })}
                         </span>
                       </div>
 
                       <div className="mt-3 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
                         <div>
-                          <p className="text-xs text-slate-400">Total gasto</p>
+                          <p className="text-xs text-slate-400">{t('clientes.total_gasto')}</p>
                           <p className="font-semibold tabular-nums text-slate-900">
-                            {Number(c.totalGasto).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT
+                            {formatMoeda(Number(c.totalGasto))}
                           </p>
                           {c.dataUltimaCompra && (
                             <p className="mt-0.5 text-xs text-slate-400">
-                              Última: {new Date(c.dataUltimaCompra).toLocaleDateString('pt-PT')}
+                              {t('clientes.ultima', { data: formatData(c.dataUltimaCompra) })}
                             </p>
                           )}
                         </div>
@@ -314,14 +317,14 @@ export function ClientesPage() {
                           <button
                             onClick={() => { setEditingCliente(c); setShowModal(true); }}
                             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                            aria-label={`Editar ${c.nome}`}
+                            aria-label={t('clientes.editar_nome', { nome: c.nome })}
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             onClick={() => setAEliminar(c)}
                             className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                            aria-label={`Apagar ${c.nome}`}
+                            aria-label={t('clientes.apagar_nome', { nome: c.nome })}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -337,9 +340,17 @@ export function ClientesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50">
-                        {['Nome', 'Contacto', 'NUIT', 'Pontos', 'Total Gasto', 'Última Compra', ''].map((h) => (
+                        {[
+                          t('clientes.col_nome'),
+                          t('clientes.col_contacto'),
+                          t('clientes.campo_nuit'),
+                          t('clientes.col_pontos'),
+                          t('clientes.col_total_gasto'),
+                          t('clientes.col_ultima_compra'),
+                          '',
+                        ].map((h, i) => (
                           <th
-                            key={h}
+                            key={i}
                             className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
                           >
                             {h}
@@ -361,15 +372,15 @@ export function ClientesPage() {
                           <td className="px-4 py-3 text-slate-500">{c.nuit || '—'}</td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-xs font-semibold">
-                              {c.pontos} pts
+                              {t('clientes.pontos_abrev', { n: c.pontos })}
                             </span>
                           </td>
                           <td className="px-4 py-3 font-semibold text-slate-900">
-                            {Number(c.totalGasto).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT
+                            {formatMoeda(Number(c.totalGasto))}
                           </td>
                           <td className="px-4 py-3 text-slate-400 text-xs">
                             {c.dataUltimaCompra
-                              ? new Date(c.dataUltimaCompra).toLocaleDateString('pt-PT')
+                              ? formatData(c.dataUltimaCompra)
                               : '—'}
                           </td>
                           <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -401,7 +412,7 @@ export function ClientesPage() {
               {lastPage > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
                   <p className="text-sm text-slate-500">
-                    Página {page} de {lastPage} Â· {total} clientes
+                    {t('clientes.paginacao', { page, lastPage, total })}
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -463,13 +474,13 @@ export function ClientesPage() {
 
       <ConfirmDialog
         isOpen={aEliminar !== null}
-        title="Apagar cliente"
+        title={t('clientes.apagar_titulo')}
         message={
           aEliminar
-            ? `Apagar "${aEliminar.nome}"? Esta acção não pode ser desfeita.`
+            ? t('clientes.apagar_mensagem', { nome: aEliminar.nome })
             : ''
         }
-        confirmText="Apagar"
+        confirmText={t('clientes.apagar')}
         variant="danger"
         isLoading={isApagando}
         onConfirm={() => {

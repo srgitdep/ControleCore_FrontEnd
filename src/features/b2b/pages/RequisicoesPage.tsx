@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   b2bApi,
-  ETIQUETA_ESTADO,
-  ETIQUETA_ESTRATEGIA,
+  EstadoRequisicao,
   podeAdjudicar,
   podeCancelar,
   podeCorrerSourcing,
@@ -31,13 +31,13 @@ import {
   podeSubmeter,
   saldoPorAdjudicar,
 } from '../api/b2b.api';
-import type { EstadoRequisicao, Requisicao, SourcingRun } from '../api/b2b.api';
+import type { Requisicao, SourcingRun } from '../api/b2b.api';
 import { CriarRequisicaoModal } from '../components/CriarRequisicaoModal';
 import { EditarLinhasModal } from '../components/EditarLinhasModal';
 import { MotivoModal } from '../components/MotivoModal';
 import { SourcingComparacaoModal } from '../components/SourcingComparacaoModal';
 import { usePermissions, useAuth } from '@/features/auth';
-import { cn } from '@/shared/utils';
+import { cn, formatData } from '@/shared/utils';
 
 /**
  * As requisições de compra e o caminho até à adjudicação.
@@ -52,6 +52,7 @@ import { cn } from '@/shared/utils';
  * Este ecrã é o que existe antes da decisão.
  */
 export function RequisicoesPage() {
+  const { t } = useTranslation('b2b');
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
   const utilizadorId = useAuth().user?.id;
@@ -80,10 +81,10 @@ export function RequisicoesPage() {
   const submeter = useMutation({
     mutationFn: (id: string) => b2bApi.submeter(id),
     onSuccess: (r) => {
-      toast.success(`${r.numero} submetida. Aguarda aprovação.`);
+      toast.success(t('req.submetida', { numero: r.numero }));
       recarregar();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao submeter.'),
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? t('req.erro_submeter')),
   });
 
   /**
@@ -104,51 +105,46 @@ export function RequisicoesPage() {
       const elegiveis = run.candidatos.filter((c) => !c.excluido).length;
 
       if (elegiveis === 0) {
-        toast.error(
-          'Nenhum fornecedor elegível. Abra a comparação para ver os motivos de exclusão — ' +
-            'a maioria resolve-se com um telefonema.',
-          { duration: 7000 },
-        );
+        toast.error(t('req.nenhum_elegivel'), { duration: 7000 });
       }
 
       setComparacao({ requisicao, run });
     },
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? 'Erro ao correr o sourcing.'),
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? t('req.erro_sourcing')),
   });
 
   const reabrir = useMutation({
     mutationFn: ({ requisicao, motivo }: { requisicao: Requisicao; motivo: string }) =>
       b2bApi.reabrir(requisicao.id, motivo),
     onSuccess: (r) => {
-      toast.success(`${r.numero} devolvida a rascunho.`);
+      toast.success(t('req.devolvida', { numero: r.numero }));
       recarregar();
       setAReabrir(null);
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao reabrir.'),
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? t('req.erro_reabrir')),
   });
 
   const cancelar = useMutation({
     mutationFn: ({ requisicao, motivo }: { requisicao: Requisicao; motivo: string }) =>
       b2bApi.cancelar(requisicao.id, motivo),
     onSuccess: (r) => {
-      toast.success(`${r.numero} cancelada.`);
+      toast.success(t('req.cancelada', { numero: r.numero }));
       recarregar();
       setACancelar(null);
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao cancelar.'),
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? t('req.erro_cancelar')),
   });
 
   const abrirComparacaoExistente = useMutation({
     mutationFn: async (requisicao: Requisicao) => {
       const runs = await b2bApi.listarRuns(requisicao.id);
-      if (runs.length === 0) throw new Error('Esta requisição ainda não foi a sourcing.');
+      if (runs.length === 0) throw new Error(t('req.sem_sourcing'));
       const run = await b2bApi.obterRun(runs[0].id);
       return { requisicao, run };
     },
     onSuccess: (dados) => setComparacao(dados),
     onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? e?.message ?? 'Erro ao abrir a comparação.'),
+      toast.error(e?.response?.data?.message ?? e?.message ?? t('req.erro_abrir_comparacao')),
   });
 
   return (
@@ -157,11 +153,9 @@ export function RequisicoesPage() {
         <div>
           <h1 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <ClipboardList size={18} className="text-blue-600" />
-            Requisições de compra
+            {t('req.titulo')}
           </h1>
-          <p className="mt-0.5 text-xs text-slate-500">
-            O que as lojas precisam. O fornecedor é escolhido por comparação, não por hábito.
-          </p>
+          <p className="mt-0.5 text-xs text-slate-500">{t('req.subtitulo')}</p>
         </div>
 
         <div className="flex shrink-0 gap-2">
@@ -171,7 +165,7 @@ export function RequisicoesPage() {
               className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <Sliders size={15} />
-              Pesos do sourcing
+              {t('pesos.titulo')}
             </Link>
           )}
 
@@ -181,14 +175,14 @@ export function RequisicoesPage() {
               className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               <Plus size={15} />
-              Nova requisição
+              {t('req.nova')}
             </button>
           )}
         </div>
       </header>
 
       <div className="flex flex-wrap gap-1.5">
-        {(['TODAS', ...Object.keys(ETIQUETA_ESTADO)] as (EstadoRequisicao | 'TODAS')[]).map(
+        {(['TODAS', ...Object.keys(EstadoRequisicao)] as (EstadoRequisicao | 'TODAS')[]).map(
           (estado) => (
             <button
               key={estado}
@@ -200,7 +194,7 @@ export function RequisicoesPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
               )}
             >
-              {estado === 'TODAS' ? 'Todas' : ETIQUETA_ESTADO[estado]}
+              {estado === 'TODAS' ? t('req.todas') : t(`req.estado.${estado}`)}
             </button>
           ),
         )}
@@ -215,8 +209,8 @@ export function RequisicoesPage() {
           <ClipboardList size={26} className="mx-auto text-slate-300" />
           <p className="mt-2 text-sm text-slate-500">
             {filtro === 'TODAS'
-              ? 'Ainda não há requisições.'
-              : `Nenhuma requisição em «${ETIQUETA_ESTADO[filtro as EstadoRequisicao]}».`}
+              ? t('req.vazio')
+              : t('req.vazio_estado', { estado: t(`req.estado.${filtro}`) })}
           </p>
         </div>
       ) : (
@@ -236,29 +230,25 @@ export function RequisicoesPage() {
                     {requisicao.sodExcepcao && (
                       <span
                         className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
-                        title="Quem submeteu foi quem aprovou, ao abrigo da excepção autorizada REQ_CRIAR_APROVAR. Permitido — há lojas com uma pessoa só — mas registado."
+                        title={t('req.auto_aprovada_ajuda')}
                       >
                         <UserCheck size={9} />
-                        auto-aprovada
+                        {t('req.auto_aprovada')}
                       </span>
                     )}
                   </div>
 
                   <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                     <span>{requisicao.loja?.nome ?? '—'}</span>
-                    <span>
-                      {requisicao.linhas.length} linha
-                      {requisicao.linhas.length === 1 ? '' : 's'}
-                    </span>
+                    <span>{t('req.linhas', { count: requisicao.linhas.length })}</span>
                     {requisicao.dataNecessidade && (
                       <span>
-                        até{' '}
-                        {new Date(requisicao.dataNecessidade).toLocaleDateString('pt-PT')}
+                        {t('req.ate')} {formatData(requisicao.dataNecessidade)}
                       </span>
                     )}
                     {requisicao.estrategiaAdjudicada && (
                       <span className="text-slate-600">
-                        {ETIQUETA_ESTRATEGIA[requisicao.estrategiaAdjudicada]}
+                        {t(`req.estrategia.${requisicao.estrategiaAdjudicada}`)}
                       </span>
                     )}
                   </p>
@@ -269,7 +259,7 @@ export function RequisicoesPage() {
 
                   {requisicao.motivoDesvio && (
                     <p className="mt-1.5 rounded bg-amber-50 px-2 py-1 text-[11px] leading-snug text-amber-800">
-                      <span className="font-medium">Desvio da recomendação:</span>{' '}
+                      <span className="font-medium">{t('req.desvio')}</span>{' '}
                       {requisicao.motivoDesvio}
                     </p>
                   )}
@@ -280,7 +270,7 @@ export function RequisicoesPage() {
                     <Accao
                       onClick={() => setAEditarLinhas(requisicao)}
                       icone={<ListPlus size={13} />}
-                      texto="Editar linhas"
+                      texto={t('req.editar_linhas')}
                     />
                   )}
 
@@ -289,7 +279,7 @@ export function RequisicoesPage() {
                       onClick={() => submeter.mutate(requisicao.id)}
                       pendente={submeter.isPending && submeter.variables === requisicao.id}
                       icone={<Send size={13} />}
-                      texto="Submeter"
+                      texto={t('req.submeter')}
                     />
                   )}
 
@@ -297,7 +287,7 @@ export function RequisicoesPage() {
                     <Accao
                       onClick={() => setADecidir(requisicao)}
                       icone={<Check size={13} />}
-                      texto="Decidir"
+                      texto={t('req.decidir')}
                       destaque
                     />
                   )}
@@ -310,7 +300,11 @@ export function RequisicoesPage() {
                         correrSourcing.variables?.id === requisicao.id
                       }
                       icone={<Radar size={13} />}
-                      texto={requisicao.estado === 'APROVADA' ? 'Comparar' : 'Comparar de novo'}
+                      texto={
+                        requisicao.estado === 'APROVADA'
+                          ? t('req.comparar')
+                          : t('req.comparar_de_novo')
+                      }
                       destaque={requisicao.estado === 'APROVADA'}
                     />
                   )}
@@ -323,7 +317,7 @@ export function RequisicoesPage() {
                         abrirComparacaoExistente.variables?.id === requisicao.id
                       }
                       icone={<Gavel size={13} />}
-                      texto="Adjudicar"
+                      texto={t('req.adjudicar')}
                       destaque
                     />
                   )}
@@ -332,7 +326,7 @@ export function RequisicoesPage() {
                     <Accao
                       onClick={() => setAReabrir(requisicao)}
                       icone={<RotateCcw size={13} />}
-                      texto="Reabrir"
+                      texto={t('req.reabrir')}
                     />
                   )}
 
@@ -340,7 +334,7 @@ export function RequisicoesPage() {
                     <Accao
                       onClick={() => setACancelar(requisicao)}
                       icone={<XCircle size={13} />}
-                      texto="Cancelar"
+                      texto={t('acao.cancelar')}
                     />
                   )}
                 </div>
@@ -382,9 +376,9 @@ export function RequisicoesPage() {
 
       {aReabrir && (
         <MotivoModal
-          titulo={`Reabrir ${aReabrir.numero}`}
-          descricao="A requisição volta a rascunho para poder ser editada. Fica registado o motivo."
-          textoConfirmar="Reabrir"
+          titulo={t('req.reabrir_titulo', { numero: aReabrir.numero })}
+          descricao={t('req.reabrir_descricao')}
+          textoConfirmar={t('req.reabrir')}
           onConfirmar={(motivo) => reabrir.mutateAsync({ requisicao: aReabrir, motivo })}
           onClose={() => setAReabrir(null)}
         />
@@ -392,9 +386,9 @@ export function RequisicoesPage() {
 
       {aCancelar && (
         <MotivoModal
-          titulo={`Cancelar ${aCancelar.numero}`}
-          descricao="Uma requisição cancelada não pode voltar a ser usada."
-          textoConfirmar="Cancelar requisição"
+          titulo={t('req.cancelar_titulo', { numero: aCancelar.numero })}
+          descricao={t('req.cancelar_descricao')}
+          textoConfirmar={t('req.cancelar_requisicao')}
           corConfirmar="rose"
           onConfirmar={(motivo) => cancelar.mutateAsync({ requisicao: aCancelar, motivo })}
           onClose={() => setACancelar(null)}
@@ -422,11 +416,12 @@ const CORES: Record<EstadoRequisicao, string> = {
 };
 
 function Etiqueta({ estado }: { estado: EstadoRequisicao }) {
+  const { t } = useTranslation('b2b');
   return (
     <span
       className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium uppercase', CORES[estado])}
     >
-      {ETIQUETA_ESTADO[estado]}
+      {t(`req.estado.${estado}`)}
     </span>
   );
 }
@@ -439,6 +434,7 @@ function Etiqueta({ estado }: { estado: EstadoRequisicao }) {
  * bloco existe: o saldo tem de estar visível na listagem, não escondido a dois cliques.
  */
 function SaldoPendente({ requisicao }: { requisicao: Requisicao }) {
+  const { t } = useTranslation('b2b');
   const saldo = saldoPorAdjudicar(requisicao);
   if (saldo.length === 0) return null;
 
@@ -446,12 +442,13 @@ function SaldoPendente({ requisicao }: { requisicao: Requisicao }) {
     <p className="mt-1.5 flex items-start gap-1.5 rounded bg-amber-50 px-2 py-1 text-[11px] leading-snug text-amber-800">
       <AlertTriangle size={11} className="mt-0.5 shrink-0" />
       <span>
-        {saldo.length} linha{saldo.length === 1 ? '' : 's'} sem fornecedor:{' '}
+        {t('req.saldo_sem_fornecedor', { count: saldo.length })}{' '}
         {saldo
           .slice(0, 3)
           .map((l) => `${l.produto?.nome ?? l.produtoId} (${l.quantidade - l.quantidadeAdjudicada})`)
           .join(', ')}
-        {saldo.length > 3 && ` e ${saldo.length - 3} mais`}. Compare outra vez para as adjudicar.
+        {saldo.length > 3 && ` ${t('req.saldo_e_mais', { n: saldo.length - 3 })}`}.{' '}
+        {t('req.saldo_comparar')}
       </span>
     </p>
   );
@@ -505,6 +502,7 @@ function DecidirModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('b2b');
   const [decisao, setDecisao] = useState<'APROVAR' | 'RECUSAR' | null>(null);
   const [motivo, setMotivo] = useState('');
   const [aGravar, setAGravar] = useState(false);
@@ -519,10 +517,7 @@ function DecidirModal({
     if (!decisao) return;
 
     if (decisao === 'RECUSAR' && motivo.trim().length < 5) {
-      toast.error(
-        'Recusar exige um motivo — é o que quem for corrigir a requisição vai ler. Sem ele, ' +
-          'ela volta amanhã na mesma forma.',
-      );
+      toast.error(t('req.decidir_erro_motivo'));
       return;
     }
 
@@ -531,13 +526,13 @@ function DecidirModal({
       await b2bApi.decidir(requisicao.id, { decisao, motivo: motivo.trim() || undefined });
       toast.success(
         decisao === 'APROVAR'
-          ? `${requisicao.numero} aprovada. Já pode ir a sourcing.`
-          : `${requisicao.numero} devolvida a rascunho.`,
+          ? t('req.aprovada', { numero: requisicao.numero })
+          : t('req.devolvida', { numero: requisicao.numero }),
       );
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? 'Erro ao registar a decisão.');
+      toast.error(error?.response?.data?.message ?? t('req.decidir_erro'));
     } finally {
       setAGravar(false);
     }
@@ -548,7 +543,7 @@ function DecidirModal({
       <form onSubmit={submeter} className="w-full max-w-md rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            Decidir {requisicao.numero}
+            {t('req.decidir_titulo', { numero: requisicao.numero })}
           </h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400">
             <X size={18} />
@@ -557,8 +552,7 @@ function DecidirModal({
 
         <div className="space-y-4 px-5 py-5">
           <p className="text-xs text-slate-500">
-            {requisicao.linhas.length} linha
-            {requisicao.linhas.length === 1 ? '' : 's'} · {requisicao.loja?.nome}
+            {t('req.linhas', { count: requisicao.linhas.length })} · {requisicao.loja?.nome}
           </p>
 
           <div className="grid grid-cols-2 gap-2">
@@ -572,7 +566,7 @@ function DecidirModal({
                   : 'border-slate-300 text-slate-700 hover:bg-slate-50',
               )}
             >
-              Aprovar
+              {t('req.aprovar')}
             </button>
             <button
               type="button"
@@ -584,7 +578,7 @@ function DecidirModal({
                   : 'border-slate-300 text-slate-700 hover:bg-slate-50',
               )}
             >
-              Recusar
+              {t('req.recusar')}
             </button>
           </div>
 
@@ -592,15 +586,14 @@ function DecidirModal({
             <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
               <UserCheck size={14} className="mt-0.5 shrink-0 text-amber-600" />
               <p className="text-[11px] leading-snug text-amber-800">
-                Foi você que submeteu esta requisição. A aprovação passa — há lojas com uma
-                pessoa só — mas fica marcada como excepção de segregação de funções.
+                {t('req.auto_aprovar_aviso')}
               </p>
             </div>
           )}
 
           <div>
             <label className="block text-xs font-medium text-slate-700">
-              Motivo {decisao === 'RECUSAR' && <span className="text-red-500">*</span>}
+              {t('motivo.motivo')} {decisao === 'RECUSAR' && <span className="text-red-500">*</span>}
             </label>
             <textarea
               value={motivo}
@@ -617,7 +610,7 @@ function DecidirModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('acao.cancelar')}
           </button>
           <button
             type="submit"
@@ -625,7 +618,7 @@ function DecidirModal({
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aGravar && <Loader2 size={15} className="animate-spin" />}
-            Confirmar
+            {t('req.confirmar')}
           </button>
         </footer>
       </form>

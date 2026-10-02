@@ -11,11 +11,13 @@ import {
   User,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
-  avisoDeNuitAoEscrever,
-  diagnosticarNuit,
+  diagnosticoDoNuit,
+  diagnosticoDoNuitAoEscrever,
   mensagemDeErro,
 } from '@/shared/utils';
+import { SelectorIdioma } from '@/shared/ui';
 import { adesoes, type AdesaoSubmetida } from '../api/adesao.api';
 
 /**
@@ -40,6 +42,8 @@ import { adesoes, type AdesaoSubmetida } from '../api/adesao.api';
  * O NUIT é o que não se dispensa: é a chave que impede dois registos da mesma empresa.
  */
 export function PedirAdesaoPage() {
+  const { t } = useTranslation('adesao');
+  const { t: tComum } = useTranslation('comum');
   const navegar = useNavigate();
 
   const [aGravar, setAGravar] = useState(false);
@@ -64,24 +68,27 @@ export function PedirAdesaoPage() {
 
   // Ver a nota em `RegistarFornecedorPage`: derivado do estado, e só assinala quando
   // passou dos nove dígitos.
-  const avisoDoNuit = avisoDeNuitAoEscrever(empresa.empresaNuit);
+  const diagnosticoAoEscrever = diagnosticoDoNuitAoEscrever(empresa.empresaNuit);
+  const avisoDoNuit = diagnosticoAoEscrever
+    ? tComum(`nuit.${diagnosticoAoEscrever.chave}`, diagnosticoAoEscrever.parametros)
+    : null;
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!empresa.empresaNome.trim()) {
-      toast.error('O nome da empresa é obrigatório.');
+      toast.error(t('pedido.nome_empresa_obrigatorio'));
       return;
     }
 
-    const erroDoNuit = diagnosticarNuit(empresa.empresaNuit);
+    const erroDoNuit = diagnosticoDoNuit(empresa.empresaNuit);
     if (erroDoNuit) {
-      toast.error(erroDoNuit);
+      toast.error(tComum(`nuit.${erroDoNuit.chave}`, erroDoNuit.parametros));
       return;
     }
 
     if (!gestor.gestorNome.trim() || !gestor.gestorEmail.trim()) {
-      toast.error('O nome e o e-mail do responsável são obrigatórios.');
+      toast.error(t('pedido.responsavel_obrigatorio'));
       return;
     }
 
@@ -105,7 +112,7 @@ export function PedirAdesaoPage() {
       // O 409 do NUIT já registado — ou do e-mail que já tem utilizador — traz uma mensagem
       // que explica o caminho alternativo («já é cliente, o que quer é entrar»). Vale mais
       // mostrá-la do que um «erro ao submeter» que não diz nada.
-      toast.error(mensagemDeErro(erro, 'Não foi possível submeter o pedido.'));
+      toast.error(mensagemDeErro(erro, t('pedido.erro_submeter')));
     } finally {
       setAGravar(false);
     }
@@ -118,12 +125,16 @@ export function PedirAdesaoPage() {
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
+        <div className="mb-4 flex justify-end">
+          <SelectorIdioma />
+        </div>
+
         <Link
           to="/criar-conta"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
         >
           <ArrowLeft size={15} />
-          Voltar
+          {t('comum.voltar')}
         </Link>
 
         <header className="mb-6 text-center">
@@ -131,11 +142,10 @@ export function PedirAdesaoPage() {
             <Store size={22} className="text-white" />
           </div>
           <h1 className="mt-3 text-xl font-semibold text-slate-900">
-            Pedir adesão ao ControlCore
+            {t('pedido.titulo')}
           </h1>
           <p className="mx-auto mt-1 max-w-lg text-sm text-slate-500">
-            Para lojas e cadeias de lojas. Analisamos o pedido e, se for aprovado, recebe por
-            e-mail o código de acesso e a senha inicial.
+            {t('pedido.subtitulo')}
           </p>
         </header>
 
@@ -143,9 +153,8 @@ export function PedirAdesaoPage() {
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <Info size={14} className="mt-0.5 shrink-0 text-amber-600" />
           <p className="text-xs leading-snug text-amber-900">
-            <strong className="font-semibold">Este pedido não cria a conta.</strong> Criar uma
-            empresa na plataforma implica um plano e um administrador com acesso aos dados — por
-            isso passa por análise. Entramos em contacto pelo e-mail que indicar.
+            <strong className="font-semibold">{t('pedido.aviso_titulo')}</strong>{' '}
+            {t('pedido.aviso_corpo')}
           </p>
         </div>
 
@@ -153,47 +162,47 @@ export function PedirAdesaoPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Building2 size={15} className="text-slate-400" />
-              A empresa
+              {t('pedido.seccao_empresa')}
             </h2>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Campo
-                  etiqueta="Nome da empresa"
+                  etiqueta={t('pedido.empresa_nome')}
                   obrigatorio
                   valor={empresa.empresaNome}
                   onChange={(v) => setEmpresa({ ...empresa, empresaNome: v })}
-                  exemplo="Supermercado Xitalha, Lda."
+                  exemplo={t('pedido.empresa_nome_exemplo')}
                 />
               </div>
               <Campo
-                etiqueta="NUIT"
+                etiqueta={t('pedido.nuit')}
                 obrigatorio
                 valor={empresa.empresaNuit}
                 onChange={(v) => setEmpresa({ ...empresa, empresaNuit: v })}
-                exemplo="400 123 456"
+                exemplo={t('pedido.nuit_exemplo')}
                 erro={avisoDoNuit}
-                ajuda="Nove dígitos. É por ele que evitamos registos duplicados da mesma empresa."
+                ajuda={t('pedido.nuit_ajuda')}
               />
               <Campo
-                etiqueta="Cidade"
+                etiqueta={t('pedido.cidade')}
                 valor={empresa.cidade}
                 onChange={(v) => setEmpresa({ ...empresa, cidade: v })}
-                exemplo="Maputo"
+                exemplo={t('pedido.cidade_exemplo')}
               />
               <Campo
-                etiqueta="E-mail da empresa"
+                etiqueta={t('pedido.empresa_email')}
                 tipo="email"
                 obrigatorio
                 valor={empresa.empresaEmail}
                 onChange={(v) => setEmpresa({ ...empresa, empresaEmail: v })}
-                ajuda="O endereço de facturação."
+                ajuda={t('pedido.empresa_email_ajuda')}
               />
               <Campo
-                etiqueta="Telefone"
+                etiqueta={t('pedido.telefone')}
                 valor={empresa.empresaTelefone}
                 onChange={(v) => setEmpresa({ ...empresa, empresaTelefone: v })}
-                exemplo="+258 84 123 4567"
+                exemplo={t('pedido.telefone_exemplo')}
               />
             </div>
           </section>
@@ -201,33 +210,33 @@ export function PedirAdesaoPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <User size={15} className="text-slate-400" />
-              Quem vai administrar a conta
+              {t('pedido.seccao_gestor')}
             </h2>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Campo
-                etiqueta="Nome"
+                etiqueta={t('pedido.gestor_nome')}
                 obrigatorio
                 valor={gestor.gestorNome}
                 onChange={(v) => setGestor({ ...gestor, gestorNome: v })}
-                exemplo="Amélia Chissano"
+                exemplo={t('pedido.gestor_nome_exemplo')}
               />
               <Campo
-                etiqueta="Cargo"
+                etiqueta={t('pedido.gestor_cargo')}
                 valor={gestor.gestorCargo}
                 onChange={(v) => setGestor({ ...gestor, gestorCargo: v })}
-                exemplo="Directora-Geral"
+                exemplo={t('pedido.gestor_cargo_exemplo')}
               />
               <Campo
-                etiqueta="E-mail"
+                etiqueta={t('pedido.gestor_email')}
                 tipo="email"
                 obrigatorio
                 valor={gestor.gestorEmail}
                 onChange={(v) => setGestor({ ...gestor, gestorEmail: v })}
-                ajuda="Se o pedido for aprovado, é para aqui que vão o código de acesso e a senha inicial."
+                ajuda={t('pedido.gestor_email_ajuda')}
               />
               <Campo
-                etiqueta="Telefone"
+                etiqueta={t('pedido.telefone')}
                 valor={gestor.gestorTelefone}
                 onChange={(v) => setGestor({ ...gestor, gestorTelefone: v })}
               />
@@ -236,27 +245,26 @@ export function PedirAdesaoPage() {
 
           <section className="rounded-xl border border-slate-200 bg-white p-5">
             <label className="block text-xs font-medium text-slate-700">
-              O que precisa resolver
+              {t('pedido.observacoes')}
             </label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={3}
               maxLength={2000}
-              placeholder="Temos três lojas em Maputo e queremos stock centralizado."
+              placeholder={t('pedido.observacoes_exemplo')}
               className="mt-1 w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             />
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              Opcional, e é o campo que mais ajuda quem analisa o pedido — diz-nos que módulos
-              faz sentido activar.
+              {t('pedido.observacoes_ajuda')}
             </p>
           </section>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-slate-500">
-              É fornecedor?{' '}
+              {t('pedido.e_fornecedor')}{' '}
               <Link to="/fornecedor/registar" className="font-medium text-blue-600 hover:underline">
-                Registar como fornecedor
+                {t('pedido.registar_fornecedor')}
               </Link>
             </p>
             <button
@@ -265,7 +273,7 @@ export function PedirAdesaoPage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {aGravar && <Loader2 size={15} className="animate-spin" />}
-              Submeter pedido
+              {t('pedido.submeter')}
             </button>
           </div>
         </form>
@@ -290,6 +298,8 @@ function PedidoRecebido({
   resultado: AdesaoSubmetida;
   onSair: () => void;
 }) {
+  const { t } = useTranslation('adesao');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 text-center">
@@ -297,22 +307,22 @@ function PedidoRecebido({
           <CheckCircle2 size={24} className="text-emerald-600" />
         </div>
 
-        <h1 className="mt-3 text-lg font-semibold text-slate-900">Pedido recebido</h1>
+        <h1 className="mt-3 text-lg font-semibold text-slate-900">{t('recebido.titulo')}</h1>
 
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            A sua referência
+            {t('recebido.referencia')}
           </p>
           <p className="mt-1 font-mono text-2xl font-semibold tracking-widest text-slate-900">
             {resultado.referencia}
           </p>
           <p className="mt-2 text-xs leading-snug text-slate-600">
-            Guarde-a. Se nos contactar sobre este pedido, é por ela que o encontramos.
+            {t('recebido.referencia_ajuda')}
           </p>
         </div>
 
         <div className="mt-5 text-left">
-          <p className="text-sm font-medium text-slate-700">O que acontece a seguir:</p>
+          <p className="text-sm font-medium text-slate-700">{t('recebido.a_seguir')}</p>
           <ol className="mt-2 space-y-2">
             {resultado.proximosPassos.map((passo, i) => (
               <li key={i} className="flex gap-2.5 text-sm text-slate-600">
@@ -329,7 +339,7 @@ function PedidoRecebido({
           onClick={onSair}
           className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          Voltar ao início
+          {t('recebido.voltar_inicio')}
           <ArrowRight size={15} />
         </button>
       </div>

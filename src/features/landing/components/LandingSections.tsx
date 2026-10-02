@@ -8,15 +8,18 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { COPY } from '@/shared/constants/copywriting';
+import { useTranslation } from 'react-i18next';
+
+import { useCopy } from '@/shared/hooks/useCopy';
+import { formatInteiro } from '@/shared/utils';
 import { LANDING_IMAGES } from '../constants/landingImages';
 import { PLANOS } from '../precos.dados';
 
 /**
  * As secções da landing page.
  *
- * Só estrutura e estilo — o texto todo vive em `shared/constants/copywriting.ts`,
- * e a razão de cada frase está documentada lá. Quem quiser mudar uma palavra não
+ * Só estrutura e estilo — o texto todo vive em `locales/<língua>/site.json` (lido por
+ * `useCopy`), e a razão de cada frase está documentada lá. Quem quiser mudar uma palavra não
  * precisa de abrir este ficheiro.
  */
 
@@ -41,6 +44,7 @@ const Icone = ({ nome, ...props }: { nome: string } & React.ComponentProps<Lucid
 // ── Herói ────────────────────────────────────────────────────────────────────
 
 export function Heroi() {
+  const COPY = useCopy();
   const semMovimento = useReducedMotion();
   const copy = COPY.HEROI;
 
@@ -187,6 +191,7 @@ function JanelaDoProduto({ imagem, alt }: { imagem: string; alt: string }) {
 // ── Faixa de contexto ────────────────────────────────────────────────────────
 
 export function FaixaDeContexto() {
+  const COPY = useCopy();
   return (
     <section style={{ borderBlock: '1px solid var(--linha)', background: 'var(--fundo-alt)' }}>
       <div
@@ -212,6 +217,7 @@ export function FaixaDeContexto() {
 // ── O problema ───────────────────────────────────────────────────────────────
 
 export function OProblema() {
+  const COPY = useCopy();
   const copy = COPY.PROBLEMA;
 
   return (
@@ -294,6 +300,7 @@ export function OProblema() {
  * desenhado no tom profundo, e perdia o brilho que faz a cadeia ler-se.
  */
 export function CadeiaViva() {
+  const COPY = useCopy();
   const copy = COPY.OPERACAO;
   const [activo, setActivo] = useState(0);
   const semMovimento = useReducedMotion();
@@ -412,6 +419,8 @@ export function CadeiaViva() {
 // ── Os módulos ───────────────────────────────────────────────────────────────
 
 export function Modulos() {
+  const COPY = useCopy();
+  const { t } = useTranslation('site');
   const copy = COPY.MODULOS;
   const [activo, setActivo] = useState<string>(copy.LISTA[0].id);
   const modulo = copy.LISTA.find((m) => m.id === activo) ?? copy.LISTA[0];
@@ -488,8 +497,8 @@ export function Modulos() {
 
           <div>
             <JanelaDoProduto
-              imagem={LANDING_IMAGES[modulo.imagem]}
-              alt={`Ecrã de ${modulo.titulo} do ControlCore.`}
+              imagem={LANDING_IMAGES[modulo.imagem as keyof typeof LANDING_IMAGES]}
+              alt={t('OUTROS.ALT_MODULO', { titulo: modulo.titulo })}
             />
           </div>
         </div>
@@ -502,16 +511,23 @@ export function Modulos() {
 
 /** O preço aparece na página inicial. Não escondido atrás de «contacte-nos». */
 export function Precos() {
+  const COPY = useCopy();
+  const { t } = useTranslation('site');
+  // Nome e frase de cada escalão vivem no catálogo `precos`, indexados pelo código, e são os
+  // mesmos da página `/precos`.
+  const { t: tPlano } = useTranslation('precos');
+  const preco = COPY.OUTROS.PRECOS;
   return (
     <section id="precos" className="cc-secao">
       <div className="cc-caixa">
-        <span className="cc-etiqueta">Preços</span>
+        <span className="cc-etiqueta">{preco.ETIQUETA}</span>
         <h2 className="cc-titulo" style={{ maxWidth: '24ch' }}>
-          Três escalões. Todos dão acesso à plataforma inteira.
+          {preco.TITULO}
         </h2>
         <p className="cc-subtitulo">
-          O que muda entre escalões é o <strong style={{ color: 'var(--tinta)' }}>âmbito</strong>,
-          não um sistema diferente por trás. Todos os planos correm no mesmo ControlCore.
+          {preco.SUBTITULO_ANTES}
+          <strong style={{ color: 'var(--tinta)' }}>{preco.SUBTITULO_REALCE}</strong>
+          {preco.SUBTITULO_DEPOIS}
         </p>
 
         <div
@@ -536,21 +552,23 @@ export function Precos() {
                     fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
                   }}
                 >
-                  O mais escolhido
+                  {preco.MAIS_ESCOLHIDO}
                 </span>
               )}
               <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--tinta)' }}>
-                {p.nome}
+                {tPlano(`plano.${p.codigo}.nome`)}
               </h3>
               <p style={{ margin: '10px 0 0', minHeight: '3.2em', fontSize: 14, lineHeight: 1.5, color: 'var(--tinta-suave)' }}>
-                «{p.frase}»
+                {t('OUTROS.PRECOS.FRASE_PLANO', { frase: tPlano(`plano.${p.codigo}.frase`) })}
               </p>
               <p style={{ margin: '18px 0 0', fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', color: 'var(--tinta)' }}>
-                {p.mensal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} MT
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tinta-tenue)' }}>/mês</span>
+                {t('OUTROS.PRECOS.VALOR_MENSAL', {
+                  valor: formatInteiro(p.mensal),
+                })}
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tinta-tenue)' }}>{preco.POR_MES}</span>
               </p>
               <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--tinta-tenue)' }}>
-                {p.utilizadores} utilizadores incluídos · sem IVA
+                {t('OUTROS.PRECOS.UTILIZADORES_INCLUIDOS', { n: p.utilizadores })}
               </p>
             </article>
           ))}
@@ -558,7 +576,7 @@ export function Precos() {
 
         <div style={{ marginTop: 28 }}>
           <Link to="/precos" className="cc-botao cc-botao--cheio">
-            Ver o que cada plano desbloqueia <ArrowRight size={16} />
+            {preco.VER_PLANOS} <ArrowRight size={16} />
           </Link>
         </div>
       </div>
@@ -569,6 +587,7 @@ export function Precos() {
 // ── A Mayra ──────────────────────────────────────────────────────────────────
 
 export function AMayra() {
+  const COPY = useCopy();
   const semMovimento = useReducedMotion();
   const copy = COPY.MAYRA;
 
@@ -632,6 +651,7 @@ export function AMayra() {
 }
 
 function ConversaDaMayra() {
+  const COPY = useCopy();
   const copy = COPY.MAYRA.CONVERSA;
 
   return (
@@ -729,8 +749,12 @@ function ConversaDaMayra() {
             <ShieldCheck size={13} /> {copy.CONFIRMACAO_ROTULO}
           </span>
           <p style={{ margin: '9px 0 0', fontSize: 13.5, lineHeight: 1.55, color: 'var(--tinta)' }}>
-            Criar encomenda a <strong>{copy.CONFIRMACAO_FORNECEDOR}</strong> com {copy.CONFIRMACAO_LINHAS},
-            no total de <strong>{copy.CONFIRMACAO_TOTAL}</strong>.
+            {COPY.OUTROS.MAYRA_CONVERSA.CRIAR_ENCOMENDA_A}
+            <strong>{copy.CONFIRMACAO_FORNECEDOR}</strong>
+            {COPY.OUTROS.MAYRA_CONVERSA.COM}
+            {copy.CONFIRMACAO_LINHAS}
+            {COPY.OUTROS.MAYRA_CONVERSA.NO_TOTAL_DE}
+            <strong>{copy.CONFIRMACAO_TOTAL}</strong>.
           </p>
           <div style={{ display: 'flex', gap: 8, marginTop: 13 }}>
             <span
@@ -792,6 +816,7 @@ function Bolha({ de, children }: { de: 'utilizador' | 'mayra'; children: React.R
 // ── A segurança ──────────────────────────────────────────────────────────────
 
 export function Seguranca() {
+  const COPY = useCopy();
   const copy = COPY.SEGURANCA;
 
   return (
@@ -841,6 +866,7 @@ export function Seguranca() {
 // ── Como começa ──────────────────────────────────────────────────────────────
 
 export function ComoComeca() {
+  const COPY = useCopy();
   const copy = COPY.COMECAR;
 
   return (
@@ -897,6 +923,7 @@ export function ComoComeca() {
 // ── Fecho ────────────────────────────────────────────────────────────────────
 
 export function Fecho() {
+  const COPY = useCopy();
   const copy = COPY.FECHO;
   const mailto = `mailto:${COPY.MARCA.EMAIL}?subject=${encodeURIComponent(copy.ASSUNTO_EMAIL)}`;
 

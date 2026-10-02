@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ArrowRight, MapPin, Warehouse } from 'lucide-react';
 import { Button } from '@/shared/ui';
+import { formatData } from '@/shared/utils';
 import { useLocalizacoes } from '@/features/armazens';
 import { useDistribuicao, useDistribuicaoMutations, useOndeEsta } from '../hooks/useDistribuicao';
 import type { NoLocalizacao } from '@/features/armazens';
@@ -41,6 +43,7 @@ export function LocalizacaoStockModal({
   armazemNome,
   unidade = 'UN',
 }: LocalizacaoStockModalProps) {
+  const { t } = useTranslation('stock');
   const [separador, setSeparador] = useState<'aqui' | 'todos'>('aqui');
   const [novaLocalizacao, setNovaLocalizacao] = useState('');
   const [novaQuantidade, setNovaQuantidade] = useState<number | ''>('');
@@ -68,7 +71,7 @@ export function LocalizacaoStockModal({
           <div className="flex items-start gap-3">
             <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-500" />
             <div>
-              <h2 className="font-bold text-slate-800">Onde está a mercadoria</h2>
+              <h2 className="font-bold text-slate-800">{t('localizacao.titulo')}</h2>
               <p className="text-sm text-slate-500">{produtoNome}</p>
             </div>
           </div>
@@ -76,7 +79,7 @@ export function LocalizacaoStockModal({
             type="button"
             onClick={onClose}
             className="text-xl leading-none text-slate-400 hover:text-slate-700"
-            aria-label="Fechar"
+            aria-label={t('localizacao.fechar')}
           >
             ×
           </button>
@@ -85,8 +88,8 @@ export function LocalizacaoStockModal({
         <div className="flex gap-1 border-b border-slate-100 px-5 pt-3">
           {(
             [
-              ['aqui', armazemNome ?? 'Neste armazém'],
-              ['todos', 'Em todos os armazéns'],
+              ['aqui', armazemNome ?? t('localizacao.neste_armazem')],
+              ['todos', t('localizacao.em_todos')],
             ] as const
           ).map(([id, rotulo]) => (
             <button
@@ -111,7 +114,7 @@ export function LocalizacaoStockModal({
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div className="rounded-lg border border-slate-200 px-3 py-2">
                     <span className="block text-[11px] uppercase tracking-wide text-slate-400">
-                      Em armazém
+                      {t('localizacao.em_armazem')}
                     </span>
                     <span className="font-semibold tabular-nums text-slate-800">
                       {resumo.saldoFisico} {unidade}
@@ -119,7 +122,7 @@ export function LocalizacaoStockModal({
                   </div>
                   <div className="rounded-lg border border-slate-200 px-3 py-2">
                     <span className="block text-[11px] uppercase tracking-wide text-slate-400">
-                      Localizado
+                      {t('localizacao.localizado')}
                     </span>
                     <span className="font-semibold tabular-nums text-slate-800">
                       {resumo.localizado} ({resumo.percentagemLocalizada}%)
@@ -127,7 +130,7 @@ export function LocalizacaoStockModal({
                   </div>
                   <div className="rounded-lg border border-slate-200 px-3 py-2">
                     <span className="block text-[11px] uppercase tracking-wide text-slate-400">
-                      Por localizar
+                      {t('localizacao.por_localizar')}
                     </span>
                     <span
                       className={`font-semibold tabular-nums ${
@@ -145,20 +148,19 @@ export function LocalizacaoStockModal({
               {resumo?.excedeSaldo && (
                 <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
                   <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  As posições somam mais do que o saldo em armazém. Alguma saída de mercadoria
-                  não passou pelas prateleiras — recontar e corrigir.
+                  {t('localizacao.excede_saldo')}
                 </p>
               )}
 
               {isLoading ? (
-                <p className="py-6 text-center text-sm text-slate-400">A carregar...</p>
+                <p className="py-6 text-center text-sm text-slate-400">{t('localizacao.a_carregar')}</p>
               ) : todasAsLocalizacoes.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center">
                   <p className="text-sm text-slate-600">
-                    Este armazém não tem posições definidas.
+                    {t('localizacao.sem_posicoes')}
                   </p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Crie-as no separador «Posições» do armazém, em Lojas → Armazéns.
+                    {t('localizacao.sem_posicoes_dica')}
                   </p>
                 </div>
               ) : (
@@ -166,8 +168,7 @@ export function LocalizacaoStockModal({
                   <div className="space-y-2">
                     {posicoes.length === 0 && (
                       <p className="text-sm text-slate-500">
-                        Nenhuma posição atribuída — sabe-se que está neste armazém, mas não em
-                        que prateleira.
+                        {t('localizacao.nenhuma_atribuida')}
                       </p>
                     )}
 
@@ -206,14 +207,14 @@ export function LocalizacaoStockModal({
                     >
                       <label className="min-w-[12rem] flex-1">
                         <span className="mb-1 block text-xs font-medium text-slate-600">
-                          Pôr numa posição
+                          {t('localizacao.por_numa_posicao')}
                         </span>
                         <select
                           value={novaLocalizacao}
                           onChange={(e) => setNovaLocalizacao(e.target.value)}
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                         >
-                          <option value="">Escolher...</option>
+                          <option value="">{t('localizacao.escolher')}</option>
                           {porAtribuir.map((l) => (
                             <option key={l.id} value={l.id}>
                               {l.caminho}
@@ -225,7 +226,7 @@ export function LocalizacaoStockModal({
 
                       <label className="w-28">
                         <span className="mb-1 block text-xs font-medium text-slate-600">
-                          Quantidade
+                          {t('localizacao.quantidade')}
                         </span>
                         <input
                           type="number"
@@ -244,16 +245,14 @@ export function LocalizacaoStockModal({
                         size="sm"
                         disabled={!novaLocalizacao || !(Number(novaQuantidade) > 0) || mutacoes.aDecorrer}
                       >
-                        Atribuir
+                        {t('localizacao.atribuir')}
                       </Button>
                     </form>
                   )}
 
                   <p className="text-xs leading-relaxed text-slate-500">
-                    A quantidade é o que está <strong>nessa</strong> posição, e substitui o que
-                    lá estava registado — escreva o que contou, não a diferença. Pôr a zero
-                    retira a atribuição. Isto não gera movimento de stock: a mercadoria não sai
-                    do armazém.
+                    {t('localizacao.nota_antes')} <strong>{t('localizacao.nota_nessa')}</strong>{' '}
+                    {t('localizacao.nota_depois')}
                   </p>
                 </>
               )}
@@ -261,17 +260,16 @@ export function LocalizacaoStockModal({
           ) : (
             <>
               {!ondeEsta ? (
-                <p className="py-6 text-center text-sm text-slate-400">A carregar...</p>
+                <p className="py-6 text-center text-sm text-slate-400">{t('localizacao.a_carregar')}</p>
               ) : ondeEsta.armazens.length === 0 ? (
                 <p className="py-6 text-center text-sm text-slate-500">
-                  Este produto não tem existências em nenhum armazém.
+                  {t('localizacao.sem_existencias')}
                 </p>
               ) : (
                 <>
                   <p className="text-sm text-slate-600">
-                    <strong className="tabular-nums">{ondeEsta.total}</strong> {unidade} no
-                    total, em {ondeEsta.armazens.length}{' '}
-                    {ondeEsta.armazens.length === 1 ? 'armazém' : 'armazéns'}.
+                    <strong className="tabular-nums">{ondeEsta.total}</strong>{' '}
+                    {t('localizacao.no_total', { count: ondeEsta.armazens.length, unidade })}
                   </p>
 
                   {ondeEsta.armazens.map((a) => (
@@ -300,21 +298,21 @@ export function LocalizacaoStockModal({
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-xs text-slate-400">Sem posições atribuídas.</p>
+                        <p className="text-xs text-slate-400">{t('localizacao.sem_posicoes_atribuidas')}</p>
                       )}
 
                       {/* Dizê-lo é a diferença entre «está tudo localizado» e «localizámos
                           parte» — sem isso alguém procura no sítio errado. */}
                       {a.porLocalizar > 0 && (
                         <p className="mt-1 text-xs text-amber-700">
-                          {a.porLocalizar} {unidade} sem posição atribuída neste armazém.
+                          {t('localizacao.sem_posicao_neste_armazem', { n: a.porLocalizar, unidade })}
                         </p>
                       )}
 
                       {a.lotes.length > 0 && (
                         <div className="mt-2 border-t border-slate-100 pt-2">
                           <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-400">
-                            Lotes
+                            {t('localizacao.lotes')}
                           </p>
                           <ul className="space-y-0.5 text-xs text-slate-600">
                             {a.lotes.map((l) => (
@@ -323,8 +321,7 @@ export function LocalizacaoStockModal({
                                 <span className="tabular-nums">{l.quantidade} {unidade}</span>
                                 {l.dataValidade && (
                                   <span>
-                                    · válido até{' '}
-                                    {new Date(l.dataValidade).toLocaleDateString('pt-PT')}
+                                    {t('localizacao.valido_ate', { data: formatData(l.dataValidade) })}
                                   </span>
                                 )}
                                 {l.caminho && (
@@ -342,8 +339,7 @@ export function LocalizacaoStockModal({
                   ))}
 
                   <p className="text-xs leading-relaxed text-slate-500">
-                    Para mover mercadoria entre armazéns use uma transferência de stock — isso
-                    é uma saída e uma entrada, e gera movimento. Aqui só se vê.
+                    {t('localizacao.mover_entre_armazens')}
                   </p>
                 </>
               )}
@@ -353,7 +349,7 @@ export function LocalizacaoStockModal({
 
         <div className="flex justify-end border-t border-slate-100 px-5 py-3">
           <Button type="button" variant="ghost" onClick={onClose}>
-            Fechar
+            {t('localizacao.fechar')}
           </Button>
         </div>
       </div>
@@ -378,6 +374,7 @@ function LinhaDePosicao({
   aDecorrer: boolean;
   onGravar: (quantidade: number) => void;
 }) {
+  const { t } = useTranslation('stock');
   const [valor, setValor] = useState<number | ''>(quantidade);
   const mudou = Number(valor) !== quantidade;
 
@@ -387,7 +384,7 @@ function LinhaDePosicao({
         <span className="font-medium text-slate-800">{caminho}</span>
         {!activa && (
           <span className="ml-2 text-[11px] font-medium text-amber-700">
-            posição desactivada
+            {t('localizacao.posicao_desactivada')}
           </span>
         )}
       </span>
@@ -411,7 +408,7 @@ function LinhaDePosicao({
           disabled={aDecorrer}
           onClick={() => onGravar(Number(valor))}
         >
-          Gravar
+          {t('localizacao.gravar')}
         </Button>
       )}
     </div>

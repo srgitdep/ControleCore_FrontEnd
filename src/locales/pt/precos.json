@@ -1,0 +1,200 @@
+{
+  "plano": {
+    "loja": {
+      "nome": "Loja",
+      "frase": "Sei o que vendi hoje, com que stock e com que caixa certa.",
+      "ambito": "Uma loja, um armazém. O ponto de venda e o essencial à sua volta."
+    },
+    "rede": {
+      "nome": "Rede",
+      "frase": "Sei o que se passa em cada loja, sem pedir o relatório a ninguém.",
+      "ambito": "Várias lojas e armazéns. Transferências, compras e crédito a clientes."
+    },
+    "enterprise": {
+      "nome": "Enterprise",
+      "frase": "Sei quanto custou de verdade e se cada loja está a dar lucro.",
+      "ambito": "A rede inteira. Financeiro, recursos humanos e o mercado de fornecedores."
+    }
+  },
+  "limite": {
+    "lojas": "Lojas incluídas",
+    "utilizadores": "Utilizadores incluídos",
+    "armazens": "Armazéns",
+    "mayra": "Perguntas à Mayra",
+    "historico": "Histórico consultável"
+  },
+  "limite_valor": {
+    "sem_limite": "sem limite",
+    "por_mes": "{{n}} / mês",
+    "anos_one": "{{count}} ano",
+    "anos_other": "{{count}} anos"
+  },
+  "familia": {
+    "loja": "Loja",
+    "cadeia": "Cadeia",
+    "gestao": "Gestão",
+    "governo": "Governo"
+  },
+  "modulo": {
+    "caixa": "Frente de caixa",
+    "catalogo": "Catálogo & Stock",
+    "compras": "Compras & Fornecedores",
+    "crm": "Clientes & Crédito",
+    "financeiro": "Financeiro",
+    "pessoas": "Pessoas — Recursos Humanos",
+    "auditoria": "Auditoria"
+  },
+  "capacidade": {
+    "caixa_venda": "Venda por código de barras ou pesquisa",
+    "caixa_pagamentos": "Vários meios de pagamento na mesma venda",
+    "caixa_recibo": "Recibo com numeração sequencial",
+    "caixa_sessao": "Sessão de caixa com abertura e fecho conferidos",
+    "caixa_historico_lojas": "Histórico de sessões entre lojas",
+    "catalogo_produtos": "Produtos por categoria",
+    "catalogo_stock": "Stock por armazém, com custo médio ponderado",
+    "catalogo_movimentos": "Histórico de movimentos",
+    "catalogo_alerta_minimo": "Alerta abaixo do stock mínimo",
+    "catalogo_transferencias": "Transferências entre armazéns, com rasto",
+    "catalogo_multi_armazem": "Multi-armazém sem limite",
+    "compras_fornecedores": "Fornecedores e artigos fornecidos",
+    "compras_encomendas": "Encomendas a fornecedor",
+    "compras_recepcao": "Recepção conferida linha a linha",
+    "compras_necessidades": "Painel de necessidades e reposição",
+    "compras_mercado": "Mercado de fornecedores e sourcing B2B",
+    "compras_portal": "Portal do fornecedor, com catálogo próprio",
+    "crm_ficha": "Ficha do cliente e histórico de compras",
+    "crm_limite_credito": "Limite de crédito e saldo em dívida",
+    "crm_venda_prazo": "Venda a prazo, com conta corrente",
+    "financeiro_indicadores": "Indicadores do que está contratado",
+    "financeiro_margem": "Margem por loja e por produto",
+    "financeiro_consolidado": "Painel financeiro consolidado da rede",
+    "pessoas_cadastro": "Cadastro de utilizadores e perfis",
+    "pessoas_permissoes": "Permissões por perfil, verificadas no servidor",
+    "pessoas_rh": "Gestão de recursos humanos da rede",
+    "pessoas_permissoes_granulares": "Permissões granulares por ecrã e por acção",
+    "auditoria_registo": "Registo de criações, alterações e eliminações",
+    "auditoria_autor": "Autor, hora e valores anteriores",
+    "auditoria_historico": "Histórico estendido (ver limites acima)",
+    "mayra_perguntar": "Perguntar e obter resposta com os dados reais",
+    "mayra_explicar": "Explicar um número — de onde vem, como se calcula",
+    "mayra_perfil": "Vê o que o perfil de quem pergunta vê",
+    "mayra_escrita": "Acções de escrita, com confirmação antes de gravar",
+    "mayra_sem_limite": "Perguntas sem limite mensal prático"
+  },
+  "cabecalho": {
+    "titulo_antes": "Três escalões. O preço está aqui, ",
+    "titulo_realce": "sem formulário",
+    "titulo_depois": ".",
+    "sub_antes": "O que muda entre escalões é o ",
+    "sub_negrito": "âmbito",
+    "sub_depois": ", não um sistema diferente por trás. Todos correm no mesmo ControlCore."
+  },
+  "ciclo": {
+    "aria": "Ciclo de facturação",
+    "mensal": "Mensal",
+    "anual": "Anual",
+    "dois_meses_chip": "2 meses grátis"
+  },
+  "cartao": {
+    "mais_escolhido": "O mais escolhido",
+    "por_mes": "/mês",
+    "por_ano": "/ano",
+    "dois_meses_gratis": "Dois meses grátis",
+    "iva": "Acresce IVA à taxa legal.",
+    "pedir_demo": "Pedir demonstração",
+    "nota_sem_cartao": "Sem cartão para experimentar. Uma conversa de meia hora diz se o sistema serve."
+  },
+  "calculadora": {
+    "titulo": "Quantas pessoas vão usar?",
+    "texto": "Acima dos incluídos, o preço por utilizador desce com o volume: {{p1}} até {{a1}}, {{p2}} até {{a2}}, {{p3}} acima disso.",
+    "aria_utilizadores": "Número de utilizadores",
+    "por_ano": "por ano, sem IVA",
+    "por_mes": "por mês, sem IVA",
+    "todos_incluidos": "Todos os utilizadores incluídos",
+    "extra": "{{n}} acima do incluído, a {{preco}}/mês cada"
+  },
+  "capacidades": {
+    "titulo": "O que cada escalão desbloqueia",
+    "subtexto": "A tabela completa, com o que está incluído e o que não está, módulo a módulo."
+  },
+  "tabela": {
+    "capacidade": "Capacidade",
+    "decide": "decide",
+    "incluido": "incluído",
+    "nao_incluido": "não incluído"
+  },
+  "mayra": {
+    "titulo": "A Mayra",
+    "familia": "Copiloto — transversal",
+    "nota_antes": "Perguntar vai em ",
+    "nota_negrito": "todos",
+    "nota_depois": " os planos. O que muda é a escrita: uma acção que altera dados precisa de confirmação antes de gravar."
+  },
+  "sempre": {
+    "titulo": "Sempre incluído, nunca facturado",
+    "subtexto": "Cobrar pela exportação dos dados é o que faz um cliente hesitar em entrar.",
+    "administracao": {
+      "titulo": "Administração completa",
+      "porque": "Utilizadores, perfis, permissões e definições da empresa."
+    },
+    "auditoria": {
+      "titulo": "Auditoria",
+      "porque": "Registo com valores anterior e novo, sem edição possível."
+    },
+    "mayra": {
+      "titulo": "Perguntar à Mayra",
+      "porque": "A camada de leitura vai em todos os planos."
+    },
+    "exportar": {
+      "titulo": "Exportar os seus dados",
+      "porque": "Sempre, e em formato aberto. Nunca se cobra a saída."
+    }
+  },
+  "complementos": {
+    "titulo": "Complementos",
+    "subtexto": "Um complemento não é uma capacidade retida. É outro sítio de trabalho, ou consumo com custo variável real.",
+    "por_mes": "/mês"
+  },
+  "complemento": {
+    "loja_adicional": {
+      "nome": "Loja adicional",
+      "descricao": "Acima das lojas incluídas no plano, por loja.",
+      "porque": "Outro balcão, outra caixa, outra equipa."
+    },
+    "pacote_mayra": {
+      "nome": "Pacote de 5 000 perguntas à Mayra",
+      "descricao": "Acrescenta 5 000 chamadas ao limite mensal do plano.",
+      "porque": "Consumo com custo marginal real."
+    }
+  },
+  "perguntas": {
+    "titulo": "Perguntas frequentes"
+  },
+  "pergunta": {
+    "mudar_plano": {
+      "p": "Posso mudar de plano a meio do mês?",
+      "r": "Sim. Cobra-se apenas a diferença dos dias que faltam. A descer, o valor fica como crédito para o ciclo seguinte."
+    },
+    "passar_limite": {
+      "p": "O que acontece se passar do limite de lojas ou utilizadores?",
+      "r": "Avisamos antes do limite, com o escalão que resolve. Ao atingir o limite deixa de poder criar lojas ou utilizadores novos — os que existem continuam a trabalhar."
+    },
+    "deixar_pagar": {
+      "p": "E se deixar de pagar?",
+      "r": "Há aviso, depois só-leitura, depois suspensão. Em nenhum momento se apagam dados, e a exportação completa está sempre disponível."
+    },
+    "iva": {
+      "p": "Os preços incluem IVA?",
+      "r": "Não. Acresce IVA à taxa legal em vigor em Moçambique."
+    },
+    "servidores": {
+      "p": "Preciso de instalar servidores?",
+      "r": "Não. É um serviço na nuvem. Há opção de instalação local para quem tem essa exigência — nesse caso o preço é por proposta."
+    }
+  },
+  "fecho": {
+    "titulo": "Quer ver isto com os dados da sua loja?",
+    "texto": "Meia hora, sem compromisso. Mostramos a cadeia a fechar com um produto seu.",
+    "assunto_email": "Demonstração do ControlCore"
+  }
+}

@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Clock, FileText, Loader2, Plus, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   DOCUMENTOS_OBRIGATORIOS,
-  ETIQUETA_DOCUMENTO,
-  ETIQUETA_ESTADO_DOCUMENTO,
+  TIPOS_DOCUMENTO,
   TipoDocumento,
   portal,
 } from '../api/portal.api';
 import type { DocumentoFornecedor } from '../api/portal.api';
 import { usePortalStore } from '../store/usePortalStore';
-import { cn, mensagemDeErro } from '@/shared/utils';
+import { cn, formatData, mensagemDeErro } from '@/shared/utils';
 
 /**
  * Os documentos de habilitação do fornecedor.
@@ -27,6 +27,7 @@ import { cn, mensagemDeErro } from '@/shared/utils';
  * na pontuação: alvará e quitação fiscal excluem das comparações; INSS e seguro não.
  */
 export function DocumentosPage() {
+  const { t } = useTranslation('portal');
   const queryClient = useQueryClient();
   const carregar = usePortalStore((s) => s.carregar);
   const [aSubmeter, setASubmeter] = useState(false);
@@ -47,10 +48,9 @@ export function DocumentosPage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-base font-semibold text-slate-900">Documentos</h1>
+          <h1 className="text-base font-semibold text-slate-900">{t('documentos.titulo')}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Submeta e a plataforma verifica. Não é possível auto-aprovar — é o que dá valor à
-            verificação.
+            {t('documentos.subtitulo')}
           </p>
         </div>
         <button
@@ -58,7 +58,7 @@ export function DocumentosPage() {
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           <Plus size={15} />
-          Submeter documento
+          {t('documentos.submeter')}
         </button>
       </header>
 
@@ -72,7 +72,7 @@ export function DocumentosPage() {
 
           {documentos && documentos.length > 0 && (
             <section>
-              <h2 className="mb-2 text-sm font-medium text-slate-700">Submetidos</h2>
+              <h2 className="mb-2 text-sm font-medium text-slate-700">{t('documentos.submetidos')}</h2>
               <ul className="space-y-2">
                 {documentos.map((doc) => (
                   <li
@@ -84,7 +84,7 @@ export function DocumentosPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-medium text-slate-900">
-                          {ETIQUETA_DOCUMENTO[doc.tipo]}
+                          {t(`documento.${doc.tipo}`)}
                           {doc.tipo === 'OUTRO' && doc.descricao ? ` — ${doc.descricao}` : ''}
                         </span>
                         <EtiquetaEstadoDoc estado={doc.estado} />
@@ -101,10 +101,10 @@ export function DocumentosPage() {
                                 : undefined
                             }
                           >
-                            válido até {new Date(doc.validoAte).toLocaleDateString('pt-PT')}
+                            {t('documentos.valido_ate', { data: formatData(doc.validoAte) })}
                           </span>
                         ) : (
-                          <span>sem validade</span>
+                          <span>{t('documentos.sem_validade')}</span>
                         )}
                       </p>
 
@@ -118,8 +118,8 @@ export function DocumentosPage() {
                           )}
                         >
                           <strong>
-                            {doc.estado === 'RECUSADO' ? 'Motivo da recusa: ' : 'Nota: '}
-                          </strong>
+                            {doc.estado === 'RECUSADO' ? t('documentos.motivo_recusa') : t('documentos.nota')}
+                          </strong>{' '}
                           {doc.motivoDecisao}
                         </p>
                       )}
@@ -147,6 +147,7 @@ export function DocumentosPage() {
  * A diferença entre as duas é estar ou não no mercado.
  */
 function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
+  const { t } = useTranslation('portal');
   const hoje = new Date();
 
   const vale = (tipo: TipoDocumento) => {
@@ -157,12 +158,12 @@ function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
 
   const estado = (tipo: TipoDocumento) => {
     const doc = documentos.find((d) => d.tipo === tipo);
-    if (!doc) return 'em falta';
-    if (doc.estado === 'PENDENTE') return 'a aguardar verificação';
-    if (doc.estado === 'RECUSADO') return 'recusado';
-    if (doc.estado === 'EXPIRADO') return 'expirado — renovar';
-    if (doc.validoAte && new Date(doc.validoAte) < hoje) return 'expirado — renovar';
-    return 'válido';
+    if (!doc) return t('documentos.estado_em_falta');
+    if (doc.estado === 'PENDENTE') return t('documentos.estado_aguarda');
+    if (doc.estado === 'RECUSADO') return t('documentos.estado_recusado');
+    if (doc.estado === 'EXPIRADO') return t('documentos.estado_expirado');
+    if (doc.validoAte && new Date(doc.validoAte) < hoje) return t('documentos.estado_expirado');
+    return t('documentos.estado_valido');
   };
 
   const RECOMENDAVEIS: TipoDocumento[] = ['INSCRICAO_INSS', 'SEGURO_RESPONSABILIDADE'];
@@ -172,10 +173,10 @@ function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
       <section className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
           <AlertTriangle size={14} />
-          Obrigatórios
+          {t('documentos.obrigatorios')}
         </h2>
         <p className="mt-0.5 text-[11px] leading-snug text-amber-800">
-          Sem estes, a sua vitrine não entra em nenhuma comparação.
+          {t('documentos.obrigatorios_ajuda')}
         </p>
         <ul className="mt-2.5 space-y-1.5">
           {DOCUMENTOS_OBRIGATORIOS.map((tipo) => (
@@ -185,7 +186,7 @@ function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
               ) : (
                 <XCircle size={13} className="shrink-0 text-amber-600" />
               )}
-              <span className="text-slate-800">{ETIQUETA_DOCUMENTO[tipo]}</span>
+              <span className="text-slate-800">{t(`documento.${tipo}`)}</span>
               <span className="ml-auto text-[11px] text-slate-500">{estado(tipo)}</span>
             </li>
           ))}
@@ -195,18 +196,17 @@ function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
           <li className="flex items-start gap-2 border-t border-amber-200/60 pt-1.5 text-[11px] leading-snug text-amber-800">
             <AlertTriangle size={11} className="mt-0.5 shrink-0" />
             <span>
-              A <strong>conta bancária</strong> também é obrigatória e não se submete aqui:
-              precisa de aprovação por uma segunda pessoa. Fale com o seu contacto na
-              plataforma.
+              {t('documentos.banco_antes')} <strong>{t('documentos.banco_nome')}</strong>{' '}
+              {t('documentos.banco_depois')}
             </span>
           </li>
         </ul>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-800">Recomendados</h2>
+        <h2 className="text-sm font-semibold text-slate-800">{t('documentos.recomendados')}</h2>
         <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
-          Não impedem a compra. Melhoram a sua pontuação nas comparações.
+          {t('documentos.recomendados_ajuda')}
         </p>
         <ul className="mt-2.5 space-y-1.5">
           {RECOMENDAVEIS.map((tipo) => (
@@ -216,14 +216,14 @@ function Exigencias({ documentos }: { documentos: DocumentoFornecedor[] }) {
               ) : (
                 <Clock size={13} className="shrink-0 text-slate-300" />
               )}
-              <span className="text-slate-800">{ETIQUETA_DOCUMENTO[tipo]}</span>
+              <span className="text-slate-800">{t(`documento.${tipo}`)}</span>
               <span className="ml-auto text-[11px] text-slate-500">{estado(tipo)}</span>
             </li>
           ))}
         </ul>
         <p className="mt-2.5 border-t border-slate-100 pt-2 text-[11px] leading-snug text-slate-500">
-          A <strong>licença sanitária</strong> passa a obrigatória em requisições de género
-          alimentar.
+          {t('documentos.sanitaria_antes')} <strong>{t('documentos.sanitaria_nome')}</strong>{' '}
+          {t('documentos.sanitaria_depois')}
         </p>
       </section>
     </div>
@@ -238,9 +238,10 @@ const CORES_DOC: Record<DocumentoFornecedor['estado'], string> = {
 };
 
 function EtiquetaEstadoDoc({ estado }: { estado: DocumentoFornecedor['estado'] }) {
+  const { t } = useTranslation('portal');
   return (
     <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', CORES_DOC[estado])}>
-      {ETIQUETA_ESTADO_DOCUMENTO[estado]}
+      {t(`estadoDocumento.${estado}`)}
     </span>
   );
 }
@@ -252,6 +253,7 @@ function SubmeterModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('portal');
   const [f, setF] = useState({
     tipo: 'ALVARA' as TipoDocumento,
     descricao: '',
@@ -274,18 +276,18 @@ function SubmeterModal({
         validoAte: f.validoAte ? new Date(`${f.validoAte}T23:59:59`).toISOString() : undefined,
       }),
     onSuccess: () => {
-      toast.success('Documento submetido. Fica a aguardar verificação pela plataforma.');
+      toast.success(t('documentos.submetido'));
       onSuccess();
       onClose();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao submeter.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('documentos.erro_submeter'))),
   });
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (f.tipo === 'OUTRO' && !f.descricao.trim()) {
-      toast.error('Descreva o documento quando o tipo é «Outro».');
+      toast.error(t('documentos.descreva_outro'));
       return;
     }
 
@@ -296,7 +298,7 @@ function SubmeterModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4">
       <form onSubmit={enviar} className="my-4 w-full max-w-lg rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Submeter documento</h2>
+          <h2 className="text-base font-semibold text-slate-900">{t('documentos.submeter')}</h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400">
             <XCircle size={18} />
           </button>
@@ -304,18 +306,17 @@ function SubmeterModal({
 
         <div className="space-y-4 px-5 py-5">
           <div>
-            <label className="block text-xs font-medium text-slate-700">Tipo *</label>
+            <label className="block text-xs font-medium text-slate-700">{t('documentos.tipo')}</label>
             <select
               value={f.tipo}
               onChange={(e) => setF({ ...f, tipo: e.target.value as TipoDocumento })}
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
             >
-              {Object.entries(ETIQUETA_DOCUMENTO).map(([valor, etiqueta]) => (
+              {TIPOS_DOCUMENTO.map((valor) => (
                 <option key={valor} value={valor}>
-                  {etiqueta}
-                  {DOCUMENTOS_OBRIGATORIOS.includes(valor as TipoDocumento)
-                    ? ' (obrigatório)'
-                    : ''}
+                  {DOCUMENTOS_OBRIGATORIOS.includes(valor)
+                    ? t('documentos.tipo_obrigatorio', { tipo: t(`documento.${valor}`) })
+                    : t(`documento.${valor}`)}
                 </option>
               ))}
             </select>
@@ -324,7 +325,7 @@ function SubmeterModal({
           {f.tipo === 'OUTRO' && (
             <div>
               <label className="block text-xs font-medium text-slate-700">
-                Que documento é *
+                {t('documentos.que_documento')}
               </label>
               <input
                 value={f.descricao}
@@ -337,7 +338,7 @@ function SubmeterModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-medium text-slate-700">Número</label>
+              <label className="block text-xs font-medium text-slate-700">{t('documentos.numero')}</label>
               <input
                 value={f.numero}
                 onChange={(e) => setF({ ...f, numero: e.target.value })}
@@ -345,7 +346,7 @@ function SubmeterModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700">Entidade emissora</label>
+              <label className="block text-xs font-medium text-slate-700">{t('documentos.entidade_emissora')}</label>
               <input
                 value={f.entidadeEmissora}
                 onChange={(e) => setF({ ...f, entidadeEmissora: e.target.value })}
@@ -353,7 +354,7 @@ function SubmeterModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700">Emitido em</label>
+              <label className="block text-xs font-medium text-slate-700">{t('documentos.emitido_em')}</label>
               <input
                 type="date"
                 value={f.emitidoEm}
@@ -362,7 +363,7 @@ function SubmeterModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700">Válido até</label>
+              <label className="block text-xs font-medium text-slate-700">{t('documentos.valido_ate_label')}</label>
               <input
                 type="date"
                 value={f.validoAte}
@@ -370,14 +371,14 @@ function SubmeterModal({
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                Vazio para documentos sem validade. Com data, avisamos antes de expirar.
+                {t('documentos.validade_ajuda')}
               </p>
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-700">
-              Endereço do ficheiro
+              {t('documentos.endereco')}
             </label>
             <input
               value={f.ficheiroUrl}
@@ -389,8 +390,7 @@ function SubmeterModal({
                 botão de anexo que não funciona — e quem verifica precisa de conseguir ver o
                 documento de alguma forma. */}
             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-              O carregamento directo de ficheiros ainda não está disponível. Por agora, ponha
-              aqui um endereço onde quem verifica possa ver o documento.
+              {t('documentos.endereco_ajuda')}
             </p>
           </div>
         </div>
@@ -401,7 +401,7 @@ function SubmeterModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('comum.cancelar')}
           </button>
           <button
             type="submit"
@@ -409,7 +409,7 @@ function SubmeterModal({
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {submeter.isPending && <Loader2 size={15} className="animate-spin" />}
-            Submeter
+            {t('documentos.submeter_btn')}
           </button>
         </footer>
       </form>

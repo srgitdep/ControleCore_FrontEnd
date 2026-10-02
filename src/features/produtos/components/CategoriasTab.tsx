@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tag, Plus, Loader2, X, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   useCategories,
   useCreateCategory,
@@ -18,6 +19,7 @@ import { ConfirmDialog } from '@/shared/ui';
  * este ecrã.
  */
 export function CategoriasTab() {
+  const { t } = useTranslation('produtos');
   const { data: categorias = [], isLoading } = useCategories();
   const [aCriar, setACriar] = useState(false);
   const [aEditar, setAEditar] = useState<Category | null>(null);
@@ -29,13 +31,13 @@ export function CategoriasTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          Agrupam os produtos no catálogo, no POS e nos filtros de listagem.
+          {t('categorias.intro')}
         </p>
         <button
           onClick={() => setACriar(true)}
           className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          <Plus size={16} /> Nova categoria
+          <Plus size={16} /> {t('categorias.nova')}
         </button>
       </div>
 
@@ -46,7 +48,7 @@ export function CategoriasTab() {
       ) : categorias.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 py-14 text-center">
           <Tag size={26} className="mx-auto text-slate-300" />
-          <p className="mt-2 text-sm text-slate-500">Ainda não há categorias.</p>
+          <p className="mt-2 text-sm text-slate-500">{t('categorias.vazio')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -68,14 +70,14 @@ export function CategoriasTab() {
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   onClick={() => setAEditar(c)}
-                  title="Editar"
+                  title={t('acoes.editar')}
                   className="p-1.5 text-slate-400 hover:text-indigo-600"
                 >
                   <Edit2 size={14} />
                 </button>
                 <button
                   onClick={() => setAApagar(c)}
-                  title="Apagar"
+                  title={t('categorias.apagar')}
                   className="p-1.5 text-slate-400 hover:text-rose-600"
                 >
                   <Trash2 size={14} />
@@ -92,13 +94,13 @@ export function CategoriasTab() {
 
       <ConfirmDialog
         isOpen={aApagar !== null}
-        title="Apagar categoria"
+        title={t('categorias.apagar_titulo')}
         message={
           aApagar
-            ? `Apagar «${aApagar.nome}»? Se houver produtos nesta categoria, o servidor recusa — mova-os primeiro.`
+            ? t('categorias.apagar_mensagem', { nome: aApagar.nome })
             : ''
         }
-        confirmText="Apagar"
+        confirmText={t('categorias.apagar')}
         variant="danger"
         isLoading={apagar.isPending}
         onConfirm={() => {
@@ -112,6 +114,7 @@ export function CategoriasTab() {
 }
 
 function CategoriaModal({ categoria, onClose }: { categoria: Category | null; onClose: () => void }) {
+  const { t } = useTranslation('produtos');
   const [nome, setNome] = useState(categoria?.nome ?? '');
   const [imagemUrl, setImagemUrl] = useState(categoria?.imagemUrl ?? '');
 
@@ -121,7 +124,7 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim()) return toast.error('Indique o nome da categoria.');
+    if (!nome.trim()) return toast.error(t('categorias.indicar_nome'));
 
     const dto = { nome: nome.trim(), imagemUrl: imagemUrl.trim() || undefined };
 
@@ -137,7 +140,7 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
       <form onSubmit={submeter} className="w-full max-w-sm rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
-            {categoria ? 'Editar categoria' : 'Nova categoria'}
+            {categoria ? t('categorias.editar_titulo') : t('categorias.nova')}
           </h2>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
@@ -146,17 +149,17 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
 
         <div className="space-y-4 px-5 py-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Nome</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('categorias.nome')}</label>
             <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex.: Bebidas"
+              placeholder={t('categorias.nome_exemplo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">
-              Imagem <span className="font-normal text-slate-400">(URL, opcional)</span>
+              {t('categorias.imagem')} <span className="font-normal text-slate-400">{t('categorias.imagem_dica')}</span>
             </label>
             <input
               value={imagemUrl}
@@ -164,13 +167,13 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
               placeholder="https://..."
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
-            <p className="mt-1 text-xs text-slate-400">Usada no botão da categoria no POS.</p>
+            <p className="mt-1 text-xs text-slate-400">{t('categorias.imagem_ajuda')}</p>
           </div>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100">
-            Cancelar
+            {t('acoes.cancelar')}
           </button>
           <button
             type="submit"
@@ -178,7 +181,7 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
             className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {isSaving && <Loader2 size={14} className="animate-spin" />}
-            Guardar
+            {t('acoes.guardar')}
           </button>
         </div>
       </form>

@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { AuditAction } from '@/features/history';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface AuditLogTableProps {
   userId?: string;
@@ -21,50 +22,43 @@ const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: str
   SALE_CANCELLED: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
 };
 
-const ACTION_LABELS: Record<AuditAction, string> = {
-  CREATE: 'Criação',
-  UPDATE: 'Atualização',
-  DELETE: 'Remoção',
-  LOGIN: 'Login',
-  LOGOUT: 'Logout',
-  SALE_COMPLETED: 'Venda ConcluÍda',
-  SALE_CANCELLED: 'Venda Cancelada',
-};
-
 export function AuditLogTable({ userId }: AuditLogTableProps) {
+  const { t } = useTranslation('historico');
   const { data: logs, isLoading } = useQuery({
     queryKey: ['auditLogs', userId],
     queryFn: () => getAuditLogs({ userId }),
   });
 
+  const actionLabel = (action: AuditAction) => t(`acao.${action}`, { defaultValue: action });
+
   const exportToPDF = () => {
     if (!logs || logs.length === 0) {
-      toast.error('Sem dados para exportar.');
+      toast.error(t('tabela.sem_dados_exportar'));
       return;
     }
     const doc = new jsPDF();
-    
+
     doc.setFontSize(16);
-    doc.text('Histórico no Sistema', 14, 20);
+    doc.text(t('tabela.pdf_titulo'), 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
     const dateStr = new Date().toLocaleString('pt-PT');
-    doc.text(`Gerado a: ${dateStr}`, 14, 28);
-    
+    doc.text(t('tabela.pdf_gerado', { data: dateStr }), 14, 28);
+
     autoTable(doc, {
       startY: 35,
-      head: [['Utilizador', 'Ação', 'Detalhes', 'Data & Hora', 'Perfil']],
+      head: [[t('tabela.col_utilizador'), t('tabela.col_acao'), t('tabela.col_detalhes'), t('tabela.col_data_hora'), t('tabela.col_perfil')]],
       body: logs.map(l => [
-        l.user ? l.user.name : 'Sistema / Desconhecido',
-        ACTION_LABELS[l.action] || l.action,
+        l.user ? l.user.name : t('tabela.sistema_desconhecido'),
+        actionLabel(l.action),
         l.entityName && l.entityName !== 'Auth' ? `${l.entityName}: ${l.newValues?.nome || l.newValues?.name || l.newValues?.numeroFatura || l.newValues?.email || l.newValues?.titulo || l.entityId}` : '-',
         format(new Date(l.createdAt), 'dd MMM, yyyy HH:mm:ss'),
-        l.user ? `${l.user.perfil?.nome || 'Padrão'}\n(${l.user.role || 'USER'})` : '-'
+        l.user ? `${l.user.perfil?.nome || t('tabela.perfil_padrao')}\n(${l.user.role || 'USER'})` : '-'
       ]),
       theme: 'grid',
       headStyles: { fillColor: [16, 185, 129] }, // emerald-500
     });
-    
+
     doc.save(`historico_sistema_${Date.now()}.pdf`);
   };
 
@@ -72,14 +66,14 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold text-slate-900">
-          Registos de Auditoria
+          {t('tabela.titulo')}
         </h2>
-        <button 
+        <button
           onClick={exportToPDF}
           className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors shadow-sm"
         >
           <Download size={16} />
-          <span>Exportar PDF</span>
+          <span>{t('tabela.exportar_pdf')}</span>
         </button>
       </div>
 
@@ -112,7 +106,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                     className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${color.bg} ${color.text} ${color.border}`}
                   >
                     <div className="h-1.5 w-1.5 rounded-full bg-current opacity-75" />
-                    {ACTION_LABELS[log.action] || log.action}
+                    {actionLabel(log.action)}
                   </span>
                   <span className="shrink-0 text-right text-xs text-slate-400">
                     {format(new Date(log.createdAt), 'dd MMM, HH:mm')}
@@ -134,7 +128,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                       {log.user.perfil?.nome || log.user.role || 'USER'}
                     </>
                   ) : (
-                    <span className="italic">Utilizador desconhecido</span>
+                    <span className="italic">{t('tabela.utilizador_desconhecido')}</span>
                   )}
                 </p>
               </div>
@@ -142,7 +136,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
           })}
 
           {logs?.length === 0 && (
-            <p className="py-12 text-center text-sm text-slate-500">Nenhum registo encontrado.</p>
+            <p className="py-12 text-center text-sm text-slate-500">{t('tabela.nenhum')}</p>
           )}
         </div>
       )}
@@ -157,11 +151,11 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium text-xs">
               <tr>
-                <th className="px-4 py-4">Utilizador</th>
-                <th className="px-4 py-4">Ação</th>
-                <th className="px-4 py-4">Detalhes</th>
-                <th className="px-4 py-4">Data & Hora</th>
-                <th className="px-4 py-4">Perfil</th>
+                <th className="px-4 py-4">{t('tabela.col_utilizador')}</th>
+                <th className="px-4 py-4">{t('tabela.col_acao')}</th>
+                <th className="px-4 py-4">{t('tabela.col_detalhes')}</th>
+                <th className="px-4 py-4">{t('tabela.col_data_hora')}</th>
+                <th className="px-4 py-4">{t('tabela.col_perfil')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -176,13 +170,13 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                           <p className="text-slate-500 text-xs">{log.user.email}</p>
                         </div>
                       ) : (
-                        <p className="text-slate-500 italic">Desconhecido</p>
+                        <p className="text-slate-500 italic">{t('tabela.desconhecido')}</p>
                       )}
                     </td>
                     <td className="px-4 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${color.bg} ${color.text} ${color.border}`}>
                         <div className={`w-1.5 h-1.5 rounded-full bg-current opacity-75`} />
-                        {ACTION_LABELS[log.action] || log.action}
+                        {actionLabel(log.action)}
                       </span>
                     </td>
                     <td className="px-4 py-4">
@@ -206,7 +200,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
                     <td className="px-4 py-4 text-slate-700">
                       {log.user ? (
                         <div>
-                          <p className="font-medium text-slate-900">{log.user.perfil?.nome || 'Padrão'}</p>
+                          <p className="font-medium text-slate-900">{log.user.perfil?.nome || t('tabela.perfil_padrao')}</p>
                           <p className="text-slate-500 text-xs font-semibold">{log.user.role || 'USER'}</p>
                         </div>
                       ) : (
@@ -219,7 +213,7 @@ export function AuditLogTable({ userId }: AuditLogTableProps) {
               {logs?.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    Nenhum registo encontrado.
+                    {t('tabela.nenhum')}
                   </td>
                 </tr>
               )}

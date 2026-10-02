@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search, Package, Truck, ClipboardList, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { usePesquisaGlobal } from '../hooks/usePesquisaGlobal';
-import { LABEL_POR_TIPO, ROTA_POR_TIPO, type ResultadoPesquisa, type TipoResultadoPesquisa } from '../types/pesquisa.types';
+import { ROTA_POR_TIPO, type ResultadoPesquisa, type TipoResultadoPesquisa } from '../types/pesquisa.types';
 
 const ICONE_POR_TIPO: Record<TipoResultadoPesquisa, React.ElementType> = {
   PRODUTO: Package,
@@ -22,6 +23,7 @@ const ICONE_POR_TIPO: Record<TipoResultadoPesquisa, React.ElementType> = {
  * estado que não seja o seu.
  */
 export function PesquisaGlobal() {
+  const { t } = useTranslation('pesquisa');
   const [termo, setTermo] = useState('');
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ export function PesquisaGlobal() {
             setAberto(true);
           }}
           onFocus={() => setAberto(true)}
-          placeholder="Pesquisar produtos, fornecedores, requisições, ordens de compra... Ctrl+K"
+          placeholder={t('placeholder')}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-slate-400 focus:bg-white focus:outline-none"
         />
         {isFetching && (
@@ -79,7 +81,7 @@ export function PesquisaGlobal() {
       {aberto && termo.trim().length >= 2 && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
           {resultados?.total === 0 && !isFetching && (
-            <p className="px-4 py-6 text-center text-sm text-slate-400">Sem resultados para "{termo}".</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-400">{t('sem_resultados', { termo })}</p>
           )}
 
           {categorias.map(({ tipo, itens }) => {
@@ -87,7 +89,7 @@ export function PesquisaGlobal() {
             return (
               <div key={tipo} className="border-b border-slate-100 py-1.5 last:border-0">
                 <p className="px-4 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {LABEL_POR_TIPO[tipo]}
+                  {t(`tipo.${tipo}`)}
                 </p>
                 {itens.map((item) => (
                   <button

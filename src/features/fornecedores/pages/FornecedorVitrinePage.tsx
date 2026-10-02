@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Barcode,
@@ -20,10 +21,9 @@ import {
 } from 'lucide-react';
 import { suppliersApi } from '../api/suppliers.api';
 import type { ArtigoDaVitrine, VitrinaDoFornecedor } from '../api/suppliers.api';
-import { cn } from '@/shared/utils';
+import { cn, formatMoeda } from '@/shared/utils';
 
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+const mt = formatMoeda;
 
 const CHAVE_MODO = 'controlcore.compras.vitrina.modo';
 
@@ -36,15 +36,20 @@ function lerModoGuardado(): 'grelha' | 'lista' {
   }
 }
 
-const ETIQUETA_DOCUMENTO: Record<string, string> = {
-  ALVARA: 'Alvará',
-  CERTIDAO_QUITACAO_FISCAL: 'Certidão de quitação fiscal',
-  INSCRICAO_INSS: 'Inscrição no INSS',
-  LICENCA_SANITARIA: 'Licença sanitária',
-  SEGURO_RESPONSABILIDADE: 'Seguro de responsabilidade',
-  CERTIFICADO_QUALIDADE: 'Certificado de qualidade',
-  OUTRO: 'Outro documento',
-};
+const TIPOS_DOCUMENTO = [
+  'ALVARA',
+  'CERTIDAO_QUITACAO_FISCAL',
+  'INSCRICAO_INSS',
+  'LICENCA_SANITARIA',
+  'SEGURO_RESPONSABILIDADE',
+  'CERTIFICADO_QUALIDADE',
+  'OUTRO',
+] as const;
+
+type TipoDocumento = (typeof TIPOS_DOCUMENTO)[number];
+
+const eTipoDocumento = (tipo: string): tipo is TipoDocumento =>
+  (TIPOS_DOCUMENTO as readonly string[]).includes(tipo);
 
 /**
  * A vitrine de um fornecedor, vista de dentro de Compras — a mesma UI/UX da vitrine que o
@@ -73,6 +78,7 @@ const ETIQUETA_DOCUMENTO: Record<string, string> = {
  * /b2b/qualificacao/:id/vitrine`) é diferente da do mercado, e exige sessão e o módulo B2B.
  */
 export function FornecedorVitrinePage() {
+  const { t } = useTranslation('fornecedores');
   const { organizacaoId } = useParams<{ organizacaoId: string }>();
   const [modo, setModo] = useState<'grelha' | 'lista'>(lerModoGuardado);
 
@@ -101,7 +107,7 @@ export function FornecedorVitrinePage() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft size={15} />
-            Fornecedores
+            {t('vit.fornecedores')}
           </Link>
         </div>
       </header>
@@ -114,12 +120,12 @@ export function FornecedorVitrinePage() {
         ) : isError || !vitrina ? (
           <div className="rounded-lg border border-dashed border-slate-300 py-16 text-center">
             <Building2 size={26} className="mx-auto text-slate-300" />
-            <p className="mt-2 text-sm text-slate-600">Fornecedor não encontrado.</p>
+            <p className="mt-2 text-sm text-slate-600">{t('vit.nao_encontrado')}</p>
             <Link
               to="/compras?tab=fornecedores"
               className="mt-3 inline-block text-sm text-blue-600 hover:underline"
             >
-              Voltar aos fornecedores
+              {t('vit.voltar')}
             </Link>
           </div>
         ) : (
@@ -128,9 +134,9 @@ export function FornecedorVitrinePage() {
 
             <div className="mt-6 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900">
-                Vitrine
+                {t('vit.vitrine')}
                 <span className="ml-1.5 font-normal text-slate-400">
-                  ({vitrina.artigos.length} artigo{vitrina.artigos.length === 1 ? '' : 's'})
+                  ({t('vit.artigos', { count: vitrina.artigos.length })})
                 </span>
               </h2>
 
@@ -138,7 +144,7 @@ export function FornecedorVitrinePage() {
                 <button
                   onClick={() => mudarModo('grelha')}
                   aria-pressed={modo === 'grelha'}
-                  title="Ver em grelha de cards"
+                  title={t('vit.ver_grelha')}
                   className={cn(
                     'rounded px-2 py-1.5 transition-colors',
                     modo === 'grelha' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
@@ -149,7 +155,7 @@ export function FornecedorVitrinePage() {
                 <button
                   onClick={() => mudarModo('lista')}
                   aria-pressed={modo === 'lista'}
-                  title="Ver em lista"
+                  title={t('vit.ver_lista')}
                   className={cn(
                     'rounded px-2 py-1.5 transition-colors',
                     modo === 'lista' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
@@ -165,7 +171,7 @@ export function FornecedorVitrinePage() {
                 <div className="rounded-lg border border-dashed border-slate-300 py-14 text-center">
                   <Package size={26} className="mx-auto text-slate-300" />
                   <p className="mt-2 text-sm text-slate-500">
-                    Este fornecedor ainda não publicou artigos.
+                    {t('vit.sem_artigos')}
                   </p>
                 </div>
               ) : modo === 'grelha' ? (
@@ -194,6 +200,8 @@ export function FornecedorVitrinePage() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function CabecalhoDaOrganizacao({ vitrina }: { vitrina: VitrinaDoFornecedor }) {
+  const { t } = useTranslation('fornecedores');
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="flex items-start gap-3">
@@ -274,7 +282,7 @@ function CabecalhoDaOrganizacao({ vitrina }: { vitrina: VitrinaDoFornecedor }) {
         <div className="mt-3 border-t border-slate-100 pt-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
             <ShieldCheck size={13} />
-            Documentação verificada
+            {t('vit.documentacao_verificada')}
           </p>
           <ul className="mt-1.5 flex flex-wrap gap-1.5">
             {vitrina.documentosValidos.map((tipo) => (
@@ -283,7 +291,7 @@ function CabecalhoDaOrganizacao({ vitrina }: { vitrina: VitrinaDoFornecedor }) {
                 className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800"
               >
                 <CheckCircle2 size={10} />
-                {ETIQUETA_DOCUMENTO[tipo] ?? tipo}
+                {eTipoDocumento(tipo) ? t(`vit.documento.${tipo}`) : tipo}
               </li>
             ))}
           </ul>
@@ -319,6 +327,7 @@ function precoVigente(artigo: ArtigoDaVitrine) {
  * acções de gestão do rodapé. Ver a nota da página sobre porque é deliberadamente igual.
  */
 function ArtigoCardLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
+  const { t } = useTranslation('fornecedores');
   const vigente = precoVigente(artigo);
   const imagemUrl = artigo.imagens?.[0];
   const [falhou, setFalhou] = useState(false);
@@ -334,17 +343,17 @@ function ArtigoCardLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
               CORES_ESTADO[artigo.esgotado ? 'esgotado' : 'publicado'],
             )}
           >
-            {artigo.esgotado ? 'Esgotado' : 'Publicado'}
+            {artigo.esgotado ? t('vit.esgotado') : t('vit.publicado')}
           </span>
         </span>
 
         {!artigo.gtin && (
           <span
             className="absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
-            title="Sem código de barras — encontrado por semelhança de nome."
+            title={t('vit.sem_gtin_ajuda')}
           >
             <Barcode size={8} />
-            sem GTIN
+            {t('vit.sem_gtin')}
           </span>
         )}
 
@@ -359,7 +368,7 @@ function ArtigoCardLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={22} />
-            <span className="text-[9px] font-medium uppercase tracking-wide">Sem imagem</span>
+            <span className="text-[9px] font-medium uppercase tracking-wide">{t('vit.sem_imagem')}</span>
           </div>
         )}
       </div>
@@ -376,19 +385,16 @@ function ArtigoCardLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
           {vigente ? (
             <>
               <p className="flex items-baseline gap-1">
-                <span className="text-lg font-black text-slate-900">{vigente.preco.toFixed(2)}</span>
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                  MT
-                </span>
+                <span className="text-lg font-black text-slate-900">{mt(vigente.preco)}</span>
               </p>
               {artigo.factorConversao !== 1 && (
                 <p className="text-[11px] text-slate-500">
-                  {mt(vigente.preco / artigo.factorConversao)} / unidade
+                  {t('vit.por_unidade_valor', { valor: mt(vigente.preco / artigo.factorConversao) })}
                 </p>
               )}
             </>
           ) : (
-            <p className="text-xs font-semibold text-amber-600">Sem preço em vigor</p>
+            <p className="text-xs font-semibold text-amber-600">{t('vit.sem_preco_vigor')}</p>
           )}
         </div>
       </div>
@@ -397,6 +403,7 @@ function ArtigoCardLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
 }
 
 function LinhaArtigoLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
+  const { t } = useTranslation('fornecedores');
   const vigente = precoVigente(artigo);
 
   return (
@@ -410,12 +417,12 @@ function LinhaArtigoLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
               CORES_ESTADO[artigo.esgotado ? 'esgotado' : 'publicado'],
             )}
           >
-            {artigo.esgotado ? 'Esgotado' : 'Publicado'}
+            {artigo.esgotado ? t('vit.esgotado') : t('vit.publicado')}
           </span>
           {!artigo.gtin && (
             <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
               <Barcode size={9} />
-              sem GTIN
+              {t('vit.sem_gtin')}
             </span>
           )}
         </div>
@@ -423,7 +430,7 @@ function LinhaArtigoLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
           <span className="font-mono">{artigo.referencia}</span>
           {artigo.unidadeVenda && <span>{artigo.unidadeVenda}</span>}
           {artigo.factorConversao !== 1 && (
-            <span className="text-slate-600">×{artigo.factorConversao} unidades</span>
+            <span className="text-slate-600">{t('vit.x_unidades', { n: artigo.factorConversao })}</span>
           )}
         </p>
       </div>
@@ -434,12 +441,12 @@ function LinhaArtigoLeitura({ artigo }: { artigo: ArtigoDaVitrine }) {
             <p className="text-sm font-semibold text-slate-900">{mt(vigente.preco)}</p>
             <p className="text-[11px] text-slate-500">
               {artigo.factorConversao !== 1
-                ? `${mt(vigente.preco / artigo.factorConversao)} / unidade`
-                : 'por unidade'}
+                ? t('vit.por_unidade_valor', { valor: mt(vigente.preco / artigo.factorConversao) })
+                : t('vit.por_unidade')}
             </p>
           </>
         ) : (
-          <p className="text-xs font-medium text-amber-600">sem preço</p>
+          <p className="text-xs font-medium text-amber-600">{t('vit.sem_preco')}</p>
         )}
       </div>
     </li>

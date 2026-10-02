@@ -20,19 +20,13 @@ import {
   Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  AJUDA_ESTADO_ARTIGO,
-  ETIQUETA_ESTADO_ARTIGO,
-  EstadoArtigoVitrine,
-  portal,
-} from '../api/portal.api';
+import { useTranslation } from 'react-i18next';
+import { ESTADOS_ARTIGO, EstadoArtigoVitrine, portal } from '../api/portal.api';
 import type { ArtigoVitrine } from '../api/portal.api';
 import { ArtigoFormModal } from '../components/ArtigoFormModal';
 import { PrecosModal } from '../components/PrecosModal';
-import { cn, mensagemDeErro } from '@/shared/utils';
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+import { localeIntl } from '@/i18n';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 const CHAVE_MODO = 'controlcore.portal.vitrine.modo';
 
@@ -66,6 +60,7 @@ function lerModoGuardado(): 'grelha' | 'lista' {
  * vai mostrar; um com trezentos quer a lista para os encontrar depressa.
  */
 export function VitrinePage() {
+  const { t } = useTranslation('portal');
   const navegar = useNavigate();
   const queryClient = useQueryClient();
 
@@ -101,12 +96,16 @@ export function VitrinePage() {
       portal.mudarEstadoArtigo(id, estado),
     onSuccess: (artigo) => {
       toast.success(
-        `«${artigo.nome}» — ${ETIQUETA_ESTADO_ARTIGO[artigo.estado]}. ${AJUDA_ESTADO_ARTIGO[artigo.estado]}`,
+        t('vitrine.estado_mudado', {
+          nome: artigo.nome,
+          estado: t(`estadoArtigo.${artigo.estado}`),
+          ajuda: t(`ajudaEstadoArtigo.${artigo.estado}`),
+        }),
         { duration: 6000 },
       );
       recarregar();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao mudar o estado.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('vitrine.erro_mudar_estado'))),
   });
 
   const semPreco = artigos?.filter((a) => precoVigente(a) === null).length ?? 0;
@@ -115,9 +114,9 @@ export function VitrinePage() {
     <div className="space-y-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-base font-semibold text-slate-900">A minha vitrine</h1>
+          <h1 className="text-base font-semibold text-slate-900">{t('vitrine.titulo')}</h1>
           <p className="mt-0.5 text-xs text-slate-500">
-            Publique uma vez. Todos os compradores da plataforma vêem.
+            {t('vitrine.subtitulo')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -126,14 +125,14 @@ export function VitrinePage() {
             className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <Upload size={15} />
-            Importar catálogo
+            {t('vitrine.importar_catalogo')}
           </button>
           <button
             onClick={() => setAEditar('novo')}
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             <Plus size={15} />
-            Novo artigo
+            {t('vitrine.novo_artigo')}
           </button>
         </div>
       </header>
@@ -146,9 +145,9 @@ export function VitrinePage() {
           <Info size={14} className="mt-0.5 shrink-0 text-amber-600" />
           <p className="text-xs leading-snug text-amber-900">
             <strong>
-              {semPreco} artigo{semPreco === 1 ? '' : 's'} sem preço em vigor.
+              {t('vitrine.sem_preco_aviso', { count: semPreco })}
             </strong>{' '}
-            Um artigo sem preço não aparece em nenhuma comparação, mesmo estando publicado.
+            {t('vitrine.sem_preco_aviso_detalhe')}
           </p>
         </div>
       )}
@@ -162,13 +161,13 @@ export function VitrinePage() {
           <input
             value={termo}
             onChange={(e) => setTermo(e.target.value)}
-            placeholder="Nome, referência ou código de barras…"
+            placeholder={t('vitrine.pesquisar')}
             className="w-full rounded-md border border-slate-300 py-2 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none"
           />
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {(['TODOS', ...Object.keys(ETIQUETA_ESTADO_ARTIGO)] as (EstadoArtigoVitrine | 'TODOS')[]).map(
+          {(['TODOS', ...ESTADOS_ARTIGO] as (EstadoArtigoVitrine | 'TODOS')[]).map(
             (estado) => (
               <button
                 key={estado}
@@ -180,7 +179,7 @@ export function VitrinePage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
                 )}
               >
-                {estado === 'TODOS' ? 'Todos' : ETIQUETA_ESTADO_ARTIGO[estado]}
+                {estado === 'TODOS' ? t('vitrine.todos') : t(`estadoArtigo.${estado}`)}
               </button>
             ),
           )}
@@ -192,7 +191,7 @@ export function VitrinePage() {
           <button
             onClick={() => mudarModo('grelha')}
             aria-pressed={modo === 'grelha'}
-            title="Ver em grelha de cards"
+            title={t('vitrine.ver_grelha')}
             className={cn(
               'rounded px-2 py-1.5 transition-colors',
               modo === 'grelha' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
@@ -203,7 +202,7 @@ export function VitrinePage() {
           <button
             onClick={() => mudarModo('lista')}
             aria-pressed={modo === 'lista'}
-            title="Ver em lista"
+            title={t('vitrine.ver_lista')}
             className={cn(
               'rounded px-2 py-1.5 transition-colors',
               modo === 'lista' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100',
@@ -223,15 +222,15 @@ export function VitrinePage() {
           <Package size={26} className="mx-auto text-slate-300" />
           <p className="mt-2 text-sm text-slate-500">
             {termo || filtro !== 'TODOS'
-              ? 'Nenhum artigo com esses critérios.'
-              : 'A vitrine está vazia.'}
+              ? t('vitrine.nenhum_artigo')
+              : t('vitrine.vazia')}
           </p>
           {!termo && filtro === 'TODOS' && (
             <button
               onClick={() => setAEditar('novo')}
               className="mt-3 text-sm font-medium text-blue-600 hover:underline"
             >
-              Acrescentar o primeiro artigo
+              {t('vitrine.acrescentar_primeiro')}
             </button>
           )}
         </div>
@@ -260,7 +259,7 @@ export function VitrinePage() {
                   <button
                     onClick={() => setExpandido(aberto ? null : artigo.id)}
                     className="mt-0.5 shrink-0 text-slate-400 hover:text-slate-600"
-                    aria-label={aberto ? 'Fechar detalhe' : 'Ver detalhe'}
+                    aria-label={aberto ? t('vitrine.fechar_detalhe') : t('vitrine.ver_detalhe')}
                   >
                     {aberto ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </button>
@@ -272,10 +271,10 @@ export function VitrinePage() {
                       {!artigo.gtin && (
                         <span
                           className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
-                          title="Sem código de barras, os compradores encontram este artigo por semelhança de nome — que falha quando o nome não é o que eles usam. Com GTIN, é encontrado com certeza."
+                          title={t('vitrine.sem_gtin_ajuda_lista')}
                         >
                           <Barcode size={9} />
-                          sem GTIN
+                          {t('vitrine.sem_gtin')}
                         </span>
                       )}
                     </div>
@@ -286,13 +285,13 @@ export function VitrinePage() {
                       {artigo.factorConversao !== 1 && (
                         <span
                           className="text-slate-600"
-                          title="Quantas unidades base entram numa unidade de venda. É o que impede que dez caixas entrem no stock do comprador como dez unidades."
+                          title={t('vitrine.factor_ajuda')}
                         >
-                          ×{artigo.factorConversao} unidades
+                          {t('vitrine.factor_unidades', { factor: artigo.factorConversao })}
                         </span>
                       )}
                       {artigo.prazoExpedicaoDias !== null && (
-                        <span>expede em {artigo.prazoExpedicaoDias}d</span>
+                        <span>{t('vitrine.expede_em', { dias: artigo.prazoExpedicaoDias })}</span>
                       )}
                     </p>
                   </div>
@@ -301,16 +300,18 @@ export function VitrinePage() {
                     {vigente ? (
                       <>
                         <p className="text-sm font-semibold text-slate-900">
-                          {mt(vigente.preco)}
+                          {formatMoeda(vigente.preco)}
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {artigo.factorConversao !== 1
-                            ? `${mt(vigente.preco / artigo.factorConversao)} / unidade`
-                            : 'por unidade'}
+                            ? t('vitrine.valor_por_unidade', {
+                                valor: formatMoeda(vigente.preco / artigo.factorConversao),
+                              })
+                            : t('vitrine.por_unidade')}
                         </p>
                       </>
                     ) : (
-                      <p className="text-xs font-medium text-amber-600">sem preço</p>
+                      <p className="text-xs font-medium text-amber-600">{t('vitrine.sem_preco')}</p>
                     )}
                   </div>
 
@@ -320,13 +321,13 @@ export function VitrinePage() {
                       className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     >
                       <Tag size={12} />
-                      Preços
+                      {t('vitrine.precos')}
                     </button>
                     <button
                       onClick={() => setAEditar(artigo)}
                       className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     >
-                      Editar
+                      {t('vitrine.editar')}
                     </button>
                     <BotaoEstado
                       artigo={artigo}
@@ -396,12 +397,14 @@ const CORES: Record<EstadoArtigoVitrine, string> = {
 };
 
 function EtiquetaEstado({ estado }: { estado: EstadoArtigoVitrine }) {
+  const { t } = useTranslation('portal');
+
   return (
     <span
       className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium uppercase', CORES[estado])}
-      title={AJUDA_ESTADO_ARTIGO[estado]}
+      title={t(`ajudaEstadoArtigo.${estado}`)}
     >
-      {ETIQUETA_ESTADO_ARTIGO[estado]}
+      {t(`estadoArtigo.${estado}`)}
     </span>
   );
 }
@@ -430,6 +433,7 @@ function ArtigoCard({
   onPrecificar: () => void;
   onMudarEstado: (estado: EstadoArtigoVitrine) => void;
 }) {
+  const { t } = useTranslation('portal');
   const vigente = precoVigente(artigo);
   const imagemUrl = artigo.imagens?.[0];
   // Sem isto, um URL que falhe a carregar (link partido, servidor a recusar, CORS) deixa o
@@ -453,10 +457,10 @@ function ArtigoCard({
         {!artigo.gtin && (
           <span
             className="absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
-            title="Sem código de barras, os compradores encontram este artigo por semelhança de nome — que falha quando o nome não é o que eles usam."
+            title={t('vitrine.sem_gtin_ajuda_card')}
           >
             <Barcode size={8} />
-            sem GTIN
+            {t('vitrine.sem_gtin')}
           </span>
         )}
 
@@ -471,7 +475,9 @@ function ArtigoCard({
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={22} />
-            <span className="text-[9px] font-medium uppercase tracking-wide">Sem imagem</span>
+            <span className="text-[9px] font-medium uppercase tracking-wide">
+              {t('vitrine.sem_imagem')}
+            </span>
           </div>
         )}
       </button>
@@ -488,19 +494,26 @@ function ArtigoCard({
           {vigente ? (
             <>
               <p className="flex items-baseline gap-1">
-                <span className="text-lg font-black text-slate-900">{vigente.preco.toFixed(2)}</span>
+                <span className="text-lg font-black text-slate-900">
+                  {vigente.preco.toLocaleString(localeIntl(), {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
                 <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
                   MT
                 </span>
               </p>
               {artigo.factorConversao !== 1 && (
                 <p className="text-[11px] text-slate-500">
-                  {mt(vigente.preco / artigo.factorConversao)} / unidade
+                  {t('vitrine.valor_por_unidade', {
+                    valor: formatMoeda(vigente.preco / artigo.factorConversao),
+                  })}
                 </p>
               )}
             </>
           ) : (
-            <p className="text-xs font-semibold text-amber-600">Sem preço em vigor</p>
+            <p className="text-xs font-semibold text-amber-600">{t('vitrine.sem_preco_vigor')}</p>
           )}
         </div>
       </button>
@@ -511,7 +524,7 @@ function ArtigoCard({
           className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-300 px-2 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
         >
           <Tag size={11} />
-          Preços
+          {t('vitrine.precos')}
         </button>
         {aMudar ? (
           <span className="inline-flex items-center px-2">
@@ -553,6 +566,8 @@ function BotaoEstado({
   /** Card da grelha: texto mais curto, para caber ao lado do botão de Preços. */
   compacto?: boolean;
 }) {
+  const { t } = useTranslation('portal');
+
   if (aMudar) {
     return (
       <span className="inline-flex items-center px-2.5 py-1.5">
@@ -570,11 +585,7 @@ function BotaoEstado({
       <button
         onClick={() => {
           if (!temPreco) {
-            toast.error(
-              'Este artigo não tem preço em vigor. Publique um preço primeiro — sem ele o ' +
-                'artigo não aparece em nenhuma comparação.',
-              { duration: 6000 },
-            );
+            toast.error(t('vitrine.erro_publicar_sem_preco'), { duration: 6000 });
             return;
           }
           onMudar('PUBLICADO');
@@ -582,7 +593,7 @@ function BotaoEstado({
         className={cn(base, 'bg-emerald-600 text-white hover:bg-emerald-700')}
       >
         <Eye size={compacto ? 11 : 12} />
-        Publicar
+        {t('vitrine.publicar')}
       </button>
     );
   }
@@ -592,10 +603,10 @@ function BotaoEstado({
       <button
         onClick={() => onMudar('ESGOTADO')}
         className={cn(base, 'border border-amber-300 text-amber-700 hover:bg-amber-50')}
-        title="Marca como sem saldo. Continua visível — o comprador vê que existe e vai voltar."
+        title={t('vitrine.esgotado_ajuda')}
       >
         <PackageX size={compacto ? 11 : 12} />
-        Esgotado
+        {t('estadoArtigo.ESGOTADO')}
       </button>
     );
   }
@@ -606,27 +617,31 @@ function BotaoEstado({
       className={cn(base, 'border border-emerald-300 text-emerald-700 hover:bg-emerald-50')}
     >
       <EyeOff size={compacto ? 11 : 12} />
-      Repor
+      {t('vitrine.repor')}
     </button>
   );
 }
 
 function Detalhe({ artigo }: { artigo: ArtigoVitrine }) {
+  const { t } = useTranslation('portal');
+
   // `string | null | undefined`: os campos opcionais da API são ambos — `?: string | null`
   // permite a chave ausente e o valor nulo, e os dois significam o mesmo aqui («não
   // preenchido»). O filtro abaixo trata-os igual.
   const linhas: [string, string | null | undefined][] = [
-    ['Código de barras', artigo.gtin],
-    ['Categoria', artigo.categoria],
-    ['Marca', artigo.marca],
-    ['Embalagem', artigo.embalagem],
-    ['Mínimo de encomenda', artigo.moq !== null ? `${artigo.moq}` : null],
-    ['Múltiplo de encomenda', artigo.multiplo !== null ? `${artigo.multiplo}` : null],
+    [t('vitrine.det_codigo_barras'), artigo.gtin],
+    [t('vitrine.det_categoria'), artigo.categoria],
+    [t('vitrine.det_marca'), artigo.marca],
+    [t('vitrine.det_embalagem'), artigo.embalagem],
+    [t('vitrine.det_minimo'), artigo.moq !== null ? `${artigo.moq}` : null],
+    [t('vitrine.det_multiplo'), artigo.multiplo !== null ? `${artigo.multiplo}` : null],
     [
-      'Saldo declarado',
-      artigo.quantidadeDisponivel !== null ? `${artigo.quantidadeDisponivel}` : 'não declarado',
+      t('vitrine.det_saldo'),
+      artigo.quantidadeDisponivel !== null
+        ? `${artigo.quantidadeDisponivel}`
+        : t('vitrine.det_nao_declarado'),
     ],
-    ['Descrição', artigo.descricao],
+    [t('vitrine.det_descricao'), artigo.descricao],
   ];
 
   return (
@@ -644,15 +659,17 @@ function Detalhe({ artigo }: { artigo: ArtigoVitrine }) {
 
       {artigo.precos.length > 1 && (
         <div className="mt-3 border-t border-slate-100 pt-2.5">
-          <p className="text-xs font-medium text-slate-600">Escalões</p>
+          <p className="text-xs font-medium text-slate-600">{t('vitrine.escaloes')}</p>
           <ul className="mt-1 space-y-0.5">
             {[...artigo.precos]
               .sort((a, b) => a.quantidadeMinima - b.quantidadeMinima)
               .map((p) => (
                 <li key={p.id} className="text-xs text-slate-500">
-                  a partir de {p.quantidadeMinima} →{' '}
-                  <span className="font-medium text-slate-700">{mt(p.preco)}</span>
-                  {p.promocional && <span className="ml-1 text-amber-600">(promoção)</span>}
+                  {t('vitrine.a_partir_de', { quantidade: p.quantidadeMinima })} →{' '}
+                  <span className="font-medium text-slate-700">{formatMoeda(p.preco)}</span>
+                  {p.promocional && (
+                    <span className="ml-1 text-amber-600">{t('vitrine.promocao')}</span>
+                  )}
                 </li>
               ))}
           </ul>

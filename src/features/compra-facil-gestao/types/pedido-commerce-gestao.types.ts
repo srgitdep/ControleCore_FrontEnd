@@ -18,26 +18,12 @@ export type EstadoPedidoCommerce =
   | 'CONCLUIDO'
   | 'CANCELADO';
 
-export const ETIQUETA_ESTADO_PEDIDO_COMMERCE: Record<EstadoPedidoCommerce, string> = {
-  CRIADO: 'Novo',
-  AGUARDA_CONFIRMACAO: 'A aguardar confirmação',
-  CONFIRMADO: 'Confirmado',
-  EM_PREPARACAO: 'Em preparação',
-  PRONTO: 'Pronto para levantar',
-  AGUARDA_LEVANTAMENTO: 'A aguardar levantamento',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-};
+// As etiquetas de estado e de canal viviam aqui como `Record<..., string>` fixo em
+// português. Com o multilingue, a tradução é feita por quem renderiza, via
+// `t(`estado.${estado}`)` / `t(`canal.${canal}`)` no namespace `lojaGestao` — os
+// tipos abaixo continuam a ser a fonte da verdade dos códigos válidos.
 
 export type CanalComunicacao = 'SMS' | 'EMAIL' | 'WHATSAPP' | 'CHAMADA' | 'PUSH';
-
-export const ETIQUETA_CANAL: Record<CanalComunicacao, string> = {
-  SMS: 'SMS',
-  EMAIL: 'E-mail',
-  WHATSAPP: 'WhatsApp',
-  CHAMADA: 'Chamada',
-  PUSH: 'Notificação push',
-};
 
 export interface SubstituicaoPedidoItem {
   produtoSubstitutoId: string | null;

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { localeIntl } from '@/i18n';
 import { X, Building2, MapPin, Phone, Mail, CheckCircle2, Ban, Users, Store, ShieldCheck, Box } from 'lucide-react';
 import type { Empresa } from '@/features/empresas';
 import { useEmpresaDetails } from '@/features/empresas';
@@ -8,10 +10,11 @@ interface EmpresaDetailsModalProps {
 }
 
 export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalProps) {
+  const { t } = useTranslation('empresas');
   const { data: details, isLoading } = useEmpresaDetails(empresa.id);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-PT', {
+    return new Date(dateString).toLocaleDateString(localeIntl(), {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -19,7 +22,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-PT', {
+    return new Date(dateString).toLocaleDateString(localeIntl(), {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -44,8 +47,8 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
               <Building2 size={20} className="text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">Detalhes da Empresa</h2>
-              <p className="text-xs text-slate-500">Visualização completa do registo</p>
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">{t('detalhes.titulo')}</h2>
+              <p className="text-xs text-slate-500">{t('detalhes.subtitulo')}</p>
             </div>
           </div>
           <button
@@ -63,7 +66,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
           <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 mb-6 shadow-sm">
             <div>
               <h3 className="text-base font-semibold text-slate-800">{empresa.nome}</h3>
-              <p className="text-sm text-slate-500 mt-0.5">NUIT: {empresa.nuit}</p>
+              <p className="text-sm text-slate-500 mt-0.5">{t('detalhes.nuit', { nuit: empresa.nuit })}</p>
             </div>
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
@@ -73,7 +76,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
               }`}
             >
               {empresa.isActive ? <CheckCircle2 size={14} /> : <Ban size={14} />}
-              {empresa.isActive ? 'Ativa no Sistema' : 'Conta Suspensa'}
+              {empresa.isActive ? t('detalhes.ativa') : t('detalhes.suspensa')}
             </span>
           </div>
 
@@ -90,28 +93,28 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 
                 {/* Contactos e Localização */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Contactos & Localização</h4>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">{t('detalhes.contactos')}</h4>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <Mail size={16} className="text-slate-400 mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500">E-mail Principal</p>
+                        <p className="text-xs text-slate-500">{t('detalhes.email_principal')}</p>
                         <p className="text-sm font-medium text-slate-800">{empresa.email}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Phone size={16} className="text-slate-400 mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500">Telefone</p>
-                        <p className="text-sm font-medium text-slate-800">{empresa.telefone || 'Não informado'}</p>
+                        <p className="text-xs text-slate-500">{t('detalhes.telefone')}</p>
+                        <p className="text-sm font-medium text-slate-800">{empresa.telefone || t('detalhes.nao_informado')}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <MapPin size={16} className="text-slate-400 mt-0.5" />
                       <div>
-                        <p className="text-xs text-slate-500">Localização</p>
+                        <p className="text-xs text-slate-500">{t('detalhes.localizacao')}</p>
                         <p className="text-sm font-medium text-slate-800">
-                          {empresa.endereco ? `${empresa.endereco}, ${empresa.cidade || ''}` : 'Endereço não informado'}
+                          {empresa.endereco ? `${empresa.endereco}, ${empresa.cidade || ''}` : t('detalhes.endereco_nao_informado')}
                           <br />
                           <span className="text-slate-500">{empresa.pais}</span>
                         </p>
@@ -123,11 +126,11 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 {/* Recursos Humanos */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Users size={16} /> Equipa e Gestão
+                    <Users size={16} /> {t('detalhes.equipa')}
                   </h4>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Gestor Principal</p>
+                      <p className="text-xs text-slate-500 mb-1">{t('detalhes.gestor_principal')}</p>
                       {gestorPrincipal ? (
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
@@ -139,12 +142,12 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 italic">Sem informação</p>
+                        <p className="text-sm text-slate-500 italic">{t('detalhes.sem_informacao')}</p>
                       )}
                     </div>
                     
                     <div className="pt-3 border-t border-slate-100">
-                      <p className="text-xs text-slate-500">Total de Funcionários (Utilizadores)</p>
+                      <p className="text-xs text-slate-500">{t('detalhes.total_funcionarios')}</p>
                       <p className="text-lg font-bold text-slate-800">{totalFuncionarios}</p>
                     </div>
                   </div>
@@ -158,14 +161,14 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 {/* Plano e Faturação */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <ShieldCheck size={16} /> Plano e Faturação
+                    <ShieldCheck size={16} /> {t('detalhes.plano')}
                   </h4>
                   
                   {assinaturaAtiva ? (
                     <div className="space-y-4">
                       <div className="flex justify-between items-start bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                         <div>
-                          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Plano Atual</p>
+                          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">{t('detalhes.plano_atual')}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {assinaturaAtiva.modulos.map((m, idx) => (
                               <span key={idx} className="bg-white border border-blue-200 text-blue-800 text-xs px-2 py-0.5 rounded shadow-sm">
@@ -180,28 +183,28 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                       </div>
 
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Ciclo de Faturação:</span>
+                        <span className="text-slate-500">{t('detalhes.ciclo')}</span>
                         <span className="font-medium text-slate-800">{assinaturaAtiva.ciclo}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Valor Total:</span>
-                        <span className="font-medium text-slate-800">{Number(assinaturaAtiva.valorTotal).toLocaleString('pt-MZ', { style: 'currency', currency: empresa.moeda })}</span>
+                        <span className="text-slate-500">{t('detalhes.valor_total')}</span>
+                        <span className="font-medium text-slate-800">{Number(assinaturaAtiva.valorTotal).toLocaleString(localeIntl(), { style: 'currency', currency: empresa.moeda })}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Expira em:</span>
+                        <span className="text-slate-500">{t('detalhes.expira_em')}</span>
                         <span className="font-medium text-rose-600">{formatDate(assinaturaAtiva.dataFim)}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-4">
-                      <p className="text-sm text-slate-500 italic">Nenhum plano ativo no momento.</p>
+                      <p className="text-sm text-slate-500 italic">{t('detalhes.sem_plano')}</p>
                     </div>
                   )}
                   
                   {/* Histórico Resumido */}
                   {details?.assinaturas && details.assinaturas.length > 1 && (
                     <div className="mt-4 pt-4 border-t border-slate-100">
-                      <p className="text-xs text-slate-500 mb-2">Histórico de Assinaturas ({details.assinaturas.length})</p>
+                      <p className="text-xs text-slate-500 mb-2">{t('detalhes.historico', { total: details.assinaturas.length })}</p>
                       <div className="space-y-2 max-h-24 overflow-y-auto pr-1">
                         {details.assinaturas.map(ass => (
                           <div key={ass.id} className="flex justify-between text-xs border border-slate-100 p-2 rounded">
@@ -217,7 +220,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 {/* Lojas e Operações */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Store size={16} /> Lojas e Operações
+                    <Store size={16} /> {t('detalhes.lojas')}
                   </h4>
                   
                   {details?.lojas && details.lojas.length > 0 ? (
@@ -230,7 +233,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                             </div>
                             <div>
                               <p className="text-sm font-medium text-slate-800">{loja.nome}</p>
-                              <p className="text-xs text-slate-500">{loja.cidade || 'Local não definido'}</p>
+                              <p className="text-xs text-slate-500">{loja.cidade || t('detalhes.local_nao_definido')}</p>
                             </div>
                           </div>
                           <span className={`w-2 h-2 rounded-full ${loja.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
@@ -239,8 +242,8 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                     </div>
                   ) : (
                     <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                      <p className="text-sm text-slate-500 italic mb-1">Sem informação</p>
-                      <p className="text-xs text-slate-400">Nenhuma loja registada para esta empresa.</p>
+                      <p className="text-sm text-slate-500 italic mb-1">{t('detalhes.sem_informacao')}</p>
+                      <p className="text-xs text-slate-400">{t('detalhes.sem_lojas')}</p>
                     </div>
                   )}
                 </div>
@@ -253,7 +256,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
           {/* Rodapé informativo (Criado em) */}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-400">
-              Registada no sistema a {formatDateTime(empresa.createdAt)}
+              {t('detalhes.registada_em', { data: formatDateTime(empresa.createdAt) })}
             </p>
           </div>
 
@@ -265,7 +268,7 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
             onClick={onClose}
             className="px-5 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
           >
-            Fechar
+            {t('acoes.fechar')}
           </button>
         </div>
       </div>

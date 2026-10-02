@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, X, MessageSquare, Send, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useGeminiVoice, type VoiceState } from '../../hooks/useGeminiVoice';
 import { OrbeFluida } from './OrbeFluida';
 
@@ -30,26 +31,31 @@ interface MayraVoiceWidgetProps {
 }
 
 /** Uma frase por estado. Substitui as pastilhas coloridas que havia no cabeçalho. */
-function legendaDe(estado: VoiceState, ferramenta: string | null): string {
+function legendaDe(
+  estado: VoiceState,
+  ferramenta: string | null,
+  t: (chave: 'voz.a_ligar' | 'voz.a_ouvir' | 'voz.a_responder' | 'voz.a_consultar' | 'voz.a_pensar' | 'voz.nao_ligou' | 'voz.toque_para_falar') => string,
+): string {
   switch (estado) {
     case 'CONNECTING':
-      return 'A ligar...';
+      return t('voz.a_ligar');
     case 'LISTENING':
-      return 'A ouvir';
+      return t('voz.a_ouvir');
     case 'SPEAKING':
-      return 'A responder';
+      return t('voz.a_responder');
     case 'EXECUTING_TOOL':
       // O nome da ferramenta é interno («get_low_stock_alerts») e não diz nada a quem
       // está a falar; a frase genérica informa melhor do que o identificador.
-      return ferramenta ? 'A consultar os dados...' : 'A pensar...';
+      return ferramenta ? t('voz.a_consultar') : t('voz.a_pensar');
     case 'ERROR':
-      return 'Não foi possível ligar';
+      return t('voz.nao_ligou');
     default:
-      return 'Toque no microfone para falar';
+      return t('voz.toque_para_falar');
   }
 }
 
 export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
+  const { t } = useTranslation('copiloto');
   const {
     state,
     transcript,
@@ -105,11 +111,11 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
             <button
               onClick={onClose}
               className="flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-              aria-label="Voltar à conversa escrita"
+              aria-label={t('voz.voltar')}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <span className="text-sm font-medium text-slate-400">Voz</span>
+            <span className="text-sm font-medium text-slate-400">{t('voz.titulo')}</span>
             <span className="w-10" />
           </div>
 
@@ -131,7 +137,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
                   {aoVivo}
                 </p>
               ) : (
-                <p className="text-sm text-slate-400">{legendaDe(state, executingTool)}</p>
+                <p className="text-sm text-slate-400">{legendaDe(state, executingTool, t)}</p>
               )}
             </div>
           </div>
@@ -150,14 +156,14 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
                 autoFocus
                 value={mensagem}
                 onChange={(e) => setMensagem(e.target.value)}
-                placeholder="Escreva a sua pergunta..."
+                placeholder={t('voz.placeholder')}
                 className="h-11 flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-blue-400 focus:bg-white"
               />
               <button
                 type="submit"
                 disabled={!mensagem.trim()}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white disabled:opacity-40"
-                aria-label="Enviar"
+                aria-label={t('voz.enviar')}
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -174,7 +180,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
-              aria-label="Escrever em vez de falar"
+              aria-label={t('voz.escrever')}
             >
               <MessageSquare className="h-5 w-5" />
             </button>
@@ -185,7 +191,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
               onClick={() => (state === 'ERROR' || state === 'DISCONNECTED') && startVoiceSession()}
               className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/25 transition-transform active:scale-95"
               aria-label={
-                state === 'ERROR' || state === 'DISCONNECTED' ? 'Ligar de novo' : 'A ouvir'
+                state === 'ERROR' || state === 'DISCONNECTED' ? t('voz.ligar_de_novo') : t('voz.a_ouvir')
               }
             >
               {state === 'ERROR' || state === 'DISCONNECTED' ? (
@@ -198,7 +204,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
             <button
               onClick={onClose}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
-              aria-label="Sair do modo de voz"
+              aria-label={t('voz.sair')}
             >
               <X className="h-5 w-5" />
             </button>

@@ -80,15 +80,25 @@ export const qualificacaoApi = {
   },
 };
 
-export const ETIQUETA_DOCUMENTO: Record<string, string> = {
-  ALVARA: 'Alvará',
-  CERTIDAO_QUITACAO_FISCAL: 'Certidão de quitação fiscal',
-  INSCRICAO_INSS: 'Inscrição no INSS',
-  LICENCA_SANITARIA: 'Licença sanitária',
-  SEGURO_RESPONSABILIDADE: 'Seguro de responsabilidade',
-  CERTIFICADO_QUALIDADE: 'Certificado de qualidade',
-  OUTRO: 'Outro documento',
-};
+/**
+ * Os tipos de documento conhecidos. As etiquetas vivem no catálogo de textos
+ * (`qual.documento.<tipo>`), por língua; um tipo que o servidor acrescente e que não esteja
+ * aqui aparece com o código em bruto em vez de partir o ecrã.
+ */
+export const TIPOS_DOCUMENTO = [
+  'ALVARA',
+  'CERTIDAO_QUITACAO_FISCAL',
+  'INSCRICAO_INSS',
+  'LICENCA_SANITARIA',
+  'SEGURO_RESPONSABILIDADE',
+  'CERTIFICADO_QUALIDADE',
+  'OUTRO',
+] as const;
+
+export type TipoDocumento = (typeof TIPOS_DOCUMENTO)[number];
+
+export const eTipoDocumento = (tipo: string): tipo is TipoDocumento =>
+  (TIPOS_DOCUMENTO as readonly string[]).includes(tipo);
 
 /** Os que impedem a compra quando faltam. Ver `qualificacao-fornecedor.ts` no backend. */
 export const DOCUMENTOS_BLOQUEANTES = ['ALVARA', 'CERTIDAO_QUITACAO_FISCAL'];

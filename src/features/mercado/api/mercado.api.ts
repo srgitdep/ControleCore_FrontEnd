@@ -92,15 +92,17 @@ export const mercado = {
  * portal — que é código autenticado, com uma instância de axios que envia cookies. A
  * duplicação de sete etiquetas é mais barata do que a dependência.
  */
-export const ETIQUETA_DOCUMENTO_PUBLICO: Record<string, string> = {
-  ALVARA: 'Alvará',
-  CERTIDAO_QUITACAO_FISCAL: 'Quitação fiscal',
-  INSCRICAO_INSS: 'INSS',
-  LICENCA_SANITARIA: 'Licença sanitária',
-  SEGURO_RESPONSABILIDADE: 'Seguro de responsabilidade',
-  CERTIFICADO_QUALIDADE: 'Certificado de qualidade',
-  OUTRO: 'Outro documento',
-};
+// As etiquetas estão em `src/locales/<língua>/mercado.json` (`documento.*`). O tipo vem do
+// servidor como texto livre: um tipo que não esteja aqui mostra-se tal como chegou.
+export const TIPOS_DOCUMENTO_PUBLICO = [
+  'ALVARA',
+  'CERTIDAO_QUITACAO_FISCAL',
+  'INSCRICAO_INSS',
+  'LICENCA_SANITARIA',
+  'SEGURO_RESPONSABILIDADE',
+  'CERTIFICADO_QUALIDADE',
+  'OUTRO',
+] as const;
 
 export const PROVINCIAS_MERCADO = [
   'Maputo',

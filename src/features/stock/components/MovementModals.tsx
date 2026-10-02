@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { stockApi } from '@/features/stock';
 import { useStockMutations } from '@/features/stock';
 
@@ -20,6 +21,7 @@ export function MovementModals({
   produtoId,
   armazemOrigem,
 }: MovementModalsProps) {
+  const { t } = useTranslation('stock');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [reason, setReason] = useState('');
   const [destinationStockId, setDestinationStockId] = useState('');
@@ -78,11 +80,11 @@ export function MovementModals({
 
   const getTitle = () => {
     switch(type) {
-      case 'IN': return 'Entrada de Mercadoria';
-      case 'OUT': return 'Saída de Mercadoria';
-      case 'TRANSFER': return 'Transferência de Armazém';
-      case 'ADJUST_PLUS': return 'Ajuste Positivo (Sobra)';
-      case 'ADJUST_MINUS': return 'Ajuste Negativo (Quebra/Furto)';
+      case 'IN': return t('modal_mov.titulo_in');
+      case 'OUT': return t('modal_mov.titulo_out');
+      case 'TRANSFER': return t('modal_mov.titulo_transfer');
+      case 'ADJUST_PLUS': return t('modal_mov.titulo_ajuste_mais');
+      case 'ADJUST_MINUS': return t('modal_mov.titulo_ajuste_menos');
       default: return '';
     }
   };
@@ -99,7 +101,7 @@ export function MovementModals({
           {type === 'TRANSFER' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Destino *
+                {t('modal_mov.destino')}
               </label>
 
               {/* Um selector dos armazéns onde o produto existe, em vez do UUID escrito à
@@ -107,11 +109,10 @@ export function MovementModals({
                   pelo que o botão de transferir não tinha uso prático — e transferir é
                   precisamente como se põe à venda o stock que está em armazém. */}
               {aCarregarPosicoes ? (
-                <p className="text-sm text-slate-500">A carregar armazéns...</p>
+                <p className="text-sm text-slate-500">{t('modal_mov.a_carregar_armazens')}</p>
               ) : destinosPossiveis.length === 0 ? (
                 <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                  Este produto só tem posição neste armazém. Crie o produto noutro armazém
-                  para poder transferir.
+                  {t('modal_mov.so_uma_posicao')}
                 </p>
               ) : (
                 <select
@@ -120,12 +121,12 @@ export function MovementModals({
                   onChange={(e) => setDestinationStockId(e.target.value)}
                   className="w-full border-gray-300 rounded-lg p-2 border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
-                  <option value="">Escolha o armazém de destino</option>
+                  <option value="">{t('modal_mov.escolha_destino')}</option>
                   {destinosPossiveis.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.armazem.nome}
-                      {p.armazem.tipo?.toUpperCase() === 'VENDA' ? ' (ponto de venda)' : ''}
-                      {` — tem ${p.currentQuantity}`}
+                      {p.armazem.tipo?.toUpperCase() === 'VENDA' ? ` (${t('lista.ponto_de_venda')})` : ''}
+                      {` — ${t('modal_mov.tem', { n: p.currentQuantity })}`}
                     </option>
                   ))}
                 </select>
@@ -133,14 +134,14 @@ export function MovementModals({
 
               {armazemOrigem && (
                 <p className="mt-1.5 text-xs text-slate-500">
-                  Sai de <strong>{armazemOrigem}</strong>.
+                  {t('modal_mov.sai_de')} <strong>{armazemOrigem}</strong>.
                 </p>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Quantidade *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('modal_mov.quantidade')}</label>
             <input
               type="number"
               min="1"
@@ -153,14 +154,14 @@ export function MovementModals({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Motivo {type.includes('ADJUST') ? '*' : '(Opcional)'}
+              {type.includes('ADJUST') ? t('modal_mov.motivo_obrigatorio') : t('modal_mov.motivo_opcional')}
             </label>
             <textarea
               required={type.includes('ADJUST')}
               value={reason}
               onChange={e => setReason(e.target.value)}
               rows={3}
-              placeholder="Descreva o motivo deste movimento..."
+              placeholder={t('modal_mov.placeholder_motivo')}
               className="w-full border-gray-300 rounded-lg p-2 border focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
             />
           </div>
@@ -171,14 +172,14 @@ export function MovementModals({
               onClick={onClose}
               className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
             >
-              Cancelar
+              {t('geral.cancelar')}
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {isPending ? 'A Processar...' : 'Confirmar'}
+              {isPending ? t('geral.a_processar') : t('geral.confirmar')}
             </button>
           </div>
         </form>

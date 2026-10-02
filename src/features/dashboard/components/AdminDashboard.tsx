@@ -2,6 +2,8 @@ import { useAdminDashboard } from '@/features/dashboard';
 import { DollarSign, FileText, Package, PackageCheck, Users } from 'lucide-react';
 import { CardCarousel, KpiCard } from '@/shared/ui';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { formatMoeda, formatInteiro } from '@/shared/utils';
 import { SalesChart } from './SalesChart';
 
 /**
@@ -27,6 +29,7 @@ import { SalesChart } from './SalesChart';
  * evoluiu.
  */
 export function AdminDashboard() {
+  const { t } = useTranslation('painel');
   const navigate = useNavigate();
   const { data, isLoading } = useAdminDashboard();
 
@@ -35,7 +38,7 @@ export function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <CardCarousel label="Indicadores" colunas={5}>
+        <CardCarousel label={t('gestao.indicadores')} colunas={5}>
           {[0, 1, 2, 3, 4].map((i) => (
             <KpiCard key={i} title="" value="" isLoading />
           ))}
@@ -48,21 +51,21 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <CardCarousel label="Indicadores do mês" colunas={5}>
+      <CardCarousel label={t('gestao.indicadores_mes')} colunas={5}>
         <KpiCard
-          title="Faturação (mês atual)"
-          value={`${(data.kpis.vendasTotalMeticais || 0).toLocaleString('pt-MZ')} MT`}
+          title={t('gestao.faturacao')}
+          value={formatMoeda(data.kpis.vendasTotalMeticais || 0)}
           icon={DollarSign}
           accent="primary"
         />
         <KpiCard
-          title="Nº de vendas (mês atual)"
-          value={data.kpis.vendasTotalFaturas.toLocaleString('pt-MZ')}
+          title={t('gestao.numero_vendas')}
+          value={formatInteiro(data.kpis.vendasTotalFaturas)}
           icon={FileText}
         />
         <KpiCard
-          title="Produtos com stock baixo"
-          value={data.kpis.produtosBaixoStock.toLocaleString('pt-MZ')}
+          title={t('gestao.stock_baixo')}
+          value={formatInteiro(data.kpis.produtosBaixoStock)}
           icon={Package}
           // Um número que assinala um problema tem de levar ao problema. Anunciar
           // «4 produtos abaixo do mínimo» e deixar quem lê a procurar quais são numa
@@ -84,18 +87,18 @@ export function AdminDashboard() {
           accent={data.kpis.produtosBaixoStock > 0 ? 'warning' : 'success'}
           description={
             data.kpis.produtosBaixoStock > 0
-              ? 'Abaixo do mínimo definido'
-              : 'Todos acima do mínimo'
+              ? t('gestao.abaixo_minimo')
+              : t('gestao.todos_acima_minimo')
           }
         />
         <KpiCard
-          title="Funcionários presentes hoje"
-          value={data.kpis.funcionariosPresentes.toLocaleString('pt-MZ')}
+          title={t('gestao.funcionarios_presentes')}
+          value={formatInteiro(data.kpis.funcionariosPresentes)}
           icon={Users}
         />
         <KpiCard
-          title="Pedidos Compra Fácil por atender"
-          value={(data.kpis.pedidosPendentes ?? 0).toLocaleString('pt-MZ')}
+          title={t('gestao.pedidos_pendentes')}
+          value={formatInteiro(data.kpis.pedidosPendentes ?? 0)}
           icon={PackageCheck}
           // Um pedido online só entra na facturação e no caixa quando o levantamento
           // é confirmado. Enquanto ninguém o fecha, não aparece em mais nenhum
@@ -109,16 +112,16 @@ export function AdminDashboard() {
           accent={(data.kpis.pedidosPendentes ?? 0) > 0 ? 'warning' : 'success'}
           description={
             (data.kpis.pedidosPendentes ?? 0) > 0
-              ? 'À espera de preparação ou levantamento'
-              : 'Nenhum pedido em espera'
+              ? t('gestao.pedidos_em_espera')
+              : t('gestao.sem_pedidos')
           }
         />
       </CardCarousel>
 
       <SalesChart
         data={data.graficoVendasSemana}
-        title="Atividade de vendas"
-        subtitle="Últimos 7 dias"
+        title={t('gestao.grafico_titulo')}
+        subtitle={t('gestao.grafico_subtitulo')}
       />
     </div>
   );

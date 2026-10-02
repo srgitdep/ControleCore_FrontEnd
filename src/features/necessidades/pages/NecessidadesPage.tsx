@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download, AlertCircle, History, Bell, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { getLojas } from '@/features/lojas/api/lojas.api';
 import { BarraDaPagina } from '@/shared/ui';
 import { KpisNecessidades } from '../components/KpisNecessidades';
@@ -38,6 +39,7 @@ import type { LinhaNecessidade, RecomendacaoNecessidade } from '../types/necessi
  * filtro desta página.
  */
 export function NecessidadesPage() {
+  const { t } = useTranslation('necessidades');
   const navigate = useNavigate();
   const [lojaId, setLojaId] = useState<string>('');
   const [pesquisa, setPesquisa] = useState('');
@@ -81,31 +83,31 @@ export function NecessidadesPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <BarraDaPagina
-        resumo={lista ? `${lista.total} necessidades activas` : undefined}
+        resumo={lista ? t('pagina.resumo', { count: lista.total }) : undefined}
         acoes={
           <div className="flex items-center gap-2">
             <button
               type="button"
               disabled={!lojaId || recalcular.isPending}
-              title={lojaId ? 'Forçar reavaliação desta loja agora' : 'Seleccione uma loja para reavaliar'}
+              title={lojaId ? t('pagina.reavaliar_title') : t('pagina.reavaliar_sem_loja')}
               onClick={() => lojaId && recalcular.mutate({ lojaId })}
               className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <RefreshCw size={16} className={recalcular.isPending ? 'animate-spin' : ''} /> Reavaliar
+              <RefreshCw size={16} className={recalcular.isPending ? 'animate-spin' : ''} /> {t('pagina.reavaliar')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/compras/necessidades/alertas')}
               className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
-              <Bell size={16} /> Alertas
+              <Bell size={16} /> {t('pagina.alertas')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/compras/necessidades/historico')}
               className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
-              <History size={16} /> Histórico
+              <History size={16} /> {t('pagina.historico')}
             </button>
             <select
               value={lojaId}
@@ -115,7 +117,7 @@ export function NecessidadesPage() {
               }}
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
             >
-              <option value="">Todas as lojas</option>
+              <option value="">{t('pagina.todas_lojas')}</option>
               {(lojas ?? []).map((loja: { id: string; nome: string }) => (
                 <option key={loja.id} value={loja.id}>
                   {loja.nome}
@@ -163,10 +165,10 @@ export function NecessidadesPage() {
             />
             <button
               type="button"
-              onClick={() => toast('Exportação ainda não disponível nesta versão.')}
+              onClick={() => toast(t('pagina.exportacao_indisponivel'))}
               className="flex items-center gap-1.5 self-start rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 sm:self-auto"
             >
-              <Download size={16} /> Exportar
+              <Download size={16} /> {t('pagina.exportar')}
             </button>
           </div>
 
@@ -181,7 +183,7 @@ export function NecessidadesPage() {
                 setPesquisa(e.target.value);
                 setPage(1);
               }}
-              placeholder="Pesquisar produto, categoria ou código..."
+              placeholder={t('pagina.pesquisa_placeholder')}
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-slate-400 focus:outline-none"
             />
           </div>
@@ -197,7 +199,7 @@ export function NecessidadesPage() {
             {lista && lista.total > 0 && (
               <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
                 <span>
-                  A mostrar {lista.dados.length} de {lista.total} produtos
+                  {t('pagina.a_mostrar_produtos', { n: lista.dados.length, total: lista.total })}
                 </span>
                 <div className="flex items-center gap-1">
                   <button
@@ -225,8 +227,7 @@ export function NecessidadesPage() {
           {(lista?.contagemPorRecomendacao.TRANSFERIR ?? 0) > 0 && (
             <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               <AlertCircle size={16} className="shrink-0" />
-              Existem {lista?.contagemPorRecomendacao.TRANSFERIR} produtos que podem ser
-              resolvidos com transferência entre lojas antes de realizar novas compras.
+              {t('pagina.aviso_transferencia', { count: lista?.contagemPorRecomendacao.TRANSFERIR ?? 0 })}
             </div>
           )}
         </div>

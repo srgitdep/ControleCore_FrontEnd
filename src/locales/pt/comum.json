@@ -9,5 +9,10 @@
     "ha_horas": "há {{n}}h",
     "ha_dias_one": "há {{count}} dia",
     "ha_dias_other": "há {{count}} dias"
+  },
+  "nuit": {
+    "obrigatorio": "O NUIT é obrigatório e tem {{digitos}} dígitos.",
+    "a_mais": "O NUIT tem {{digitos}} dígitos e escreveu {{escritos}} — {{excesso}} a mais. Confirme o número no cartão de contribuinte.",
+    "a_menos": "O NUIT tem {{digitos}} dígitos e escreveu {{escritos}} — faltam {{faltam}}. Confirme o número no cartão de contribuinte."
   }
 }

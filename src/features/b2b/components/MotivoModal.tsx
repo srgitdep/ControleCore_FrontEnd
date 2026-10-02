@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 interface Props {
@@ -30,6 +31,7 @@ export function MotivoModal({
   onConfirmar,
   onClose,
 }: Props) {
+  const { t } = useTranslation('b2b');
   const [motivo, setMotivo] = useState('');
   const [aGravar, setAGravar] = useState(false);
   const [erro, setErro] = useState('');
@@ -38,7 +40,7 @@ export function MotivoModal({
     e.preventDefault();
 
     if (motivo.trim().length < 5) {
-      setErro('Indique o motivo — fica registado para quem ler o histórico desta requisição.');
+      setErro(t('motivo.erro'));
       return;
     }
 
@@ -65,7 +67,7 @@ export function MotivoModal({
 
           <div>
             <label className="block text-xs font-medium text-slate-700">
-              Motivo <span className="text-red-500">*</span>
+              {t('motivo.motivo')} <span className="text-red-500">*</span>
             </label>
             <textarea
               value={motivo}
@@ -87,7 +89,7 @@ export function MotivoModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Voltar
+            {t('acao.voltar')}
           </button>
           <button
             type="submit"

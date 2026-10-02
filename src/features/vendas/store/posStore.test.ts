@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import i18n from '@/i18n';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from './posStore';
 import type { Product } from '@/features/produtos';
 
@@ -291,6 +292,12 @@ describe('getStockNoutrosArmazens', () => {
 });
 
 describe('mensagemDeRecusa', () => {
+  // A língua activa é global (singleton `i18n`) e outro ficheiro de teste pode tê-la
+  // deixado em inglês; sem isto, o resultado depende da ordem de execução dos testes.
+  beforeEach(async () => {
+    await i18n.changeLanguage('pt');
+  });
+
   it('distingue esgotado de está-no-armazém', () => {
     expect(
       mensagemDeRecusa({ ok: false, motivo: 'SEM_STOCK', disponivel: 0, nome: 'Queijo', noutrosArmazens: 1500 }),

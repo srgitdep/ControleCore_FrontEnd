@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 const MOTIVO_MINIMO = 5;
@@ -23,6 +24,7 @@ export function IgnorarNecessidadeModal({
   onClose,
   onConfirm,
 }: IgnorarNecessidadeModalProps) {
+  const { t } = useTranslation('necessidades');
   const [motivo, setMotivo] = useState('');
 
   if (!isOpen) return null;
@@ -37,10 +39,11 @@ export function IgnorarNecessidadeModal({
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100">
               <AlertTriangle className="text-orange-600" size={20} />
             </div>
-            <h3 className="text-base font-semibold text-slate-900">Não comprar</h3>
+            <h3 className="text-base font-semibold text-slate-900">{t('ignorar.titulo')}</h3>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('ignorar.fechar')}
             className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           >
             <X size={18} />
@@ -48,8 +51,7 @@ export function IgnorarNecessidadeModal({
         </div>
 
         <p className="mt-3 text-sm text-slate-500">
-          Explique porque não se deve repor este produto agora. Fica registado no
-          histórico da necessidade.
+          {t('ignorar.descricao')}
         </p>
 
         <textarea
@@ -57,11 +59,11 @@ export function IgnorarNecessidadeModal({
           onChange={(e) => setMotivo(e.target.value)}
           rows={3}
           autoFocus
-          placeholder="Ex.: produto sazonal, procura vai retomar no próximo trimestre."
+          placeholder={t('ignorar.placeholder')}
           className="mt-3 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
         />
         {motivo.length > 0 && invalido && (
-          <p className="mt-1 text-xs text-rose-500">Mínimo de {MOTIVO_MINIMO} caracteres.</p>
+          <p className="mt-1 text-xs text-rose-500">{t('ignorar.minimo', { n: MOTIVO_MINIMO })}</p>
         )}
 
         <div className="mt-5 flex justify-end gap-2">
@@ -69,7 +71,7 @@ export function IgnorarNecessidadeModal({
             onClick={onClose}
             className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
-            Cancelar
+            {t('ignorar.cancelar')}
           </button>
           <button
             disabled={invalido || isSubmitting}
@@ -79,7 +81,7 @@ export function IgnorarNecessidadeModal({
               (invalido || isSubmitting) && 'cursor-not-allowed opacity-50',
             )}
           >
-            {isSubmitting ? 'A guardar...' : 'Confirmar'}
+            {isSubmitting ? t('ignorar.a_guardar') : t('ignorar.confirmar')}
           </button>
         </div>
       </div>

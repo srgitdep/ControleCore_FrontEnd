@@ -1,4 +1,5 @@
 import { Check, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Capacidade, Escalao } from '../precos.dados';
 
 /**
@@ -8,10 +9,11 @@ import type { Capacidade, Escalao } from '../precos.dados';
  * tabela sete vezes.
  */
 export function TabelaDeCapacidades({ capacidades }: { capacidades: Capacidade[] }) {
-  const colunas: { chave: Escalao; nome: string; campo: keyof Capacidade }[] = [
-    { chave: 'loja', nome: 'Loja', campo: 'loja' },
-    { chave: 'rede', nome: 'Rede', campo: 'rede' },
-    { chave: 'enterprise', nome: 'Enterprise', campo: 'enterprise' },
+  const { t } = useTranslation('precos');
+  const colunas: { chave: Escalao; campo: keyof Capacidade }[] = [
+    { chave: 'loja', campo: 'loja' },
+    { chave: 'rede', campo: 'rede' },
+    { chave: 'enterprise', campo: 'enterprise' },
   ];
 
   return (
@@ -23,7 +25,7 @@ export function TabelaDeCapacidades({ capacidades }: { capacidades: Capacidade[]
               scope="col"
               style={{ padding: '8px 0', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--tinta-tenue)' }}
             >
-              Capacidade
+              {t('tabela.capacidade')}
             </th>
             {colunas.map((c) => (
               <th
@@ -31,7 +33,7 @@ export function TabelaDeCapacidades({ capacidades }: { capacidades: Capacidade[]
                 scope="col"
                 style={{ width: 100, padding: '8px 0', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--tinta-tenue)', textAlign: 'center' }}
               >
-                {c.nome}
+                {t(`plano.${c.chave}.nome`)}
               </th>
             ))}
           </tr>
@@ -39,23 +41,23 @@ export function TabelaDeCapacidades({ capacidades }: { capacidades: Capacidade[]
         <tbody>
           {capacidades.map((cap, i) => (
             <tr
-              key={cap.nome}
+              key={cap.codigo}
               style={{ borderBottom: i === capacidades.length - 1 ? 'none' : '1px solid var(--fundo-alt)' }}
             >
               <td style={{ padding: '10px 14px 10px 0', fontSize: 13.5, color: 'var(--tinta-suave)' }}>
-                {cap.nome}
+                {t(`capacidade.${cap.codigo}`)}
                 {cap.chave && (
                   <span style={{ marginLeft: 8, verticalAlign: 'middle', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--tinta-tenue)' }}>
-                    decide
+                    {t('tabela.decide')}
                   </span>
                 )}
               </td>
               {colunas.map((c) => (
                 <td key={c.chave} style={{ padding: '10px 0', textAlign: 'center' }}>
                   {cap[c.campo] ? (
-                    <Check size={16} strokeWidth={2.5} style={{ margin: '0 auto', color: '#059669' }} aria-label="incluído" />
+                    <Check size={16} strokeWidth={2.5} style={{ margin: '0 auto', color: '#059669' }} aria-label={t('tabela.incluido')} />
                   ) : (
-                    <Minus size={14} style={{ margin: '0 auto', color: 'var(--tinta-tenue)' }} aria-label="não incluído" />
+                    <Minus size={14} style={{ margin: '0 auto', color: 'var(--tinta-tenue)' }} aria-label={t('tabela.nao_incluido')} />
                   )}
                 </td>
               ))}

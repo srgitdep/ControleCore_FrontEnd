@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, MapPin, AlertTriangle } from 'lucide-react';
 import { useIniciarContagem, useRegisterCount, useConfirmarZero, useRegistarForaDaLocalizacao } from '@/features/stock';
 import { Button } from '@/shared/ui';
@@ -22,6 +23,7 @@ export function ContagemItemPanel({
   localizacoesDoArmazem: Array<{ id: string; codigo: string; nome: string | null; caminho: string }>;
   onConcluido?: () => void;
 }) {
+  const { t } = useTranslation('stock');
   const [quantidade, setQuantidade] = useState('');
   const [modo, setModo] = useState<'contar' | 'fora'>('contar');
   const [localizacaoRealId, setLocalizacaoRealId] = useState('');
@@ -85,7 +87,7 @@ export function ContagemItemPanel({
           {produto?.codigoBarras && <p className="text-xs text-slate-400">{produto.codigoBarras}</p>}
           <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
             <MapPin className="h-3 w-3" />
-            Prateleira: <span className="font-medium">{item.localizacaoEsperada?.codigo ?? '—'}</span>
+            {t('contagem_item.prateleira')} <span className="font-medium">{item.localizacaoEsperada?.codigo ?? '—'}</span>
           </p>
         </div>
       </div>
@@ -93,7 +95,7 @@ export function ContagemItemPanel({
       {modo === 'contar' ? (
         <div className="mt-4 space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Quantidade encontrada</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('contagem_item.quantidade_encontrada')}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -109,7 +111,7 @@ export function ContagemItemPanel({
           {quantidade.trim() === '0' && (
             <p className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              Confirme que verificou toda a localização antes de registar zero.
+              {t('contagem_item.confirmar_zero')}
             </p>
           )}
 
@@ -119,7 +121,7 @@ export function ContagemItemPanel({
             onClick={handleRegistar}
           >
             <Check className="h-4 w-4" />
-            {isPending ? 'A registar...' : 'Registar e Concluir'}
+            {isPending ? t('contagem_item.a_registar') : t('contagem_item.registar_concluir')}
           </Button>
 
           <button
@@ -127,21 +129,21 @@ export function ContagemItemPanel({
             onClick={() => setModo('fora')}
             className="w-full rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
           >
-            Produto encontrado noutra localização
+            {t('contagem_item.noutra_localizacao')}
           </button>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">
-              Onde foi encontrado?
+              {t('contagem_item.onde_encontrado')}
             </label>
             <select
               value={localizacaoRealId}
               onChange={(e) => setLocalizacaoRealId(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Selecione a localização real</option>
+              <option value="">{t('contagem_item.seleccione_localizacao')}</option>
               {localizacoesDoArmazem
                 .filter((l) => l.id !== item.localizacaoEsperadaId)
                 .map((l) => (
@@ -152,7 +154,7 @@ export function ContagemItemPanel({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Quantidade encontrada</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('contagem_item.quantidade_encontrada')}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -166,7 +168,7 @@ export function ContagemItemPanel({
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setModo('contar')}>
-              Voltar
+              {t('geral.voltar')}
             </Button>
             <Button
               variant="warning"
@@ -174,14 +176,14 @@ export function ContagemItemPanel({
               disabled={!localizacaoRealId || quantidade.trim() === '' || isPending}
               onClick={handleForaDaLocalizacao}
             >
-              Confirmar
+              {t('geral.confirmar')}
             </Button>
           </div>
         </div>
       )}
 
       <p className="mt-3 text-center text-[11px] text-slate-400">
-        Unidade: {unidade} — o saldo do sistema não é mostrado de propósito (contagem cega).
+        {t('contagem_item.unidade_cega', { unidade })}
       </p>
     </div>
   );

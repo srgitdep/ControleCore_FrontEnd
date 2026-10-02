@@ -169,22 +169,6 @@ export interface ResultadoCriacaoRequisicao {
   jaExistia: boolean;
 }
 
-/** Rótulos para os chips de filtro e a coluna de recomendação (DT01 5 e 10). */
-export const RECOMENDACAO_LABEL: Record<RecomendacaoNecessidade, string> = {
-  COMPRAR: 'Comprar',
-  TRANSFERIR: 'Transferir',
-  AGUARDAR: 'Aguardar',
-  NAO_COMPRAR: 'Não comprar',
-  STOCK_PARADO: 'Stock parado',
-  EXCESSO: 'Excesso',
-};
-
-export const URGENCIA_LABEL: Record<UrgenciaNecessidade, string> = {
-  CRITICA: 'Crítica',
-  ALTA: 'Alta',
-  MEDIA: 'Média',
-};
-
 /** A recomendação principal da MAYRA sobre a fila (DT01 §14). */
 export interface AnaliseMayra {
   recomendacaoPrincipal: string;

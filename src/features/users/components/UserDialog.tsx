@@ -1,23 +1,28 @@
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { createUser, updateUser, resendPassword } from '@/features/users';
 import { getEmpresas } from '@/features/empresas';
 import type { UserDetail } from '@/features/users';
 import { useAuth } from '@/features/auth';
 
-const baseSchema = z.object({
-  name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('E-mail inválido'),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER', 'USER']),
-  empresaId: z.string().optional(),
-  isActive: z.boolean(),
-});
+function criarSchema(t: TFunction<'utilizadores'>) {
+  return z.object({
+    name: z.string().min(2, t('dialogo.validacao_nome')),
+    email: z.string().email(t('dialogo.validacao_email')),
+    role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER', 'USER']),
+    empresaId: z.string().optional(),
+    isActive: z.boolean(),
+  });
+}
 
-type UserFormData = z.infer<typeof baseSchema>;
+type UserFormData = z.infer<ReturnType<typeof criarSchema>>;
 
 interface UserDialogProps {
   userToEdit: UserDetail | null;
@@ -25,6 +30,7 @@ interface UserDialogProps {
 }
 
 export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
+  const { t } = useTranslation('utilizadores');
   const { user: currentUser } = useAuth();
   const isEditing = !!userToEdit;
   const queryClient = useQueryClient();
@@ -36,7 +42,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
     enabled: currentUser?.role === 'SUPER_ADMIN',
   });
 
-  const dynamicSchema = baseSchema;
+  const dynamicSchema = useMemo(() => criarSchema(t), [t]);
 
   const {
     register,
@@ -72,12 +78,12 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
       return isEditing ? updateUser(userToEdit!.id, payload as any) : createUser(payload as any);
     },
     onSuccess: () => {
-      toast.success(isEditing ? 'Utilizador atualizado!' : 'Utilizador criado com sucesso!');
+      toast.success(isEditing ? t('dialogo.actualizado') : t('dialogo.criado'));
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onClose();
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Erro ao guardar o utilizador.';
+      const message = error.response?.data?.message || t('dialogo.erro_guardar');
       toast.error(Array.isArray(message) ? message[0] : message);
     },
   });
@@ -85,7 +91,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
   const resendPasswordMutation = useMutation({
     mutationFn: (userId: string) => resendPassword(userId),
     onSuccess: (data) => toast.success(data.message),
-    onError: () => toast.error('Erro ao reenviar senha'),
+    onError: () => toast.error(t('dialogo.erro_reenviar')),
   });
 
   const onSubmit = (data: UserFormData) => {
@@ -97,7 +103,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="text-xl font-bold text-slate-800">
-            {isEditing ? 'Editar Utilizador' : 'Novo Utilizador'}
+            {isEditing ? t('dialogo.titulo_editar') : t('dialogo.titulo_novo')}
           </h2>
           <button
             onClick={onClose}
@@ -111,22 +117,22 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
           <form id="user-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nome Completo *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.nome')}</label>
               <input
                 {...register('name')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ex: João Silva"
+                placeholder={t('dialogo.nome_exemplo')}
               />
               {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">E-mail *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.email')}</label>
               <input
                 {...register('email')}
                 type="email"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="joao@srg.com"
+                placeholder={t('dialogo.email_exemplo')}
               />
               {errors.email && <p className="text-xs text-rose-500 mt-1">{errors.email.message}</p>}
             </div>
@@ -134,20 +140,20 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
 
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Perfil de Acesso *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.perfil')}</label>
               <select
                 {...register('role')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
-                <option value="USER">Funcionário Geral</option>
-                <option value="CASHIER">Operador de Caixa</option>
-                <option value="STOCK_KEEPER">Armazenista</option>
-                <option value="MANAGER">Supervisor / Gerente</option>
+                <option value="USER">{t('dialogo.perfil_opcao.USER')}</option>
+                <option value="CASHIER">{t('dialogo.perfil_opcao.CASHIER')}</option>
+                <option value="STOCK_KEEPER">{t('dialogo.perfil_opcao.STOCK_KEEPER')}</option>
+                <option value="MANAGER">{t('dialogo.perfil_opcao.MANAGER')}</option>
                 {(currentUser?.role === 'SUPER_ADMIN' || userToEdit?.role === 'ADMIN') && (
-                  <option value="ADMIN">Administrador da Empresa</option>
+                  <option value="ADMIN">{t('dialogo.perfil_opcao.ADMIN')}</option>
                 )}
                 {(currentUser?.role === 'SUPER_ADMIN' || userToEdit?.role === 'SUPER_ADMIN') && (
-                  <option value="SUPER_ADMIN">Super Administrador (SRG)</option>
+                  <option value="SUPER_ADMIN">{t('dialogo.perfil_opcao.SUPER_ADMIN')}</option>
                 )}
               </select>
             </div>
@@ -155,12 +161,12 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
             {/* Apenas o Super Admin pode atribuir empresas manualmente. O Admin cria sempre para a sua própria empresa (forçado no backend). */}
             {currentUser?.role === 'SUPER_ADMIN' && selectedRole !== 'SUPER_ADMIN' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Associar a Empresa</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.associar_empresa')}</label>
                 <select
                   {...register('empresaId')}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="">Nenhuma (Global)</option>
+                  <option value="">{t('dialogo.nenhuma_global')}</option>
                   {empresas?.map(emp => (
                     <option key={emp.id} value={emp.id}>{emp.nome}</option>
                   ))}
@@ -179,7 +185,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
               disabled={resendPasswordMutation.isPending}
               className="mr-auto px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
-              {resendPasswordMutation.isPending ? 'A enviar...' : 'Reenviar Senha por Email'}
+              {resendPasswordMutation.isPending ? t('dialogo.a_enviar') : t('dialogo.reenviar_senha')}
             </button>
           )}
           <button
@@ -187,7 +193,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
           >
-            Cancelar
+            {t('acoes.cancelar')}
           </button>
           <button
             type="submit"
@@ -195,7 +201,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
             disabled={mutation.isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {mutation.isPending ? 'A guardar...' : 'Guardar Utilizador'}
+            {mutation.isPending ? t('dialogo.a_guardar') : t('dialogo.guardar')}
           </button>
         </div>
       </div>

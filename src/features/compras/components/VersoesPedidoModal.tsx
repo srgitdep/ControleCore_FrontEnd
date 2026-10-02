@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { X, History, Loader2, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { purchasesApi } from '../api/purchases.api';
 import type { PurchaseOrder } from '../api/purchases.api';
+import { formatDataHora } from '@/shared/utils';
 
 interface Props {
   order: PurchaseOrder;
@@ -15,6 +17,7 @@ interface Props {
  * alterar a ordem de novo, com um motivo próprio.
  */
 export function VersoesPedidoModal({ order, onClose }: Props) {
+  const { t } = useTranslation('compras');
   const { data: versoes = [], isLoading } = useQuery({
     queryKey: ['pedido-versoes', order.id],
     queryFn: () => purchasesApi.getVersions(order.id),
@@ -30,12 +33,16 @@ export function VersoesPedidoModal({ order, onClose }: Props) {
             </div>
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Versões — #{order.id.slice(0, 8)}
+                {t('versoes.titulo', { id: order.id.slice(0, 8) })}
               </h2>
-              <p className="text-xs text-slate-500">{order.fornecedor?.nome ?? 'fornecedor n/d'}</p>
+              <p className="text-xs text-slate-500">{order.fornecedor?.nome ?? t('versoes.fornecedor_nd')}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-600"
+            aria-label={t('versoes.fechar')}
+          >
             <X size={18} />
           </button>
         </div>
@@ -44,37 +51,31 @@ export function VersoesPedidoModal({ order, onClose }: Props) {
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              A carregar versões...
+              {t('versoes.a_carregar')}
             </div>
           ) : versoes.length === 0 ? (
             <p className="py-10 text-center text-sm text-slate-500">
-              Esta ordem ainda não foi alterada — só há a versão original.
+              {t('versoes.vazio')}
             </p>
           ) : (
             <ul className="space-y-3">
               {versoes.map((v) => (
                 <li key={v.id} className="rounded-lg border border-slate-200 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-slate-900">Versão {v.versao}</span>
+                    <span className="text-sm font-semibold text-slate-900">{t('versoes.versao', { n: v.versao })}</span>
                     <span className="text-xs text-slate-500">
-                      {new Date(v.criadaEm).toLocaleString('pt-MZ', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDataHora(v.criadaEm)}
                     </span>
                   </div>
 
                   {v.alteradaPor?.name && (
-                    <p className="mt-1 text-xs text-slate-500">por {v.alteradaPor.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{t('versoes.por', { nome: v.alteradaPor.name })}</p>
                   )}
 
                   {v.materialidade && (
                     <p className="mt-2 flex items-start gap-1.5 rounded bg-amber-50 px-2 py-1 text-[11px] leading-snug text-amber-800">
                       <AlertTriangle size={11} className="mt-0.5 shrink-0" />
-                      Alteração material — anulou a aprovação em vigor nessa altura.
+                      {t('versoes.material')}
                     </p>
                   )}
 
@@ -92,7 +93,7 @@ export function VersoesPedidoModal({ order, onClose }: Props) {
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Fechar
+            {t('versoes.fechar')}
           </button>
         </div>
       </div>

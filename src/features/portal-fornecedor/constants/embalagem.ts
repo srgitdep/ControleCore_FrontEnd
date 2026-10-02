@@ -1,5 +1,6 @@
 /**
- * O vocabulário de embalagem e unidade, partilhado entre o formulário de um artigo só
+ * O vocabulário de embalagem e unidade (valor gravado + chave da etiqueta em
+ * `portal:unidade.*` e `portal:embalagem.*`), partilhado entre o formulário de um artigo só
  * (`ArtigoFormModal`) e a tabela de revisão da importação em lote (`ImportarCatalogoPage`).
  *
  * Um ficheiro à parte, e não exportado de `ArtigoFormModal`: as duas telas têm de mostrar
@@ -18,18 +19,18 @@
  * campo sempre aceitou.
  */
 export const UNIDADES_COMUNS = [
-  { valor: 'kg', etiqueta: 'Quilograma (kg)' },
-  { valor: 'g', etiqueta: 'Grama (g)' },
-  { valor: 'litro', etiqueta: 'Litro (L)' },
-  { valor: 'ml', etiqueta: 'Mililitro (ml)' },
-  { valor: 'unidade', etiqueta: 'Unidade' },
-  { valor: 'metro', etiqueta: 'Metro (m)' },
-  { valor: 'm2', etiqueta: 'Metro quadrado (m²)' },
-  { valor: 'm3', etiqueta: 'Metro cúbico (m³)' },
-  { valor: 'dúzia', etiqueta: 'Dúzia' },
-  { valor: 'par', etiqueta: 'Par' },
-  { valor: 'rolo', etiqueta: 'Rolo' },
-  { valor: 'folha', etiqueta: 'Folha' },
+  { valor: 'kg', chave: 'kg' },
+  { valor: 'g', chave: 'g' },
+  { valor: 'litro', chave: 'litro' },
+  { valor: 'ml', chave: 'ml' },
+  { valor: 'unidade', chave: 'unidade' },
+  { valor: 'metro', chave: 'metro' },
+  { valor: 'm2', chave: 'm2' },
+  { valor: 'm3', chave: 'm3' },
+  { valor: 'dúzia', chave: 'duzia' },
+  { valor: 'par', chave: 'par' },
+  { valor: 'rolo', chave: 'rolo' },
+  { valor: 'folha', chave: 'folha' },
 ] as const;
 
 /**
@@ -39,13 +40,13 @@ export const UNIDADES_COMUNS = [
  * os campos de quantidade desaparecem, porque a pergunta deixa de fazer sentido.
  */
 export const TIPOS_DE_EMBALAGEM = [
-  { valor: '', etiqueta: 'À unidade — sem embalagem' },
-  { valor: 'caixa', etiqueta: 'Caixa' },
-  { valor: 'fardo', etiqueta: 'Fardo' },
-  { valor: 'saco', etiqueta: 'Saco' },
-  { valor: 'pacote', etiqueta: 'Pacote' },
-  { valor: 'engradado', etiqueta: 'Engradado' },
-  { valor: 'palete', etiqueta: 'Palete' },
+  { valor: '', chave: 'sem_embalagem' },
+  { valor: 'caixa', chave: 'caixa' },
+  { valor: 'fardo', chave: 'fardo' },
+  { valor: 'saco', chave: 'saco' },
+  { valor: 'pacote', chave: 'pacote' },
+  { valor: 'engradado', chave: 'engradado' },
+  { valor: 'palete', chave: 'palete' },
 ] as const;
 
 export const OUTRA = '__outra__';

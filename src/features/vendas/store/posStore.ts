@@ -1,4 +1,5 @@
 ﻿import { create } from 'zustand';
+import i18n from '@/i18n';
 import type { Product } from '@/features/produtos';
 import type { Cliente } from '@/features/crm';
 
@@ -85,16 +86,16 @@ export type CartResult =
  */
 export function mensagemDeRecusa(r: Extract<CartResult, { ok: false }>): string {
   if (r.disponivel > 0) {
-    return `${r.nome}: apenas ${r.disponivel} em stock.`;
+    return i18n.t('pos:recusa.apenas', { nome: r.nome, disponivel: r.disponivel });
   }
 
   if (r.noutrosArmazens && r.noutrosArmazens > 0) {
     // Diz onde está e o que fazer. «Esgotado» sozinho levava o operador a recusar uma
     // venda que podia fazer depois de uma transferência.
-    return `${r.nome}: 0 na sala de vendas, ${r.noutrosArmazens} em armazém. Faça uma transferência.`;
+    return i18n.t('pos:recusa.so_em_armazem', { nome: r.nome, armazem: r.noutrosArmazens });
   }
 
-  return `${r.nome} está esgotado.`;
+  return i18n.t('pos:recusa.esgotado', { nome: r.nome });
 }
 
 interface POSState {

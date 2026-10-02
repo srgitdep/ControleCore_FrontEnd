@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useMemo } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 import { BarraDaPagina, ResponsiveTable } from '@/shared/ui';
+import { formatDataHora } from '@/shared/utils';
 import { useHistoricoNecessidades } from '../hooks/useNecessidades';
 import type { LinhaHistoricoNecessidade } from '../types/necessidade.types';
 
@@ -16,28 +18,23 @@ const helper = createColumnHelper<LinhaHistoricoNecessidade>();
  * incluindo as já resolvidas ou ignoradas, que a fila operacional não mostra mais.
  */
 export function HistoricoNecessidadesPage() {
+  const { t } = useTranslation('necessidades');
   const [page, setPage] = useState(1);
   const { data, isLoading } = useHistoricoNecessidades({ page, limit: 20 });
 
   const colunas = useMemo(
     () => [
       helper.accessor('createdAt', {
-        header: 'Quando',
+        header: t('historico.quando'),
         cell: (info) => (
           <span className="whitespace-nowrap text-sm text-slate-600">
-            {new Date(info.getValue()).toLocaleString('pt-PT', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {formatDataHora(info.getValue())}
           </span>
         ),
       }),
       helper.accessor((l) => l.produto.nome, {
         id: 'produto',
-        header: 'Produto',
+        header: t('historico.produto'),
         cell: (info) => (
           <div>
             <p className="font-medium text-slate-800">{info.getValue()}</p>
@@ -46,7 +43,7 @@ export function HistoricoNecessidadesPage() {
         ),
       }),
       helper.accessor('accao', {
-        header: 'O que aconteceu',
+        header: t('historico.o_que_aconteceu'),
         cell: (info) => {
           const l = info.row.original;
           return (
@@ -58,7 +55,7 @@ export function HistoricoNecessidadesPage() {
         },
       }),
       helper.accessor('recomendacaoNova', {
-        header: 'Recomendação',
+        header: t('historico.recomendacao'),
         cell: (info) => {
           const anterior = info.row.original.recomendacaoAnterior;
           const nova = info.getValue();
@@ -71,20 +68,20 @@ export function HistoricoNecessidadesPage() {
         },
       }),
       helper.accessor('quantidadeSugerida', {
-        header: 'Quantidade',
+        header: t('historico.quantidade'),
         cell: (info) => {
           const v = info.getValue();
           return <span className="tabular-nums text-sm">{v === null ? '—' : v}</span>;
         },
       }),
       helper.accessor('utilizador', {
-        header: 'Quem',
+        header: t('historico.quem'),
         cell: (info) => (
-          <span className="text-sm text-slate-600">{info.getValue() ?? 'Sistema (automático)'}</span>
+          <span className="text-sm text-slate-600">{info.getValue() ?? t('historico.sistema')}</span>
         ),
       }),
     ],
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -98,18 +95,18 @@ export function HistoricoNecessidadesPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <BarraDaPagina resumo={data ? `${data.total} registos` : undefined} />
+      <BarraDaPagina resumo={data ? t('historico.resumo', { count: data.total }) : undefined} />
 
       <div className="rounded-xl border border-slate-200 bg-white">
         <ResponsiveTable
           table={table}
           isLoading={isLoading}
-          emptyMessage="Ainda não há histórico de necessidades registado."
+          emptyMessage={t('historico.vazio')}
         />
 
         {data && data.total > 0 && (
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
-            <span>A mostrar {data.dados.length} de {data.total}</span>
+            <span>{t('comum.a_mostrar', { n: data.dados.length, total: data.total })}</span>
             <div className="flex items-center gap-1">
               <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(p - 1, 1))} className="rounded-md px-2 py-1 disabled:opacity-30">‹</button>
               <span className="tabular-nums">{page} / {totalPaginas}</span>

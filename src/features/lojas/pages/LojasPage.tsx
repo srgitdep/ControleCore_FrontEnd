@@ -4,11 +4,13 @@ import { getLojas, createLoja, updateLoja, deleteLoja } from '@/features/lojas';
 import { getAllCaixas, removerCaixa } from '@/features/vendas';
 import { getUsers } from '@/features/users';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { LojaDetailsModal } from '../components/LojaDetailsModal';
 import { ConfirmDialog } from '@/shared/ui';
 import { mensagemDeErro } from '@/shared/utils';
 
 export function LojasPage() {
+  const { t } = useTranslation('lojas');
   const [activeTab, setActiveTab] = useState<'LOJAS' | 'CAIXAS'>('LOJAS');
   
   const [lojas, setLojas] = useState<any[]>([]);
@@ -45,7 +47,7 @@ export function LojasPage() {
       setCaixas(caixasData);
       setUsers(usersData.filter((u: any) => u.role === 'MANAGER' || u.role === 'ADMIN'));
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível carregar as lojas e os caixas.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_carregar')));
     } finally {
       setIsLoading(false);
     }
@@ -55,28 +57,28 @@ export function LojasPage() {
     e.preventDefault();
     try {
       await createLoja(newLoja);
-      toast.success('Loja criada com sucesso');
+      toast.success(t('pagina.loja_criada'));
       setShowCreateModal(false);
       setNewLoja({ nome: '', endereco: '', cidade: '', gestorId: '' });
       fetchData();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível criar a loja.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_criar_loja')));
     }
   };
 
   const handleCreateCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCaixa.lojaId) return toast.error('Selecione a loja a que este caixa pertence.');
+    if (!newCaixa.lojaId) return toast.error(t('pagina.escolher_loja'));
     try {
       // Assuming criarCaixa is imported from @/api/caixas.api
       const { criarCaixa } = await import('@/features/vendas');
       await criarCaixa(newCaixa);
-      toast.success('Caixa criado com sucesso!');
+      toast.success(t('pagina.caixa_criado'));
       setShowCreateCaixaModal(false);
       setNewCaixa({ nome: '', lojaId: '' });
       fetchData();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível criar o caixa.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_criar_caixa')));
     }
   };
 
@@ -89,11 +91,11 @@ export function LojasPage() {
         cidade: editingLoja.cidade,
         gestorId: editingLoja.gestorId
       });
-      toast.success('Loja atualizada com sucesso');
+      toast.success(t('pagina.loja_actualizada'));
       setShowEditModal(false);
       fetchData();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível actualizar a loja.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_actualizar_loja')));
     }
   };
 
@@ -102,11 +104,11 @@ export function LojasPage() {
     setADesactivar(true);
     try {
       await deleteLoja(lojaADesactivar.id);
-      toast.success('Loja desactivada.');
+      toast.success(t('pagina.loja_desactivada'));
       setLojaADesactivar(null);
       fetchData();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível desactivar a loja.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_desactivar_loja')));
     } finally {
       setADesactivar(false);
     }
@@ -134,17 +136,17 @@ export function LojasPage() {
   );
 
   const handleToggleCaixaStatus = async (caixa: any) => {
-    if (!confirm(caixa.isActive ? 'Desativar este caixa?' : 'Reativar este caixa?')) return;
+    if (!confirm(caixa.isActive ? t('pagina.confirmar_desativar_caixa') : t('pagina.confirmar_reativar_caixa'))) return;
     try {
       if (caixa.isActive) {
         await removerCaixa(caixa.id);
-        toast.success('Caixa desativado');
+        toast.success(t('pagina.caixa_desativado'));
       } else {
-        toast.error('Reativação a ser implementada na API'); // Caso precise de um updateCaixa só para estado
+        toast.error(t('pagina.reativacao_pendente')); // Caso precise de um updateCaixa só para estado
       }
       fetchData();
     } catch (error) {
-      toast.error(mensagemDeErro(error, 'Não foi possível alterar o estado do caixa.'));
+      toast.error(mensagemDeErro(error, t('pagina.erro_estado_caixa')));
     }
   };
 
@@ -160,7 +162,7 @@ export function LojasPage() {
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
               <Plus size={20} />
-              Nova Loja
+              {t('pagina.nova_loja')}
             </button>
           )}
           {activeTab === 'CAIXAS' && (
@@ -169,7 +171,7 @@ export function LojasPage() {
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
               <Plus size={20} />
-              Novo Caixa
+              {t('pagina.novo_caixa')}
             </button>
           )}
         </div>
@@ -180,13 +182,13 @@ export function LojasPage() {
           onClick={() => setActiveTab('LOJAS')}
           className={`px-6 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'LOJAS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
-          <Store size={18} /> Gestão de Lojas
+          <Store size={18} /> {t('pagina.aba_lojas')}
         </button>
         <button 
           onClick={() => setActiveTab('CAIXAS')}
           className={`px-6 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'CAIXAS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
         >
-          <MonitorSmartphone size={18} /> Terminais de Caixa
+          <MonitorSmartphone size={18} /> {t('pagina.aba_caixas')}
         </button>
       </div>
 
@@ -196,7 +198,7 @@ export function LojasPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input 
               type="text" 
-              placeholder={activeTab === 'LOJAS' ? "Pesquisar loja..." : "Pesquisar caixa..."} 
+              placeholder={activeTab === 'LOJAS' ? t('pagina.pesquisar_loja') : t('pagina.pesquisar_caixa')} 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -209,28 +211,28 @@ export function LojasPage() {
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-semibold">
                 <tr>
-                <th className="px-6 py-4">Nome da Loja</th>
-                <th className="px-6 py-4">Localização</th>
-                <th className="px-6 py-4">Gestor</th>
-                <th className="px-6 py-4">Infraestrutura</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4">{t('pagina.col_nome_loja')}</th>
+                <th className="px-6 py-4">{t('pagina.col_localizacao')}</th>
+                <th className="px-6 py-4">{t('pagina.col_gestor')}</th>
+                <th className="px-6 py-4">{t('pagina.col_infraestrutura')}</th>
+                <th className="px-6 py-4 text-right">{t('pagina.col_accoes')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">A carregar lojas...</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">{t('pagina.a_carregar_lojas')}</td>
                 </tr>
               ) : filteredLojas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Nenhuma loja encontrada.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-400">{t('pagina.sem_lojas')}</td>
                 </tr>
               ) : (
                 filteredLojas.map(loja => (
                   <tr key={loja.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900">
                       {loja.nome}
-                      {!loja.isActive && <span className="ml-2 px-2 py-0.5 text-[10px] bg-rose-100 text-rose-700 rounded-full">Inativa</span>}
+                      {!loja.isActive && <span className="ml-2 px-2 py-0.5 text-[10px] bg-rose-100 text-rose-700 rounded-full">{t('pagina.inativa')}</span>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-slate-500">
@@ -247,15 +249,15 @@ export function LojasPage() {
                           <span>{loja.gestor.name}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 italic">Sem gestor</span>
+                        <span className="text-slate-400 italic">{t('pagina.sem_gestor')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-4">
-                        <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-medium" title="Armazéns">
+                        <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-2 py-1 rounded-md text-xs font-medium" title={t('pagina.armazens')}>
                           <Box size={14} /> {loja.armazens?.length || 0}
                         </div>
-                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-medium" title="Caixas FÍsicos">
+                        <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-medium" title={t('pagina.caixas_fisicos')}>
                           <MonitorSmartphone size={14} /> {loja.caixas?.length || 0}
                         </div>
                       </div>
@@ -265,7 +267,7 @@ export function LojasPage() {
                         <button 
                           onClick={() => openEditModal(loja)}
                           className="text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Editar Loja"
+                          title={t('pagina.editar_loja')}
                         >
                           <Edit2 size={16} />
                         </button>
@@ -273,21 +275,21 @@ export function LojasPage() {
                           onClick={() => setSelectedLoja(loja)}
                           className="text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                         >
-                          Gerir Infraestrutura
+                          {t('pagina.gerir_infraestrutura')}
                         </button>
                         {loja.isActive ? (
                           <button
                             onClick={() => setLojaADesactivar(loja)}
                             className="text-slate-400 hover:text-rose-600 p-2 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Desactivar loja"
+                            title={t('pagina.desactivar_loja')}
                           >
                             <Ban size={16} />
                           </button>
                         ) : (
                           <button
-                            onClick={() => updateLoja(loja.id, { isActive: true }).then(() => { toast.success('Loja reactivada.'); fetchData(); }).catch((error) => toast.error(mensagemDeErro(error, 'Não foi possível reactivar a loja.')))}
+                            onClick={() => updateLoja(loja.id, { isActive: true }).then(() => { toast.success(t('pagina.loja_reactivada')); fetchData(); }).catch((error) => toast.error(mensagemDeErro(error, t('pagina.erro_reactivar_loja'))))}
                             className="text-slate-400 hover:text-emerald-600 p-2 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Reactivar loja"
+                            title={t('pagina.reactivar_loja')}
                           >
                             <CheckCircle2 size={16} />
                           </button>
@@ -303,20 +305,20 @@ export function LojasPage() {
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-semibold">
               <tr>
-                <th className="px-6 py-4">Terminal (Caixa)</th>
-                <th className="px-6 py-4">Loja Associada</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                <th className="px-6 py-4">{t('pagina.col_terminal')}</th>
+                <th className="px-6 py-4">{t('pagina.col_loja_associada')}</th>
+                <th className="px-6 py-4">{t('pagina.col_estado')}</th>
+                <th className="px-6 py-4 text-right">{t('pagina.col_accoes')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">A carregar caixas...</td>
+                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">{t('pagina.a_carregar_caixas')}</td>
                 </tr>
               ) : filteredCaixas.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">Nenhum caixa encontrado.</td>
+                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400">{t('pagina.sem_caixas')}</td>
                 </tr>
               ) : (
                 filteredCaixas.map(caixa => (
@@ -329,7 +331,7 @@ export function LojasPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${caixa.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {caixa.isActive ? 'Ativo' : 'Inativo'}
+                        {caixa.isActive ? t('pagina.ativo') : t('pagina.inativo')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -338,7 +340,7 @@ export function LojasPage() {
                           onClick={() => handleToggleCaixaStatus(caixa)}
                           className="text-rose-600 hover:text-rose-800 font-medium text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
                         >
-                          Desativar
+                          {t('pagina.desativar')}
                         </button>
                       )}
                     </td>
@@ -356,34 +358,34 @@ export function LojasPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
             <div className="p-6 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-900">Nova Loja</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t('pagina.nova_loja')}</h2>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Loja *</label>
-                <input required type="text" value={newLoja.nome} onChange={e => setNewLoja({...newLoja, nome: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Ex: Loja Baixa" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.nome_loja_obrig')}</label>
+                <input required type="text" value={newLoja.nome} onChange={e => setNewLoja({...newLoja, nome: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder={t('pagina.nome_loja_exemplo')} />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cidade</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.cidade')}</label>
                   <input type="text" value={newLoja.cidade} onChange={e => setNewLoja({...newLoja, cidade: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.endereco')}</label>
                   <input type="text" value={newLoja.endereco} onChange={e => setNewLoja({...newLoja, endereco: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Gestor (Opcional)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.gestor_opcional')}</label>
                 <select value={newLoja.gestorId} onChange={e => setNewLoja({...newLoja, gestorId: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="">-- Sem Gestor --</option>
+                  <option value="">{t('sem_gestor')}</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Criar Loja</button>
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">{t('acoes.cancelar')}</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">{t('pagina.criar_loja')}</button>
               </div>
             </form>
           </div>
@@ -395,34 +397,34 @@ export function LojasPage() {
         <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
             <div className="p-6 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-900">Editar Loja</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t('pagina.editar_loja')}</h2>
             </div>
             <form onSubmit={handleUpdate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Loja *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.nome_loja_obrig')}</label>
                 <input required type="text" value={editingLoja.nome} onChange={e => setEditingLoja({...editingLoja, nome: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cidade</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.cidade')}</label>
                   <input type="text" value={editingLoja.cidade} onChange={e => setEditingLoja({...editingLoja, cidade: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.endereco')}</label>
                   <input type="text" value={editingLoja.endereco} onChange={e => setEditingLoja({...editingLoja, endereco: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Gestor Principal</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('pagina.gestor_principal')}</label>
                 <select value={editingLoja.gestorId} onChange={e => setEditingLoja({...editingLoja, gestorId: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="">-- Sem Gestor --</option>
+                  <option value="">{t('sem_gestor')}</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Atualizar Loja</button>
+                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">{t('acoes.cancelar')}</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">{t('pagina.actualizar_loja')}</button>
               </div>
             </form>
           </div>
@@ -443,7 +445,7 @@ export function LojasPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-800">Adicionar Novo Caixa</h2>
+              <h2 className="text-xl font-bold text-gray-800">{t('pagina.adicionar_caixa_titulo')}</h2>
               <button onClick={() => setShowCreateCaixaModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-5 w-5" />
               </button>
@@ -451,26 +453,26 @@ export function LojasPage() {
             
             <form onSubmit={handleCreateCaixa} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Caixa *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('pagina.nome_caixa')}</label>
                 <input 
                   type="text" 
                   required 
                   className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                  placeholder="Ex: Caixa Principal, Caixa 01"
+                  placeholder={t('pagina.nome_caixa_exemplo')}
                   value={newCaixa.nome}
                   onChange={e => setNewCaixa({...newCaixa, nome: e.target.value})}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Loja Associada *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('pagina.loja_associada_obrig')}</label>
                 <select 
                   required
                   className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newCaixa.lojaId}
                   onChange={e => setNewCaixa({...newCaixa, lojaId: e.target.value})}
                 >
-                  <option value="">Selecione uma loja...</option>
+                  <option value="">{t('pagina.selecionar_loja')}</option>
                   {lojas.map(loja => (
                     <option key={loja.id} value={loja.id}>{loja.nome}</option>
                   ))}
@@ -483,13 +485,13 @@ export function LojasPage() {
                   onClick={() => setShowCreateCaixaModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 >
-                  Cancelar
+                  {t('acoes.cancelar')}
                 </button>
                 <button 
                   type="submit" 
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20"
                 >
-                  Adicionar
+                  {t('acoes.adicionar')}
                 </button>
               </div>
             </form>
@@ -499,13 +501,13 @@ export function LojasPage() {
 
       <ConfirmDialog
         isOpen={lojaADesactivar !== null}
-        title="Desactivar loja"
+        title={t('pagina.desactivar_loja')}
         message={
           lojaADesactivar
-            ? `Desactivar "${lojaADesactivar.nome}"? Deixa de aparecer nas escolhas de venda e requisição, mas o histórico mantém-se.`
+            ? t('pagina.desactivar_mensagem', { nome: lojaADesactivar.nome })
             : ''
         }
-        confirmText="Desactivar"
+        confirmText={t('acoes.desactivar')}
         variant="warning"
         isLoading={aDesactivar}
         onConfirm={desactivarLoja}

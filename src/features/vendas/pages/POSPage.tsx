@@ -13,13 +13,16 @@ import { ReceiptModal } from '../components/ReceiptModal';
 import { LeitorCameraModal } from '../components/LeitorCameraModal';
 import { IdentificarClienteModal } from '../components/IdentificarClienteModal';
 import { useSaldoPontos, useResgatarPontos } from '@/features/crm';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatDataHora, formatInteiro, formatMoeda } from '@/shared/utils';
+import { formatNumero2 } from '../utils/formatNumero';
 
+// O rótulo de cada método vem do catálogo (`metodos.<id>`), não deste array.
 const PAYMENT_METHODS = [
-  { id: 'NUMERARIO', label: 'Dinheiro', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
-  { id: 'CARTAO', label: 'Cartão', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
-  { id: 'MPESA', label: 'M-Pesa', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuVGSOSpXTlLYNFnoBgJbrad3KiF3UhfJwh6NZvmDcMA&s=10' },
-  { id: 'EMOLA', label: 'e-Mola', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWArdpolsdD7Hcb0-MsWf4R2PtrceSQTA5HF3wpIkfNw&s=10' }
+  { id: 'NUMERARIO', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
+  { id: 'CARTAO', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
+  { id: 'MPESA', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuVGSOSpXTlLYNFnoBgJbrad3KiF3UhfJwh6NZvmDcMA&s=10' },
+  { id: 'EMOLA', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWArdpolsdD7Hcb0-MsWf4R2PtrceSQTA5HF3wpIkfNw&s=10' }
 ] as const;
 
 // Hook de Debounce
@@ -35,6 +38,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function POSPage() {
+  const { t } = useTranslation('pos');
   useSocket();
 
   const {
@@ -209,7 +213,7 @@ export function POSPage() {
             .getProductByBarcode(barcode)
             .then((foundProduct) => {
               if (!foundProduct) {
-                toast.error('Produto não encontrado.');
+                toast.error(t('pdv.produto_nao_encontrado'));
                 return;
               }
 
@@ -219,7 +223,7 @@ export function POSPage() {
               }
             })
             .catch(() => {
-              toast.error('Não foi possível consultar o produto. Verifique a ligação.');
+              toast.error(t('leitor.erro_consulta'));
             });
         }
       } else if (e.key.length === 1) {
@@ -235,7 +239,7 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
     // `products` saiu das dependências: a busca é feita no servidor e já não depende da
     // lista da grelha.
-  }, [addItem, receiptData, leitorAberto]);
+  }, [addItem, receiptData, leitorAberto, t]);
 
   // ─── Leitura pela câmara ──────────────────────────────────────────────────
 
@@ -301,7 +305,7 @@ export function POSPage() {
   };
 
   const handleOpenSession = async () => {
-    if (!selectedCaixaId) return toast.error('Selecione um caixa.');
+    if (!selectedCaixaId) return toast.error(t('pdv.selecione_caixa'));
     abrirSessaoMutation.mutate(
       { caixaId: selectedCaixaId, saldoInicial },
       {
@@ -314,11 +318,11 @@ export function POSPage() {
               <div className="flex gap-3">
                 <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-slate-800">Sessão Iniciada</p>
-                  <p className="text-sm text-slate-500">Caixa pronto a operar.</p>
+                  <p className="font-bold text-slate-800">{t('pdv.sessao_iniciada')}</p>
+                  <p className="text-sm text-slate-500">{t('pdv.caixa_pronto')}</p>
                   <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600">
-                    Data: {new Date().toLocaleString('pt-PT')}<br/>
-                    Fundo de Maneio: {saldoInicial.toFixed(2)} MT
+                    {t('recibo.pdf_data', { data: formatDataHora(new Date()) })}<br/>
+                    {t('pdv.fundo_maneio', { valor: formatMoeda(saldoInicial) })}
                   </div>
                 </div>
               </div>
@@ -340,14 +344,14 @@ export function POSPage() {
               <div className="flex gap-3">
                 <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-slate-800">Sessão Fechada</p>
-                  <p className="text-sm text-slate-500">O seu turno foi encerrado.</p>
+                  <p className="font-bold text-slate-800">{t('pdv.sessao_fechada')}</p>
+                  <p className="text-sm text-slate-500">{t('pdv.turno_encerrado')}</p>
                   <div className="mt-2 bg-slate-50 p-2 rounded text-xs font-mono text-slate-600 space-y-1">
-                    <p>Data: {new Date(result.dataFecho).toLocaleString('pt-PT')}</p>
-                    <p>Total Faturado: <span className="font-bold">{(result.saldoFinalCalculado - result.saldoInicial).toFixed(2)} MT</span></p>
-                    <p>Saldo Gaveta: <span className="font-bold text-slate-900">{result.saldoFinalCalculado.toFixed(2)} MT</span></p>
-                    <p>Saldo Declarado: <span className="font-bold">{result.saldoFinalDeclarado.toFixed(2)} MT</span></p>
-                    <p>Quebra/Sobras: <span className={`font-bold ${result.quebra < 0 ? 'text-rose-600' : result.quebra > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>{result.quebra.toFixed(2)} MT</span></p>
+                    <p>{t('recibo.pdf_data', { data: formatDataHora(result.dataFecho) })}</p>
+                    <p>{t('pdv.total_faturado')} <span className="font-bold">{formatMoeda(result.saldoFinalCalculado - result.saldoInicial)}</span></p>
+                    <p>{t('pdv.saldo_gaveta')} <span className="font-bold text-slate-900">{formatMoeda(result.saldoFinalCalculado)}</span></p>
+                    <p>{t('pdv.saldo_declarado')} <span className="font-bold">{formatMoeda(result.saldoFinalDeclarado)}</span></p>
+                    <p>{t('pdv.quebra_sobras')} <span className={`font-bold ${result.quebra < 0 ? 'text-rose-600' : result.quebra > 0 ? 'text-emerald-600' : 'text-slate-600'}`}>{formatMoeda(result.quebra)}</span></p>
                   </div>
                 </div>
               </div>
@@ -368,7 +372,7 @@ export function POSPage() {
 
   const handleSangria = async () => {
     if (!currentSessaoId || movimentoValor <= 0 || !movimentoMotivo) {
-      toast.error('Preencha o valor e motivo corretamente.');
+      toast.error(t('pdv.preencha_valor_motivo'));
       return;
     }
     sangriaMutation.mutate(
@@ -385,7 +389,7 @@ export function POSPage() {
 
   const handleReforco = async () => {
     if (!currentSessaoId || movimentoValor <= 0 || !movimentoMotivo) {
-      toast.error('Preencha o valor e motivo corretamente.');
+      toast.error(t('pdv.preencha_valor_motivo'));
       return;
     }
     reforcoMutation.mutate(
@@ -402,14 +406,14 @@ export function POSPage() {
 
   const handleCheckout = async () => {
     if (!hasSession) {
-      toast.error('Não tem nenhuma sessão de caixa aberta.');
+      toast.error(t('pdv.sem_sessao'));
       setShowOpenSessionModal(true);
       return;
     }
     if (cartItems.length === 0) return;
     const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
     if (totalEntregue < total) {
-      toast.error('O valor entregue total não pode ser inferior ao total.');
+      toast.error(t('pdv.valor_inferior'));
       return;
     }
 
@@ -478,7 +482,7 @@ export function POSPage() {
                 {/* `whitespace-nowrap`: sem isto quebrava em «Sessão / Aberta» e o
                     cabeçalho crescia uma linha no telemóvel. */}
                 <span className="whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 sm:px-3 sm:text-sm">
-                  Sessão Aberta
+                  {t('pdv.sessao_aberta')}
                 </span>
               </>
             ) : (
@@ -486,7 +490,7 @@ export function POSPage() {
                 onClick={() => setShowOpenSessionModal(true)}
                 className="bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
-                Abrir Sessão
+                {t('pdv.abrir_sessao')}
               </button>
             )}
           </div>
@@ -505,7 +509,7 @@ export function POSPage() {
             )}
           >
             <Store size={16} />
-            Ponto de Venda
+            {t('pdv.tab_pdv')}
           </button>
           <button
             onClick={() => setActiveTab('HISTORY')}
@@ -519,7 +523,7 @@ export function POSPage() {
             )}
           >
             <History size={16} />
-            Histórico de Sessões
+            {t('pdv.tab_historico')}
           </button>
           <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-200" />
         </div>
@@ -540,7 +544,7 @@ export function POSPage() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <input 
                       type="text" 
-                      placeholder="Pesquisar produtos (Nome, SKU, Cód. Barras)..." 
+                      placeholder={t('pdv.pesquisar')}
                       className="w-full pl-12 pr-4 py-3 bg-gray-100/80 border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -556,12 +560,12 @@ export function POSPage() {
                     className="flex shrink-0 items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700"
                     title={
                       temCamara
-                        ? 'Ler código de barras com a câmara'
-                        : 'Introduzir código de barras (sem câmara neste dispositivo)'
+                        ? t('pdv.ler_codigo_titulo_camara')
+                        : t('pdv.ler_codigo_titulo_sem_camara')
                     }
                   >
                     <ScanLine className="h-5 w-5" />
-                    <span className="hidden sm:inline">Ler código</span>
+                    <span className="hidden sm:inline">{t('pdv.ler_codigo')}</span>
                   </button>
               </div>
             </div>
@@ -574,7 +578,7 @@ export function POSPage() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Todas
+                {t('pdv.todas')}
               </button>
               {categories.map((cat) => (
                 <button
@@ -640,12 +644,12 @@ export function POSPage() {
             <button
               onClick={() => setCarrinhoAberto(false)}
               className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 lg:hidden"
-              aria-label="Voltar aos produtos"
+              aria-label={t('pdv.voltar_produtos')}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <ShoppingCart className="h-6 w-6 text-blue-600" />
-            <span className="hidden sm:inline">Carrinho</span>
+            <span className="hidden sm:inline">{t('pdv.carrinho')}</span>
           </h2>
           {/* Deslizável no telemóvel: os três botões de sessão mais o contador não cabem
               em 375 px, e sem isto o «Fechar» ficava cortado no bordo do ecrã. */}
@@ -655,31 +659,31 @@ export function POSPage() {
                 <button 
                   onClick={() => setShowSangriaModal(true)}
                   className="bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
-                  title="Sangria (Retirar da Gaveta)"
+                  title={t('pdv.sangria_titulo')}
                 >
                   <Minus className="w-3.5 h-3.5" />
-                  Sangria
+                  {t('pdv.sangria')}
                 </button>
                 <button 
                   onClick={() => setShowReforcoModal(true)}
                   className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
-                  title="Reforço (Colocar na Gaveta)"
+                  title={t('pdv.reforco_titulo')}
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Reforço
+                  {t('pdv.reforco')}
                 </button>
                 <button 
                   onClick={() => setShowCloseSessionModal(true)}
                   className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs font-bold px-3 h-11 shrink-0 rounded-lg flex items-center gap-1 transition-colors sm:h-auto sm:py-1.5"
-                  title="Fechar Turno / Sessão"
+                  title={t('pdv.fechar_titulo')}
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  Fechar
+                  {t('pdv.fechar')}
                 </button>
               </>
             )}
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center">
-              {cartItems.length} Itens
+              {t('pdv.itens', { count: cartItems.length })}
             </span>
           </div>
         </div>
@@ -697,14 +701,14 @@ export function POSPage() {
                     {clienteIdentificado.nome}
                   </p>
                   <p className="truncate text-xs text-blue-600">
-                    {clienteIdentificado.telefone || clienteIdentificado.email || 'sem contacto'}
-                    {clienteIdentificado.pontos > 0 && ` · ${clienteIdentificado.pontos} pontos`}
+                    {clienteIdentificado.telefone || clienteIdentificado.email || t('identificar.sem_contacto')}
+                    {clienteIdentificado.pontos > 0 && ` · ${t('pdv.cliente_pontos', { n: clienteIdentificado.pontos })}`}
                   </p>
                 </div>
                 <button
                   onClick={() => associarCliente(null)}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-blue-400 hover:bg-blue-100 hover:text-blue-700"
-                  aria-label="Remover cliente da venda"
+                  aria-label={t('pdv.remover_cliente_aria')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -742,14 +746,18 @@ export function POSPage() {
                         }}
                         className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
                       >
-                        Usar {pontosAOferecer.toLocaleString('pt-MZ')} pontos (
-                        {valorAOferecer.toLocaleString('pt-MZ')} MT de desconto)
+                        {t('pdv.usar_pontos', {
+                          pontos: formatInteiro(pontosAOferecer),
+                          valor: formatMoeda(valorAOferecer),
+                        })}
                       </button>
                     ) : (
                       <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-100 px-3 py-2">
                         <span className="text-xs font-semibold text-emerald-800">
-                          {pontosAResgatar} pontos aplicados: −
-                          {valorPontosAResgatar.toLocaleString('pt-MZ')} MT
+                          {t('pdv.pontos_aplicados', {
+                            pontos: formatInteiro(pontosAResgatar),
+                            valor: formatMoeda(valorPontosAResgatar),
+                          })}
                         </span>
                         <button
                           onClick={() => {
@@ -758,7 +766,7 @@ export function POSPage() {
                           }}
                           className="shrink-0 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900"
                         >
-                          Remover
+                          {t('pdv.remover')}
                         </button>
                       </div>
                     )}
@@ -772,7 +780,7 @@ export function POSPage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-semibold text-gray-500 transition-colors hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700"
             >
               <UserPlus className="h-4 w-4" />
-              Identificar cliente
+              {t('identificar.titulo')}
             </button>
           )}
         </div>
@@ -782,8 +790,8 @@ export function POSPage() {
           {cartItems.length === 0 ? (
             <div className="text-center text-gray-400 mt-20">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" />
-              <p className="font-medium text-gray-500">O carrinho está vazio.</p>
-              <p className="text-sm mt-1">Adicione produtos para iniciar a venda.</p>
+              <p className="font-medium text-gray-500">{t('pdv.carrinho_vazio')}</p>
+              <p className="text-sm mt-1">{t('pdv.carrinho_vazio_dica')}</p>
             </div>
           ) : (
             cartItems.map((item) => (
@@ -792,12 +800,12 @@ export function POSPage() {
                   {item.imagemUrl ? (
                     <img src={item.imagemUrl} alt={item.nome} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">Sem Img</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">{t('pdv.sem_img')}</div>
                   )}
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   <h4 className="text-sm font-bold text-gray-800 line-clamp-1 pr-6">{item.nome}</h4>
-                  <p className="text-blue-600 font-extrabold text-sm">{item.precoVenda.toFixed(2)} MT</p>
+                  <p className="text-blue-600 font-extrabold text-sm">{formatMoeda(item.precoVenda)}</p>
                   
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
@@ -828,7 +836,7 @@ export function POSPage() {
                         disabled={item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel}
                         title={
                           item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel
-                            ? `Apenas ${item.stockDisponivel} em stock`
+                            ? t('pdv.apenas_stock', { n: item.stockDisponivel })
                             : undefined
                         }
                         className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-600"
@@ -838,7 +846,7 @@ export function POSPage() {
                     </div>
                     {item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel && (
                       <span className="text-[10px] font-semibold text-amber-600">
-                        Máx. em stock
+                        {t('pdv.max_stock')}
                       </span>
                     )}
                   </div>
@@ -861,7 +869,7 @@ export function POSPage() {
         <div className="max-h-[65%] shrink-0 overflow-y-auto border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] sm:p-5 lg:max-h-none">
           
           <div className="mb-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Método de Pagamento</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{t('pdv.metodo_pagamento')}</p>
             <div className="grid grid-cols-4 gap-2 mb-3">
               {PAYMENT_METHODS.map(pm => (
                 <button
@@ -873,15 +881,15 @@ export function POSPage() {
                       : 'border-gray-100 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <img src={pm.img} alt={pm.label} className="h-7 w-auto object-contain mb-1.5 rounded" />
-                  <span className={`text-[10px] font-bold ${currentPaymentMethod === pm.id ? 'text-blue-700' : 'text-gray-600'}`}>{pm.label}</span>
+                  <img src={pm.img} alt={t(`metodos.${pm.id}`)} className="h-7 w-auto object-contain mb-1.5 rounded" />
+                  <span className={`text-[10px] font-bold ${currentPaymentMethod === pm.id ? 'text-blue-700' : 'text-gray-600'}`}>{t(`metodos.${pm.id}`)}</span>
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2">
               <div className="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-2 flex items-center">
-                <span className="text-sm font-bold text-blue-500 mr-2 uppercase">Valor</span>
+                <span className="text-sm font-bold text-blue-500 mr-2 uppercase">{t('pdv.valor')}</span>
                 <input 
                   type="number" 
                   min="0"
@@ -903,7 +911,7 @@ export function POSPage() {
                 disabled={currentAmountPaid <= 0}
                 className="bg-slate-800 text-white px-4 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-slate-700"
               >
-                Adicionar
+                {t('pdv.adicionar')}
               </button>
             </div>
           </div>
@@ -917,10 +925,10 @@ export function POSPage() {
                   <div key={idx} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm">
                     <div className="flex items-center gap-2">
                       <img src={pmInfo?.img} className="w-5 h-5 object-contain rounded" />
-                      <span className="font-semibold text-slate-700">{pmInfo?.label}</span>
+                      <span className="font-semibold text-slate-700">{pmInfo ? t(`metodos.${pmInfo.id}`) : undefined}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{pag.valorEntregue.toFixed(2)} MT</span>
+                      <span className="font-bold text-slate-900">{formatMoeda(pag.valorEntregue)}</span>
                       <button 
                         onClick={() => setPagamentos(pagamentos.filter((_, i) => i !== idx))}
                         className="text-rose-400 hover:text-rose-600 p-1"
@@ -936,13 +944,13 @@ export function POSPage() {
 
           <div className="flex gap-3 mb-5">
             <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-gray-400 uppercase mb-1">Total a Pagar</span>
-              <span className="text-xl font-black text-gray-900">{total.toFixed(2)} MT</span>
+              <span className="text-[11px] font-bold text-gray-400 uppercase mb-1">{t('pdv.total_pagar')}</span>
+              <span className="text-xl font-black text-gray-900">{formatMoeda(total)}</span>
             </div>
             <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-emerald-600 uppercase mb-1">Total Recebido</span>
+              <span className="text-[11px] font-bold text-emerald-600 uppercase mb-1">{t('pdv.total_recebido')}</span>
               <span className="text-xl font-black text-emerald-700">
-                {pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0).toFixed(2)} MT
+                {formatMoeda(pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0))}
               </span>
             </div>
           </div>
@@ -955,7 +963,7 @@ export function POSPage() {
             {processarVendaMutation.isPending ? (
               <RefreshCcw className="w-5 h-5 animate-spin" />
             ) : (
-              <>Finalizar Compra</>
+              <>{t('pdv.finalizar')}</>
             )}
           </button>
         </div>
@@ -982,10 +990,10 @@ export function POSPage() {
         >
           <span className="flex items-center gap-2 font-semibold">
             <ShoppingCart className="h-5 w-5" />
-            {cartItems.length} {cartItems.length === 1 ? 'artigo' : 'artigos'}
+            {t('pdv.artigos', { count: cartItems.length })}
           </span>
           <span className="flex items-center gap-2 font-black">
-            {total.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
+            {formatMoeda(total)}
             <ChevronUp className="h-5 w-5" />
           </span>
         </button>
@@ -1011,7 +1019,7 @@ export function POSPage() {
           onEscolher={(cliente) => {
             associarCliente(cliente);
             setShowClienteModal(false);
-            toast.success(`Venda associada a ${cliente.nome}.`);
+            toast.success(t('pdv.cliente_associado', { nome: cliente.nome }));
           }}
         />
       )}
@@ -1035,24 +1043,24 @@ export function POSPage() {
             <button 
               onClick={() => setShowOpenSessionModal(false)}
               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-              aria-label="Fechar"
+              aria-label={t('identificar.fechar')}
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Abrir Sessão de Caixa</h2>
-            <p className="text-slate-500 text-center text-sm font-medium mb-6">É obrigatório abrir uma sessão para começar a vender.</p>
+            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">{t('abrir.titulo')}</h2>
+            <p className="text-slate-500 text-center text-sm font-medium mb-6">{t('abrir.obrigatorio')}</p>
             
             {caixas.length === 0 ? (
               <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 text-sm mb-6">
-                <p className="font-semibold mb-1">Nenhum caixa disponível</p>
-                <p>Contacte o Gestor de Loja para adicionar um terminal de caixa antes de abrir uma sessão.</p>
+                <p className="font-semibold mb-1">{t('abrir.sem_caixa')}</p>
+                <p>{t('abrir.sem_caixa_detalhe')}</p>
               </div>
             ) : (
               <>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Selecione o Caixa</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('abrir.selecione_caixa')}</label>
                     <select
                       value={selectedCaixaId}
                       onChange={e => setSelectedCaixaId(e.target.value)}
@@ -1064,7 +1072,7 @@ export function POSPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fundo de Maneio / Troco Inicial (MT)</label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('abrir.fundo')}</label>
                     <input 
                       type="number" 
                       min="0"
@@ -1082,7 +1090,7 @@ export function POSPage() {
                   onClick={handleOpenSession}
                   className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
                 >
-                  {abrirSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Confirmar Abertura'}
+                  {abrirSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : t('abrir.confirmar')}
                 </button>
               </>
             )}
@@ -1102,12 +1110,12 @@ export function POSPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Fechar Turno</h2>
-            <p className="text-slate-500 text-center text-sm font-medium mb-6">Declare o valor em dinheiro existente na gaveta.</p>
+            <h2 className="text-2xl font-black text-slate-800 text-center mb-1">{t('fechar.titulo')}</h2>
+            <p className="text-slate-500 text-center text-sm font-medium mb-6">{t('fechar.subtitulo')}</p>
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor FÍsico (Gaveta) MT</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('fechar.valor_fisico')}</label>
                 <input 
                   type="number" 
                   min="0"
@@ -1120,12 +1128,12 @@ export function POSPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observações (Opcional)</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('fechar.observacoes')}</label>
                 <textarea 
                   value={observacoesClose}
                   onChange={e => setObservacoesClose(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-sm font-medium resize-none h-20"
-                  placeholder="Justificação de quebras/sobras..."
+                  placeholder={t('fechar.observacoes_ph')}
                 />
               </div>
             </div>
@@ -1135,7 +1143,7 @@ export function POSPage() {
               onClick={handleCloseSession}
               className="w-full bg-rose-600 text-white font-black py-4 rounded-xl hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-md shadow-rose-600/20"
             >
-              {fecharSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : 'Encerrar Caixa'}
+              {fecharSessaoMutation.isPending ? <RefreshCcw className="w-5 h-5 animate-spin" /> : t('fechar.encerrar')}
             </button>
           </div>
         </div>
@@ -1151,12 +1159,12 @@ export function POSPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Sangria</h2>
-              <p className="text-slate-500 text-center text-sm font-medium mb-6">Retirada de valor do caixa.</p>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">{t('movimento.sangria_titulo')}</h2>
+              <p className="text-slate-500 text-center text-sm font-medium mb-6">{t('movimento.sangria_subtitulo')}</p>
               
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor MT</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('movimento.valor_mt')}</label>
                   <input 
                     type="number" min="0" step="0.01"
                     value={movimentoValor || ''}
@@ -1166,17 +1174,17 @@ export function POSPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Motivo</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('movimento.motivo')}</label>
                   <textarea 
                     value={movimentoMotivo}
                     onChange={e => setMovimentoMotivo(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm text-slate-700 min-h-[100px]"
-                    placeholder="Ex: Pagamento a fornecedor..."
+                    placeholder={t('movimento.sangria_ph')}
                   />
                 </div>
               </div>
               <button onClick={handleSangria} className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98]">
-                Confirmar Sangria
+                {t('movimento.sangria_confirmar')}
               </button>
             </div>
           </div>
@@ -1192,12 +1200,12 @@ export function POSPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">Registrar Reforço</h2>
-              <p className="text-slate-500 text-center text-sm font-medium mb-6">Entrada de valor (ex: trocos) no caixa.</p>
+              <h2 className="text-2xl font-black text-slate-800 text-center mb-1">{t('movimento.reforco_titulo')}</h2>
+              <p className="text-slate-500 text-center text-sm font-medium mb-6">{t('movimento.reforco_subtitulo')}</p>
               
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor MT</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('movimento.valor_mt')}</label>
                   <input 
                     type="number" min="0" step="0.01"
                     value={movimentoValor || ''}
@@ -1207,17 +1215,17 @@ export function POSPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Motivo</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('movimento.motivo')}</label>
                   <textarea 
                     value={movimentoMotivo}
                     onChange={e => setMovimentoMotivo(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 min-h-[100px]"
-                    placeholder="Ex: Reforço de moedas para troco..."
+                    placeholder={t('movimento.reforco_ph')}
                   />
                 </div>
               </div>
               <button onClick={handleReforco} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                Confirmar Reforço
+                {t('movimento.reforco_confirmar')}
               </button>
             </div>
           </div>
@@ -1228,6 +1236,7 @@ export function POSPage() {
 
 // ──â”€ Componente Interno: ProductCard ────────────────────────────────────────
 function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }) {
+  const { t } = useTranslation('pos');
   const disponivel = getStockDisponivel(product);
   const semSaldoNaLoja = disponivel !== undefined && disponivel <= 0;
 
@@ -1261,19 +1270,19 @@ function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }
         {soEmArmazem && (
           <span
             className="absolute top-2 left-2 z-10 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
-            title={`${noutrosArmazens} unidades em armazém. Transfira para a sala de vendas para poder vender.`}
+            title={t('produto.so_em_armazem_titulo', { n: noutrosArmazens })}
           >
-            Só em armazém
+            {t('produto.so_em_armazem')}
           </span>
         )}
         {esgotado && !soEmArmazem && (
           <span className="absolute top-2 left-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-            Esgotado
+            {t('produto.esgotado')}
           </span>
         )}
         {!esgotado && disponivel !== undefined && disponivel <= 5 && (
           <span className="absolute top-2 left-2 z-10 rounded-md bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-            Restam {disponivel}
+            {t('produto.restam', { n: disponivel })}
           </span>
         )}
 
@@ -1284,18 +1293,18 @@ function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }
             className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" 
           />
         ) : (
-          <span className="text-gray-400 text-[10px] font-medium text-center uppercase tracking-wide">Sem Imagem</span>
+          <span className="text-gray-400 text-[10px] font-medium text-center uppercase tracking-wide">{t('produto.sem_imagem')}</span>
         )}
       </div>
 
       <div className="flex-1 flex flex-col relative pb-8">
         <h3 className="text-sm font-bold text-gray-800 mb-1 line-clamp-2 leading-snug pr-2">{product.nome}</h3>
-        <p className="text-[11px] text-gray-400 font-medium mb-2">Ref: {product.codigoBarras || 'N/A'}</p>
+        <p className="text-[11px] text-gray-400 font-medium mb-2">{t('produto.ref', { codigo: product.codigoBarras || t('recibo.nd') })}</p>
         
         <div className="mt-auto">
           <div className="flex items-baseline gap-1">
             <p className="text-lg font-black text-gray-900">
-              {product.precoVenda.toFixed(2)}
+              {formatNumero2(product.precoVenda)}
             </p>
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">MT</span>
           </div>
@@ -1304,7 +1313,7 @@ function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }
         {/* Plus Button inside Card */}
         <div 
           className="absolute bottom-0 right-0 w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 group-hover:shadow-md"
-          title="Adicionar ao carrinho"
+          title={t('produto.adicionar_carrinho')}
         >
           <Plus className="w-5 h-5" />
         </div>

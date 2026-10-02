@@ -34,10 +34,3 @@ export const ROTA_POR_TIPO: Record<TipoResultadoPesquisa, string> = {
   ORDEM_COMPRA: '/compras',
 };
 
-export const LABEL_POR_TIPO: Record<TipoResultadoPesquisa, string> = {
-  PRODUTO: 'Produto',
-  FORNECEDOR: 'Fornecedor',
-  REQUISICAO: 'Requisição',
-  SOURCING: 'RFQ',
-  ORDEM_COMPRA: 'Ordem de Compra',
-};

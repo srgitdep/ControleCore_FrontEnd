@@ -1,4 +1,5 @@
 import { X, User, Shield, Building2, CheckCircle2, Ban, Hash } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
 
@@ -8,6 +9,7 @@ interface UserDetailsModalProps {
 }
 
 export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
+  const { t } = useTranslation('utilizadores');
   // Se tivéssemos createdAt vindo da API para os users:
   // const formatDate = (dateString: string) => { ... };
 
@@ -21,8 +23,8 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
               <User size={20} className="text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">Detalhes do Utilizador</h2>
-              <p className="text-xs text-slate-500">Perfil e acessos</p>
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">{t('detalhes.titulo')}</h2>
+              <p className="text-xs text-slate-500">{t('detalhes.subtitulo')}</p>
             </div>
           </div>
           <button
@@ -55,19 +57,19 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
               }`}
             >
               {user.isActive ? <CheckCircle2 size={14} /> : <Ban size={14} />}
-              {user.isActive ? 'Acesso Ativo' : 'Acesso Suspenso'}
+              {user.isActive ? t('detalhes.acesso_ativo') : t('detalhes.acesso_suspenso')}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Informações Base */}
             <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Identificação</h4>
-              
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('detalhes.identificacao')}</h4>
+
               <div className="flex items-start gap-3">
                 <Hash size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-500">Código de Acesso</p>
+                  <p className="text-xs text-slate-500">{t('detalhes.codigo')}</p>
                   <p className="text-sm font-mono font-medium text-slate-800">{user.code}</p>
                 </div>
               </div>
@@ -75,7 +77,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
               <div className="flex items-start gap-3">
                 <Shield size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-500">NÍvel de Acesso (Role)</p>
+                  <p className="text-xs text-slate-500">{t('detalhes.nivel')}</p>
                   <p className="text-sm font-medium text-slate-800">{ROLE_LABELS[user.role]}</p>
                 </div>
               </div>
@@ -83,14 +85,14 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
 
             {/* VÍnculos */}
             <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">VÍnculos Institucionais</h4>
-              
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('detalhes.vinculos')}</h4>
+
               <div className="flex items-start gap-3">
                 <Building2 size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-500">Empresa Associada</p>
+                  <p className="text-xs text-slate-500">{t('detalhes.empresa')}</p>
                   <p className="text-sm font-medium text-slate-800">
-                    {user.empresa?.nome || <span className="italic text-slate-400">Plataforma Global (SRG)</span>}
+                    {user.empresa?.nome || <span className="italic text-slate-400">{t('detalhes.plataforma')}</span>}
                   </p>
                 </div>
               </div>
@@ -105,7 +107,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
             onClick={onClose}
             className="px-5 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
           >
-            Fechar Janela
+            {t('detalhes.fechar')}
           </button>
         </div>
       </div>

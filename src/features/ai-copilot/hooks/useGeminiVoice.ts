@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import i18n from 'i18next';
 import {
   podeVoltarAOuvir,
   calcularRms,
@@ -318,7 +319,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionClass) {
-      setErrorMessage('O seu navegador não suporta reconhecimento de voz local.');
+      setErrorMessage(i18n.t('voz.erro.sem_reconhecimento', { ns: 'copiloto' }));
       return;
     }
 
@@ -463,7 +464,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       })
       .catch((err) => {
         console.error('Erro ao aceder ao microfone:', err);
-        setErrorMessage('Não foi possível aceder ao microfone. Verifique as permissões.');
+        setErrorMessage(i18n.t('voz.erro.sem_microfone', { ns: 'copiloto' }));
         setState('ERROR');
       });
   }, [interromperMayra]);
@@ -522,7 +523,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       socket.close();
       setErrorMessage(
         avisoDeConfiguracao ??
-          `Não foi possível ligar ao servidor de voz em ${socketHost}. Verifique a ligação.`,
+          i18n.t('voz.erro.tempo_esgotado', { ns: 'copiloto', host: socketHost }),
       );
       setState('ERROR');
     }, 12000);
@@ -535,7 +536,8 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     socket.on('connect_error', (err) => {
       if (esperaDeLigacaoRef.current) clearTimeout(esperaDeLigacaoRef.current);
-      setErrorMessage(avisoDeConfiguracao ?? `Falha ao ligar ao servidor de voz: ${err.message}`);
+      setErrorMessage(avisoDeConfiguracao ??
+          i18n.t('voz.erro.falha_ligar', { ns: 'copiloto', detalhe: err.message }),);
       setState('ERROR');
     });
 
@@ -712,7 +714,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
           return;
         } catch (refreshErr) {
           isRefreshingTokenRef.current = false;
-          setErrorMessage('Sessão expirada. Por favor, faça login novamente.');
+          setErrorMessage(i18n.t('voz.erro.sessao_expirada', { ns: 'copiloto' }));
           setState('ERROR');
           return;
         }

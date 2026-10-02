@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Clock, Loader2, Plus, X, CalendarClock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getEmployees } from '../api/hr.api';
@@ -6,6 +7,8 @@ import { turnosApi } from '../api/turnos.api';
 import type { Turno, EscalaTurno } from '../api/turnos.api';
 import { getLojas } from '@/features/lojas';
 import type { Employee } from '../types';
+import { localeIntl } from '@/i18n';
+import { formatData, mensagemDeErro } from '@/shared/utils';
 
 interface Loja {
   id: string;
@@ -28,6 +31,7 @@ interface Loja {
  * consulta. Este ecrã é o de atribuir, e atribui-se um dia de cada vez.
  */
 export function TurnosPage() {
+  const { t } = useTranslation('rh');
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [funcionarios, setFuncionarios] = useState<Employee[]>([]);
   const [lojaId, setLojaId] = useState('');
@@ -53,12 +57,12 @@ export function TurnosPage() {
         setFuncionarios(fs);
         if (ls.length > 0) setLojaId(ls[0].id);
       } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Erro ao carregar dados.');
+        toast.error(mensagemDeErro(error, t('turnos.erro_dados')));
       } finally {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   // `turnos` não tem endpoint de listagem próprio — reconstrói-se a partir das escalas do
   // dia mais os que acabaram de ser criados nesta sessão, para o selector de «Atribuir» ter
@@ -70,12 +74,12 @@ export function TurnosPage() {
       const dados = await turnosApi.obterEscalas(loja, dia);
       setEscalas(dados);
       setTurnos((antes) => {
-        const vistos = new Map(antes.map((t) => [t.id, t]));
+        const vistos = new Map(antes.map((turno) => [turno.id, turno]));
         dados.forEach((e) => vistos.set(e.turno.id, e.turno));
         return Array.from(vistos.values());
       });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao carregar a escala.');
+      toast.error(mensagemDeErro(error, t('turnos.erro_escala')));
       setEscalas([]);
     } finally {
       setIsLoadingEscalas(false);
@@ -87,12 +91,12 @@ export function TurnosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lojaId, data]);
 
-  const turnosDaLoja = turnos.filter((t) => t.lojaId === lojaId);
+  const turnosDaLoja = turnos.filter((turno) => turno.lojaId === lojaId);
 
   const criarTurno = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lojaId) return toast.error('Escolha a loja.');
-    if (!formTurno.nome.trim()) return toast.error('Dê um nome ao turno.');
+    if (!lojaId) return toast.error(t('turnos.escolha_loja'));
+    if (!formTurno.nome.trim()) return toast.error(t('turnos.de_nome'));
 
     setIsSaving(true);
     try {
@@ -103,11 +107,11 @@ export function TurnosPage() {
         horaFim: formTurno.horaFim,
       });
       setTurnos((antes) => [...antes, turno]);
-      toast.success(`Turno «${turno.nome}» criado.`);
+      toast.success(t('turnos.criado', { nome: turno.nome }));
       setShowNovoTurno(false);
       setFormTurno({ nome: '', horaInicio: '08:00', horaFim: '16:00' });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao criar o turno.');
+      toast.error(mensagemDeErro(error, t('turnos.erro_criar')));
     } finally {
       setIsSaving(false);
     }
@@ -115,8 +119,8 @@ export function TurnosPage() {
 
   const atribuir = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formEscala.turnoId) return toast.error('Escolha o turno.');
-    if (!formEscala.userId) return toast.error('Escolha o funcionário.');
+    if (!formEscala.turnoId) return toast.error(t('turnos.escolha_turno'));
+    if (!formEscala.userId) return toast.error(t('turnos.escolha_funcionario'));
 
     setIsSaving(true);
     try {
@@ -125,13 +129,13 @@ export function TurnosPage() {
         userId: formEscala.userId,
         data,
       });
-      toast.success('Escala atribuída.');
+      toast.success(t('turnos.atribuida'));
       setShowAtribuir(false);
       setFormEscala({ turnoId: '', userId: '' });
       carregarEscalas(lojaId, data);
     } catch (error: any) {
       // «Este funcionário já está alocado a um turno neste dia» chega assim.
-      toast.error(error?.response?.data?.message || 'Erro ao atribuir a escala.');
+      toast.error(mensagemDeErro(error, t('turnos.erro_atribuir')));
     } finally {
       setIsSaving(false);
     }
@@ -144,25 +148,25 @@ export function TurnosPage() {
           <Clock className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Turnos</h2>
-          <p className="text-sm text-slate-500">Horários por loja e quem trabalha cada um</p>
+          <h2 className="text-xl font-semibold text-slate-900">{t('turnos.titulo')}</h2>
+          <p className="text-sm text-slate-500">{t('turnos.subtitulo')}</p>
         </div>
       </div>
 
       {isLoading ? (
         <div className="p-10 text-center text-slate-500">
           <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600 mb-2" />
-          A carregar...
+          {t('acoes.a_carregar')}
         </div>
       ) : lojas.length === 0 ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Sem lojas registadas. Crie uma loja antes de definir turnos.
+          {t('turnos.sem_lojas')}
         </div>
       ) : (
         <>
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Loja</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.loja')}</label>
               <select
                 value={lojaId}
                 onChange={(e) => setLojaId(e.target.value)}
@@ -174,7 +178,7 @@ export function TurnosPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Dia</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.dia')}</label>
               <input
                 type="date"
                 value={data}
@@ -187,35 +191,37 @@ export function TurnosPage() {
                 onClick={() => setShowNovoTurno(true)}
                 className="px-3 py-2.5 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-1.5"
               >
-                <Plus size={15} /> Novo turno
+                <Plus size={15} /> {t('turnos.novo_turno')}
               </button>
               <button
                 onClick={() => setShowAtribuir(true)}
                 disabled={turnosDaLoja.length === 0}
                 className="px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
-                title={turnosDaLoja.length === 0 ? 'Crie um turno primeiro' : undefined}
+                title={turnosDaLoja.length === 0 ? t('turnos.crie_primeiro') : undefined}
               >
-                <CalendarClock size={15} /> Atribuir escala
+                <CalendarClock size={15} /> {t('turnos.atribuir_escala')}
               </button>
             </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 text-sm font-semibold text-slate-700">
-              Escala de {new Date(data + 'T00:00:00').toLocaleDateString('pt-MZ', {
-                weekday: 'long', day: '2-digit', month: 'long',
+              {t('turnos.escala_de', {
+                data: new Date(data + 'T00:00:00').toLocaleDateString(localeIntl(), {
+                  weekday: 'long', day: '2-digit', month: 'long',
+                }),
               })}
             </div>
 
             {isLoadingEscalas ? (
               <div className="p-10 text-center text-slate-500">
                 <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600 mb-2" />
-                A carregar...
+                {t('acoes.a_carregar')}
               </div>
             ) : escalas.length === 0 ? (
               <div className="p-10 text-center text-sm text-slate-500">
                 <User className="mx-auto h-10 w-10 text-slate-300 mb-2" />
-                Ninguém escalado neste dia.
+                {t('turnos.ninguem')}
               </div>
             ) : (
               <ul className="divide-y divide-slate-100">
@@ -240,16 +246,16 @@ export function TurnosPage() {
           {turnosDaLoja.length > 0 && (
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Turnos desta loja
+                {t('turnos.turnos_da_loja')}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {turnosDaLoja.map((t) => (
+                {turnosDaLoja.map((turno) => (
                   <span
-                    key={t.id}
+                    key={turno.id}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700"
                   >
                     <Clock size={13} className="text-slate-400" />
-                    {t.nome} · {t.horaInicio}–{t.horaFim}
+                    {turno.nome} · {turno.horaInicio}–{turno.horaFim}
                   </span>
                 ))}
               </div>
@@ -262,7 +268,7 @@ export function TurnosPage() {
         <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-900">Novo turno</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t('turnos.novo_turno')}</h2>
               <button
                 onClick={() => setShowNovoTurno(false)}
                 className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
@@ -273,18 +279,18 @@ export function TurnosPage() {
 
             <form onSubmit={criarTurno} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nome</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.nome')}</label>
                 <input
                   type="text"
                   value={formTurno.nome}
                   onChange={(e) => setFormTurno({ ...formTurno, nome: e.target.value })}
-                  placeholder="Ex.: Manhã"
+                  placeholder={t('turnos.nome_exemplo')}
                   className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Início</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.inicio')}</label>
                   <input
                     type="time"
                     value={formTurno.horaInicio}
@@ -293,7 +299,7 @@ export function TurnosPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fim</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.fim')}</label>
                   <input
                     type="time"
                     value={formTurno.horaFim}
@@ -309,7 +315,7 @@ export function TurnosPage() {
                   onClick={() => setShowNovoTurno(false)}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('acoes.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -317,7 +323,7 @@ export function TurnosPage() {
                   className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  Criar
+                  {t('turnos.criar')}
                 </button>
               </div>
             </form>
@@ -330,9 +336,9 @@ export function TurnosPage() {
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Atribuir escala</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('turnos.atribuir_escala')}</h2>
                 <p className="text-xs text-slate-500">
-                  {new Date(data + 'T00:00:00').toLocaleDateString('pt-MZ')}
+                  {formatData(new Date(data + 'T00:00:00'))}
                 </p>
               </div>
               <button
@@ -346,14 +352,14 @@ export function TurnosPage() {
             <form onSubmit={atribuir} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Funcionário
+                  {t('turnos.funcionario')}
                 </label>
                 <select
                   value={formEscala.userId}
                   onChange={(e) => setFormEscala({ ...formEscala, userId: e.target.value })}
                   className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Escolher...</option>
+                  <option value="">{t('acoes.escolher')}</option>
                   {funcionarios.map((f) => (
                     <option key={f.id} value={f.id}>{f.nome}</option>
                   ))}
@@ -361,23 +367,23 @@ export function TurnosPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Turno</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('turnos.turno')}</label>
                 <select
                   value={formEscala.turnoId}
                   onChange={(e) => setFormEscala({ ...formEscala, turnoId: e.target.value })}
                   className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Escolher...</option>
-                  {turnosDaLoja.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nome} ({t.horaInicio}–{t.horaFim})
+                  <option value="">{t('acoes.escolher')}</option>
+                  {turnosDaLoja.map((turno) => (
+                    <option key={turno.id} value={turno.id}>
+                      {turno.nome} ({turno.horaInicio}–{turno.horaFim})
                     </option>
                   ))}
                 </select>
               </div>
 
               <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
-                Um funcionário só pode ter um turno por dia.
+                {t('turnos.um_por_dia')}
               </p>
 
               <div className="flex justify-end gap-3 pt-1">
@@ -386,7 +392,7 @@ export function TurnosPage() {
                   onClick={() => setShowAtribuir(false)}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('acoes.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -394,7 +400,7 @@ export function TurnosPage() {
                   className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  Atribuir
+                  {t('turnos.atribuir')}
                 </button>
               </div>
             </form>

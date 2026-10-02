@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
 import { distribuicaoApi } from '../api/distribuicao.api';
 
 export function useDistribuicao(stockId: string | undefined) {
@@ -33,7 +34,7 @@ export function useDistribuicaoMutations(stockId: string | undefined) {
   // 100 e 20 já estão atribuídas a outras». Trocá-la por «ocorreu um erro» apagaria o número
   // que a pessoa precisa de escrever a seguir.
   const aoFalhar = (erro: any) =>
-    toast.error(erro?.response?.data?.message || 'Não foi possível concluir a operação.');
+    toast.error(erro?.response?.data?.message || i18n.t('stock:operacao.erro_generico'));
 
   const atribuir = useMutation({
     mutationFn: (payload: { localizacaoId: string; quantidade: number }) =>
@@ -42,8 +43,8 @@ export function useDistribuicaoMutations(stockId: string | undefined) {
       invalidar();
       toast.success(
         d.resumo.porLocalizar > 0
-          ? `Posição actualizada. Faltam localizar ${d.resumo.porLocalizar} unidades.`
-          : 'Posição actualizada. Todo o saldo está localizado.',
+          ? i18n.t('stock:distribuicao.actualizada_faltam', { count: d.resumo.porLocalizar })
+          : i18n.t('stock:distribuicao.actualizada_localizado'),
       );
     },
     onError: aoFalhar,
@@ -58,7 +59,7 @@ export function useDistribuicaoMutations(stockId: string | undefined) {
     }) => distribuicaoApi.mover(stockId!, payload),
     onSuccess: () => {
       invalidar();
-      toast.success('Mercadoria movida entre posições.');
+      toast.success(i18n.t('stock:distribuicao.movida'));
     },
     onError: aoFalhar,
   });

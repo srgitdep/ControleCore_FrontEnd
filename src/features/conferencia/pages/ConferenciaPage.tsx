@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FileText, AlertTriangle, SlidersHorizontal } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { FacturasTab } from '../components/FacturasTab';
@@ -25,14 +26,15 @@ type Aba = 'facturas' | 'excepcoes' | 'tolerancias';
  * pouco.
  */
 export function ConferenciaPage() {
+  const { t } = useTranslation('conferencia');
   const [params, setParams] = useSearchParams();
   const abaInicial = (params.get('tab') as Aba) ?? 'facturas';
   const [aba, setAba] = useState<Aba>(abaInicial);
 
   const ABAS: TabDefinition<Aba>[] = [
-    { id: 'facturas', label: 'Facturas', icon: FileText },
-    { id: 'excepcoes', label: 'Excepções', icon: AlertTriangle },
-    { id: 'tolerancias', label: 'Tolerâncias', icon: SlidersHorizontal },
+    { id: 'facturas', label: t('pagina.aba_facturas'), icon: FileText },
+    { id: 'excepcoes', label: t('pagina.aba_excepcoes'), icon: AlertTriangle },
+    { id: 'tolerancias', label: t('pagina.aba_tolerancias'), icon: SlidersHorizontal },
   ];
 
   const mudarAba = (nova: Aba) => {
@@ -44,7 +46,7 @@ export function ConferenciaPage() {
 
   return (
     <div className="space-y-6">
-      <Tabs tabs={ABAS} active={aba} onChange={mudarAba} label="Secções da conferência" />
+      <Tabs tabs={ABAS} active={aba} onChange={mudarAba} label={t('pagina.seccoes')} />
 
       {aba === 'facturas' && <FacturasTab />}
       {aba === 'excepcoes' && <ExcepcoesTab />}

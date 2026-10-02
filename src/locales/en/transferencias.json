@@ -1,0 +1,102 @@
+{
+  "estado": {
+    "SOLICITADA": "Requested",
+    "APROVADA": "Approved",
+    "EXPEDIDA": "Dispatched",
+    "RECEBIDA": "Received",
+    "CANCELADA": "Cancelled"
+  },
+  "pagina": {
+    "resumo_zero": "{{count}} transfers",
+    "resumo_one": "{{count}} transfer",
+    "resumo_other": "{{count}} transfers",
+    "nova": "New transfer",
+    "todas": "All",
+    "a_mostrar": "Showing {{n}} of {{total}}",
+    "recusar_titulo": "Reject transfer",
+    "recusar_descricao": "Explain why this transfer should not go ahead.",
+    "recusar_placeholder": "E.g. the source store needs the stock for its own sales.",
+    "cancelar_titulo": "Cancel transfer",
+    "cancelar_descricao": "A transfer can only be cancelled before dispatch — after that the goods have already physically left."
+  },
+  "tabela": {
+    "produto": "Product",
+    "rota": "Source → Destination",
+    "quantidade": "Quantity",
+    "recebido": "({{n}} received)",
+    "estado": "Status",
+    "solicitada_por": "Requested by",
+    "accao": "Action",
+    "aprovar": "Approve",
+    "recusar": "Reject",
+    "expedir": "Dispatch",
+    "cancelar": "Cancel",
+    "confirmar_recepcao": "Confirm receipt",
+    "ver": "View",
+    "vazio": "No transfers between stores recorded."
+  },
+  "detalhe": {
+    "titulo": "Transfer details",
+    "fechar": "Close",
+    "a_carregar": "Loading details...",
+    "origem": "Source",
+    "destino": "Destination",
+    "solicitada": "Requested",
+    "unidades": "{{n}} units",
+    "expedida_recebida": "Dispatched / Received",
+    "motivo": "Reason",
+    "cancelamento": "Cancellation",
+    "linha_do_tempo": "Timeline",
+    "solicitada_por": "Requested by",
+    "aprovada_por": "Approved by",
+    "expedida_por": "Dispatched by",
+    "recebida_por": "Received by",
+    "cancelada_por": "Cancelled by"
+  },
+  "motivo": {
+    "minimo": "Minimum of {{n}} characters.",
+    "voltar": "Back",
+    "a_guardar": "Saving...",
+    "confirmar": "Confirm"
+  },
+  "receber": {
+    "titulo": "Confirm receipt",
+    "expedidas_1": "Dispatched:",
+    "expedidas_2": "units. Confirm what actually arrived.",
+    "invalido": "You cannot receive more than was dispatched, nor a negative value.",
+    "divergencia": "Discrepancy of {{n}} units compared with what was dispatched. It is recorded on the transfer.",
+    "voltar": "Back",
+    "a_confirmar": "Confirming...",
+    "confirmar": "Confirm receipt"
+  },
+  "solicitar": {
+    "titulo": "New transfer",
+    "produto": "Product",
+    "trocar": "Change",
+    "pesquisa_placeholder": "Search by name, SKU or barcode...",
+    "a_pesquisar": "Searching...",
+    "sem_resultados": "No results.",
+    "origem": "Source",
+    "destino": "Destination",
+    "seleccione": "Select...",
+    "mesma_loja": "The source and destination cannot be the same store.",
+    "quantidade": "Quantity",
+    "motivo_opcional": "Reason (optional)",
+    "cancelar": "Cancel",
+    "a_solicitar": "Requesting...",
+    "solicitar": "Request"
+  },
+  "hooks": {
+    "solicitada": "Transfer requested.",
+    "erro_solicitar": "Could not request the transfer.",
+    "aprovada": "Transfer approved.",
+    "recusada": "Transfer rejected.",
+    "erro_decidir": "Could not decide on the transfer.",
+    "expedicao_registada": "Dispatch recorded.",
+    "erro_expedir": "Could not dispatch.",
+    "recepcao_confirmada": "Receipt confirmed.",
+    "erro_receber": "Could not confirm receipt.",
+    "cancelada": "Transfer cancelled.",
+    "erro_cancelar": "Could not cancel."
+  }
+}

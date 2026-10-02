@@ -23,15 +23,6 @@ export const EstadoAviso = {
 } as const;
 export type EstadoAviso = (typeof EstadoAviso)[keyof typeof EstadoAviso];
 
-export const ROTULO_ESTADO_AVISO: Record<EstadoAviso, string> = {
-  RASCUNHO: 'Rascunho',
-  SUBMETIDO: 'Declarado',
-  EM_TRANSITO: 'A caminho',
-  CHEGADO: 'Chegou',
-  RECEPCIONADO: 'Recepcionado',
-  CANCELADO: 'Cancelado',
-};
-
 /**
  * As transições possíveis, espelhando o backend.
  *

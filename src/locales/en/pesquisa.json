@@ -1,0 +1,11 @@
+{
+  "placeholder": "Search products, suppliers, requisitions, purchase orders... Ctrl+K",
+  "sem_resultados": "No results for \"{{termo}}\".",
+  "tipo": {
+    "PRODUTO": "Product",
+    "FORNECEDOR": "Supplier",
+    "REQUISICAO": "Requisition",
+    "SOURCING": "RFQ",
+    "ORDEM_COMPRA": "Purchase Order"
+  }
+}

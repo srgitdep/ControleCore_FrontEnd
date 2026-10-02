@@ -34,33 +34,40 @@ export function normalizarNuit(nuit: string | null | undefined): string | null {
 }
 
 /**
- * O que está errado com um NUIT, ou `null` quando está bem.
+ * O que está errado com um NUIT: a chave da frase no namespace `comum` (`nuit.<chave>`) e
+ * os valores que ela leva. `null` quando está bem.
  *
- * As mensagens são as do backend, para o utilizador não ler duas redacções diferentes do
- * mesmo problema — uma ao escrever e outra ao submeter.
+ * Devolve a chave e não o texto porque o texto depende da língua, e esta função é lógica
+ * pura, sem hooks. As frases são as do backend (`b2b.nuit.*` em `erros.json`), para o
+ * utilizador não ler duas redacções diferentes do mesmo problema — uma ao escrever e outra
+ * ao submeter.
  */
-export function diagnosticarNuit(nuit: string | null | undefined): string | null {
+export interface DiagnosticoDoNuit {
+  chave: 'obrigatorio' | 'a_mais' | 'a_menos';
+  parametros: Record<string, number>;
+}
+
+export function diagnosticoDoNuit(nuit: string | null | undefined): DiagnosticoDoNuit | null {
   const digitos = normalizarNuit(nuit);
 
   if (digitos === null) {
-    return `O NUIT é obrigatório e tem ${DIGITOS_DO_NUIT} dígitos.`;
+    return { chave: 'obrigatorio', parametros: { digitos: DIGITOS_DO_NUIT } };
   }
 
   if (digitos.length === DIGITOS_DO_NUIT) return null;
 
   const excesso = digitos.length - DIGITOS_DO_NUIT;
+  const escritos = digitos.length;
 
   return excesso > 0
-    ? `O NUIT tem ${DIGITOS_DO_NUIT} dígitos e escreveu ${digitos.length} — ` +
-        `${excesso} a mais. Confirme o número no cartão de contribuinte.`
-    : `O NUIT tem ${DIGITOS_DO_NUIT} dígitos e escreveu ${digitos.length} — ` +
-        `faltam ${-excesso}. Confirme o número no cartão de contribuinte.`;
+    ? { chave: 'a_mais', parametros: { digitos: DIGITOS_DO_NUIT, escritos, excesso } }
+    : { chave: 'a_menos', parametros: { digitos: DIGITOS_DO_NUIT, escritos, faltam: -excesso } };
 }
 
 /**
  * O aviso a mostrar **enquanto** se escreve.
  *
- * Difere de `diagnosticarNuit` num ponto que decide se o formulário ajuda ou irrita: um
+ * Difere de `diagnosticoDoNuit` num ponto que decide se o formulário ajuda ou irrita: um
  * campo ainda incompleto não é um erro. Quem escreveu quatro dígitos de nove está a meio,
  * e pintar o campo de vermelho ao quarto dígito acusa a pessoa de um engano que ela ainda
  * não cometeu.
@@ -68,10 +75,10 @@ export function diagnosticarNuit(nuit: string | null | undefined): string | null
  * Por isso só assinala quando **passou** dos nove — que é sempre um erro, e o caso do
  * utilizador que escreveu treze. O que falta é dito na submissão, quando escrever acabou.
  */
-export function avisoDeNuitAoEscrever(nuit: string): string | null {
+export function diagnosticoDoNuitAoEscrever(nuit: string): DiagnosticoDoNuit | null {
   const digitos = normalizarNuit(nuit);
   if (digitos === null || digitos.length <= DIGITOS_DO_NUIT) return null;
-  return diagnosticarNuit(nuit);
+  return diagnosticoDoNuit(nuit);
 }
 
 /**

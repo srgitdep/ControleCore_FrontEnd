@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getLojas } from '@/features/lojas';
 import { cn, mensagemDeErro } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaPedidosCommerce } from '../components/TabelaPedidosCommerce';
 import { DetalhePedidoCommerceDrawer } from '../components/DetalhePedidoCommerceDrawer';
 import { usePedidosCommerceGestao } from '../hooks/usePedidosCommerceGestao';
-import { ETIQUETA_ESTADO_PEDIDO_COMMERCE, type EstadoPedidoCommerce, type PedidoCommerceGestao } from '../types/pedido-commerce-gestao.types';
+import { type EstadoPedidoCommerce, type PedidoCommerceGestao } from '../types/pedido-commerce-gestao.types';
 
 const ESTADOS: EstadoPedidoCommerce[] = [
   'CRIADO',
@@ -25,6 +26,7 @@ const ESTADOS: EstadoPedidoCommerce[] = [
  * separa, confere e fecha o levantamento.
  */
 export function PedidosCommercePage() {
+  const { t } = useTranslation('lojaGestao');
   const [estado, setEstado] = useState<EstadoPedidoCommerce | undefined>(undefined);
   const [lojaId, setLojaId] = useState('');
   const [pedidoAberto, setPedidoAberto] = useState<PedidoCommerceGestao | null>(null);
@@ -41,7 +43,7 @@ export function PedidosCommercePage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <BarraDaPagina resumo={pedidos ? `${pedidos.length} pedido(s)` : undefined} />
+      <BarraDaPagina resumo={pedidos ? t('pagina.resumo', { count: pedidos.length }) : undefined} />
 
       <div className="flex flex-wrap items-center gap-2">
         {/*
@@ -55,7 +57,7 @@ export function PedidosCommercePage() {
           onChange={(e) => setLojaId(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
         >
-          <option value="">Todas as lojas</option>
+          <option value="">{t('pagina.todas_lojas')}</option>
           {(lojas ?? []).map((loja: { id: string; nome: string }) => (
             <option key={loja.id} value={loja.id}>
               {loja.nome}
@@ -71,7 +73,7 @@ export function PedidosCommercePage() {
             !estado ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
           )}
         >
-          Todos
+          {t('pagina.todos_estados')}
         </button>
         {ESTADOS.map((valor) => (
           <button
@@ -83,7 +85,7 @@ export function PedidosCommercePage() {
               estado === valor ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
             )}
           >
-            {ETIQUETA_ESTADO_PEDIDO_COMMERCE[valor]}
+            {t(`estado.${valor}`)}
           </button>
         ))}
       </div>
@@ -91,7 +93,7 @@ export function PedidosCommercePage() {
       {isError ? (
         <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-          <p>{mensagemDeErro(error, 'Não foi possível carregar os pedidos do Compra Fácil.')}</p>
+          <p>{mensagemDeErro(error, t('pagina.erro_carregar'))}</p>
         </div>
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white">

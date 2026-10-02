@@ -2,18 +2,16 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Info, Loader2, Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { portal } from '../api/portal.api';
 import type { ArtigoVitrine, PrecoArtigo } from '../api/portal.api';
-import { cn, mensagemDeErro } from '@/shared/utils';
+import { cn, formatData, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 interface Props {
   artigo: ArtigoVitrine;
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
 const hoje = () => new Date().toISOString().slice(0, 10);
 
@@ -36,6 +34,7 @@ const hoje = () => new Date().toISOString().slice(0, 10);
  * por escalão para isso ficar visível.
  */
 export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('portal');
   const queryClient = useQueryClient();
 
   const [novo, setNovo] = useState({
@@ -66,22 +65,22 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
         promocional: novo.promocional,
       }),
     onSuccess: () => {
-      toast.success('Preço publicado. O anterior deste escalão foi fechado, não apagado.');
+      toast.success(t('precos.publicado'));
       setNovo({ ...novo, preco: '' });
       recarregar();
     },
-    onError: (e: any) => toast.error(mensagemDeErro(e, 'Erro ao publicar o preço.')),
+    onError: (e: any) => toast.error(mensagemDeErro(e, t('precos.erro_publicar'))),
   });
 
   const apagar = useMutation({
     mutationFn: (precoId: string) => portal.apagarPreco(precoId),
     onSuccess: () => {
-      toast.success('Preço futuro removido.');
+      toast.success(t('precos.removido'));
       recarregar();
     },
     onError: (e: any) =>
       toast.error(
-        mensagemDeErro(e, 'Só preços que ainda não entraram em vigor podem ser removidos.'),
+        mensagemDeErro(e, t('precos.erro_remover')),
       ),
   });
 
@@ -90,18 +89,18 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
 
     const preco = Number(novo.preco);
     if (!Number.isFinite(preco) || preco <= 0) {
-      toast.error('O preço tem de ser maior do que zero.');
+      toast.error(t('precos.erro_preco'));
       return;
     }
 
     const minima = Number(novo.quantidadeMinima);
     if (!Number.isFinite(minima) || minima <= 0) {
-      toast.error('A quantidade mínima tem de ser maior do que zero.');
+      toast.error(t('precos.erro_quantidade'));
       return;
     }
 
     if (novo.vigenteAte && novo.vigenteAte < novo.vigenteDe) {
-      toast.error('A data de fim não pode ser anterior à de início.');
+      toast.error(t('precos.erro_datas'));
       return;
     }
 
@@ -117,13 +116,17 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
       <div className="my-4 w-full max-w-2xl rounded-xl bg-white shadow-xl">
         <header className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Preços</h2>
+            <h2 className="text-base font-semibold text-slate-900">{t('precos.titulo')}</h2>
             <p className="mt-0.5 text-xs text-slate-500">
               {artigo.nome} · <span className="font-mono">{artigo.referencia}</span>
               {artigo.factorConversao !== 1 && (
                 <>
                   {' '}
-                  · 1 {artigo.unidadeVenda ?? 'embalagem'} = {artigo.factorConversao} unidades
+                  ·{' '}
+                  {t('precos.conversao', {
+                    embalagem: artigo.unidadeVenda ?? t('precos.embalagem_generica'),
+                    factor: artigo.factorConversao,
+                  })}
                 </>
               )}
             </p>
@@ -136,12 +139,13 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
         <div className="space-y-5 px-5 py-5">
           {/* ── Publicar ───────────────────────────────────────────── */}
           <form onSubmit={submeter} className="rounded-lg border border-slate-200 p-4">
-            <h3 className="text-sm font-medium text-slate-800">Publicar um preço</h3>
+            <h3 className="text-sm font-medium text-slate-800">{t('precos.publicar_titulo')}</h3>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-slate-700">
-                  Preço por {artigo.unidadeVenda ?? 'unidade'} <span className="text-red-500">*</span>
+                  {t('precos.preco_por', { unidade: artigo.unidadeVenda ?? t('precos.unidade_generica') })}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -157,15 +161,16 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                     artigo é vendido à caixa. */}
                 {artigo.factorConversao !== 1 && Number.isFinite(precoNovo) && precoNovo > 0 && (
                   <p className="mt-1 text-[11px] text-blue-700">
-                    Será comparado como <strong>{mt(precoNovo / artigo.factorConversao)}</strong>{' '}
-                    por unidade.
+                    {t('precos.sera_comparado_antes')}{' '}
+                    <strong>{formatMoeda(precoNovo / artigo.factorConversao)}</strong>{' '}
+                    {t('precos.sera_comparado_depois')}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-700">
-                  A partir de que quantidade
+                  {t('precos.a_partir_quantidade')}
                 </label>
                 <input
                   type="number"
@@ -176,13 +181,12 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 />
                 <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                  1 é o preço base. Um escalão de 100 aplica-se a encomendas de 100 ou mais, e
-                  não substitui o de 1.
+                  {t('precos.ajuda_quantidade')}
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700">Em vigor a partir de</label>
+                <label className="block text-xs font-medium text-slate-700">{t('precos.em_vigor_a_partir')}</label>
                 <input
                   type="date"
                   value={novo.vigenteDe}
@@ -191,12 +195,12 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 />
                 <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                  Pode ser futuro — o preço entra em vigor sozinho nesse dia.
+                  {t('precos.ajuda_vigor')}
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700">Até (opcional)</label>
+                <label className="block text-xs font-medium text-slate-700">{t('precos.ate_opcional')}</label>
                 <input
                   type="date"
                   value={novo.vigenteAte}
@@ -204,7 +208,7 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
                 />
                 <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                  Vazio = até nova ordem.
+                  {t('precos.ajuda_ate')}
                 </p>
               </div>
             </div>
@@ -216,15 +220,14 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                 onChange={(e) => setNovo({ ...novo, promocional: e.target.checked })}
                 className="rounded border-slate-300"
               />
-              É uma promoção
+              {t('precos.promocao')}
             </label>
 
             <div className="mt-3 flex items-start gap-2 rounded bg-slate-50 px-2.5 py-2">
               <Info size={12} className="mt-0.5 shrink-0 text-slate-400" />
               <p className="text-[11px] leading-snug text-slate-600">
-                Publicar fecha o preço anterior <strong>do mesmo escalão</strong> — não o
-                apaga. O antigo continua a responder a «quanto custava quando o cliente
-                comprou», que é a pergunta da conferência de factura.
+                {t('precos.aviso_1')} <strong>{t('precos.aviso_2')}</strong>{' '}
+                {t('precos.aviso_3')}
               </p>
             </div>
 
@@ -238,31 +241,32 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
               ) : (
                 <Plus size={15} />
               )}
-              Publicar preço
+              {t('precos.publicar_preco')}
             </button>
           </form>
 
           {/* ── Histórico ──────────────────────────────────────────── */}
           <section>
             <h3 className="text-sm font-medium text-slate-800">
-              Escalões e histórico
+              {t('precos.escaloes_historico')}
               <span className="ml-1.5 text-xs font-normal text-slate-500">
-                ({artigo.precos.length} {artigo.precos.length === 1 ? 'registo' : 'registos'})
+                ({t('precos.n_registos', { count: artigo.precos.length })})
               </span>
             </h3>
 
             {artigo.precos.length === 0 ? (
               <p className="mt-2 rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-500">
-                Ainda não publicou nenhum preço. Sem preço, o artigo não aparece em nenhuma
-                comparação.
+                {t('precos.vazio')}
               </p>
             ) : (
               <div className="mt-2 space-y-3">
                 {escaloes.map(({ quantidadeMinima, precos }) => (
                   <div key={quantidadeMinima} className="rounded-lg border border-slate-200">
                     <p className="border-b border-slate-100 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
-                      A partir de {quantidadeMinima}{' '}
-                      {artigo.unidadeVenda ? `${artigo.unidadeVenda}(s)` : 'unidade(s)'}
+                      {t('precos.a_partir_de', {
+                        quantidade: quantidadeMinima,
+                        unidade: artigo.unidadeVenda ? `${artigo.unidadeVenda}(s)` : t('precos.unidades_s'),
+                      })}
                     </p>
                     <ul className="divide-y divide-slate-100">
                       {precos.map((p) => {
@@ -283,24 +287,28 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                                     : 'bg-slate-100 text-slate-500',
                               )}
                             >
-                              {emVigor ? 'em vigor' : futuro ? 'agendado' : 'fechado'}
+                              {emVigor
+                                ? t('precos.estado_em_vigor')
+                                : futuro
+                                  ? t('precos.estado_agendado')
+                                  : t('precos.estado_fechado')}
                             </span>
 
                             <span className="text-sm font-medium text-slate-900">
-                              {mt(p.preco)}
+                              {formatMoeda(p.preco)}
                             </span>
 
                             {p.promocional && (
                               <span className="text-[10px] font-medium text-amber-600">
-                                promoção
+                                {t('precos.promocao_etiqueta')}
                               </span>
                             )}
 
                             <span className="ml-auto text-right text-[11px] leading-tight text-slate-500">
-                              {new Date(p.vigenteDe).toLocaleDateString('pt-PT')}
+                              {formatData(p.vigenteDe)}
                               {p.vigenteAte
-                                ? ` — ${new Date(p.vigenteAte).toLocaleDateString('pt-PT')}`
-                                : ' — sem fim'}
+                                ? ` — ${formatData(p.vigenteAte)}`
+                                : ` — ${t('precos.sem_fim')}`}
                             </span>
 
                             {/* Só os agendados. Apagar um preço que já valeu destruiria a
@@ -312,7 +320,7 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
                                 onClick={() => apagar.mutate(p.id)}
                                 disabled={apagar.isPending}
                                 className="shrink-0 p-1 text-slate-400 hover:text-red-600 disabled:opacity-50"
-                                title="Remover este preço agendado"
+                                title={t('precos.remover_agendado')}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -333,7 +341,7 @@ export function PrecosModal({ artigo, onClose, onSuccess }: Props) {
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Fechar
+            {t('precos.fechar')}
           </button>
         </footer>
       </div>

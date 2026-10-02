@@ -1,27 +1,28 @@
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Clock3, Sparkles, XCircle, RefreshCw, Truck, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { formatMoeda } from '@/shared/utils';
 import { useExcecoes, useDecidirExcecao, useAnalisarExcecaoMayra, useExportarExcecoes } from '@/features/stock';
 import { Button } from '@/shared/ui';
 import type { AcaoGestor, InventoryException } from '@/features/stock';
 
+// O texto de cada classificação e acção vem do catálogo; aqui ficam só o emoji, a cor e a variante.
 const CLASSIFICACAO_CONFIG: Record<
   NonNullable<InventoryException['classificacao']>,
-  { label: string; className: string }
+  { emoji: string; className: string }
 > = {
-  CONFORME: { label: '🟢 Conforme', className: 'bg-emerald-100 text-emerald-700' },
-  ATENCAO: { label: '🟠 Atenção', className: 'bg-amber-100 text-amber-700' },
-  CRITICO: { label: '🔴 Crítico', className: 'bg-rose-100 text-rose-700' },
+  CONFORME: { emoji: '🟢', className: 'bg-emerald-100 text-emerald-700' },
+  ATENCAO: { emoji: '🟠', className: 'bg-amber-100 text-amber-700' },
+  CRITICO: { emoji: '🔴', className: 'bg-rose-100 text-rose-700' },
 };
 
-const ACOES: Array<{ acao: AcaoGestor; label: string; variant: 'success' | 'outline' | 'warning' | 'destructive' }> = [
-  { acao: 'APROVAR_AJUSTE', label: 'Aprovar ajuste', variant: 'success' },
-  { acao: 'SOLICITAR_RECONTAGEM', label: 'Solicitar recontagem', variant: 'outline' },
-  { acao: 'INVESTIGAR', label: 'Investigar', variant: 'warning' },
-  { acao: 'REJEITAR_AJUSTE', label: 'Rejeitar ajuste', variant: 'destructive' },
+const ACOES: Array<{ acao: AcaoGestor; variant: 'success' | 'outline' | 'warning' | 'destructive' }> = [
+  { acao: 'APROVAR_AJUSTE', variant: 'success' },
+  { acao: 'SOLICITAR_RECONTAGEM', variant: 'outline' },
+  { acao: 'INVESTIGAR', variant: 'warning' },
+  { acao: 'REJEITAR_AJUSTE', variant: 'destructive' },
 ];
-
-const moeda = (v: number) => v.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
 /**
  * Fila do Gestor (§12): Produto | Teórico | Físico | Diferença | Impacto |
@@ -30,6 +31,7 @@ const moeda = (v: number) => v.toLocaleString('pt-MZ', { style: 'currency', curr
  * de ação enquanto `acao` estiver por preencher.
  */
 export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
+  const { t } = useTranslation('stock');
   const [somenteAbertas, setSomenteAbertas] = useState(true);
   const { data: excecoes = [], isLoading } = useExcecoes({
     cycleId,
@@ -43,41 +45,41 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
   const handleExportar = () => {
     exportar.mutate(
       { cycleId, decididas: somenteAbertas ? false : undefined },
-      { onError: () => toast.error('Não foi possível exportar as exceções.') },
+      { onError: () => toast.error(t('excecao.erro_exportar')) },
     );
   };
 
   const handleAnalisar = (excecaoId: string) => {
     analisarComMayra.mutate(excecaoId, {
-      onSuccess: () => toast.success('MAYRA classificou a divergência.'),
+      onSuccess: () => toast.success(t('excecao.mayra_classificou')),
       onError: (err: any) =>
-        toast.error(err?.response?.data?.message ?? 'Não foi possível obter a classificação da MAYRA.'),
+        toast.error(err?.response?.data?.message ?? t('excecao.erro_mayra')),
     });
   };
 
   const handleDecidir = (excecao: InventoryException, acao: AcaoGestor) => {
     const motivo = motivoPorExcecao[excecao.id]?.trim();
     if (acao === 'REJEITAR_AJUSTE' && !motivo) {
-      toast.error('Rejeitar um ajuste exige motivo.');
+      toast.error(t('excecao.rejeitar_exige_motivo'));
       return;
     }
     decidir.mutate(
       { excecaoId: excecao.id, payload: { acao, motivo: motivo || undefined } },
       {
         onSuccess: (resultado) => {
-          toast.success('Decisão registada.');
+          toast.success(t('excecao.decisao_registada'));
           if (resultado.recomendacao) {
             const r = resultado.recomendacao;
             toast(
               r.acao === 'TRANSFERIR'
-                ? `Risco de ruptura: transferir ${r.quantidade ?? '?'} unidade(s) de ${r.armazemOrigemNome}.`
-                : `Risco de ruptura: nenhum armazém com sobra — considerar comprar ${r.quantidade ?? '?'} unidade(s).`,
+                ? t('excecao.ruptura_transferir', { n: r.quantidade ?? '?', origem: r.armazemOrigemNome })
+                : t('excecao.ruptura_comprar', { n: r.quantidade ?? '?' }),
               { icon: '🚚', duration: 6000 },
             );
           }
         },
         onError: (err: any) =>
-          toast.error(err?.response?.data?.message ?? 'Não foi possível registar a decisão.'),
+          toast.error(err?.response?.data?.message ?? t('excecao.erro_decisao')),
       },
     );
   };
@@ -93,7 +95,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-slate-700">Exceções para Decisão</h3>
+        <h3 className="font-semibold text-slate-700">{t('excecao.titulo')}</h3>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-slate-500">
             <input
@@ -101,7 +103,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
               checked={somenteAbertas}
               onChange={(e) => setSomenteAbertas(e.target.checked)}
             />
-            Mostrar só as por decidir
+            {t('excecao.so_por_decidir')}
           </label>
           <Button
             size="sm"
@@ -110,7 +112,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
             onClick={handleExportar}
           >
             <Download className="h-3.5 w-3.5" />
-            {exportar.isPending ? 'A exportar...' : 'Exportar'}
+            {exportar.isPending ? t('excecao.a_exportar') : t('excecao.exportar')}
           </Button>
         </div>
       </div>
@@ -118,7 +120,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
       {excecoes.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 rounded-xl">
           <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 text-sm font-medium">Nenhuma exceção pendente</p>
+          <p className="text-slate-500 text-sm font-medium">{t('excecao.nenhuma_pendente')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -129,19 +131,19 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                   <p className="font-semibold text-slate-800">{e.produto}</p>
                   <p className="text-xs text-slate-400">
                     {e.armazem}
-                    {e.localizacao ? ` · ${e.localizacao}` : ''} · Ciclo: {e.cycleName}
+                    {e.localizacao ? ` · ${e.localizacao}` : ''} · {t('excecao.ciclo', { nome: e.cycleName })}
                   </p>
                 </div>
                 {e.classificacao ? (
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${CLASSIFICACAO_CONFIG[e.classificacao].className}`}
                   >
-                    {CLASSIFICACAO_CONFIG[e.classificacao].label}
+                    {CLASSIFICACAO_CONFIG[e.classificacao].emoji} {t(`excecao.classificacao.${e.classificacao}`)}
                   </span>
                 ) : e.acao ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
                     <Clock3 className="h-3 w-3" />
-                    Não classificada
+                    {t('excecao.nao_classificada')}
                   </span>
                 ) : (
                   <Button
@@ -151,26 +153,26 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                     onClick={() => handleAnalisar(e.id)}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    {analisarComMayra.isPending ? 'A analisar...' : 'Analisar com MAYRA'}
+                    {analisarComMayra.isPending ? t('excecao.a_analisar') : t('excecao.analisar_mayra')}
                   </Button>
                 )}
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Metrica rotulo="Teórico" valor={String(e.teorico)} />
-                <Metrica rotulo="Físico" valor={String(e.fisico)} />
+                <Metrica rotulo={t('excecao.teorico')} valor={String(e.teorico)} />
+                <Metrica rotulo={t('excecao.fisico')} valor={String(e.fisico)} />
                 <Metrica
-                  rotulo="Diferença"
+                  rotulo={t('excecao.diferenca')}
                   valor={`${e.diferenca > 0 ? '+' : ''}${e.diferenca}`}
                   cor={e.diferenca < 0 ? 'text-rose-600' : e.diferenca > 0 ? 'text-emerald-600' : undefined}
                 />
-                <Metrica rotulo="Impacto" valor={e.impacto != null ? moeda(e.impacto) : '—'} />
+                <Metrica rotulo={t('excecao.impacto')} valor={e.impacto != null ? formatMoeda(e.impacto) : '—'} />
               </div>
 
               {e.movimentosDuranteContagem > 0 && (
                 <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-amber-50/60 px-3 py-2 text-xs text-amber-700">
                   <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-                  {e.movimentosDuranteContagem} movimento(s) de stock durante a contagem — a divergência pode ser reflexo de uma venda/receção concorrente, não uma perda real (§9).
+                  {t('excecao.movimentos_durante', { n: e.movimentosDuranteContagem })}
                 </p>
               )}
 
@@ -178,7 +180,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                 <div className="mt-3 flex items-start gap-2 rounded-lg bg-blue-50/60 px-3 py-2 text-xs text-blue-700">
                   <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium">Recomendação MAYRA{e.causa ? ` · ${formatarCausa(e.causa)}` : ''}</p>
+                    <p className="font-medium">{t('excecao.recomendacao_mayra')}{e.causa ? ` · ${t(`excecao.causa.${e.causa}`)}` : ''}</p>
                     <p className="mt-0.5">{e.recomendacaoMayra}</p>
                   </div>
                 </div>
@@ -193,8 +195,8 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     )}
                     <span>
-                      Decidido: <span className="font-medium">{formatarAcao(e.acao)}</span>
-                      {e.aprovador ? ` por ${e.aprovador}` : ''}
+                      {t('excecao.decidido')} <span className="font-medium">{t(`excecao.acao.${e.acao}`)}</span>
+                      {e.aprovador ? t('excecao.por', { nome: e.aprovador }) : ''}
                       {e.motivo ? ` — ${e.motivo}` : ''}
                     </span>
                   </div>
@@ -205,11 +207,11 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                       <p>
                         {e.recomendacao.acao === 'TRANSFERIR' ? (
                           <>
-                            Risco de ruptura — transferir {e.recomendacao.quantidade ?? '?'} unidade(s) de{' '}
+                            {t('excecao.ruptura_transferir_antes', { n: e.recomendacao.quantidade ?? '?' })}{' '}
                             <span className="font-medium">{e.recomendacao.armazemOrigemNome}</span>.
                           </>
                         ) : (
-                          <>Risco de ruptura — nenhum outro armazém tem sobra; considerar comprar {e.recomendacao.quantidade ?? '?'} unidade(s).</>
+                          <>{t('excecao.ruptura_comprar_linha', { n: e.recomendacao.quantidade ?? '?' })}</>
                         )}
                       </p>
                     </div>
@@ -220,7 +222,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                   {e.classificacao === 'CRITICO' && (
                     <p className="flex items-center gap-1.5 text-xs font-medium text-rose-600">
                       <AlertTriangle className="h-3.5 w-3.5" />
-                      Classificado como crítico — decisão humana obrigatória.
+                      {t('excecao.critico_obrigatoria')}
                     </p>
                   )}
                   <input
@@ -228,7 +230,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                     onChange={(ev) =>
                       setMotivoPorExcecao((m) => ({ ...m, [e.id]: ev.target.value }))
                     }
-                    placeholder="Motivo (obrigatório para rejeitar)"
+                    placeholder={t('excecao.placeholder_motivo')}
                     className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <div className="flex flex-wrap gap-2">
@@ -240,7 +242,7 @@ export function PainelExcecoesGestor({ cycleId }: { cycleId?: string }) {
                         disabled={decidir.isPending}
                         onClick={() => handleDecidir(e, a.acao)}
                       >
-                        {a.label}
+                        {t(`excecao.acao.${a.acao}`)}
                       </Button>
                     ))}
                   </div>
@@ -263,15 +265,3 @@ function Metrica({ rotulo, valor, cor }: { rotulo: string; valor: string; cor?: 
   );
 }
 
-function formatarCausa(causa: NonNullable<InventoryException['causa']>) {
-  return { CAUSA_CONFIRMADA: 'Causa confirmada', CAUSA_PROVAVEL: 'Causa provável', EVIDENCIA_INSUFICIENTE: 'Evidência insuficiente' }[causa];
-}
-
-function formatarAcao(acao: AcaoGestor) {
-  return {
-    APROVAR_AJUSTE: 'Aprovar ajuste',
-    SOLICITAR_RECONTAGEM: 'Solicitar recontagem',
-    INVESTIGAR: 'Investigar',
-    REJEITAR_AJUSTE: 'Rejeitar ajuste',
-  }[acao];
-}

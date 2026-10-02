@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, PackagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useRegistarProdutoInesperado } from '@/features/stock';
 
 /**
@@ -20,6 +21,7 @@ export function RegistarProdutoInesperadoModal({
   localizacoesDoArmazem: Array<{ id: string; codigo: string; nome: string | null; caminho: string }>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('stock');
   const [codigoBarras, setCodigoBarras] = useState('');
   const [localizacaoRealId, setLocalizacaoRealId] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -36,10 +38,10 @@ export function RegistarProdutoInesperadoModal({
       { codigoBarras: codigoBarras.trim(), armazemId, localizacaoRealId, physicalQuantity: n },
       {
         onSuccess: () => {
-          toast.success('Produto inesperado registado — fica na lista para o Gestor investigar.');
+          toast.success(t('inesperado.registado'));
           onClose();
         },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível registar o produto.'),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? t('inesperado.erro')),
       },
     );
   };
@@ -53,8 +55,8 @@ export function RegistarProdutoInesperadoModal({
               <PackagePlus className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Produto encontrado</h2>
-              <p className="text-xs text-slate-500">Não estava previsto neste inventário — fica registado para investigação.</p>
+              <h2 className="text-lg font-bold text-slate-800">{t('inesperado.titulo')}</h2>
+              <p className="text-xs text-slate-500">{t('inesperado.subtitulo')}</p>
             </div>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -64,24 +66,24 @@ export function RegistarProdutoInesperadoModal({
 
         <div className="space-y-3 p-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Código de barras</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('inesperado.codigo_barras')}</label>
             <input
               value={codigoBarras}
               onChange={(e) => setCodigoBarras(e.target.value)}
-              placeholder="Digite ou escaneie o código"
+              placeholder={t('inesperado.placeholder_codigo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Onde foi encontrado?</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('inesperado.onde_encontrado')}</label>
             <select
               value={localizacaoRealId}
               onChange={(e) => setLocalizacaoRealId(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Selecione a localização</option>
+              <option value="">{t('inesperado.seleccione_localizacao')}</option>
               {localizacoesDoArmazem.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.caminho}
@@ -91,7 +93,7 @@ export function RegistarProdutoInesperadoModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Quantidade encontrada</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('inesperado.quantidade')}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -110,7 +112,7 @@ export function RegistarProdutoInesperadoModal({
             disabled={!podeSubmeter || registar.isPending}
             className="w-full rounded-lg bg-amber-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {registar.isPending ? 'A registar...' : 'Registar como inesperado'}
+            {registar.isPending ? t('contagem_item.a_registar') : t('inesperado.registar')}
           </button>
         </div>
       </div>

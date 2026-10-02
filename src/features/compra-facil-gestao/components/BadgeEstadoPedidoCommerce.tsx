@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
-import { ETIQUETA_ESTADO_PEDIDO_COMMERCE, type EstadoPedidoCommerce } from '../types/pedido-commerce-gestao.types';
+import type { EstadoPedidoCommerce } from '../types/pedido-commerce-gestao.types';
 
 const COR: Record<EstadoPedidoCommerce, string> = {
   CRIADO: 'bg-amber-100 text-amber-800',
@@ -13,9 +14,10 @@ const COR: Record<EstadoPedidoCommerce, string> = {
 };
 
 export function BadgeEstadoPedidoCommerce({ estado }: { estado: EstadoPedidoCommerce }) {
+  const { t } = useTranslation('lojaGestao');
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold', COR[estado])}>
-      {ETIQUETA_ESTADO_PEDIDO_COMMERCE[estado]}
+      {t(`estado.${estado}`)}
     </span>
   );
 }

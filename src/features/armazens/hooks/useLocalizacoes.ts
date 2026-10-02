@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
 import {
   localizacoesApi,
   type ActualizarLocalizacaoPayload,
@@ -30,13 +31,13 @@ export function useLocalizacaoMutations(armazemId: string | undefined) {
   // quantas unidades impedem a desactivação. Trocá-la por «ocorreu um erro» apagaria o que
   // resolve o problema.
   const aoFalhar = (erro: any) =>
-    toast.error(erro?.response?.data?.message || 'Não foi possível concluir a operação.');
+    toast.error(erro?.response?.data?.message || i18n.t('armazens:hooks.erro_operacao'));
 
   const criar = useMutation({
     mutationFn: (payload: CriarLocalizacaoPayload) => localizacoesApi.criar(armazemId!, payload),
     onSuccess: (l) => {
       invalidar();
-      toast.success(`Localização ${l.caminho} criada.`);
+      toast.success(i18n.t('armazens:hooks.criada', { caminho: l.caminho }));
     },
     onError: aoFalhar,
   });
@@ -48,8 +49,11 @@ export function useLocalizacaoMutations(armazemId: string | undefined) {
       invalidar();
       toast.success(
         l.descendentesReescritos > 0
-          ? `${l.caminho} actualizada, e ${l.descendentesReescritos} posições abaixo foram reendereçadas.`
-          : `${l.caminho} actualizada.`,
+          ? i18n.t('armazens:hooks.actualizada_com_descendentes', {
+              caminho: l.caminho,
+              count: l.descendentesReescritos,
+            })
+          : i18n.t('armazens:hooks.actualizada', { caminho: l.caminho }),
       );
     },
     onError: aoFalhar,
@@ -59,7 +63,7 @@ export function useLocalizacaoMutations(armazemId: string | undefined) {
     mutationFn: (id: string) => localizacoesApi.desactivar(id),
     onSuccess: (l) => {
       invalidar();
-      toast.success(`${l.caminho} desactivada.`);
+      toast.success(i18n.t('armazens:hooks.desactivada', { caminho: l.caminho }));
     },
     onError: aoFalhar,
   });

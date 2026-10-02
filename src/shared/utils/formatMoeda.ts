@@ -35,3 +35,24 @@ export function formatMoedaCompacta(value: number): string {
   }
   return formatMoeda(value);
 }
+
+/**
+ * Inteiro com separador de milhares sempre visível (`1 900`, `4 000`). O `Intl` em pt só
+ * agrupa a partir de cinco dígitos (regra do CLDR), o que faria `1900` e `14 900` aparecerem
+ * lado a lado numa tabela de preços; `useGrouping: 'always'` uniformiza.
+ */
+export function formatInteiro(value: number): string {
+  return new Intl.NumberFormat(localeIntl(), {
+    maximumFractionDigits: 0,
+    useGrouping: 'always',
+  }).format(value);
+}
+
+/**
+ * Metical sem casas decimais, para preços de tabela (`6 500 MT`, `MT 6,500` em inglês).
+ * `formatMoeda` mostra sempre dois decimais, o que num preçário de valores inteiros só
+ * acrescenta `,00` a cada cartão.
+ */
+export function formatMoedaInteira(value: number): string {
+  return comSimbolo(formatInteiro(Math.round(value)));
+}
