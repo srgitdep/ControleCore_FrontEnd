@@ -871,6 +871,18 @@ esse merge trouxe.
   > o POS em inglês no browser (todas as 24 áreas), confirmar o e-mail de boas-vindas do
   > fornecedor e da adesão na língua escolhida, e pedir à Mayra uma recomendação de
   > necessidades/classificação de excepção com a conta em inglês.
+  >
+  > **Correcção depois de fechada a fase** (2026-10-03, mesmo dia): o utilizador pediu
+  > confirmação de que a Mayra já falava inglês, o que levou a rever outra vez todas as
+  > 29 áreas à procura de texto solto — não apareceu nenhum (nem com útil `useTranslation`
+  > em falta, nem texto por traduzir ao lado de texto já traduzido). Apareceu, sim, um
+  > defeito mais subtil: `cleanTextForSpeech()` (`useGeminiVoice.ts`, voz de recurso do
+  > browser quando a Gemini Live não está disponível) expandia `MZN`/`USD`/`kg`/`%` para
+  > palavras portuguesas sempre, mesmo numa resposta em inglês — a frase lida ficava com
+  > uma palavra em português a meio de uma frase inglesa. Corrigido: a detecção de língua
+  > passa a correr sobre o texto em bruto, antes de qualquer substituição, com as duas
+  > versões da expansão. `fix/mayra-voz-tts-ingles`, mesclado directamente (correcção
+  > pequena e já verificada, sobre trabalho desta mesma fase já autorizado).
 
 ---
 
