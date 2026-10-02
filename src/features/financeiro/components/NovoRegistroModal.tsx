@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { X, PlusCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -21,6 +22,7 @@ interface Props {
  * (ex: uma taxa bancária).
  */
 export function NovoRegistroModal({ tipo, onClose }: Props) {
+  const { t } = useTranslation('financeiro');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [dataVencimento, setDataVencimento] = useState(new Date().toISOString().slice(0, 10));
@@ -49,10 +51,10 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!descricao.trim()) return toast.error('Descreva o lançamento.');
+    if (!descricao.trim()) return toast.error(t('novo.descreva'));
     const valorNum = Number(valor);
-    if (!(valorNum > 0)) return toast.error('O valor tem de ser maior que zero.');
-    if (!dataVencimento) return toast.error('Indique a data de vencimento.');
+    if (!(valorNum > 0)) return toast.error(t('novo.valor_positivo'));
+    if (!dataVencimento) return toast.error(t('novo.indique_data'));
 
     criar.mutate(
       {
@@ -76,7 +78,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
               <PlusCircle className="h-5 w-5 text-blue-600" />
             </div>
             <h2 className="text-lg font-bold text-slate-900">
-              {tipo === 'RECEITA' ? 'Nova conta a receber' : 'Nova conta a pagar'}
+              {tipo === 'RECEITA' ? t('novo.titulo_receber') : t('novo.titulo_pagar')}
             </h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -86,19 +88,19 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
 
         <div className="space-y-4 p-6">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Descrição</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('novo.descricao')}</label>
             <input
               type="text"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder={tipo === 'RECEITA' ? 'Ex.: Aluguer de espaço' : 'Ex.: Manutenção do gerador'}
+              placeholder={tipo === 'RECEITA' ? t('novo.exemplo_receber') : t('novo.exemplo_pagar')}
               className="w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Valor (MT)</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('novo.valor_mt')}</label>
               <input
                 type="number"
                 value={valor}
@@ -109,7 +111,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Vencimento</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('novo.vencimento')}</label>
               <input
                 type="date"
                 value={dataVencimento}
@@ -121,8 +123,8 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              {tipo === 'RECEITA' ? 'Cliente' : 'Fornecedor'}{' '}
-              <span className="font-normal text-slate-400">(opcional)</span>
+              {tipo === 'RECEITA' ? t('novo.cliente') : t('novo.fornecedor')}{' '}
+              <span className="font-normal text-slate-400">{t('novo.opcional')}</span>
             </label>
             {nomeContraparte ? (
               <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm">
@@ -136,7 +138,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
                   }}
                   className="text-xs text-blue-600 hover:underline"
                 >
-                  trocar
+                  {t('novo.trocar')}
                 </button>
               </div>
             ) : (
@@ -145,7 +147,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
                   type="text"
                   value={pesquisaContraparte}
                   onChange={(e) => setPesquisaContraparte(e.target.value)}
-                  placeholder="Procurar..."
+                  placeholder={t('novo.procurar')}
                   className="w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                 />
                 {pesquisaContraparte.trim().length >= 2 && (
@@ -190,7 +192,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
             onClick={onClose}
             className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
-            Cancelar
+            {t('novo.cancelar')}
           </button>
           <button
             type="submit"
@@ -198,7 +200,7 @@ export function NovoRegistroModal({ tipo, onClose }: Props) {
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {criar.isPending && <Loader2 size={16} className="animate-spin" />}
-            Criar
+            {t('novo.criar')}
           </button>
         </div>
       </form>

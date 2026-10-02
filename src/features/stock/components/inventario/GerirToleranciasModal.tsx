@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Sliders, Plus, Trash2, Package, Tags } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   useTolerancias,
   useCriarTolerancia,
@@ -18,6 +19,7 @@ import type { ToleranciaInventario } from '@/features/stock';
  * produto ou por categoria.
  */
 export function GerirToleranciasModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('stock');
   const { data: tolerancias = [], isLoading } = useTolerancias();
   const [formularioAberto, setFormularioAberto] = useState(false);
 
@@ -30,9 +32,9 @@ export function GerirToleranciasModal({ onClose }: { onClose: () => void }) {
               <Sliders className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Tolerâncias</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('tolerancias.titulo')}</h2>
               <p className="text-xs text-slate-500">
-                Sem tolerância, qualquer divergência dispara recontagem (§10).
+                {t('tolerancias.subtitulo')}
               </p>
             </div>
           </div>
@@ -47,20 +49,20 @@ export function GerirToleranciasModal({ onClose }: { onClose: () => void }) {
           ) : (
             <Button onClick={() => setFormularioAberto(true)} className="mb-4 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
-              Nova tolerância
+              {t('tolerancias.nova')}
             </Button>
           )}
 
           {isLoading ? (
-            <p className="py-8 text-center text-sm text-slate-400">A carregar...</p>
+            <p className="py-8 text-center text-sm text-slate-400">{t('tolerancias.a_carregar')}</p>
           ) : tolerancias.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-400">
-              Nenhuma tolerância configurada — toda divergência dispara recontagem.
+              {t('tolerancias.nenhuma')}
             </p>
           ) : (
             <div className="space-y-2">
-              {tolerancias.map((t) => (
-                <ToleranciaLinha key={t.id} tolerancia={t} />
+              {tolerancias.map((tol) => (
+                <ToleranciaLinha key={tol.id} tolerancia={tol} />
               ))}
             </div>
           )}
@@ -68,7 +70,7 @@ export function GerirToleranciasModal({ onClose }: { onClose: () => void }) {
 
         <div className="border-t border-slate-100 bg-slate-50 px-6 py-3 text-right">
           <Button variant="outline" onClick={onClose}>
-            Fechar
+            {t('tolerancias.fechar')}
           </Button>
         </div>
       </div>
@@ -77,6 +79,7 @@ export function GerirToleranciasModal({ onClose }: { onClose: () => void }) {
 }
 
 function ToleranciaLinha({ tolerancia }: { tolerancia: ToleranciaInventario }) {
+  const { t } = useTranslation('stock');
   const [editando, setEditando] = useState(false);
   const atualizar = useAtualizarTolerancia();
   const desativar = useDesativarTolerancia();
@@ -95,17 +98,17 @@ function ToleranciaLinha({ tolerancia }: { tolerancia: ToleranciaInventario }) {
       { id: tolerancia.id, payload },
       {
         onSuccess: () => {
-          toast.success('Tolerância atualizada.');
+          toast.success(t('tolerancias.actualizada'));
           setEditando(false);
         },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível atualizar.'),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? t('tolerancias.erro_actualizar')),
       },
     );
   };
 
   const remover = () => {
     desativar.mutate(tolerancia.id, {
-      onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível desativar.'),
+      onError: (err: any) => toast.error(err?.response?.data?.message ?? t('tolerancias.erro_desactivar')),
     });
   };
 
@@ -129,7 +132,7 @@ function ToleranciaLinha({ tolerancia }: { tolerancia: ToleranciaInventario }) {
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <button onClick={() => setEditando((e) => !e)} className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 text-xs font-medium px-2">
-            {editando ? 'Cancelar' : 'Editar'}
+            {editando ? t('tolerancias.cancelar') : t('tolerancias.editar')}
           </button>
           <button onClick={remover} className="rounded p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500">
             <Trash2 className="h-3.5 w-3.5" />
@@ -139,20 +142,20 @@ function ToleranciaLinha({ tolerancia }: { tolerancia: ToleranciaInventario }) {
 
       {editando ? (
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <LimiteInput label="Quantidade" value={qtd} onChange={setQtd} />
-          <LimiteInput label="Percentagem" value={pct} onChange={setPct} />
-          <LimiteInput label="Valor (MZN)" value={valor} onChange={setValor} />
+          <LimiteInput label={t('tolerancias.quantidade')} value={qtd} onChange={setQtd} />
+          <LimiteInput label={t('tolerancias.percentagem')} value={pct} onChange={setPct} />
+          <LimiteInput label={t('tolerancias.valor_mzn')} value={valor} onChange={setValor} />
           <div className="col-span-3">
             <Button size="sm" className="w-full" onClick={salvar} disabled={atualizar.isPending}>
-              {atualizar.isPending ? 'A guardar...' : 'Guardar'}
+              {atualizar.isPending ? t('tolerancias.a_guardar') : t('tolerancias.guardar')}
             </Button>
           </div>
         </div>
       ) : (
         <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-          {tolerancia.toleranciaQtd != null && <span>Qtd: {tolerancia.toleranciaQtd}</span>}
-          {tolerancia.toleranciaPct != null && <span>Pct: {tolerancia.toleranciaPct}%</span>}
-          {tolerancia.toleranciaValor != null && <span>Valor: {tolerancia.toleranciaValor} MZN</span>}
+          {tolerancia.toleranciaQtd != null && <span>{t('tolerancias.resumo_qtd', { n: tolerancia.toleranciaQtd })}</span>}
+          {tolerancia.toleranciaPct != null && <span>{t('tolerancias.resumo_pct', { n: tolerancia.toleranciaPct })}</span>}
+          {tolerancia.toleranciaValor != null && <span>{t('tolerancias.resumo_valor', { n: tolerancia.toleranciaValor })}</span>}
         </div>
       )}
     </div>
@@ -176,6 +179,7 @@ function LimiteInput({ label, value, onChange }: { label: string; value: string;
 }
 
 function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; onCriada: () => void }) {
+  const { t } = useTranslation('stock');
   const [alvo, setAlvo] = useState<'produto' | 'categoria'>('produto');
   const [busca, setBusca] = useState('');
   const [alvoId, setAlvoId] = useState<string | null>(null);
@@ -194,11 +198,11 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
 
   const submeter = () => {
     if (!alvoId) {
-      toast.error('Selecione um produto ou categoria.');
+      toast.error(t('tolerancias.erro_seleccione_alvo'));
       return;
     }
     if (!qtd.trim() && !pct.trim() && !valor.trim()) {
-      toast.error('Informe pelo menos um limite.');
+      toast.error(t('tolerancias.erro_limite'));
       return;
     }
 
@@ -213,10 +217,10 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
       },
       {
         onSuccess: () => {
-          toast.success('Tolerância criada.');
+          toast.success(t('tolerancias.criada'));
           onCriada();
         },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível criar a tolerância.'),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? t('tolerancias.erro_criar')),
       },
     );
   };
@@ -229,14 +233,14 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
           onClick={() => { setAlvo('produto'); setAlvoId(null); setAlvoNome(''); setBusca(''); }}
           className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium ${alvo === 'produto' ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500'}`}
         >
-          Por Produto
+          {t('tolerancias.por_produto')}
         </button>
         <button
           type="button"
           onClick={() => { setAlvo('categoria'); setAlvoId(null); setAlvoNome(''); setBusca(''); }}
           className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium ${alvo === 'categoria' ? 'border-purple-300 bg-purple-50 text-purple-700' : 'border-slate-200 text-slate-500'}`}
         >
-          Por Categoria
+          {t('tolerancias.por_categoria')}
         </button>
       </div>
 
@@ -244,7 +248,7 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
         <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm">
           <span className="font-medium text-slate-800">{alvoNome}</span>
           <button onClick={() => { setAlvoId(null); setAlvoNome(''); }} className="text-xs text-slate-400 hover:text-slate-600">
-            Trocar
+            {t('tolerancias.trocar')}
           </button>
         </div>
       ) : (
@@ -252,7 +256,7 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder={alvo === 'produto' ? 'Pesquisar produto...' : 'Pesquisar categoria...'}
+            placeholder={alvo === 'produto' ? t('tolerancias.pesquisar_produto') : t('tolerancias.pesquisar_categoria')}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {busca.trim() && (
@@ -282,24 +286,24 @@ function NovaToleranciaForm({ onCancelar, onCriada }: { onCancelar: () => void; 
       )}
 
       <div className="grid grid-cols-3 gap-2">
-        <LimiteInput label="Quantidade" value={qtd} onChange={setQtd} />
-        <LimiteInput label="Percentagem" value={pct} onChange={setPct} />
-        <LimiteInput label="Valor (MZN)" value={valor} onChange={setValor} />
+        <LimiteInput label={t('tolerancias.quantidade')} value={qtd} onChange={setQtd} />
+        <LimiteInput label={t('tolerancias.percentagem')} value={pct} onChange={setPct} />
+        <LimiteInput label={t('tolerancias.valor_mzn')} value={valor} onChange={setValor} />
       </div>
 
       <input
         value={criticidade}
         onChange={(e) => setCriticidade(e.target.value)}
-        placeholder="Criticidade (opcional, ex: ALTA)"
+        placeholder={t('tolerancias.criticidade')}
         className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
       <div className="flex gap-2">
         <Button variant="outline" size="sm" className="flex-1" onClick={onCancelar}>
-          Cancelar
+          {t('tolerancias.cancelar')}
         </Button>
         <Button size="sm" className="flex-1" onClick={submeter} disabled={criar.isPending}>
-          {criar.isPending ? 'A criar...' : 'Criar tolerância'}
+          {criar.isPending ? t('tolerancias.a_criar') : t('tolerancias.criar')}
         </Button>
       </div>
     </div>

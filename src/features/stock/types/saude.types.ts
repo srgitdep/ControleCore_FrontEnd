@@ -145,59 +145,47 @@ export interface SugestaoFefo {
   resumo: ResumoValidade;
 }
 
-/** Rótulos e cores por classe, num só lugar para a tabela e o painel não divergirem. */
-export const CLASSE_META: Record<
-  ClasseStock,
-  { label: string; descricao: string; cor: string; pastilha: string }
-> = {
+/**
+ * Cores por classe, num só lugar para a tabela e o painel não divergirem.
+ *
+ * Os rótulos (`label`/`descricao`) não vivem aqui — vêm do catálogo i18n
+ * (`classe.<CODIGO>.label` / `.descricao`), para existirem em português e em inglês.
+ */
+export const CLASSE_META: Record<ClasseStock, { cor: string; pastilha: string }> = {
   NORMAL: {
-    label: 'Normal',
-    descricao: 'Boa rotação',
     cor: 'bg-emerald-500',
     pastilha: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   BAIXA_ROTACAO: {
-    label: 'Baixa rotação',
-    descricao: 'Vende lentamente',
     cor: 'bg-lime-500',
     pastilha: 'bg-lime-50 text-lime-700 border-lime-200',
   },
   EXCESSO: {
-    label: 'Excesso',
-    descricao: 'Vende, mas há stock a mais',
     cor: 'bg-amber-500',
     pastilha: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   PARADO: {
-    label: 'Parado',
-    descricao: 'Sem movimento relevante',
     cor: 'bg-orange-500',
     pastilha: 'bg-orange-50 text-orange-700 border-orange-200',
   },
   OBSOLETO: {
-    label: 'Obsoleto',
-    descricao: 'Sem procura há muito tempo',
     cor: 'bg-rose-500',
     pastilha: 'bg-rose-50 text-rose-700 border-rose-200',
   },
   RISCO_VALIDADE: {
-    label: 'Risco de validade',
-    descricao: 'Tem prazo — agir agora ou perder',
     cor: 'bg-red-600',
     pastilha: 'bg-red-50 text-red-700 border-red-200',
   },
 };
 
-export const ESTADO_VALIDADE_META: Record<
-  EstadoValidade,
-  { label: string; pastilha: string }
-> = {
-  EXPIRADO: { label: 'Expirado', pastilha: 'bg-red-50 text-red-700 border-red-200' },
-  EM_RISCO: { label: 'Em risco', pastilha: 'bg-orange-50 text-orange-700 border-orange-200' },
-  PROXIMO_DA_VALIDADE: {
-    label: 'Próximo da validade',
-    pastilha: 'bg-amber-50 text-amber-700 border-amber-200',
-  },
-  NORMAL: { label: 'Normal', pastilha: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  SEM_VALIDADE: { label: 'Sem validade', pastilha: 'bg-slate-50 text-slate-600 border-slate-200' },
+/**
+ * Pastilhas de cor por estado de validade. O rótulo vive no catálogo i18n
+ * (`validade_estado.<CODIGO>`), pela mesma razão.
+ */
+export const ESTADO_VALIDADE_META: Record<EstadoValidade, { pastilha: string }> = {
+  EXPIRADO: { pastilha: 'bg-red-50 text-red-700 border-red-200' },
+  EM_RISCO: { pastilha: 'bg-orange-50 text-orange-700 border-orange-200' },
+  PROXIMO_DA_VALIDADE: { pastilha: 'bg-amber-50 text-amber-700 border-amber-200' },
+  NORMAL: { pastilha: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  SEM_VALIDADE: { pastilha: 'bg-slate-50 text-slate-600 border-slate-200' },
 };

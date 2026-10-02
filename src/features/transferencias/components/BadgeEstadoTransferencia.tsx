@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
-import { ESTADO_TRANSFERENCIA_LABEL, type EstadoTransferencia } from '../types/transferencia.types';
+import type { EstadoTransferencia } from '../types/transferencia.types';
 
 const COR: Record<EstadoTransferencia, string> = {
   SOLICITADA: 'bg-amber-100 text-amber-800',
@@ -10,9 +11,10 @@ const COR: Record<EstadoTransferencia, string> = {
 };
 
 export function BadgeEstadoTransferencia({ estado }: { estado: EstadoTransferencia }) {
+  const { t } = useTranslation('transferencias');
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold', COR[estado])}>
-      {ESTADO_TRANSFERENCIA_LABEL[estado]}
+      {t(`estado.${estado}`)}
     </span>
   );
 }

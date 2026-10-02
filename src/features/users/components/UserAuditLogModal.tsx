@@ -1,4 +1,5 @@
 ﻿import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { UserDetail } from '@/features/users';
 import { AuditLogTable } from '../../history/components/AuditLogTable';
 
@@ -8,15 +9,18 @@ interface UserAuditLogModalProps {
 }
 
 export function UserAuditLogModal({ user, onClose }: UserAuditLogModalProps) {
+  const { t } = useTranslation('utilizadores');
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-        
+
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Histórico de Auditoria</h2>
+            <h2 className="text-xl font-bold text-slate-900">{t('auditoria.titulo')}</h2>
             <p className="text-sm text-slate-500 mt-1">
-              Visualizando logs de <span className="font-medium text-slate-700">{user.name}</span> ({user.email})
+              {t('auditoria.visualizando')}{' '}
+              <span className="font-medium text-slate-700">{user.name}</span> ({user.email})
             </p>
           </div>
           <button

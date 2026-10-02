@@ -15,14 +15,16 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   DOCUMENTOS_BLOQUEANTES,
-  ETIQUETA_DOCUMENTO,
+  eTipoDocumento,
   qualificacaoApi,
 } from '../api/qualificacao.api';
 import type { OrganizacaoNaFila } from '../api/qualificacao.api';
 import { ContasBancariasModal } from '@/features/fornecedores';
-import { cn } from '@/shared/utils';
+import { cn, formatData, mensagemDeErro } from '@/shared/utils';
 
 /**
  * A fila de verificação documental dos fornecedores.
@@ -43,6 +45,7 @@ import { cn } from '@/shared/utils';
  * ecrã não faz a segunda.
  */
 export function QualificacaoTab() {
+  const { t } = useTranslation('b2b');
   const [aberta, setAberta] = useState<OrganizacaoNaFila | null>(null);
 
   // A conta bancária é o terceiro requisito bloqueante, e não se submete pelo portal:
@@ -64,10 +67,9 @@ export function QualificacaoTab() {
   return (
     <div className="space-y-4">
       <header>
-        <h2 className="text-sm font-semibold text-slate-900">Fornecedores por verificar</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t('qual.titulo')}</h2>
         <p className="mt-0.5 text-xs text-slate-500">
-          Quem se registou e submeteu documentos. Sem verificação, a vitrine não entra em
-          nenhuma comparação.
+          {t('qual.subtitulo')}
         </p>
       </header>
 
@@ -78,10 +80,9 @@ export function QualificacaoTab() {
       ) : !fila || fila.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 py-14 text-center">
           <ShieldCheck size={26} className="mx-auto text-slate-300" />
-          <p className="mt-2 text-sm text-slate-600">Nada por verificar.</p>
+          <p className="mt-2 text-sm text-slate-600">{t('qual.nada')}</p>
           <p className="mx-auto mt-1 max-w-sm text-xs leading-snug text-slate-500">
-            Quando um fornecedor se registar e submeter documentos, aparece aqui — ordenado
-            por quem espera há mais tempo.
+            {t('qual.nada_ajuda')}
           </p>
         </div>
       ) : (
@@ -102,37 +103,36 @@ export function QualificacaoTab() {
                   {org.semRelacoes && (
                     <span
                       className="inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700"
-                      title="Registou-se sozinho pelo portal público. Nenhuma empresa lhe compra ainda — e não apareceria em Fornecedores sem esta fila."
+                      title={t('qual.auto_registo_ajuda')}
                     >
                       <Sparkles size={9} />
-                      auto-registo
+                      {t('qual.auto_registo')}
                     </span>
                   )}
 
                   <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
                     <Clock size={9} />
-                    {org.documentosPendentes} por verificar
+                    {t('qual.por_verificar_n', { n: org.documentosPendentes })}
                   </span>
                 </div>
 
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                   {org.nuit && <span className="font-mono">NUIT {org.nuit}</span>}
                   {org.sede && <span>{org.sede}</span>}
-                  <span>{org.artigosPublicados} artigos publicados</span>
+                  <span>{t('qual.artigos_publicados', { n: org.artigosPublicados })}</span>
                   <span
                     className={
                       org.temContaBancariaActiva ? 'text-emerald-600' : 'text-amber-600'
                     }
                   >
-                    {org.temContaBancariaActiva ? 'conta aprovada' : 'sem conta bancária'}
+                    {org.temContaBancariaActiva ? t('qual.conta_aprovada') : t('qual.sem_conta')}
                   </span>
                 </p>
 
                 {org.submissaoMaisAntiga && (
                   <p className="mt-0.5 text-[11px] text-slate-400">
-                    À espera desde{' '}
-                    {new Date(org.submissaoMaisAntiga).toLocaleDateString('pt-PT')} (
-                    {diasDesde(org.submissaoMaisAntiga)})
+                    {t('qual.a_espera_desde')} {formatData(org.submissaoMaisAntiga)} (
+                    {diasDesde(org.submissaoMaisAntiga, t)})
                   </p>
                 )}
               </div>
@@ -145,17 +145,17 @@ export function QualificacaoTab() {
                   <button
                     onClick={() => setContasDe(org)}
                     className="inline-flex items-center gap-1 rounded-md border border-amber-300 px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50"
-                    title="A conta bancária é obrigatória e passa por aprovação de segunda pessoa. Sem ela o fornecedor é excluído de todas as comparações."
+                    title={t('qual.conta_ajuda')}
                   >
                     <Landmark size={12} />
-                    Conta bancária
+                    {t('qual.conta_bancaria')}
                   </button>
                 )}
                 <button
                   onClick={() => setAberta(org)}
                   className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
                 >
-                  Verificar
+                  {t('qual.verificar')}
                 </button>
               </div>
             </li>
@@ -182,11 +182,11 @@ export function QualificacaoTab() {
   );
 }
 
-function diasDesde(iso: string): string {
+function diasDesde(iso: string, t: TFunction<'b2b'>): string {
   const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  if (dias === 0) return 'hoje';
-  if (dias === 1) return 'há 1 dia';
-  return `há ${dias} dias`;
+  if (dias === 0) return t('qual.hoje');
+  if (dias === 1) return t('qual.ha_1_dia');
+  return t('qual.ha_n_dias', { n: dias });
 }
 
 /**
@@ -205,6 +205,7 @@ function VerificarModal({
   organizacao: OrganizacaoNaFila;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('b2b');
   const queryClient = useQueryClient();
   const [aRecusar, setARecusar] = useState<string | null>(null);
   const [motivo, setMotivo] = useState('');
@@ -227,8 +228,8 @@ function VerificarModal({
     onSuccess: (resultado) => {
       toast.success(
         resultado.conformidade.conforme
-          ? 'Verificado. O fornecedor está habilitado a receber ordens de compra.'
-          : `Verificado. ${resultado.conformidade.resumo}`,
+          ? t('qual.verificado_ok')
+          : t('qual.verificado_resumo', { resumo: resultado.conformidade.resumo }),
         { duration: 7000 },
       );
       setARecusar(null);
@@ -236,14 +237,12 @@ function VerificarModal({
       queryClient.invalidateQueries({ queryKey: ['qualificacao-estado'] });
       queryClient.invalidateQueries({ queryKey: ['qualificacao-pendentes'] });
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Erro ao registar a decisão.'),
+    onError: (e: unknown) => toast.error(mensagemDeErro(e, t('qual.erro_decisao'))),
   });
 
   const recusar = (documentoId: string) => {
     if (motivo.trim().length < 5) {
-      toast.error(
-        'Recusar exige um motivo — sem ele o fornecedor submete o mesmo documento amanhã.',
-      );
+      toast.error(t('qual.erro_motivo'));
       return;
     }
     decidir.mutate({ documentoId, decisao: 'RECUSADO', motivo: motivo.trim() });
@@ -281,7 +280,7 @@ function VerificarModal({
 
               {pendentes.length > 0 && (
                 <section>
-                  <h3 className="text-sm font-medium text-slate-800">Por verificar</h3>
+                  <h3 className="text-sm font-medium text-slate-800">{t('qual.sec_por_verificar')}</h3>
                   <ul className="mt-2 space-y-2">
                     {pendentes.map((doc) => (
                       <li key={doc.id} className="rounded-lg border border-blue-200 bg-blue-50/40 p-3">
@@ -289,11 +288,11 @@ function VerificarModal({
                           <div className="min-w-0">
                             <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
                               <FileText size={14} className="text-slate-400" />
-                              {ETIQUETA_DOCUMENTO[doc.tipo] ?? doc.tipo}
+                              {eTipoDocumento(doc.tipo) ? t(`qual.documento.${doc.tipo}`) : doc.tipo}
                               {doc.tipo === 'OUTRO' && doc.descricao ? ` — ${doc.descricao}` : ''}
                               {DOCUMENTOS_BLOQUEANTES.includes(doc.tipo) && (
                                 <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                                  obrigatório
+                                  {t('qual.obrigatorio')}
                                 </span>
                               )}
                             </p>
@@ -303,8 +302,7 @@ function VerificarModal({
                               {doc.entidadeEmissora && <span>{doc.entidadeEmissora}</span>}
                               {doc.emitidoEm && (
                                 <span>
-                                  emitido{' '}
-                                  {new Date(doc.emitidoEm).toLocaleDateString('pt-PT')}
+                                  {t('qual.emitido')} {formatData(doc.emitidoEm)}
                                 </span>
                               )}
                               {doc.validoAte ? (
@@ -315,12 +313,11 @@ function VerificarModal({
                                       : undefined
                                   }
                                 >
-                                  válido até{' '}
-                                  {new Date(doc.validoAte).toLocaleDateString('pt-PT')}
-                                  {new Date(doc.validoAte) < new Date() && ' — JÁ EXPIROU'}
+                                  {t('qual.valido_ate')} {formatData(doc.validoAte)}
+                                  {new Date(doc.validoAte) < new Date() && ` — ${t('qual.ja_expirou')}`}
                                 </span>
                               ) : (
-                                <span>sem validade</span>
+                                <span>{t('qual.sem_validade')}</span>
                               )}
                             </p>
 
@@ -332,7 +329,7 @@ function VerificarModal({
                                 className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
                               >
                                 <ExternalLink size={11} />
-                                Abrir documento
+                                {t('qual.abrir_documento')}
                               </a>
                             )}
                           </div>
@@ -347,7 +344,7 @@ function VerificarModal({
                                 className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
                               >
                                 <CheckCircle2 size={12} />
-                                Válido
+                                {t('qual.valido')}
                               </button>
                               <button
                                 onClick={() => {
@@ -357,7 +354,7 @@ function VerificarModal({
                                 className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
                               >
                                 <XCircle size={12} />
-                                Recusar
+                                {t('qual.recusar')}
                               </button>
                             </div>
                           )}
@@ -366,19 +363,18 @@ function VerificarModal({
                         {aRecusar === doc.id && (
                           <div className="mt-3 border-t border-blue-200 pt-3">
                             <label className="block text-xs font-medium text-slate-700">
-                              Motivo da recusa *
+                              {t('qual.motivo_recusa')}
                             </label>
                             <textarea
                               value={motivo}
                               onChange={(e) => setMotivo(e.target.value)}
                               rows={2}
                               autoFocus
-                              placeholder="O que está errado, e o que o fornecedor tem de corrigir."
+                              placeholder={t('qual.motivo_ph')}
                               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                             />
                             <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                              O fornecedor vê este texto no portal. Sem ele, submete o mesmo
-                              documento outra vez e o ciclo repete-se.
+                              {t('qual.motivo_ajuda')}
                             </p>
                             <div className="mt-2 flex gap-2">
                               <button
@@ -386,13 +382,13 @@ function VerificarModal({
                                 disabled={decidir.isPending}
                                 className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
                               >
-                                Confirmar recusa
+                                {t('qual.confirmar_recusa')}
                               </button>
                               <button
                                 onClick={() => setARecusar(null)}
                                 className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
                               >
-                                Cancelar
+                                {t('acao.cancelar')}
                               </button>
                             </div>
                           </div>
@@ -405,7 +401,7 @@ function VerificarModal({
 
               {decididos.length > 0 && (
                 <section>
-                  <h3 className="text-sm font-medium text-slate-800">Já decididos</h3>
+                  <h3 className="text-sm font-medium text-slate-800">{t('qual.sec_decididos')}</h3>
                   <ul className="mt-2 space-y-1.5">
                     {decididos.map((doc) => (
                       <li
@@ -413,7 +409,7 @@ function VerificarModal({
                         className="flex flex-wrap items-center gap-2 rounded border border-slate-200 px-3 py-2 text-xs"
                       >
                         <span className="text-slate-800">
-                          {ETIQUETA_DOCUMENTO[doc.tipo] ?? doc.tipo}
+                          {eTipoDocumento(doc.tipo) ? t(`qual.documento.${doc.tipo}`) : doc.tipo}
                         </span>
                         <span
                           className={cn(
@@ -425,14 +421,14 @@ function VerificarModal({
                                 : 'bg-red-100 text-red-700',
                           )}
                         >
-                          {doc.estado}
+                          {t(`qual.estado_doc.${doc.estado as 'VALIDO' | 'EXPIRADO' | 'RECUSADO' | 'PENDENTE'}`)}
                         </span>
                         {doc.motivoDecisao && (
                           <span className="min-w-0 text-slate-500">— {doc.motivoDecisao}</span>
                         )}
                         {doc.verificadoEm && (
                           <span className="ml-auto text-[11px] text-slate-400">
-                            {new Date(doc.verificadoEm).toLocaleDateString('pt-PT')}
+                            {formatData(doc.verificadoEm)}
                           </span>
                         )}
                       </li>
@@ -449,7 +445,7 @@ function VerificarModal({
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Fechar
+            {t('acao.fechar')}
           </button>
         </footer>
       </div>
@@ -462,6 +458,7 @@ function ResumoConformidade({
 }: {
   conformidade: { conforme: boolean; resumo: string; faltas: { bloqueante: boolean; mensagem: string }[] };
 }) {
+  const { t } = useTranslation('b2b');
   const bloqueantes = conformidade.faltas.filter((f) => f.bloqueante);
 
   return (
@@ -487,8 +484,8 @@ function ResumoConformidade({
             )}
           >
             {conformidade.conforme
-              ? 'Habilitado a receber ordens de compra'
-              : 'Ainda não entra nas comparações'}
+              ? t('qual.habilitado')
+              : t('qual.fora_comparacoes')}
           </p>
           {bloqueantes.length > 0 && (
             <ul className="mt-1 space-y-0.5">

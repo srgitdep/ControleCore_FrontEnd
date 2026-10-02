@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Loader2, Search, UserPlus, X } from 'lucide-react';
 import { useSearchClientes, useRegistarClienteNoBalcao } from '@/features/crm';
 import type { CanalComunicacao, Cliente } from '@/features/crm';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 /**
@@ -30,6 +31,7 @@ export function IdentificarClienteModal({
   onClose: () => void;
   onEscolher: (cliente: Cliente) => void;
 }) {
+  const { t } = useTranslation('pos');
   const [termo, setTermo] = useState('');
   const [procura, setProcura] = useState('');
   const [aRegistar, setARegistar] = useState(false);
@@ -40,8 +42,8 @@ export function IdentificarClienteModal({
   // A procura só dispara depois de o operador parar de escrever: um pedido por
   // tecla saturaria a rede da loja sem melhorar o resultado.
   useEffect(() => {
-    const t = setTimeout(() => setProcura(termo.trim()), 350);
-    return () => clearTimeout(t);
+    const temporizador = setTimeout(() => setProcura(termo.trim()), 350);
+    return () => clearTimeout(temporizador);
   }, [termo]);
 
   const { data: resultados, isFetching } = useSearchClientes(procura);
@@ -53,6 +55,9 @@ export function IdentificarClienteModal({
   /** Um canal só se pode consentir se houver por onde o usar. */
   const canalUsavel = (precisaDe: 'telefone' | 'email') =>
     precisaDe === 'telefone' ? temTelefone : temEmail;
+
+  const rotuloDoCanal = (canal: (typeof CANAIS)[number]) =>
+    canal.id === 'EMAIL' ? t('identificar.canal_email') : canal.rotulo;
 
   const alternarCanal = (id: CanalComunicacao) =>
     setCanais((actuais) =>
@@ -101,12 +106,12 @@ export function IdentificarClienteModal({
       <div className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 p-5">
           <h2 className="text-lg font-bold text-slate-900">
-            {aRegistar ? 'Novo cliente' : 'Identificar cliente'}
+            {aRegistar ? t('identificar.titulo_novo') : t('identificar.titulo')}
           </h2>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
-            aria-label="Fechar"
+            aria-label={t('identificar.fechar')}
           >
             <X size={18} />
           </button>
@@ -115,17 +120,17 @@ export function IdentificarClienteModal({
         {aRegistar ? (
           <form onSubmit={registar} className="space-y-4 overflow-y-auto p-5">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nome *</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('identificar.nome')}</label>
               <input
                 autoFocus
                 value={novo.nome}
                 onChange={(e) => setNovo((n) => ({ ...n, nome: e.target.value }))}
-                placeholder="Ex.: João Silva"
+                placeholder={t('identificar.nome_exemplo')}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Telefone</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('identificar.telefone')}</label>
               <input
                 inputMode="tel"
                 value={novo.telefone}
@@ -134,12 +139,12 @@ export function IdentificarClienteModal({
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
               <p className="mt-1.5 text-xs text-slate-400">
-                É por aqui que o cliente volta a ser reconhecido na próxima compra.
+                {t('identificar.telefone_ajuda')}
               </p>
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">E-mail</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('identificar.email')}</label>
               <input
                 type="email"
                 inputMode="email"
@@ -154,10 +159,10 @@ export function IdentificarClienteModal({
                 alguém volta atrás para o marcar. */}
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-sm font-medium text-slate-700">
-                Aceita receber promoções?
+                {t('identificar.promocoes')}
               </p>
               <p className="mb-2.5 mt-0.5 text-xs text-slate-500">
-                Pergunte ao cliente. Sem resposta, não marque nada.
+                {t('identificar.promocoes_ajuda')}
               </p>
 
               <div className="flex flex-wrap gap-2">
@@ -174,7 +179,12 @@ export function IdentificarClienteModal({
                       title={
                         usavel
                           ? undefined
-                          : `Preencha o ${canal.precisaDe} para poder usar ${canal.rotulo}.`
+                          : t(
+                              canal.precisaDe === 'telefone'
+                                ? 'identificar.preencha_telefone'
+                                : 'identificar.preencha_email',
+                              { canal: rotuloDoCanal(canal) },
+                            )
                       }
                       className={cn(
                         'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
@@ -192,14 +202,14 @@ export function IdentificarClienteModal({
                       >
                         {marcado && <Check size={11} className="text-white" strokeWidth={3} />}
                       </span>
-                      {canal.rotulo}
+                      {rotuloDoCanal(canal)}
                     </button>
                   );
                 })}
               </div>
 
               <p className="mt-2.5 text-xs text-slate-400">
-                Avisos de conta e cobrança não dependem desta escolha.
+                {t('identificar.avisos_conta')}
               </p>
             </div>
 
@@ -209,14 +219,14 @@ export function IdentificarClienteModal({
                 onClick={() => setARegistar(false)}
                 className="flex-1 rounded-lg border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                Voltar
+                {t('identificar.voltar')}
               </button>
               <button
                 type="submit"
                 disabled={criar.isPending || !novo.nome.trim()}
                 className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {criar.isPending ? 'A registar…' : 'Registar e associar'}
+                {criar.isPending ? t('identificar.a_registar') : t('identificar.registar_associar')}
               </button>
             </div>
           </form>
@@ -232,7 +242,7 @@ export function IdentificarClienteModal({
                   autoFocus
                   value={termo}
                   onChange={(e) => setTermo(e.target.value)}
-                  placeholder="Nome, telefone ou NUIT…"
+                  placeholder={t('identificar.procurar_placeholder')}
                   className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
                 {isFetching && (
@@ -247,7 +257,7 @@ export function IdentificarClienteModal({
             <div className="max-h-[45vh] overflow-y-auto px-5 pb-3">
               {procura.length < 2 ? (
                 <p className="py-6 text-center text-sm text-slate-400">
-                  Escreva pelo menos duas letras para procurar.
+                  {t('identificar.minimo_letras')}
                 </p>
               ) : resultados && resultados.length > 0 ? (
                 <div className="space-y-2">
@@ -263,12 +273,12 @@ export function IdentificarClienteModal({
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-900">{c.nome}</p>
                         <p className="truncate text-sm text-slate-500">
-                          {c.telefone || c.email || c.nuit || 'sem contacto'}
+                          {c.telefone || c.email || c.nuit || t('identificar.sem_contacto')}
                         </p>
                       </div>
                       {c.pontos > 0 && (
                         <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                          {c.pontos} pts
+                          {t('identificar.pontos', { n: c.pontos })}
                         </span>
                       )}
                     </button>
@@ -276,7 +286,7 @@ export function IdentificarClienteModal({
                 </div>
               ) : !isFetching ? (
                 <p className="py-6 text-center text-sm text-slate-400">
-                  Nenhum cliente encontrado para “{procura}”.
+                  {t('identificar.nenhum_encontrado', { termo: procura })}
                 </p>
               ) : null}
             </div>
@@ -287,7 +297,7 @@ export function IdentificarClienteModal({
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-semibold text-slate-600 hover:border-blue-400 hover:text-blue-700"
               >
                 <UserPlus size={16} />
-                Registar cliente novo
+                {t('identificar.registar_novo')}
               </button>
             </div>
           </>

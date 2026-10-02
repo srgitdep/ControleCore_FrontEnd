@@ -11,13 +11,10 @@ import {
   Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatMoeda } from '@/shared/utils';
 import { catalogApi } from '@/features/produtos';
-import {
-  catalogoFornecedorApi,
-  ROTULO_ESTADO_LINHA,
-  ROTULO_METODO,
-} from '../api/catalogo.api';
+import { catalogoFornecedorApi } from '../api/catalogo.api';
 import type { LinhaImportacao, EstadoLinha } from '../api/catalogo.api';
 
 interface Props {
@@ -25,9 +22,6 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
 /**
  * A revisão de uma importação de catálogo, linha a linha.
@@ -44,6 +38,7 @@ const mt = (v: number) =>
  * se resolvem aqui — corrige-se o ficheiro e importa-se outra vez.
  */
 export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('catalogo');
   const queryClient = useQueryClient();
   const [filtro, setFiltro] = useState<EstadoLinha | 'TODAS'>('POR_REVER');
   const [aDecidir, setADecidir] = useState<LinhaImportacao | null>(null);
@@ -80,14 +75,17 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
     try {
       const r = await catalogoFornecedorApi.aplicar(importacaoId);
       toast.success(
-        `${r.mapeamentosCriados} artigos novos, ${r.mapeamentosActualizados} actualizados, ` +
-          `${r.precosCriados} preços.`,
+        t('revisao.aplicada_resumo', {
+          novos: r.mapeamentosCriados,
+          actualizados: r.mapeamentosActualizados,
+          precos: r.precosCriados,
+        }),
       );
       if (r.aviso) toast(r.aviso, { icon: '⚠️', duration: 7000 });
       recarregar();
       onSuccess();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao aplicar.');
+      toast.error(error?.response?.data?.message || t('revisao.erro_aplicar'));
     } finally {
       setAAplicar(false);
     }
@@ -95,21 +93,24 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
 
   const reverter = async () => {
     if (motivoReversao.trim().length < 5) {
-      toast.error('A reversão exige um motivo.');
+      toast.error(t('revisao.motivo_obrigatorio'));
       return;
     }
     setAAplicar(true);
     try {
       const r = await catalogoFornecedorApi.reverter(importacaoId, motivoReversao.trim());
       toast.success(
-        `Revertido: ${r.precosApagados} preços apagados, ${r.mapeamentosRestaurados} ` +
-          `mapeamentos restaurados, ${r.mapeamentosApagados} removidos.`,
+        t('revisao.revertido_resumo', {
+          apagados: r.precosApagados,
+          restaurados: r.mapeamentosRestaurados,
+          removidos: r.mapeamentosApagados,
+        }),
       );
       recarregar();
       onSuccess();
       setAReverter(false);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao reverter.');
+      toast.error(error?.response?.data?.message || t('revisao.erro_reverter'));
     } finally {
       setAAplicar(false);
     }
@@ -121,10 +122,13 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              {importacao.ficheiroNome ?? 'Importação de catálogo'}
+              {importacao.ficheiroNome ?? t('revisao.titulo_defeito')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">
-              {importacao.totalLinhas} linhas · {ROTULO_ESTADO_IMPORTACAO_LOCAL[importacao.estado]}
+              {t('revisao.linhas_estado', {
+                total: importacao.totalLinhas,
+                estado: t(`estado_importacao_minuscula.${importacao.estado}`),
+              })}
               {importacao.criadoPor && ` · ${importacao.criadoPor.name}`}
             </p>
           </div>
@@ -135,18 +139,20 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
 
         <div className="border-b border-slate-100 px-5 py-3">
           <div className="grid grid-cols-3 gap-3">
-            <Contador rotulo="Prontas" valor={prontas} cor="emerald" />
-            <Contador rotulo="Por rever" valor={porRever} cor="amber" />
-            <Contador rotulo="Com erro" valor={importacao.linhasComErro} cor="rose" />
+            <Contador rotulo={t('revisao.contador_prontas')} valor={prontas} cor="emerald" />
+            <Contador rotulo={t('revisao.contador_por_rever')} valor={porRever} cor="amber" />
+            <Contador rotulo={t('revisao.contador_erro')} valor={importacao.linhasComErro} cor="rose" />
           </div>
 
           {/* Guardar o mapa de colunas é o que responde à primeira pergunta que alguém
               faz quando um preço aparece errado: que coluna é que ele leu como preço? */}
           {importacao.mapaColunas && (
             <p className="mt-3 text-xs text-slate-500">
-              Colunas lidas:{' '}
+              {t('revisao.colunas_lidas')}{' '}
               {Object.entries(importacao.mapaColunas)
-                .map(([papel, indice]) => `${papel} → coluna ${Number(indice) + 1}`)
+                .map(([papel, indice]) =>
+                  t('revisao.coluna_mapa', { papel, indice: Number(indice) + 1 }),
+                )
                 .join(' · ')}
             </p>
           )}
@@ -165,7 +171,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
                 )}
               >
-                {f === 'TODAS' ? 'Todas' : ROTULO_ESTADO_LINHA[f]}
+                {f === 'TODAS' ? t('revisao.filtro_todas') : t(`estado_linha.${f}`)}
               </button>
             ),
           )}
@@ -174,9 +180,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
         <div className="flex-1 overflow-y-auto px-5 py-3">
           {visiveis.length === 0 ? (
             <p className="py-10 text-center text-sm text-slate-500">
-              {filtro === 'POR_REVER'
-                ? 'Nenhuma linha por rever. Podes aplicar.'
-                : 'Nenhuma linha neste estado.'}
+              {filtro === 'POR_REVER' ? t('revisao.vazio_por_rever') : t('revisao.vazio_estado')}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -198,15 +202,19 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                         <span className="mr-2 font-mono text-xs text-slate-400">
                           L{l.numeroLinha}
                         </span>
-                        {l.descricao ?? l.referenciaFornecedor ?? '(sem descrição)'}
+                        {l.descricao ?? l.referenciaFornecedor ?? t('revisao.sem_descricao')}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
-                        {l.referenciaFornecedor && `Ref. ${l.referenciaFornecedor} · `}
-                        {l.gtin && `EAN ${l.gtin} · `}
-                        {l.precoUnitario != null ? mt(l.precoUnitario) : 'sem preço'}
+                        {l.referenciaFornecedor &&
+                          `${t('revisao.ref', { valor: l.referenciaFornecedor })} · `}
+                        {l.gtin && `${t('revisao.ean', { valor: l.gtin })} · `}
+                        {l.precoUnitario != null ? formatMoeda(l.precoUnitario) : t('revisao.sem_preco')}
                         {l.unidadeFornecedor && ` / ${l.unidadeFornecedor}`}
                         {l.factorConversao && l.factorConversao !== 1 && (
-                          <span className="text-slate-600"> ({l.factorConversao} un.)</span>
+                          <span className="text-slate-600">
+                            {' '}
+                            {t('revisao.factor_unidades', { factor: l.factorConversao })}
+                          </span>
                         )}
                       </p>
                       {l.mensagem && (
@@ -214,8 +222,10 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                       )}
                       {l.metodo && l.confianca != null && (
                         <p className="mt-0.5 text-xs text-slate-400">
-                          Por {ROTULO_METODO[l.metodo]} · confiança{' '}
-                          {(l.confianca * 100).toFixed(0)}%
+                          {t('revisao.metodo_confianca', {
+                            metodo: t(`metodo.${l.metodo}`),
+                            percentagem: (l.confianca * 100).toFixed(0),
+                          })}
                         </p>
                       )}
                     </div>
@@ -227,7 +237,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                           onClick={() => setADecidir(l)}
                           className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700"
                         >
-                          Decidir
+                          {t('revisao.decidir')}
                         </button>
                       )}
                     </div>
@@ -242,14 +252,12 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
           {aReverter && (
             <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 p-3">
               <p className="text-xs text-rose-800">
-                Reverter apaga os preços que este lote criou e devolve aos que ele fechou a data
-                de fim que tinham. Os mapeamentos voltam ao que eram; os que este lote criou de
-                raiz desaparecem.
+                {t('revisao.aviso_reverter')}
               </p>
               <input
                 value={motivoReversao}
                 onChange={(e) => setMotivoReversao(e.target.value)}
-                placeholder="A coluna do preço estava trocada com a do desconto."
+                placeholder={t('revisao.placeholder_motivo')}
                 className="mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-sm placeholder:text-rose-300 focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-400"
               />
             </div>
@@ -259,7 +267,8 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
             <p className="text-xs text-slate-500">
               {emRevisao && porRever > 0 && (
                 <>
-                  <strong>{porRever}</strong> linhas por rever não vão ser aplicadas.
+                  <strong>{porRever}</strong>{' '}
+                  {t('revisao.por_rever_nao_aplicadas', { count: porRever })}
                 </>
               )}
             </p>
@@ -269,7 +278,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                 onClick={onClose}
                 className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
               >
-                Fechar
+                {t('revisao.fechar')}
               </button>
 
               {importacao.estado === 'APLICADA' &&
@@ -280,14 +289,14 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                     className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
                   >
                     {aAplicar && <Loader2 size={14} className="animate-spin" />}
-                    Confirmar reversão
+                    {t('revisao.confirmar_reversao')}
                   </button>
                 ) : (
                   <button
                     onClick={() => setAReverter(true)}
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                   >
-                    <Undo2 size={14} /> Reverter
+                    <Undo2 size={14} /> {t('revisao.reverter')}
                   </button>
                 ))}
 
@@ -295,7 +304,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                 <button
                   onClick={aplicar}
                   disabled={aAplicar || prontas === 0}
-                  title={prontas === 0 ? 'Nenhuma linha pronta para aplicar' : undefined}
+                  title={prontas === 0 ? t('revisao.nenhuma_pronta') : undefined}
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {aAplicar ? (
@@ -303,7 +312,7 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
                   ) : (
                     <Upload size={14} />
                   )}
-                  Aplicar {prontas} linhas
+                  {t('revisao.aplicar', { count: prontas })}
                 </button>
               )}
             </div>
@@ -322,13 +331,6 @@ export function RevisaoImportacaoModal({ importacaoId, onClose, onSuccess }: Pro
     </div>
   );
 }
-
-const ROTULO_ESTADO_IMPORTACAO_LOCAL: Record<string, string> = {
-  EM_REVISAO: 'em revisão',
-  APLICADA: 'aplicada',
-  REVERTIDA: 'revertida',
-  CANCELADA: 'cancelada',
-};
 
 function Contador({
   rotulo,
@@ -354,6 +356,7 @@ function Contador({
 }
 
 function EstadoLinhaBadge({ estado }: { estado: EstadoLinha }) {
+  const { t } = useTranslation('catalogo');
   const cores: Record<EstadoLinha, string> = {
     MAPEADA: 'bg-emerald-100 text-emerald-700',
     POR_REVER: 'bg-amber-100 text-amber-800',
@@ -369,7 +372,7 @@ function EstadoLinhaBadge({ estado }: { estado: EstadoLinha }) {
         cores[estado],
       )}
     >
-      {ROTULO_ESTADO_LINHA[estado]}
+      {t(`estado_linha.${estado}`)}
     </span>
   );
 }
@@ -391,6 +394,7 @@ function DecidirLinhaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('catalogo');
   const [pesquisa, setPesquisa] = useState(linha.descricao ?? '');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -408,11 +412,11 @@ function DecidirLinhaModal({
         produtoId,
         ignorar: !produtoId,
       });
-      toast.success(produtoId ? 'Linha mapeada.' : 'Linha descartada.');
+      toast.success(produtoId ? t('decidir.linha_mapeada') : t('decidir.linha_descartada'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao decidir a linha.');
+      toast.error(error?.response?.data?.message || t('decidir.erro'));
     } finally {
       setIsSaving(false);
     }
@@ -425,7 +429,7 @@ function DecidirLinhaModal({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-base font-semibold text-slate-900">
-                Linha {linha.numeroLinha}
+                {t('decidir.titulo', { numero: linha.numeroLinha })}
               </h2>
               <p className="mt-0.5 text-sm text-slate-600">{linha.descricao}</p>
             </div>
@@ -450,7 +454,7 @@ function DecidirLinhaModal({
             <input
               value={pesquisa}
               onChange={(e) => setPesquisa(e.target.value)}
-              placeholder="Procurar produto..."
+              placeholder={t('decidir.procurar')}
               autoFocus
               className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
@@ -465,8 +469,8 @@ function DecidirLinhaModal({
           ) : produtos.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-500">
               {pesquisa.trim().length < 2
-                ? 'Escreve pelo menos duas letras.'
-                : 'Nenhum produto encontrado.'}
+                ? t('decidir.escrever_duas_letras')
+                : t('decidir.nenhum_produto')}
             </p>
           ) : (
             <ul className="space-y-1.5">
@@ -481,7 +485,7 @@ function DecidirLinhaModal({
                       <p className="font-medium text-slate-800">{p.nome}</p>
                       {(p.sku || p.codigoBarras) && (
                         <p className="text-xs text-slate-500">
-                          {p.sku && `SKU ${p.sku}`}
+                          {p.sku && t('decidir.sku', { valor: p.sku })}
                           {p.sku && p.codigoBarras && ' · '}
                           {p.codigoBarras}
                         </p>
@@ -501,13 +505,13 @@ function DecidirLinhaModal({
             disabled={isSaving}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
           >
-            <EyeOff size={14} /> Descartar linha
+            <EyeOff size={14} /> {t('decidir.descartar')}
           </button>
           <button
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
           >
-            Cancelar
+            {t('decidir.cancelar')}
           </button>
         </footer>
       </div>

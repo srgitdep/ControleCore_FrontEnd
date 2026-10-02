@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, PackageCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 interface ReceberTransferenciaModalProps {
@@ -24,6 +25,7 @@ export function ReceberTransferenciaModal({
   onClose,
   onConfirm,
 }: ReceberTransferenciaModalProps) {
+  const { t } = useTranslation('transferencias');
   const [quantidade, setQuantidade] = useState(quantidadeExpedida);
 
   if (!isOpen) return null;
@@ -39,7 +41,7 @@ export function ReceberTransferenciaModal({
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
               <PackageCheck className="text-emerald-600" size={20} />
             </div>
-            <h3 className="text-base font-semibold text-slate-900">Confirmar recepção</h3>
+            <h3 className="text-base font-semibold text-slate-900">{t('receber.titulo')}</h3>
           </div>
           <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
             <X size={18} />
@@ -47,7 +49,7 @@ export function ReceberTransferenciaModal({
         </div>
 
         <p className="mt-3 text-sm text-slate-500">
-          Foram expedidas <strong>{quantidadeExpedida}</strong> unidades. Confirme o que chegou de facto.
+          {t('receber.expedidas_1')} <strong>{quantidadeExpedida}</strong> {t('receber.expedidas_2')}
         </p>
 
         <input
@@ -62,19 +64,18 @@ export function ReceberTransferenciaModal({
 
         {invalido && (
           <p className="mt-1 text-xs text-rose-500">
-            Não é possível receber mais do que foi expedido nem um valor negativo.
+            {t('receber.invalido')}
           </p>
         )}
         {!invalido && divergente && (
           <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Divergência de {quantidadeExpedida - quantidade} unidades em relação ao expedido.
-            Fica registada na transferência.
+            {t('receber.divergencia', { n: quantidadeExpedida - quantidade })}
           </p>
         )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            Voltar
+            {t('receber.voltar')}
           </button>
           <button
             disabled={invalido || isSubmitting}
@@ -84,7 +85,7 @@ export function ReceberTransferenciaModal({
               (invalido || isSubmitting) && 'cursor-not-allowed opacity-50',
             )}
           >
-            {isSubmitting ? 'A confirmar...' : 'Confirmar recepção'}
+            {isSubmitting ? t('receber.a_confirmar') : t('receber.confirmar')}
           </button>
         </div>
       </div>

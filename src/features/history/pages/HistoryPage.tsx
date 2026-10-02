@@ -1,10 +1,12 @@
 ﻿import { useAuth } from '@/features/auth';
 import { AuditLogTable } from '../components/AuditLogTable';
 import { History } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function HistoryPage() {
+  const { t } = useTranslation('historico');
   const { user } = useAuth();
-  
+
   // Se for nÍvel gerencial ou superior, vamos não enviar userId por padrão para carregar o histórico global
   // Caso contrário, enviamos o próprio id (embora o backend já faça este enforce de segurança)
   const isManagerial = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role || '');
@@ -21,8 +23,8 @@ export function HistoryPage() {
             Sistema». A distinção fica — é ela que muda o que se está a ver. */}
         <p className="text-sm text-slate-500">
           {isManagerial
-            ? 'Acções de todos os utilizadores da empresa.'
-            : 'As suas acções no sistema.'}
+            ? t('pagina.global')
+            : t('pagina.pessoal')}
         </p>
       </div>
 

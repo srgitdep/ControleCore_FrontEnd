@@ -1,7 +1,10 @@
 import { History, Plus, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatDataHora } from '@/shared/utils';
 import { useCopilotStore } from '../../store/copilotStore';
 
 export function HistoryPanel() {
+  const { t } = useTranslation('copiloto');
   const {
     isHistoryOpen,
     toggleHistory,
@@ -20,7 +23,7 @@ export function HistoryPanel() {
       <div className="flex items-center justify-between p-4 bg-indigo-600 text-white shrink-0">
         <div className="flex items-center gap-2">
           <History className="w-5 h-5" />
-          <h3 className="font-semibold">Histórico</h3>
+          <h3 className="font-semibold">{t('historico.titulo')}</h3>
         </div>
         <button onClick={toggleHistory} className="p-1.5 hover:bg-white/20 rounded-full transition-colors">
           <X className="w-4 h-4" />
@@ -33,13 +36,13 @@ export function HistoryPanel() {
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg transition-colors border border-indigo-200"
         >
           <Plus className="w-4 h-4" />
-          Nova Conversa
+          {t('historico.nova_conversa')}
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
         {sessions.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center mt-6">Nenhum histórico encontrado.</p>
+          <p className="text-sm text-slate-500 text-center mt-6">{t('historico.vazio')}</p>
         ) : (
           sessions.map((sess: any) => (
             <button
@@ -53,7 +56,7 @@ export function HistoryPanel() {
             >
               <p className="font-medium truncate">{sess.title}</p>
               <p className="text-[11px] text-slate-400 mt-1">
-                {new Date(sess.updatedAt).toLocaleString('pt-PT')}
+                {formatDataHora(sess.updatedAt)}
               </p>
             </button>
           ))

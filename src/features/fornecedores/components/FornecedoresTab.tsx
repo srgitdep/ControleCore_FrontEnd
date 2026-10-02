@@ -6,13 +6,14 @@ import {
   BarChart3, Landmark, Store, Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { suppliersApi } from '../api/suppliers.api';
 import type { Supplier, LinhaDeFornecedor } from '../api/suppliers.api';
 import { FornecedorFormModal } from './FornecedorFormModal';
 import { FornecedorDetailsModal } from './FornecedorDetailsModal';
 import { ContasBancariasModal } from './ContasBancariasModal';
 import { ConfirmDialog } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { cn, mensagemDeErro } from '@/shared/utils';
 
 /**
  * A lista de fornecedores, sem cabeçalho de página.
@@ -46,6 +47,7 @@ import { cn } from '@/shared/utils';
  * acontece na requisição.
  */
 export function FornecedoresTab() {
+  const { t } = useTranslation('fornecedores');
   const queryClient = useQueryClient();
   const [pesquisa, setPesquisa] = useState('');
 
@@ -73,13 +75,12 @@ export function FornecedoresTab() {
       // mas o histórico de compras mantém-se intacto — e é esse histórico que sustenta
       // as medidas de prazo e pontualidade.
       await suppliersApi.updateSupplier(aAlternar.id, { isActive: !activo });
-      toast.success(activo ? 'Fornecedor suspenso.' : 'Fornecedor reactivado.');
+      toast.success(activo ? t('lista.suspenso_ok') : t('lista.reactivado_ok'));
       recarregar();
       setAAlternar(null);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message ||
-          `Erro ao ${activo ? 'suspender' : 'reactivar'} o fornecedor.`,
+        mensagemDeErro(error, activo ? t('lista.erro_suspender') : t('lista.erro_reactivar')),
       );
     } finally {
       setAGuardar(false);
@@ -114,21 +115,21 @@ export function FornecedoresTab() {
             type="text"
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
-            placeholder="Pesquisar por nome, NUIT, email ou telefone..."
+            placeholder={t('lista.pesquisar_ph')}
             className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
         <div className="flex items-center gap-3">
           <span className="hidden whitespace-nowrap text-xs text-slate-500 sm:inline">
-            {comRelacao.length} com relação · {activos} activo(s)
-            {semRelacao > 0 && ` · ${semRelacao} da plataforma`}
+            {t('lista.resumo', { relacao: comRelacao.length, activos })}
+            {semRelacao > 0 && ` · ${t('lista.resumo_plataforma', { n: semRelacao })}`}
           </span>
           <button
             onClick={() => setAEditar({})}
             className="flex items-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            <Plus size={16} /> Novo Fornecedor
+            <Plus size={16} /> {t('lista.novo')}
           </button>
         </div>
       </div>
@@ -137,11 +138,8 @@ export function FornecedoresTab() {
         <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5">
           <Sparkles size={14} className="mt-0.5 shrink-0 text-blue-600" />
           <p className="text-xs leading-snug text-blue-900">
-            <strong>{semRelacao} fornecedor{semRelacao === 1 ? '' : 'es'} da plataforma</strong>{' '}
-            {semRelacao === 1 ? 'tem' : 'têm'} vitrine publicada e ainda não{' '}
-            {semRelacao === 1 ? 'vendeu' : 'venderam'} a esta empresa. Para comparar preços e
-            condições entre todos, peça à Mayra — ela corre o sourcing sobre uma requisição e
-            diz quem dá o melhor orçamento, com os factores que decidiram.
+            <strong>{t('lista.banner_titulo', { count: semRelacao })}</strong>{' '}
+            {t('lista.banner_texto', { count: semRelacao })}
           </p>
         </div>
       )}
@@ -150,24 +148,22 @@ export function FornecedoresTab() {
         {isLoading ? (
           <div className="p-12 text-center text-slate-500">
             <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-600" />
-            A carregar fornecedores...
+            {t('lista.a_carregar')}
           </div>
         ) : filtradas.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Truck className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-            {termo
-              ? `Nenhum fornecedor corresponde a "${pesquisa}".`
-              : 'Ainda não há fornecedores registados.'}
+            {termo ? t('lista.vazio_pesquisa', { pesquisa }) : t('lista.vazio')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Fornecedor</th>
-                  <th className="hidden px-4 py-3 text-left font-medium md:table-cell">Contactos</th>
-                  <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">NUIT</th>
-                  <th className="px-4 py-3 text-left font-medium">Estado</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('lista.col_fornecedor')}</th>
+                  <th className="hidden px-4 py-3 text-left font-medium md:table-cell">{t('lista.col_contactos')}</th>
+                  <th className="hidden px-4 py-3 text-left font-medium sm:table-cell">{t('lista.col_nuit')}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t('lista.col_estado')}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -193,8 +189,7 @@ export function FornecedoresTab() {
       </div>
 
       <p className="text-xs text-slate-500">
-        Um fornecedor <strong>suspenso</strong> não pode receber pedidos de compra novos, mas o
-        histórico mantém-se intacto. Clique no nome para ver o prazo de entrega e a pontualidade.
+        {t('lista.nota_antes')} <strong>{t('lista.nota_suspenso')}</strong> {t('lista.nota_depois')}
       </p>
 
       {aEditar && (
@@ -217,15 +212,15 @@ export function FornecedoresTab() {
 
       <ConfirmDialog
         isOpen={aAlternar !== null}
-        title={aAlternar?.isActive ? 'Suspender fornecedor' : 'Reactivar fornecedor'}
+        title={aAlternar?.isActive ? t('lista.titulo_suspender') : t('lista.titulo_reactivar')}
         message={
           aAlternar
             ? aAlternar.isActive
-              ? `Suspender "${aAlternar.nome}"? Deixa de poder receber pedidos novos, mas o histórico de compras mantém-se.`
-              : `Reactivar "${aAlternar.nome}"? Volta a poder receber pedidos de compra.`
+              ? t('lista.msg_suspender', { nome: aAlternar.nome })
+              : t('lista.msg_reactivar', { nome: aAlternar.nome })
             : ''
         }
-        confirmText={aAlternar?.isActive ? 'Suspender' : 'Reactivar'}
+        confirmText={aAlternar?.isActive ? t('acao.suspender') : t('acao.reactivar')}
         variant={aAlternar?.isActive ? 'warning' : 'info'}
         isLoading={aGuardar}
         onConfirm={alternarEstado}
@@ -252,13 +247,15 @@ function LinhaComRelacao({
   onEditar: () => void;
   onAlternar: () => void;
 }) {
+  const { t } = useTranslation('fornecedores');
+
   return (
     <tr className={cn('hover:bg-slate-50', !f.isActive && 'opacity-60')}>
       <td className="px-4 py-3">
         <button
           onClick={onVer}
           className="text-left font-medium text-slate-900 hover:text-blue-600 hover:underline"
-          title="Ver desempenho e histórico"
+          title={t('lista.ver_desempenho')}
         >
           {f.nome}
         </button>
@@ -296,7 +293,7 @@ function LinhaComRelacao({
           )}
         >
           {f.isActive ? <CheckCircle2 size={12} /> : <Ban size={12} />}
-          {f.isActive ? 'Activo' : 'Suspenso'}
+          {f.isActive ? t('estado.activo') : t('estado.suspenso')}
         </span>
       </td>
       <td className="px-4 py-3">
@@ -304,14 +301,14 @@ function LinhaComRelacao({
           {f.organizacaoId ? (
             <Link
               to={`/fornecedores/${f.organizacaoId}/vitrine`}
-              title="Ver vitrine"
+              title={t('lista.ver_vitrine')}
               className="p-2 text-slate-400 transition-colors hover:text-blue-600"
             >
               <Store size={16} />
             </Link>
           ) : (
             <span
-              title="Sem organização associada — cadastro anterior à separação de identidade, sem vitrine própria"
+              title={t('lista.sem_org_vitrine')}
               className="p-2 text-slate-200"
             >
               <Store size={16} />
@@ -319,7 +316,7 @@ function LinhaComRelacao({
           )}
           <button
             onClick={onVer}
-            title="Desempenho e histórico"
+            title={t('lista.desempenho_historico')}
             className="p-2 text-slate-400 transition-colors hover:text-blue-600"
           >
             <BarChart3 size={16} />
@@ -329,8 +326,8 @@ function LinhaComRelacao({
             disabled={!f.organizacaoId}
             title={
               f.organizacaoId
-                ? 'Contas bancárias'
-                : 'Sem organização associada — cadastro anterior à separação de identidade'
+                ? t('contas.titulo')
+                : t('lista.sem_org')
             }
             className="p-2 text-slate-400 transition-colors hover:text-amber-600 disabled:opacity-30 disabled:hover:text-slate-400"
           >
@@ -338,14 +335,14 @@ function LinhaComRelacao({
           </button>
           <button
             onClick={onEditar}
-            title="Editar"
+            title={t('acao.editar')}
             className="p-2 text-slate-400 transition-colors hover:text-blue-600"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={onAlternar}
-            title={f.isActive ? 'Suspender' : 'Reactivar'}
+            title={f.isActive ? t('acao.suspender') : t('acao.reactivar')}
             className={cn(
               'p-2 transition-colors',
               f.isActive ? 'text-slate-400 hover:text-rose-500' : 'text-slate-400 hover:text-emerald-600',
@@ -371,6 +368,8 @@ function LinhaSemRelacao({
 }: {
   linha: Extract<LinhaDeFornecedor, { tipo: 'SEM_RELACAO' }>;
 }) {
+  const { t } = useTranslation('fornecedores');
+
   return (
     <tr className="bg-blue-50/30 hover:bg-blue-50">
       <td className="px-4 py-3">
@@ -384,8 +383,7 @@ function LinhaSemRelacao({
           <p className="text-xs text-slate-500">{linha.razaoSocial}</p>
         )}
         <p className="mt-0.5 text-xs text-slate-400">
-          {linha.artigosPublicados} artigo{linha.artigosPublicados === 1 ? '' : 's'} publicado
-          {linha.artigosPublicados === 1 ? '' : 's'}
+          {t('lista.artigos_publicados', { count: linha.artigosPublicados })}
         </p>
       </td>
       <td className="hidden px-4 py-3 text-slate-600 md:table-cell">
@@ -404,18 +402,18 @@ function LinhaSemRelacao({
       <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{linha.nuit || '—'}</td>
       <td className="px-4 py-3">
         <span
-          title="Esta empresa ainda não tem relação comercial com este fornecedor — nasce ao adjudicar-lhe uma requisição."
+          title={t('lista.da_plataforma_ajuda')}
           className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700"
         >
           <Sparkles size={12} />
-          Da plataforma
+          {t('lista.da_plataforma')}
         </span>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center justify-end gap-1">
           <Link
             to={`/fornecedores/${linha.organizacaoId}/vitrine`}
-            title="Ver vitrine"
+            title={t('lista.ver_vitrine')}
             className="p-2 text-slate-400 transition-colors hover:text-blue-600"
           >
             <Store size={16} />

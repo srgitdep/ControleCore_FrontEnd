@@ -1,4 +1,5 @@
 import { Sparkles, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import { useAnaliseMayra } from '../hooks/useNecessidades';
 import type { KpisNecessidades } from '../types/necessidade.types';
@@ -26,6 +27,7 @@ interface PainelMayraProps {
  * números continuam visíveis mesmo quando a recomendação falha.
  */
 export function PainelMayra({ kpis, isLoading, lojaId }: PainelMayraProps) {
+  const { t } = useTranslation('necessidades');
   const { data: analise, isLoading: aCarregarAnalise, isError } = useAnaliseMayra(lojaId);
 
   if (isLoading || !kpis) {
@@ -49,31 +51,31 @@ export function PainelMayra({ kpis, isLoading, lojaId }: PainelMayraProps) {
     <Card padding="lg">
       <div className="flex items-center gap-2">
         <Sparkles size={18} className="text-indigo-500" />
-        <p className="text-sm font-semibold text-slate-800">MAYRA — Assistente de Abastecimento</p>
+        <p className="text-sm font-semibold text-slate-800">{t('mayra.titulo')}</p>
       </div>
 
       <ul className="mt-4 space-y-2 text-sm text-slate-600">
         <li className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
-          <span className="tabular-nums font-semibold text-slate-800">{emRisco}</span> em risco de
-          ruptura
+          <span className="tabular-nums font-semibold text-slate-800">{emRisco}</span>{' '}
+          {t('mayra.em_risco')}
         </li>
         <li className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
           <span className="tabular-nums font-semibold text-slate-800">
             {resolveisPorTransferencia}
           </span>{' '}
-          resolvíveis por transferência
+          {t('mayra.por_transferencia')}
         </li>
         <li className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-          <span className="tabular-nums font-semibold text-slate-800">{jaEmTransito}</span> já com
-          compra/transferência em trânsito
+          <span className="tabular-nums font-semibold text-slate-800">{jaEmTransito}</span>{' '}
+          {t('mayra.em_transito')}
         </li>
         <li className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
           <span className="tabular-nums font-semibold text-slate-800">{precisamNovaCompra}</span>{' '}
-          precisam de nova compra
+          {t('mayra.nova_compra')}
         </li>
       </ul>
 
@@ -82,12 +84,11 @@ export function PainelMayra({ kpis, isLoading, lojaId }: PainelMayraProps) {
       <div className="mt-4 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-900">
         {aCarregarAnalise ? (
           <span className="flex items-center gap-2 text-indigo-700">
-            <Loader2 size={14} className="animate-spin" /> A analisar a fila...
+            <Loader2 size={14} className="animate-spin" /> {t('mayra.a_analisar')}
           </span>
         ) : isError ? (
           <span className="text-indigo-700/70">
-            Análise inteligente indisponível neste momento. O painel operacional
-            continua funcional.
+            {t('mayra.indisponivel')}
           </span>
         ) : (
           <span>{analise?.recomendacaoPrincipal}</span>

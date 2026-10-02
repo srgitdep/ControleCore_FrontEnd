@@ -1,6 +1,7 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { stockApi } from '@/features/stock';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
 
 export function useStockList(params?: { page?: number; limit?: number; search?: string; armazemId?: string; incluirSemSaldo?: boolean; apenasStockBaixo?: boolean }) {
   return useQuery({
@@ -56,31 +57,31 @@ export function useStockMutations() {
   };
 
   const handleError = (error: any) => {
-    const message = error.response?.data?.message || 'Ocorreu um erro na operação.';
+    const message = error.response?.data?.message || i18n.t('stock:movimentos.erro_operacao');
     toast.error(message);
   };
 
   const createMovement = useMutation({
     mutationFn: stockApi.createMovement,
-    onSuccess: () => handleSuccess('Movimento registado com sucesso.'),
+    onSuccess: () => handleSuccess(i18n.t('stock:movimentos.registado')),
     onError: handleError,
   });
 
   const createTransfer = useMutation({
     mutationFn: stockApi.createTransfer,
-    onSuccess: () => handleSuccess('Transferência realizada com sucesso.'),
+    onSuccess: () => handleSuccess(i18n.t('stock:movimentos.transferencia_realizada')),
     onError: handleError,
   });
 
   const createPositiveAdjustment = useMutation({
     mutationFn: stockApi.createPositiveAdjustment,
-    onSuccess: () => handleSuccess('Ajuste positivo registado com sucesso.'),
+    onSuccess: () => handleSuccess(i18n.t('stock:movimentos.ajuste_positivo_registado')),
     onError: handleError,
   });
 
   const createNegativeAdjustment = useMutation({
     mutationFn: stockApi.createNegativeAdjustment,
-    onSuccess: () => handleSuccess('Ajuste negativo registado com sucesso.'),
+    onSuccess: () => handleSuccess(i18n.t('stock:movimentos.ajuste_negativo_registado')),
     onError: handleError,
   });
 

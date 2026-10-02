@@ -12,8 +12,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '@/shared/utils';
-import { b2bFornecedorApi, ROTULO_ESTADO_CONTA } from '../api/suppliers.api';
+import { useTranslation } from 'react-i18next';
+import { cn, formatData, mensagemDeErro } from '@/shared/utils';
+import { b2bFornecedorApi } from '../api/suppliers.api';
 import type { ContaBancaria, EstadoContaBancaria } from '../api/suppliers.api';
 
 interface Props {
@@ -42,6 +43,7 @@ interface Props {
  * acesso — e é essa a intenção.
  */
 export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }: Props) {
+  const { t } = useTranslation('fornecedores');
   const queryClient = useQueryClient();
   const [aPedir, setAPedir] = useState(false);
   const [aDecidir, setADecidir] = useState<ContaBancaria | null>(null);
@@ -65,7 +67,7 @@ export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }:
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <Landmark size={16} className="text-slate-400" />
-              Contas bancárias
+              {t('contas.titulo')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">{nomeFornecedor}</p>
           </div>
@@ -78,19 +80,19 @@ export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }:
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              A carregar...
+              {t('contas.a_carregar')}
             </div>
           ) : (
             <>
               <div>
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Conta em uso
+                  {t('contas.em_uso')}
                 </p>
                 {activa ? (
                   <CartaoConta conta={activa} />
                 ) : (
                   <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                    Nenhuma conta aprovada. Não há para onde pagar a este fornecedor.
+                    {t('contas.nenhuma_aprovada')}
                   </p>
                 )}
               </div>
@@ -98,7 +100,7 @@ export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }:
               {pendente && (
                 <div>
                   <p className="mb-2 text-xs font-medium uppercase tracking-wide text-amber-600">
-                    Alteração por aprovar
+                    {t('contas.por_aprovar')}
                   </p>
                   <CartaoConta conta={pendente} destaque />
                   <div className="mt-2 flex justify-end">
@@ -107,7 +109,7 @@ export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }:
                       className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
                     >
                       <ShieldAlert size={15} />
-                      Verificar e decidir
+                      {t('contas.verificar_decidir')}
                     </button>
                   </div>
                 </div>
@@ -119,14 +121,14 @@ export function ContasBancariasModal({ organizacaoId, nomeFornecedor, onClose }:
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
                 >
                   <Plus size={15} />
-                  Pedir alteração de conta
+                  {t('contas.pedir_alteracao')}
                 </button>
               )}
 
               {historico.length > 0 && (
                 <div>
                   <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Histórico
+                    {t('contas.historico')}
                   </p>
                   {/* Nunca se apaga uma conta: é o histórico que responde a «para onde
                       pagámos em Março». */}
@@ -171,6 +173,8 @@ function CartaoConta({
   destaque?: boolean;
   compacto?: boolean;
 }) {
+  const { t } = useTranslation('fornecedores');
+
   return (
     <div
       className={cn(
@@ -190,13 +194,15 @@ function CartaoConta({
 
       <div className="mt-2.5 space-y-0.5 border-t border-slate-200/70 pt-2 text-xs text-slate-500">
         <p>
-          Pedida por {conta.solicitadaPor?.name ?? '—'} ·{' '}
-          {new Date(conta.solicitadaEm).toLocaleDateString('pt-MZ')}
+          {t('contas.pedida_por', {
+            nome: conta.solicitadaPor?.name ?? '—',
+            data: formatData(conta.solicitadaEm),
+          })}
         </p>
         {conta.decididaPor && (
           <p>
-            Decidida por {conta.decididaPor.name}
-            {conta.decididaEm && ` · ${new Date(conta.decididaEm).toLocaleDateString('pt-MZ')}`}
+            {t('contas.decidida_por', { nome: conta.decididaPor.name })}
+            {conta.decididaEm && ` · ${formatData(conta.decididaEm)}`}
           </p>
         )}
         {conta.canalVerificacao && (
@@ -212,6 +218,7 @@ function CartaoConta({
 }
 
 function EstadoConta({ estado }: { estado: EstadoContaBancaria }) {
+  const { t } = useTranslation('fornecedores');
   const cores: Record<EstadoContaBancaria, string> = {
     ACTIVA: 'bg-emerald-100 text-emerald-700',
     PENDENTE: 'bg-amber-100 text-amber-800',
@@ -226,7 +233,7 @@ function EstadoConta({ estado }: { estado: EstadoContaBancaria }) {
         cores[estado],
       )}
     >
-      {ROTULO_ESTADO_CONTA[estado]}
+      {t(`contas.estado.${estado}`)}
     </span>
   );
 }
@@ -240,6 +247,7 @@ function PedirContaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('fornecedores');
   const [banco, setBanco] = useState('');
   const [iban, setIban] = useState('');
   const [titular, setTitular] = useState('');
@@ -264,11 +272,11 @@ function PedirContaModal({
         toast(r.avisoIbanJaRecusado, { icon: '⚠️', duration: 8000 });
       }
 
-      toast.success('Pedido registado. A conta só passa a valer depois de outra pessoa a aprovar.');
+      toast.success(t('contas.pedir_sucesso'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao registar o pedido.');
+      toast.error(mensagemDeErro(error, t('contas.pedir_erro')));
     } finally {
       setIsSaving(false);
     }
@@ -278,7 +286,7 @@ function PedirContaModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4">
       <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">Pedir alteração de conta</h2>
+          <h2 className="text-base font-semibold text-slate-900">{t('contas.pedir_alteracao')}</h2>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
           </button>
@@ -286,7 +294,7 @@ function PedirContaModal({
 
         <form onSubmit={submeter} className="space-y-4 px-5 py-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-600">Banco *</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">{t('contas.pedir_banco')}</label>
             <input
               required
               value={banco}
@@ -308,7 +316,7 @@ function PedirContaModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-600">Titular</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">{t('contas.pedir_titular')}</label>
             <input
               value={titular}
               onChange={(e) => setTitular(e.target.value)}
@@ -318,17 +326,17 @@ function PedirContaModal({
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-600">
-              Comprovativo <span className="text-slate-400">(link)</span>
+              {t('contas.pedir_comprovativo')}{' '}
+              <span className="text-slate-400">{t('contas.pedir_link')}</span>
             </label>
             <input
               value={comprovativoUrl}
               onChange={(e) => setComprovativoUrl(e.target.value)}
-              placeholder="Declaração do banco, cheque anulado..."
+              placeholder={t('contas.pedir_comprovativo_ph')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
             <p className="mt-1 text-xs text-slate-500">
-              Opcional agora, obrigatório para aprovar — quem pede pode estar à espera do
-              documento do fornecedor.
+              {t('contas.pedir_comprovativo_ajuda')}
             </p>
           </div>
 
@@ -338,7 +346,7 @@ function PedirContaModal({
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
             >
-              Cancelar
+              {t('acao.cancelar')}
             </button>
             <button
               type="submit"
@@ -346,7 +354,7 @@ function PedirContaModal({
               className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
             >
               {isSaving && <Loader2 size={14} className="animate-spin" />}
-              Registar pedido
+              {t('contas.pedir_registar')}
             </button>
           </div>
         </form>
@@ -372,6 +380,7 @@ function DecidirContaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation('fornecedores');
   const [canal, setCanal] = useState('');
   const [motivo, setMotivo] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -380,13 +389,11 @@ function DecidirContaModal({
 
   const decidir = async (aprovar: boolean) => {
     if (aprovar && canal.trim().length < 10) {
-      toast.error(
-        'Descreve como confirmaste a alteração por um canal independente do que a pediu.',
-      );
+      toast.error(t('contas.decidir_erro_canal'));
       return;
     }
     if (!aprovar && motivo.trim().length < 5) {
-      toast.error('A recusa exige um motivo — é o que quem voltar a pedir vai ler.');
+      toast.error(t('contas.decidir_erro_motivo'));
       return;
     }
 
@@ -397,13 +404,13 @@ function DecidirContaModal({
         canalVerificacao: aprovar ? canal.trim() : undefined,
         motivo: motivo.trim() || undefined,
       });
-      toast.success(aprovar ? 'Conta aprovada e em uso.' : 'Pedido recusado.');
+      toast.success(aprovar ? t('contas.decidir_aprovada') : t('contas.decidir_recusada'));
       onSuccess();
       onClose();
     } catch (error: any) {
       // O 403 da segregação de funções traz a regra na mensagem. Mostrá-la é o que
       // explica a quem tentou porque é que não pode.
-      toast.error(error?.response?.data?.message || 'Erro ao decidir.');
+      toast.error(mensagemDeErro(error, t('contas.decidir_erro')));
     } finally {
       setIsSaving(false);
     }
@@ -415,7 +422,7 @@ function DecidirContaModal({
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
             <ShieldAlert size={16} className="text-amber-500" />
-            Verificar alteração de conta
+            {t('contas.decidir_titulo')}
           </h2>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={18} />
@@ -427,7 +434,7 @@ function DecidirContaModal({
               reparar que o número mudou. */}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs text-slate-500">Conta actual</p>
+              <p className="text-xs text-slate-500">{t('contas.decidir_conta_actual')}</p>
               {contaActual ? (
                 <>
                   <p className="mt-1 text-sm font-medium text-slate-800">{contaActual.banco}</p>
@@ -436,11 +443,11 @@ function DecidirContaModal({
                   </p>
                 </>
               ) : (
-                <p className="mt-1 text-sm text-slate-500">Nenhuma</p>
+                <p className="mt-1 text-sm text-slate-500">{t('contas.decidir_nenhuma')}</p>
               )}
             </div>
             <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3">
-              <p className="text-xs text-amber-700">Passa a ser</p>
+              <p className="text-xs text-amber-700">{t('contas.decidir_passa_a_ser')}</p>
               <p className="mt-1 text-sm font-medium text-amber-900">{conta.banco}</p>
               <p className="mt-0.5 break-all font-mono text-xs text-amber-800">{conta.iban}</p>
             </div>
@@ -450,32 +457,32 @@ function DecidirContaModal({
             <div className="flex gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <p>
-                <strong>Sem comprovativo de titularidade.</strong> Não é possível aprovar: um
-                IBAN sem documento que prove de quem é são as palavras de quem o escreveu.
+                <strong>{t('contas.decidir_sem_comprovativo_titulo')}</strong>{' '}
+                {t('contas.decidir_sem_comprovativo_texto')}
               </p>
             </div>
           )}
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-600">
-              Como confirmaste, por canal independente? <span className="text-rose-500">*</span>
+              {t('contas.decidir_canal')} <span className="text-rose-500">*</span>
             </label>
             <textarea
               value={canal}
               onChange={(e) => setCanal(e.target.value)}
               rows={2}
-              placeholder="Telefonema para o número do contrato, 04/09, atendeu o responsável financeiro."
+              placeholder={t('contas.decidir_canal_ph')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
             <p className="mt-1 text-xs text-slate-500">
-              Um pedido que chega por e-mail e é confirmado por resposta ao mesmo e-mail não foi
-              confirmado: quem controla a caixa de correio controla os dois lados.
+              {t('contas.decidir_canal_ajuda')}
             </p>
           </div>
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-600">
-              Motivo <span className="text-slate-400">(obrigatório para recusar)</span>
+              {t('contas.decidir_motivo')}{' '}
+              <span className="text-slate-400">{t('contas.decidir_motivo_obrig')}</span>
             </label>
             <input
               value={motivo}
@@ -490,23 +497,23 @@ function DecidirContaModal({
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
           >
-            Fechar
+            {t('acao.fechar')}
           </button>
           <button
             onClick={() => decidir(false)}
             disabled={isSaving}
             className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
           >
-            <Ban size={14} /> Recusar
+            <Ban size={14} /> {t('contas.decidir_recusar')}
           </button>
           <button
             onClick={() => decidir(true)}
             disabled={isSaving || semComprovativo}
-            title={semComprovativo ? 'Falta o comprovativo de titularidade' : undefined}
+            title={semComprovativo ? t('contas.decidir_falta_comprovativo') : undefined}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            Aprovar
+            {t('contas.decidir_aprovar')}
           </button>
         </div>
       </div>

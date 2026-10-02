@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X, Loader2, MessageSquare, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { purchasesApi } from '../api/purchases.api';
 import type { PurchaseOrder } from '../api/purchases.api';
 
@@ -9,9 +11,6 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
 
 /**
  * Registar o que o fornecedor respondeu à ordem.
@@ -32,6 +31,7 @@ const mt = (v: number) =>
  * não é uma promessa de a entregar, e é essa a leitura que evita surpresas na entrega.
  */
 export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('compras');
   const itens = order.itens ?? [];
 
   const [quantidades, setQuantidades] = useState<Record<string, number>>(
@@ -53,12 +53,12 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
   // O mesmo cálculo que o backend faz, para o ecrã dizer de antemão o que vai acontecer.
   const tipo =
     totalConfirmado === 0
-      ? 'Recusa'
+      ? t('conf.tipo_recusa')
       : totalConfirmado < totalPedido
-        ? 'Aceite parcial'
+        ? t('conf.tipo_parcial')
         : Object.keys(precos).some((k) => precos[k] !== '') || dataProposta
-          ? 'Aceite com alterações'
-          : 'Aceite total';
+          ? t('conf.tipo_alteracoes')
+          : t('conf.tipo_total');
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,14 +84,14 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
 
       toast.success(
         falta > 0
-          ? `Resposta registada. Ficam ${falta} unidades por confirmar — decide se compras a outro.`
-          : 'Resposta do fornecedor registada.',
+          ? t('conf.toast_com_falta', { count: falta })
+          : t('conf.toast_registada'),
       );
 
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao registar a resposta.');
+      toast.error(mensagemDeErro(error, t('conf.erro_registar')));
     } finally {
       setIsSaving(false);
     }
@@ -104,13 +104,17 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <MessageSquare size={16} className="text-slate-400" />
-              Resposta do fornecedor
+              {t('conf.titulo')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">
               {order.fornecedor?.nome} · <span className="font-mono">#{order.id.slice(0, 8)}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-slate-600"
+            aria-label={t('conf.fechar')}
+          >
             <X size={18} />
           </button>
         </header>
@@ -120,11 +124,12 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">Produto</th>
-                  <th className="px-3 py-2 text-right font-medium">Pedido</th>
-                  <th className="px-3 py-2 text-right font-medium">Confirma</th>
+                  <th className="px-3 py-2 font-medium">{t('conf.col_produto')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('conf.col_pedido')}</th>
+                  <th className="px-3 py-2 text-right font-medium">{t('conf.col_confirma')}</th>
                   <th className="px-3 py-2 text-right font-medium">
-                    Preço <span className="font-normal text-slate-400">(se diferente)</span>
+                    {t('conf.col_preco')}{' '}
+                    <span className="font-normal text-slate-400">({t('conf.se_diferente')})</span>
                   </th>
                 </tr>
               </thead>
@@ -152,7 +157,7 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
                           }`}
                         />
                         {falta > 0 && (
-                          <p className="mt-0.5 text-[10px] text-amber-700">faltam {falta}</p>
+                          <p className="mt-0.5 text-[10px] text-amber-700">{t('conf.faltam', { falta })}</p>
                         )}
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -162,7 +167,7 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
                           min={0}
                           value={precos[i.id] ?? ''}
                           onChange={(e) => setPrecos((p) => ({ ...p, [i.id]: e.target.value }))}
-                          placeholder={mt(i.custoUnitario)}
+                          placeholder={formatMoeda(i.custoUnitario)}
                           className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
                       </td>
@@ -177,9 +182,8 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
             <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <p>
-                <strong>{emFalta} unidades ficam por confirmar.</strong> Não desaparecem — ficam
-                identificadas na ordem para se decidir se se compra a outro fornecedor ou se se
-                aceita menos. Saber isto hoje é a diferença para o descobrir no dia da entrega.
+                <strong>{t('conf.por_confirmar', { count: emFalta })}</strong>{' '}
+                {t('conf.por_confirmar_ajuda')}
               </p>
             </div>
           )}
@@ -187,7 +191,8 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                Nova data de entrega <span className="text-slate-400">(se propôs outra)</span>
+                {t('conf.nova_data')}{' '}
+                <span className="text-slate-400">({t('conf.se_propos')})</span>
               </label>
               <input
                 type="date"
@@ -198,12 +203,12 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                Por onde chegou
+                {t('conf.canal')}
               </label>
               <input
                 value={canal}
                 onChange={(e) => setCanal(e.target.value)}
-                placeholder="WhatsApp do comercial, 04/09"
+                placeholder={t('conf.canal_exemplo')}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
             </div>
@@ -211,20 +216,21 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-slate-600">
-              O que o fornecedor disse
+              {t('conf.o_que_disse')}
             </label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={2}
-              placeholder="Só tem 300 em armazém; o resto entra na próxima semana."
+              placeholder={t('conf.observacoes_exemplo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm placeholder:text-slate-300 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
 
           <div className="flex items-center justify-between border-t border-slate-100 pt-4">
             <p className="text-xs text-slate-500">
-              Vai ficar como <strong className="text-slate-700">{tipo}</strong>
+              {t('conf.vai_ficar_como')}{' '}
+              <strong className="text-slate-700">{tipo}</strong>
             </p>
             <div className="flex gap-2">
               <button
@@ -232,7 +238,7 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
                 onClick={onClose}
                 className="rounded-lg px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
               >
-                Cancelar
+                {t('conf.cancelar')}
               </button>
               <button
                 type="submit"
@@ -240,7 +246,7 @@ export function ConfirmacaoFornecedorModal({ order, onClose, onSuccess }: Props)
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
               >
                 {isSaving && <Loader2 size={14} className="animate-spin" />}
-                Registar resposta
+                {t('conf.registar')}
               </button>
             </div>
           </div>

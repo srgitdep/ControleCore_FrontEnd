@@ -1,5 +1,6 @@
 import { type Table, flexRender } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 // ── CVA: variantes de linha para destacar estados críticos ──────────────────
@@ -27,9 +28,10 @@ interface ResponsiveTableProps<TData> {
 export function ResponsiveTable<TData>({
   table,
   isLoading = false,
-  emptyMessage = 'Nenhum registo encontrado.',
+  emptyMessage,
   getRowStatus,
 }: ResponsiveTableProps<TData>) {
+  const { t } = useTranslation('shell');
   const rows = table.getRowModel().rows;
   const headerGroups = table.getHeaderGroups();
 
@@ -38,7 +40,7 @@ export function ResponsiveTable<TData>({
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-slate-600" />
-        <span className="text-sm">A carregar dados...</span>
+        <span className="text-sm">{t('tabela.a_carregar')}</span>
       </div>
     );
   }
@@ -46,7 +48,7 @@ export function ResponsiveTable<TData>({
   // ── Empty state ──────────────────────────────────────────────────────────
   if (rows.length === 0) {
     return (
-      <div className="py-16 text-center text-sm text-slate-400">{emptyMessage}</div>
+      <div className="py-16 text-center text-sm text-slate-400">{emptyMessage ?? t('tabela.sem_registos')}</div>
     );
   }
 

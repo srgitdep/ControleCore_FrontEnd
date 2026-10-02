@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, ClipboardList, MapPin } from 'lucide-react';
 import { useCreateCycle } from '@/features/stock';
 import { useArmazens } from '@/features/lojas';
@@ -22,6 +23,7 @@ interface CreateCycleModalProps {
  * localizações em si); o aviso abaixo orienta para o segundo.
  */
 export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) {
+  const { t } = useTranslation('stock');
   const [name, setName] = useState('');
   const [armazemId, setArmazemId] = useState('');
   const [gerirLocalizacoesAberto, setGerirLocalizacoesAberto] = useState(false);
@@ -49,7 +51,7 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
             <div className="p-2 bg-blue-100 rounded-lg">
               <ClipboardList className="h-5 w-5 text-blue-600" />
             </div>
-            <h2 className="text-lg font-bold text-slate-800">Novo Ciclo de Inventário</h2>
+            <h2 className="text-lg font-bold text-slate-800">{t('novo_ciclo.titulo')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -63,26 +65,26 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
           <div className="p-6 space-y-4">
             <div>
               <label htmlFor="cycle-name" className="block text-sm font-medium text-slate-700 mb-1.5">
-                Nome do Ciclo
+                {t('novo_ciclo.nome')}
               </label>
               <input
                 id="cycle-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Balanço Mensal — Bebidas (Set/2026)"
+                placeholder={t('novo_ciclo.exemplo_nome')}
                 required
                 autoFocus
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="mt-1.5 text-xs text-slate-400">
-                Será visível para os operadores durante a contagem.
+                {t('novo_ciclo.nome_dica')}
               </p>
             </div>
 
             <div>
               <label htmlFor="cycle-armazem" className="block text-sm font-medium text-slate-700 mb-1.5">
-                Armazém
+                {t('novo_ciclo.armazem')}
               </label>
               <select
                 id="cycle-armazem"
@@ -93,7 +95,7 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-60"
               >
                 <option value="">
-                  {isLoadingArmazens ? 'A carregar armazéns...' : 'Selecione um armazém'}
+                  {isLoadingArmazens ? t('novo_ciclo.a_carregar_armazens') : t('novo_ciclo.seleccione_armazem')}
                 </option>
                 {armazens.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -102,8 +104,7 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
                 ))}
               </select>
               <p className="mt-1.5 text-xs text-slate-400">
-                Toda mercadoria já atribuída a uma prateleira deste armazém entra no ciclo
-                como pendente.
+                {t('novo_ciclo.armazem_dica')}
               </p>
             </div>
 
@@ -115,8 +116,8 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
               >
                 <span>
                   {totalLocalizacoes > 0
-                    ? `${totalLocalizacoes} localização(ões) cadastrada(s). Confirme que há mercadoria atribuída a elas na ficha de cada posição em Stock.`
-                    : 'Este armazém ainda não tem localizações (prateleiras) cadastradas.'}
+                    ? t('novo_ciclo.localizacoes_ok', { n: totalLocalizacoes })
+                    : t('novo_ciclo.sem_localizacoes')}
                 </span>
                 <button
                   type="button"
@@ -124,24 +125,24 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
                   className="flex shrink-0 items-center gap-1 rounded-md bg-white/70 px-2 py-1 font-medium hover:bg-white"
                 >
                   <MapPin className="h-3 w-3" />
-                  Gerir localizações
+                  {t('novo_ciclo.gerir_localizacoes')}
                 </button>
               </div>
             )}
 
             {error && (
               <p className="text-sm text-rose-600 bg-rose-50 px-3 py-2 rounded-lg">
-                {(error as any)?.response?.data?.message ?? 'Erro ao criar ciclo. Tente novamente.'}
+                {(error as any)?.response?.data?.message ?? t('novo_ciclo.erro_criar')}
               </p>
             )}
           </div>
 
           <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-              Cancelar
+              {t('geral.cancelar')}
             </Button>
             <Button type="submit" disabled={!name.trim() || !armazemId || isPending}>
-              {isPending ? 'A criar...' : 'Criar Ciclo'}
+              {isPending ? t('novo_ciclo.a_criar') : t('novo_ciclo.criar')}
             </Button>
           </div>
         </form>
@@ -151,7 +152,7 @@ export function CreateCycleModal({ onClose, onCreated }: CreateCycleModalProps) 
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <h3 className="font-bold text-slate-800">Localizações — {armazemSelecionado?.etiqueta}</h3>
+              <h3 className="font-bold text-slate-800">{t('novo_ciclo.localizacoes_titulo', { armazem: armazemSelecionado?.etiqueta })}</h3>
               <button
                 onClick={() => setGerirLocalizacoesAberto(false)}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"

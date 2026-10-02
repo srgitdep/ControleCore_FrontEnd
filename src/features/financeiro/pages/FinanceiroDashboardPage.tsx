@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ComposedChart,
   Bar,
@@ -37,29 +38,13 @@ import {
 import type { EstadoLancamento, RegistroFinanceiro } from '@/features/financeiro';
 import { CardCarousel, KpiCard as SharedKpiCard, TableScroll } from '@/shared/ui';
 import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatData, formatMoeda } from '@/shared/utils';
 import { NovoRegistroModal } from '../components/NovoRegistroModal';
 
 // ─── Helpers ───
 
-/**
- * Um valor em meticais.
- *
- * ## A escolha de `pt-BR`
- *
- * Parece errado num sistema moçambicano, e é deliberado: `pt-PT` separa os milhares com
- * **espaço** (`4 274,60`), enquanto `pt-BR` usa o ponto (`4.274,60`), que é a convenção
- * usada em Moçambique e a que já estava a aparecer nestes relatórios. A vírgula decimal é
- * igual nos dois. Trocar para `pt-PT` mudaria os milhares para espaço sem ninguém pedir.
- *
- * A unidade é «MT», que é o que aparece nos recibos e no fecho de caixa — «MZN» por
- * extenso era o único sítio do sistema a escrevê-lo assim.
- */
-const fmt = (v: number | string) =>
-  Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-/** Um valor com a unidade, para quando aparece sozinho. */
-const moeda = (v: number | string) => `${fmt(v)} MT`;
+/** Um valor em meticais, na forma da língua activa (`1.234,50 MT` / `MT 1,234.50`). */
+const moeda = (v: number | string) => formatMoeda(Number(v));
 
 /**
  * Uma linha da demonstração de resultados.
@@ -121,8 +106,7 @@ function LinhaDre({
           total && negativo ? 'text-red-600' : 'text-slate-900',
         ].join(' ')}
       >
-        {negativo && !total ? `(${fmt(absoluto)})` : fmt(valor)}
-        <span className="ml-1 text-xs font-normal text-slate-400">MT</span>
+        {negativo && !total ? `(${moeda(absoluto)})` : moeda(valor)}
       </dd>
     </div>
   );
@@ -130,16 +114,16 @@ function LinhaDre({
 
 const fmtDate = (iso: string) => {
   try {
-    return format(parseISO(iso), 'dd/MM/yyyy', { locale: ptBR });
+    return formatData(parseISO(iso));
   } catch {
     return iso;
   }
 };
 
-const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
+const MONTH_KEYS = [
+  'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+] as const;
 
 // ─── Sub-components ───
 
@@ -191,26 +175,28 @@ function KpiCard({
 }
 
 function StatusBadge({ estado }: { estado: EstadoLancamento }) {
-  const config: Record<EstadoLancamento, { label: string; cls: string; icon: React.ElementType }> = {
-    PENDING:   { label: 'Pendente',   cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',   icon: Clock },
-    PAID:      { label: 'Pago',       cls: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', icon: CheckCircle },
-    OVERDUE:   { label: 'Vencido',    cls: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',       icon: AlertTriangle },
-    CANCELLED: { label: 'Cancelado',  cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',  icon: XCircle },
+  const { t } = useTranslation('financeiro');
+  const config: Record<EstadoLancamento, { cls: string; icon: React.ElementType }> = {
+    PENDING:   { cls: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',   icon: Clock },
+    PAID:      { cls: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', icon: CheckCircle },
+    OVERDUE:   { cls: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',       icon: AlertTriangle },
+    CANCELLED: { cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',  icon: XCircle },
   };
-  const { label, cls, icon: Icon } = config[estado];
+  const { cls, icon: Icon } = config[estado];
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>
       <Icon className="h-3 w-3" />
-      {label}
+      {t(`estado.${estado}`)}
     </span>
   );
 }
 
 function CreditBlockBadge() {
+  const { t } = useTranslation('financeiro');
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">
       <AlertTriangle className="h-3 w-3" />
-      Crédito Bloqueado
+      {t('registos.credito_bloqueado')}
     </span>
   );
 }
@@ -237,6 +223,7 @@ function CustomCashFlowTooltip({ active, payload, label }: any) {
 type Tab = 'dre' | 'cashflow' | 'receber' | 'pagar';
 
 export function FinanceiroDashboardPage() {
+  const { t } = useTranslation('financeiro');
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
@@ -264,11 +251,12 @@ export function FinanceiroDashboardPage() {
   const cf = cashFlowQuery.data;
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'dre', label: 'DRE — Resultados' },
-    { id: 'cashflow', label: 'Fluxo de Caixa' },
-    { id: 'receber', label: 'Contas a Receber' },
-    { id: 'pagar', label: 'Contas a Pagar' },
+    { id: 'dre', label: t('abas.dre') },
+    { id: 'cashflow', label: t('abas.fluxo') },
+    { id: 'receber', label: t('abas.receber') },
+    { id: 'pagar', label: t('abas.pagar') },
   ];
+  const periodo = `${t(`meses.${MONTH_KEYS[mes - 1]}`)} ${ano}`;
 
   return (
     // Sem padding próprio: o `AppLayout` já aplica `p-4 sm:p-6` ao `<main>`. Num
@@ -284,18 +272,18 @@ export function FinanceiroDashboardPage() {
           usam, e um bloco de cor sólida a competir com os números do relatório tirava-lhes
           a atenção — num relatório financeiro, o que salta à vista deve ser o valor. */}
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200 hide-scrollbar">
-        {TABS.map((t) => (
+        {TABS.map((aba) => (
           <button
-            key={t.id}
-            id={`tab-${t.id}`}
-            onClick={() => setTab(t.id)}
+            key={aba.id}
+            id={`tab-${aba.id}`}
+            onClick={() => setTab(aba.id)}
             className={`-mb-px flex-shrink-0 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-              tab === t.id
+              tab === aba.id
                 ? 'border-blue-600 text-blue-700'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
-            {t.label}
+            {aba.label}
           </button>
         ))}
       </div>
@@ -312,7 +300,7 @@ export function FinanceiroDashboardPage() {
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="min-w-40 text-center text-base font-semibold text-slate-900 dark:text-white">
-              {MONTH_NAMES[mes - 1]} {ano}
+              {periodo}
             </span>
             <button
               onClick={nextMonth}
@@ -347,24 +335,24 @@ export function FinanceiroDashboardPage() {
                   recurso que devia avisar de um prejuízo. */}
               <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
                 <h2 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Demonstração de resultados — {MONTH_NAMES[mes - 1]} {ano}
+                  {t('dre.titulo', { periodo })}
                 </h2>
 
                 <dl className="space-y-0">
-                  <LinhaDre rotulo="Faturação bruta" valor={dre.faturamentoBruto} />
-                  <LinhaDre rotulo="Custo da mercadoria vendida" valor={-dre.cmv} />
+                  <LinhaDre rotulo={t('dre.faturacao_bruta')} valor={dre.faturamentoBruto} />
+                  <LinhaDre rotulo={t('dre.cmv')} valor={-dre.cmv} />
 
                   <LinhaDre
-                    rotulo="Margem bruta"
-                    detalhe={`${dre.margemBrutaPercentagem.toFixed(1)}% da faturação`}
+                    rotulo={t('dre.margem_bruta')}
+                    detalhe={t('dre.da_faturacao', { pct: dre.margemBrutaPercentagem.toFixed(1) })}
                     valor={dre.margemBruta}
                     subtotal
                   />
 
-                  <LinhaDre rotulo="Despesas pagas no período" valor={-dre.despesasPagas} />
+                  <LinhaDre rotulo={t('dre.despesas_pagas')} valor={-dre.despesasPagas} />
 
                   <LinhaDre
-                    rotulo="Lucro operacional estimado"
+                    rotulo={t('dre.lucro')}
                     valor={dre.lucroOperacionalEstimado}
                     total
                   />
@@ -374,27 +362,27 @@ export function FinanceiroDashboardPage() {
               {/* Os indicadores deslizam na horizontal abaixo de `lg`, em vez de
                   empilharem: eram `grid-cols-2` em telemóvel, o que dava dois cartões
                   de largura mínima por linha e texto a partir. */}
-              <CardCarousel label="Indicadores do período" colunas={4}>
+              <CardCarousel label={t('dre.indicadores')} colunas={4}>
                 <KpiCard
-                  label="Vendas Realizadas"
+                  label={t('dre.vendas_realizadas')}
                   value={String(dre.totalVendasRealizadas)}
                   icon={ShoppingCart}
                   accent="blue"
                 />
                 <KpiCard
-                  label="Ticket Médio"
+                  label={t('dre.ticket_medio')}
                   value={moeda(dre.ticketMedioVenda)}
                   icon={DollarSign}
                   accent="purple"
                 />
                 <KpiCard
-                  label="Recebíveis Pendentes"
+                  label={t('dre.recebiveis_pendentes')}
                   value={moeda(dre.receitasReceber)}
                   icon={TrendingUp}
                   accent="green"
                 />
                 <KpiCard
-                  label="Despesas Pendentes"
+                  label={t('dre.despesas_pendentes')}
                   value={moeda(dre.despesasPendentes)}
                   icon={TrendingDown}
                   accent="red"
@@ -405,7 +393,7 @@ export function FinanceiroDashboardPage() {
               {dre.topProdutos.length > 0 && (
                 <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                   <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                    Top 5 Produtos por Receita
+                    {t('dre.top_produtos')}
                   </h3>
                   <div className="space-y-3">
                     {dre.topProdutos.map((p, i) => {
@@ -450,21 +438,21 @@ export function FinanceiroDashboardPage() {
             <>
               {/* Três colunas, não quatro: com três indicadores, uma grelha de quatro
                   deixaria uma lacuna à direita. */}
-              <CardCarousel label="Fluxo de caixa" colunas={3}>
+              <CardCarousel label={t('fluxo.etiqueta')} colunas={3}>
                 <KpiCard
-                  label="Saldo Atual (Caixa Real)"
+                  label={t('fluxo.saldo_atual')}
                   value={moeda(cf.saldoAtual)}
                   icon={DollarSign}
                   accent={cf.saldoAtual >= 0 ? 'green' : 'red'}
                 />
                 <KpiCard
-                  label="Recebíveis nos Próx. 30d"
+                  label={t('fluxo.receber_30')}
                   value={moeda(cf.serie.reduce((a, p) => a + p.receber, 0))}
                   icon={TrendingUp}
                   accent="blue"
                 />
                 <KpiCard
-                  label="Pagáveis nos Próx. 30d"
+                  label={t('fluxo.pagar_30')}
                   value={moeda(cf.serie.reduce((a, p) => a + p.pagar, 0))}
                   icon={TrendingDown}
                   accent="red"
@@ -473,10 +461,10 @@ export function FinanceiroDashboardPage() {
 
               <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-6 backdrop-blur-sm">
                 <h2 className="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">
-                  Projeção de Fluxo de Caixa — Próximos 30 dias
+                  {t('fluxo.projecao')}
                 </h2>
                 <p className="mb-6 text-xs text-slate-500">
-                  Barras: entradas (azul) e saÍdas (vermelho) diárias. Linha: saldo projetado acumulado.
+                  {t('fluxo.legenda')}
                 </p>
                 <ResponsiveContainer width="100%" height={340}>
                   <ComposedChart data={cf.serie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -500,12 +488,12 @@ export function FinanceiroDashboardPage() {
                       iconType="circle"
                     />
                     <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="4 2" />
-                    <Bar dataKey="receber" name="A Receber" fill="#3b82f6" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="pagar" name="A Pagar" fill="#ef4444" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="receber" name={t('fluxo.serie_receber')} fill="#3b82f6" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="pagar" name={t('fluxo.serie_pagar')} fill="#ef4444" fillOpacity={0.75} radius={[3, 3, 0, 0]} />
                     <Line
                       type="monotone"
                       dataKey="saldoProjetado"
-                      name="Saldo Projetado"
+                      name={t('fluxo.serie_saldo')}
                       stroke="#1d4ed8"
                       strokeWidth={2.5}
                       dot={false}
@@ -563,6 +551,7 @@ function RegistrosTable({
   onPagar: (id: string) => void;
   isPayingId: string | null;
 }) {
+  const { t } = useTranslation('financeiro');
   const { data, isLoading } = query;
   const registros: RegistroFinanceiro[] = data?.data ?? [];
   const lastPage: number = data?.lastPage ?? 1;
@@ -575,7 +564,7 @@ function RegistrosTable({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-900 dark:text-white">
-          {tipo === 'RECEITA' ? 'Contas a Receber' : 'Contas a Pagar'}
+          {tipo === 'RECEITA' ? t('registos.titulo_receber') : t('registos.titulo_pagar')}
         </h2>
         <button
           id={`btn-novo-${tipo.toLowerCase()}`}
@@ -583,7 +572,7 @@ function RegistrosTable({
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
         >
           <PlusCircle className="h-4 w-4" />
-          Novo
+          {t('registos.novo')}
         </button>
       </div>
 
@@ -598,7 +587,7 @@ function RegistrosTable({
       {!isLoading && registros.length === 0 && (
         <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-500">
           <DollarSign className="h-8 w-8" />
-          <p className="text-sm">Nenhum registro encontrado</p>
+          <p className="text-sm">{t('registos.nenhum')}</p>
         </div>
       )}
 
@@ -616,14 +605,14 @@ function RegistrosTable({
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Descrição</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('registos.col_descricao')}</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {tipo === 'RECEITA' ? 'Cliente' : 'Fornecedor'}
+                  {tipo === 'RECEITA' ? t('registos.col_cliente') : t('registos.col_fornecedor')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Vencimento</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Valor</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Estado</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ações</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('registos.col_vencimento')}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('registos.col_valor')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('registos.col_estado')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('registos.col_acoes')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-900/40">
@@ -636,10 +625,10 @@ function RegistrosTable({
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-slate-800 dark:text-slate-200">{r.descricao}</span>
                       {r.createdBySystem && (
-                        <span className="text-xs text-slate-500 italic">ðŸ¤– Criado automaticamente</span>
+                        <span className="text-xs text-slate-500 italic">{t('registos.criado_auto')}</span>
                       )}
                       {r.venda && (
-                        <span className="text-xs text-slate-500">Fatura: {r.venda.numeroFatura}</span>
+                        <span className="text-xs text-slate-500">{t('registos.fatura', { numero: r.venda.numeroFatura })}</span>
                       )}
                     </div>
                   </td>
@@ -674,7 +663,7 @@ function RegistrosTable({
                       </span>
                       {r.dataPagamento && (
                         <span className="text-xs text-emerald-500">
-                          Pago: {fmtDate(r.dataPagamento)}
+                          {t('registos.pago_em', { data: fmtDate(r.dataPagamento) })}
                         </span>
                       )}
                     </div>
@@ -698,14 +687,14 @@ function RegistrosTable({
                         disabled={isPayingId === r.id}
                         className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-slate-900 dark:text-white hover:bg-emerald-500 transition disabled:opacity-50"
                       >
-                        {isPayingId === r.id ? '...' : 'Marcar Pago'}
+                        {isPayingId === r.id ? '...' : t('registos.marcar_pago')}
                       </button>
                     )}
                     {r.estado === 'PAID' && (
-                      <span className="text-xs text-slate-500">Pago</span>
+                      <span className="text-xs text-slate-500">{t('registos.pago')}</span>
                     )}
                     {r.estado === 'CANCELLED' && (
-                      <span className="text-xs text-slate-500">Cancelado</span>
+                      <span className="text-xs text-slate-500">{t('registos.cancelado')}</span>
                     )}
                   </td>
                 </tr>
@@ -717,7 +706,7 @@ function RegistrosTable({
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm px-4 py-3">
             <span className="text-xs text-slate-500">
-              Página {page} de {lastPage} · {data?.total ?? 0} registros
+              {t('registos.paginacao', { page, last: lastPage, count: data?.total ?? 0 })}
             </span>
             <div className="flex gap-2">
               <button

@@ -6,7 +6,8 @@ import { cn } from '@/shared/utils';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
 import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 import { PesquisaGlobal } from '@/features/pesquisa';
-import { useAlertas, TIPO_ALERTA_LABEL } from '@/features/necessidades';
+import { useAlertas } from '@/features/necessidades';
+import { useTranslation } from 'react-i18next';
 import { definirIdiomaApi } from '@/features/auth/api/auth.api';
 import { SelectorIdioma } from '@/shared/ui';
 
@@ -18,31 +19,37 @@ import { SelectorIdioma } from '@/shared/ui';
  * passou a separador das Compras. `/armazens`, `/lojas`, `/financeiro` e `/permissoes`
  * estavam a faltar e mostravam «ControlCore».
  */
-const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':     'Dashboard',
-  '/produtos':      'Produtos & Stock',
-  '/stock':         'Produtos & Stock',
-  '/armazens':      'Armazéns',
-  '/compras':       'Compras',
-  '/requisicoes':   'Requisições de Compra',
-  '/conferencia':   'Conferência',
-  '/vendas':        'Ponto de Venda',
-  '/lojas':         'Lojas & Caixas',
-  '/clientes':      'CRM',
-  '/crm':           'CRM',
-  '/financeiro':    'Financeiro',
-  '/rh':            'Recursos Humanos',
-  '/empresas':      'Empresas',
-  '/utilizadores':  'Utilizadores',
-  '/permissoes':    'Permissões',
-  '/historico':     'Histórico no Sistema',
-};
+const PAGE_TITLES = {
+  '/dashboard':     'dashboard',
+  '/produtos':      'stock',
+  '/stock':         'stock',
+  '/armazens':      'armazens',
+  '/compras':       'compras',
+  '/requisicoes':   'requisicoes',
+  '/conferencia':   'conferencia',
+  '/vendas':        'vendas',
+  '/lojas':         'lojas',
+  '/clientes':      'crm',
+  '/crm':           'crm',
+  '/financeiro':    'financeiro',
+  '/rh':            'rh',
+  '/empresas':      'empresas',
+  '/utilizadores':  'utilizadores',
+  '/permissoes':    'permissoes',
+  '/historico':     'historico',
+} as const;
+
+/** O texto vem do catálogo (`cabecalho.titulo.<chave>`), pelo que o mapa guarda só a chave. */
+function chaveDoTitulo(rota: string): (typeof PAGE_TITLES)[keyof typeof PAGE_TITLES] | undefined {
+  return (PAGE_TITLES as Record<string, (typeof PAGE_TITLES)[keyof typeof PAGE_TITLES]>)[rota];
+}
 
 interface HeaderProps {
   isCollapsed?: boolean;
 }
 
 export function Header({ isCollapsed = false }: HeaderProps) {
+  const { t } = useTranslation('shell');
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleMobileMenu } = useUIStore();
@@ -70,10 +77,9 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const margemDaMayra = classeMargemDaMayra(useCopilotStore());
 
   // Resolve o título: verifica o pathname exacto ou usa o segmento raiz
-  const pageTitle =
-    PAGE_TITLES[location.pathname] ??
-    PAGE_TITLES[`/${location.pathname.split('/')[1]}`] ??
-    'ControlCore';
+  const chaveTitulo =
+    chaveDoTitulo(location.pathname) ?? chaveDoTitulo(`/${location.pathname.split('/')[1]}`);
+  const pageTitle = chaveTitulo ? t(`cabecalho.titulo.${chaveTitulo}`) : 'ControlCore';
 
   return (
     <header
@@ -96,7 +102,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         <button
           onClick={toggleMobileMenu}
           className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors lg:hidden"
-          aria-label="Abrir menu de navegação"
+          aria-label={t('cabecalho.abrir_menu')}
         >
           <Menu size={22} />
         </button>
@@ -118,7 +124,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         <button
           onClick={() => setAlertasAbertos((a) => !a)}
           className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-          title="Alertas"
+          title={t('cabecalho.alertas')}
         >
           <Bell size={20} />
           {!!alertas?.total && (
@@ -131,12 +137,12 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         {alertasAbertos && (
           <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-              <p className="text-sm font-semibold text-slate-800">Alertas</p>
+              <p className="text-sm font-semibold text-slate-800">{t('cabecalho.alertas')}</p>
               <span className="text-xs text-slate-400">{alertas?.total ?? 0}</span>
             </div>
 
             {!alertas?.total ? (
-              <p className="px-4 py-6 text-center text-sm text-slate-400">Sem alertas activos.</p>
+              <p className="px-4 py-6 text-center text-sm text-slate-400">{t('cabecalho.sem_alertas')}</p>
             ) : (
               alertas.dados.slice(0, 8).map((alerta) => (
                 <div key={`${alerta.tipo}-${alerta.entidadeId}`} className="flex items-start gap-2.5 border-b border-slate-50 px-4 py-2.5 last:border-0">
@@ -144,8 +150,8 @@ export function Header({ isCollapsed = false }: HeaderProps) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-slate-800">{alerta.titulo}</p>
                     <p className="truncate text-xs text-slate-400">
-                      {TIPO_ALERTA_LABEL[alerta.tipo]} · há {alerta.diasEmAberto}{' '}
-                      {alerta.diasEmAberto === 1 ? 'dia' : 'dias'}
+                      {t(`cabecalho.tipo.${alerta.tipo}`)} ·{' '}
+                      {t('cabecalho.ha_dias', { count: alerta.diasEmAberto })}
                     </p>
                   </div>
                 </div>
@@ -159,7 +165,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
               }}
               className="w-full border-t border-slate-100 py-2.5 text-center text-sm font-medium text-blue-600 hover:bg-slate-50"
             >
-              Ver todos
+              {t('cabecalho.ver_todos')}
             </button>
           </div>
         )}

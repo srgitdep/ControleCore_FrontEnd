@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Users2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { getUsers } from '@/features/users';
 import { useAtribuirPrateleiras } from '@/features/stock';
 import type { InventoryCount } from '@/features/stock';
@@ -21,6 +22,7 @@ export function AtribuirPrateleirasModal({
   counts: InventoryCount[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation('stock');
   const [operatorId, setOperatorId] = useState('');
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
 
@@ -65,10 +67,10 @@ export function AtribuirPrateleirasModal({
       { operatorId, localizacaoIds: [...selecionadas] },
       {
         onSuccess: (res) => {
-          toast.success(`${res.posicoesAtribuidas} posição(ões) distribuída(s).`);
+          toast.success(t('atribuir.distribuidas', { n: res.posicoesAtribuidas }));
           onClose();
         },
-        onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Não foi possível distribuir as prateleiras.'),
+        onError: (err: any) => toast.error(err?.response?.data?.message ?? t('atribuir.erro')),
       },
     );
   };
@@ -82,8 +84,8 @@ export function AtribuirPrateleirasModal({
               <Users2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Distribuir prateleiras</h2>
-              <p className="text-xs text-slate-500">Só o operador escolhido poderá iniciar a contagem destas posições (§8).</p>
+              <h2 className="text-lg font-bold text-slate-800">{t('atribuir.titulo')}</h2>
+              <p className="text-xs text-slate-500">{t('atribuir.subtitulo')}</p>
             </div>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -93,13 +95,13 @@ export function AtribuirPrateleirasModal({
 
         <div className="space-y-4 overflow-y-auto p-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Operador</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">{t('atribuir.operador')}</label>
             <select
               value={operatorId}
               onChange={(e) => setOperatorId(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Selecione um operador</option>
+              <option value="">{t('atribuir.seleccione_operador')}</option>
               {operadores.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
@@ -110,12 +112,12 @@ export function AtribuirPrateleirasModal({
 
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600">Prateleiras (só pendentes)</label>
-              <span className="text-[11px] text-slate-400">{selecionadas.size} selecionada(s)</span>
+              <label className="text-xs font-medium text-slate-600">{t('atribuir.prateleiras_pendentes')}</label>
+              <span className="text-[11px] text-slate-400">{t('atribuir.seleccionadas', { n: selecionadas.size })}</span>
             </div>
             {localizacoesDisponiveis.length === 0 ? (
               <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
-                Sem posições pendentes para distribuir.
+                {t('atribuir.sem_pendentes')}
               </p>
             ) : (
               <div className="max-h-64 divide-y divide-slate-50 overflow-y-auto rounded-lg border border-slate-200">
@@ -132,8 +134,8 @@ export function AtribuirPrateleirasModal({
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-slate-800">{loc.caminho}</p>
                       <p className="text-[11px] text-slate-400">
-                        {loc.pendentes} item(ns) pendente(s)
-                        {loc.jaAtribuida ? ` · já atribuída a ${loc.jaAtribuida}` : ''}
+                        {t('atribuir.itens_pendentes', { n: loc.pendentes })}
+                        {loc.jaAtribuida ? t('atribuir.ja_atribuida', { nome: loc.jaAtribuida }) : ''}
                       </p>
                     </div>
                   </label>
@@ -148,7 +150,7 @@ export function AtribuirPrateleirasModal({
             disabled={!operatorId || selecionadas.size === 0 || atribuir.isPending}
             className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {atribuir.isPending ? 'A distribuir...' : 'Distribuir'}
+            {atribuir.isPending ? t('atribuir.a_distribuir') : t('atribuir.distribuir')}
           </button>
         </div>
       </div>

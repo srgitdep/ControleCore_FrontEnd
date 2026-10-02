@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Loader2, Package, ArrowRightLeft, ShoppingCart, Truck, History } from 'lucide-react';
-import { formatMoeda } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { formatMoeda, formatData, formatDataHora } from '@/shared/utils';
 import { cn } from '@/shared/utils';
 import {
   useDetalheNecessidade,
@@ -8,7 +9,6 @@ import {
   useCriarTransferenciaDeNecessidade,
   useIgnorarNecessidade,
 } from '../hooks/useNecessidades';
-import { RECOMENDACAO_LABEL, URGENCIA_LABEL } from '../types/necessidade.types';
 import { IgnorarNecessidadeModal } from './IgnorarNecessidadeModal';
 
 interface DetalheNecessidadeDrawerProps {
@@ -28,6 +28,7 @@ interface DetalheNecessidadeDrawerProps {
  * estava.
  */
 export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNecessidadeDrawerProps) {
+  const { t } = useTranslation('necessidades');
   const [aIgnorar, setAIgnorar] = useState(false);
   const { data: detalhe, isLoading } = useDetalheNecessidade(necessidadeId);
   const criarRequisicao = useCriarRequisicaoDeNecessidade();
@@ -46,7 +47,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              {detalhe?.produto.nome ?? 'Detalhe da necessidade'}
+              {detalhe?.produto.nome ?? t('detalhe.titulo_por_omissao')}
             </h2>
             {detalhe && (
               <p className="text-xs text-slate-400">
@@ -56,6 +57,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
           </div>
           <button
             onClick={onClose}
+            aria-label={t('detalhe.fechar')}
             className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
             <X className="h-5 w-5" />
@@ -66,32 +68,32 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
           {isLoading || !detalhe ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm">A carregar detalhe...</p>
+              <p className="text-sm">{t('detalhe.a_carregar')}</p>
             </div>
           ) : (
             <div className="space-y-6 p-6">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                  {RECOMENDACAO_LABEL[detalhe.recomendacao]}
+                  {t(`recomendacao.${detalhe.recomendacao}`)}
                 </span>
                 <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
-                  Urgência {URGENCIA_LABEL[detalhe.urgencia]}
+                  {t('detalhe.urgencia', { nivel: t(`urgencia.${detalhe.urgencia}`) })}
                 </span>
               </div>
 
               {/* Situação actual */}
-              <Secao icone={Package} titulo="Situação actual">
+              <Secao icone={Package} titulo={t('detalhe.situacao')}>
                 <div className="grid grid-cols-3 gap-3">
-                  <Metrica label="Físico" valor={detalhe.situacao.stockFisico} />
-                  <Metrica label="Disponível" valor={detalhe.situacao.stockDisponivel} />
-                  <Metrica label="Mínimo" valor={detalhe.situacao.stockMinimo} />
+                  <Metrica label={t('detalhe.fisico')} valor={detalhe.situacao.stockFisico} />
+                  <Metrica label={t('detalhe.disponivel')} valor={detalhe.situacao.stockDisponivel} />
+                  <Metrica label={t('detalhe.minimo')} valor={detalhe.situacao.stockMinimo} />
                 </div>
                 {detalhe.situacao.porArmazem.length > 1 && (
                   <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm">
                     {detalhe.situacao.porArmazem.map((a) => (
                       <div key={a.armazemId} className="flex justify-between text-slate-600">
                         <span>{a.armazemNome}</span>
-                        <span className="tabular-nums">{a.quantidade} un</span>
+                        <span className="tabular-nums">{t('detalhe.unidades', { n: a.quantidade })}</span>
                       </div>
                     ))}
                   </div>
@@ -99,35 +101,38 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
               </Secao>
 
               {/* Procura */}
-              <Secao icone={History} titulo="Procura">
+              <Secao icone={History} titulo={t('detalhe.procura')}>
                 <div className="grid grid-cols-2 gap-3">
-                  <Metrica label="Média diária" valor={`${detalhe.procura.mediaDiaria} un/dia`} />
+                  <Metrica label={t('detalhe.media_diaria')} valor={t('detalhe.media_diaria_valor', { n: detalhe.procura.mediaDiaria })} />
                   <Metrica
-                    label="Vendido na janela"
-                    valor={`${detalhe.procura.vendidoNaJanela} un em ${detalhe.procura.janelaDias}d`}
+                    label={t('detalhe.vendido_janela')}
+                    valor={t('detalhe.vendido_janela_valor', {
+                      vendido: detalhe.procura.vendidoNaJanela,
+                      janela: detalhe.procura.janelaDias,
+                    })}
                   />
                 </div>
                 {detalhe.procura.diasDesdeUltimaVenda !== null && (
                   <p className="mt-2 text-xs text-slate-400">
-                    Última venda há {detalhe.procura.diasDesdeUltimaVenda} dias.
+                    {t('detalhe.ultima_venda', { count: detalhe.procura.diasDesdeUltimaVenda })}
                   </p>
                 )}
               </Secao>
 
               {/* Abastecimento */}
-              <Secao icone={ShoppingCart} titulo="Abastecimento">
+              <Secao icone={ShoppingCart} titulo={t('detalhe.abastecimento')}>
                 <div className="grid grid-cols-2 gap-3">
-                  <Metrica label="Quantidade sugerida" valor={`${detalhe.abastecimento.quantidadeSugerida} un`} />
-                  <Metrica label="Valor estimado" valor={formatMoeda(detalhe.abastecimento.valorEstimado)} />
+                  <Metrica label={t('detalhe.quantidade_sugerida')} valor={t('detalhe.unidades', { n: detalhe.abastecimento.quantidadeSugerida })} />
+                  <Metrica label={t('detalhe.valor_estimado')} valor={formatMoeda(detalhe.abastecimento.valorEstimado)} />
                   <Metrica
-                    label="Cobertura actual"
-                    valor={detalhe.abastecimento.diasCobertura !== null ? `${detalhe.abastecimento.diasCobertura} dias` : '—'}
+                    label={t('detalhe.cobertura_actual')}
+                    valor={detalhe.abastecimento.diasCobertura !== null ? t('comum.dias', { count: detalhe.abastecimento.diasCobertura }) : '—'}
                   />
                   <Metrica
-                    label="Data prevista de ruptura"
+                    label={t('detalhe.data_ruptura')}
                     valor={
                       detalhe.abastecimento.dataPrevistaRuptura
-                        ? new Date(detalhe.abastecimento.dataPrevistaRuptura).toLocaleDateString('pt-PT')
+                        ? formatData(detalhe.abastecimento.dataPrevistaRuptura)
                         : '—'
                     }
                   />
@@ -135,9 +140,9 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
               </Secao>
 
               {/* Rede */}
-              <Secao icone={ArrowRightLeft} titulo="Rede">
+              <Secao icone={ArrowRightLeft} titulo={t('detalhe.rede')}>
                 {detalhe.rede.oportunidades.length === 0 ? (
-                  <p className="text-sm text-slate-400">Sem stock transferível na rede.</p>
+                  <p className="text-sm text-slate-400">{t('detalhe.sem_stock_rede')}</p>
                 ) : (
                   <div className="space-y-2">
                     {detalhe.rede.oportunidades.map((o) => (
@@ -148,7 +153,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                         <span className="text-slate-700">{o.origemLojaNome}</span>
                         <div className="flex items-center gap-2">
                           <span className="tabular-nums font-medium text-slate-800">
-                            {o.quantidadeDisponivel} un disponíveis
+                            {t('detalhe.unidades_disponiveis', { n: o.quantidadeDisponivel })}
                           </span>
                           {podeAgir && (
                             <button
@@ -163,7 +168,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                               }
                               className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
                             >
-                              Transferir
+                              {t('detalhe.transferir')}
                             </button>
                           )}
                         </div>
@@ -174,22 +179,22 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
               </Secao>
 
               {/* Compras */}
-              <Secao icone={Truck} titulo="Compras">
+              <Secao icone={Truck} titulo={t('detalhe.compras')}>
                 {detalhe.compras.requisicoes.length === 0 && detalhe.compras.ordensCompra.length === 0 ? (
-                  <p className="text-sm text-slate-400">Sem requisições ou ordens para este produto.</p>
+                  <p className="text-sm text-slate-400">{t('detalhe.sem_compras')}</p>
                 ) : (
                   <div className="space-y-2 text-sm">
                     {detalhe.compras.requisicoes.map((r) => (
                       <div key={r.id} className="text-slate-600">
                         <div className="flex justify-between">
-                          <span>Requisição {r.numero}</span>
+                          <span>{t('detalhe.requisicao', { numero: r.numero })}</span>
                           <span className="text-xs text-slate-400">{r.estado}</span>
                         </div>
                         {/* RFQ/sourcing adjudicado — DT01 §17: a ligação
                             requisição→RFQ→OC visível a partir da necessidade. */}
                         {r.sourcing && (
                           <div className="mt-0.5 flex justify-between pl-3 text-xs text-slate-400">
-                            <span>↳ RFQ ({r.sourcing.candidatosAvaliados} candidatos)</span>
+                            <span>{t('detalhe.rfq', { n: r.sourcing.candidatosAvaliados })}</span>
                             <span>{r.sourcing.estado}</span>
                           </div>
                         )}
@@ -197,9 +202,9 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                     ))}
                     {detalhe.compras.ordensCompra.map((o) => (
                       <div key={o.id} className="flex justify-between text-slate-600">
-                        <span>OC · {o.fornecedor}</span>
+                        <span>{t('detalhe.oc', { fornecedor: o.fornecedor })}</span>
                         <span className="tabular-nums text-xs text-slate-400">
-                          {o.quantidadeRecebida}/{o.quantidadePedida} recebido
+                          {t('detalhe.oc_recebido', { recebida: o.quantidadeRecebida, pedida: o.quantidadePedida })}
                         </span>
                       </div>
                     ))}
@@ -209,7 +214,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
 
               {/* Fornecedor */}
               {detalhe.fornecedor && (
-                <Secao icone={ShoppingCart} titulo="Fornecedor">
+                <Secao icone={ShoppingCart} titulo={t('detalhe.fornecedor')}>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-700">{detalhe.fornecedor.nome}</span>
                     <span className="tabular-nums font-medium text-slate-800">
@@ -221,14 +226,14 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
 
               {/* Histórico — DT01 15.3 */}
               {detalhe.historico.length > 0 && (
-                <Secao icone={History} titulo="Histórico">
+                <Secao icone={History} titulo={t('detalhe.historico')}>
                   <ol className="space-y-3 border-l border-slate-100 pl-4">
                     {detalhe.historico.map((h, i) => (
                       <li key={i} className="text-sm">
                         <p className="font-medium text-slate-700">{h.accao}</p>
                         {h.observacoes && <p className="text-slate-500">{h.observacoes}</p>}
                         <p className="text-xs text-slate-400">
-                          {new Date(h.createdAt).toLocaleString('pt-PT')}
+                          {formatDataHora(h.createdAt)}
                           {h.utilizador ? ` · ${h.utilizador}` : ''}
                         </p>
                       </li>
@@ -254,7 +259,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
                   criarRequisicao.isPending && 'opacity-60',
                 )}
               >
-                {criarRequisicao.isPending ? 'A criar...' : 'Criar requisição'}
+                {criarRequisicao.isPending ? t('detalhe.a_criar') : t('detalhe.criar_requisicao')}
               </button>
             )}
             <button
@@ -262,7 +267,7 @@ export function DetalheNecessidadeDrawer({ necessidadeId, onClose }: DetalheNece
               onClick={() => setAIgnorar(true)}
               className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
-              Não comprar
+              {t('detalhe.nao_comprar')}
             </button>
           </div>
         )}

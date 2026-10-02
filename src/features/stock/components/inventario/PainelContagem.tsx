@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Camera, Search, CheckCircle2, Circle, MapPin, PackageX, History, PackagePlus, Lock } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { useInventoryCycleDetail, useCobertura } from '@/features/stock';
@@ -8,24 +9,25 @@ import { HistoricoContagemModal } from './HistoricoContagemModal';
 import { RegistarProdutoInesperadoModal } from './RegistarProdutoInesperadoModal';
 import type { InventoryCount, InventoryItemStatus } from '@/features/stock';
 
-const FILTROS: Array<{ key: 'TODOS' | InventoryItemStatus; label: string }> = [
-  { key: 'TODOS', label: 'Todos' },
-  { key: 'PENDENTE', label: 'Pendentes' },
-  { key: 'CONTADO', label: 'Contados' },
-  { key: 'ZERO_CONFIRMADO', label: 'Zero' },
-  { key: 'FORA_DA_LOCALIZACAO', label: 'Fora da localização' },
-  { key: 'PRODUTO_INESPERADO', label: 'Inesperados' },
-];
+const FILTROS = [
+  'TODOS',
+  'PENDENTE',
+  'CONTADO',
+  'ZERO_CONFIRMADO',
+  'FORA_DA_LOCALIZACAO',
+  'PRODUTO_INESPERADO',
+] as const;
 
-const STATUS_BADGE: Record<InventoryItemStatus, { label: string; className: string; icon: React.ReactNode }> = {
-  PENDENTE: { label: 'Pendente', className: 'bg-rose-100 text-rose-700', icon: <Circle className="h-3 w-3" /> },
-  EM_CONTAGEM: { label: 'Em contagem', className: 'bg-amber-100 text-amber-700', icon: <Circle className="h-3 w-3" /> },
-  CONTADO: { label: 'Contado', className: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="h-3 w-3" /> },
-  ZERO_CONFIRMADO: { label: 'Zero confirmado', className: 'bg-slate-100 text-slate-600', icon: <CheckCircle2 className="h-3 w-3" /> },
-  FORA_DA_LOCALIZACAO: { label: 'Fora da localização', className: 'bg-amber-100 text-amber-700', icon: <MapPin className="h-3 w-3" /> },
-  RECONTAGEM_PENDENTE: { label: 'Recontagem pendente', className: 'bg-purple-100 text-purple-700', icon: <Circle className="h-3 w-3" /> },
-  RECONTADO: { label: 'Recontado', className: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="h-3 w-3" /> },
-  PRODUTO_INESPERADO: { label: 'Inesperado', className: 'bg-orange-100 text-orange-700', icon: <PackagePlus className="h-3 w-3" /> },
+// A etiqueta de cada estado vem do catálogo (`item_estado.<codigo>`); aqui ficam só a cor e o ícone.
+const STATUS_BADGE: Record<InventoryItemStatus, { className: string; icon: React.ReactNode }> = {
+  PENDENTE: { className: 'bg-rose-100 text-rose-700', icon: <Circle className="h-3 w-3" /> },
+  EM_CONTAGEM: { className: 'bg-amber-100 text-amber-700', icon: <Circle className="h-3 w-3" /> },
+  CONTADO: { className: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="h-3 w-3" /> },
+  ZERO_CONFIRMADO: { className: 'bg-slate-100 text-slate-600', icon: <CheckCircle2 className="h-3 w-3" /> },
+  FORA_DA_LOCALIZACAO: { className: 'bg-amber-100 text-amber-700', icon: <MapPin className="h-3 w-3" /> },
+  RECONTAGEM_PENDENTE: { className: 'bg-purple-100 text-purple-700', icon: <Circle className="h-3 w-3" /> },
+  RECONTADO: { className: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="h-3 w-3" /> },
+  PRODUTO_INESPERADO: { className: 'bg-orange-100 text-orange-700', icon: <PackagePlus className="h-3 w-3" /> },
 };
 
 /**
@@ -33,6 +35,7 @@ const STATUS_BADGE: Record<InventoryItemStatus, { label: string; className: stri
  * agrupados por localização, e o painel de registo do item selecionado.
  */
 export function PainelContagem({ cycleId }: { cycleId: string }) {
+  const { t } = useTranslation('stock');
   const { user } = useAuth();
   const { data: cycle, isLoading } = useInventoryCycleDetail(cycleId);
   const { data: cobertura } = useCobertura(cycleId, { poll: true });
@@ -103,20 +106,20 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
       <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
         <PackageX className="h-5 w-5 shrink-0 text-blue-500" />
         <p className="text-xs text-blue-700">
-          <span className="font-semibold">Inventário Cego.</span> O sistema não mostra as
-          quantidades teóricas. Conte o que existe fisicamente.
+          <span className="font-semibold">{t('contagem.cego_titulo')}</span>{' '}
+          {t('contagem.cego_texto')}
         </p>
       </div>
 
       {/* Indicadores */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
         {[
-          { rotulo: 'No inventário', valor: indicadores.total },
-          { rotulo: 'Contados', valor: indicadores.contados, cor: 'text-emerald-600' },
-          { rotulo: 'Zero confirmado', valor: indicadores.zero },
-          { rotulo: 'Fora da localização', valor: indicadores.fora, cor: 'text-amber-600' },
-          { rotulo: 'Inesperados', valor: indicadores.inesperados, cor: 'text-orange-600' },
-          { rotulo: 'Pendentes', valor: indicadores.pendentes, cor: 'text-rose-600' },
+          { rotulo: t('contagem.ind_total'), valor: indicadores.total },
+          { rotulo: t('contagem.ind_contados'), valor: indicadores.contados, cor: 'text-emerald-600' },
+          { rotulo: t('contagem.ind_zero'), valor: indicadores.zero },
+          { rotulo: t('contagem.ind_fora'), valor: indicadores.fora, cor: 'text-amber-600' },
+          { rotulo: t('contagem.ind_inesperados'), valor: indicadores.inesperados, cor: 'text-orange-600' },
+          { rotulo: t('contagem.ind_pendentes'), valor: indicadores.pendentes, cor: 'text-rose-600' },
         ].map((m) => (
           <div key={m.rotulo} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
             <p className="text-[11px] text-slate-500">{m.rotulo}</p>
@@ -128,7 +131,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
       {/* Progresso */}
       <div>
         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-          <span>Progresso de contagem</span>
+          <span>{t('contagem.progresso')}</span>
           <span className="font-semibold text-slate-700">{indicadores.progresso}%</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -141,8 +144,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
 
       {(cobertura ? cobertura.pendentes > 0 : indicadores.pendentes > 0) && (
         <p className="text-xs text-amber-600">
-          Ainda existem {cobertura?.pendentes ?? indicadores.pendentes} produto(s) por verificar.
-          Conclua todos os produtos antes de finalizar o inventário.
+          {t('contagem.por_verificar', { n: cobertura?.pendentes ?? indicadores.pendentes })}
         </p>
       )}
 
@@ -150,13 +152,13 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         {FILTROS.map((f) => (
           <button
-            key={f.key}
-            onClick={() => setFiltro(f.key)}
+            key={f}
+            onClick={() => setFiltro(f)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              filtro === f.key ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              filtro === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            {f.label}
+            {t(`contagem.filtro_${f}`)}
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2">
@@ -165,7 +167,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Pesquisar produto..."
+              placeholder={t('contagem.pesquisar')}
               className="rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -174,16 +176,16 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
           >
             <Camera size={14} />
-            Câmara
+            {t('contagem.camara')}
           </button>
           <button
             onClick={() => setProdutoInesperadoAberto(true)}
             disabled={!armazemId}
-            title={armazemId ? undefined : 'Sem itens no perímetro para identificar o armazém'}
+            title={armazemId ? undefined : t('contagem.sem_perimetro')}
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PackagePlus size={14} />
-            + Produto
+            {t('contagem.mais_produto')}
           </button>
         </div>
       </div>
@@ -193,7 +195,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
         <div className="overflow-hidden rounded-xl border border-slate-100 bg-white">
           <div className="max-h-[520px] overflow-y-auto divide-y divide-slate-50">
             {itensFiltrados.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-slate-400">Nenhum item encontrado.</p>
+              <p className="px-4 py-10 text-center text-sm text-slate-400">{t('contagem.nenhum_item')}</p>
             ) : (
               itensFiltrados.map((item) => (
                 <ItemLinha
@@ -219,7 +221,7 @@ export function PainelContagem({ cycleId }: { cycleId: string }) {
             />
           ) : (
             <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-400">
-              Selecione um produto na lista para registar a contagem.
+              {t('contagem.seleccione_produto')}
             </div>
           )}
         </div>
@@ -263,6 +265,7 @@ function ItemLinha({
   onVerHistorico: () => void;
   currentUserId?: string;
 }) {
+  const { t } = useTranslation('stock');
   const badge = STATUS_BADGE[item.status];
   const produto = item.stock?.product;
   const jaTemHistorico = item.status !== 'PENDENTE';
@@ -279,7 +282,7 @@ function ItemLinha({
           className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}
         >
           {badge.icon}
-          {badge.label}
+          {t(`item_estado.${item.status}`)}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-800">{produto?.nome ?? '—'}</p>
@@ -289,11 +292,11 @@ function ItemLinha({
         </div>
         {bloqueadaParaOutro && (
           <span
-            title={`Prateleira distribuída a ${item.assignedTo?.name ?? 'outro operador'}`}
+            title={t('contagem.prateleira_distribuida', { nome: item.assignedTo?.name ?? t('contagem.outro_operador') })}
             className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500"
           >
             <Lock className="h-3 w-3" />
-            {item.assignedTo?.name ?? 'Atribuída'}
+            {item.assignedTo?.name ?? t('contagem.atribuida')}
           </span>
         )}
       </button>
@@ -303,7 +306,7 @@ function ItemLinha({
             e.stopPropagation();
             onVerHistorico();
           }}
-          title="Ver histórico de alterações"
+          title={t('contagem.ver_historico')}
           className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
         >
           <History className="h-4 w-4" />

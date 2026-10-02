@@ -1,0 +1,102 @@
+{
+  "abas": {
+    "dre": "Income Statement",
+    "fluxo": "Cash Flow",
+    "receber": "Receivables",
+    "pagar": "Payables"
+  },
+  "meses": {
+    "janeiro": "January",
+    "fevereiro": "February",
+    "marco": "March",
+    "abril": "April",
+    "maio": "May",
+    "junho": "June",
+    "julho": "July",
+    "agosto": "August",
+    "setembro": "September",
+    "outubro": "October",
+    "novembro": "November",
+    "dezembro": "December"
+  },
+  "dre": {
+    "titulo": "Income statement — {{periodo}}",
+    "faturacao_bruta": "Gross sales",
+    "cmv": "Cost of goods sold",
+    "margem_bruta": "Gross margin",
+    "da_faturacao": "{{pct}}% of sales",
+    "despesas_pagas": "Expenses paid in the period",
+    "lucro": "Estimated operating profit",
+    "indicadores": "Period indicators",
+    "vendas_realizadas": "Sales Made",
+    "ticket_medio": "Average Ticket",
+    "recebiveis_pendentes": "Pending Receivables",
+    "despesas_pendentes": "Pending Expenses",
+    "top_produtos": "Top 5 Products by Revenue"
+  },
+  "fluxo": {
+    "etiqueta": "Cash flow",
+    "saldo_atual": "Current Balance (Actual Cash)",
+    "receber_30": "Receivables, Next 30d",
+    "pagar_30": "Payables, Next 30d",
+    "projecao": "Cash Flow Projection — Next 30 days",
+    "legenda": "Bars: daily inflows (blue) and outflows (red). Line: cumulative projected balance.",
+    "serie_receber": "Receivable",
+    "serie_pagar": "Payable",
+    "serie_saldo": "Projected Balance"
+  },
+  "estado": {
+    "PENDING": "Pending",
+    "PAID": "Paid",
+    "OVERDUE": "Overdue",
+    "CANCELLED": "Cancelled"
+  },
+  "registos": {
+    "credito_bloqueado": "Credit Blocked",
+    "titulo_receber": "Receivables",
+    "titulo_pagar": "Payables",
+    "novo": "New",
+    "nenhum": "No records found",
+    "col_descricao": "Description",
+    "col_cliente": "Customer",
+    "col_fornecedor": "Supplier",
+    "col_vencimento": "Due date",
+    "col_valor": "Amount",
+    "col_estado": "Status",
+    "col_acoes": "Actions",
+    "criado_auto": "🤖 Created automatically",
+    "fatura": "Invoice: {{numero}}",
+    "pago_em": "Paid: {{data}}",
+    "marcar_pago": "Mark as Paid",
+    "pago": "Paid",
+    "cancelado": "Cancelled",
+    "paginacao_zero": "Page {{page}} of {{last}} · {{count}} records",
+    "paginacao_one": "Page {{page}} of {{last}} · {{count}} record",
+    "paginacao_other": "Page {{page}} of {{last}} · {{count}} records"
+  },
+  "novo": {
+    "titulo_receber": "New receivable",
+    "titulo_pagar": "New payable",
+    "descricao": "Description",
+    "exemplo_receber": "E.g. Space rental",
+    "exemplo_pagar": "E.g. Generator maintenance",
+    "valor_mt": "Amount (MT)",
+    "vencimento": "Due date",
+    "cliente": "Customer",
+    "fornecedor": "Supplier",
+    "opcional": "(optional)",
+    "trocar": "change",
+    "procurar": "Search...",
+    "cancelar": "Cancel",
+    "criar": "Create",
+    "descreva": "Describe the entry.",
+    "valor_positivo": "The amount must be greater than zero.",
+    "indique_data": "Enter the due date."
+  },
+  "mensagens": {
+    "pagamento_ok": "Payment processed successfully!",
+    "erro_pagamento": "Failed to process payment.",
+    "registo_criado": "Financial record created successfully!",
+    "erro_criar": "Failed to create record."
+  }
+}

@@ -71,5 +71,50 @@
     "ver_fornecedores": "View the platform's suppliers",
     "so_comprar": "Just want to buy from a shop?",
     "ir_loja": "Go to the online shop"
+  },
+  "gestao": {
+    "titulo": "Access requests",
+    "subtitulo": "Companies that asked to become customers. Approving creates the company, the administrator and the subscription, and emails the access code.",
+    "filtro_todos": "All",
+    "estado": {
+      "PENDENTE": "Pending",
+      "APROVADO": "Approved",
+      "RECUSADO": "Declined"
+    },
+    "a_carregar": "Loading the queue…",
+    "vazio_pendente": "No requests awaiting a decision.",
+    "vazio_estado": "No requests in this status.",
+    "referencia": "Reference {{ref}}",
+    "dado": {
+      "cidade": "City",
+      "empresa_email": "Company email",
+      "empresa_telefone": "Company phone",
+      "gestor_nome": "Manager",
+      "gestor_cargo": "Job title",
+      "gestor_email": "Manager's email",
+      "gestor_telefone": "Manager's phone"
+    },
+    "o_que_precisa": "What they need to solve",
+    "decidido_por": "{{estado}} by {{nome}}",
+    "empresa_criada": "Company created:",
+    "modulos_titulo": "Modules to subscribe to",
+    "modulos_ajuda": "A company with no modules subscribed is one whose first screen refuses everything. Choose at least one.",
+    "motivo": "Reason",
+    "motivo_ajuda": "(required when declining — it is what the applicant will read)",
+    "motivo_exemplo": "The NUIT provided does not match the company named.",
+    "aprovar_1": "This will create the company",
+    "aprovar_2": ", the administrator",
+    "aprovar_3": ", and a subscription with {{n}} module(s). The access code and the password will be sent to",
+    "aprovar_4": ". This cannot be undone.",
+    "recusar_1": "This will send the reason to",
+    "recusar_2": ". The request does not return to the queue — whoever fixes what was wrong has to submit a new request.",
+    "confirmar_aprovacao": "Confirm approval",
+    "confirmar_recusa": "Confirm refusal",
+    "voltar_atras": "Go back",
+    "recusar": "Decline",
+    "aprovar": "Approve",
+    "erro_decisao": "Could not record the decision.",
+    "erro_motivo_curto": "Declining requires a reason of at least 5 characters.",
+    "erro_sem_modulo": "Choose at least one module before approving."
   }
 }

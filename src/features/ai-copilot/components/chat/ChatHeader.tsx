@@ -1,7 +1,9 @@
 import { X, Sparkles, SquarePen, Maximize2, Minimize2, History } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCopilotStore } from '../../store/copilotStore';
 
 export function ChatHeader() {
+  const { t } = useTranslation('copiloto');
   const { isExpanded, toggleExpanded, toggleHistory, startNewSession, setOpen } = useCopilotStore();
 
   return (
@@ -17,21 +19,21 @@ export function ChatHeader() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            Online e pronta a ajudar
+            {t('cabecalho.online')}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-1">
         <button
           onClick={toggleExpanded}
-          title={isExpanded ? "Restaurar Tamanho" : "Ecrã Inteiro"}
+          title={isExpanded ? t('cabecalho.restaurar') : t('cabecalho.ecra_inteiro')}
           className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-full transition-colors hidden sm:block"
         >
           {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
         <button
           onClick={toggleHistory}
-          title="Histórico de Conversas"
+          title={t('cabecalho.historico')}
           className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
         >
           <History className="w-4 h-4" />
@@ -42,7 +44,7 @@ export function ChatHeader() {
             de tooltip para quem usa rato. */}
         <button
           onClick={startNewSession}
-          title="Nova conversa"
+          title={t('cabecalho.nova_conversa')}
           className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
         >
           <SquarePen className="w-4 h-4" />

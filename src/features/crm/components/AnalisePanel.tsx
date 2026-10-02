@@ -1,31 +1,39 @@
 import { AlertTriangle, ChevronRight, Sparkles, Users } from 'lucide-react';
 import { useAtencao } from '../hooks/useClientes';
 import type { ClienteAAgir, UrgenciaAccao } from '../api/clientes.api';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatMoeda } from '@/shared/utils';
 
-const moeda = (v: number) =>
-  `${Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+const moeda = (v: number) => formatMoeda(Number(v));
 
-const URGENCIAS: Record<UrgenciaAccao, { rotulo: string; classe: string; barra: string }> = {
+const URGENCIAS: Record<
+  UrgenciaAccao,
+  {
+    rotulo: 'analise.urgencia_urgente' | 'analise.urgencia_importante' | 'analise.urgencia_oportunidade' | null;
+    classe: string;
+    barra: string;
+  }
+> = {
   URGENTE: {
-    rotulo: 'Agir agora',
+    rotulo: 'analise.urgencia_urgente',
     classe: 'bg-amber-100 text-amber-800',
     barra: 'border-l-amber-500',
   },
   IMPORTANTE: {
-    rotulo: 'A ter em conta',
+    rotulo: 'analise.urgencia_importante',
     classe: 'bg-rose-100 text-rose-800',
     barra: 'border-l-rose-500',
   },
   OPORTUNIDADE: {
-    rotulo: 'Oportunidade',
+    rotulo: 'analise.urgencia_oportunidade',
     classe: 'bg-blue-100 text-blue-800',
     barra: 'border-l-blue-500',
   },
-  NENHUMA: { rotulo: '', classe: '', barra: 'border-l-slate-200' },
+  NENHUMA: { rotulo: null, classe: '', barra: 'border-l-slate-200' },
 };
 
 export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => void }) {
+  const { t } = useTranslation('crm');
   const { data, isLoading, isError } = useAtencao();
 
   if (isLoading) {
@@ -40,7 +48,7 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
         <AlertTriangle size={36} strokeWidth={1} />
-        <p className="text-sm">Não foi possível carregar a análise.</p>
+        <p className="text-sm">{t('analise.erro_carregar')}</p>
       </div>
     );
   }
@@ -53,30 +61,30 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
       <section>
         <div className="mb-3 flex items-center gap-2">
           <Sparkles size={15} className="text-violet-600" />
-          <h3 className="text-sm font-semibold text-slate-700">Como está a sua base de clientes</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('analise.titulo_base')}</h3>
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Numero rotulo="Clientes" valor={String(saude.clientes)} />
+          <Numero rotulo={t('analise.clientes')} valor={String(saude.clientes)} />
           <Numero
-            rotulo="Já compraram"
+            rotulo={t('analise.ja_compraram')}
             valor={String(saude.comCompras)}
             sub={
               saude.clientes > 0
-                ? `${Math.round((saude.comCompras / saude.clientes) * 100)}% da base`
+                ? t('analise.percentagem_base', { n: Math.round((saude.comCompras / saude.clientes) * 100) })
                 : undefined
             }
           />
           <Numero
-            rotulo="Contactáveis"
+            rotulo={t('analise.contactaveis')}
             valor={String(saude.contactaveis)}
-            sub="aceitaram ser contactados"
+            sub={t('analise.contactaveis_sub')}
             alerta={saude.contactaveis === 0}
           />
           <Numero
-            rotulo="Valor a escapar"
+            rotulo={t('analise.valor_a_escapar')}
             valor={moeda(saude.valorEmRisco)}
-            sub="de quem precisa de atenção"
+            sub={t('analise.valor_a_escapar_sub')}
             alerta={saude.valorEmRisco > 0}
           />
         </div>
@@ -85,7 +93,7 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
       {/* O que está a limitar o CRM */}
       {saude.obstaculos.length > 0 && (
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">O que está a limitar</h3>
+          <h3 className="mb-2 text-sm font-semibold text-slate-700">{t('analise.o_que_limita')}</h3>
           <div className="space-y-2">
             {saude.obstaculos.map((o, i) => (
               <div
@@ -103,10 +111,10 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
       {/* Quem precisa de atenção */}
       <section>
         <div className="mb-3 flex items-baseline gap-2">
-          <h3 className="text-sm font-semibold text-slate-700">Por onde começar</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('analise.por_onde_comecar')}</h3>
           {clientes.length > 0 && (
             <span className="text-xs text-slate-400">
-              {clientes.length} cliente(s), do mais urgente ao menos
+              {t('analise.contagem_ordem', { n: clientes.length })}
             </span>
           )}
         </div>
@@ -116,12 +124,12 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
             <Users size={32} strokeWidth={1} className="text-slate-300" />
             <div>
               <p className="text-sm font-medium text-slate-600">
-                Nenhum cliente precisa de atenção agora.
+                {t('analise.nenhum_precisa')}
               </p>
               <p className="mt-0.5 text-sm text-slate-400">
                 {saude.comCompras === 0
-                  ? 'Ainda não há compras identificadas para analisar.'
-                  : 'Todos estão a comprar dentro do ritmo habitual.'}
+                  ? t('analise.sem_compras')
+                  : t('analise.ritmo_habitual')}
               </p>
             </div>
           </div>
@@ -148,7 +156,7 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
                             u.classe,
                           )}
                         >
-                          {u.rotulo}
+                          {t(u.rotulo)}
                         </span>
                       )}
                     </div>
@@ -159,7 +167,7 @@ export function AnalisePanel({ onVerCliente }: { onVerCliente: (id: string) => v
                     </p>
 
                     <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-slate-400">
-                      <span className="tabular-nums">{moeda(c.valorTotal)} de histórico</span>
+                      <span className="tabular-nums">{t('analise.de_historico', { valor: moeda(c.valorTotal) })}</span>
                       {c.telefone && <span>{c.telefone}</span>}
                     </div>
                   </div>

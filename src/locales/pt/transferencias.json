@@ -1,0 +1,102 @@
+{
+  "estado": {
+    "SOLICITADA": "Solicitada",
+    "APROVADA": "Aprovada",
+    "EXPEDIDA": "Expedida",
+    "RECEBIDA": "Recebida",
+    "CANCELADA": "Cancelada"
+  },
+  "pagina": {
+    "resumo_zero": "{{count}} transferências",
+    "resumo_one": "{{count}} transferências",
+    "resumo_other": "{{count}} transferências",
+    "nova": "Nova transferência",
+    "todas": "Todas",
+    "a_mostrar": "A mostrar {{n}} de {{total}}",
+    "recusar_titulo": "Recusar transferência",
+    "recusar_descricao": "Explique porque esta transferência não deve avançar.",
+    "recusar_placeholder": "Ex.: a origem precisa do stock para as próprias vendas.",
+    "cancelar_titulo": "Cancelar transferência",
+    "cancelar_descricao": "Só é possível cancelar antes da expedição — depois disso a mercadoria já saiu fisicamente."
+  },
+  "tabela": {
+    "produto": "Produto",
+    "rota": "Origem → Destino",
+    "quantidade": "Quantidade",
+    "recebido": "({{n}} recebido)",
+    "estado": "Estado",
+    "solicitada_por": "Solicitada por",
+    "accao": "Acção",
+    "aprovar": "Aprovar",
+    "recusar": "Recusar",
+    "expedir": "Expedir",
+    "cancelar": "Cancelar",
+    "confirmar_recepcao": "Confirmar recepção",
+    "ver": "Ver",
+    "vazio": "Nenhuma transferência entre lojas registada."
+  },
+  "detalhe": {
+    "titulo": "Detalhe da transferência",
+    "fechar": "Fechar",
+    "a_carregar": "A carregar detalhe...",
+    "origem": "Origem",
+    "destino": "Destino",
+    "solicitada": "Solicitada",
+    "unidades": "{{n}} un",
+    "expedida_recebida": "Expedida / Recebida",
+    "motivo": "Motivo",
+    "cancelamento": "Cancelamento",
+    "linha_do_tempo": "Linha do tempo",
+    "solicitada_por": "Solicitada por",
+    "aprovada_por": "Aprovada por",
+    "expedida_por": "Expedida por",
+    "recebida_por": "Recebida por",
+    "cancelada_por": "Cancelada por"
+  },
+  "motivo": {
+    "minimo": "Mínimo de {{n}} caracteres.",
+    "voltar": "Voltar",
+    "a_guardar": "A guardar...",
+    "confirmar": "Confirmar"
+  },
+  "receber": {
+    "titulo": "Confirmar recepção",
+    "expedidas_1": "Foram expedidas",
+    "expedidas_2": "unidades. Confirme o que chegou de facto.",
+    "invalido": "Não é possível receber mais do que foi expedido nem um valor negativo.",
+    "divergencia": "Divergência de {{n}} unidades em relação ao expedido. Fica registada na transferência.",
+    "voltar": "Voltar",
+    "a_confirmar": "A confirmar...",
+    "confirmar": "Confirmar recepção"
+  },
+  "solicitar": {
+    "titulo": "Nova transferência",
+    "produto": "Produto",
+    "trocar": "Trocar",
+    "pesquisa_placeholder": "Pesquisar por nome, SKU ou código de barras...",
+    "a_pesquisar": "A pesquisar...",
+    "sem_resultados": "Sem resultados.",
+    "origem": "Origem",
+    "destino": "Destino",
+    "seleccione": "Seleccione...",
+    "mesma_loja": "A origem e o destino não podem ser a mesma loja.",
+    "quantidade": "Quantidade",
+    "motivo_opcional": "Motivo (opcional)",
+    "cancelar": "Cancelar",
+    "a_solicitar": "A solicitar...",
+    "solicitar": "Solicitar"
+  },
+  "hooks": {
+    "solicitada": "Transferência solicitada.",
+    "erro_solicitar": "Não foi possível solicitar a transferência.",
+    "aprovada": "Transferência aprovada.",
+    "recusada": "Transferência recusada.",
+    "erro_decidir": "Não foi possível decidir a transferência.",
+    "expedicao_registada": "Expedição registada.",
+    "erro_expedir": "Não foi possível expedir.",
+    "recepcao_confirmada": "Recepção confirmada.",
+    "erro_receber": "Não foi possível confirmar a recepção.",
+    "cancelada": "Transferência cancelada.",
+    "erro_cancelar": "Não foi possível cancelar."
+  }
+}

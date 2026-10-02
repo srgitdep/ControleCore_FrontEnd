@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send, Loader2, Mic } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -8,6 +9,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
+  const { t } = useTranslation('copiloto');
   const [inputMessage, setInputMessage] = useState('');
   const [currentPath, setCurrentPath] = useState('');
 
@@ -34,16 +36,16 @@ export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
       {(currentPath.includes('/rh') || currentPath.includes('/funcionarios')) && (
         <div className="flex flex-wrap gap-2 mb-3">
           <button
-            onClick={() => onSend('RH: Quem está escalado para o turno de amanhã na Loja Principal?')}
+            onClick={() => onSend(t('entrada.rh_escala_pergunta'))}
             className="text-xs bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
-            👥 Escala de amanhã
+            {t('entrada.rh_escala_rotulo')}
           </button>
           <button
-            onClick={() => onSend('RH: Resuma as anomalias de ponto (atrasos/faltas) desta semana.')}
+            onClick={() => onSend(t('entrada.rh_anomalias_pergunta'))}
             className="text-xs bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
-            ⏱️ Resumo de anomalias (esta semana)
+            {t('entrada.rh_anomalias_rotulo')}
           </button>
         </div>
       )}
@@ -56,7 +58,7 @@ export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Pergunte à Mayra..."
+          placeholder={t('entrada.placeholder')}
           className="flex-1 bg-transparent border-0 focus:ring-0 px-4 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
           disabled={isLoading}
         />
@@ -64,7 +66,7 @@ export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
           <button
             type="button"
             onClick={onOpenVoice}
-            title="Ativar Modo Voz (Gemini Live)"
+            title={t('entrada.voz')}
             className="p-2.5 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors"
           >
             <Mic className="w-4 h-4" />
@@ -80,7 +82,7 @@ export function ChatInput({ onSend, isLoading, onOpenVoice }: ChatInputProps) {
       </form>
       <div className="text-center mt-3">
         <span className="text-[10px] text-slate-400 font-medium">
-          A Mayra pode cometer erros. Confirme sempre os valores importantes.
+          {t('entrada.aviso')}
         </span>
       </div>
     </div>

@@ -1,0 +1,93 @@
+{
+  "estado": {
+    "CRIADO": "Novo",
+    "AGUARDA_CONFIRMACAO": "A aguardar confirmação",
+    "CONFIRMADO": "Confirmado",
+    "EM_PREPARACAO": "Em preparação",
+    "PRONTO": "Pronto para levantar",
+    "AGUARDA_LEVANTAMENTO": "A aguardar levantamento",
+    "CONCLUIDO": "Concluído",
+    "CANCELADO": "Cancelado"
+  },
+  "canal": {
+    "SMS": "SMS",
+    "EMAIL": "E-mail",
+    "WHATSAPP": "WhatsApp",
+    "CHAMADA": "Chamada",
+    "PUSH": "Notificação push"
+  },
+  "pagina": {
+    "resumo_zero": "{{count}} pedidos",
+    "resumo_one": "{{count}} pedido",
+    "resumo_other": "{{count}} pedidos",
+    "todas_lojas": "Todas as lojas",
+    "todos_estados": "Todos",
+    "erro_carregar": "Não foi possível carregar os pedidos do Compra Fácil."
+  },
+  "tabela": {
+    "col_pedido": "Pedido",
+    "col_cliente": "Cliente",
+    "col_loja": "Loja",
+    "col_estado": "Estado",
+    "col_total": "Total",
+    "col_criado": "Criado",
+    "abrir": "Abrir",
+    "vazio": "Nenhum pedido do Compra Fácil nesta fila."
+  },
+  "drawer": {
+    "sem_telefone": "sem telefone",
+    "venda_criada": "Venda criada — pedido entregue ao cliente.",
+    "artigos_titulo": "Artigos",
+    "ordem_recolha_sufixo": "ordem de recolha sugerida",
+    "substituir": "Substituir",
+    "ajustado": "Ajustado: aceite {{aceite}} de {{quantidade}}",
+    "produto_substituto_sufixo": "(produto substituto)",
+    "autorizado_por": "Autorizado por {{canal}}: “{{registo}}”",
+    "total": "Total",
+    "confirmar_pedido": "Confirmar pedido",
+    "a_confirmar": "A confirmar...",
+    "iniciar_preparacao": "Iniciar preparação",
+    "a_iniciar": "A iniciar...",
+    "artigos_por_resolver_one": "{{count}} artigo com quantidade separada abaixo do pedido — registe uma substituição antes de fechar.",
+    "artigos_por_resolver_other": "{{count}} artigos com quantidade separada abaixo do pedido — registe uma substituição antes de fechar.",
+    "quantidade_invalida": "Alguma quantidade é negativa ou maior do que a pedida — corrija antes de confirmar.",
+    "confirmar_conferencia": "Confirmar conferência",
+    "a_conferir": "A conferir...",
+    "confirmar_levantamento": "Confirmar levantamento",
+    "aviso_levantamento": "Isto cria uma venda real e exige que tenha uma sessão de caixa aberta. Confirma?",
+    "voltar": "Voltar",
+    "sim_confirmar": "Sim, confirmar",
+    "cancelar_pedido": "Cancelar pedido",
+    "aviso_cancelar": "Isto cancela a encomenda e liberta a reserva de stock. O cliente é avisado com o motivo.",
+    "motivo_placeholder": "Motivo — ex.: cliente não levantou em três dias",
+    "a_cancelar": "A cancelar..."
+  },
+  "modal": {
+    "titulo": "Registar substituição",
+    "item_info": "{{produto}} — pedido: {{quantidade}}",
+    "quantidade_label": "Quantidade que o cliente aceitou",
+    "produto_substituto_label": "Produto substituto (opcional — vazio se for só menos quantidade do mesmo artigo)",
+    "produto_substituto_placeholder": "ID do produto substituto",
+    "motivo_label": "Motivo",
+    "motivo_placeholder": "Ex.: ruptura de stock à chegada da equipa de picking",
+    "canal_label": "Canal usado para contactar o cliente",
+    "registo_label": "Registo da autorização (obrigatório — nunca inferido)",
+    "registo_placeholder": "Ex.: cliente confirmou por WhatsApp às 10:32 — aceita 1 unidade.",
+    "registo_minimo_aviso": "Mínimo de {{minimo}} caracteres.",
+    "a_registar": "A registar..."
+  },
+  "mensagens": {
+    "confirmado": "Pedido confirmado.",
+    "erro_confirmar": "Não foi possível confirmar o pedido.",
+    "cancelado": "Pedido cancelado — a reserva de stock foi libertada.",
+    "erro_cancelar": "Não foi possível cancelar o pedido.",
+    "preparacao_iniciada": "Preparação iniciada.",
+    "erro_iniciar_preparacao": "Não foi possível iniciar a preparação.",
+    "conferencia_fechada": "Conferência fechada — pedido pronto para levantamento.",
+    "erro_conferir": "Ainda há artigos por resolver — confirme a quantidade ou registe uma substituição.",
+    "substituicao_registada": "Substituição registada.",
+    "erro_substituir": "Não foi possível registar a substituição.",
+    "levantamento_confirmado": "Levantamento confirmado — venda criada.",
+    "erro_confirmar_levantamento": "Não foi possível confirmar o levantamento — verifique se tem uma sessão de caixa aberta."
+  }
+}

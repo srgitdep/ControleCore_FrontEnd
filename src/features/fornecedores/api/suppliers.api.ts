@@ -305,13 +305,6 @@ export interface PedidoDeContaBancaria {
   comprovativoUrl?: string;
 }
 
-export const ROTULO_ESTADO_CONTA: Record<EstadoContaBancaria, string> = {
-  PENDENTE: 'Por aprovar',
-  ACTIVA: 'Em uso',
-  RECUSADA: 'Recusada',
-  SUBSTITUIDA: 'Substituída',
-};
-
 export const b2bFornecedorApi = {
   /**
    * Procura organizações que possam ser a mesma antes de criar.

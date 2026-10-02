@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { getWeeklySchedule } from '../api/hr.api';
 import type { Shift } from '../types';
+import { localeIntl } from '@/i18n';
 
 // Gera os 7 dias da semana a partir de uma data base (segunda-feira)
 function getWeekDays(monday: Date): Date[] {
@@ -26,9 +28,10 @@ function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
 }
 
-const WEEKDAY_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const WEEKDAY_SHORT = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
 
 export function ShiftManagementPage() {
+  const { t } = useTranslation('rh');
   const [monday, setMonday] = useState<Date>(() => getMondayOf(new Date()));
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,9 +47,9 @@ export function ShiftManagementPage() {
     setError(null);
     getWeeklySchedule(dataInicial, dataFinal)
       .then((res) => setShifts(res.escalas ?? []))
-      .catch(() => setError('Erro ao carregar a escala semanal.'))
+      .catch(() => setError(t('escalas.erro_carregar')))
       .finally(() => setIsLoading(false));
-  }, [dataInicial, dataFinal]);
+  }, [dataInicial, dataFinal, t]);
 
   const navigateWeek = (direction: number) => {
     const next = new Date(monday);
@@ -74,11 +77,12 @@ export function ShiftManagementPage() {
             <CalendarDays className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Gestão de Escalas</h2>
+            <h2 className="text-xl font-semibold text-slate-900">{t('escalas.titulo')}</h2>
             <p className="text-sm text-slate-500">
-              Semana de{' '}
-              {monday.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })} a{' '}
-              {sunday.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {t('escalas.semana', {
+                inicio: monday.toLocaleDateString(localeIntl(), { day: 'numeric', month: 'long' }),
+                fim: sunday.toLocaleDateString(localeIntl(), { day: 'numeric', month: 'long', year: 'numeric' }),
+              })}
             </p>
           </div>
         </div>
@@ -88,7 +92,7 @@ export function ShiftManagementPage() {
           <button
             onClick={() => navigateWeek(-1)}
             className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-            aria-label="Semana anterior"
+            aria-label={t('escalas.anterior')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -96,12 +100,12 @@ export function ShiftManagementPage() {
             onClick={() => { setMonday(getMondayOf(new Date())); }}
             className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
           >
-            Hoje
+            {t('escalas.hoje')}
           </button>
           <button
             onClick={() => navigateWeek(1)}
             className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-            aria-label="Próxima semana"
+            aria-label={t('escalas.proxima')}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -146,7 +150,7 @@ export function ShiftManagementPage() {
                 }`}
               >
                 <p className={`text-xs font-semibold ${isToday ? 'text-indigo-200' : 'text-slate-400'}`}>
-                  {WEEKDAY_SHORT[idx]}
+                  {t(`dias.${WEEKDAY_SHORT[idx]}`)}
                 </p>
                 <p className={`text-lg font-bold leading-tight ${isToday ? 'text-white' : 'text-slate-700'}`}>
                   {day.getDate()}
@@ -192,7 +196,7 @@ export function ShiftManagementPage() {
       {/* Legenda */}
       {!isLoading && shifts.length > 0 && (
         <p className="text-xs text-slate-400 text-right">
-          {shifts.length} escalas planeadas nesta semana
+          {t('escalas.n_planeadas', { count: shifts.length })}
         </p>
       )}
     </div>

@@ -5,17 +5,8 @@ import {
 import toast from 'react-hot-toast';
 import { useLeitorDeCodigo } from '@/shared/hooks';
 import { catalogApi, type Product } from '@/features/produtos';
-import { cn } from '@/shared/utils';
-
-/**
- * Formata em meticais como o resto do POS.
- *
- * Não usa `Intl` com `currency: 'MZN'`: o browser escreve «MTn», símbolo que não aparece
- * em nenhum outro ecrã do sistema — os recibos e o fecho de caixa usam «MT». Um valor
- * escrito de duas formas no mesmo ecrã faz o operador duvidar de qual é o total.
- */
-const moeda = (valor: number) =>
-  `${valor.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+import { useTranslation } from 'react-i18next';
+import { cn, formatMoeda as moeda } from '@/shared/utils';
 
 /**
  * Leitura de códigos de barras pela câmara, para vender no telemóvel.
@@ -45,6 +36,7 @@ export function LeitorCameraModal({
   onConfirmar: (produto: Product, quantidade: number) => string | null;
   onFechar: () => void;
 }) {
+  const { t } = useTranslation('pos');
   /** O produto lido, à espera de quantidade. */
   const [lido, setLido] = useState<Product | null>(null);
   const [quantidade, setQuantidade] = useState('1');
@@ -88,7 +80,7 @@ export function LeitorCameraModal({
       // registar um produto que já tem.
       if (estaLeitura === leituraActual.current) {
         setAProcurar(false);
-        toast.error('Não foi possível consultar o produto. Verifique a ligação.');
+        toast.error(t('leitor.erro_consulta'));
       }
       return;
     }
@@ -157,14 +149,14 @@ export function LeitorCameraModal({
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <div className="flex items-center gap-2">
           <ScanLine className="h-5 w-5 text-blue-400" />
-          <span className="font-semibold">Ler código de barras</span>
+          <span className="font-semibold">{t('leitor.titulo')}</span>
         </div>
         <button
           onClick={onFechar}
           // 44 px: o mínimo que um dedo acerta sem falhar. Com `p-2` dava 38 px, e este é
           // o botão que o operador usa com o telemóvel numa mão.
           className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
-          aria-label="Fechar leitor"
+          aria-label={t('leitor.fechar_aria')}
         >
           <X size={22} />
         </button>
@@ -201,7 +193,7 @@ export function LeitorCameraModal({
         {aCarregar && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300">
             <Camera className="h-8 w-8 animate-pulse" />
-            <p className="text-sm">A pedir acesso à câmara...</p>
+            <p className="text-sm">{t('leitor.a_pedir_camara')}</p>
           </div>
         )}
 
@@ -212,11 +204,10 @@ export function LeitorCameraModal({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
             <CameraOff className="h-7 w-7 text-slate-500" />
             <p className="text-sm font-medium text-slate-300">
-              Sem câmara neste dispositivo
+              {t('leitor.sem_camara')}
             </p>
             <p className="max-w-xs text-xs text-slate-500">
-              {detalheDoErro ??
-                'Escreva o código de barras no campo abaixo. Num telemóvel, a leitura pela câmara fica disponível.'}
+              {detalheDoErro ?? t('leitor.sem_camara_detalhe')}
             </p>
           </div>
         )}
@@ -254,14 +245,14 @@ export function LeitorCameraModal({
             className="space-y-3"
           >
             <label className="block text-sm font-medium text-slate-700">
-              Código de barras
+              {t('leitor.codigo_barras')}
               <input
                 type="text"
                 inputMode="numeric"
                 autoFocus
                 value={codigoManual}
                 onChange={(e) => setCodigoManual(e.target.value)}
-                placeholder="Ex: 5601234567890"
+                placeholder={t('leitor.codigo_exemplo')}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-base"
               />
             </label>
@@ -271,30 +262,29 @@ export function LeitorCameraModal({
                 onClick={() => setModoManual(false)}
                 className="flex-1 rounded-lg border border-slate-200 py-3 text-sm font-medium text-slate-600"
               >
-                Voltar à câmara
+                {t('leitor.voltar_camara')}
               </button>
               <button
                 type="submit"
                 className="flex-1 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white"
               >
-                Procurar
+                {t('leitor.procurar')}
               </button>
             </div>
           </form>
         ) : aProcurar ? (
           <div className="flex items-center gap-3 text-slate-600">
             <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-            <p className="text-sm">Código lido. A procurar o produto...</p>
+            <p className="text-sm">{t('leitor.a_procurar_produto')}</p>
           </div>
         ) : codigoDesconhecido ? (
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-800">Código não reconhecido</p>
+              <p className="text-sm font-medium text-slate-800">{t('leitor.codigo_nao_reconhecido')}</p>
               <p className="font-mono text-xs text-slate-500">{codigoDesconhecido}</p>
               <p className="mt-1 text-xs text-slate-500">
-                Este código não está associado a nenhum produto. Aponte a outro, ou
-                registe o produto no catálogo.
+                {t('leitor.codigo_nao_reconhecido_detalhe')}
               </p>
             </div>
           </div>
@@ -327,7 +317,7 @@ export function LeitorCameraModal({
               <button
                 onClick={() => setQuantidade((q) => String(Math.max(1, (Number(q) || 1) - 1)))}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 active:bg-slate-100"
-                aria-label="Menos um"
+                aria-label={t('leitor.menos_um')}
               >
                 <Minus size={20} />
               </button>
@@ -336,7 +326,7 @@ export function LeitorCameraModal({
                 ref={campoQuantidade}
                 type="number"
                 inputMode="decimal"
-                aria-label="Quantidade"
+                aria-label={t('leitor.quantidade')}
                 min="0"
                 step="any"
                 value={quantidade}
@@ -348,7 +338,7 @@ export function LeitorCameraModal({
               <button
                 onClick={() => setQuantidade((q) => String((Number(q) || 0) + 1))}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 active:bg-slate-100"
-                aria-label="Mais um"
+                aria-label={t('leitor.mais_um')}
               >
                 <Plus size={20} />
               </button>
@@ -356,7 +346,7 @@ export function LeitorCameraModal({
 
             <div className="mt-3 flex items-center justify-between gap-3">
               <p className="text-sm text-slate-500">
-                Total:{' '}
+                {t('leitor.total')}{' '}
                 <strong className="text-slate-900">
                   {moeda((Number(quantidade) || 0) * (lido.precoVenda ?? 0))}
                 </strong>
@@ -367,7 +357,7 @@ export function LeitorCameraModal({
                 className="flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
               >
                 <Check size={18} />
-                Adicionar
+                {t('leitor.adicionar')}
               </button>
             </div>
           </div>
@@ -375,16 +365,14 @@ export function LeitorCameraModal({
           // ── À espera de leitura ─────────────────────────────────────────────
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-slate-500">
-              {estado === 'a-ler'
-                ? 'Aponte a câmara ao código de barras do produto.'
-                : 'Leitor inactivo.'}
+              {estado === 'a-ler' ? t('leitor.aponte') : t('leitor.inactivo')}
             </p>
             <button
               onClick={() => setModoManual(true)}
               className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600"
             >
               <Keyboard size={14} />
-              Escrever
+              {t('leitor.escrever')}
             </button>
           </div>
         )}
@@ -394,7 +382,7 @@ export function LeitorCameraModal({
             onClick={onFechar}
             className="mt-4 w-full rounded-lg bg-slate-900 py-3 font-semibold text-white active:bg-slate-800"
           >
-            Concluir — {confirmados.reduce((s, c) => s + c.quantidade, 0)} artigo(s) no carrinho
+            {t('leitor.concluir', { n: confirmados.reduce((s, c) => s + c.quantidade, 0) })}
           </button>
         )}
       </div>

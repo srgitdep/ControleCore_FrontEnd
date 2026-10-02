@@ -5,6 +5,7 @@
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 interface ChartData {
   dia: string;
@@ -17,27 +18,31 @@ interface SalesChartProps {
   subtitle?: string;
 }
 
-export function SalesChart({ data, title = "Customer Activity", subtitle = "Customer activity for the last 3 months" }: SalesChartProps) {
+export function SalesChart({ data, title, subtitle }: SalesChartProps) {
+  const { t } = useTranslation('painel');
+  const tituloFinal = title ?? t('grafico.titulo_padrao');
+  const subtituloFinal = subtitle ?? t('grafico.subtitulo_padrao');
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col shadow-sm">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-[15px] font-medium text-slate-900">{title}</h3>
-          <p className="text-sm text-slate-400 mt-1">{subtitle}</p>
+          <h3 className="text-[15px] font-medium text-slate-900">{tituloFinal}</h3>
+          <p className="text-sm text-slate-400 mt-1">{subtituloFinal}</p>
         </div>
-        
+
         <div className="flex gap-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-slate-500 rounded-sm"></div>
-            <span className="text-xs text-slate-500 font-medium">Active Accounts</span>
+            <span className="text-xs text-slate-500 font-medium">{t('grafico.legenda_contas')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-slate-200 rounded-sm"></div>
-            <span className="text-xs text-slate-500 font-medium">New Customers</span>
+            <span className="text-xs text-slate-500 font-medium">{t('grafico.legenda_novos')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-slate-800 rounded-sm"></div>
-            <span className="text-xs text-slate-500 font-medium">Returning Users</span>
+            <span className="text-xs text-slate-500 font-medium">{t('grafico.legenda_regulares')}</span>
           </div>
         </div>
       </div>

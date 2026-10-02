@@ -1,4 +1,6 @@
 import { Loader2, Package, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatDataHora } from '@/shared/utils';
 import { BadgeEstadoTransferencia } from './BadgeEstadoTransferencia';
 import { useDetalheTransferencia } from '../hooks/useTransferencias';
 
@@ -15,6 +17,7 @@ interface DetalheTransferenciaDrawerProps {
  * exactamente ao filtro e à página da lista de transferências.
  */
 export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: DetalheTransferenciaDrawerProps) {
+  const { t } = useTranslation('transferencias');
   const { data: detalhe, isLoading } = useDetalheTransferencia(transferenciaId);
 
   if (!transferenciaId) return null;
@@ -24,9 +27,10 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
       <div className="fixed inset-0 z-40 bg-slate-900/50 transition-opacity" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md transform flex-col bg-white shadow-xl transition-transform duration-300">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Detalhe da transferência</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t('detalhe.titulo')}</h2>
           <button
             onClick={onClose}
+            aria-label={t('detalhe.fechar')}
             className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
             <X className="h-5 w-5" />
@@ -37,7 +41,7 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
           {isLoading || !detalhe ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm">A carregar detalhe...</p>
+              <p className="text-sm">{t('detalhe.a_carregar')}</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -58,19 +62,19 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-xs text-slate-400">Origem</p>
+                  <p className="text-xs text-slate-400">{t('detalhe.origem')}</p>
                   <p className="text-sm font-medium text-slate-800">{detalhe.origemLoja.nome}</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-xs text-slate-400">Destino</p>
+                  <p className="text-xs text-slate-400">{t('detalhe.destino')}</p>
                   <p className="text-sm font-medium text-slate-800">{detalhe.destinoLoja.nome}</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-xs text-slate-400">Solicitada</p>
-                  <p className="tabular-nums text-sm font-medium text-slate-800">{detalhe.quantidadeSolicitada} un</p>
+                  <p className="text-xs text-slate-400">{t('detalhe.solicitada')}</p>
+                  <p className="tabular-nums text-sm font-medium text-slate-800">{t('detalhe.unidades', { n: detalhe.quantidadeSolicitada })}</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
-                  <p className="text-xs text-slate-400">Expedida / Recebida</p>
+                  <p className="text-xs text-slate-400">{t('detalhe.expedida_recebida')}</p>
                   <p className="tabular-nums text-sm font-medium text-slate-800">
                     {detalhe.quantidadeExpedida ?? '—'} / {detalhe.quantidadeRecebida ?? '—'}
                   </p>
@@ -79,35 +83,35 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
 
               {detalhe.motivo && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Motivo</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t('detalhe.motivo')}</p>
                   <p className="mt-1 text-sm text-slate-600">{detalhe.motivo}</p>
                 </div>
               )}
 
               {detalhe.motivoCancelamento && (
                 <div className="rounded-lg bg-rose-50 px-3 py-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-500">Cancelamento</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-500">{t('detalhe.cancelamento')}</p>
                   <p className="mt-1 text-sm text-rose-700">{detalhe.motivoCancelamento}</p>
                 </div>
               )}
 
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Linha do tempo
+                  {t('detalhe.linha_do_tempo')}
                 </p>
                 <ol className="space-y-3 border-l border-slate-100 pl-4">
-                  <Evento label="Solicitada por" nome={detalhe.solicitadaPor.name} data={detalhe.createdAt} />
+                  <Evento label={t('detalhe.solicitada_por')} nome={detalhe.solicitadaPor.name} data={detalhe.createdAt} />
                   {detalhe.aprovadaPor && (
-                    <Evento label="Aprovada por" nome={detalhe.aprovadaPor.name} data={detalhe.aprovadaEm} />
+                    <Evento label={t('detalhe.aprovada_por')} nome={detalhe.aprovadaPor.name} data={detalhe.aprovadaEm} />
                   )}
                   {detalhe.expedidaPor && (
-                    <Evento label="Expedida por" nome={detalhe.expedidaPor.name} data={detalhe.expedidaEm} />
+                    <Evento label={t('detalhe.expedida_por')} nome={detalhe.expedidaPor.name} data={detalhe.expedidaEm} />
                   )}
                   {detalhe.recebidaPor && (
-                    <Evento label="Recebida por" nome={detalhe.recebidaPor.name} data={detalhe.recebidaEm} />
+                    <Evento label={t('detalhe.recebida_por')} nome={detalhe.recebidaPor.name} data={detalhe.recebidaEm} />
                   )}
                   {detalhe.canceladaPor && (
-                    <Evento label="Cancelada por" nome={detalhe.canceladaPor.name} data={null} />
+                    <Evento label={t('detalhe.cancelada_por')} nome={detalhe.canceladaPor.name} data={null} />
                   )}
                 </ol>
               </div>
@@ -126,7 +130,7 @@ function Evento({ label, nome, data }: { label: string; nome: string; data: stri
         {label} <span className="font-normal text-slate-500">— {nome}</span>
       </p>
       {data && (
-        <p className="text-xs text-slate-400">{new Date(data).toLocaleString('pt-PT')}</p>
+        <p className="text-xs text-slate-400">{formatDataHora(data)}</p>
       )}
     </li>
   );

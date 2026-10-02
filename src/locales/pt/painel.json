@@ -1,0 +1,45 @@
+{
+  "gestao": {
+    "indicadores": "Indicadores",
+    "indicadores_mes": "Indicadores do mês",
+    "faturacao": "Faturação (mês atual)",
+    "numero_vendas": "Nº de vendas (mês atual)",
+    "stock_baixo": "Produtos com stock baixo",
+    "abaixo_minimo": "Abaixo do mínimo definido",
+    "todos_acima_minimo": "Todos acima do mínimo",
+    "funcionarios_presentes": "Funcionários presentes hoje",
+    "pedidos_pendentes": "Pedidos Compra Fácil por atender",
+    "pedidos_em_espera": "À espera de preparação ou levantamento",
+    "sem_pedidos": "Nenhum pedido em espera",
+    "grafico_titulo": "Atividade de vendas",
+    "grafico_subtitulo": "Últimos 7 dias"
+  },
+  "grafico": {
+    "titulo_padrao": "Customer Activity",
+    "subtitulo_padrao": "Customer activity for the last 3 months",
+    "legenda_contas": "Active Accounts",
+    "legenda_novos": "New Customers",
+    "legenda_regulares": "Returning Users"
+  },
+  "plataforma": {
+    "titulo": "Visão geral do sistema",
+    "subtitulo": "Estatísticas globais de todas as instâncias activas.",
+    "indicadores": "Indicadores do sistema",
+    "empresas": "Total de empresas",
+    "empresas_desc": "Contas activas",
+    "utilizadores": "Total de utilizadores",
+    "utilizadores_desc": "Membros registados",
+    "lojas": "Lojas registadas",
+    "lojas_desc": "Pontos de venda",
+    "subscricoes": "Subscrições activas",
+    "subscricoes_desc": "Planos regulares",
+    "actividade": "Actividade recente do sistema",
+    "actividade_vazio": "Os registos detalhados do sistema irão aparecer aqui"
+  },
+  "clientes": {
+    "novo": "Novo Cliente",
+    "modulo": "Módulo de CRM",
+    "descricao": "A lista de clientes e relatórios serão carregados aqui.",
+    "mayra": "Pode usar a Mayra (IA Copilot) para consultar o perfil ou histórico de qualquer cliente!"
+  }
+}

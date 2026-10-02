@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Loader2, Plus, Trash2, FileEdit, Search, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { purchasesApi } from '../api/purchases.api';
 import type { PurchaseOrder } from '../api/purchases.api';
 import { catalogApi } from '@/features/produtos';
 import { useDebounce } from '@/shared/hooks';
-import { cn } from '@/shared/utils';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
 const LIMITE_CATALOGO = 50;
 
@@ -49,13 +47,14 @@ interface Props {
  * aqui para não ensaiar uma submissão que vai falhar.
  */
 export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('compras');
   const [dataPrevista, setDataPrevista] = useState(order.dataPrevista?.slice(0, 10) ?? '');
   const [observacoes, setObservacoes] = useState(order.observacoes ?? '');
   const [motivo, setMotivo] = useState('');
   const [linhas, setLinhas] = useState<Linha[]>(
     (order.itens ?? []).map((i) => ({
       produtoId: i.produtoId,
-      nome: i.produto?.nome ?? 'Produto',
+      nome: i.produto?.nome ?? t('alterar.produto_generico'),
       quantidade: i.quantidadePedida,
       custoUnitario: i.custoUnitario,
       taxaIva: i.taxaIva,
@@ -87,7 +86,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
   const acrescentar = (produto: { id: string; nome: string; precoCusto?: number }) => {
     if (linhas.some((l) => l.produtoId === produto.id)) {
-      return toast.error(`"${produto.nome}" já está na ordem. Ajuste a quantidade.`);
+      return toast.error(t('alterar.erro_ja_na_ordem', { nome: produto.nome }));
     }
 
     setLinhas((antes) => [
@@ -117,28 +116,29 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
   const remover = (linha: Linha) => {
     if (linha.quantidadeRecebida > 0) {
-      return toast.error(
-        `"${linha.nome}" já tem mercadoria recebida — não pode ser removida da ordem.`,
-      );
+      return toast.error(t('alterar.erro_remover_recebida', { nome: linha.nome }));
     }
     setLinhas((antes) => antes.filter((l) => l.produtoId !== linha.produtoId));
   };
 
   const guardar = async () => {
-    if (linhas.length === 0) return toast.error('A ordem precisa de pelo menos um produto.');
+    if (linhas.length === 0) return toast.error(t('alterar.erro_sem_produtos'));
 
     const invalida = linhas.find((l) => !(l.quantidade > 0));
-    if (invalida) return toast.error(`A quantidade de "${invalida.nome}" tem de ser maior que zero.`);
+    if (invalida) return toast.error(t('alterar.erro_quantidade', { nome: invalida.nome }));
 
     const abaixoDoRecebido = linhas.find((l) => l.quantidade < l.quantidadeRecebida);
     if (abaixoDoRecebido) {
       return toast.error(
-        `"${abaixoDoRecebido.nome}" já recebeu ${abaixoDoRecebido.quantidadeRecebida} — não pode pedir menos do que isso.`,
+        t('alterar.erro_abaixo_recebido', {
+          nome: abaixoDoRecebido.nome,
+          recebido: abaixoDoRecebido.quantidadeRecebida,
+        }),
       );
     }
 
     if (motivo.trim().length < 5) {
-      return toast.error('Indique o motivo da alteração — fica registado na versão.');
+      return toast.error(t('alterar.erro_motivo'));
     }
 
     setIsSaving(true);
@@ -156,11 +156,11 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
         motivo: motivo.trim(),
       });
 
-      toast.success('Ordem alterada. Uma nova versão foi criada.');
+      toast.success(t('alterar.toast_alterada'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao alterar a ordem.');
+      toast.error(mensagemDeErro(error, t('alterar.erro_alterar')));
     } finally {
       setIsSaving(false);
     }
@@ -176,15 +176,15 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800">
-                Alterar pedido #{order.id.slice(0, 8)}
+                {t('alterar.titulo', { id: order.id.slice(0, 8) })}
               </h2>
-              <p className="text-sm text-slate-500">{order.fornecedor?.nome ?? 'fornecedor n/d'}</p>
+              <p className="text-sm text-slate-500">{order.fornecedor?.nome ?? t('alterar.fornecedor_nd')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label={t('alterar.fechar')}
           >
             <X size={20} />
           </button>
@@ -194,14 +194,13 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
           {order.estadoAprovacao === 'APROVADA' && (
             <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-              Esta ordem já está aprovada. Se a alteração for material, a aprovação é anulada e
-              ela volta a aguardar decisão.
+              {t('alterar.aviso_aprovada')}
             </div>
           )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Data de entrega combinada
+              {t('alterar.data_entrega')}
             </label>
             <input
               type="date"
@@ -212,7 +211,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Produtos</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('alterar.produtos')}</label>
             <div
               className="relative"
               onBlur={(e) => {
@@ -225,7 +224,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                 value={pesquisa}
                 onChange={(e) => setPesquisa(e.target.value)}
                 onFocus={() => setListaAberta(true)}
-                placeholder="Clicar para ver os produtos, ou escrever para procurar..."
+                placeholder={t('alterar.pesquisa_placeholder')}
                 className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500"
               />
 
@@ -234,13 +233,13 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                   {aCarregarProdutos && produtos.length === 0 ? (
                     <p className="flex items-center gap-2 px-3 py-3 text-sm text-slate-500">
                       <Loader2 size={14} className="animate-spin" />
-                      A carregar produtos...
+                      {t('alterar.a_carregar_produtos')}
                     </p>
                   ) : produtos.length === 0 ? (
                     <p className="px-3 py-3 text-sm text-slate-500">
                       {termo
-                        ? `Nenhum produto encontrado para "${termo}".`
-                        : 'A empresa ainda não tem produtos no catálogo.'}
+                        ? t('alterar.nenhum_encontrado', { termo })
+                        : t('alterar.catalogo_vazio')}
                     </p>
                   ) : (
                     <>
@@ -263,10 +262,10 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                                 </span>
                                 <span className="flex items-center gap-2 text-xs text-slate-500">
                                   {jaNaOrdem ? (
-                                    <span className="text-slate-400">já na ordem</span>
+                                    <span className="text-slate-400">{t('alterar.ja_na_ordem')}</span>
                                   ) : (
                                     <>
-                                      {moeda(p.precoCusto ?? 0)}
+                                      {formatMoeda(p.precoCusto ?? 0)}
                                       <Plus size={13} className="text-blue-600" />
                                     </>
                                   )}
@@ -279,8 +278,11 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
                       {escondidos > 0 && (
                         <p className="border-t border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                          A mostrar {produtos.length} de {totalNoCatalogo}. Escreva para
-                          encontrar os restantes {escondidos}.
+                          {t('alterar.a_mostrar', {
+                            mostrados: produtos.length,
+                            total: totalNoCatalogo,
+                            restantes: escondidos,
+                          })}
                         </p>
                       )}
                     </>
@@ -291,7 +293,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
             {linhas.length === 0 ? (
               <p className="mt-3 rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Nenhum produto na ordem.
+                {t('alterar.nenhum_na_ordem')}
               </p>
             ) : (
               <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
@@ -299,12 +301,12 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                       <tr>
-                        <th className="px-3 py-2 font-medium">Produto</th>
-                        <th className="w-24 px-3 py-2 font-medium">Quantidade</th>
-                        <th className="w-28 px-3 py-2 font-medium">Custo unit.</th>
-                        <th className="w-20 px-3 py-2 font-medium">IVA %</th>
-                        <th className="w-24 px-3 py-2 font-medium">Desconto</th>
-                        <th className="w-28 px-3 py-2 text-right font-medium">Total</th>
+                        <th className="px-3 py-2 font-medium">{t('alterar.col_produto')}</th>
+                        <th className="w-24 px-3 py-2 font-medium">{t('alterar.col_quantidade')}</th>
+                        <th className="w-28 px-3 py-2 font-medium">{t('alterar.col_custo_unit')}</th>
+                        <th className="w-20 px-3 py-2 font-medium">{t('alterar.col_iva')}</th>
+                        <th className="w-24 px-3 py-2 font-medium">{t('alterar.col_desconto')}</th>
+                        <th className="w-28 px-3 py-2 text-right font-medium">{t('alterar.col_total')}</th>
                         <th className="w-10 px-3 py-2" />
                       </tr>
                     </thead>
@@ -315,7 +317,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                             {l.nome}
                             {l.quantidadeRecebida > 0 && (
                               <p className="text-xs font-normal text-slate-400">
-                                {l.quantidadeRecebida} já recebida
+                                {t('alterar.ja_recebida', { n: l.quantidadeRecebida })}
                               </p>
                             )}
                           </td>
@@ -373,7 +375,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                             />
                           </td>
                           <td className="px-3 py-2 text-right text-slate-700">
-                            {moeda(l.quantidade * l.custoUnitario - l.desconto)}
+                            {formatMoeda(l.quantidade * l.custoUnitario - l.desconto)}
                           </td>
                           <td className="px-3 py-2">
                             <button
@@ -382,8 +384,8 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
                               className="p-1 text-slate-400 hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-30"
                               title={
                                 l.quantidadeRecebida > 0
-                                  ? 'Já tem mercadoria recebida'
-                                  : 'Remover linha'
+                                  ? t('alterar.tem_recebida')
+                                  : t('alterar.remover_linha')
                               }
                             >
                               <Trash2 size={15} />
@@ -399,7 +401,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Observações</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('alterar.observacoes')}</label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
@@ -410,13 +412,13 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Motivo da alteração <span className="text-rose-500">*</span>
+              {t('alterar.motivo')} <span className="text-rose-500">*</span>
             </label>
             <textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               rows={2}
-              placeholder="Ex: fornecedor actualizou o preço, cliente pediu mais quantidade..."
+              placeholder={t('alterar.motivo_exemplo')}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -424,15 +426,15 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-6 py-3">
           <p className="text-sm text-slate-600">
-            {linhas.length} {linhas.length === 1 ? 'linha' : 'linhas'} ·{' '}
-            <strong className="text-slate-900">{moeda(total)}</strong>
+            {t('alterar.n_linhas', { count: linhas.length })} ·{' '}
+            <strong className="text-slate-900">{formatMoeda(total)}</strong>
           </p>
           <div className="flex gap-2">
             <button
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
-              Cancelar
+              {t('alterar.cancelar')}
             </button>
             <button
               onClick={guardar}
@@ -440,7 +442,7 @@ export function AlterarLinhasPedidoModal({ order, onClose, onSuccess }: Props) {
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {isSaving && <Loader2 size={16} className="animate-spin" />}
-              Guardar alteração
+              {t('alterar.guardar')}
             </button>
           </div>
         </div>

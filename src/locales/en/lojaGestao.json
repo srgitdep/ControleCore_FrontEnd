@@ -1,0 +1,93 @@
+{
+  "estado": {
+    "CRIADO": "New",
+    "AGUARDA_CONFIRMACAO": "Awaiting confirmation",
+    "CONFIRMADO": "Confirmed",
+    "EM_PREPARACAO": "Being prepared",
+    "PRONTO": "Ready for collection",
+    "AGUARDA_LEVANTAMENTO": "Awaiting collection",
+    "CONCLUIDO": "Completed",
+    "CANCELADO": "Cancelled"
+  },
+  "canal": {
+    "SMS": "SMS",
+    "EMAIL": "Email",
+    "WHATSAPP": "WhatsApp",
+    "CHAMADA": "Call",
+    "PUSH": "Push notification"
+  },
+  "pagina": {
+    "resumo_zero": "{{count}} orders",
+    "resumo_one": "{{count}} order",
+    "resumo_other": "{{count}} orders",
+    "todas_lojas": "All stores",
+    "todos_estados": "All",
+    "erro_carregar": "Could not load the Compra Fácil orders."
+  },
+  "tabela": {
+    "col_pedido": "Order",
+    "col_cliente": "Customer",
+    "col_loja": "Store",
+    "col_estado": "Status",
+    "col_total": "Total",
+    "col_criado": "Created",
+    "abrir": "Open",
+    "vazio": "No Compra Fácil orders in this queue."
+  },
+  "drawer": {
+    "sem_telefone": "no phone number",
+    "venda_criada": "Sale created — order delivered to the customer.",
+    "artigos_titulo": "Items",
+    "ordem_recolha_sufixo": "suggested picking order",
+    "substituir": "Substitute",
+    "ajustado": "Adjusted: accepted {{aceite}} of {{quantidade}}",
+    "produto_substituto_sufixo": "(substitute product)",
+    "autorizado_por": "Authorised via {{canal}}: “{{registo}}”",
+    "total": "Total",
+    "confirmar_pedido": "Confirm order",
+    "a_confirmar": "Confirming...",
+    "iniciar_preparacao": "Start preparation",
+    "a_iniciar": "Starting...",
+    "artigos_por_resolver_one": "{{count}} item picked below the ordered quantity — record a substitution before closing.",
+    "artigos_por_resolver_other": "{{count}} items picked below the ordered quantity — record a substitution before closing.",
+    "quantidade_invalida": "Some quantity is negative or greater than what was ordered — fix it before confirming.",
+    "confirmar_conferencia": "Confirm check",
+    "a_conferir": "Checking...",
+    "confirmar_levantamento": "Confirm collection",
+    "aviso_levantamento": "This creates a real sale and requires an open till session. Confirm?",
+    "voltar": "Back",
+    "sim_confirmar": "Yes, confirm",
+    "cancelar_pedido": "Cancel order",
+    "aviso_cancelar": "This cancels the order and releases the stock reservation. The customer is notified with the reason.",
+    "motivo_placeholder": "Reason — e.g. customer did not collect within three days",
+    "a_cancelar": "Cancelling..."
+  },
+  "modal": {
+    "titulo": "Record substitution",
+    "item_info": "{{produto}} — ordered: {{quantidade}}",
+    "quantidade_label": "Quantity the customer accepted",
+    "produto_substituto_label": "Substitute product (optional — leave empty if it is only a smaller quantity of the same item)",
+    "produto_substituto_placeholder": "Substitute product ID",
+    "motivo_label": "Reason",
+    "motivo_placeholder": "E.g. stock-out when the picking team arrived",
+    "canal_label": "Channel used to contact the customer",
+    "registo_label": "Record of the authorisation (required — never inferred)",
+    "registo_placeholder": "E.g. customer confirmed via WhatsApp at 10:32 — accepts 1 unit.",
+    "registo_minimo_aviso": "Minimum of {{minimo}} characters.",
+    "a_registar": "Recording..."
+  },
+  "mensagens": {
+    "confirmado": "Order confirmed.",
+    "erro_confirmar": "Could not confirm the order.",
+    "cancelado": "Order cancelled — the stock reservation was released.",
+    "erro_cancelar": "Could not cancel the order.",
+    "preparacao_iniciada": "Preparation started.",
+    "erro_iniciar_preparacao": "Could not start preparation.",
+    "conferencia_fechada": "Check closed — order ready for collection.",
+    "erro_conferir": "There are still items to resolve — confirm the quantity or record a substitution.",
+    "substituicao_registada": "Substitution recorded.",
+    "erro_substituir": "Could not record the substitution.",
+    "levantamento_confirmado": "Collection confirmed — sale created.",
+    "erro_confirmar_levantamento": "Could not confirm the collection — check whether you have an open till session."
+  }
+}

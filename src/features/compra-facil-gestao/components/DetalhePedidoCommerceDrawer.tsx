@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Loader2, RefreshCw, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { Can } from '@/features/auth';
 import { BadgeEstadoPedidoCommerce } from './BadgeEstadoPedidoCommerce';
@@ -12,7 +13,7 @@ import {
   useIniciarPreparacaoCommerce,
   useSubstituirItemCommerce,
 } from '../hooks/usePedidosCommerceGestao';
-import { ETIQUETA_CANAL, type PedidoCommerceGestao, type PedidoItemCommerce } from '../types/pedido-commerce-gestao.types';
+import { type PedidoCommerceGestao, type PedidoItemCommerce } from '../types/pedido-commerce-gestao.types';
 
 interface DetalhePedidoCommerceDrawerProps {
   pedido: PedidoCommerceGestao | null;
@@ -30,6 +31,7 @@ interface DetalhePedidoCommerceDrawerProps {
  * lista, que arrasta este drawer para o estado mais recente.
  */
 export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCommerceDrawerProps) {
+  const { t } = useTranslation('lojaGestao');
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [itemASubstituir, setItemASubstituir] = useState<PedidoItemCommerce | null>(null);
   const [aConfirmarLevantamento, setAConfirmarLevantamento] = useState(false);
@@ -101,7 +103,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-slate-800">{pedido.cliente.nome}</p>
-              <p className="text-xs text-slate-400">{pedido.cliente.telefone ?? 'sem telefone'} · {pedido.loja.nome}</p>
+              <p className="text-xs text-slate-400">{pedido.cliente.telefone ?? t('drawer.sem_telefone')} · {pedido.loja.nome}</p>
             </div>
             <BadgeEstadoPedidoCommerce estado={pedido.estado} />
           </div>
@@ -112,13 +114,14 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
 
           {pedido.estado === 'CONCLUIDO' && (
             <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              Venda criada — pedido entregue ao cliente.
+              {t('drawer.venda_criada')}
             </p>
           )}
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Artigos{sequenciaPickingIds && ' — ordem de recolha sugerida'}
+              {t('drawer.artigos_titulo')}
+              {sequenciaPickingIds && <> — {t('drawer.ordem_recolha_sufixo')}</>}
             </p>
             <ul className="space-y-2">
               {itensParaMostrar.map((item, indice) => (
@@ -155,7 +158,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                           onClick={() => setItemASubstituir(item)}
                           className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-100"
                         >
-                          <RefreshCw size={12} /> Substituir
+                          <RefreshCw size={12} /> {t('drawer.substituir')}
                         </button>
                       </div>
                     )}
@@ -168,12 +171,18 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                   {item.substituicao && (
                     <div className="mt-2 rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-800">
                       <p className="font-semibold">
-                        Ajustado: aceite {item.substituicao.quantidadeAceite} de {item.quantidade}
-                        {item.substituicao.produtoSubstitutoId && ' (produto substituto)'}
+                        {t('drawer.ajustado', {
+                          aceite: item.substituicao.quantidadeAceite,
+                          quantidade: item.quantidade,
+                        })}
+                        {item.substituicao.produtoSubstitutoId && <> {t('drawer.produto_substituto_sufixo')}</>}
                       </p>
                       <p className="mt-0.5">{item.substituicao.motivo}</p>
                       <p className="mt-0.5 text-orange-600">
-                        Autorizado por {item.substituicao.canalAutorizacao ? ETIQUETA_CANAL[item.substituicao.canalAutorizacao] : '—'}: “{item.substituicao.registoAutorizacao}”
+                        {t('drawer.autorizado_por', {
+                          canal: item.substituicao.canalAutorizacao ? t(`canal.${item.substituicao.canalAutorizacao}`) : '—',
+                          registo: item.substituicao.registoAutorizacao,
+                        })}
                       </p>
                     </div>
                   )}
@@ -183,7 +192,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
           </div>
 
           <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
-            <span>Total</span>
+            <span>{t('drawer.total')}</span>
             <span>{formatMoeda(pedido.totalFinal)}</span>
           </div>
 
@@ -197,7 +206,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                   onClick={() => confirmar.mutate(pedido.id)}
                   className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {confirmar.isPending ? 'A confirmar...' : 'Confirmar pedido'}
+                  {confirmar.isPending ? t('drawer.a_confirmar') : t('drawer.confirmar_pedido')}
                 </button>
               )}
 
@@ -213,7 +222,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                   }
                   className="w-full rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
                 >
-                  {iniciarPreparacao.isPending ? 'A iniciar...' : 'Iniciar preparação'}
+                  {iniciarPreparacao.isPending ? t('drawer.a_iniciar') : t('drawer.iniciar_preparacao')}
                 </button>
               )}
 
@@ -222,12 +231,12 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                   {itensPorResolver.length > 0 && (
                     <p className="mb-2 flex items-center gap-1.5 text-xs text-amber-600">
                       <AlertTriangle size={14} />
-                      {itensPorResolver.length} artigo(s) com quantidade separada abaixo do pedido — registe uma substituição antes de fechar.
+                      {t('drawer.artigos_por_resolver', { count: itensPorResolver.length })}
                     </p>
                   )}
                   {conferenciaInvalida && (
                     <p className="mb-2 text-xs text-rose-500">
-                      Alguma quantidade é negativa ou maior do que a pedida — corrija antes de confirmar.
+                      {t('drawer.quantidade_invalida')}
                     </p>
                   )}
                   <button
@@ -248,7 +257,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                     }
                     className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
-                    {conferir.isPending ? 'A conferir...' : 'Confirmar conferência'}
+                    {conferir.isPending ? t('drawer.a_conferir') : t('drawer.confirmar_conferencia')}
                   </button>
                 </>
               )}
@@ -261,12 +270,12 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                       onClick={() => setAConfirmarLevantamento(true)}
                       className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
                     >
-                      Confirmar levantamento
+                      {t('drawer.confirmar_levantamento')}
                     </button>
                   ) : (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                       <p className="text-sm text-amber-800">
-                        Isto cria uma venda real e exige que tenha uma sessão de caixa aberta. Confirma?
+                        {t('drawer.aviso_levantamento')}
                       </p>
                       <div className="mt-2 flex gap-2">
                         <button
@@ -274,7 +283,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                           onClick={() => setAConfirmarLevantamento(false)}
                           className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                         >
-                          Voltar
+                          {t('drawer.voltar')}
                         </button>
                         <button
                           type="button"
@@ -287,10 +296,10 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                         >
                           {confirmarLevantamento.isPending ? (
                             <span className="flex items-center justify-center gap-1.5">
-                              <Loader2 size={14} className="animate-spin" /> A confirmar...
+                              <Loader2 size={14} className="animate-spin" /> {t('drawer.a_confirmar')}
                             </span>
                           ) : (
-                            'Sim, confirmar'
+                            t('drawer.sim_confirmar')
                           )}
                         </button>
                       </div>
@@ -313,18 +322,18 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                     onClick={() => setACancelar(true)}
                     className="w-full rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50"
                   >
-                    Cancelar pedido
+                    {t('drawer.cancelar_pedido')}
                   </button>
                 ) : (
                   <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
                     <p className="text-sm text-rose-800">
-                      Isto cancela a encomenda e liberta a reserva de stock. O cliente é avisado com o motivo.
+                      {t('drawer.aviso_cancelar')}
                     </p>
                     <textarea
                       value={motivoCancelamento}
                       onChange={(e) => setMotivoCancelamento(e.target.value)}
                       rows={2}
-                      placeholder="Motivo — ex.: cliente não levantou em três dias"
+                      placeholder={t('drawer.motivo_placeholder')}
                       className="mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400"
                     />
                     <div className="mt-2 flex gap-2">
@@ -336,7 +345,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                         }}
                         className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                       >
-                        Voltar
+                        {t('drawer.voltar')}
                       </button>
                       <button
                         type="button"
@@ -353,10 +362,10 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                       >
                         {cancelarPedido.isPending ? (
                           <span className="flex items-center justify-center gap-1.5">
-                            <Loader2 size={14} className="animate-spin" /> A cancelar...
+                            <Loader2 size={14} className="animate-spin" /> {t('drawer.a_cancelar')}
                           </span>
                         ) : (
-                          'Cancelar pedido'
+                          t('drawer.cancelar_pedido')
                         )}
                       </button>
                     </div>

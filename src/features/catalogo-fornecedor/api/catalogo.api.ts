@@ -35,29 +35,8 @@ export type MetodoMapeamento =
   | 'CODIGO_INTERNO'
   | 'DESCRICAO';
 
-export const ROTULO_ESTADO_IMPORTACAO: Record<EstadoImportacao, string> = {
-  EM_REVISAO: 'Em revisão',
-  APLICADA: 'Aplicada',
-  REVERTIDA: 'Revertida',
-  CANCELADA: 'Cancelada',
-};
-
-export const ROTULO_ESTADO_LINHA: Record<EstadoLinha, string> = {
-  MAPEADA: 'Pronta',
-  POR_REVER: 'Por rever',
-  ERRO: 'Erro',
-  APLICADA: 'Aplicada',
-  IGNORADA: 'Ignorada',
-};
-
-/** Quanta fé merece cada método. `DESCRICAO` nunca entra sozinho. */
-export const ROTULO_METODO: Record<MetodoMapeamento, string> = {
-  MANUAL: 'escolha humana',
-  GTIN: 'código de barras',
-  REFERENCIA: 'referência já mapeada',
-  CODIGO_INTERNO: 'código interno',
-  DESCRICAO: 'semelhança de descrição',
-};
+// As etiquetas de estado e de método vivem no catálogo `catalogo` (`estado_importacao.*`,
+// `estado_linha.*`, `metodo.*`) para sairem na língua do utilizador. `DESCRICAO` nunca entra sozinho.
 
 export interface LinhaImportacao {
   id: string;

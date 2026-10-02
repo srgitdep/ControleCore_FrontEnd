@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
 import { transferenciasApi } from '../api/transferencias.api';
 import type { FiltrosTransferencia } from '../types/transferencia.types';
 
@@ -38,11 +39,11 @@ export function useSolicitarTransferencia() {
   return useMutation({
     mutationFn: transferenciasApi.solicitar,
     onSuccess: () => {
-      toast.success('Transferência solicitada.');
+      toast.success(i18n.t('transferencias:hooks.solicitada'));
       invalidar();
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível solicitar a transferência.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('transferencias:hooks.erro_solicitar'));
     },
   });
 }
@@ -54,13 +55,17 @@ export function useDecidirTransferencia() {
     mutationFn: ({ id, decisao, motivo }: { id: string; decisao: 'APROVAR' | 'RECUSAR'; motivo?: string }) =>
       transferenciasApi.decidir(id, decisao, motivo),
     onSuccess: (_dados, variaveis) => {
-      toast.success(variaveis.decisao === 'APROVAR' ? 'Transferência aprovada.' : 'Transferência recusada.');
+      toast.success(
+        variaveis.decisao === 'APROVAR'
+          ? i18n.t('transferencias:hooks.aprovada')
+          : i18n.t('transferencias:hooks.recusada'),
+      );
       invalidar();
     },
     onError: (erro: any) => {
       // A revalidação em tempo real (DT01 §12) pode recusar aqui mesmo quando o
       // painel mostrou a oportunidade há pouco — a mensagem do backend explica porquê.
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível decidir a transferência.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('transferencias:hooks.erro_decidir'));
     },
   });
 }
@@ -71,11 +76,11 @@ export function useExpedirTransferencia() {
   return useMutation({
     mutationFn: transferenciasApi.expedir,
     onSuccess: () => {
-      toast.success('Expedição registada.');
+      toast.success(i18n.t('transferencias:hooks.expedicao_registada'));
       invalidar();
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível expedir.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('transferencias:hooks.erro_expedir'));
     },
   });
 }
@@ -87,11 +92,11 @@ export function useReceberTransferencia() {
     mutationFn: ({ id, quantidadeRecebida }: { id: string; quantidadeRecebida: number }) =>
       transferenciasApi.receber(id, quantidadeRecebida),
     onSuccess: () => {
-      toast.success('Recepção confirmada.');
+      toast.success(i18n.t('transferencias:hooks.recepcao_confirmada'));
       invalidar();
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível confirmar a recepção.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('transferencias:hooks.erro_receber'));
     },
   });
 }
@@ -103,11 +108,11 @@ export function useCancelarTransferencia() {
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
       transferenciasApi.cancelar(id, motivo),
     onSuccess: () => {
-      toast.success('Transferência cancelada.');
+      toast.success(i18n.t('transferencias:hooks.cancelada'));
       invalidar();
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível cancelar.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('transferencias:hooks.erro_cancelar'));
     },
   });
 }

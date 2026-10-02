@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 // Importado do módulo directo, e não do barrel `@/features/produtos`: o barrel passa a
 // exportar este componente, e importar dele aqui fecharia um ciclo.
 import { useProducts, useDeleteProduct } from '../hooks/useCatalog';
@@ -7,6 +8,7 @@ import type { Product } from '../types';
 import { useAuth, usePermissions } from '@/features/auth';
 import { Button, ResponsiveTable, ConfirmDialog } from '@/shared/ui';
 import { useDebounce, useBreakpoint } from '@/shared/hooks';
+import { formatMoeda } from '@/shared/utils';
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable, createColumnHelper } from '@tanstack/react-table';
 import { ProductFormModal } from './ProductFormModal';
@@ -23,6 +25,7 @@ import { ProductFormModal } from './ProductFormModal';
  * responder a uma pergunta só.
  */
 export function ProductsTab() {
+  const { t } = useTranslation('produtos');
   const [searchTerm, setSearchTerm] = useState('');
   // `useDebounce` devolve o valor, não um par — ver a nota em `CriarPedidoModal`. Com
   // destructuring, a pesquisa filtrava pelo primeiro carácter escrito.
@@ -67,7 +70,7 @@ export function ProductsTab() {
 
     return [
       columnHelper.accessor('nome', {
-        header: 'Produto',
+        header: t('lista.col_produto'),
         cell: (info) => {
           const product = info.row.original;
           return (
@@ -83,27 +86,27 @@ export function ProductsTab() {
         },
       }),
       columnHelper.accessor('categoria.nome', {
-        header: 'Categoria',
-        cell: (info) => info.getValue() || <span className="text-slate-400">Sem categoria</span>,
+        header: t('lista.col_categoria'),
+        cell: (info) => info.getValue() || <span className="text-slate-400">{t('lista.sem_categoria')}</span>,
       }),
       columnHelper.accessor('precoCusto', {
-        header: 'Preço de Custo',
+        header: t('lista.col_custo'),
         cell: (info) => (
           <div className="text-slate-700">
-            {(info.getValue() || 0).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
+            {formatMoeda(info.getValue() || 0)}
           </div>
         ),
       }),
       columnHelper.accessor('precoVenda', {
-        header: 'Preço de Venda',
+        header: t('lista.col_venda'),
         cell: (info) => (
           <div className="font-semibold text-slate-900">
-            {(info.getValue() || 0).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
+            {formatMoeda(info.getValue() || 0)}
           </div>
         ),
       }),
       columnHelper.accessor('margemLucro', {
-        header: 'Margem',
+        header: t('lista.col_margem'),
         cell: (info) => {
           const margem = info.getValue() || 0;
           const cor =
@@ -121,16 +124,16 @@ export function ProductsTab() {
         },
       }),
       columnHelper.accessor('unidadeMedida', {
-        header: 'Unidade',
+        header: t('lista.col_unidade'),
         cell: (info) => (
           <div className="flex items-center gap-1">
             <span className="text-sm font-medium">{info.getValue() || 'UN'}</span>
             {info.row.original.isWeighable && (
               <span
                 className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
-                title="Produto pesável na balança"
+                title={t('lista.balanca_titulo')}
               >
-                Balança
+                {t('lista.balanca')}
               </span>
             )}
           </div>
@@ -139,7 +142,7 @@ export function ProductsTab() {
       canManage &&
         columnHelper.display({
           id: 'actions',
-          header: 'Ações',
+          header: t('lista.col_accoes'),
           cell: (info) => {
             const product = info.row.original;
             return (
@@ -148,7 +151,7 @@ export function ProductsTab() {
                   variant="outline"
                   size="icon"
                   onClick={() => setModalState({ isOpen: true, productToEdit: product })}
-                  title="Editar produto"
+                  title={t('lista.editar_produto')}
                   className="h-8 w-8"
                 >
                   <Edit className="h-4 w-4 text-slate-600" />
@@ -157,7 +160,7 @@ export function ProductsTab() {
                   variant="outline"
                   size="icon"
                   onClick={() => setAEliminar(product)}
-                  title="Eliminar produto"
+                  title={t('lista.eliminar_produto')}
                   className="h-8 w-8 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -167,7 +170,7 @@ export function ProductsTab() {
           },
         }),
     ].filter(Boolean) as ColumnDef<Product, any>[];
-  }, [canManage]);
+  }, [canManage, t]);
 
   // Lido por `useBreakpoint`, e não por `window.innerWidth`: este era medido uma
   // única vez na primeira renderização, pelo que rodar o telemóvel de retrato para
@@ -199,7 +202,7 @@ export function ProductsTab() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Pesquisar por nome, SKU ou código de barras..."
+            placeholder={t('lista.pesquisar')}
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -215,7 +218,7 @@ export function ProductsTab() {
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Novo Produto
+            {t('lista.novo_produto')}
           </Button>
         )}
       </div>
@@ -226,15 +229,15 @@ export function ProductsTab() {
           isLoading={isLoading}
           emptyMessage={
             debouncedSearch
-              ? 'Nenhum produto encontrado para a sua pesquisa.'
-              : 'Ainda não existem produtos registados.'
+              ? t('lista.vazio_pesquisa')
+              : t('lista.vazio')
           }
         />
 
         {!isLoading && products.length > 0 && (
           <div className="flex items-center justify-between border-t border-slate-100 bg-white px-4 py-3 text-sm">
             <span className="text-slate-500">
-              Página {page} de {totalPages}
+              {t('lista.pagina', { pagina: page, total: totalPages })}
             </span>
             <div className="flex gap-2">
               <Button
@@ -243,7 +246,7 @@ export function ProductsTab() {
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Anterior
+                {t('lista.anterior')}
               </Button>
               <Button
                 variant="outline"
@@ -251,7 +254,7 @@ export function ProductsTab() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Próxima
+                {t('lista.proxima')}
               </Button>
             </div>
           </div>
@@ -267,13 +270,13 @@ export function ProductsTab() {
 
       <ConfirmDialog
         isOpen={aEliminar !== null}
-        title="Eliminar produto"
+        title={t('lista.eliminar_titulo')}
         message={
           aEliminar
-            ? `Eliminar "${aEliminar.nome}"? Se o produto tiver stock, vendas ou compras associadas, a eliminação será recusada — nesse caso desactive-o em vez de o apagar.`
+            ? t('lista.eliminar_mensagem', { nome: aEliminar.nome })
             : ''
         }
-        confirmText="Eliminar"
+        confirmText={t('lista.eliminar_confirmar')}
         variant="danger"
         isLoading={deleteProductMutation.isPending}
         onConfirm={() => {

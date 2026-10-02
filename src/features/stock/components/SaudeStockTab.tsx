@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -66,6 +67,7 @@ const LIMIARES_PADRAO: Limiares = {
  * informação.
  */
 export function SaudeStockTab() {
+  const { t } = useTranslation('stock');
   const [classe, setClasse] = useState<ClasseStock | null>(null);
   const [page, setPage] = useState(1);
   const [limiares, setLimiares] = useState<Limiares>(LIMIARES_PADRAO);
@@ -97,7 +99,7 @@ export function SaudeStockTab() {
   const colunas = useMemo(
     () => [
       helper.accessor('nome', {
-        header: 'Produto',
+        header: t('saude.produto'),
         cell: (info) => (
           <div className="min-w-0">
             <p className="truncate font-medium text-slate-800">{info.getValue()}</p>
@@ -106,13 +108,13 @@ export function SaudeStockTab() {
                 CLASSE_META[info.row.original.classe].pastilha
               }`}
             >
-              {CLASSE_META[info.row.original.classe].label}
+              {t(`classe.${info.row.original.classe}.label`)}
             </span>
           </div>
         ),
       }),
       helper.accessor('capitalImobilizado', {
-        header: 'Capital imobilizado',
+        header: t('saude.capital_imobilizado'),
         cell: (info) => (
           <span className="font-semibold tabular-nums text-slate-800">
             {formatMoeda(info.getValue())}
@@ -120,50 +122,50 @@ export function SaudeStockTab() {
         ),
       }),
       helper.accessor('quantidade', {
-        header: 'Stock',
+        header: t('saude.stock'),
         cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
       }),
       helper.accessor('diasCobertura', {
-        header: 'Cobertura',
+        header: t('saude.cobertura'),
         cell: (info) => {
           const dias = info.getValue();
           // `null` não é zero: significa que não houve vendas na janela e portanto não há
           // cobertura a calcular. Mostrar «0 dias» diria que o stock acaba hoje.
           if (dias === null) {
-            return <span className="text-slate-400">sem vendas na janela</span>;
+            return <span className="text-slate-400">{t('saude.sem_vendas_janela')}</span>;
           }
-          return <span className="tabular-nums">{dias} dias</span>;
+          return <span className="tabular-nums">{t('saude.dias', { n: dias })}</span>;
         },
       }),
       helper.accessor('diasSemVenda', {
-        header: 'Sem venda',
+        header: t('saude.sem_venda'),
         cell: (info) =>
           info.row.original.nuncaVendeu ? (
             <span className="text-slate-500">
-              nunca vendeu
+              {t('saude.nunca_vendeu')}
               <span className="block text-[11px] text-slate-400">
-                em catálogo há {info.getValue()} dias
+                {t('saude.em_catalogo_ha', { n: info.getValue() })}
               </span>
             </span>
           ) : (
-            <span className="tabular-nums">{info.getValue()} dias</span>
+            <span className="tabular-nums">{t('saude.dias', { n: info.getValue() })}</span>
           ),
       }),
       helper.accessor('percentagemNaoVendida', {
-        header: 'Não vendido',
+        header: t('saude.nao_vendido'),
         cell: (info) => {
           const pct = info.getValue();
           if (pct === null) {
-            return <span className="text-slate-400">sem compras</span>;
+            return <span className="text-slate-400">{t('saude.sem_compras')}</span>;
           }
           return <span className="tabular-nums">{pct}%</span>;
         },
       }),
       helper.accessor('margemUnitaria', {
-        header: 'Margem unit.',
+        header: t('saude.margem_unit'),
         cell: (info) => {
           const margem = info.getValue();
-          if (margem === null) return <span className="text-slate-400">sem preço</span>;
+          if (margem === null) return <span className="text-slate-400">{t('saude.sem_preco')}</span>;
           return (
             <span className={`tabular-nums ${margem < 0 ? 'text-rose-600' : 'text-slate-700'}`}>
               {formatMoeda(margem)}
@@ -172,7 +174,7 @@ export function SaudeStockTab() {
         },
       }),
     ],
-    [],
+    [t],
   );
 
   const table = useReactTable({
@@ -197,39 +199,42 @@ export function SaudeStockTab() {
       {/* ─── Indicadores, que são também filtros ────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          title="Valor total do stock"
+          title={t('saude.kpi_valor_total')}
           value={resumo ? formatMoeda(resumo.valorTotal) : '—'}
           description={
-            resumo ? `${resumo.produtosComStock} produtos com existências` : undefined
+            resumo ? t('saude.produtos_com_existencias', { count: resumo.produtosComStock }) : undefined
           }
           icon={Wallet}
           accent="primary"
           isLoading={aCarregarResumo}
         />
         <KpiCard
-          title="Parado e obsoleto"
+          title={t('saude.kpi_parado')}
           value={resumo ? formatMoeda(paradoEObsoleto) : '—'}
-          description={`sem venda há mais de ${limiares.diasSemVendaParado} dias`}
+          description={t('saude.sem_venda_ha_mais', { n: limiares.diasSemVendaParado })}
           icon={PauseCircle}
           accent="warning"
           isLoading={aCarregarResumo}
           onClick={() => alterarClasse(classe === 'PARADO' ? null : 'PARADO')}
         />
         <KpiCard
-          title="Em excesso"
+          title={t('saude.kpi_excesso')}
           value={resumo ? formatMoeda(resumo.porClasse.EXCESSO.valor) : '—'}
-          description={`mais de ${limiares.diasCoberturaMaximo} dias de cobertura`}
+          description={t('saude.mais_de_cobertura', { n: limiares.diasCoberturaMaximo })}
           icon={Layers}
           accent="warning"
           isLoading={aCarregarResumo}
           onClick={() => alterarClasse(classe === 'EXCESSO' ? null : 'EXCESSO')}
         />
         <KpiCard
-          title="Em risco de validade"
+          title={t('saude.kpi_validade')}
           value={resumo ? formatMoeda(resumo.validade.valorEmRisco) : '—'}
           description={
             resumo
-              ? `${resumo.validade.porEstado.EXPIRADO.lotes} lotes expirados, ${resumo.validade.porEstado.EM_RISCO.lotes} em risco`
+              ? t('saude.lotes_expirados_em_risco', {
+                  expirados: resumo.validade.porEstado.EXPIRADO.lotes,
+                  risco: resumo.validade.porEstado.EM_RISCO.lotes,
+                })
               : undefined
           }
           icon={CalendarClock}
@@ -245,18 +250,18 @@ export function SaudeStockTab() {
           <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-sky-600" />
           <div className="min-w-0 text-sm text-sky-900">
             <p className="font-medium">
-              O valor em risco de validade é um mínimo, não um total.
+              {t('saude.rast_titulo')}
             </p>
             <p className="mt-0.5 text-sky-800">
-              Apenas {resumo.rastreabilidade.percentagemRastreada}% do stock está coberto por
-              lotes com validade registada
+              {t('saude.rast_a', { pct: resumo.rastreabilidade.percentagemRastreada })}
               {resumo.rastreabilidade.produtosComValidadeExigidaSemLote > 0 && (
                 <>
-                  , e {resumo.rastreabilidade.produtosComValidadeExigidaSemLote} produtos
-                  exigem validade sem ter nenhum lote registado
+                  {t('saude.rast_b', {
+                    count: resumo.rastreabilidade.produtosComValidadeExigidaSemLote,
+                  })}
                 </>
               )}
-              . Só se vigia o que é registado na entrada de mercadoria.
+              {t('saude.rast_c')}
             </p>
           </div>
         </div>
@@ -266,7 +271,7 @@ export function SaudeStockTab() {
       {resumo && resumo.valorTotal > 0 && (
         <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold text-slate-800">Composição do stock</h3>
+            <h3 className="text-sm font-semibold text-slate-800">{t('saude.composicao')}</h3>
             {classe && (
               <button
                 type="button"
@@ -274,7 +279,7 @@ export function SaudeStockTab() {
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                Ver todas as classes
+                {t('saude.ver_todas_classes')}
               </button>
             )}
           </div>
@@ -294,8 +299,12 @@ export function SaudeStockTab() {
                   className={`${CLASSE_META[c].cor} transition-opacity hover:opacity-80 ${
                     classe && classe !== c ? 'opacity-30' : ''
                   }`}
-                  title={`${CLASSE_META[c].label}: ${formatMoeda(dados.valor)} (${dados.percentagemDoValor}%)`}
-                  aria-label={`Filtrar por ${CLASSE_META[c].label}`}
+                  title={t('saude.titulo_barra_classe', {
+                    classe: t(`classe.${c}.label`),
+                    valor: formatMoeda(dados.valor),
+                    pct: dados.percentagemDoValor,
+                  })}
+                  aria-label={t('saude.filtrar_por', { classe: t(`classe.${c}.label`) })}
                 />
               );
             })}
@@ -316,13 +325,13 @@ export function SaudeStockTab() {
                   <span className={`mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-sm ${CLASSE_META[c].cor}`} />
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-medium text-slate-700">
-                      {CLASSE_META[c].label}
+                      {t(`classe.${c}.label`)}
                     </span>
                     <span className="block text-xs tabular-nums text-slate-500">
                       {formatMoeda(dados.valor)}
                     </span>
                     <span className="block text-[11px] text-slate-400">
-                      {dados.produtos} {dados.produtos === 1 ? 'produto' : 'produtos'}
+                      {t('saude.n_produtos', { count: dados.produtos })}
                     </span>
                   </span>
                 </button>
@@ -341,15 +350,16 @@ export function SaudeStockTab() {
         >
           <span className="flex items-center gap-2 text-sm text-slate-600">
             <SlidersHorizontal className="h-4 w-4 text-slate-400" />
-            Parado a partir de{' '}
-            <strong className="text-slate-800">{limiares.diasSemVendaParado} dias</strong> sem
-            venda · obsoleto aos{' '}
-            <strong className="text-slate-800">{limiares.diasSemVendaObsoleto}</strong> · excesso
-            acima de <strong className="text-slate-800">{limiares.diasCoberturaMaximo}</strong>{' '}
-            dias de cobertura
+            {t('saude.limiar_a')}{' '}
+            <strong className="text-slate-800">{t('saude.limiar_dias', { n: limiares.diasSemVendaParado })}</strong>{' '}
+            {t('saude.limiar_b')}{' '}
+            <strong className="text-slate-800">{limiares.diasSemVendaObsoleto}</strong>{' '}
+            {t('saude.limiar_c')}{' '}
+            <strong className="text-slate-800">{limiares.diasCoberturaMaximo}</strong>{' '}
+            {t('saude.limiar_d')}
           </span>
           <span className="flex-shrink-0 text-xs font-medium text-blue-600">
-            {mostrarLimiares ? 'Fechar' : 'Ajustar'}
+            {mostrarLimiares ? t('saude.fechar') : t('saude.ajustar')}
           </span>
         </button>
 
@@ -357,14 +367,14 @@ export function SaudeStockTab() {
           <div className="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
             {(
               [
-                ['diasSemVendaParado', 'Parado (dias sem venda)'],
-                ['diasSemVendaObsoleto', 'Obsoleto (dias sem venda)'],
-                ['diasCoberturaMaximo', 'Excesso (dias de cobertura)'],
-                ['janelaDias', 'Janela de vendas (dias)'],
-              ] as [keyof Limiares, string][]
-            ).map(([chave, etiqueta]) => (
+                ['diasSemVendaParado', 'lim_parado'],
+                ['diasSemVendaObsoleto', 'lim_obsoleto'],
+                ['diasCoberturaMaximo', 'lim_excesso'],
+                ['janelaDias', 'lim_janela'],
+              ] as [keyof Limiares, 'lim_parado' | 'lim_obsoleto' | 'lim_excesso' | 'lim_janela'][]
+            ).map(([chave, chaveTexto]) => (
               <label key={chave} className="block">
-                <span className="mb-1 block text-xs font-medium text-slate-600">{etiqueta}</span>
+                <span className="mb-1 block text-xs font-medium text-slate-600">{t(`saude.${chaveTexto}`)}</span>
                 <input
                   type="number"
                   min={1}
@@ -375,9 +385,7 @@ export function SaudeStockTab() {
               </label>
             ))}
             <p className="col-span-full text-xs text-slate-500">
-              Estes limiares são de negócio e não do código: 60 dias sem venda é normal numa
-              loja de electrodomésticos e é alarme numa mercearia. A alteração aplica-se de
-              imediato à análise.
+              {t('saude.lim_nota')}
             </p>
           </div>
         )}
@@ -387,15 +395,15 @@ export function SaudeStockTab() {
       <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
           <h3 className="text-sm font-semibold text-slate-800">
-            {classe ? CLASSE_META[classe].label : 'Todos os produtos'}
+            {classe ? t(`classe.${classe}.label`) : t('saude.todos_produtos')}
             {lista && (
               <span className="ml-2 font-normal text-slate-400">
-                {lista.paginacao.total} {lista.paginacao.total === 1 ? 'produto' : 'produtos'}
+                {t('saude.n_produtos', { count: lista.paginacao.total })}
               </span>
             )}
           </h3>
           {classe && (
-            <span className="text-xs text-slate-500">{CLASSE_META[classe].descricao}</span>
+            <span className="text-xs text-slate-500">{t(`classe.${classe}.descricao`)}</span>
           )}
         </div>
 
@@ -404,8 +412,8 @@ export function SaudeStockTab() {
           isLoading={isFetching && !lista}
           emptyMessage={
             classe
-              ? `Nenhum produto na classe ${CLASSE_META[classe].label} com os limiares actuais.`
-              : 'Nenhum produto com existências.'
+              ? t('saude.vazio_classe', { classe: t(`classe.${classe}.label`) })
+              : t('saude.vazio')
           }
           getRowStatus={(row) =>
             row.classe === 'RISCO_VALIDADE' || row.classe === 'OBSOLETO'
@@ -419,11 +427,11 @@ export function SaudeStockTab() {
         {lista && lista.paginacao.total > lista.paginacao.limit && (
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm">
             <span className="text-slate-500">
-              Página {lista.paginacao.page} de {totalPaginas}
+              {t('saude.pagina', { pagina: lista.paginacao.page, total: totalPaginas })}
               {/* Nunca truncar em silêncio. */}
               {lista.paginacao.omitidas > 0 && (
                 <span className="ml-2 text-slate-400">
-                  ({lista.paginacao.omitidas} linhas por mostrar)
+                  {t('saude.linhas_por_mostrar', { n: lista.paginacao.omitidas })}
                 </span>
               )}
             </span>
@@ -434,7 +442,7 @@ export function SaudeStockTab() {
                 disabled={lista.paginacao.page <= 1}
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:opacity-40"
               >
-                Anterior
+                {t('saude.anterior')}
               </button>
               <button
                 type="button"
@@ -442,7 +450,7 @@ export function SaudeStockTab() {
                 disabled={lista.paginacao.page >= totalPaginas}
                 className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:opacity-40"
               >
-                Seguinte
+                {t('saude.seguinte')}
               </button>
             </div>
           </div>
@@ -452,9 +460,7 @@ export function SaudeStockTab() {
       {/* O §60 proíbe decisão automática sobre stock parado. O ecrã diz o mesmo a quem o lê,
           porque o número sozinho convida à conclusão errada. */}
       <p className="px-1 text-xs leading-relaxed text-slate-500">
-        Um produto parado pode ser sazonal — procura concentrada num período do ano. Antes de
-        decidir liquidar, verifique o histórico do mesmo período em anos anteriores. Esta
-        análise quantifica o problema; não recomenda a acção.
+        {t('saude.nota_sazonal')}
       </p>
     </div>
   );

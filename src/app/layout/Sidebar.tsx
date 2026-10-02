@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth';
@@ -34,9 +35,18 @@ import { adesoes } from '@/features/adesao';
 import { useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
+import { definirIdiomaApi } from '@/features/auth/api/auth.api';
+import { SelectorIdioma } from '@/shared/ui';
+
+type ChaveItem =
+  | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
+  | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
+  | 'pedidos_commerce' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
-  label: string;
+  /** Chave do rótulo no catálogo (`menu.item.<chave>`): o texto vem da língua activa. */
+  chave: ChaveItem;
   icon: React.ElementType;
   path: string;
   roles?: Role[];
@@ -44,7 +54,7 @@ interface NavItem {
 }
 
 interface NavGroup {
-  title: string;
+  chave: 'gestao' | 'operacao' | 'empresa';
   items: NavItem[];
 }
 
@@ -63,55 +73,55 @@ interface NavGroup {
  */
 const navGroups: NavGroup[] = [
   {
-    title: 'Gestão',
+    chave: 'gestao',
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
+      { chave: 'dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       // Ao lado de Empresas porque é a origem delas: um pedido aprovado é uma empresa nova.
-      { label: 'Adesões', icon: Inbox, path: '/adesoes', roles: ['SUPER_ADMIN'] },
+      { chave: 'adesoes', icon: Inbox, path: '/adesoes', roles: ['SUPER_ADMIN'] },
       // O catálogo global do que uma empresa pode contratar — plataforma, não operação.
-      { label: 'Módulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
-      { label: 'Utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { label: 'Permissões', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'modulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
+      { chave: 'utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { chave: 'permissoes', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ]
   },
   {
-    title: 'Operação',
+    chave: 'operacao',
     items: [
-      { label: 'Ponto de Venda', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { label: 'CRM', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
+      { chave: 'crm', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
-      { label: 'Produtos & Stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
-      { label: 'Armazéns', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
+      { chave: 'armazens', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // O workflow real por trás das oportunidades que o painel de Necessidades
       // mostra (DT01 §12/§15.1): aprovar, expedir, receber.
-      { label: 'Transferências', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // A fila de pedidos do Compra Fácil (Fase 12) — visível a quem também vê o POS,
       // porque o levantamento fecha exactamente como uma venda de balcão.
-      { label: 'Pedidos Compra Fácil', icon: PackageCheck, path: '/commerce/pedidos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
+      { chave: 'pedidos_commerce', icon: PackageCheck, path: '/commerce/pedidos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).
-      { label: 'Necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a
       // quem comprar, depois emite-se a ordem. A ordem inversa no menu sugeriria que a
       // requisição é um detalhe da ordem, quando é o contrário.
-      { label: 'Requisições', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'requisicoes', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Compras leva Fornecedores como separador.
-      { label: 'Compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Sem STOCK_KEEPER: quem recebe mercadoria não deve libertar o pagamento dela.
-      { label: 'Conferência', icon: Scale, path: '/conferencia', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Lojas & Caixas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { chave: 'conferencia', icon: Scale, path: '/conferencia', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'lojas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
     ]
   },
   {
-    title: 'Empresa',
+    chave: 'empresa',
     items: [
       // `MANAGER` entrou porque tinha acesso a Salários (que era entrada própria) e não
       // a RH. Dentro da secção, o separador de colaboradores é condicionado.
-      { label: 'Recursos Humanos', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { label: 'Histórico no Sistema', icon: History, path: '/historico' },
+      { chave: 'rh', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'historico', icon: History, path: '/historico' },
     ]
   }
 ];
@@ -123,6 +133,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
+  const { t } = useTranslation('shell');
   const { user, hasRole, logout } = useAuth();
 
   /**
@@ -151,13 +162,13 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleLogout = async () => {
-    const toastId = toast.loading('A terminar sessão...');
+    const toastId = toast.loading(t('menu.a_terminar'));
     try {
       await logout();
-      toast.success('Sessão encerrada.', { id: toastId });
+      toast.success(t('menu.sessao_encerrada'), { id: toastId });
       navigate('/login', { replace: true });
     } catch {
-      toast.error('Erro ao terminar sessão.', { id: toastId });
+      toast.error(t('menu.erro_terminar'), { id: toastId });
     }
   };
 
@@ -195,7 +206,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           <button
             onClick={closeMobileMenu}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label="Fechar menu"
+            aria-label={t('menu.fechar')}
           >
             <X size={20} />
           </button>
@@ -203,7 +214,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           <button
             onClick={toggleSidebarCollapse}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+            aria-label={isCollapsed ? t('menu.expandir') : t('menu.colapsar')}
           >
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </button>
@@ -226,7 +237,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
             <div key={idx} className="mb-6">
               {showLabel ? (
                 <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {group.title}
+                  {t(`menu.grupo.${group.chave}`)}
                 </h3>
               ) : (
                 <div className="h-4" />
@@ -241,7 +252,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                     <li key={item.path}>
                       <NavLink
                          to={item.path}
-                         title={collapsed ? item.label : undefined}
+                         title={collapsed ? t(`menu.item.${item.chave}`) : undefined}
                          className={cn(
                            'flex items-center rounded-lg text-sm font-medium transition-all duration-150 group',
                            collapsed ? 'justify-center py-3' : 'justify-between px-3 py-2',
@@ -258,7 +269,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                               isActive ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600',
                             )}
                           />
-                          {!collapsed && <span className="truncate">{item.label}</span>}
+                          {!collapsed && <span className="truncate">{t(`menu.item.${item.chave}`)}</span>}
                         </div>
 
                         {/* O selo das adesões é âmbar e não verde: é trabalho à espera, não
@@ -292,18 +303,26 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
               (isCollapsed && !isMobileDrawer) ? 'justify-center py-3' : 'justify-between px-3 py-2',
               'text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 shadow-sm'
             )}
-            title={(isCollapsed && !isMobileDrawer) ? 'Assistente Mayra' : undefined}
+            title={(isCollapsed && !isMobileDrawer) ? t('menu.assistente_mayra') : undefined}
           >
             <div className={cn('flex items-center', (isCollapsed && !isMobileDrawer) ? 'gap-0' : 'gap-3')}>
               <Sparkles
                 size={(isCollapsed && !isMobileDrawer) ? 20 : 18}
                 className="flex-shrink-0 text-indigo-600 group-hover:scale-110 transition-transform"
               />
-              {(!isCollapsed || isMobileDrawer) && <span className="truncate font-semibold">Assistente Mayra</span>}
+              {(!isCollapsed || isMobileDrawer) && <span className="truncate font-semibold">{t('menu.assistente_mayra')}</span>}
             </div>
           </button>
         </div>
       </nav>
+
+      {/* A língua no telemóvel. O selector do cabeçalho esconde-se abaixo de `sm` por falta
+          de espaço, e sem este o POS, que se usa no telemóvel, ficava sem forma de trocar. */}
+      {isMobileDrawer && (
+        <div className="border-t border-slate-200 px-4 py-2 sm:hidden">
+          <SelectorIdioma aoMudar={definirIdiomaApi} />
+        </div>
+      )}
 
       {/* Utilizador (Rodapé) ──────────────────────────────────────── */}
       {user && (
@@ -316,7 +335,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 transition-colors text-left"
               >
-                <LogOut size={16} /> Terminar Sessão
+                <LogOut size={16} /> {t('menu.terminar_sessao')}
               </button>
             </div>
           )}
@@ -327,7 +346,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
               isCollapsed && !isMobileDrawer ? 'justify-center' : 'justify-between',
             )}
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            title={isCollapsed && !isMobileDrawer ? 'Perfil' : undefined}
+            title={isCollapsed && !isMobileDrawer ? t('menu.perfil') : undefined}
           >
             <div
               className={cn(

@@ -1,0 +1,102 @@
+{
+  "abas": {
+    "dre": "DRE — Resultados",
+    "fluxo": "Fluxo de Caixa",
+    "receber": "Contas a Receber",
+    "pagar": "Contas a Pagar"
+  },
+  "meses": {
+    "janeiro": "Janeiro",
+    "fevereiro": "Fevereiro",
+    "marco": "Março",
+    "abril": "Abril",
+    "maio": "Maio",
+    "junho": "Junho",
+    "julho": "Julho",
+    "agosto": "Agosto",
+    "setembro": "Setembro",
+    "outubro": "Outubro",
+    "novembro": "Novembro",
+    "dezembro": "Dezembro"
+  },
+  "dre": {
+    "titulo": "Demonstração de resultados — {{periodo}}",
+    "faturacao_bruta": "Faturação bruta",
+    "cmv": "Custo da mercadoria vendida",
+    "margem_bruta": "Margem bruta",
+    "da_faturacao": "{{pct}}% da faturação",
+    "despesas_pagas": "Despesas pagas no período",
+    "lucro": "Lucro operacional estimado",
+    "indicadores": "Indicadores do período",
+    "vendas_realizadas": "Vendas Realizadas",
+    "ticket_medio": "Ticket Médio",
+    "recebiveis_pendentes": "Recebíveis Pendentes",
+    "despesas_pendentes": "Despesas Pendentes",
+    "top_produtos": "Top 5 Produtos por Receita"
+  },
+  "fluxo": {
+    "etiqueta": "Fluxo de caixa",
+    "saldo_atual": "Saldo Atual (Caixa Real)",
+    "receber_30": "Recebíveis nos Próx. 30d",
+    "pagar_30": "Pagáveis nos Próx. 30d",
+    "projecao": "Projeção de Fluxo de Caixa — Próximos 30 dias",
+    "legenda": "Barras: entradas (azul) e saídas (vermelho) diárias. Linha: saldo projetado acumulado.",
+    "serie_receber": "A Receber",
+    "serie_pagar": "A Pagar",
+    "serie_saldo": "Saldo Projetado"
+  },
+  "estado": {
+    "PENDING": "Pendente",
+    "PAID": "Pago",
+    "OVERDUE": "Vencido",
+    "CANCELLED": "Cancelado"
+  },
+  "registos": {
+    "credito_bloqueado": "Crédito Bloqueado",
+    "titulo_receber": "Contas a Receber",
+    "titulo_pagar": "Contas a Pagar",
+    "novo": "Novo",
+    "nenhum": "Nenhum registro encontrado",
+    "col_descricao": "Descrição",
+    "col_cliente": "Cliente",
+    "col_fornecedor": "Fornecedor",
+    "col_vencimento": "Vencimento",
+    "col_valor": "Valor",
+    "col_estado": "Estado",
+    "col_acoes": "Ações",
+    "criado_auto": "🤖 Criado automaticamente",
+    "fatura": "Fatura: {{numero}}",
+    "pago_em": "Pago: {{data}}",
+    "marcar_pago": "Marcar Pago",
+    "pago": "Pago",
+    "cancelado": "Cancelado",
+    "paginacao_zero": "Página {{page}} de {{last}} · {{count}} registros",
+    "paginacao_one": "Página {{page}} de {{last}} · {{count}} registro",
+    "paginacao_other": "Página {{page}} de {{last}} · {{count}} registros"
+  },
+  "novo": {
+    "titulo_receber": "Nova conta a receber",
+    "titulo_pagar": "Nova conta a pagar",
+    "descricao": "Descrição",
+    "exemplo_receber": "Ex.: Aluguer de espaço",
+    "exemplo_pagar": "Ex.: Manutenção do gerador",
+    "valor_mt": "Valor (MT)",
+    "vencimento": "Vencimento",
+    "cliente": "Cliente",
+    "fornecedor": "Fornecedor",
+    "opcional": "(opcional)",
+    "trocar": "trocar",
+    "procurar": "Procurar...",
+    "cancelar": "Cancelar",
+    "criar": "Criar",
+    "descreva": "Descreva o lançamento.",
+    "valor_positivo": "O valor tem de ser maior que zero.",
+    "indique_data": "Indique a data de vencimento."
+  },
+  "mensagens": {
+    "pagamento_ok": "Pagamento processado com sucesso!",
+    "erro_pagamento": "Erro ao processar pagamento.",
+    "registo_criado": "Registro financeiro criado com sucesso!",
+    "erro_criar": "Erro ao criar registro."
+  }
+}

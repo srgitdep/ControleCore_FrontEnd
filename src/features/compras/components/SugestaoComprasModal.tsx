@@ -1,24 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Loader2, AlertTriangle, Sparkles, ShoppingBag, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { purchasesApi } from '../api/purchases.api';
 import type { SugestaoCompra, MotivoSugestao, UrgenciaSugestao } from '../api/purchases.api';
-import { cn } from '@/shared/utils';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
-
-const MOTIVOS: Record<MotivoSugestao, { rotulo: string; explicacao: string }> = {
-  RUPTURA: { rotulo: 'Em ruptura', explicacao: 'Sem existências — está a perder venda agora.' },
-  ABAIXO_MINIMO: {
-    rotulo: 'Abaixo do mínimo',
-    explicacao: 'Abaixo do ponto de reposição definido para o armazém.',
-  },
-  VELOCIDADE: {
-    rotulo: 'A esgotar',
-    explicacao: 'Ao ritmo de venda actual, o stock não chega ao fim do prazo de cobertura.',
-  },
-};
+import { cn, formatMoeda } from '@/shared/utils';
 
 const URGENCIAS: Record<UrgenciaSugestao, string> = {
   CRITICA: 'bg-rose-100 text-rose-700',
@@ -53,6 +39,21 @@ export function SugestoesDeCompra({
   /** Só existe quando o painel está dentro de um diálogo. */
   onFechar?: () => void;
 }) {
+  const { t } = useTranslation('compras');
+
+  // Dentro do componente porque os textos dependem da língua activa.
+  const MOTIVOS: Record<MotivoSugestao, { rotulo: string; explicacao: string }> = {
+    RUPTURA: { rotulo: t('sugestoes.motivo_RUPTURA'), explicacao: t('sugestoes.explicacao_RUPTURA') },
+    ABAIXO_MINIMO: {
+      rotulo: t('sugestoes.motivo_ABAIXO_MINIMO'),
+      explicacao: t('sugestoes.explicacao_ABAIXO_MINIMO'),
+    },
+    VELOCIDADE: {
+      rotulo: t('sugestoes.motivo_VELOCIDADE'),
+      explicacao: t('sugestoes.explicacao_VELOCIDADE'),
+    },
+  };
+
   const [janelaDias, setJanelaDias] = useState(30);
   const [diasCobertura, setDiasCobertura] = useState(14);
   const [escolhidas, setEscolhidas] = useState<Set<string>>(new Set());
@@ -122,43 +123,45 @@ export function SugestoesDeCompra({
         {/* ── Parâmetros ─────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-end gap-4 border-b border-slate-100 bg-slate-50/60 px-6 py-3">
           <label className="text-xs text-slate-600">
-            <span className="mb-1 block font-medium">Janela de vendas</span>
+            <span className="mb-1 block font-medium">{t('sugestoes.janela_vendas')}</span>
             <select
               value={janelaDias}
               onChange={(e) => setJanelaDias(Number(e.target.value))}
               className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm"
             >
-              <option value={7}>Últimos 7 dias</option>
-              <option value={30}>Últimos 30 dias</option>
-              <option value={90}>Últimos 90 dias</option>
+              <option value={7}>{t('sugestoes.ultimos_dias', { n: 7 })}</option>
+              <option value={30}>{t('sugestoes.ultimos_dias', { n: 30 })}</option>
+              <option value={90}>{t('sugestoes.ultimos_dias', { n: 90 })}</option>
             </select>
           </label>
 
           <label className="text-xs text-slate-600">
-            <span className="mb-1 block font-medium">Cobrir</span>
+            <span className="mb-1 block font-medium">{t('sugestoes.cobrir')}</span>
             <select
               value={diasCobertura}
               onChange={(e) => setDiasCobertura(Number(e.target.value))}
               className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm"
             >
-              <option value={7}>7 dias de venda</option>
-              <option value={14}>14 dias de venda</option>
-              <option value={30}>30 dias de venda</option>
-              <option value={60}>60 dias de venda</option>
+              <option value={7}>{t('sugestoes.dias_venda', { n: 7 })}</option>
+              <option value={14}>{t('sugestoes.dias_venda', { n: 14 })}</option>
+              <option value={30}>{t('sugestoes.dias_venda', { n: 30 })}</option>
+              <option value={60}>{t('sugestoes.dias_venda', { n: 60 })}</option>
             </select>
           </label>
 
           {data && (
             <div className="ml-auto flex flex-wrap gap-4 text-xs">
               <span className="text-slate-500">
-                <strong className="text-rose-600">{data.resumo.emRuptura}</strong> em ruptura
+                <strong className="text-rose-600">{data.resumo.emRuptura}</strong>{' '}
+                {t('sugestoes.resumo_ruptura')}
               </span>
               <span className="text-slate-500">
-                <strong className="text-amber-600">{data.resumo.abaixoDoMinimo}</strong> abaixo do
-                mínimo
+                <strong className="text-amber-600">{data.resumo.abaixoDoMinimo}</strong>{' '}
+                {t('sugestoes.resumo_abaixo')}
               </span>
               <span className="text-slate-500">
-                <strong className="text-slate-700">{data.resumo.total}</strong> a repor
+                <strong className="text-slate-700">{data.resumo.total}</strong>{' '}
+                {t('sugestoes.resumo_repor')}
               </span>
             </div>
           )}
@@ -167,7 +170,7 @@ export function SugestoesDeCompra({
         {/* ── Filtro por motivo ──────────────────────────────────────────── */}
         {todasAsSugestoes.length > 0 && (
           <div className="flex flex-wrap gap-2 border-b border-slate-100 px-6 py-3">
-            {([['TODOS', 'Tudo a repor'], ['RUPTURA', MOTIVOS.RUPTURA.rotulo], ['ABAIXO_MINIMO', MOTIVOS.ABAIXO_MINIMO.rotulo], ['VELOCIDADE', MOTIVOS.VELOCIDADE.rotulo]] as const).map(
+            {([['TODOS', t('sugestoes.tudo_a_repor')], ['RUPTURA', MOTIVOS.RUPTURA.rotulo], ['ABAIXO_MINIMO', MOTIVOS.ABAIXO_MINIMO.rotulo], ['VELOCIDADE', MOTIVOS.VELOCIDADE.rotulo]] as const).map(
               ([chave, rotulo]) => {
                 const quantos = contagens[chave] ?? 0;
                 // Um filtro que não filtra nada só ocupa espaço e faz duvidar da lista.
@@ -198,19 +201,18 @@ export function SugestoesDeCompra({
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              A analisar vendas e existências...
+              {t('sugestoes.a_analisar')}
             </div>
           ) : error ? (
             <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
               <AlertTriangle className="h-6 w-6 text-amber-500" />
-              <p className="text-sm text-slate-600">Não foi possível gerar as sugestões.</p>
+              <p className="text-sm text-slate-600">{t('sugestoes.erro')}</p>
             </div>
           ) : sugestoes.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-sm font-medium text-slate-700">Nada a repor.</p>
+              <p className="text-sm font-medium text-slate-700">{t('sugestoes.nada_a_repor')}</p>
               <p className="mt-1 text-sm text-slate-500">
-                Nenhum produto está em ruptura, abaixo do mínimo, ou a esgotar dentro dos{' '}
-                {diasCobertura} dias de cobertura.
+                {t('sugestoes.nada_a_repor_ajuda', { dias: diasCobertura })}
               </p>
             </div>
           ) : (
@@ -227,19 +229,19 @@ export function SugestoesDeCompra({
                         )
                       }
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      aria-label="Escolher todas"
+                      aria-label={t('sugestoes.escolher_todas')}
                     />
                   </th>
-                  <th className="px-3 py-2.5 font-medium">Produto</th>
-                  <th className="px-3 py-2.5 font-medium">Motivo</th>
-                  <th className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">Stock</th>
+                  <th className="px-3 py-2.5 font-medium">{t('sugestoes.col_produto')}</th>
+                  <th className="px-3 py-2.5 font-medium">{t('sugestoes.col_motivo')}</th>
+                  <th className="hidden px-3 py-2.5 text-right font-medium sm:table-cell">{t('sugestoes.col_stock')}</th>
                   <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">
-                    Venda/dia
+                    {t('sugestoes.col_venda_dia')}
                   </th>
-                  <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Dura</th>
-                  <th className="px-3 py-2.5 text-right font-medium">Comprar</th>
-                  <th className="hidden px-3 py-2.5 font-medium lg:table-cell">Fornecedor</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Valor</th>
+                  <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">{t('sugestoes.col_dura')}</th>
+                  <th className="px-3 py-2.5 text-right font-medium">{t('sugestoes.col_comprar')}</th>
+                  <th className="hidden px-3 py-2.5 font-medium lg:table-cell">{t('sugestoes.col_fornecedor')}</th>
+                  <th className="px-4 py-2.5 text-right font-medium">{t('sugestoes.col_valor')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -259,7 +261,7 @@ export function SugestoesDeCompra({
                         onChange={() => alternar(s.produtoId)}
                         onClick={(e) => e.stopPropagation()}
                         className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        aria-label={`Escolher ${s.nome}`}
+                        aria-label={t('sugestoes.escolher_produto', { nome: s.nome })}
                       />
                     </td>
                     <td className="px-3 py-3 font-medium text-slate-900">{s.nome}</td>
@@ -288,7 +290,7 @@ export function SugestoesDeCompra({
                     <td className="hidden px-3 py-3 text-right text-slate-500 md:table-cell">
                       {/* Nulo quando não houve venda: sem consumo o stock não acaba, e
                           um número faria parecer que se sabe algo que não se sabe. */}
-                      {s.diasRestantes === null ? '—' : `${s.diasRestantes} d`}
+                      {s.diasRestantes === null ? '—' : t('sugestoes.dias_abrev', { n: s.diasRestantes })}
                     </td>
                     <td className="px-3 py-3 text-right font-semibold text-slate-900">
                       {s.quantidadeSugerida}
@@ -297,12 +299,12 @@ export function SugestoesDeCompra({
                       {s.fornecedorSugerido ? (
                         <span className="text-slate-600">{s.fornecedorSugerido.nome}</span>
                       ) : (
-                        <span className="text-amber-600" title="Associe um fornecedor a este produto">
-                          sem fornecedor
+                        <span className="text-amber-600" title={t('sugestoes.associe_fornecedor')}>
+                          {t('sugestoes.sem_fornecedor')}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-700">{moeda(s.valorEstimado)}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">{formatMoeda(s.valorEstimado)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -324,21 +326,27 @@ export function SugestoesDeCompra({
           {data && data.resumo.omitidas > 0 && (
             <p className="flex items-center gap-1.5 text-xs text-slate-500">
               <Info size={13} />
-              A analisar {todasAsSugestoes.length} das {data.resumo.total} linhas a repor.
+              {t('sugestoes.a_analisar_n', {
+                n: todasAsSugestoes.length,
+                total: data.resumo.total,
+              })}
             </p>
           )}
 
           {motivoVisivel !== 'TODOS' && (
             <p className="flex items-center gap-1.5 text-xs text-slate-500">
               <Info size={13} />
-              A mostrar só «{MOTIVOS[motivoVisivel].rotulo}»: {sugestoes.length} de{' '}
-              {todasAsSugestoes.length}.
+              {t('sugestoes.mostrar_so', {
+                motivo: MOTIVOS[motivoVisivel].rotulo,
+                n: sugestoes.length,
+                total: todasAsSugestoes.length,
+              })}
               <button
                 type="button"
                 onClick={() => setMotivoVisivel('TODOS')}
                 className="font-semibold underline underline-offset-2 hover:text-slate-700"
               >
-                Ver tudo
+                {t('sugestoes.ver_tudo')}
               </button>
             </p>
           )}
@@ -346,20 +354,19 @@ export function SugestoesDeCompra({
           {fornecedoresEnvolvidos.size > 1 && (
             <p className="flex items-center gap-1.5 text-xs text-amber-700">
               <AlertTriangle size={13} />
-              As linhas escolhidas são de fornecedores diferentes. Um pedido de compra é a um
-              fornecedor só — escolha as de um deles, ou ajuste o fornecedor no pedido.
+              {t('sugestoes.fornecedores_diferentes')}
             </p>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-600">
               {seleccionadas.length === 0 ? (
-                'Escolha as linhas a encomendar.'
+                t('sugestoes.escolha_linhas')
               ) : (
                 <>
                   <strong>{seleccionadas.length}</strong>{' '}
-                  {seleccionadas.length === 1 ? 'linha' : 'linhas'} ·{' '}
-                  <strong>{moeda(totalEscolhido)}</strong>
+                  {t('sugestoes.palavra_linhas', { count: seleccionadas.length })} ·{' '}
+                  <strong>{formatMoeda(totalEscolhido)}</strong>
                 </>
               )}
             </p>
@@ -370,7 +377,7 @@ export function SugestoesDeCompra({
                   onClick={onFechar}
                   className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
                 >
-                  Fechar
+                  {t('sugestoes.fechar')}
                 </button>
               )}
               <button
@@ -379,7 +386,7 @@ export function SugestoesDeCompra({
                 className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
               >
                 <ShoppingBag size={16} />
-                Criar pedido
+                {t('sugestoes.criar_pedido')}
               </button>
             </div>
           </div>
@@ -403,6 +410,8 @@ export function SugestaoComprasModal({
   onClose: () => void;
   onCriarPedido: (linhas: SugestaoCompra[]) => void;
 }) {
+  const { t } = useTranslation('compras');
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
       <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
@@ -412,9 +421,9 @@ export function SugestaoComprasModal({
               <Sparkles className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Sugestão de compras</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('sugestoes.titulo')}</h2>
               <p className="text-sm text-slate-500">
-                Cruza o ponto de reposição de cada armazém com a velocidade de venda.
+                {t('sugestoes.subtitulo')}
               </p>
             </div>
           </div>
@@ -422,7 +431,7 @@ export function SugestaoComprasModal({
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label={t('sugestoes.fechar')}
           >
             <X size={20} />
           </button>

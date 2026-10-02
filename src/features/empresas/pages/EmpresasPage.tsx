@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BarraDaPagina } from '@/shared/ui';
+import { formatDataHora } from '@/shared/utils';
 
 import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Palette } from 'lucide-react';
 import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
@@ -13,6 +15,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export function EmpresasPage() {
+  const { t } = useTranslation('empresas');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [empresaToEdit, setEmpresaToEdit] = useState<Empresa | null>(null);
@@ -48,27 +51,27 @@ export function EmpresasPage() {
 
   const exportToPDF = () => {
     if (!filteredEmpresas || filteredEmpresas.length === 0) {
-      toast.error('Sem dados para exportar.');
+      toast.error(t('pagina.sem_dados_exportar'));
       return;
     }
     const doc = new jsPDF();
     
     // TÍtulo e Data
     doc.setFontSize(16);
-    doc.text('Relatório de Empresas', 14, 20);
+    doc.text(t('pagina.pdf_titulo'), 14, 20);
     doc.setFontSize(10);
     doc.setTextColor(100);
-    const dateStr = new Date().toLocaleString('pt-PT');
-    doc.text(`Gerado a: ${dateStr}`, 14, 28);
+    const dateStr = formatDataHora(new Date());
+    doc.text(t('pagina.pdf_gerado', { data: dateStr }), 14, 28);
     
     autoTable(doc, {
       startY: 35,
-      head: [['Nome', 'NUIT', 'Email', 'Estado']],
+      head: [[t('pagina.pdf_nome'), t('pagina.pdf_nuit'), t('pagina.pdf_email'), t('pagina.pdf_estado')]],
       body: filteredEmpresas.map(emp => [
         emp.nome,
         emp.nuit,
         emp.email,
-        emp.isActive ? 'Ativa' : 'Inativa'
+        emp.isActive ? t('estado.ativa') : t('estado.inativa')
       ]),
       theme: 'grid',
       headStyles: { fillColor: [59, 130, 246] },
@@ -85,8 +88,8 @@ export function EmpresasPage() {
   const handleDelete = (id: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Eliminar Empresa',
-      message: 'Tem a certeza que deseja eliminar esta empresa? Esta acção é irreversÍvel e removerá o acesso a todos os utilizadores associados.',
+      title: t('pagina.eliminar_titulo'),
+      message: t('pagina.eliminar_mensagem'),
       variant: 'danger',
       onConfirm: () => {
         deleteMutation.mutate(id, {
@@ -107,7 +110,7 @@ export function EmpresasPage() {
       {/* «Lista de Empresas» repetia o «Empresas» do cabeçalho da aplicação. O total
           fica: é dado. */}
       <BarraDaPagina
-        resumo={`${filteredEmpresas?.length || 0} ${(filteredEmpresas?.length || 0) === 1 ? 'empresa' : 'empresas'}`}
+        resumo={t('pagina.resumo', { count: filteredEmpresas?.length || 0 })}
       />
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
@@ -119,7 +122,7 @@ export function EmpresasPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
-                placeholder="Pesquisar empresas..." 
+                placeholder={t('pagina.pesquisar')} 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-[280px] transition-all"
@@ -127,7 +130,7 @@ export function EmpresasPage() {
             </div>
             <button className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-sm hover:bg-slate-100 transition-colors">
               <Calendar size={16} />
-              <span>Selecionar data</span>
+              <span>{t('pagina.seleccionar_data')}</span>
             </button>
           </div>
 
@@ -136,14 +139,14 @@ export function EmpresasPage() {
               onClick={openNewDialog}
               className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
-              Adicionar Empresa
+              {t('pagina.adicionar')}
             </button>
             <button 
               onClick={exportToPDF}
               className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-sm hover:bg-slate-100 transition-colors"
             >
               <Download size={16} />
-              <span>Exportar PDF</span>
+              <span>{t('pagina.exportar_pdf')}</span>
             </button>
           </div>
         </div>
@@ -177,7 +180,7 @@ export function EmpresasPage() {
                         : 'border-slate-200 bg-slate-50 text-slate-600'
                     }`}
                   >
-                    {empresa.isActive ? 'Ativa' : 'Inativa'}
+                    {empresa.isActive ? t('estado.ativa') : t('estado.inativa')}
                   </span>
                 </div>
 
@@ -185,28 +188,28 @@ export function EmpresasPage() {
                   <button
                     onClick={() => { setEmpresaToView(empresa); setIsDetailsOpen(true); }}
                     className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
-                    aria-label={`Detalhes de ${empresa.nome}`}
+                    aria-label={t('pagina.detalhes_de', { nome: empresa.nome })}
                   >
                     <Eye size={17} />
                   </button>
                   <button
                     onClick={() => setEmpresaToBrand(empresa)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-violet-50 hover:text-violet-600"
-                    aria-label={`Identidade visual de ${empresa.nome}`}
+                    aria-label={t('pagina.identidade_de', { nome: empresa.nome })}
                   >
                     <Palette size={17} />
                   </button>
                   <button
                     onClick={() => handleEdit(empresa)}
                     className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
-                    aria-label={`Editar ${empresa.nome}`}
+                    aria-label={t('pagina.editar_a', { nome: empresa.nome })}
                   >
                     <Edit2 size={17} />
                   </button>
                   <button
                     onClick={() => handleDelete(empresa.id)}
                     className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                    aria-label={`Eliminar ${empresa.nome}`}
+                    aria-label={t('pagina.eliminar_a', { nome: empresa.nome })}
                   >
                     <Trash2 size={17} />
                   </button>
@@ -215,7 +218,7 @@ export function EmpresasPage() {
             ))}
 
             {empresas?.length === 0 && (
-              <p className="py-12 text-center text-sm text-slate-500">Nenhuma empresa registada.</p>
+              <p className="py-12 text-center text-sm text-slate-500">{t('pagina.nenhuma')}</p>
             )}
           </div>
         )}
@@ -234,16 +237,16 @@ export function EmpresasPage() {
                     <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                   </th>
                   <th className="px-4 py-4 cursor-pointer hover:text-slate-800">
-                    <div className="flex items-center gap-2">Nome <SlidersHorizontal size={12} className="opacity-50" /></div>
+                    <div className="flex items-center gap-2">{t('pagina.col_nome')} <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
                   <th className="px-4 py-4 cursor-pointer hover:text-slate-800">
-                    <div className="flex items-center gap-2">NUIT <SlidersHorizontal size={12} className="opacity-50" /></div>
+                    <div className="flex items-center gap-2">{t('pagina.col_nuit')} <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
                   <th className="px-4 py-4 cursor-pointer hover:text-slate-800">
-                    <div className="flex items-center gap-2">Email <SlidersHorizontal size={12} className="opacity-50" /></div>
+                    <div className="flex items-center gap-2">{t('pagina.col_email')} <SlidersHorizontal size={12} className="opacity-50" /></div>
                   </th>
-                  <th className="px-4 py-4 text-right">Estado</th>
-                  <th className="px-4 py-4 text-center">Ações</th>
+                  <th className="px-4 py-4 text-right">{t('pagina.col_estado')}</th>
+                  <th className="px-4 py-4 text-center">{t('pagina.col_accoes')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -269,7 +272,7 @@ export function EmpresasPage() {
                             : 'bg-slate-50 text-slate-600 border border-slate-200'
                         }`}
                       >
-                        {empresa.isActive ? 'Ativa' : 'Inativa'}
+                        {empresa.isActive ? t('estado.ativa') : t('estado.inativa')}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center">
@@ -277,28 +280,28 @@ export function EmpresasPage() {
                         <button
                           onClick={() => { setEmpresaToView(empresa); setIsDetailsOpen(true); }}
                           className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                          title="Detalhes"
+                          title={t('pagina.detalhes')}
                         >
                           <Eye size={15} />
                         </button>
                         <button
                           onClick={() => setEmpresaToBrand(empresa)}
                           className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded transition-colors"
-                          title="Identidade visual"
+                          title={t('pagina.identidade')}
                         >
                           <Palette size={15} />
                         </button>
                         <button
                           onClick={() => handleEdit(empresa)}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Editar"
+                          title={t('acoes.editar')}
                         >
                           <Edit2 size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(empresa.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors disabled:opacity-30"
-                          title="Eliminar"
+                          title={t('acoes.eliminar')}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -309,7 +312,7 @@ export function EmpresasPage() {
                 {empresas?.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                      Nenhuma empresa registada.
+                      {t('pagina.nenhuma')}
                     </td>
                   </tr>
                 )}
@@ -321,18 +324,18 @@ export function EmpresasPage() {
         {/* Footer / Pagination */}
         <div className="p-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center gap-4">
-            <span>0 of {filteredEmpresas?.length || 0} row(s) selected.</span>
+            <span>{t('pagina.linhas_seleccionadas', { total: filteredEmpresas?.length || 0 })}</span>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <span>Rows per page</span>
+              <span>{t('pagina.linhas_por_pagina')}</span>
               <select className="bg-white border border-slate-200 rounded px-2 py-1 outline-none text-slate-700">
                 <option>10</option>
                 <option>20</option>
                 <option>50</option>
               </select>
             </div>
-            <span>Page 1 of 1</span>
+            <span>{t('pagina.pagina_1_de_1')}</span>
             <div className="flex items-center gap-1">
               <button className="p-1 border border-slate-200 rounded text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled><ChevronsLeft size={14} /></button>
               <button className="p-1 border border-slate-200 rounded text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled><ChevronLeft size={14} /></button>

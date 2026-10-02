@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Wallet, Search, Loader2, X, CalendarOff, Receipt, AlertTriangle, TrendingDown,
 } from 'lucide-react';
@@ -9,15 +10,12 @@ import {
 } from '../api/salarios.api';
 import type { Employee } from '../types';
 import type { ReciboVencimento, TipoAusencia } from '../api/salarios.api';
-import { cn } from '@/shared/utils';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+  'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+] as const;
 
 /** Mês anterior ao corrente: o mês actual não pode ser processado por ainda não ter terminado. */
 function mesAnterior() {
@@ -27,6 +25,7 @@ function mesAnterior() {
 }
 
 export function SalariosPage() {
+  const { t } = useTranslation('rh');
   const [funcionarios, setFuncionarios] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,12 +51,12 @@ export function SalariosPage() {
       try {
         setFuncionarios(await getEmployees());
       } catch (error: any) {
-        toast.error(error?.response?.data?.message || 'Erro ao carregar funcionários.');
+        toast.error(mensagemDeErro(error, t('salarios.erro_funcionarios')));
       } finally {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   const abrirFuncionario = async (f: Employee) => {
     setSelecionado(f);
@@ -65,7 +64,7 @@ export function SalariosPage() {
     try {
       setRecibos(await getRecibos(f.id));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao carregar recibos.');
+      toast.error(mensagemDeErro(error, t('salarios.erro_recibos')));
       setRecibos([]);
     } finally {
       setIsLoadingRecibos(false);
@@ -94,14 +93,14 @@ export function SalariosPage() {
         ...(bonus !== undefined && { valorBonus: bonus }),
       });
 
-      toast.success(`Salário processado: ${mt(recibo.totalLiquido)} líquido.`);
+      toast.success(t('salarios.processado', { valor: formatMoeda(recibo.totalLiquido) }));
       setShowProcessar(false);
       setForm({ ...form, valorBonus: '' });
       recarregarRecibos(selecionado.id);
     } catch (error: any) {
       // O backend recusa mês não terminado, salário já processado e funcionário sem
       // contrato activo, cada um com mensagem própria — vale mostrá-la.
-      toast.error(error?.response?.data?.message || 'Erro ao processar salário.');
+      toast.error(mensagemDeErro(error, t('salarios.erro_processar')));
     } finally {
       setIsSaving(false);
     }
@@ -120,12 +119,13 @@ export function SalariosPage() {
         ...(ausencia.observacoes.trim() && { observacoes: ausencia.observacoes }),
       });
 
-      const label = TIPOS_AUSENCIA.find((t) => t.valor === ausencia.tipo)?.label;
-      toast.success(`${label} marcada para ${ausencia.data}.`);
+      toast.success(
+        t('salarios.ausencia_marcada', { tipo: t(`ausencia.${ausencia.tipo}`), data: ausencia.data }),
+      );
       setShowAusencia(false);
       setAusencia({ ...ausencia, observacoes: '' });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao marcar ausência.');
+      toast.error(mensagemDeErro(error, t('salarios.erro_ausencia')));
     } finally {
       setIsSaving(false);
     }
@@ -147,9 +147,9 @@ export function SalariosPage() {
           <Wallet className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Salários</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('salarios.titulo')}</h2>
           <p className="text-sm text-slate-500">
-            Processamento de vencimentos a partir da assiduidade registada
+            {t('salarios.subtitulo')}
           </p>
         </div>
       </div>
@@ -157,12 +157,11 @@ export function SalariosPage() {
       <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
         <AlertTriangle size={18} className="mt-0.5 shrink-0 text-blue-600" />
         <div className="text-sm text-blue-800">
-          <p className="font-medium">Como o desconto é calculado</p>
+          <p className="font-medium">{t('salarios.como_calculado')}</p>
           <p className="text-xs mt-0.5">
-            O valor/dia sai dos dias que o funcionário tinha <strong>escalados</strong> nesse
-            mês, e a hora da duração real do turno. Dias marcados como férias, baixa médica,
-            feriado ou falta justificada <strong>não descontam</strong> — marque-os antes de
-            processar. Um mês só pode ser processado uma vez.
+            {t('salarios.expl_1')} <strong>{t('salarios.expl_escalados')}</strong>{' '}
+            {t('salarios.expl_2')} <strong>{t('salarios.expl_nao_descontam')}</strong>{' '}
+            {t('salarios.expl_3')}
           </p>
         </div>
       </div>
@@ -173,7 +172,7 @@ export function SalariosPage() {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Pesquisar funcionário..."
+          placeholder={t('salarios.pesquisar')}
           className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
         />
       </div>
@@ -182,16 +181,16 @@ export function SalariosPage() {
         {/* Funcionários */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 text-sm font-semibold text-slate-700">
-            Funcionários
+            {t('salarios.funcionarios')}
           </div>
           {isLoading ? (
             <div className="p-10 text-center text-slate-500">
               <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600 mb-2" />
-              A carregar...
+              {t('acoes.a_carregar')}
             </div>
           ) : filtrados.length === 0 ? (
             <div className="p-10 text-center text-sm text-slate-500">
-              {termo ? `Nada corresponde a "${searchTerm}".` : 'Sem funcionários registados.'}
+              {termo ? t('salarios.nada_corresponde', { termo: searchTerm }) : t('salarios.sem_funcionarios')}
             </div>
           ) : (
             <ul className="divide-y divide-slate-100 max-h-[28rem] overflow-y-auto">
@@ -218,27 +217,27 @@ export function SalariosPage() {
           {!selecionado ? (
             <div className="p-12 text-center text-slate-500">
               <Receipt className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-              Escolha um funcionário para ver os recibos e processar o salário.
+              {t('salarios.escolha_funcionario')}
             </div>
           ) : (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50/50 border-b border-slate-100">
                 <div>
                   <p className="font-semibold text-slate-900">{selecionado.nome}</p>
-                  <p className="text-xs text-slate-500">{recibos.length} recibo(s)</p>
+                  <p className="text-xs text-slate-500">{t('salarios.n_recibos', { count: recibos.length })}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowAusencia(true)}
                     className="px-3 py-2 text-sm font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-1.5"
                   >
-                    <CalendarOff size={15} /> Marcar ausência
+                    <CalendarOff size={15} /> {t('salarios.marcar_ausencia')}
                   </button>
                   <button
                     onClick={() => setShowProcessar(true)}
                     className="px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 flex items-center gap-1.5"
                   >
-                    <Wallet size={15} /> Processar salário
+                    <Wallet size={15} /> {t('salarios.processar_salario')}
                   </button>
                 </div>
               </div>
@@ -246,33 +245,33 @@ export function SalariosPage() {
               {isLoadingRecibos ? (
                 <div className="p-10 text-center text-slate-500">
                   <Loader2 className="mx-auto h-7 w-7 animate-spin text-blue-600 mb-2" />
-                  A carregar recibos...
+                  {t('salarios.a_carregar_recibos')}
                 </div>
               ) : recibos.length === 0 ? (
                 <div className="p-10 text-center text-sm text-slate-500">
                   <Receipt className="mx-auto h-10 w-10 text-slate-300 mb-2" />
-                  Sem recibos processados.
+                  {t('salarios.sem_recibos')}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50 text-slate-600">
                       <tr>
-                        <th className="text-left font-medium px-4 py-2.5">Mês</th>
-                        <th className="text-right font-medium px-4 py-2.5">Base</th>
-                        <th className="text-right font-medium px-4 py-2.5">Faltas</th>
-                        <th className="text-right font-medium px-4 py-2.5">Descontos</th>
-                        <th className="text-right font-medium px-4 py-2.5">Bónus</th>
-                        <th className="text-right font-medium px-4 py-2.5">Líquido</th>
+                        <th className="text-left font-medium px-4 py-2.5">{t('salarios.col_mes')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('salarios.col_base')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('salarios.col_faltas')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('salarios.col_descontos')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('salarios.col_bonus')}</th>
+                        <th className="text-right font-medium px-4 py-2.5">{t('salarios.col_liquido')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {recibos.map((r) => (
                         <tr key={r.id} className="hover:bg-slate-50">
                           <td className="px-4 py-2.5 text-slate-900">
-                            {MESES[r.mesRef - 1]} {r.anoRef}
+                            {t(`meses.${MESES[r.mesRef - 1]}`)} {r.anoRef}
                           </td>
-                          <td className="px-4 py-2.5 text-right text-slate-600">{mt(r.salarioBase)}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-600">{formatMoeda(r.salarioBase)}</td>
                           <td className="px-4 py-2.5 text-right">
                             {r.diasFalta > 0 ? (
                               <span className="text-rose-600 font-medium">{r.diasFalta}</span>
@@ -281,24 +280,24 @@ export function SalariosPage() {
                             )}
                             {r.minutosAtraso > 0 && (
                               <span className="block text-[11px] text-amber-600">
-                                +{r.minutosAtraso} min
+                                {t('salarios.min_atraso', { n: r.minutosAtraso })}
                               </span>
                             )}
                           </td>
                           <td className="px-4 py-2.5 text-right">
                             {r.valorDescontos > 0 ? (
                               <span className="text-rose-600 inline-flex items-center gap-1">
-                                <TrendingDown size={12} /> {mt(r.valorDescontos)}
+                                <TrendingDown size={12} /> {formatMoeda(r.valorDescontos)}
                               </span>
                             ) : (
                               <span className="text-slate-400">—</span>
                             )}
                           </td>
                           <td className="px-4 py-2.5 text-right text-slate-600">
-                            {r.valorBonus > 0 ? mt(r.valorBonus) : <span className="text-slate-400">—</span>}
+                            {r.valorBonus > 0 ? formatMoeda(r.valorBonus) : <span className="text-slate-400">—</span>}
                           </td>
                           <td className="px-4 py-2.5 text-right font-semibold text-slate-900">
-                            {mt(r.totalLiquido)}
+                            {formatMoeda(r.totalLiquido)}
                           </td>
                         </tr>
                       ))}
@@ -317,7 +316,7 @@ export function SalariosPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Processar Salário</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('salarios.modal_processar')}</h2>
                 <p className="text-xs text-slate-500">{selecionado.nome}</p>
               </div>
               <button
@@ -331,19 +330,19 @@ export function SalariosPage() {
             <form onSubmit={submeterProcessamento} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Mês</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('salarios.mes')}</label>
                   <select
                     value={form.mes}
                     onChange={(e) => setForm({ ...form, mes: Number(e.target.value) })}
                     className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                   >
                     {MESES.map((m, i) => (
-                      <option key={m} value={i + 1}>{m}</option>
+                      <option key={m} value={i + 1}>{t(`meses.${m}`)}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Ano</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('salarios.ano')}</label>
                   <input
                     type="number"
                     value={form.ano}
@@ -356,7 +355,7 @@ export function SalariosPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Bónus <span className="text-slate-400 font-normal">(opcional)</span>
+                  {t('salarios.bonus')} <span className="text-slate-400 font-normal">{t('salarios.opcional')}</span>
                 </label>
                 <input
                   type="number"
@@ -368,13 +367,12 @@ export function SalariosPage() {
                   className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">
-                  Prémio ou subsídio a somar ao líquido deste mês.
+                  {t('salarios.bonus_ajuda')}
                 </p>
               </div>
 
               <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
-                O mês tem de ter terminado, e o funcionário precisa de contrato activo. Cada
-                mês só pode ser processado uma vez.
+                {t('salarios.aviso_processar')}
               </p>
 
               <div className="flex justify-end gap-3 pt-1">
@@ -383,7 +381,7 @@ export function SalariosPage() {
                   onClick={() => setShowProcessar(false)}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('acoes.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -391,7 +389,7 @@ export function SalariosPage() {
                   className="px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  Processar
+                  {t('salarios.processar')}
                 </button>
               </div>
             </form>
@@ -405,7 +403,7 @@ export function SalariosPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Marcar Ausência</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('salarios.modal_ausencia')}</h2>
                 <p className="text-xs text-slate-500">{selecionado.nome}</p>
               </div>
               <button
@@ -418,7 +416,7 @@ export function SalariosPage() {
 
             <form onSubmit={submeterAusencia} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Dia</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('salarios.dia')}</label>
                 <input
                   type="date"
                   value={ausencia.data}
@@ -428,35 +426,34 @@ export function SalariosPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('salarios.tipo')}</label>
                 <select
                   value={ausencia.tipo}
                   onChange={(e) => setAusencia({ ...ausencia, tipo: e.target.value as TipoAusencia })}
                   className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500"
                 >
-                  {TIPOS_AUSENCIA.map((t) => (
-                    <option key={t.valor} value={t.valor}>{t.label}</option>
+                  {TIPOS_AUSENCIA.map((tipo) => (
+                    <option key={tipo} value={tipo}>{t(`ausencia.${tipo}`)}</option>
                   ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Observações <span className="text-slate-400 font-normal">(opcional)</span>
+                  {t('salarios.observacoes')} <span className="text-slate-400 font-normal">{t('salarios.opcional')}</span>
                 </label>
                 <input
                   type="text"
                   value={ausencia.observacoes}
                   onChange={(e) => setAusencia({ ...ausencia, observacoes: e.target.value })}
-                  placeholder="Ex.: baixa nº 12345"
+                  placeholder={t('salarios.observacoes_exemplo')}
                   maxLength={255}
                   className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
-                Um dia marcado assim não desconta salário. Não é possível marcar ausência num
-                dia em que o funcionário já picou o ponto.
+                {t('salarios.aviso_ausencia')}
               </p>
 
               <div className="flex justify-end gap-3 pt-1">
@@ -465,7 +462,7 @@ export function SalariosPage() {
                   onClick={() => setShowAusencia(false)}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('acoes.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -473,7 +470,7 @@ export function SalariosPage() {
                   className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}
-                  Marcar
+                  {t('salarios.marcar')}
                 </button>
               </div>
             </form>

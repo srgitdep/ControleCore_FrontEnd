@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuth, usePermissions } from '@/features/auth';
 import type { Role } from '@/features/auth';
 
@@ -9,6 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
+  const { t } = useTranslation('shell');
   const { isAuthenticated, isLoading, hasRole } = useAuth();
   const { hasPermission } = usePermissions();
 
@@ -20,7 +22,7 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm">A carregar...</p>
+          <p className="text-slate-400 text-sm">{t('rota.a_carregar')}</p>
         </div>
       </div>
     );
@@ -33,7 +35,7 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
 
   // Autenticado mas sem a role necessária â†’ toast + redireciona para dashboard
   if (roles && !hasRole(roles)) {
-    toast.error('Sem permissão para aceder a esta página.', {
+    toast.error(t('rota.sem_permissao_pagina'), {
       id: 'sem-permissao-role',
       duration: 4000,
     });
@@ -44,7 +46,7 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
   if (requiredPermission) {
     const [action, resource] = requiredPermission.split(':');
     if (action && resource && !hasPermission(action, resource)) {
-      toast.error('Não tem permissão para essa ação.', {
+      toast.error(t('rota.sem_permissao_accao'), {
         id: 'sem-permissao-action',
         duration: 4000,
       });

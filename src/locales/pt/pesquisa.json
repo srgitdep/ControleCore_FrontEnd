@@ -1,0 +1,11 @@
+{
+  "placeholder": "Pesquisar produtos, fornecedores, requisições, ordens de compra... Ctrl+K",
+  "sem_resultados": "Sem resultados para \"{{termo}}\".",
+  "tipo": {
+    "PRODUTO": "Produto",
+    "FORNECEDOR": "Fornecedor",
+    "REQUISICAO": "Requisição",
+    "SOURCING": "RFQ",
+    "ORDEM_COMPRA": "Ordem de Compra"
+  }
+}

@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/shared/ui';
 import type { KpisNecessidades } from '../types/necessidade.types';
 
@@ -29,6 +30,7 @@ interface CoberturaCardProps {
  * seria pior do que não ter o botão.
  */
 export function CoberturaCard({ kpis, isLoading }: CoberturaCardProps) {
+  const { t } = useTranslation('necessidades');
   if (isLoading || !kpis) {
     return (
       <Card className="animate-pulse">
@@ -52,14 +54,14 @@ export function CoberturaCard({ kpis, isLoading }: CoberturaCardProps) {
   return (
     <Card padding="lg">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-700">Cobertura da fila de necessidades</p>
+        <p className="text-sm font-semibold text-slate-700">{t('cobertura.titulo')}</p>
         <button
           type="button"
           disabled
-          title="Análise detalhada de cobertura — por vir"
+          title={t('cobertura.ver_detalhes_title')}
           className="flex items-center gap-0.5 text-xs font-medium text-slate-300"
         >
-          Ver detalhes <ChevronRight size={14} />
+          {t('cobertura.ver_detalhes')} <ChevronRight size={14} />
         </button>
       </div>
 
@@ -78,9 +80,9 @@ export function CoberturaCard({ kpis, isLoading }: CoberturaCardProps) {
         </div>
 
         <div className="space-y-1.5 text-sm">
-          <Legenda cor="bg-rose-500" label="Em risco (comprar/transferir)" valor={emRisco} />
-          <Legenda cor="bg-amber-500" label="Em atenção" valor={emAtencao} />
-          <Legenda cor="bg-slate-400" label="Não comprar" valor={kpis.porRecomendacao.NAO_COMPRAR} />
+          <Legenda cor="bg-rose-500" label={t('cobertura.em_risco')} valor={emRisco} />
+          <Legenda cor="bg-amber-500" label={t('cobertura.em_atencao')} valor={emAtencao} />
+          <Legenda cor="bg-slate-400" label={t('cobertura.nao_comprar')} valor={kpis.porRecomendacao.NAO_COMPRAR} />
         </div>
       </div>
     </Card>

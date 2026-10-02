@@ -1,14 +1,12 @@
 import { api } from '@/shared/config';
 
-/** Tipos de ausência que o gestor pode marcar. Os restantes vêm do relógio de ponto. */
-export const TIPOS_AUSENCIA = [
-  { valor: 'FERIAS', label: 'Férias' },
-  { valor: 'BAIXA_MEDICA', label: 'Baixa médica' },
-  { valor: 'FALTA_JUSTIFICADA', label: 'Falta justificada' },
-  { valor: 'FERIADO', label: 'Feriado' },
-] as const;
+/**
+ * Tipos de ausência que o gestor pode marcar. Os restantes vêm do relógio de ponto. As
+ * etiquetas vivem no catálogo (`rh`, chaves `ausencia.<código>`), para seguirem a língua activa.
+ */
+export const TIPOS_AUSENCIA = ['FERIAS', 'BAIXA_MEDICA', 'FALTA_JUSTIFICADA', 'FERIADO'] as const;
 
-export type TipoAusencia = (typeof TIPOS_AUSENCIA)[number]['valor'];
+export type TipoAusencia = (typeof TIPOS_AUSENCIA)[number];
 
 export interface ReciboVencimento {
   id: string;

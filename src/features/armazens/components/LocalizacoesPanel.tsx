@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, MapPin, Plus, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui';
 import { useLocalizacaoMutations, useLocalizacoes } from '../hooks/useLocalizacoes';
 import type { NoLocalizacao } from '../api/localizacoes.api';
@@ -29,6 +30,7 @@ interface LocalizacoesPanelProps {
  * possível».
  */
 export function LocalizacoesPanel({ armazemId, armazemNome }: LocalizacoesPanelProps) {
+  const { t } = useTranslation('armazens');
   const [incluirInactivas, setIncluirInactivas] = useState(false);
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
   const [aCriarEm, setACriarEm] = useState<{ paiId: string | null; caminho: string } | null>(null);
@@ -52,8 +54,7 @@ export function LocalizacoesPanel({ armazemId, armazemNome }: LocalizacoesPanelP
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <MapPin className="h-4 w-4 text-slate-400" />
           <span>
-            {data?.total ?? 0}{' '}
-            {data?.total === 1 ? 'posição' : 'posições'} em {armazemNome}
+            {t('posicoes.contagem', { count: data?.total ?? 0, armazem: armazemNome })}
           </span>
         </div>
 
@@ -65,7 +66,7 @@ export function LocalizacoesPanel({ armazemId, armazemNome }: LocalizacoesPanelP
               onChange={(e) => setIncluirInactivas(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-slate-300"
             />
-            Mostrar desactivadas
+            {t('posicoes.mostrar_desactivadas')}
           </label>
 
           <Button
@@ -75,21 +76,19 @@ export function LocalizacoesPanel({ armazemId, armazemNome }: LocalizacoesPanelP
             className="gap-1.5"
           >
             <Plus className="h-3.5 w-3.5" />
-            Nova zona
+            {t('posicoes.nova_zona')}
           </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <p className="py-6 text-center text-sm text-slate-400">A carregar posições...</p>
+        <p className="py-6 text-center text-sm text-slate-400">{t('posicoes.a_carregar')}</p>
       ) : arvore.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center">
           <MapPin className="mx-auto mb-2 h-6 w-6 text-slate-300" />
-          <p className="text-sm text-slate-600">Este armazém não tem posições definidas.</p>
+          <p className="text-sm text-slate-600">{t('posicoes.vazio_titulo')}</p>
           <p className="mx-auto mt-1 max-w-md text-xs text-slate-400">
-            Sem elas, o sistema sabe que a mercadoria está neste armazém mas não em que
-            prateleira. Crie só os níveis que a operação usa de facto — posições que ninguém
-            mantém são piores do que não as ter.
+            {t('posicoes.vazio_ajuda')}
           </p>
         </div>
       ) : (
@@ -152,6 +151,7 @@ function NoDaArvore({
   onDesactivar: (id: string) => void;
   aDecorrer: boolean;
 }) {
+  const { t } = useTranslation('armazens');
   const temFilhos = no.filhos.length > 0;
   const aberto = expandidos.has(no.id);
 
@@ -171,7 +171,7 @@ function NoDaArvore({
           className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded ${
             temFilhos ? 'text-slate-500 hover:bg-slate-200' : 'invisible'
           }`}
-          aria-label={aberto ? 'Fechar' : 'Abrir'}
+          aria-label={aberto ? t('posicoes.fechar') : t('posicoes.abrir')}
         >
           {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
@@ -185,7 +185,7 @@ function NoDaArvore({
             </span>
           )}
           {!no.isActive && (
-            <span className="ml-2 text-[11px] font-medium text-slate-400">desactivada</span>
+            <span className="ml-2 text-[11px] font-medium text-slate-400">{t('posicoes.desactivada')}</span>
           )}
         </span>
 
@@ -198,7 +198,7 @@ function NoDaArvore({
             onClick={() => onCriarDentro(no)}
             disabled={aDecorrer}
             className="rounded p-1 text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-            title={`Criar dentro de ${no.caminho}`}
+            title={t('posicoes.criar_dentro', { caminho: no.caminho })}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -208,7 +208,7 @@ function NoDaArvore({
               onClick={() => onDesactivar(no.id)}
               disabled={aDecorrer}
               className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700"
-              title="Desactivar"
+              title={t('posicoes.desactivar')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -249,6 +249,7 @@ function FormularioNovaLocalizacao({
   onCancelar: () => void;
   onGravar: (payload: { codigo: string; nome?: string; tipo?: string }) => void;
 }) {
+  const { t } = useTranslation('armazens');
   const [codigo, setCodigo] = useState('');
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
@@ -273,13 +274,13 @@ function FormularioNovaLocalizacao({
     >
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-medium text-slate-800">
-          Nova posição dentro de <span className="text-blue-700">{dentroDe.caminho}</span>
+          {t('posicoes.nova_dentro_1')} <span className="text-blue-700">{dentroDe.caminho}</span>
         </p>
         <button
           type="button"
           onClick={onCancelar}
           className="text-slate-400 hover:text-slate-700"
-          aria-label="Cancelar"
+          aria-label={t('posicoes.cancelar')}
         >
           <X className="h-4 w-4" />
         </button>
@@ -287,12 +288,12 @@ function FormularioNovaLocalizacao({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Código</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600">{t('posicoes.codigo')}</span>
           <input
             type="text"
             value={codigo}
             onChange={(e) => setCodigo(e.target.value)}
-            placeholder="B, 04, P2"
+            placeholder={t('posicoes.codigo_placeholder')}
             autoFocus
             className={`w-full rounded-lg border px-3 py-2 text-sm uppercase ${
               temBarra ? 'border-rose-400 bg-rose-50' : 'border-slate-200'
@@ -302,54 +303,54 @@ function FormularioNovaLocalizacao({
 
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-600">
-            Nome <span className="font-normal text-slate-400">(opcional)</span>
+            {t('posicoes.nome')} <span className="font-normal text-slate-400">{t('posicoes.opcional')}</span>
           </span>
           <input
             type="text"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Câmara de frio"
+            placeholder={t('posicoes.nome_placeholder')}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
         </label>
 
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-600">
-            Tipo <span className="font-normal text-slate-400">(opcional)</span>
+            {t('posicoes.tipo')} <span className="font-normal text-slate-400">{t('posicoes.opcional')}</span>
           </span>
           <input
             type="text"
             value={tipo}
             onChange={(e) => setTipo(e.target.value)}
-            placeholder="zona, corredor, prateleira"
+            placeholder={t('posicoes.tipo_placeholder')}
             list="tipos-de-localizacao"
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
           {/* Sugestões e não um selector fechado: nem todo o armazém pensa em «corredores», e
               um enum obrigaria a inventar um valor para os que não têm. */}
           <datalist id="tipos-de-localizacao">
-            <option value="zona" />
-            <option value="corredor" />
-            <option value="estante" />
-            <option value="prateleira" />
-            <option value="posição" />
-            <option value="câmara" />
+            <option value={t('posicoes.sugestao_zona')} />
+            <option value={t('posicoes.sugestao_corredor')} />
+            <option value={t('posicoes.sugestao_estante')} />
+            <option value={t('posicoes.sugestao_prateleira')} />
+            <option value={t('posicoes.sugestao_posicao')} />
+            <option value={t('posicoes.sugestao_camara')} />
           </datalist>
         </label>
       </div>
 
       {temBarra && (
         <p className="mt-2 text-xs text-rose-600">
-          O código não pode conter «/» — é o separador que liga os níveis do endereço.
+          {t('posicoes.codigo_com_barra')}
         </p>
       )}
 
       <div className="mt-3 flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancelar}>
-          Cancelar
+          {t('posicoes.cancelar')}
         </Button>
         <Button type="submit" size="sm" disabled={!podeGravar}>
-          {aDecorrer ? 'A criar...' : 'Criar'}
+          {aDecorrer ? t('posicoes.a_criar') : t('posicoes.criar')}
         </Button>
       </div>
     </form>

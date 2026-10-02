@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Package, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useDebounce } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
 import { catalogApi, type Product } from '@/features/produtos';
@@ -33,6 +34,7 @@ export function SolicitarTransferenciaModal({
   onClose,
   onConfirm,
 }: SolicitarTransferenciaModalProps) {
+  const { t } = useTranslation('transferencias');
   const [buscaProduto, setBuscaProduto] = useState('');
   const buscaComDebounce = useDebounce(buscaProduto, 300);
   const [produto, setProduto] = useState<Product | null>(null);
@@ -73,7 +75,7 @@ export function SolicitarTransferenciaModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-slate-900">Nova transferência</h3>
+          <h3 className="text-base font-semibold text-slate-900">{t('solicitar.titulo')}</h3>
           <button onClick={onClose} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
             <X size={18} />
           </button>
@@ -81,7 +83,7 @@ export function SolicitarTransferenciaModal({
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-500">Produto</label>
+            <label className="mb-1 block text-xs font-medium text-slate-500">{t('solicitar.produto')}</label>
             {produto ? (
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -93,7 +95,7 @@ export function SolicitarTransferenciaModal({
                   onClick={() => setProduto(null)}
                   className="text-xs font-medium text-blue-600 hover:underline"
                 >
-                  Trocar
+                  {t('solicitar.trocar')}
                 </button>
               </div>
             ) : (
@@ -102,15 +104,15 @@ export function SolicitarTransferenciaModal({
                 <input
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
-                  placeholder="Pesquisar por nome, SKU ou código de barras..."
+                  placeholder={t('solicitar.pesquisa_placeholder')}
                   className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm focus:border-slate-400 focus:outline-none"
                 />
                 {buscaComDebounce.trim().length >= 2 && (
                   <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-100">
                     {isFetching ? (
-                      <p className="px-3 py-2 text-xs text-slate-400">A pesquisar...</p>
+                      <p className="px-3 py-2 text-xs text-slate-400">{t('solicitar.a_pesquisar')}</p>
                     ) : !resultadoProdutos?.data.length ? (
-                      <p className="px-3 py-2 text-xs text-slate-400">Sem resultados.</p>
+                      <p className="px-3 py-2 text-xs text-slate-400">{t('solicitar.sem_resultados')}</p>
                     ) : (
                       resultadoProdutos.data.map((p) => (
                         <button
@@ -134,26 +136,26 @@ export function SolicitarTransferenciaModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Origem</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500">{t('solicitar.origem')}</label>
               <select
                 value={origemLojaId}
                 onChange={(e) => setOrigemLojaId(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-2 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
-                <option value="">Seleccione...</option>
+                <option value="">{t('solicitar.seleccione')}</option>
                 {(lojas ?? []).map((l: { id: string; nome: string }) => (
                   <option key={l.id} value={l.id}>{l.nome}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Destino</label>
+              <label className="mb-1 block text-xs font-medium text-slate-500">{t('solicitar.destino')}</label>
               <select
                 value={destinoLojaId}
                 onChange={(e) => setDestinoLojaId(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-2 py-2 text-sm focus:border-slate-400 focus:outline-none"
               >
-                <option value="">Seleccione...</option>
+                <option value="">{t('solicitar.seleccione')}</option>
                 {(lojas ?? []).map((l: { id: string; nome: string }) => (
                   <option key={l.id} value={l.id}>{l.nome}</option>
                 ))}
@@ -161,11 +163,11 @@ export function SolicitarTransferenciaModal({
             </div>
           </div>
           {origemLojaId && destinoLojaId && origemLojaId === destinoLojaId && (
-            <p className="text-xs text-rose-500">A origem e o destino não podem ser a mesma loja.</p>
+            <p className="text-xs text-rose-500">{t('solicitar.mesma_loja')}</p>
           )}
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-500">Quantidade</label>
+            <label className="mb-1 block text-xs font-medium text-slate-500">{t('solicitar.quantidade')}</label>
             <input
               type="number"
               min={1}
@@ -176,7 +178,7 @@ export function SolicitarTransferenciaModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-500">Motivo (opcional)</label>
+            <label className="mb-1 block text-xs font-medium text-slate-500">{t('solicitar.motivo_opcional')}</label>
             <textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
@@ -188,7 +190,7 @@ export function SolicitarTransferenciaModal({
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            Cancelar
+            {t('solicitar.cancelar')}
           </button>
           <button
             disabled={invalido || isSubmitting}
@@ -207,7 +209,7 @@ export function SolicitarTransferenciaModal({
               (invalido || isSubmitting) && 'cursor-not-allowed opacity-50',
             )}
           >
-            {isSubmitting ? 'A solicitar...' : 'Solicitar'}
+            {isSubmitting ? t('solicitar.a_solicitar') : t('solicitar.solicitar')}
           </button>
         </div>
       </div>

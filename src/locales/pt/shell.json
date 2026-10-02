@@ -1,0 +1,156 @@
+{
+  "menu": {
+    "grupo": {
+      "gestao": "Gestão",
+      "operacao": "Operação",
+      "empresa": "Empresa"
+    },
+    "item": {
+      "dashboard": "Dashboard",
+      "empresas": "Empresas",
+      "adesoes": "Adesões",
+      "modulos": "Módulos",
+      "utilizadores": "Utilizadores",
+      "permissoes": "Permissões",
+      "vendas": "Ponto de Venda",
+      "crm": "CRM",
+      "financeiro": "Financeiro",
+      "stock": "Produtos & Stock",
+      "armazens": "Armazéns",
+      "transferencias": "Transferências",
+      "pedidos_commerce": "Pedidos Compra Fácil",
+      "necessidades": "Necessidades",
+      "requisicoes": "Requisições",
+      "compras": "Compras",
+      "conferencia": "Conferência",
+      "lojas": "Lojas & Caixas",
+      "rh": "Recursos Humanos",
+      "historico": "Histórico no Sistema"
+    },
+    "fechar": "Fechar menu",
+    "expandir": "Expandir sidebar",
+    "colapsar": "Colapsar sidebar",
+    "assistente_mayra": "Assistente Mayra",
+    "perfil": "Perfil",
+    "terminar_sessao": "Terminar Sessão",
+    "a_terminar": "A terminar sessão...",
+    "sessao_encerrada": "Sessão encerrada.",
+    "erro_terminar": "Erro ao terminar sessão."
+  },
+  "cabecalho": {
+    "titulo": {
+      "dashboard": "Dashboard",
+      "stock": "Produtos & Stock",
+      "armazens": "Armazéns",
+      "compras": "Compras",
+      "requisicoes": "Requisições de Compra",
+      "conferencia": "Conferência",
+      "vendas": "Ponto de Venda",
+      "lojas": "Lojas & Caixas",
+      "crm": "CRM",
+      "financeiro": "Financeiro",
+      "rh": "Recursos Humanos",
+      "empresas": "Empresas",
+      "utilizadores": "Utilizadores",
+      "permissoes": "Permissões",
+      "historico": "Histórico no Sistema"
+    },
+    "abrir_menu": "Abrir menu de navegação",
+    "alertas": "Alertas",
+    "sem_alertas": "Sem alertas activos.",
+    "ver_todos": "Ver todos",
+    "tipo": {
+      "RISCO_RUPTURA": "Risco de ruptura",
+      "OC_ATRASADA": "OC atrasada",
+      "RECEPCAO_PENDENTE": "Recepção pendente"
+    },
+    "ha_dias_zero": "há {{count}} dias",
+    "ha_dias_one": "há {{count}} dia",
+    "ha_dias_other": "há {{count}} dias"
+  },
+  "rota": {
+    "a_carregar": "A carregar...",
+    "sem_permissao_pagina": "Sem permissão para aceder a esta página.",
+    "sem_permissao_accao": "Não tem permissão para essa ação."
+  },
+  "dialogo": {
+    "confirmar": "Confirmar",
+    "cancelar": "Cancelar",
+    "a_processar": "A processar..."
+  },
+  "tabela": {
+    "sem_registos": "Nenhum registo encontrado.",
+    "a_carregar": "A carregar dados..."
+  },
+  "carrossel": {
+    "ir_para": "Ir para o cartão {{n}} de {{total}}"
+  },
+  "foto": {
+    "titulo": "Preencher a partir de fotografias",
+    "legenda_padrao": "Fotografe a frente e a face de trás — o código de barras costuma estar atrás. Os preços não são lidos da imagem.",
+    "maximo": "Máximo de {{max}} fotografias.",
+    "nao_imagem": "\"{{nome}}\" não é uma imagem.",
+    "excede": "\"{{nome}}\" excede 5 MB.",
+    "sem_resultado": "Não foi possível ler dados nestas fotografias. Tente com mais luz, ou aproxime o rótulo.",
+    "campos_preenchidos_zero": "{{count}} campos preenchidos.",
+    "campos_preenchidos_one": "{{count}} campo preenchido.",
+    "campos_preenchidos_other": "{{count}} campos preenchidos.",
+    "falha_analise": "Falha ao analisar as fotografias. Verifique a ligação.",
+    "alt": "Fotografia {{n}}",
+    "remover": "Remover fotografia {{n}}",
+    "tirar": "Tirar fotografia",
+    "outra": "Outra fotografia",
+    "galeria": "Escolher da galeria",
+    "a_ler_one": "A ler a fotografia...",
+    "a_ler_other": "A ler as {{count}} fotografias...",
+    "ler_dados": "Ler dados",
+    "nao_aproveitado": "Não aproveitado",
+    "escrever_a_mao": "Escreva estes campos à mão, ou tente outra fotografia mais nítida."
+  },
+  "leitor": {
+    "sem_acesso": "Este dispositivo ou navegador não dá acesso à câmara.",
+    "autorizar": "Autorize o acesso à câmara nas permissões do navegador.",
+    "nao_abriu": "Não foi possível abrir a câmara.",
+    "previa_falhou": "O navegador não deixou iniciar a pré-visualização da câmara. Escreva o código à mão.",
+    "nao_iniciou": "Não foi possível iniciar o leitor neste navegador. Escreva o código à mão."
+  },
+  "permissoes": {
+    "erro_perfis": "Erro ao carregar os perfis.",
+    "erro_permissoes": "Erro ao carregar permissões deste perfil.",
+    "sucesso": "Permissões atualizadas com sucesso!",
+    "erro_guardar": "Erro ao atualizar permissões.",
+    "perfil_acesso": "Perfil de acesso",
+    "a_carregar": "A carregar...",
+    "perfis_titulo": "Perfis de Acesso",
+    "perfis_ajuda": "Selecione o perfil para configurar as permissões.",
+    "matriz_titulo": "Matriz de Permissões",
+    "matriz_ajuda": "Assinale o que este perfil pode ver e fazer.",
+    "a_guardar": "A guardar...",
+    "guardar": "Guardar Alterações",
+    "a_carregar_servidor": "A carregar permissões do servidor...",
+    "coluna_recurso": "Módulo / Recurso",
+    "escolha_perfil": "Selecione um perfil à esquerda para configurar.",
+    "recurso": {
+      "dashboard": "Dashboard",
+      "empresa": "Empresa / Configurações",
+      "users": "Utilizadores",
+      "lojas": "Lojas",
+      "armazens": "Armazéns",
+      "caixas": "Caixas / POS",
+      "stock": "Stock",
+      "catalogo": "Catálogo",
+      "compras": "Compras",
+      "necessidades": "Necessidades de Compra",
+      "rh": "Recursos Humanos",
+      "vendas": "Vendas",
+      "clientes": "Clientes / CRM",
+      "pedidos_commerce": "Pedidos Compra Fácil"
+    },
+    "accao": {
+      "read": "Visualizar",
+      "write": "Criar / Editar",
+      "delete": "Remover",
+      "manage": "Gerir Tudo"
+    }
+  }
+}

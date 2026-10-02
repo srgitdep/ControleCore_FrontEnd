@@ -1,6 +1,11 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { catalogApi, type CreateProductPayload } from '../api/catalog.api';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
+
+// Fora de componentes não há hook: `getFixedT` com língua nula segue a língua activa em cada
+// chamada, e não a do momento em que o módulo carregou.
+const t = i18n.getFixedT(null, 'produtos');
 
 export function useCategories() {
   return useQuery({
@@ -23,14 +28,14 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => catalogApi.updateProduct(id, data),
     onSuccess: () => {
-      toast.success('Produto atualizado com sucesso!');
+      toast.success(t('mensagens.produto_actualizado'));
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para atualizar produtos.');
+        toast.error(t('mensagens.sem_permissao_actualizar'));
       } else {
-        toast.error(error.response?.data?.message || 'Erro ao atualizar produto.');
+        toast.error(error.response?.data?.message || t('mensagens.erro_actualizar'));
       }
     }
   });
@@ -43,12 +48,12 @@ export function useCarregarImagemProduto() {
     mutationFn: ({ produtoId, ficheiro }: { produtoId: string; ficheiro: File }) =>
       catalogApi.carregarImagemProduto(produtoId, ficheiro),
     onSuccess: () => {
-      toast.success('Imagem carregada.');
+      toast.success(t('mensagens.imagem_carregada'));
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Não foi possível carregar a imagem.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_carregar_imagem'));
     },
   });
 }
@@ -60,12 +65,12 @@ export function useRemoverImagemProduto() {
     mutationFn: ({ produtoId, imagemId }: { produtoId: string; imagemId: string }) =>
       catalogApi.removerImagemProduto(produtoId, imagemId),
     onSuccess: () => {
-      toast.success('Imagem removida.');
+      toast.success(t('mensagens.imagem_removida'));
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Não foi possível remover a imagem.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_remover_imagem'));
     },
   });
 }
@@ -80,8 +85,8 @@ export function useCreateProduct() {
 
       toast.success(
         comStock
-          ? `Produto criado com ${variaveis.quantidadeInicial} unidades em stock.`
-          : 'Produto criado com sucesso!',
+          ? t('mensagens.produto_criado_stock', { count: variaveis.quantidadeInicial })
+          : t('mensagens.produto_criado'),
       );
 
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -95,9 +100,9 @@ export function useCreateProduct() {
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para criar produtos.');
+        toast.error(t('mensagens.sem_permissao_criar'));
       } else {
-        toast.error(error.response?.data?.message || 'Erro ao criar produto.');
+        toast.error(error.response?.data?.message || t('mensagens.erro_criar'));
       }
     }
   });
@@ -109,11 +114,11 @@ export function useCreateCategory() {
   return useMutation({
     mutationFn: catalogApi.createCategory,
     onSuccess: () => {
-      toast.success('Categoria criada.');
+      toast.success(t('mensagens.categoria_criada'));
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar a categoria.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_criar_categoria'));
     },
   });
 }
@@ -125,11 +130,11 @@ export function useUpdateCategory() {
     mutationFn: ({ id, dto }: { id: string; dto: Parameters<typeof catalogApi.updateCategory>[1] }) =>
       catalogApi.updateCategory(id, dto),
     onSuccess: () => {
-      toast.success('Categoria actualizada.');
+      toast.success(t('mensagens.categoria_actualizada'));
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao actualizar a categoria.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_actualizar_categoria'));
     },
   });
 }
@@ -140,11 +145,11 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: catalogApi.deleteCategory,
     onSuccess: () => {
-      toast.success('Categoria apagada.');
+      toast.success(t('mensagens.categoria_apagada'));
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao apagar a categoria.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_apagar_categoria'));
     },
   });
 }
@@ -155,14 +160,14 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: (id: string) => catalogApi.deleteProduct(id),
     onSuccess: () => {
-      toast.success('Produto eliminado com sucesso!');
+      toast.success(t('mensagens.produto_eliminado'));
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: any) => {
       if (error.response?.status === 403) {
-        toast.error('Não tem permissão para eliminar produtos.');
+        toast.error(t('mensagens.sem_permissao_eliminar'));
       } else {
-        toast.error(error.response?.data?.message || 'Erro ao eliminar produto.');
+        toast.error(error.response?.data?.message || t('mensagens.erro_eliminar'));
       }
     }
   });

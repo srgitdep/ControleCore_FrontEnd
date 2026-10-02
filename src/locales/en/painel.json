@@ -1,0 +1,45 @@
+{
+  "gestao": {
+    "indicadores": "Indicators",
+    "indicadores_mes": "Monthly indicators",
+    "faturacao": "Revenue (current month)",
+    "numero_vendas": "No. of sales (current month)",
+    "stock_baixo": "Low-stock products",
+    "abaixo_minimo": "Below the set minimum",
+    "todos_acima_minimo": "All above the minimum",
+    "funcionarios_presentes": "Employees present today",
+    "pedidos_pendentes": "Compra Fácil orders to handle",
+    "pedidos_em_espera": "Awaiting preparation or collection",
+    "sem_pedidos": "No orders waiting",
+    "grafico_titulo": "Sales activity",
+    "grafico_subtitulo": "Last 7 days"
+  },
+  "grafico": {
+    "titulo_padrao": "Customer Activity",
+    "subtitulo_padrao": "Customer activity for the last 3 months",
+    "legenda_contas": "Active Accounts",
+    "legenda_novos": "New Customers",
+    "legenda_regulares": "Returning Users"
+  },
+  "plataforma": {
+    "titulo": "System overview",
+    "subtitulo": "Global statistics for all active instances.",
+    "indicadores": "System indicators",
+    "empresas": "Total companies",
+    "empresas_desc": "Active accounts",
+    "utilizadores": "Total users",
+    "utilizadores_desc": "Registered members",
+    "lojas": "Registered stores",
+    "lojas_desc": "Points of sale",
+    "subscricoes": "Active subscriptions",
+    "subscricoes_desc": "Regular plans",
+    "actividade": "Recent system activity",
+    "actividade_vazio": "Detailed system records will appear here"
+  },
+  "clientes": {
+    "novo": "New Customer",
+    "modulo": "CRM Module",
+    "descricao": "The customer list and reports will be loaded here.",
+    "mayra": "You can use Mayra (AI Copilot) to look up the profile or history of any customer!"
+  }
+}

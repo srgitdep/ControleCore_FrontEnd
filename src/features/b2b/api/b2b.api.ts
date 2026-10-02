@@ -351,41 +351,23 @@ export function saldoPorAdjudicar(requisicao: Requisicao): RequisicaoLinha[] {
   return requisicao.linhas.filter((l) => l.quantidadeAdjudicada < l.quantidade - 0.001);
 }
 
-/** As etiquetas dos estados, para o ecrã não ter de as inventar em cada sítio. */
-export const ETIQUETA_ESTADO: Record<EstadoRequisicao, string> = {
-  RASCUNHO: 'Rascunho',
-  AGUARDA_APROVACAO: 'Aguarda aprovação',
-  APROVADA: 'Aprovada',
-  EM_SOURCING: 'A comparar fornecedores',
-  EM_DECISAO: 'Aguarda decisão',
-  ADJUDICADA: 'Adjudicada',
-  PARCIALMENTE_ADJUDICADA: 'Parcialmente adjudicada',
-  CANCELADA: 'Cancelada',
-};
-
-export const ETIQUETA_ESTRATEGIA: Record<EstrategiaAdjudicacao, string> = {
-  FORNECEDOR_UNICO: 'Fornecedor único',
-  REPARTIDA: 'Repartida',
-  EQUILIBRADA: 'Equilibrada',
-};
-
 /**
- * O que cada estratégia significa, em uma frase.
- *
- * Vive aqui e não no ecrã porque é usado em três sítios — o cartão do cenário, o selector de
- * adjudicação e a confirmação — e três cópias divergiriam.
+ * As etiquetas de estado, estratégia e exclusão vivem no catálogo de textos (`req.estado.*`,
+ * `req.estrategia.*`, `req.estrategia_descricao.*`, `req.exclusao.*`), por língua — já não
+ * fazem sentido como `Record` fixos aqui. `EstadoRequisicao` e `EstrategiaAdjudicacao`
+ * continuam a servir de lista de códigos para quem precisar de iterar.
  */
-export const DESCRICAO_ESTRATEGIA: Record<EstrategiaAdjudicacao, string> = {
-  FORNECEDOR_UNICO: 'Um fornecedor serve tudo o que consegue. Uma ordem, uma entrega, uma factura.',
-  REPARTIDA: 'Cada linha ao mais barato. Menor custo de mercadoria, mais entregas para conferir.',
-  EQUILIBRADA: 'O ponto onde acrescentar mais um fornecedor deixa de compensar o trabalho.',
-};
 
-/** Os motivos de exclusão, traduzidos. */
-export const ETIQUETA_EXCLUSAO: Record<string, string> = {
-  ESTADO_RELACAO: 'Relação comercial',
-  CONFORMIDADE: 'Conformidade documental',
-  SEM_COBERTURA: 'Não tem os artigos',
-  SEM_PRECO_VIGENTE: 'Sem preço em vigor',
-  FORA_DA_ZONA: 'Não entrega na zona',
-};
+/** Os motivos de exclusão conhecidos. Ver `MotivoExclusaoCandidato` no backend (`schema.prisma`). */
+export const MOTIVOS_EXCLUSAO = [
+  'ESTADO_RELACAO',
+  'CONFORMIDADE',
+  'SEM_COBERTURA',
+  'SEM_PRECO_VIGENTE',
+  'FORA_DA_ZONA',
+] as const;
+
+export type MotivoExclusao = (typeof MOTIVOS_EXCLUSAO)[number];
+
+export const eMotivoExclusao = (motivo: string | null | undefined): motivo is MotivoExclusao =>
+  !!motivo && (MOTIVOS_EXCLUSAO as readonly string[]).includes(motivo);

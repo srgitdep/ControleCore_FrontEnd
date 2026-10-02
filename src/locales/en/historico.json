@@ -1,0 +1,32 @@
+{
+  "acao": {
+    "CREATE": "Creation",
+    "UPDATE": "Update",
+    "DELETE": "Deletion",
+    "LOGIN": "Login",
+    "LOGOUT": "Logout",
+    "SALE_COMPLETED": "Sale Completed",
+    "SALE_CANCELLED": "Sale Cancelled"
+  },
+  "tabela": {
+    "sem_dados_exportar": "No data to export.",
+    "pdf_titulo": "System History",
+    "pdf_gerado": "Generated on: {{data}}",
+    "col_utilizador": "User",
+    "col_acao": "Action",
+    "col_detalhes": "Details",
+    "col_data_hora": "Date & Time",
+    "col_perfil": "Role",
+    "sistema_desconhecido": "System / Unknown",
+    "perfil_padrao": "Default",
+    "titulo": "Audit Records",
+    "exportar_pdf": "Export PDF",
+    "utilizador_desconhecido": "Unknown user",
+    "desconhecido": "Unknown",
+    "nenhum": "No records found."
+  },
+  "pagina": {
+    "global": "Actions of all the company's users.",
+    "pessoal": "Your actions in the system."
+  }
+}

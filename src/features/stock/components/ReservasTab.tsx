@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { AlarmClockOff, RotateCcw, Timer } from 'lucide-react';
 import { ResponsiveTable, Button, KpiCard } from '@/shared/ui';
+import { formatData, formatDataHora } from '@/shared/utils';
 import { useReservaMutations, useReservas } from '../hooks/useReservas';
 import type { EstadoReserva, ReservaStock } from '../types/stock.types';
 
 const helper = createColumnHelper<ReservaStock>();
 
-const ESTADO_META: Record<EstadoReserva, { label: string; pastilha: string }> = {
-  ACTIVA: { label: 'Activa', pastilha: 'bg-blue-50 text-blue-700 border-blue-200' },
-  CONSUMIDA: { label: 'Cumprida', pastilha: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  LIBERTADA: { label: 'Libertada', pastilha: 'bg-slate-50 text-slate-600 border-slate-200' },
-  EXPIRADA: { label: 'Caducada', pastilha: 'bg-amber-50 text-amber-700 border-amber-200' },
+// Os rótulos vêm do catálogo i18n (`reserva_estado.<CODIGO>`); aqui só fica a cor da pastilha.
+const ESTADO_META: Record<EstadoReserva, { pastilha: string }> = {
+  ACTIVA: { pastilha: 'bg-blue-50 text-blue-700 border-blue-200' },
+  CONSUMIDA: { pastilha: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  LIBERTADA: { pastilha: 'bg-slate-50 text-slate-600 border-slate-200' },
+  EXPIRADA: { pastilha: 'bg-amber-50 text-amber-700 border-amber-200' },
 };
 
 const ESTADOS: EstadoReserva[] = ['ACTIVA', 'CONSUMIDA', 'LIBERTADA', 'EXPIRADA'];
@@ -29,6 +32,7 @@ const ESTADOS: EstadoReserva[] = ['ACTIVA', 'CONSUMIDA', 'LIBERTADA', 'EXPIRADA'
  * esteve apartada sem sair, que é o sinal de reservas a mais ou de prazos longos demais.
  */
 export function ReservasTab() {
+  const { t } = useTranslation('stock');
   const [estado, setEstado] = useState<EstadoReserva | 'TODAS'>('ACTIVA');
 
   const { data: reservas, isFetching } = useReservas(
@@ -47,37 +51,37 @@ export function ReservasTab() {
     () => [
       helper.accessor((r) => r.stock?.product?.nome ?? '—', {
         id: 'produto',
-        header: 'Produto',
+        header: t('reservas_tab.produto'),
         cell: (info) => (
           <div className="min-w-0">
             <p className="truncate font-medium text-slate-800">{info.getValue()}</p>
             <span className="block text-[11px] text-slate-500">
-              {info.row.original.stock?.armazem?.nome ?? 'Armazém desconhecido'}
+              {info.row.original.stock?.armazem?.nome ?? t('reservas_tab.armazem_desconhecido')}
               {info.row.original.referencia && ` · ${info.row.original.referencia}`}
             </span>
           </div>
         ),
       }),
       helper.accessor('quantidade', {
-        header: 'Quantidade',
+        header: t('reservas_tab.quantidade'),
         cell: (info) => (
           <span className="font-semibold tabular-nums text-slate-800">{info.getValue()}</span>
         ),
       }),
       helper.accessor('estado', {
-        header: 'Estado',
+        header: t('reservas_tab.estado'),
         cell: (info) => (
           <span
             className={`inline-block rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${
               ESTADO_META[info.getValue()].pastilha
             }`}
           >
-            {ESTADO_META[info.getValue()].label}
+            {t(`reserva_estado.${info.getValue()}`)}
           </span>
         ),
       }),
       helper.accessor('expiraEm', {
-        header: 'Prazo',
+        header: t('reservas_tab.prazo'),
         cell: (info) => {
           const iso = info.getValue();
           const reserva = info.row.original;
@@ -86,14 +90,14 @@ export function ReservasTab() {
             return (
               <span className="text-xs text-slate-400">
                 {reserva.resolvidoEm
-                  ? `resolvida a ${new Date(reserva.resolvidoEm).toLocaleDateString('pt-PT')}`
+                  ? t('reservas_tab.resolvida_a', { data: formatData(reserva.resolvidoEm) })
                   : '—'}
               </span>
             );
           }
 
           if (!iso) {
-            return <span className="text-xs text-slate-500">sem prazo</span>;
+            return <span className="text-xs text-slate-500">{t('reservas_tab.sem_prazo')}</span>;
           }
 
           const prazo = new Date(iso);
@@ -101,22 +105,17 @@ export function ReservasTab() {
 
           return (
             <span className={`text-xs tabular-nums ${vencida ? 'font-medium text-amber-700' : 'text-slate-600'}`}>
-              {prazo.toLocaleString('pt-PT', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatDataHora(prazo)}
               {/* Vencida mas ainda activa: o varrimento corre de dez em dez minutos, e dizê-lo
                   evita que se conclua que a caducidade não funciona. */}
-              {vencida && <span className="block">prazo passado — a aguardar varrimento</span>}
+              {vencida && <span className="block">{t('reservas_tab.prazo_passado')}</span>}
             </span>
           );
         },
       }),
       helper.accessor((r) => r.criadoPor?.name ?? '—', {
         id: 'autor',
-        header: 'Reservada por',
+        header: t('reservas_tab.reservada_por'),
         cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
       }),
       helper.display({
@@ -138,13 +137,13 @@ export function ReservasTab() {
                 className="gap-1.5"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                Libertar
+                {t('reservas_tab.libertar')}
               </Button>
             </div>
           ) : null,
       }),
     ],
-    [mutacoes],
+    [mutacoes, t],
   );
 
   const table = useReactTable({
@@ -157,26 +156,26 @@ export function ReservasTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <KpiCard
-          title="Reservas activas"
+          title={t('reservas_tab.kpi_activas')}
           value={activas.length}
-          description="mercadoria comprometida sem ter saído"
+          description={t('reservas_tab.kpi_activas_desc')}
           icon={Timer}
           accent="primary"
         />
         <KpiCard
-          title="Unidades comprometidas"
+          title={t('reservas_tab.kpi_unidades')}
           value={Number(activas.reduce((s, r) => s + r.quantidade, 0).toFixed(3))}
-          description="fora do stock disponível"
+          description={t('reservas_tab.kpi_unidades_desc')}
           icon={Timer}
           accent="warning"
         />
         <KpiCard
-          title="Com prazo passado"
+          title={t('reservas_tab.kpi_vencidas')}
           value={jaVencidas.length}
           description={
             jaVencidas.length > 0
-              ? 'caducam no próximo varrimento'
-              : 'nenhuma à espera de caducar'
+              ? t('reservas_tab.kpi_vencidas_proximo')
+              : t('reservas_tab.kpi_vencidas_nenhuma')
           }
           icon={AlarmClockOff}
           accent={jaVencidas.length > 0 ? 'warning' : 'neutral'}
@@ -196,7 +195,7 @@ export function ReservasTab() {
                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {ESTADO_META[e].label}
+              {t(`reserva_estado.${e}`)}
             </button>
           ))}
           <button
@@ -208,7 +207,7 @@ export function ReservasTab() {
                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
             }`}
           >
-            Todas
+            {t('reservas_tab.todas')}
           </button>
         </div>
 
@@ -222,7 +221,7 @@ export function ReservasTab() {
           className="gap-1.5"
         >
           <AlarmClockOff className="h-4 w-4" />
-          Caducar as vencidas agora
+          {t('reservas_tab.caducar_agora')}
         </Button>
       </div>
 
@@ -232,8 +231,8 @@ export function ReservasTab() {
           isLoading={isFetching && !reservas}
           emptyMessage={
             estado === 'ACTIVA'
-              ? 'Nenhuma reserva activa — todo o stock em armazém está disponível.'
-              : 'Nenhuma reserva neste estado.'
+              ? t('reservas_tab.vazio_activa')
+              : t('reservas_tab.vazio_estado')
           }
           getRowStatus={(r) =>
             r.estado === 'ACTIVA' && r.expiraEm !== null && new Date(r.expiraEm) < new Date()
@@ -244,9 +243,7 @@ export function ReservasTab() {
       </div>
 
       <p className="px-1 text-xs leading-relaxed text-slate-500">
-        Reservar não é vender: a mercadoria continua no armazém e continua a valer no
-        inventário, mas sai do stock disponível e não pode ser vendida no POS. Nenhuma destas
-        operações gera movimento de stock, porque a existência física nunca muda.
+        {t('reservas_tab.nota')}
       </p>
     </div>
   );

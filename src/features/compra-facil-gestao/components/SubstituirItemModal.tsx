@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
-import { ETIQUETA_CANAL, type CanalComunicacao, type PedidoItemCommerce, type SubstituirItemPayload } from '../types/pedido-commerce-gestao.types';
+import { type CanalComunicacao, type PedidoItemCommerce, type SubstituirItemPayload } from '../types/pedido-commerce-gestao.types';
 
 const CANAIS: CanalComunicacao[] = ['WHATSAPP', 'SMS', 'EMAIL', 'CHAMADA'];
 const REGISTO_MINIMO = 10;
@@ -20,6 +21,7 @@ interface SubstituirItemModalProps {
  * ecrã), exactamente como o backend exige (`SubstituirItemDto.registoAutorizacao`).
  */
 export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: SubstituirItemModalProps) {
+  const { t } = useTranslation('lojaGestao');
   const [produtoSubstitutoId, setProdutoSubstitutoId] = useState('');
   const [quantidadeAceite, setQuantidadeAceite] = useState(0);
   const [motivo, setMotivo] = useState('');
@@ -53,9 +55,9 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
               <RefreshCw size={20} />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-900">Registar substituição</h3>
+              <h3 className="text-base font-semibold text-slate-900">{t('modal.titulo')}</h3>
               <p className="text-xs text-slate-400">
-                {item.produto.nome} — pedido: {item.quantidade}
+                {t('modal.item_info', { produto: item.produto.nome, quantidade: item.quantidade })}
               </p>
             </div>
           </div>
@@ -66,7 +68,7 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="text-xs font-medium text-slate-600">Quantidade que o cliente aceitou</label>
+            <label className="text-xs font-medium text-slate-600">{t('modal.quantidade_label')}</label>
             <input
               type="number"
               min={0}
@@ -80,30 +82,30 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
 
           <div>
             <label className="text-xs font-medium text-slate-600">
-              Produto substituto (opcional — vazio se for só menos quantidade do mesmo artigo)
+              {t('modal.produto_substituto_label')}
             </label>
             <input
               type="text"
               value={produtoSubstitutoId}
               onChange={(e) => setProdutoSubstitutoId(e.target.value)}
-              placeholder="ID do produto substituto"
+              placeholder={t('modal.produto_substituto_placeholder')}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600">Motivo</label>
+            <label className="text-xs font-medium text-slate-600">{t('modal.motivo_label')}</label>
             <input
               type="text"
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Ex.: ruptura de stock à chegada da equipa de picking"
+              placeholder={t('modal.motivo_placeholder')}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-600">Canal usado para contactar o cliente</label>
+            <label className="text-xs font-medium text-slate-600">{t('modal.canal_label')}</label>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {CANAIS.map((canal) => (
                 <button
@@ -117,7 +119,7 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
                       : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
                   )}
                 >
-                  {ETIQUETA_CANAL[canal]}
+                  {t(`canal.${canal}`)}
                 </button>
               ))}
             </div>
@@ -125,24 +127,24 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
 
           <div>
             <label className="text-xs font-medium text-slate-600">
-              Registo da autorização (obrigatório — nunca inferido)
+              {t('modal.registo_label')}
             </label>
             <textarea
               value={registoAutorizacao}
               onChange={(e) => setRegistoAutorizacao(e.target.value)}
               rows={3}
-              placeholder="Ex.: cliente confirmou por WhatsApp às 10:32 — aceita 1 unidade."
+              placeholder={t('modal.registo_placeholder')}
               className="mt-1 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
             />
             {registoAutorizacao.length > 0 && registoAutorizacao.trim().length < REGISTO_MINIMO && (
-              <p className="mt-1 text-xs text-rose-500">Mínimo de {REGISTO_MINIMO} caracteres.</p>
+              <p className="mt-1 text-xs text-rose-500">{t('modal.registo_minimo_aviso', { minimo: REGISTO_MINIMO })}</p>
             )}
           </div>
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={fechar} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            Voltar
+            {t('drawer.voltar')}
           </button>
           <button
             disabled={invalido || isSubmitting}
@@ -160,7 +162,7 @@ export function SubstituirItemModal({ item, isSubmitting, onClose, onConfirm }: 
               (invalido || isSubmitting) && 'cursor-not-allowed opacity-50',
             )}
           >
-            {isSubmitting ? 'A registar...' : 'Registar substituição'}
+            {isSubmitting ? t('modal.a_registar') : t('modal.titulo')}
           </button>
         </div>
       </div>

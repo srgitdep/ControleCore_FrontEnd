@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ClipboardList, Plus, ChevronRight, Lock, Sliders } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { useInventoryCycles } from '@/features/stock';
@@ -9,22 +10,6 @@ import { PainelContagem } from './inventario/PainelContagem';
 import { GerirToleranciasModal } from './inventario/GerirToleranciasModal';
 import { DashboardInventario } from './inventario/DashboardInventario';
 import type { InventoryCycle, InventoryCycleStatus } from '@/features/stock';
-
-const STATUS_LABEL: Record<InventoryCycleStatus, string> = {
-  RASCUNHO: 'Rascunho',
-  PREPARADO: 'Preparado',
-  EM_CONTAGEM: 'Em Contagem',
-  PAUSADO: 'Pausado',
-  VALIDACAO_DE_COBERTURA: 'A validar cobertura',
-  EM_RECONCILIACAO: 'Em Reconciliação',
-  AGUARDA_RECONTAGEM: 'Aguarda Recontagem',
-  EM_ANALISE_MAYRA: 'Em Análise (MAYRA)',
-  AGUARDA_APROVACAO: 'Aguarda Aprovação',
-  AJUSTE_APROVADO: 'Ajuste Aprovado',
-  ENCERRADO: 'Encerrado',
-  CANCELADO: 'Cancelado',
-  BLOQUEADO_POR_ERRO: 'Bloqueado por Erro',
-};
 
 const STATUS_CLASSNAME: Record<InventoryCycleStatus, string> = {
   RASCUNHO: 'bg-slate-100 text-slate-500',
@@ -60,6 +45,7 @@ function ManagerCycleList({
   onCreateCycle: () => void;
   onGerirTolerancias: () => void;
 }) {
+  const { t } = useTranslation('stock');
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -73,15 +59,15 @@ function ManagerCycleList({
       <DashboardInventario onSelectCycle={onSelectCycle} />
 
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-slate-700">Ciclos de Inventário</h3>
+        <h3 className="font-semibold text-slate-700">{t('inventario.ciclos_titulo')}</h3>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onGerirTolerancias} className="gap-2">
             <Sliders className="h-4 w-4" />
-            Tolerâncias
+            {t('inventario.tolerancias')}
           </Button>
           <Button onClick={onCreateCycle} className="gap-2">
             <Plus className="h-4 w-4" />
-            Novo Ciclo
+            {t('inventario.novo_ciclo')}
           </Button>
         </div>
       </div>
@@ -89,9 +75,9 @@ function ManagerCycleList({
       {cycles.length === 0 ? (
         <div className="text-center py-16 bg-slate-50 rounded-xl">
           <ClipboardList className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 text-sm font-medium">Nenhum ciclo de inventário</p>
+          <p className="text-slate-500 text-sm font-medium">{t('inventario.nenhum_ciclo')}</p>
           <p className="text-slate-400 text-xs mt-1">
-            Crie um novo ciclo para iniciar o balanço de estoque.
+            {t('inventario.nenhum_ciclo_dica')}
           </p>
         </div>
       ) : (
@@ -106,14 +92,14 @@ function ManagerCycleList({
                 <p className="font-semibold text-slate-800 truncate">{cycle.name}</p>
                 <div className="flex items-center gap-3 mt-1">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_CLASSNAME[cycle.status]}`}>
-                    {STATUS_LABEL[cycle.status]}
+                    {t(`ciclo_estado.${cycle.status}`)}
                   </span>
                   <span className="text-xs text-slate-400">
-                    {cycle._count?.counts ?? 0} item(ns)
+                    {t('inventario.n_itens', { n: cycle._count?.counts ?? 0 })}
                   </span>
                   {cycle.createdBy && (
                     <span className="text-xs text-slate-400 hidden sm:inline">
-                      por {cycle.createdBy.name}
+                      {t('inventario.por', { nome: cycle.createdBy.name })}
                     </span>
                   )}
                 </div>
@@ -128,6 +114,7 @@ function ManagerCycleList({
 }
 
 export function InventoryTab() {
+  const { t } = useTranslation('stock');
   const { user } = useAuth();
   const { data: cycles = [], isLoading } = useInventoryCycles();
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
@@ -147,12 +134,15 @@ export function InventoryTab() {
             <Lock className="h-8 w-8 text-slate-400" />
           </div>
           <h3 className="text-lg font-semibold text-slate-700 mb-2">
-            {activeCycle ? 'Contagem não iniciada' : 'Nenhum Ciclo Ativo'}
+            {activeCycle ? t('inventario.contagem_nao_iniciada') : t('inventario.nenhum_ciclo_activo')}
           </h3>
           <p className="text-slate-500 text-sm max-w-sm">
             {activeCycle
-              ? `O ciclo "${activeCycle.name}" está em ${STATUS_LABEL[activeCycle.status]}. Aguarde o gestor iniciar a contagem.`
-              : 'Não há um ciclo de inventário em andamento. Aguarde o gestor abrir um ciclo.'}
+              ? t('inventario.ciclo_em_estado', {
+                  nome: activeCycle.name,
+                  estado: t(`ciclo_estado.${activeCycle.status}`),
+                })
+              : t('inventario.sem_ciclo_em_andamento')}
           </p>
         </div>
       );

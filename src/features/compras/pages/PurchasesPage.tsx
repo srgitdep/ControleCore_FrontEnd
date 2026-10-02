@@ -20,6 +20,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   purchasesApi,
   EstadoPedidoCompra,
@@ -36,7 +38,7 @@ import type { PurchaseOrder, SugestaoCompra } from '../api/purchases.api';
 import { FornecedoresTab } from '@/features/fornecedores';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { usePermissions, useAuth } from '@/features/auth';
-import { cn } from '@/shared/utils';
+import { cn, formatData, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { RecebimentoModal } from '../components/RecebimentoModal';
 import { RececoesModal } from '../components/RececoesModal';
 import { SugestaoComprasModal, SugestoesDeCompra } from '../components/SugestaoComprasModal';
@@ -54,9 +56,6 @@ import { VersoesPedidoModal } from '../components/VersoesPedidoModal';
 // por verificar, e quem a trata é quem trata de fornecedores. Uma entrada de menu para
 // uma tarefa que se faz uma vez por semana seria uma entrada que ninguém abre.
 type Aba = 'pedidos' | 'reposicao' | 'expedicoes' | 'catalogo' | 'fornecedores' | 'qualificacao';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
 /**
  * A secção Compras: pedidos e fornecedores.
@@ -77,6 +76,7 @@ const moeda = (valor: number) =>
  * pela interface era impossível.
  */
 export function PurchasesPage() {
+  const { t } = useTranslation('compras');
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission } = usePermissions();
@@ -95,21 +95,21 @@ export function PurchasesPage() {
   const podeQualificar = hasPermission('read', 'vitrines');
 
   const ABAS: TabDefinition<Aba>[] = [
-    { id: 'pedidos', label: 'Pedidos de compra', icon: ShoppingCart },
+    { id: 'pedidos', label: t('pagina.aba_pedidos'), icon: ShoppingCart },
     // A seguir aos pedidos, e antes dos fornecedores: é o que se consulta para
     // decidir o que encomendar. Estava atrás de um botão que abria um diálogo — uma
     // lista de rupturas que é preciso saber procurar não é uma lista que alguém veja.
-    { id: 'reposicao', label: 'A repor', icon: PackageSearch },
+    { id: 'reposicao', label: t('pagina.aba_reposicao'), icon: PackageSearch },
     // A seguir ao que se vai encomendar vem o que já vem a caminho. Responde a «o que
     // chega esta semana» — pergunta que antes só tinha resposta abrindo cada ordem uma
     // a uma e adivinhando pela data prevista.
-    { id: 'expedicoes', label: 'A caminho', icon: Truck },
+    { id: 'expedicoes', label: t('pagina.aba_expedicoes'), icon: Truck },
     // O catálogo vem antes dos fornecedores porque é sobre o que eles vendem, e a
     // pergunta «a que preço?» faz-se mais vezes do que «quem é este fornecedor?».
     ...(podeVerFornecedores
       ? [
-          { id: 'catalogo' as Aba, label: 'Catálogo', icon: FileSpreadsheet },
-          { id: 'fornecedores' as Aba, label: 'Fornecedores', icon: Truck },
+          { id: 'catalogo' as Aba, label: t('pagina.aba_catalogo'), icon: FileSpreadsheet },
+          { id: 'fornecedores' as Aba, label: t('pagina.aba_fornecedores'), icon: Truck },
         ]
       : []),
     // Por último: é a tarefa menos frequente, e a única que trata de fornecedores que
@@ -117,7 +117,7 @@ export function PurchasesPage() {
     // com nenhuma empresa e por isso não aparece no separador Fornecedores — sem esta fila
     // submeteria o alvará e ficaria à espera para sempre.
     ...(podeQualificar
-      ? [{ id: 'qualificacao' as Aba, label: 'Por verificar', icon: ShieldCheck }]
+      ? [{ id: 'qualificacao' as Aba, label: t('pagina.aba_qualificacao'), icon: ShieldCheck }]
       : []),
   ];
 
@@ -172,10 +172,10 @@ export function PurchasesPage() {
     setASubmeter(pedido.id);
     try {
       await purchasesApi.sendOrder(pedido.id);
-      toast.success('Ordem marcada como enviada. Já podes registar a resposta do fornecedor.');
+      toast.success(t('pagina.toast_enviada'));
       queryClient.invalidateQueries({ queryKey: ['pedidos-compra'] });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao marcar como enviada.');
+      toast.error(mensagemDeErro(error, t('pagina.erro_enviar')));
     } finally {
       setASubmeter(null);
     }
@@ -185,10 +185,10 @@ export function PurchasesPage() {
     setASubmeter(pedido.id);
     try {
       await purchasesApi.submitOrder(pedido.id);
-      toast.success('Pedido submetido. Fica à espera de aprovação e deixa de ser editável.');
+      toast.success(t('pagina.toast_submetido'));
       queryClient.invalidateQueries({ queryKey: ['pedidos-compra'] });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao submeter o pedido.');
+      toast.error(mensagemDeErro(error, t('pagina.erro_submeter')));
     } finally {
       setASubmeter(null);
     }
@@ -199,11 +199,11 @@ export function PurchasesPage() {
     setACancelarBusy(true);
     try {
       await purchasesApi.updateOrderStatus(aCancelarPedido.id, 'CANCELADO');
-      toast.success('Pedido cancelado.');
+      toast.success(t('pagina.toast_cancelado'));
       recarregar();
       setACancelarPedido(null);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao cancelar o pedido.');
+      toast.error(mensagemDeErro(error, t('pagina.erro_cancelar')));
     } finally {
       setACancelarBusy(false);
     }
@@ -257,14 +257,14 @@ export function PurchasesPage() {
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <Sparkles className="h-4 w-4 text-indigo-600" />
-              Sugestão de Compras
+              {t('pagina.sugestao_compras')}
             </button>
             <button
               onClick={() => setACriar({})}
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
               <ShoppingBag className="h-4 w-4" />
-              Novo Pedido
+              {t('pagina.novo_pedido')}
             </button>
           </div>
         )}
@@ -275,7 +275,7 @@ export function PurchasesPage() {
           tabs={ABAS}
           active={aba}
           onChange={(id) => setSearchParams({ tab: id }, { replace: true })}
-          label="Compras"
+          label={t('pagina.titulo_abas')}
           className="px-4"
         />
 
@@ -385,11 +385,11 @@ export function PurchasesPage() {
           <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
             <div className="px-5 py-4">
               <h2 className="text-base font-semibold text-slate-900">
-                Cancelar pedido #{aCancelarPedido.id.slice(0, 8)}?
+                {t('pagina.cancelar_titulo', { id: aCancelarPedido.id.slice(0, 8) })}
               </h2>
               <p className="mt-1.5 text-sm text-slate-500">
-                {aCancelarPedido.fornecedor?.nome ?? 'Fornecedor n/d'}. Um pedido cancelado não
-                pode voltar atrás — se ainda for preciso comprar, cria-se um pedido novo.
+                {aCancelarPedido.fornecedor?.nome ?? t('pagina.fornecedor_nd')}.{' '}
+                {t('pagina.cancelar_aviso')}
               </p>
             </div>
             <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
@@ -398,7 +398,7 @@ export function PurchasesPage() {
                 disabled={aCancelar}
                 className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-50"
               >
-                Voltar
+                {t('pagina.voltar')}
               </button>
               <button
                 onClick={cancelarPedido}
@@ -406,7 +406,7 @@ export function PurchasesPage() {
                 className="inline-flex items-center gap-2 rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
               >
                 {aCancelar && <Loader2 size={15} className="animate-spin" />}
-                Cancelar pedido
+                {t('pagina.cancelar_pedido')}
               </button>
             </div>
           </div>
@@ -448,11 +448,13 @@ function ListaDePedidos({
   /** O id do pedido a ser submetido, para desactivar só esse botão. */
   aSubmeter: string | null;
 }) {
+  const { t } = useTranslation('compras');
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
         <Loader2 className="h-4 w-4 animate-spin" />
-        A carregar pedidos...
+        {t('lista.a_carregar')}
       </div>
     );
   }
@@ -461,9 +463,9 @@ function ListaDePedidos({
     return (
       <div className="py-16 text-center">
         <ShoppingCart className="mx-auto mb-3 h-12 w-12 text-slate-300" />
-        <p className="text-sm font-medium text-slate-700">Ainda não há pedidos de compra.</p>
+        <p className="text-sm font-medium text-slate-700">{t('lista.vazio_titulo')}</p>
         <p className="mt-1 text-sm text-slate-500">
-          Use a sugestão de compras para saber o que repor, ou crie um pedido directamente.
+          {t('lista.vazio_texto')}
         </p>
       </div>
     );
@@ -474,12 +476,12 @@ function ListaDePedidos({
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
-            <th className="px-4 py-2.5 font-medium">Pedido</th>
-            <th className="px-3 py-2.5 font-medium">Fornecedor</th>
-            <th className="hidden px-3 py-2.5 font-medium sm:table-cell">Data</th>
-            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Linhas</th>
-            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">Valor</th>
-            <th className="px-3 py-2.5 font-medium">Estado</th>
+            <th className="px-4 py-2.5 font-medium">{t('lista.col_pedido')}</th>
+            <th className="px-3 py-2.5 font-medium">{t('lista.col_fornecedor')}</th>
+            <th className="hidden px-3 py-2.5 font-medium sm:table-cell">{t('lista.col_data')}</th>
+            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">{t('lista.col_linhas')}</th>
+            <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">{t('lista.col_valor')}</th>
+            <th className="px-3 py-2.5 font-medium">{t('lista.col_estado')}</th>
             <th className="px-4 py-2.5" />
           </tr>
         </thead>
@@ -518,17 +520,13 @@ function ListaDePedidos({
                   {p.fornecedor?.nome ?? '—'}
                 </td>
                 <td className="hidden px-3 py-3 text-slate-500 sm:table-cell">
-                  {new Date(p.dataPedido).toLocaleDateString('pt-MZ', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  {formatData(p.dataPedido)}
                 </td>
                 <td className="hidden px-3 py-3 text-right text-slate-500 md:table-cell">
                   {p.itens?.length ?? '—'}
                 </td>
                 <td className="hidden px-3 py-3 text-right text-slate-700 md:table-cell">
-                  {total !== undefined ? moeda(total) : '—'}
+                  {total !== undefined ? formatMoeda(total) : '—'}
                 </td>
                 <td className="px-3 py-3">
                   <EstadoBadge pedido={p} />
@@ -539,7 +537,7 @@ function ListaDePedidos({
                       <button
                         onClick={() => onSubmeter(p)}
                         disabled={aSubmeter === p.id}
-                        title="Submeter para aprovação"
+                        title={t('lista.acao_submeter')}
                         className="p-2 text-slate-400 transition-colors hover:text-indigo-600 disabled:opacity-40"
                       >
                         {aSubmeter === p.id ? (
@@ -552,7 +550,7 @@ function ListaDePedidos({
                     {decidivel && (
                       <button
                         onClick={() => onDecidir(p)}
-                        title="Aprovar ou rejeitar"
+                        title={t('lista.acao_decidir')}
                         className="p-2 text-amber-500 transition-colors hover:text-amber-700"
                       >
                         <Gavel size={16} />
@@ -561,7 +559,7 @@ function ListaDePedidos({
                     {recebivel && (
                       <button
                         onClick={() => onExpedir(p)}
-                        title="Registar o que o fornecedor expediu"
+                        title={t('lista.acao_expedir')}
                         className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
                       >
                         <Truck size={16} />
@@ -571,7 +569,7 @@ function ListaDePedidos({
                       <button
                         onClick={() => onEnviar(p)}
                         disabled={aSubmeter === p.id}
-                        title="Marcar como enviada ao fornecedor"
+                        title={t('lista.acao_enviar')}
                         className="p-2 text-blue-500 transition-colors hover:text-blue-700 disabled:opacity-40"
                       >
                         {aSubmeter === p.id ? (
@@ -584,7 +582,7 @@ function ListaDePedidos({
                     {confirmavel && (
                       <button
                         onClick={() => onConfirmar(p)}
-                        title="Registar resposta do fornecedor"
+                        title={t('lista.acao_confirmar')}
                         className="p-2 text-slate-400 transition-colors hover:text-blue-600"
                       >
                         <MessageSquare size={16} />
@@ -593,7 +591,7 @@ function ListaDePedidos({
                     {recebivel && (
                       <button
                         onClick={() => onClicar(p)}
-                        title="Dar entrada de mercadoria"
+                        title={t('lista.acao_receber')}
                         className="p-2 text-slate-400 transition-colors hover:text-emerald-600"
                       >
                         <PackageCheck size={16} />
@@ -601,7 +599,7 @@ function ListaDePedidos({
                     )}
                     <button
                       onClick={() => onVerRececoes(p)}
-                      title="Ver recepções"
+                      title={t('lista.acao_rececoes')}
                       className="p-2 text-slate-400 transition-colors hover:text-blue-600"
                     >
                       <Truck size={16} />
@@ -609,7 +607,7 @@ function ListaDePedidos({
                     {podeAlterarLinhas(p) && (
                       <button
                         onClick={() => onAlterar(p)}
-                        title="Alterar linhas"
+                        title={t('lista.acao_alterar')}
                         className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
                       >
                         <FileEdit size={16} />
@@ -617,7 +615,7 @@ function ListaDePedidos({
                     )}
                     <button
                       onClick={() => onVerVersoes(p)}
-                      title="Ver histórico de versões"
+                      title={t('lista.acao_versoes')}
                       className="p-2 text-slate-400 transition-colors hover:text-slate-600"
                     >
                       <History size={16} />
@@ -625,7 +623,7 @@ function ListaDePedidos({
                     {podeCancelarPedido(p) && (
                       <button
                         onClick={() => onCancelar(p)}
-                        title="Cancelar pedido"
+                        title={t('lista.acao_cancelar')}
                         className="p-2 text-slate-400 transition-colors hover:text-rose-600"
                       >
                         <XCircle size={16} />
@@ -656,7 +654,8 @@ function ListaDePedidos({
  * mostra-se a projecção, que é o que o ecrã sempre mostrou.
  */
 function EstadoBadge({ pedido }: { pedido: PurchaseOrder }) {
-  const { rotulo, cor } = rotularEstado(pedido);
+  const { t } = useTranslation('compras');
+  const { rotulo, cor } = rotularEstado(pedido, t);
 
   return (
     <div className="flex items-center gap-1.5">
@@ -670,7 +669,7 @@ function EstadoBadge({ pedido }: { pedido: PurchaseOrder }) {
       </span>
       {pedido.sodExcepcao && (
         <span
-          title="Aprovada por quem a criou — excepção de segregação de funções"
+          title={t('lista.sod_excepcao')}
           className="text-amber-500"
         >
           <UserCheck size={13} />
@@ -680,9 +679,12 @@ function EstadoBadge({ pedido }: { pedido: PurchaseOrder }) {
   );
 }
 
-function rotularEstado(p: PurchaseOrder): { rotulo: string; cor: string } {
+function rotularEstado(
+  p: PurchaseOrder,
+  t: TFunction<'compras'>,
+): { rotulo: string; cor: string } {
   if (p.cancelamento === 'CANCELADA') {
-    return { rotulo: 'Cancelada', cor: 'bg-rose-100 text-rose-700' };
+    return { rotulo: t('estado.cancelada'), cor: 'bg-rose-100 text-rose-700' };
   }
 
   // Sem eixos, é uma ordem anterior à governação: mostra-se o que sempre se mostrou.
@@ -695,46 +697,57 @@ function rotularEstado(p: PurchaseOrder): { rotulo: string; cor: string } {
       RECEBIDO: 'bg-emerald-100 text-emerald-700',
       CANCELADO: 'bg-rose-100 text-rose-700',
     };
-    return { rotulo: p.estado, cor: cores[p.estado] ?? 'bg-slate-100 text-slate-700' };
+    const rotulos: Record<string, string> = {
+      RASCUNHO: t('estado.proj_rascunho'),
+      ENVIADO: t('estado.proj_enviado'),
+      PENDENTE: t('estado.proj_pendente'),
+      PARCIAL: t('estado.proj_parcial'),
+      RECEBIDO: t('estado.proj_recebido'),
+      CANCELADO: t('estado.proj_cancelado'),
+    };
+    return {
+      rotulo: rotulos[p.estado] ?? p.estado,
+      cor: cores[p.estado] ?? 'bg-slate-100 text-slate-700',
+    };
   }
 
   // A aprovação vem primeiro: enquanto não estiver resolvida, o resto não acontece.
   if (p.estadoAprovacao === EstadoAprovacaoOC.RASCUNHO) {
-    return { rotulo: 'Por submeter', cor: 'bg-slate-100 text-slate-700' };
+    return { rotulo: t('estado.por_submeter'), cor: 'bg-slate-100 text-slate-700' };
   }
   if (p.estadoAprovacao === EstadoAprovacaoOC.AGUARDA_APROVACAO) {
-    return { rotulo: 'Por aprovar', cor: 'bg-amber-100 text-amber-800' };
+    return { rotulo: t('estado.por_aprovar'), cor: 'bg-amber-100 text-amber-800' };
   }
   if (p.estadoAprovacao === EstadoAprovacaoOC.REJEITADA) {
-    return { rotulo: 'Rejeitada', cor: 'bg-rose-100 text-rose-700' };
+    return { rotulo: t('estado.rejeitada'), cor: 'bg-rose-100 text-rose-700' };
   }
 
   // Aprovada. O que interessa agora é o que já veio, e só depois o que foi combinado.
   if (p.estadoCumprimento === 'TOTALMENTE_RECEBIDA' || p.estadoCumprimento === 'ENCERRADA') {
-    return { rotulo: 'Recebida', cor: 'bg-emerald-100 text-emerald-700' };
+    return { rotulo: t('estado.recebida'), cor: 'bg-emerald-100 text-emerald-700' };
   }
   if (p.estadoCumprimento === 'PARCIALMENTE_RECEBIDA') {
-    return { rotulo: 'Parcial', cor: 'bg-amber-100 text-amber-800' };
+    return { rotulo: t('estado.parcial'), cor: 'bg-amber-100 text-amber-800' };
   }
 
   if (p.estadoComercial === 'PARCIALMENTE_CONFIRMADA') {
-    return { rotulo: 'Confirmada em parte', cor: 'bg-amber-100 text-amber-800' };
+    return { rotulo: t('estado.confirmada_parte'), cor: 'bg-amber-100 text-amber-800' };
   }
   if (p.estadoComercial === 'RECUSADA') {
-    return { rotulo: 'Recusada pelo fornecedor', cor: 'bg-rose-100 text-rose-700' };
+    return { rotulo: t('estado.recusada'), cor: 'bg-rose-100 text-rose-700' };
   }
   if (p.estadoComercial === 'ACEITE' || p.estadoComercial === 'ACEITE_COM_ALTERACOES') {
-    return { rotulo: 'A aguardar entrega', cor: 'bg-blue-100 text-blue-700' };
+    return { rotulo: t('estado.aguarda_entrega'), cor: 'bg-blue-100 text-blue-700' };
   }
   if (p.estadoComercial === 'ENVIADA' || p.estadoComercial === 'AGUARDA_RESPOSTA') {
-    return { rotulo: 'Sem resposta', cor: 'bg-blue-100 text-blue-700' };
+    return { rotulo: t('estado.sem_resposta'), cor: 'bg-blue-100 text-blue-700' };
   }
 
   // Aprovada e ainda por enviar. O rótulo diz o passo que falta, e não o estado em que
   // está — «Aprovada» sozinho não diz a ninguém que ainda há uma acção pendente.
   if (p.estadoComercial === 'NAO_ENVIADA') {
-    return { rotulo: 'Por enviar', cor: 'bg-emerald-100 text-emerald-700' };
+    return { rotulo: t('estado.por_enviar'), cor: 'bg-emerald-100 text-emerald-700' };
   }
 
-  return { rotulo: 'Aprovada', cor: 'bg-emerald-100 text-emerald-700' };
+  return { rotulo: t('estado.aprovada'), cor: 'bg-emerald-100 text-emerald-700' };
 }

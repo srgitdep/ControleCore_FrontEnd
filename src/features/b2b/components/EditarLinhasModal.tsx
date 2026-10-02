@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { catalogApi } from '@/features/produtos';
 import { useDebounce } from '@/shared/hooks';
+import { mensagemDeErro } from '@/shared/utils';
 import { b2bApi } from '../api/b2b.api';
 import type { Requisicao } from '../api/b2b.api';
 
@@ -29,6 +31,7 @@ interface LinhaEmEdicao {
  * rascunho ainda não tem nada a proteger contra essa substituição.
  */
 export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
+  const { t } = useTranslation('b2b');
   const [linhas, setLinhas] = useState<LinhaEmEdicao[]>(
     requisicao.linhas.map((l) => ({
       produtoId: l.produtoId,
@@ -52,7 +55,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
 
   const acrescentar = (produto: { id: string; nome: string; unidadeMedida?: string }) => {
     if (jaAdicionados.has(produto.id)) {
-      toast.error(`«${produto.nome}» já está na lista. Altere a quantidade dessa linha.`);
+      toast.error(t('linhas.ja_na_lista', { nome: produto.nome }));
       return;
     }
 
@@ -77,13 +80,13 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
     e.preventDefault();
 
     if (linhas.length === 0) {
-      toast.error('A requisição precisa de pelo menos um produto.');
+      toast.error(t('editar.erro_sem_produtos'));
       return;
     }
 
     const invalida = linhas.find((l) => !(l.quantidade > 0));
     if (invalida) {
-      toast.error(`A quantidade de «${invalida.nome}» tem de ser maior do que zero.`);
+      toast.error(t('linhas.qtd_invalida', { nome: invalida.nome }));
       return;
     }
 
@@ -98,11 +101,11 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
         })),
       );
 
-      toast.success(`Linhas de ${requisicao.numero} actualizadas.`);
+      toast.success(t('editar.sucesso', { numero: requisicao.numero }));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao actualizar as linhas.');
+      toast.error(mensagemDeErro(error, t('editar.erro')));
     } finally {
       setAGravar(false);
     }
@@ -114,7 +117,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
         <header className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              Editar linhas — {requisicao.numero}
+              {t('editar.titulo', { numero: requisicao.numero })}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">{requisicao.loja?.nome}</p>
           </div>
@@ -125,7 +128,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
 
         <div className="space-y-4 px-5 py-5">
           <div>
-            <label className="block text-xs font-medium text-slate-700">Produtos *</label>
+            <label className="block text-xs font-medium text-slate-700">{t('linhas.produtos')}</label>
 
             <div className="relative mt-1">
               <Search
@@ -135,7 +138,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
               <input
                 value={pesquisa}
                 onChange={(e) => setPesquisa(e.target.value)}
-                placeholder="Escrever o nome do produto…"
+                placeholder={t('linhas.pesquisar_ph')}
                 className="w-full rounded-md border border-slate-300 py-2 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none"
               />
               {isFetching && (
@@ -150,7 +153,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
               <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200">
                 {produtos.data.length === 0 ? (
                   <p className="px-3 py-2 text-xs text-slate-500">
-                    Nenhum produto encontrado para «{pesquisaAtrasada}».
+                    {t('linhas.nenhum_produto', { pesquisa: pesquisaAtrasada })}
                   </p>
                 ) : (
                   produtos.data.map((produto) => (
@@ -163,7 +166,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
                     >
                       <span className="truncate text-slate-800">{produto.nome}</span>
                       {jaAdicionados.has(produto.id) ? (
-                        <span className="shrink-0 text-[10px] text-slate-400">na lista</span>
+                        <span className="shrink-0 text-[10px] text-slate-400">{t('linhas.na_lista')}</span>
                       ) : (
                         <Plus size={12} className="shrink-0 text-blue-600" />
                       )}
@@ -191,7 +194,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
                       className="w-20 rounded border border-slate-300 px-2 py-1 text-right text-sm focus:border-blue-500 focus:outline-none"
                     />
                     <span className="w-8 shrink-0 text-[11px] text-slate-400">
-                      {linha.unidade ?? 'un'}
+                      {linha.unidade ?? t('linhas.un')}
                     </span>
                     <button
                       type="button"
@@ -213,7 +216,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
             onClick={onClose}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
           >
-            Cancelar
+            {t('acao.cancelar')}
           </button>
           <button
             type="submit"
@@ -221,7 +224,7 @@ export function EditarLinhasModal({ requisicao, onClose, onSuccess }: Props) {
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aGravar && <Loader2 size={15} className="animate-spin" />}
-            Guardar linhas
+            {t('editar.guardar')}
           </button>
         </footer>
       </form>

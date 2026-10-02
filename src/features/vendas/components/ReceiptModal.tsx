@@ -4,6 +4,13 @@ import { api } from '@/shared/config';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useTranslation } from 'react-i18next';
+import { formatDataHora, formatMoeda } from '@/shared/utils';
+import { formatNumero2 } from '../utils/formatNumero';
+
+// Os valores do recibo podem faltar (venda vista a partir do histórico); sem valor, nada se
+// escreve em vez de «NaN MT».
+const moeda = (valor?: number | null) => (valor == null ? '' : formatMoeda(valor));
 
 interface ReceiptModalProps {
   receiptData: any;
@@ -12,6 +19,7 @@ interface ReceiptModalProps {
 }
 
 export function ReceiptModal({ receiptData, onClose, viewOnly = false }: ReceiptModalProps) {
+  const { t } = useTranslation('pos');
   const [email, setEmail] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showEmailInput, setShowEmailInput] = useState(false);
@@ -27,29 +35,29 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
   const _pagamentos = pagamentosPreparados || receiptData.pagamentos || [];
   const _trocoGlobal = trocoGlobal || receiptData.troco || (_pagamentos.length > 0 ? _pagamentos.reduce((acc: number, p: any) => acc + (p.troco || 0), 0) : 0);
   const _items = itensPreparados || receiptData.itens || [];
-  const invoiceNum = numeroFatura || vendaCriada?.numeroFatura || 'N/A';
+  const invoiceNum = numeroFatura || vendaCriada?.numeroFatura || t('recibo.nd');
 
   const generatePDFBlob = (): Blob => {
     const doc = new jsPDF();
     
     // Header
     doc.setFontSize(22);
-    doc.text("Recibo de Compra", 14, 20);
+    doc.text(t('recibo.titulo'), 14, 20);
     doc.setFontSize(12);
-    doc.text(`Fatura: ${invoiceNum}`, 14, 30);
-    doc.text(`Data: ${new Date().toLocaleString('pt-PT')}`, 14, 36);
+    doc.text(t('recibo.pdf_fatura', { numero: invoiceNum }), 14, 30);
+    doc.text(t('recibo.pdf_data', { data: formatDataHora(new Date()) }), 14, 36);
     if (caixeiro?.name) {
-      doc.text(`Operador: ${caixeiro.name}`, 14, 42);
+      doc.text(t('recibo.pdf_operador', { nome: caixeiro.name }), 14, 42);
     }
     
     autoTable(doc, {
       startY: 50,
-      head: [['Descrição', 'Qtd', 'Preço Unit.', 'Subtotal']],
+      head: [[t('recibo.pdf_col_descricao'), t('recibo.pdf_col_qtd'), t('recibo.pdf_col_preco'), t('recibo.pdf_col_subtotal')]],
       body: _items.map((item: any) => [
-        item.nomeProduto || item.produto?.nome || 'N/A', 
+        item.nomeProduto || item.produto?.nome || t('recibo.nd'), 
         item.quantidade?.toString(), 
-        `${(item.precoUnitario || item.precoVenda)?.toFixed(2)} MT`, 
-        `${(item.subtotal)?.toFixed(2)} MT`
+        moeda(item.precoUnitario || item.precoVenda), 
+        moeda(item.subtotal)
       ]),
       styles: { fontSize: 10 },
       headStyles: { fillColor: [37, 99, 235] }
@@ -58,16 +66,16 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
     const finalY = (doc as any).lastAutoTable.finalY || 50;
     
     doc.setFontSize(11);
-    doc.text(`Subtotal: ${_subtotalGlobal?.toFixed(2)} MT`, 14, finalY + 10);
+    doc.text(t('recibo.pdf_subtotal', { valor: moeda(_subtotalGlobal) }), 14, finalY + 10);
     if (_descontoGlobal > 0) {
-      doc.text(`Descontos: -${_descontoGlobal?.toFixed(2)} MT`, 14, finalY + 16);
+      doc.text(t('recibo.pdf_descontos', { valor: moeda(_descontoGlobal) }), 14, finalY + 16);
     }
-    doc.text(`Total IVA: ${_ivaGlobal?.toFixed(2)} MT`, 14, finalY + (_descontoGlobal > 0 ? 22 : 16));
+    doc.text(t('recibo.pdf_iva', { valor: moeda(_ivaGlobal) }), 14, finalY + (_descontoGlobal > 0 ? 22 : 16));
     
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     const totalY = finalY + (_descontoGlobal > 0 ? 30 : 24);
-    doc.text(`TOTAL FINAL: ${_totalGlobal?.toFixed(2)} MT`, 14, totalY);
+    doc.text(t('recibo.pdf_total', { valor: moeda(_totalGlobal) }), 14, totalY);
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -75,9 +83,9 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
     const metodosPagamento = _pagamentos.map((p: any) => p.metodo).join(', ');
     const totalEntreguePdf = _pagamentos.reduce((acc: number, p: any) => acc + (p.valorPago || p.valorEntregue || 0), 0);
 
-    doc.text(`Método de Pagamento: ${metodosPagamento || 'N/A'}`, 14, totalY + 12);
-    doc.text(`Valor Entregue: ${totalEntreguePdf.toFixed(2)} MT`, 14, totalY + 18);
-    doc.text(`Troco: ${_trocoGlobal?.toFixed(2)} MT`, 14, totalY + 24);
+    doc.text(t('recibo.pdf_metodo', { metodos: metodosPagamento || t('recibo.nd') }), 14, totalY + 12);
+    doc.text(t('recibo.pdf_entregue', { valor: moeda(totalEntreguePdf) }), 14, totalY + 18);
+    doc.text(t('recibo.pdf_troco', { valor: moeda(_trocoGlobal) }), 14, totalY + 24);
 
     return doc.output('blob');
   };
@@ -87,10 +95,10 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
     setIsSending(true);
     try {
       await api.post(`/vendas/${vendaCriada?.id || receiptData.id}/send-receipt`, { email });
-      toast.success('Recibo enviado com sucesso!');
+      toast.success(t('recibo.enviado'));
       setShowEmailInput(false);
     } catch (error) {
-      toast.error('Erro ao enviar recibo.');
+      toast.error(t('recibo.erro_enviar'));
     } finally {
       setIsSending(false);
     }
@@ -108,21 +116,21 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
         
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: 'Recibo de Compra',
-            text: `Recibo de compra - Fatura ${invoiceNum}`,
+            title: t('recibo.titulo'),
+            text: t('recibo.partilha_texto', { numero: invoiceNum }),
             files: [file]
           });
         } else {
           await navigator.share({
-            title: 'Recibo de Compra',
-            text: `Recibo de compra - Fatura ${invoiceNum}\nTotal: ${_totalGlobal?.toFixed(2)} MT`,
+            title: t('recibo.titulo'),
+            text: `${t('recibo.partilha_texto', { numero: invoiceNum })}\n${t('recibo.partilha_total', { valor: moeda(_totalGlobal) })}`,
           });
         }
       } catch (error) {
         console.log('Error sharing', error);
       }
     } else {
-      toast.error('Partilha não suportada neste dispositivo.');
+      toast.error(t('recibo.partilha_nao_suportada'));
     }
   };
 
@@ -136,28 +144,28 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold uppercase tracking-widest mb-1">Supermercado SPAR</h2>
             <p className="text-xs text-slate-500">NIF: 123456789</p>
-            <p className="text-xs text-slate-500">Maputo, Moçambique</p>
+            <p className="text-xs text-slate-500">{t('recibo.localidade')}</p>
             <div className="border-b-2 border-dashed border-slate-300 my-4"></div>
-            <p className="text-xs font-semibold">Talão de Venda</p>
-            <p className="text-xs">{new Date().toLocaleString('pt-PT')}</p>
-            <p className="text-xs mt-1">Doc: {invoiceNum}</p>
-            {caixeiro?.name && <p className="text-xs mt-1">Op: {caixeiro.name}</p>}
+            <p className="text-xs font-semibold">{t('recibo.talao')}</p>
+            <p className="text-xs">{formatDataHora(new Date())}</p>
+            <p className="text-xs mt-1">{t('recibo.doc', { numero: invoiceNum })}</p>
+            {caixeiro?.name && <p className="text-xs mt-1">{t('recibo.op', { nome: caixeiro.name })}</p>}
           </div>
 
           <div className="border-b border-dashed border-slate-300 mb-4"></div>
 
           <div className="space-y-3 mb-4">
             <div className="flex justify-between text-xs font-bold uppercase text-slate-500 mb-1">
-              <span>Qtd x Produto</span>
-              <span>Subtotal</span>
+              <span>{t('recibo.qtd_produto')}</span>
+              <span>{t('recibo.pdf_col_subtotal')}</span>
             </div>
             {_items.map((item: any, idx: number) => (
               <div key={idx} className="flex justify-between items-start text-xs">
                 <div className="pr-2">
                   <p className="font-semibold line-clamp-1">{item.nomeProduto || item.produto?.nome}</p>
-                  <p className="text-slate-500">{item.quantidade} x {(item.precoUnitario || item.precoVenda)?.toFixed(2)}</p>
+                  <p className="text-slate-500">{item.quantidade} x {formatNumero2(item.precoUnitario || item.precoVenda)}</p>
                 </div>
-                <span className="font-semibold whitespace-nowrap">{(item.subtotal)?.toFixed(2)} MT</span>
+                <span className="font-semibold whitespace-nowrap">{moeda(item.subtotal)}</span>
               </div>
             ))}
           </div>
@@ -166,22 +174,22 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
 
           <div className="space-y-1 mb-4 text-xs">
             <div className="flex justify-between text-slate-600">
-              <span>Subtotal:</span>
-              <span>{_subtotalGlobal?.toFixed(2)} MT</span>
+              <span>{t('recibo.subtotal')}</span>
+              <span>{moeda(_subtotalGlobal)}</span>
             </div>
             {_descontoGlobal > 0 && (
               <div className="flex justify-between text-slate-600">
-                <span>Descontos:</span>
-                <span>-{_descontoGlobal?.toFixed(2)} MT</span>
+                <span>{t('recibo.descontos')}</span>
+                <span>-{moeda(_descontoGlobal)}</span>
               </div>
             )}
             <div className="flex justify-between text-slate-600">
-              <span>Total IVA:</span>
-              <span>{_ivaGlobal?.toFixed(2)} MT</span>
+              <span>{t('recibo.iva')}</span>
+              <span>{moeda(_ivaGlobal)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t border-slate-200">
-              <span>TOTAL FINAL:</span>
-              <span>{_totalGlobal?.toFixed(2)} MT</span>
+              <span>{t('recibo.total_final')}</span>
+              <span>{moeda(_totalGlobal)}</span>
             </div>
           </div>
 
@@ -191,18 +199,18 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
             {_pagamentos.map((p: any, idx: number) => (
               <div key={idx} className="flex justify-between text-slate-600">
                 <span>{p.metodo}:</span>
-                <span>{(p.valorPago || p.valorEntregue)?.toFixed(2)} MT</span>
+                <span>{moeda(p.valorPago || p.valorEntregue)}</span>
               </div>
             ))}
             <div className="flex justify-between font-bold mt-1">
-              <span>TROCO:</span>
-              <span>{_trocoGlobal?.toFixed(2)} MT</span>
+              <span>{t('recibo.troco')}</span>
+              <span>{moeda(_trocoGlobal)}</span>
             </div>
           </div>
           
           <div className="mt-8 text-center">
-            <p className="text-xs font-semibold mb-1">Obrigado pela preferência!</p>
-            <p className="text-[10px] text-slate-400">Processado por ControlCore PDV</p>
+            <p className="text-xs font-semibold mb-1">{t('recibo.obrigado')}</p>
+            <p className="text-[10px] text-slate-400">{t('recibo.processado_por')}</p>
           </div>
         </div>
 
@@ -215,7 +223,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="E-mail do cliente..."
+                  placeholder={t('recibo.email_placeholder')}
                   className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <button
@@ -223,7 +231,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
                   disabled={isSending}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {isSending ? 'A enviar...' : 'Enviar'}
+                  {isSending ? t('recibo.a_enviar') : t('recibo.enviar')}
                 </button>
                 <button
                   onClick={() => setShowEmailInput(false)}
@@ -236,15 +244,15 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
               <div className="flex justify-center gap-4 mb-4">
                 <button onClick={() => setShowEmailInput(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors">
                   <div className="p-3 bg-white border border-slate-200 rounded-full shadow-sm"><Mail className="w-5 h-5" /></div>
-                  <span className="text-[10px] font-semibold uppercase">Email</span>
+                  <span className="text-[10px] font-semibold uppercase">{t('recibo.email')}</span>
                 </button>
                 <button onClick={handlePrint} className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors">
                   <div className="p-3 bg-white border border-slate-200 rounded-full shadow-sm"><Printer className="w-5 h-5" /></div>
-                  <span className="text-[10px] font-semibold uppercase">Imprimir</span>
+                  <span className="text-[10px] font-semibold uppercase">{t('recibo.imprimir')}</span>
                 </button>
                 <button onClick={handleShare} className="flex flex-col items-center gap-1 text-slate-600 hover:text-blue-600 transition-colors">
                   <div className="p-3 bg-white border border-slate-200 rounded-full shadow-sm"><Share2 className="w-5 h-5" /></div>
-                  <span className="text-[10px] font-semibold uppercase">Partilhar</span>
+                  <span className="text-[10px] font-semibold uppercase">{t('recibo.partilhar')}</span>
                 </button>
               </div>
             )
@@ -255,7 +263,7 @@ export function ReceiptModal({ receiptData, onClose, viewOnly = false }: Receipt
             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
           >
             {!viewOnly && <CheckCircle2 className="w-5 h-5" />}
-            {viewOnly ? 'Fechar' : 'Nova Venda (Cliente Seguinte)'}
+            {viewOnly ? t('recibo.fechar') : t('recibo.nova_venda')}
           </button>
         </div>
 

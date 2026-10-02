@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { ArrowRight, Package } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ResponsiveTable } from '@/shared/ui';
 import { BadgeEstadoTransferencia } from './BadgeEstadoTransferencia';
 import type { LinhaTransferencia } from '../types/transferencia.types';
@@ -35,11 +36,12 @@ export function TabelaTransferencias({
   onCancelar,
   onVerDetalhe,
 }: TabelaTransferenciasProps) {
+  const { t } = useTranslation('transferencias');
   const colunas = useMemo(
     () => [
       helper.accessor((l) => l.produto.nome, {
         id: 'produto',
-        header: 'Produto',
+        header: t('tabela.produto'),
         cell: (info) => {
           const linha = info.row.original;
           return (
@@ -61,7 +63,7 @@ export function TabelaTransferencias({
       }),
       helper.display({
         id: 'rota',
-        header: 'Origem → Destino',
+        header: t('tabela.rota'),
         cell: (info) => {
           const linha = info.row.original;
           return (
@@ -74,30 +76,30 @@ export function TabelaTransferencias({
         },
       }),
       helper.accessor('quantidadeSolicitada', {
-        header: 'Quantidade',
+        header: t('tabela.quantidade'),
         cell: (info) => {
           const linha = info.row.original;
           return (
             <div className="text-sm tabular-nums">
               <span className="font-medium text-slate-800">{linha.quantidadeSolicitada}</span>
               {linha.quantidadeRecebida !== null && linha.quantidadeRecebida !== linha.quantidadeExpedida && (
-                <span className="ml-1 text-xs text-amber-600">({linha.quantidadeRecebida} recebido)</span>
+                <span className="ml-1 text-xs text-amber-600">{t('tabela.recebido', { n: linha.quantidadeRecebida })}</span>
               )}
             </div>
           );
         },
       }),
       helper.accessor('estado', {
-        header: 'Estado',
+        header: t('tabela.estado'),
         cell: (info) => <BadgeEstadoTransferencia estado={info.getValue()} />,
       }),
       helper.accessor('solicitadaPor.name', {
-        header: 'Solicitada por',
+        header: t('tabela.solicitada_por'),
         cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
       }),
       helper.display({
         id: 'accao',
-        header: 'Acção',
+        header: t('tabela.accao'),
         cell: (info) => {
           const linha = info.row.original;
 
@@ -109,14 +111,14 @@ export function TabelaTransferencias({
                   onClick={() => onAprovar(linha)}
                   className="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100"
                 >
-                  Aprovar
+                  {t('tabela.aprovar')}
                 </button>
                 <button
                   type="button"
                   onClick={() => onRecusar(linha)}
                   className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
-                  Recusar
+                  {t('tabela.recusar')}
                 </button>
               </div>
             );
@@ -130,14 +132,14 @@ export function TabelaTransferencias({
                   onClick={() => onExpedir(linha)}
                   className="rounded-md border border-purple-200 bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100"
                 >
-                  Expedir
+                  {t('tabela.expedir')}
                 </button>
                 <button
                   type="button"
                   onClick={() => onCancelar(linha)}
                   className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50"
                 >
-                  Cancelar
+                  {t('tabela.cancelar')}
                 </button>
               </div>
             );
@@ -150,7 +152,7 @@ export function TabelaTransferencias({
                 onClick={() => onReceber(linha)}
                 className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
               >
-                Confirmar recepção
+                {t('tabela.confirmar_recepcao')}
               </button>
             );
           }
@@ -161,13 +163,13 @@ export function TabelaTransferencias({
               onClick={() => onVerDetalhe(linha.id)}
               className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             >
-              Ver
+              {t('tabela.ver')}
             </button>
           );
         },
       }),
     ],
-    [onAprovar, onRecusar, onExpedir, onReceber, onCancelar, onVerDetalhe],
+    [t, onAprovar, onRecusar, onExpedir, onReceber, onCancelar, onVerDetalhe],
   );
 
   const table = useReactTable({
@@ -181,7 +183,7 @@ export function TabelaTransferencias({
     <ResponsiveTable
       table={table}
       isLoading={isLoading}
-      emptyMessage="Nenhuma transferência entre lojas registada."
+      emptyMessage={t('tabela.vazio')}
     />
   );
 }

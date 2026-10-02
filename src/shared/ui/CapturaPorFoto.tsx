@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Camera, X, Sparkles, Loader2, AlertTriangle, Check, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 /**
  * O que qualquer leitura por fotografia devolve, para este componente ser genérico.
@@ -63,6 +64,7 @@ export function CapturaPorFoto({
   /** Substitui o texto de ajuda por omissão, quando o que se lê difere (preço nunca incluído). */
   legenda?: string;
 }) {
+  const { t } = useTranslation('shell');
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [aAnalisar, setAAnalisar] = useState(false);
   const [recusados, setRecusados] = useState<{ campo: string; motivo: string }[]>([]);
@@ -77,7 +79,7 @@ export function CapturaPorFoto({
 
     const espaco = MAX - fotos.length;
     if (espaco <= 0) {
-      toast.error(`Máximo de ${MAX} fotografias.`);
+      toast.error(t('foto.maximo', { max: MAX }));
       return;
     }
 
@@ -85,11 +87,11 @@ export function CapturaPorFoto({
       .slice(0, espaco)
       .filter((f) => {
         if (!f.type.startsWith('image/')) {
-          toast.error(`"${f.name}" não é uma imagem.`);
+          toast.error(t('foto.nao_imagem', { nome: f.name }));
           return false;
         }
         if (f.size > 5 * 1024 * 1024) {
-          toast.error(`"${f.name}" excede 5 MB.`);
+          toast.error(t('foto.excede', { nome: f.name }));
           return false;
         }
         return true;
@@ -119,9 +121,7 @@ export function CapturaPorFoto({
       const r = await analisar(fotos.map((f) => f.ficheiro));
 
       if (r.semResultado) {
-        toast.error(
-          'Não foi possível ler dados nestas fotografias. Tente com mais luz, ou aproxime o rótulo.',
-        );
+        toast.error(t('foto.sem_resultado'));
         setRecusados(r.recusados ?? []);
         return;
       }
@@ -130,13 +130,13 @@ export function CapturaPorFoto({
       setRecusados(r.recusados ?? []);
 
       const lidos = Object.keys(r.dados).length;
-      toast.success(`${lidos} ${lidos === 1 ? 'campo preenchido' : 'campos preenchidos'}.`);
+      toast.success(t('foto.campos_preenchidos', { count: lidos }));
     } catch (erro: any) {
       const mensagem = erro?.response?.data?.message;
       toast.error(
         typeof mensagem === 'string'
           ? mensagem
-          : 'Falha ao analisar as fotografias. Verifique a ligação.',
+          : t('foto.falha_analise'),
       );
     } finally {
       setAAnalisar(false);
@@ -149,11 +149,10 @@ export function CapturaPorFoto({
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-800">
-            Preencher a partir de fotografias
+            {t('foto.titulo')}
           </p>
           <p className="text-xs text-slate-600">
-            {legenda ??
-              'Fotografe a frente e a face de trás — o código de barras costuma estar atrás. Os preços não são lidos da imagem.'}
+            {legenda ?? t('foto.legenda_padrao')}
           </p>
         </div>
       </div>
@@ -165,14 +164,14 @@ export function CapturaPorFoto({
             <div key={f.previa} className="relative">
               <img
                 src={f.previa}
-                alt={`Fotografia ${i + 1}`}
+                alt={t('foto.alt', { n: i + 1 })}
                 className="h-20 w-20 rounded-lg border border-slate-200 object-cover"
               />
               <button
                 type="button"
                 onClick={() => remover(i)}
                 className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm"
-                aria-label={`Remover fotografia ${i + 1}`}
+                aria-label={t('foto.remover', { n: i + 1 })}
               >
                 <X size={13} />
               </button>
@@ -218,7 +217,7 @@ export function CapturaPorFoto({
           className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
         >
           {fotos.length === 0 ? <Camera size={16} /> : <Plus size={16} />}
-          {fotos.length === 0 ? 'Tirar fotografia' : 'Outra fotografia'}
+          {fotos.length === 0 ? t('foto.tirar') : t('foto.outra')}
         </button>
 
         <button
@@ -227,7 +226,7 @@ export function CapturaPorFoto({
           disabled={fotos.length >= MAX || aAnalisar}
           className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50"
         >
-          Escolher da galeria
+          {t('foto.galeria')}
         </button>
 
         {fotos.length > 0 && (
@@ -240,12 +239,12 @@ export function CapturaPorFoto({
             {aAnalisar ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                A ler {fotos.length === 1 ? 'a fotografia' : `as ${fotos.length} fotografias`}...
+                {t('foto.a_ler', { count: fotos.length })}
               </>
             ) : (
               <>
                 <Sparkles size={16} />
-                Ler dados
+                {t('foto.ler_dados')}
               </>
             )}
           </button>
@@ -260,7 +259,7 @@ export function CapturaPorFoto({
         <div className="mt-3 rounded-lg bg-amber-50 p-3">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
             <AlertTriangle size={13} />
-            Não aproveitado
+            {t('foto.nao_aproveitado')}
           </p>
           <ul className="mt-1 space-y-0.5">
             {recusados.map((r, i) => (
@@ -270,14 +269,14 @@ export function CapturaPorFoto({
             ))}
           </ul>
           <p className="mt-1.5 text-xs text-amber-700">
-            Escreva estes campos à mão, ou tente outra fotografia mais nítida.
+            {t('foto.escrever_a_mao')}
           </p>
         </div>
       )}
 
       {fotos.length >= MAX && (
         <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
-          <Check size={12} /> Máximo de {MAX} fotografias.
+          <Check size={12} /> {t('foto.maximo', { max: MAX })}
         </p>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
 import { necessidadesApi } from '../api/necessidades.api';
 import type { FiltrosHistorico, FiltrosNecessidade } from '../types/necessidade.types';
 
@@ -79,13 +80,13 @@ export function useCriarRequisicaoDeNecessidade() {
     onSuccess: (resultado) => {
       toast.success(
         resultado.jaExistia
-          ? `Já existia a requisição ${resultado.numero}. Necessidade encaminhada para lá.`
-          : `Requisição ${resultado.numero} criada.`,
+          ? i18n.t('necessidades:hooks.requisicao_ja_existia', { numero: resultado.numero })
+          : i18n.t('necessidades:hooks.requisicao_criada', { numero: resultado.numero }),
       );
       queryClient.invalidateQueries({ queryKey: ['necessidades'] });
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível criar a requisição.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('necessidades:hooks.erro_requisicao'));
     },
   });
 }
@@ -109,12 +110,12 @@ export function useCriarTransferenciaDeNecessidade() {
       quantidade?: number;
     }) => necessidadesApi.criarTransferencia(necessidadeId, dados),
     onSuccess: () => {
-      toast.success('Transferência solicitada. Acompanhe-a em Transferências entre Lojas.');
+      toast.success(i18n.t('necessidades:hooks.transferencia_solicitada'));
       queryClient.invalidateQueries({ queryKey: ['necessidades'] });
       queryClient.invalidateQueries({ queryKey: ['transferencias'] });
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível solicitar a transferência.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('necessidades:hooks.erro_transferencia'));
     },
   });
 }
@@ -126,11 +127,11 @@ export function useIgnorarNecessidade() {
     mutationFn: ({ necessidadeId, motivo }: { necessidadeId: string; motivo: string }) =>
       necessidadesApi.ignorar(necessidadeId, motivo),
     onSuccess: () => {
-      toast.success('Necessidade marcada como ignorada.');
+      toast.success(i18n.t('necessidades:hooks.ignorada'));
       queryClient.invalidateQueries({ queryKey: ['necessidades'] });
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível ignorar a necessidade.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('necessidades:hooks.erro_ignorar'));
     },
   });
 }
@@ -142,11 +143,11 @@ export function useRecalcularNecessidades() {
     mutationFn: ({ lojaId, produtoIds }: { lojaId: string; produtoIds?: string[] }) =>
       necessidadesApi.recalcular(lojaId, produtoIds),
     onSuccess: () => {
-      toast.success('Necessidades reavaliadas.');
+      toast.success(i18n.t('necessidades:hooks.reavaliadas'));
       queryClient.invalidateQueries({ queryKey: ['necessidades'] });
     },
     onError: (erro: any) => {
-      toast.error(erro?.response?.data?.message ?? 'Não foi possível reavaliar.');
+      toast.error(erro?.response?.data?.message ?? i18n.t('necessidades:hooks.erro_reavaliar'));
     },
   });
 }

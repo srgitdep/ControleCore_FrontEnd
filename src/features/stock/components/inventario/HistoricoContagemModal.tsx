@@ -1,17 +1,8 @@
 import { X, History, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatDataHora } from '@/shared/utils';
 import { useHistoricoContagem } from '@/features/stock';
 import type { InventoryItemStatus } from '@/features/stock';
-
-const ESTADO_LABEL: Record<InventoryItemStatus, string> = {
-  PENDENTE: 'Pendente',
-  EM_CONTAGEM: 'Em contagem',
-  CONTADO: 'Contado',
-  ZERO_CONFIRMADO: 'Zero confirmado',
-  FORA_DA_LOCALIZACAO: 'Fora da localização',
-  RECONTAGEM_PENDENTE: 'Recontagem pendente',
-  RECONTADO: 'Recontado',
-  PRODUTO_INESPERADO: 'Produto inesperado',
-};
 
 /**
  * Trilha append-only de alterações a uma contagem (§5, §13): valor anterior,
@@ -29,6 +20,12 @@ export function HistoricoContagemModal({
   produtoNome?: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('stock');
+  // Aqui o estado inesperado tem a etiqueta longa; nas outras vistas é «Inesperado».
+  const estadoLabel = (estado: InventoryItemStatus) =>
+    estado === 'PRODUTO_INESPERADO'
+      ? t('historico_contagem.produto_inesperado')
+      : t(`item_estado.${estado}`);
   const { data: historico = [], isLoading } = useHistoricoContagem(cycleId, itemId);
 
   return (
@@ -40,7 +37,7 @@ export function HistoricoContagemModal({
               <History className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Histórico da contagem</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('historico_contagem.titulo')}</h2>
               {produtoNome && <p className="text-xs text-slate-500">{produtoNome}</p>}
             </div>
           </div>
@@ -56,7 +53,7 @@ export function HistoricoContagemModal({
             </div>
           ) : historico.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-slate-400">
-              Ainda não há alterações registadas para este item.
+              {t('historico_contagem.vazio')}
             </p>
           ) : (
             <ol className="space-y-3">
@@ -64,17 +61,17 @@ export function HistoricoContagemModal({
                 <li key={h.id} className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-slate-800">
-                      {ESTADO_LABEL[h.estadoAnterior]} → {ESTADO_LABEL[h.estadoNovo]}
+                      {estadoLabel(h.estadoAnterior)} → {estadoLabel(h.estadoNovo)}
                     </span>
                     <span className="flex items-center gap-1 text-[11px] text-slate-400">
                       <Clock className="h-3 w-3" />
-                      {new Date(h.em).toLocaleString('pt-PT')}
+                      {formatDataHora(h.em)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    Quantidade: {h.valorAnterior ?? '—'} → <span className="font-semibold text-slate-700">{h.valorNovo ?? '—'}</span>
+                    {t('historico_contagem.quantidade')} {h.valorAnterior ?? '—'} → <span className="font-semibold text-slate-700">{h.valorNovo ?? '—'}</span>
                   </p>
-                  <p className="mt-0.5 text-[11px] text-slate-400">Alterado por {h.alteradoPor}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400">{t('historico_contagem.alterado_por', { nome: h.alteradoPor })}</p>
                 </li>
               ))}
             </ol>

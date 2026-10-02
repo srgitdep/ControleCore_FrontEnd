@@ -6,8 +6,14 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { TableScroll } from '@/shared/ui';
+import { useTranslation } from 'react-i18next';
+import { formatDataHora, formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 export function CaixasHistoricoPage() {
+  const { t } = useTranslation('pos');
+  // Os estados vêm da API como códigos; um código novo aparece tal como chegou.
+  const rotuloEstado = (estado: string) =>
+    estado === 'ABERTA' ? t('estado.ABERTA') : estado === 'FECHADA' ? t('estado.FECHADA') : estado;
   const { data, isLoading, refetch } = useHistoricoSessoes();
   const sessoes = data || [];
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -24,8 +30,15 @@ export function CaixasHistoricoPage() {
     try {
       const r = await anularVenda(vendaParaAnular.id, motivoAnulacao);
       toast.success(
-        `${r.message} Stock devolvido: ${r.stockDevolvido} item(ns).` +
-        (r.numerarioDevolvido > 0 ? ` Retirado da gaveta: ${r.numerarioDevolvido.toFixed(2)} MT.` : ''),
+        [
+          r.message,
+          t('anular.stock_devolvido', { n: r.stockDevolvido }),
+          r.numerarioDevolvido > 0
+            ? t('anular.numerario_devolvido', { valor: formatMoeda(r.numerarioDevolvido) })
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' '),
       );
       setVendaParaAnular(null);
       setMotivoAnulacao('');
@@ -33,7 +46,7 @@ export function CaixasHistoricoPage() {
     } catch (error: any) {
       // O backend recusa venda já anulada, sessão fechada e perfil sem permissão,
       // cada um com mensagem própria.
-      toast.error(error?.response?.data?.message || 'Erro ao anular a venda.');
+      toast.error(mensagemDeErro(error, t('anular.erro')));
     } finally {
       setIsAnulando(false);
     }
@@ -48,21 +61,21 @@ export function CaixasHistoricoPage() {
     const invoiceNum = venda.numeroFatura || 'N/A';
     
     doc.setFontSize(22);
-    doc.text("Recibo de Compra (Via Histórico)", 14, 20);
+    doc.text(t('historico.pdf_titulo'), 14, 20);
     doc.setFontSize(12);
-    doc.text(`Fatura: ${invoiceNum}`, 14, 30);
-    doc.text(`Data: ${new Date(venda.createdAt).toLocaleString('pt-PT')}`, 14, 36);
+    doc.text(t('recibo.pdf_fatura', { numero: invoiceNum }), 14, 30);
+    doc.text(t('recibo.pdf_data', { data: formatDataHora(venda.createdAt) }), 14, 36);
     
     // Na API de histórico, as vendas não trazem os itens por defeito no plano atual, 
     // mas trazem os totais e pagamentos. Vamos mostrar os totais gerais.
     doc.setFontSize(11);
-    doc.text(`Total Faturado: ${venda.totalFinal.toFixed(2)} MT`, 14, 50);
+    doc.text(t('historico.pdf_total', { valor: formatMoeda(venda.totalFinal) }), 14, 50);
     
     if (venda.pagamentos && venda.pagamentos.length > 0) {
       const pag = venda.pagamentos[0];
-      doc.text(`Método: ${pag.metodo}`, 14, 60);
-      doc.text(`Valor Pago: ${pag.valorPago.toFixed(2)} MT`, 14, 66);
-      doc.text(`Troco: ${pag.troco.toFixed(2)} MT`, 14, 72);
+      doc.text(t('historico.pdf_metodo', { metodo: pag.metodo }), 14, 60);
+      doc.text(t('historico.pdf_valor_pago', { valor: formatMoeda(pag.valorPago) }), 14, 66);
+      doc.text(t('recibo.pdf_troco', { valor: formatMoeda(pag.troco) }), 14, 72);
     }
 
     doc.save(`Recibo_${invoiceNum}.pdf`);
@@ -78,16 +91,16 @@ export function CaixasHistoricoPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
             <MonitorSmartphone className="w-5 h-5 text-blue-600" />
-            Histórico de Sessões de Caixa
+            {t('historico.titulo')}
           </h2>
-          <p className="text-slate-500 mt-1">Consulte os turnos fechados e vendas associadas a cada sessão.</p>
+          <p className="text-slate-500 mt-1">{t('historico.subtitulo')}</p>
         </div>
         <button 
           onClick={() => refetch()}
           className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg font-medium hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
         >
           <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} />
-          Atualizar
+          {t('historico.atualizar')}
         </button>
       </div>
 
@@ -95,11 +108,11 @@ export function CaixasHistoricoPage() {
         {isLoading ? (
           <div className="p-8 text-center text-slate-400 flex flex-col items-center">
             <RefreshCcw className="w-8 h-8 animate-spin mb-4" />
-            A carregar histórico...
+            {t('historico.a_carregar')}
           </div>
         ) : sessoes.length === 0 ? (
           <div className="p-8 text-center text-slate-400">
-            Nenhuma sessão encontrada.
+            {t('historico.vazio')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -114,41 +127,41 @@ export function CaixasHistoricoPage() {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                         sessao.estado === 'ABERTA' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
                       }`}>
-                        {sessao.estado}
+                        {rotuloEstado(sessao.estado)}
                       </span>
                       <h3 className="font-bold text-slate-800 text-lg">
                         {sessao.caixa?.nome} ({sessao.caixa?.loja?.nome})
                       </h3>
                     </div>
-                    <p className="text-sm text-slate-500">Operador: <span className="font-medium text-slate-700">{sessao.operador?.name}</span></p>
+                    <p className="text-sm text-slate-500">{t('historico.operador')}{' '}<span className="font-medium text-slate-700">{sessao.operador?.name}</span></p>
                     <div className="flex gap-6 mt-2 text-xs font-mono text-slate-500">
-                      <span>Abertura: {new Date(sessao.dataAbertura).toLocaleString('pt-PT')}</span>
+                      <span>{t('historico.abertura', { data: formatDataHora(sessao.dataAbertura) })}</span>
                       {sessao.dataFecho && (
-                        <span>Fecho: {new Date(sessao.dataFecho).toLocaleString('pt-PT')}</span>
+                        <span>{t('historico.fecho', { data: formatDataHora(sessao.dataFecho) })}</span>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-xs font-bold text-slate-400 uppercase">Faturado</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase">{t('historico.faturado')}</p>
                       <p className="font-black text-lg text-slate-800">
-                        {(sessao.saldoFinalCalculado - sessao.saldoInicial).toFixed(2)} MT
+                        {formatMoeda(sessao.saldoFinalCalculado - sessao.saldoInicial)}
                       </p>
                     </div>
                     {sessao.estado === 'FECHADA' && (
                       <div className="text-right">
-                        <p className="text-xs font-bold text-slate-400 uppercase">Quebra/Sobra</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase">{t('historico.quebra_sobra')}</p>
                         <div className="flex items-center gap-2 justify-end">
                           <p className={`font-black text-lg ${
                             (sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) < 0 ? 'text-rose-600' :
                             (sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) > 0 ? 'text-emerald-600' : 'text-slate-500'
                           }`}>
-                            {(sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)).toFixed(2)} MT
+                            {formatMoeda(sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado))}
                           </p>
                           {(sessao.diferenca ?? (sessao.saldoFinalDeclarado - sessao.saldoFinalCalculado)) < 0 && (
-                            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" title="Quebra Negativa de Caixa">
-                              Alerta
+                            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" title={t('historico.quebra_negativa')}>
+                              {t('historico.alerta')}
                             </span>
                           )}
                         </div>
@@ -164,21 +177,22 @@ export function CaixasHistoricoPage() {
                 {expandedId === sessao.id && (
                   <div className="bg-slate-50 p-6 border-t border-slate-100">
                     <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                      <Receipt className="w-5 h-5 text-blue-500" /> Vendas Associadas ({sessao.vendas?.length || 0})
+                      <Receipt className="w-5 h-5 text-blue-500" />{' '}
+                      {t('historico.vendas_associadas', { n: sessao.vendas?.length || 0 })}
                     </h4>
                     
                     {(!sessao.vendas || sessao.vendas.length === 0) ? (
-                      <p className="text-sm text-slate-500 italic">Nenhuma venda registada nesta sessão.</p>
+                      <p className="text-sm text-slate-500 italic">{t('historico.sem_vendas')}</p>
                     ) : (
                       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                         <TableScroll>
                         <table className="w-full text-left text-sm text-slate-600">
                           <thead className="bg-slate-100/50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold">
                             <tr>
-                              <th className="px-4 py-3">Fatura / Recibo</th>
-                              <th className="px-4 py-3">Data Hora</th>
-                              <th className="px-4 py-3">Valor</th>
-                              <th className="px-4 py-3 text-right">Ação</th>
+                              <th className="px-4 py-3">{t('historico.col_fatura')}</th>
+                              <th className="px-4 py-3">{t('historico.col_data_hora')}</th>
+                              <th className="px-4 py-3">{t('historico.col_valor')}</th>
+                              <th className="px-4 py-3 text-right">{t('historico.col_acao')}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -195,12 +209,12 @@ export function CaixasHistoricoPage() {
                                   <span className={anulada ? 'line-through' : ''}>{venda.numeroFatura}</span>
                                   {anulada && (
                                     <span className="ml-2 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
-                                      Anulada
+                                      {t('historico.anulada')}
                                     </span>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 font-mono text-xs">{new Date(venda.createdAt).toLocaleString('pt-PT')}</td>
-                                <td className={`px-4 py-3 font-bold ${anulada ? 'text-slate-400' : 'text-blue-600'}`}>{venda.totalFinal.toFixed(2)} MT</td>
+                                <td className="px-4 py-3 font-mono text-xs">{formatDataHora(venda.createdAt)}</td>
+                                <td className={`px-4 py-3 font-bold ${anulada ? 'text-slate-400' : 'text-blue-600'}`}>{formatMoeda(venda.totalFinal)}</td>
                                 <td className="px-4 py-3 text-right flex justify-end gap-2">
                                   <button
                                     onClick={(e) => {
@@ -208,7 +222,7 @@ export function CaixasHistoricoPage() {
                                       setSelectedReceipt({ ...venda, caixeiro: sessao.operador });
                                     }}
                                     className="text-slate-500 hover:text-emerald-600 p-1 rounded transition-colors"
-                                    title="Visualizar Recibo"
+                                    title={t('historico.ver_recibo')}
                                   >
                                     <Eye size={18} />
                                   </button>
@@ -218,7 +232,7 @@ export function CaixasHistoricoPage() {
                                       handleDownloadReceipt(venda);
                                     }}
                                     className="text-slate-500 hover:text-blue-600 p-1 rounded transition-colors"
-                                    title="Descarregar Recibo Resumido"
+                                    title={t('historico.descarregar_recibo')}
                                   >
                                     <Download size={18} />
                                   </button>
@@ -229,7 +243,7 @@ export function CaixasHistoricoPage() {
                                         setVendaParaAnular(venda);
                                       }}
                                       className="text-slate-500 hover:text-rose-600 p-1 rounded transition-colors"
-                                      title="Anular venda (devolve stock e numerário)"
+                                      title={t('historico.anular_titulo')}
                                     >
                                       <Ban size={18} />
                                     </button>
@@ -264,9 +278,9 @@ export function CaixasHistoricoPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-rose-50/50">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Anular Venda</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t('anular.titulo')}</h2>
                 <p className="text-xs text-slate-500">
-                  {vendaParaAnular.numeroFatura} · {vendaParaAnular.totalFinal.toFixed(2)} MT
+                  {vendaParaAnular.numeroFatura} · {formatMoeda(vendaParaAnular.totalFinal)}
                 </p>
               </div>
               <button
@@ -281,28 +295,27 @@ export function CaixasHistoricoPage() {
               <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
                 <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
                 <p className="text-xs text-amber-800">
-                  O stock vendido volta ao armazém e o numerário sai da gaveta. A venda fica
-                  marcada como <strong>anulada</strong> — não é apagada, para a numeração de
-                  facturas não ter buracos.
+                  {t('anular.aviso_1')} <strong>{t('anular.aviso_forte')}</strong>{' '}
+                  {t('anular.aviso_2')}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Motivo <span className="text-rose-500">*</span>
+                  {t('anular.motivo')} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={motivoAnulacao}
                   onChange={(e) => setMotivoAnulacao(e.target.value)}
-                  placeholder="Ex.: cliente desistiu da compra"
+                  placeholder={t('anular.motivo_placeholder')}
                   minLength={5}
                   maxLength={255}
                   autoFocus
                   className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-rose-500"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">
-                  Fica registado na auditoria e no movimento de stock.
+                  {t('anular.motivo_ajuda')}
                 </p>
               </div>
 
@@ -312,7 +325,7 @@ export function CaixasHistoricoPage() {
                   onClick={() => { setVendaParaAnular(null); setMotivoAnulacao(''); }}
                   className="px-5 py-2.5 text-slate-600 font-medium rounded-xl hover:bg-slate-100"
                 >
-                  Cancelar
+                  {t('anular.cancelar')}
                 </button>
                 <button
                   type="submit"
@@ -320,7 +333,7 @@ export function CaixasHistoricoPage() {
                   className="px-5 py-2.5 bg-rose-600 text-white font-medium rounded-xl hover:bg-rose-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isAnulando && <Loader2 size={16} className="animate-spin" />}
-                  Anular venda
+                  {t('anular.confirmar')}
                 </button>
               </div>
             </form>

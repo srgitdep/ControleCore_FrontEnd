@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 import { formatDataHora, formatMoeda } from '@/shared/utils';
 import { ResponsiveTable } from '@/shared/ui';
 import { BadgeEstadoPedidoCommerce } from './BadgeEstadoPedidoCommerce';
@@ -14,10 +15,11 @@ interface TabelaPedidosCommerceProps {
 }
 
 export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPedidosCommerceProps) {
+  const { t } = useTranslation('lojaGestao');
   const colunas = useMemo(
     () => [
       helper.accessor('numeroPedido', {
-        header: 'Pedido',
+        header: t('tabela.col_pedido'),
         cell: (info) => {
           const pedido = info.row.original;
           return (
@@ -28,23 +30,23 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
         },
       }),
       helper.accessor('cliente.nome', {
-        header: 'Cliente',
+        header: t('tabela.col_cliente'),
         cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
       }),
       helper.accessor('loja.nome', {
-        header: 'Loja',
+        header: t('tabela.col_loja'),
         cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
       }),
       helper.accessor('estado', {
-        header: 'Estado',
+        header: t('tabela.col_estado'),
         cell: (info) => <BadgeEstadoPedidoCommerce estado={info.getValue()} />,
       }),
       helper.accessor('totalFinal', {
-        header: 'Total',
+        header: t('tabela.col_total'),
         cell: (info) => <span className="text-sm font-medium tabular-nums text-slate-800">{formatMoeda(info.getValue())}</span>,
       }),
       helper.accessor('createdAt', {
-        header: 'Criado',
+        header: t('tabela.col_criado'),
         cell: (info) => <span className="text-xs text-slate-400">{formatDataHora(info.getValue())}</span>,
       }),
       helper.display({
@@ -56,12 +58,12 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
             onClick={() => onAbrir(info.row.original)}
             className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
           >
-            Abrir
+            {t('tabela.abrir')}
           </button>
         ),
       }),
     ],
-    [onAbrir],
+    [onAbrir, t],
   );
 
   const table = useReactTable({
@@ -71,5 +73,5 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
     getRowId: (p) => p.id,
   });
 
-  return <ResponsiveTable table={table} isLoading={isLoading} emptyMessage="Nenhum pedido do Compra Fácil nesta fila." />;
+  return <ResponsiveTable table={table} isLoading={isLoading} emptyMessage={t('tabela.vazio')} />;
 }

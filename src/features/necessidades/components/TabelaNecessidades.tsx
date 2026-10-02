@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { Package, MoreVertical } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { ResponsiveTable } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-import {
-  RECOMENDACAO_LABEL,
-  type LinhaNecessidade,
-  type RecomendacaoNecessidade,
-} from '../types/necessidade.types';
+import { cn, formatData } from '@/shared/utils';
+import { localeIntl } from '@/i18n';
+import type { LinhaNecessidade, RecomendacaoNecessidade } from '../types/necessidade.types';
 
 const helper = createColumnHelper<LinhaNecessidade>();
 
@@ -21,21 +20,21 @@ const BADGE_RECOMENDACAO: Record<RecomendacaoNecessidade, string> = {
 };
 
 /** O rótulo do botão de acção, coerente com o estado — DT01 10, coluna Acção. */
-function rotuloAccao(linha: LinhaNecessidade): string {
-  if (linha.estado === 'EM_REQUISICAO') return 'Ver requisição';
-  if (linha.estado === 'EM_TRANSFERENCIA' || linha.estado === 'AGUARDA_RECEPCAO') return 'Ver';
+function rotuloAccao(t: TFunction<'necessidades'>, linha: LinhaNecessidade): string {
+  if (linha.estado === 'EM_REQUISICAO') return t('tabela.ver_requisicao');
+  if (linha.estado === 'EM_TRANSFERENCIA' || linha.estado === 'AGUARDA_RECEPCAO') return t('tabela.ver');
 
   switch (linha.recomendacao) {
     case 'COMPRAR':
-      return 'Criar';
+      return t('tabela.criar');
     case 'TRANSFERIR':
-      return 'Criar';
+      return t('tabela.criar');
     case 'NAO_COMPRAR':
     case 'STOCK_PARADO':
     case 'EXCESSO':
       return '—';
     default:
-      return 'Ver';
+      return t('tabela.ver');
   }
 }
 
@@ -67,11 +66,12 @@ export function TabelaNecessidades({
   onAbrirDetalhe,
   onCriarRequisicao,
 }: TabelaNecessidadesProps) {
+  const { t } = useTranslation('necessidades');
   const colunas = useMemo(
     () => [
       helper.accessor((linha) => linha.produto.nome, {
         id: 'produto',
-        header: 'Produto',
+        header: t('tabela.produto'),
         cell: (info) => {
           const linha = info.row.original;
           return (
@@ -105,24 +105,24 @@ export function TabelaNecessidades({
       }),
       helper.accessor((linha) => linha.categoria?.nome ?? '—', {
         id: 'categoria',
-        header: 'Categoria',
+        header: t('tabela.categoria'),
         cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
       }),
       helper.accessor((linha) => linha.loja.nome, {
         id: 'loja',
-        header: 'Loja',
+        header: t('tabela.loja'),
         cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
       }),
       helper.accessor('stockDisponivel', {
-        header: 'Stock Disp.',
+        header: t('tabela.stock_disp'),
         cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
       }),
       helper.accessor('mediaDiaria', {
-        header: 'Vendas/Dia',
+        header: t('tabela.vendas_dia'),
         cell: (info) => <span className="tabular-nums">{info.getValue()}</span>,
       }),
       helper.accessor('diasCobertura', {
-        header: 'Cobertura',
+        header: t('tabela.cobertura'),
         cell: (info) => {
           const dias = info.getValue();
           // `null` não é zero: sem vendas na janela não há cobertura a calcular. Mostrar
@@ -135,21 +135,26 @@ export function TabelaNecessidades({
                 dias <= 2 ? 'font-semibold text-rose-600' : 'text-slate-700',
               )}
             >
-              {dias.toFixed(1)} dias
+              {t('tabela.dias', {
+                dias: dias.toLocaleString(localeIntl(), {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }),
+              })}
             </span>
           );
         },
       }),
       helper.accessor('quantidadeSugerida', {
-        header: 'Necessidade (Sugestão)',
+        header: t('tabela.necessidade'),
         cell: (info) => {
           const linha = info.row.original;
           if (linha.quantidadeSugerida <= 0) return <span className="text-slate-400">—</span>;
-          return <span className="tabular-nums">{linha.quantidadeSugerida} un</span>;
+          return <span className="tabular-nums">{t('tabela.unidades', { n: linha.quantidadeSugerida })}</span>;
         },
       }),
       helper.accessor('recomendacao', {
-        header: 'Recomendação',
+        header: t('tabela.recomendacao'),
         cell: (info) => (
           <span
             className={cn(
@@ -157,28 +162,28 @@ export function TabelaNecessidades({
               BADGE_RECOMENDACAO[info.getValue()],
             )}
           >
-            {RECOMENDACAO_LABEL[info.getValue()]}
+            {t(`recomendacao.${info.getValue()}`)}
           </span>
         ),
       }),
       helper.accessor('dataPrevistaRuptura', {
-        header: 'Data prevista',
+        header: t('tabela.data_prevista'),
         cell: (info) => {
           const data = info.getValue();
           if (!data) return <span className="text-slate-400">—</span>;
           return (
             <span className="tabular-nums text-slate-600">
-              {new Date(data).toLocaleDateString('pt-PT')}
+              {formatData(data)}
             </span>
           );
         },
       }),
       helper.display({
         id: 'accao',
-        header: 'Acção',
+        header: t('tabela.accao'),
         cell: (info) => {
           const linha = info.row.original;
-          const rotulo = rotuloAccao(linha);
+          const rotulo = rotuloAccao(t, linha);
           const podeAgir = linha.estado === 'ACTIVA' && ['COMPRAR', 'TRANSFERIR'].includes(linha.recomendacao);
           const podeVer = linha.requisicaoId || linha.estado !== 'ACTIVA';
 
@@ -205,7 +210,7 @@ export function TabelaNecessidades({
               <button
                 type="button"
                 onClick={() => onAbrirDetalhe(linha.id)}
-                aria-label="Mais opções"
+                aria-label={t('tabela.mais_opcoes')}
                 className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               >
                 <MoreVertical size={16} />
@@ -215,7 +220,7 @@ export function TabelaNecessidades({
         },
       }),
     ],
-    [onAbrirDetalhe, onCriarRequisicao],
+    [t, onAbrirDetalhe, onCriarRequisicao],
   );
 
   const table = useReactTable({
@@ -229,7 +234,7 @@ export function TabelaNecessidades({
     <ResponsiveTable
       table={table}
       isLoading={isLoading}
-      emptyMessage="Nenhuma necessidade activa. O stock está dentro dos parâmetros configurados."
+      emptyMessage={t('tabela.vazio')}
       getRowStatus={(linha) => (linha.urgencia === 'CRITICA' ? 'critical' : linha.urgencia === 'ALTA' ? 'warning' : 'default')}
     />
   );

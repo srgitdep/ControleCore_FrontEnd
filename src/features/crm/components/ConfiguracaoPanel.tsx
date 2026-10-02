@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, RotateCcw, Save, SlidersHorizontal } from 'lucide-react';
 import { useConfiguracaoCrm, useActualizarConfiguracao } from '../hooks/useClientes';
 import type { CanalComunicacao, ConfiguracaoCrm } from '../api/clientes.api';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { localeIntl } from '@/i18n';
 import { cn } from '@/shared/utils';
 
 /**
@@ -47,161 +50,168 @@ interface Campo {
  * Os campos agrupados pela pergunta de negócio que respondem, e não pelo nome
  * técnico que têm na base. Quem configura isto pensa em "com que frequência
  * posso falar com um cliente", não em "limiteJanelaDias".
+ *
+ * Função e não constante: os textos vêm do catálogo e mudam com a língua; uma
+ * constante de módulo congelava o idioma do primeiro render.
  */
-const SECCOES: Array<{ titulo: string; explicacao: string; campos: Campo[] }> = [
-  {
-    titulo: 'Com que frequência pode falar com um cliente',
-    explicacao:
-      'Vale para todas as campanhas juntas. Quando um cliente atinge o limite, deixa de receber até a janela passar — mesmo que outra campanha o inclua.',
-    campos: [
-      {
-        chave: 'limiteMensagens',
-        rotulo: 'Máximo de mensagens',
-        ajuda: 'Por cliente, somando todas as campanhas.',
-        min: 1,
-        max: 50,
-        unidade: 'mensagens',
-      },
-      {
-        chave: 'limiteJanelaDias',
-        rotulo: 'Nesse período',
-        ajuda: 'Passado este tempo, a contagem recomeça.',
-        min: 1,
-        max: 365,
-        unidade: 'dias',
-      },
-    ],
-  },
-  {
-    titulo: 'A partir de quando um cliente está a perder-se',
-    explicacao:
-      'Medido contra o hábito de cada um, não em dias fixos. Com 2x, quem compra de 10 em 10 dias entra em risco aos 20 — e quem compra de 90 em 90 só aos 180.',
-    campos: [
-      {
-        chave: 'factorRisco',
-        rotulo: 'Em risco a partir de',
-        ajuda: 'Quantas vezes o intervalo habitual dele.',
-        min: 1,
-        max: 10,
-        passo: 0.5,
-        unidade: 'x o hábito',
-      },
-      {
-        chave: 'factorInactivo',
-        rotulo: 'Inactivo a partir de',
-        ajuda: 'Passado isto, recuperar custa muito mais.',
-        min: 1,
-        max: 20,
-        passo: 0.5,
-        unidade: 'x o hábito',
-      },
-      {
-        chave: 'intervaloMinimoDias',
-        rotulo: 'Intervalo mínimo considerado',
-        ajuda: 'Impede que quem compra quase todos os dias dispare alertas por um fim-de-semana.',
-        min: 1,
-        max: 90,
-        unidade: 'dias',
-      },
-    ],
-  },
-  {
-    titulo: 'Clientes com uma só compra',
-    explicacao:
-      'Sem duas compras não há intervalo que medir, por isso estes usam dias fixos.',
-    campos: [
-      {
-        chave: 'diasRiscoSemHabito',
-        rotulo: 'Deixa de ser "novo" após',
-        ajuda: 'Antes disto, conta como cliente recente.',
-        min: 7,
-        max: 365,
-        unidade: 'dias',
-      },
-      {
-        chave: 'diasInactivoSemHabito',
-        rotulo: 'Inactivo após',
-        ajuda: 'Comprou uma vez e nunca mais voltou.',
-        min: 14,
-        max: 730,
-        unidade: 'dias',
-      },
-    ],
-  },
-  {
-    titulo: 'Medição das campanhas',
-    explicacao:
-      'Quanto tempo depois de uma mensagem é que uma compra ainda conta como resultado dela. Janelas longas fazem qualquer campanha parecer bem-sucedida.',
-    campos: [
-      {
-        chave: 'janelaConversaoDias',
-        rotulo: 'Compra conta como conversão até',
-        ajuda: 'Contado a partir do envio.',
-        min: 1,
-        max: 90,
-        unidade: 'dias',
-      },
-    ],
-  },
-  {
-    titulo: 'O que a MAYRA sugere',
-    explicacao:
-      'Janelas que ela propõe ao recomendar uma campanha. Continuam a poder ser alteradas em cada campanha.',
-    campos: [
-      {
-        chave: 'supressaoEmRiscoDias',
-        rotulo: 'Clientes em risco',
-        ajuda: 'Não enviar a quem comprou neste período.',
-        min: 1,
-        max: 365,
-        unidade: 'dias',
-      },
-      {
-        chave: 'supressaoInactivoDias',
-        rotulo: 'Clientes inactivos',
-        ajuda: 'Idem, para quem já não compra há muito.',
-        min: 1,
-        max: 365,
-        unidade: 'dias',
-      },
-    ],
-  },
-];
+function criarSeccoes(
+  t: TFunction<'crm'>,
+): Array<{ titulo: string; explicacao: string; campos: Campo[] }> {
+  return [
+    {
+      titulo: t('config.seccao_frequencia_titulo'),
+      explicacao: t('config.seccao_frequencia_explicacao'),
+      campos: [
+        {
+          chave: 'limiteMensagens',
+          rotulo: t('config.limite_mensagens_rotulo'),
+          ajuda: t('config.limite_mensagens_ajuda'),
+          min: 1,
+          max: 50,
+          unidade: t('config.unidade_mensagens'),
+        },
+        {
+          chave: 'limiteJanelaDias',
+          rotulo: t('config.limite_janela_rotulo'),
+          ajuda: t('config.limite_janela_ajuda'),
+          min: 1,
+          max: 365,
+          unidade: t('config.unidade_dias'),
+        },
+      ],
+    },
+    {
+      titulo: t('config.seccao_perda_titulo'),
+      explicacao: t('config.seccao_perda_explicacao'),
+      campos: [
+        {
+          chave: 'factorRisco',
+          rotulo: t('config.factor_risco_rotulo'),
+          ajuda: t('config.factor_risco_ajuda'),
+          min: 1,
+          max: 10,
+          passo: 0.5,
+          unidade: t('config.unidade_x_habito'),
+        },
+        {
+          chave: 'factorInactivo',
+          rotulo: t('config.factor_inactivo_rotulo'),
+          ajuda: t('config.factor_inactivo_ajuda'),
+          min: 1,
+          max: 20,
+          passo: 0.5,
+          unidade: t('config.unidade_x_habito'),
+        },
+        {
+          chave: 'intervaloMinimoDias',
+          rotulo: t('config.intervalo_minimo_rotulo'),
+          ajuda: t('config.intervalo_minimo_ajuda'),
+          min: 1,
+          max: 90,
+          unidade: t('config.unidade_dias'),
+        },
+      ],
+    },
+    {
+      titulo: t('config.seccao_uma_compra_titulo'),
+      explicacao: t('config.seccao_uma_compra_explicacao'),
+      campos: [
+        {
+          chave: 'diasRiscoSemHabito',
+          rotulo: t('config.dias_risco_sem_habito_rotulo'),
+          ajuda: t('config.dias_risco_sem_habito_ajuda'),
+          min: 7,
+          max: 365,
+          unidade: t('config.unidade_dias'),
+        },
+        {
+          chave: 'diasInactivoSemHabito',
+          rotulo: t('config.dias_inactivo_sem_habito_rotulo'),
+          ajuda: t('config.dias_inactivo_sem_habito_ajuda'),
+          min: 14,
+          max: 730,
+          unidade: t('config.unidade_dias'),
+        },
+      ],
+    },
+    {
+      titulo: t('config.seccao_medicao_titulo'),
+      explicacao: t('config.seccao_medicao_explicacao'),
+      campos: [
+        {
+          chave: 'janelaConversaoDias',
+          rotulo: t('config.janela_conversao_rotulo'),
+          ajuda: t('config.janela_conversao_ajuda'),
+          min: 1,
+          max: 90,
+          unidade: t('config.unidade_dias'),
+        },
+      ],
+    },
+    {
+      titulo: t('config.seccao_mayra_titulo'),
+      explicacao: t('config.seccao_mayra_explicacao'),
+      campos: [
+        {
+          chave: 'supressaoEmRiscoDias',
+          rotulo: t('config.supressao_em_risco_rotulo'),
+          ajuda: t('config.supressao_em_risco_ajuda'),
+          min: 1,
+          max: 365,
+          unidade: t('config.unidade_dias'),
+        },
+        {
+          chave: 'supressaoInactivoDias',
+          rotulo: t('config.supressao_inactivo_rotulo'),
+          ajuda: t('config.supressao_inactivo_ajuda'),
+          min: 1,
+          max: 365,
+          unidade: t('config.unidade_dias'),
+        },
+      ],
+    },
+  ];
+}
 
 /**
- * Os campos de fidelização, fora das SECCOES porque a secção deles tem
+ * Os campos de fidelização, fora das secções porque a secção deles tem
  * interruptor e simulação próprios.
  */
-const FIDELIZACAO: Campo[] = [
-  {
-    chave: 'pontosPorMetical',
-    rotulo: 'Pontos por cada metical',
-    ajuda: '0,01 dá 1 ponto por cada 100 MT gastos.',
-    min: 0,
-    max: 1,
-    passo: 0.001,
-    unidade: 'pontos/MT',
-  },
-  {
-    chave: 'valorDoPonto',
-    rotulo: 'Quanto vale um ponto',
-    ajuda: 'Em desconto, quando o cliente os usa.',
-    min: 0.01,
-    max: 100,
-    passo: 0.5,
-    unidade: 'MT',
-  },
-  {
-    chave: 'minimoResgate',
-    rotulo: 'Mínimo para usar',
-    ajuda: 'Abaixo disto o cliente acumula, mas não pode gastar.',
-    min: 1,
-    max: 100000,
-    unidade: 'pontos',
-  },
-];
+function criarFidelizacao(t: TFunction<'crm'>): Campo[] {
+  return [
+    {
+      chave: 'pontosPorMetical',
+      rotulo: t('config.pontos_por_metical_rotulo'),
+      ajuda: t('config.pontos_por_metical_ajuda'),
+      min: 0,
+      max: 1,
+      passo: 0.001,
+      unidade: t('config.unidade_pontos_mt'),
+    },
+    {
+      chave: 'valorDoPonto',
+      rotulo: t('config.valor_do_ponto_rotulo'),
+      ajuda: t('config.valor_do_ponto_ajuda'),
+      min: 0.01,
+      max: 100,
+      passo: 0.5,
+      unidade: t('config.unidade_mt'),
+    },
+    {
+      chave: 'minimoResgate',
+      rotulo: t('config.minimo_resgate_rotulo'),
+      ajuda: t('config.minimo_resgate_ajuda'),
+      min: 1,
+      max: 100000,
+      unidade: t('config.unidade_pontos'),
+    },
+  ];
+}
 
 export function ConfiguracaoPanel() {
+  const { t } = useTranslation('crm');
+  const SECCOES = useMemo(() => criarSeccoes(t), [t]);
+  const FIDELIZACAO = useMemo(() => criarFidelizacao(t), [t]);
   const { data: guardada, isLoading, isError } = useConfiguracaoCrm();
   const actualizar = useActualizarConfiguracao();
 
@@ -232,7 +242,7 @@ export function ConfiguracaoPanel() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
         <AlertTriangle size={36} strokeWidth={1} />
-        <p className="text-sm">Não foi possível carregar as definições.</p>
+        <p className="text-sm">{t('config.erro_carregar')}</p>
       </div>
     );
   }
@@ -284,11 +294,10 @@ export function ConfiguracaoPanel() {
           <SlidersHorizontal size={16} className="mt-0.5 shrink-0 text-slate-400" />
           <div>
             <p className="text-sm text-slate-600">
-              Como o CRM se comporta nesta empresa.
+              {t('config.intro_titulo')}
             </p>
             <p className="mt-0.5 text-xs text-slate-400">
-              Os valores mudam a classificação de toda a base no próximo cálculo, e quantas
-              mensagens saem.
+              {t('config.intro_aviso')}
             </p>
           </div>
         </div>
@@ -306,7 +315,7 @@ export function ConfiguracaoPanel() {
             }
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
-            <RotateCcw size={14} /> Repor
+            <RotateCcw size={14} /> {t('config.repor')}
           </button>
           <button
             onClick={guardar}
@@ -314,7 +323,7 @@ export function ConfiguracaoPanel() {
             className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
           >
             <Save size={14} />
-            {actualizar.isPending ? 'A guardar…' : 'Guardar'}
+            {actualizar.isPending ? t('comum.a_guardar') : t('comum.guardar')}
           </button>
         </div>
       </div>
@@ -332,10 +341,10 @@ export function ConfiguracaoPanel() {
                     {campo.rotulo}
                     {alterado(campo.chave) && (
                       <span
-                        title={`Valor de origem: ${OMISSAO[campo.chave]}`}
+                        title={t('config.valor_origem', { valor: OMISSAO[campo.chave] })}
                         className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700"
                       >
-                        alterado
+                        {t('config.alterado')}
                       </span>
                     )}
                   </label>
@@ -373,9 +382,9 @@ export function ConfiguracaoPanel() {
         <section className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Pontos de fidelização</h3>
+              <h3 className="text-sm font-semibold text-slate-800">{t('config.fidelizacao_titulo')}</h3>
               <p className="mt-0.5 max-w-2xl text-xs text-slate-500">
-                Quanto os clientes ganham por comprar, e quanto isso vale quando usam.
+                {t('config.fidelizacao_explicacao')}
               </p>
             </div>
 
@@ -398,14 +407,13 @@ export function ConfiguracaoPanel() {
                   form.fidelizacaoActiva ? 'bg-emerald-500' : 'bg-slate-300',
                 )}
               />
-              {form.fidelizacaoActiva ? 'Activa' : 'Desligada'}
+              {form.fidelizacaoActiva ? t('config.activa') : t('config.desligada')}
             </button>
           </div>
 
           {!form.fidelizacaoActiva && (
             <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Desligada, ninguém ganha nem usa pontos. Os saldos actuais ficam guardados e
-              voltam a estar disponíveis se a religar.
+              {t('config.aviso_desligada')}
             </p>
           )}
 
@@ -421,10 +429,10 @@ export function ConfiguracaoPanel() {
                   {campo.rotulo}
                   {alterado(campo.chave) && (
                     <span
-                      title={`Valor de origem: ${OMISSAO[campo.chave]}`}
+                      title={t('config.valor_origem', { valor: OMISSAO[campo.chave] })}
                       className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700"
                     >
-                      alterado
+                      {t('config.alterado')}
                     </span>
                   )}
                 </label>
@@ -457,29 +465,33 @@ export function ConfiguracaoPanel() {
           {form.fidelizacaoActiva && (
             <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
               <p>
-                Numa compra de <strong>1 000 MT</strong> o cliente ganha{' '}
+                {t('config.simul_compra_de')} <strong>{t('config.simul_mil_mt')}</strong>{' '}
+                {t('config.simul_cliente_ganha')}{' '}
                 <strong className="tabular-nums">
-                  {Math.floor(1000 * form.pontosPorMetical)} pontos
+                  {t('config.simul_pontos', { n: Math.floor(1000 * form.pontosPorMetical) })}
                 </strong>
-                , que valem{' '}
+                {t('config.simul_que_valem')}{' '}
                 <strong className="tabular-nums">
-                  {(Math.floor(1000 * form.pontosPorMetical) * form.valorDoPonto).toLocaleString(
-                    'pt-MZ',
-                    { maximumFractionDigits: 2 },
-                  )}{' '}
-                  MT
+                  {t('config.simul_valor_mt', {
+                    valor: (
+                      Math.floor(1000 * form.pontosPorMetical) * form.valorDoPonto
+                    ).toLocaleString(localeIntl(), { maximumFractionDigits: 2 }),
+                  })}
                 </strong>{' '}
-                de desconto — {custoPercentual.toLocaleString('pt-MZ', {
-                  maximumFractionDigits: 2,
+                {t('config.simul_de_desconto', {
+                  percentagem: custoPercentual.toLocaleString(localeIntl(), {
+                    maximumFractionDigits: 2,
+                  }),
                 })}
-                % do valor da compra.
               </p>
               <p className="mt-1 text-slate-500">
-                Só pode usar a partir de {form.minimoResgate} pontos, ou seja depois de gastar{' '}
-                {meticaisAteResgatar === Infinity
-                  ? '—'
-                  : Math.ceil(meticaisAteResgatar).toLocaleString('pt-MZ')}{' '}
-                MT.
+                {t('config.simul_resgate', {
+                  minimo: form.minimoResgate,
+                  valor:
+                    meticaisAteResgatar === Infinity
+                      ? '—'
+                      : Math.ceil(meticaisAteResgatar).toLocaleString(localeIntl()),
+                })}
               </p>
             </div>
           )}
@@ -487,17 +499,16 @@ export function ConfiguracaoPanel() {
           {custoPercentual > 20 && form.fidelizacaoActiva && (
             <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
               <AlertTriangle size={14} className="mt-px shrink-0" />
-              Está a devolver mais de um quinto de cada venda em pontos. Confirme que a margem
-              aguenta.
+              {t('config.aviso_custo_alto')}
             </p>
           )}
         </section>
 
         {/* Canais */}
         <section className="rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="text-sm font-semibold text-slate-800">Canais que esta empresa usa</h3>
+          <h3 className="text-sm font-semibold text-slate-800">{t('config.canais_titulo')}</h3>
           <p className="mt-0.5 text-xs text-slate-500">
-            Nenhum seleccionado significa todos os que o sistema conseguir entregar.
+            {t('config.canais_explicacao')}
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -524,8 +535,7 @@ export function ConfiguracaoPanel() {
 
       {/* O aviso fica no fim, junto ao botão, e não no topo onde se esquece. */}
       <p className="mt-5 text-xs text-slate-400">
-        As definições aplicam-se ao próximo cálculo de segmentos — corre todas as noites, ou
-        quando o pedir na aba Segmentos.
+        {t('config.rodape')}
       </p>
     </div>
   );

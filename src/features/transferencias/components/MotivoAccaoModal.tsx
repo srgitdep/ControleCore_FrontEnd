@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 
 const MOTIVO_MINIMO = 5;
@@ -31,6 +32,7 @@ export function MotivoAccaoModal({
   onClose,
   onConfirm,
 }: MotivoAccaoModalProps) {
+  const { t } = useTranslation('transferencias');
   const [motivo, setMotivo] = useState('');
 
   if (!isOpen) return null;
@@ -66,12 +68,12 @@ export function MotivoAccaoModal({
           className="mt-3 w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
         />
         {motivo.length > 0 && invalido && (
-          <p className="mt-1 text-xs text-rose-500">Mínimo de {MOTIVO_MINIMO} caracteres.</p>
+          <p className="mt-1 text-xs text-rose-500">{t('motivo.minimo', { n: MOTIVO_MINIMO })}</p>
         )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            Voltar
+            {t('motivo.voltar')}
           </button>
           <button
             disabled={invalido || isSubmitting}
@@ -82,7 +84,7 @@ export function MotivoAccaoModal({
               (invalido || isSubmitting) && 'cursor-not-allowed opacity-50',
             )}
           >
-            {isSubmitting ? 'A guardar...' : 'Confirmar'}
+            {isSubmitting ? t('motivo.a_guardar') : t('motivo.confirmar')}
           </button>
         </div>
       </div>

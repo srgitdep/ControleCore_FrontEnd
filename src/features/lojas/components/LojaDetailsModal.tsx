@@ -3,8 +3,10 @@ import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } 
 import { criarCaixa, removerCaixa } from '@/features/vendas';
 import { createArmazem, deleteArmazem, updateLoja, TIPOS_ARMAZEM } from '@/features/lojas';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void }) {
+  const { t } = useTranslation('lojas');
   const [activeTab, setActiveTab] = useState<'INFO' | 'ARMAZENS' | 'CAIXAS'>('CAIXAS');
   
   // States para novos
@@ -24,11 +26,11 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
     setIsCreatingCaixa(true);
     try {
       await criarCaixa({ lojaId: loja.id, nome: novoCaixa });
-      toast.success('Caixa adicionado');
+      toast.success(t('detalhes.caixa_adicionado'));
       setNovoCaixa('');
       onUpdate();
     } catch {
-      toast.error('Erro ao adicionar caixa');
+      toast.error(t('detalhes.erro_adicionar_caixa'));
     } finally {
       setIsCreatingCaixa(false);
     }
@@ -40,39 +42,39 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
     setIsCreatingArmazem(true);
     try {
       await createArmazem({ lojaId: loja.id, nome: novoArmazem, tipo: novoArmazemTipo });
-      toast.success('Armazém adicionado');
+      toast.success(t('detalhes.armazem_adicionado'));
       setNovoArmazem('');
       onUpdate();
     } catch (error: any) {
       // O backend recusa um segundo armazém de venda com mensagem explícita —
       // mostrá-la é mais útil do que um erro genérico.
-      toast.error(error?.response?.data?.message || 'Erro ao adicionar armazém');
+      toast.error(error?.response?.data?.message || t('detalhes.erro_adicionar_armazem'));
     } finally {
       setIsCreatingArmazem(false);
     }
   };
 
   const handleDeleteCaixa = async (id: string) => {
-    if (!confirm('Desativar este terminal de caixa?')) return;
+    if (!confirm(t('detalhes.confirmar_desativar_terminal'))) return;
     try {
       await removerCaixa(id);
-      toast.success('Caixa removido');
+      toast.success(t('detalhes.caixa_removido'));
       onUpdate();
     } catch {
-      toast.error('Erro ao remover caixa');
+      toast.error(t('detalhes.erro_remover_caixa'));
     }
   };
 
   const handleDeleteArmazem = async (id: string) => {
     // Desactivação lógica: o stock e os movimentos mantêm-se, por isso o texto não
     // deve prometer que o armazém é apagado.
-    if (!confirm('Desactivar este armazém? Deixa de aceitar recepções, mas o histórico de stock mantém-se.')) return;
+    if (!confirm(t('detalhes.confirmar_desactivar_armazem'))) return;
     try {
       await deleteArmazem(id);
-      toast.success('Armazém desactivado');
+      toast.success(t('detalhes.armazem_desactivado'));
       onUpdate();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao desactivar armazém');
+      toast.error(error?.response?.data?.message || t('detalhes.erro_desactivar_armazem'));
     }
   };
 
@@ -80,10 +82,10 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
     setIsSavingGestor(true);
     try {
       await updateLoja(loja.id, { gestorId });
-      toast.success('Gestor atualizado');
+      toast.success(t('detalhes.gestor_actualizado'));
       onUpdate();
     } catch {
-      toast.error('Erro ao atualizar gestor');
+      toast.error(t('detalhes.erro_actualizar_gestor'));
     } finally {
       setIsSavingGestor(false);
     }
@@ -97,7 +99,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
           <div>
             <h2 className="text-xl font-bold text-slate-900">{loja.nome}</h2>
-            <p className="text-sm text-slate-500">Gestão de Infraestrutura e Pessoal</p>
+            <p className="text-sm text-slate-500">{t('detalhes.subtitulo')}</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
             <X size={20} />
@@ -110,19 +112,19 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
             onClick={() => setActiveTab('CAIXAS')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'CAIXAS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
-            <MonitorSmartphone size={16} /> Caixas (Terminais)
+            <MonitorSmartphone size={16} /> {t('detalhes.aba_caixas')}
           </button>
           <button 
             onClick={() => setActiveTab('ARMAZENS')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'ARMAZENS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
-            <Box size={16} /> Armazéns
+            <Box size={16} /> {t('detalhes.aba_armazens')}
           </button>
           <button 
             onClick={() => setActiveTab('INFO')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'INFO' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
-            <User size={16} /> Gestor Principal
+            <User size={16} /> {t('pagina.gestor_principal')}
           </button>
         </div>
 
@@ -136,11 +138,11 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   type="text" 
                   value={novoCaixa}
                   onChange={e => setNovoCaixa(e.target.value)}
-                  placeholder="Ex: Caixa 01 (Balcão Principal)" 
+                  placeholder={t('detalhes.caixa_exemplo')} 
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
                 <button type="submit" disabled={!novoCaixa.trim() || isCreatingCaixa} className="px-5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
-                  {isCreatingCaixa ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Adicionar
+                  {isCreatingCaixa ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {t('acoes.adicionar')}
                 </button>
               </form>
 
@@ -156,7 +158,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                           <div>
                             <p className="font-medium text-slate-900 flex items-center gap-2">
                               {c.nome}
-                              {!c.isActive && <span className="text-[10px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded uppercase font-bold">Inativo</span>}
+                              {!c.isActive && <span className="text-[10px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded uppercase font-bold">{t('pagina.inativo')}</span>}
                             </p>
                           </div>
                         </div>
@@ -171,7 +173,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                 ) : (
                   <div className="p-8 text-center text-slate-500">
                     <MonitorSmartphone className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                    <p>Nenhum caixa registado nesta loja.</p>
+                    <p>{t('detalhes.sem_caixas')}</p>
                   </div>
                 )}
               </div>
@@ -185,26 +187,26 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   type="text"
                   value={novoArmazem}
                   onChange={e => setNovoArmazem(e.target.value)}
-                  placeholder="Ex: Armazém Retaguarda"
+                  placeholder={t('detalhes.armazem_exemplo')}
                   className="flex-1 px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
                 <select
                   value={novoArmazemTipo}
                   onChange={e => setNovoArmazemTipo(e.target.value)}
-                  title="O POS abate stock do armazém de Venda — só pode existir um por loja"
+                  title={t('detalhes.tipo_ajuda')}
                   className="px-3 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
                 >
-                  {TIPOS_ARMAZEM.map(t => (
-                    <option key={t} value={t}>{t}</option>
+                  {TIPOS_ARMAZEM.map(tipo => (
+                    <option key={tipo} value={tipo}>{t(`tipos.${tipo}`)}</option>
                   ))}
                 </select>
                 <button type="submit" disabled={!novoArmazem.trim() || isCreatingArmazem} className="px-5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 shadow-sm">
-                  {isCreatingArmazem ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Adicionar
+                  {isCreatingArmazem ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {t('acoes.adicionar')}
                 </button>
               </form>
               <p className="text-xs text-slate-500 -mt-1">
-                O <strong>ponto de venda</strong> é o armazém de tipo <em>Venda</em>, de onde o POS
-                abate stock. Só pode existir um por loja.
+                {t('detalhes.ponto_venda_antes')} <strong>{t('detalhes.ponto_venda')}</strong> {t('detalhes.ponto_venda_meio')}{' '}
+                <em>{t('detalhes.ponto_venda_tipo')}</em>{t('detalhes.ponto_venda_depois')}
               </p>
 
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
@@ -221,22 +223,22 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                               {a.nome}
                               {a.tipo?.toUpperCase() === 'VENDA' && (
                                 <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
-                                  Ponto de venda
+                                  {t('detalhes.ponto_de_venda_etiqueta')}
                                 </span>
                               )}
                               {a.isActive === false && (
                                 <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                                  Inactivo
+                                  {t('detalhes.inactivo')}
                                 </span>
                               )}
                             </p>
-                            <p className="text-xs text-slate-500">Tipo: {a.tipo || '—'}</p>
+                            <p className="text-xs text-slate-500">{t('detalhes.tipo', { tipo: a.tipo || '—' })}</p>
                           </div>
                         </div>
                         {a.isActive !== false && (
                           <button
                             onClick={() => handleDeleteArmazem(a.id)}
-                            title="Desactivar armazém"
+                            title={t('detalhes.desactivar_armazem')}
                             className="text-slate-400 hover:text-rose-500 p-2 transition-colors"
                           >
                             <Trash2 size={18} />
@@ -248,7 +250,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                 ) : (
                   <div className="p-8 text-center text-slate-500">
                     <Box className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                    <p>Nenhum armazém registado nesta loja.</p>
+                    <p>{t('detalhes.sem_armazens')}</p>
                   </div>
                 )}
               </div>
@@ -258,16 +260,16 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
           {activeTab === 'INFO' && (
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Responsável / Gestor de Loja</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('detalhes.gestor_label')}</label>
                 <select 
                   value={gestorId} 
                   onChange={e => setGestorId(e.target.value)} 
                   className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">-- Sem Gestor --</option>
+                  <option value="">{t('sem_gestor')}</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
                 </select>
-                <p className="text-xs text-slate-500 mt-2">Apenas utilizadores com o nÍvel ADMIN ou MANAGER podem ser gestores de loja.</p>
+                <p className="text-xs text-slate-500 mt-2">{t('detalhes.gestor_ajuda')}</p>
               </div>
               <div className="flex justify-end pt-2">
                 <button 
@@ -275,7 +277,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                   disabled={isSavingGestor || gestorId === (loja.gestorId || '')}
                   className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
-                  <CheckCircle2 size={18} /> Guardar Gestor
+                  <CheckCircle2 size={18} /> {t('detalhes.guardar_gestor')}
                 </button>
               </div>
             </div>

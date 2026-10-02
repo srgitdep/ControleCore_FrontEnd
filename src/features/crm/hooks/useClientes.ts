@@ -44,6 +44,8 @@ import {
   type EstadoCandidatoFusao,
 } from '../api/clientes.api';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { formatMoeda, mensagemDeErro } from '@/shared/utils';
 
 export function useClientes(params?: { page?: number; limit?: number; search?: string }) {
   return useQuery({
@@ -71,50 +73,53 @@ export function useSearchClientes(search: string) {
 }
 
 export function useCreateCliente() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: criarCliente,
     onSuccess: () => {
-      toast.success('Cliente registado com sucesso!');
+      toast.success(t('hooks.cliente_registado'));
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['clientes-search'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao registar cliente.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_registar_cliente')));
     }
   });
 }
 
 export function useUpdateCliente() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => atualizarCliente(id, data),
     onSuccess: (_, variables) => {
-      toast.success('Cliente atualizado com sucesso!');
+      toast.success(t('hooks.cliente_actualizado'));
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['cliente', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['clientes-search'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao atualizar cliente.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_actualizar_cliente')));
     }
   });
 }
 
 export function useDeleteCliente() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: apagarCliente,
     onSuccess: () => {
-      toast.success('Cliente eliminado com sucesso!');
+      toast.success(t('hooks.cliente_eliminado'));
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['clientes-search'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao eliminar cliente.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_eliminar_cliente')));
     }
   });
 }
@@ -128,6 +133,7 @@ export function useVisao360(id: string) {
 }
 
 export function useRegistarConsentimento(clienteId: string) {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -137,10 +143,12 @@ export function useRegistarConsentimento(clienteId: string) {
       concedido: boolean;
     }) => registarConsentimento(clienteId, { ...payload, origem: 'ficha do cliente' }),
     onSuccess: (_, variables) => {
+      const canal =
+        variables.canal === 'CHAMADA' ? t('hooks.canal_chamada') : variables.canal.toLowerCase();
       toast.success(
         variables.concedido
-          ? `Consentimento concedido para ${variables.canal.toLowerCase()}.`
-          : `Consentimento revogado para ${variables.canal.toLowerCase()}.`,
+          ? t('hooks.consentimento_concedido', { canal })
+          : t('hooks.consentimento_revogado', { canal }),
       );
       queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
       // O campo antigo do cliente é espelhado no backend; a lista mostra-o.
@@ -148,45 +156,48 @@ export function useRegistarConsentimento(clienteId: string) {
       queryClient.invalidateQueries({ queryKey: ['cliente', clienteId] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao registar consentimento.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_consentimento')));
     },
   });
 }
 
 export function useAdicionarIdentidade(clienteId: string) {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: { tipo: TipoIdentidade; valor: string; principal?: boolean }) =>
       adicionarIdentidade(clienteId, { ...payload, origem: 'ficha do cliente' }),
     onSuccess: () => {
-      toast.success('Identidade ligada ao cliente.');
+      toast.success(t('hooks.identidade_ligada'));
       queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
     },
     onError: (error: any) => {
       // Identidade já pertencente a outro cliente devolve 409 com a explicação
       // e o candidato a fusão criado — a mensagem do servidor diz o que fazer.
-      toast.error(error.response?.data?.message || 'Erro ao ligar identidade.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_ligar_identidade')));
     },
   });
 }
 
 export function useRemoverIdentidade(clienteId: string) {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: removerIdentidade,
     onSuccess: () => {
-      toast.success('Identidade desligada.');
+      toast.success(t('hooks.identidade_desligada'));
       queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao desligar identidade.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_desligar_identidade')));
     },
   });
 }
 
 export function useRegistarClienteNoBalcao() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -196,23 +207,24 @@ export function useRegistarClienteNoBalcao() {
       queryClient.invalidateQueries({ queryKey: ['clientes-search'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao registar cliente.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_registar_cliente')));
     },
   });
 }
 
 export function useGuardarPreferencia(clienteId: string) {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: { chave: string; valor: string }) =>
       guardarPreferencia(clienteId, payload),
     onSuccess: () => {
-      toast.success('Preferência guardada.');
+      toast.success(t('hooks.preferencia_guardada'));
       queryClient.invalidateQueries({ queryKey: ['cliente-360', clienteId] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao guardar a preferência.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_preferencia')));
     },
   });
 }
@@ -227,6 +239,7 @@ export function useCandidatosFusao(estado?: EstadoCandidatoFusao) {
 }
 
 export function useResolverCandidatoFusao() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -240,29 +253,30 @@ export function useResolverCandidatoFusao() {
     }) => resolverCandidatoFusao(id, payload),
     onSuccess: (_, variaveis) => {
       toast.success(
-        variaveis.estado === 'CONFIRMADO' ? 'Clientes fundidos.' : 'Candidato rejeitado.',
+        variaveis.estado === 'CONFIRMADO' ? t('hooks.clientes_fundidos') : t('hooks.candidato_rejeitado'),
       );
       queryClient.invalidateQueries({ queryKey: ['crm-candidatos-fusao'] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao decidir o candidato.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_decidir_candidato')));
     },
   });
 }
 
 export function useFundirClientes() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: fundirClientes,
     onSuccess: () => {
-      toast.success('Clientes fundidos.');
+      toast.success(t('hooks.clientes_fundidos'));
       queryClient.invalidateQueries({ queryKey: ['crm-candidatos-fusao'] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao fundir os clientes.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_fundir')));
     },
   });
 }
@@ -286,13 +300,14 @@ export function useMembrosSegmento(segmentId: string | null, page: number) {
 }
 
 export function useRecalcularSegmentos() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: recalcularSegmentos,
     onSuccess: (r) => {
       toast.success(
-        `${r.clientes} cliente(s) reclassificado(s): ${r.entradas} entrada(s), ${r.saidas} saída(s).`,
+        t('hooks.segmentos_recalculados', { clientes: r.clientes, entradas: r.entradas, saidas: r.saidas }),
       );
       queryClient.invalidateQueries({ queryKey: ['crm-segmentos'] });
       queryClient.invalidateQueries({ queryKey: ['crm-segmento-membros'] });
@@ -300,7 +315,7 @@ export function useRecalcularSegmentos() {
       queryClient.invalidateQueries({ queryKey: ['cliente-360'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao recalcular segmentos.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_recalcular')));
     },
   });
 }
@@ -310,17 +325,18 @@ export function useAudiencias() {
 }
 
 export function useCriarAudiencia() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: criarAudiencia,
     onSuccess: (a) => {
-      toast.success(`Audiência "${a.nome}" fixada com ${a.total} cliente(s).`);
+      toast.success(t('hooks.audiencia_fixada', { nome: a.nome, total: a.total }));
       queryClient.invalidateQueries({ queryKey: ['crm-audiencias'] });
     },
     onError: (error: any) => {
       // Segmento vazio devolve 400 com a explicação.
-      toast.error(error.response?.data?.message || 'Erro ao fixar audiência.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_fixar_audiencia')));
     },
   });
 }
@@ -357,21 +373,23 @@ export function useResultadoCampanha(id: string | null) {
 }
 
 export function useCriarCampanha() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: criarCampanha,
     onSuccess: () => {
-      toast.success('Campanha criada. Reveja antes de enviar.');
+      toast.success(t('hooks.campanha_criada'));
       queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar campanha.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_criar_campanha')));
     },
   });
 }
 
 export function useEnviarCampanha() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -380,7 +398,7 @@ export function useEnviarCampanha() {
       // O número que interessa é o que saiu, não o de destinatários: a diferença
       // entre os dois é o que explica o resultado.
       toast.success(
-        `${r.enviados} mensagem(ns) enviada(s) de ${r.destinatarios} destinatário(s).`,
+        t('hooks.campanha_enviada', { enviados: r.enviados, destinatarios: r.destinatarios }),
       );
       queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
       queryClient.invalidateQueries({ queryKey: ['crm-campanha'] });
@@ -388,23 +406,24 @@ export function useEnviarCampanha() {
       queryClient.invalidateQueries({ queryKey: ['crm-campanha-resultado'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao enviar campanha.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_enviar_campanha')));
     },
   });
 }
 
 export function useCancelarCampanha() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: cancelarCampanha,
     onSuccess: () => {
-      toast.success('Campanha cancelada.');
+      toast.success(t('hooks.campanha_cancelada'));
       queryClient.invalidateQueries({ queryKey: ['crm-campanhas'] });
       queryClient.invalidateQueries({ queryKey: ['crm-campanha'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao cancelar campanha.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_cancelar_campanha')));
     },
   });
 }
@@ -416,12 +435,13 @@ export function useOportunidades() {
 }
 
 export function useSugerirMensagens() {
+  const { t } = useTranslation('crm');
   return useMutation({
     mutationFn: sugerirMensagens,
     onError: (error: any) => {
       // A MAYRA pode estar indisponível; o campo de texto continua a funcionar.
       toast.error(
-        error.response?.data?.message || 'A MAYRA não conseguiu sugerir agora. Escreva a mensagem.',
+        mensagemDeErro(error, t('hooks.erro_mayra_sugerir')),
       );
     },
   });
@@ -438,12 +458,13 @@ export function useConfiguracaoCrm() {
 }
 
 export function useActualizarConfiguracao() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: actualizarConfiguracao,
     onSuccess: () => {
-      toast.success('Definições guardadas. Aplicam-se no próximo cálculo.');
+      toast.success(t('hooks.definicoes_guardadas'));
       queryClient.invalidateQueries({ queryKey: ['crm-configuracao'] });
       // A classificação e as recomendações passam a usar os valores novos.
       queryClient.invalidateQueries({ queryKey: ['crm-segmentos'] });
@@ -451,7 +472,7 @@ export function useActualizarConfiguracao() {
       queryClient.invalidateQueries({ queryKey: ['crm-mayra-atencao'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao guardar as definições.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_definicoes')));
     },
   });
 }
@@ -487,56 +508,65 @@ function invalidarPontos(queryClient: ReturnType<typeof useQueryClient>, cliente
 }
 
 export function useResgatarPontos() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: resgatarPontos,
     onSuccess: (r, variaveis) => {
       toast.success(
-        `${r.pontosUsados} pontos usados: ${r.descontoEmMeticais.toLocaleString('pt-MZ')} MT de desconto.`,
+        t('hooks.pontos_usados', {
+          pontos: r.pontosUsados,
+          desconto: formatMoeda(Number(r.descontoEmMeticais)),
+        }),
       );
       invalidarPontos(queryClient, variaveis.clienteId);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Não foi possível usar os pontos.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_usar_pontos')));
     },
   });
 }
 
 export function useAjustarPontos() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ajustarPontos,
     onSuccess: (r, variaveis) => {
-      toast.success(`Saldo ajustado: ${r.saldoAnterior} → ${r.saldoApos} pontos.`);
+      toast.success(t('hooks.saldo_ajustado', { anterior: r.saldoAnterior, actual: r.saldoApos }));
       invalidarPontos(queryClient, variaveis.clienteId);
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Não foi possível ajustar os pontos.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_ajustar_pontos')));
     },
   });
 }
 
 export function useVerificarEntregas() {
+  const { t } = useTranslation('crm');
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: verificarEntregas,
     onSuccess: (r) => {
       if (r.verificadas === 0) {
-        toast.success('Nada por confirmar — todas as mensagens já têm estado.');
+        toast.success(t('hooks.entregas_nada'));
       } else {
         toast.success(
-          `${r.entregues} entregue(s), ${r.naoEntregues} não entregue(s), ` +
-            `${r.aindaEmTransito} ainda a caminho.`,
+          t('hooks.entregas_resultado', {
+            entregues: r.entregues,
+            naoEntregues: r.naoEntregues,
+            aindaEmTransito: r.aindaEmTransito,
+          }),
         );
       }
       queryClient.invalidateQueries({ queryKey: ['crm-campanha-envios'] });
       queryClient.invalidateQueries({ queryKey: ['crm-campanha-resultado'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao verificar as entregas.');
+      toast.error(mensagemDeErro(error, t('hooks.erro_entregas')));
     },
   });
 }

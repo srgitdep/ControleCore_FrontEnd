@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import i18n from 'i18next';
 
 /**
  * Leitura de códigos de barras pela câmara do telemóvel.
@@ -170,7 +171,7 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
   const iniciar = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setEstado('sem-camara');
-      setDetalheDoErro('Este dispositivo ou navegador não dá acesso à câmara.');
+      setDetalheDoErro(i18n.t('leitor.sem_acesso', { ns: 'shell' }));
       return;
     }
 
@@ -198,10 +199,10 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
       // permissões do site, a outra não se resolve.
       if (erro?.name === 'NotAllowedError' || erro?.name === 'SecurityError') {
         setEstado('sem-permissao');
-        setDetalheDoErro('Autorize o acesso à câmara nas permissões do navegador.');
+        setDetalheDoErro(i18n.t('leitor.autorizar', { ns: 'shell' }));
       } else {
         setEstado('sem-camara');
-        setDetalheDoErro(erro?.message ?? 'Não foi possível abrir a câmara.');
+        setDetalheDoErro(erro?.message ?? i18n.t('leitor.nao_abriu', { ns: 'shell' }));
       }
       return;
     }
@@ -232,9 +233,7 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
         await video.play();
       } catch {
         setEstado('erro');
-        setDetalheDoErro(
-          'O navegador não deixou iniciar a pré-visualização da câmara. Escreva o código à mão.',
-        );
+        setDetalheDoErro(i18n.t('leitor.previa_falhou', { ns: 'shell' }));
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
@@ -336,9 +335,7 @@ export function useLeitorDeCodigo({ aoLer, pausaEntreRepeticoes = 1500 }: Opcoes
       pararRef.current = () => controles.stop();
     } catch {
       setEstado('erro');
-      setDetalheDoErro(
-        'Não foi possível iniciar o leitor neste navegador. Escreva o código à mão.',
-      );
+      setDetalheDoErro(i18n.t('leitor.nao_iniciou', { ns: 'shell' }));
     }
   }, [entregarCodigo]);
 

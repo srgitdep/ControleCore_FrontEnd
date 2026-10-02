@@ -201,47 +201,9 @@ export interface RegistarFacturaDto {
 
 // ─── Rótulos ─────────────────────────────────────────────────────────────────
 //
-// Em português e a dizer o que aconteceu, não o nome da constante. «RECEPCAO_EM_FALTA»
-// não diz nada a quem abre o Centro de Excepções pela primeira vez.
-
-export const ROTULO_TIPO: Record<TipoExcepcao, string> = {
-  PRECO: 'Preço',
-  QUANTIDADE: 'Quantidade',
-  IMPOSTO: 'IVA',
-  FRETE: 'Frete',
-  RECEPCAO_EM_FALTA: 'Facturado sem recepção',
-  FACTURA_DUPLICADA: 'Factura duplicada',
-  ASN_VERSUS_RECEPCAO: 'Aviso ≠ recepção',
-  TOTAL_INCONSISTENTE: 'Total não bate com as linhas',
-  PRODUTO_NAO_ENCOMENDADO: 'Produto não encomendado',
-};
-
-export const ROTULO_ESTADO_EXCEPCAO: Record<EstadoExcepcao, string> = {
-  ABERTA: 'Aberta',
-  ATRIBUIDA: 'Atribuída',
-  EM_ANALISE: 'Em análise',
-  AGUARDA_FORNECEDOR: 'A aguardar fornecedor',
-  RESOLVIDA: 'Resolvida',
-  DISPENSADA: 'Dispensada',
-  REJEITADA: 'Rejeitada',
-  ESCALADA: 'Escalada',
-  ENCERRADA: 'Encerrada',
-};
-
-export const ROTULO_DIMENSAO: Record<DimensaoTolerancia, string> = {
-  PRECO: 'Preço',
-  QUANTIDADE: 'Quantidade',
-  IMPOSTO: 'IVA',
-  FRETE: 'Frete',
-  TOTAL: 'Total da factura',
-};
-
-export const ROTULO_ESCOPO: Record<EscopoTolerancia, string> = {
-  EMPRESA: 'Empresa',
-  CATEGORIA: 'Categoria',
-  FORNECEDOR: 'Fornecedor',
-  PRODUTO: 'Produto',
-};
+// Vivem no catálogo `conferencia` (`tipo.*`, `estado_excepcao.*`, `dimensao.*`, `escopo.*`)
+// para sairem na língua do utilizador. Dizem o que aconteceu, não o nome da constante:
+// «RECEPCAO_EM_FALTA» não diz nada a quem abre o Centro de Excepções pela primeira vez.
 
 /**
  * As transições possíveis de um caso, espelhando o backend.

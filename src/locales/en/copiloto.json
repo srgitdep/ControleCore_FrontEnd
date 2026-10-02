@@ -1,0 +1,212 @@
+{
+  "cabecalho": {
+    "online": "Online and ready to help",
+    "restaurar": "Restore Size",
+    "ecra_inteiro": "Full Screen",
+    "historico": "Conversation History",
+    "nova_conversa": "New conversation"
+  },
+  "entrada": {
+    "rh_escala_rotulo": "👥 Tomorrow's roster",
+    "rh_escala_pergunta": "HR: Who is rostered for tomorrow's shift at the Main Store?",
+    "rh_anomalias_rotulo": "⏱️ Anomalies summary (this week)",
+    "rh_anomalias_pergunta": "HR: Summarise this week's attendance anomalies (lateness/absences).",
+    "placeholder": "Ask Mayra...",
+    "voz": "Turn on Voice Mode (Gemini Live)",
+    "aviso": "Mayra can make mistakes. Always double-check important figures."
+  },
+  "mensagem": {
+    "ouvir": "Read aloud",
+    "copiar": "Copy text"
+  },
+  "boas_vindas": "Hello! I'm Mayra, your intelligent ControlCore assistant. How can I help you manage your business today?",
+  "erro": {
+    "carregar_sessao": "Error loading the session.",
+    "comunicacao": "A communication error with the AI occurred.",
+    "executar_accao": "Error carrying out the requested action."
+  },
+  "sucesso": "✅ Success: {{resposta}}",
+  "boas_vindas_ecra": {
+    "ola": "Hello, {{nome}}",
+    "nome_padrao": "Manager",
+    "intro": "I'm Mayra. Pick a suggestion or type your question."
+  },
+  "sugestao": {
+    "stock": {
+      "ruptura": {
+        "titulo": "Predict Stock-outs",
+        "descricao": "Predict the risk of running out of stock",
+        "pergunta": "Predict the risk of stock-outs"
+      },
+      "capital": {
+        "titulo": "Frozen Capital",
+        "descricao": "Analyse idle stock in the stores",
+        "pergunta": "Analyse idle stock (frozen capital)"
+      },
+      "movimentos": {
+        "titulo": "Movements",
+        "descricao": "Check the latest movements",
+        "pergunta": "Show today's latest stock movements"
+      },
+      "baixo": {
+        "titulo": "Low Stock",
+        "descricao": "List products at their limit",
+        "pergunta": "Which products are below their minimum stock?"
+      }
+    },
+    "caixa": {
+      "turno": {
+        "titulo": "My Shift",
+        "descricao": "Summary of my sales",
+        "pergunta": "Summarise my sales today"
+      },
+      "preco": {
+        "titulo": "Check Price",
+        "descricao": "Check a product's price",
+        "pergunta": "Check the price of a product"
+      },
+      "horarios": {
+        "titulo": "My Hours",
+        "descricao": "See my clock-in records",
+        "pergunta": "Show my clock-ins and clock-outs today"
+      },
+      "top": {
+        "titulo": "Top Sellers",
+        "descricao": "Best-selling products",
+        "pergunta": "Which products did I sell the most of today?"
+      }
+    },
+    "gestao": {
+      "margens": {
+        "titulo": "Audit Margins",
+        "descricao": "Analyse products with a low profit margin",
+        "pergunta": "Analyse products with a low or negative profit margin"
+      },
+      "fraude": {
+        "titulo": "Anti-fraud",
+        "descricao": "Audit of suspicious incidents",
+        "pergunta": "Anti-fraud audit (suspicious incidents this week)"
+      },
+      "fecho": {
+        "titulo": "Till Closings",
+        "descricao": "Summarise the closings of all shifts",
+        "pergunta": "Summarise today's till closings"
+      },
+      "capital": {
+        "titulo": "Frozen Capital",
+        "descricao": "Analyse stock with no outflow",
+        "pergunta": "Analyse idle stock (frozen capital)"
+      },
+      "marketing": {
+        "titulo": "Marketing + Stock",
+        "descricao": "How to clear items close to expiry",
+        "pergunta": "Marketing + Stock: How can we clear items close to expiry?"
+      },
+      "financas": {
+        "titulo": "Finance",
+        "descricao": "Summary of till shortfalls",
+        "pergunta": "Finance: Summary of this week's till shortfalls."
+      },
+      "rh_vendas": {
+        "titulo": "HR + Sales",
+        "descricao": "Best till performance",
+        "pergunta": "HR + Sales: Which operator performed best today?"
+      },
+      "entregas": {
+        "titulo": "Deliveries",
+        "descricao": "Actual delivery time",
+        "pergunta": "Purchases: What is Supplier X's actual delivery time?"
+      },
+      "preco": {
+        "titulo": "Best Price",
+        "descricao": "Who has the best historical price?",
+        "pergunta": "Purchases: Who has the best historical price for Rice 5kg?"
+      },
+      "rascunho": {
+        "titulo": "Draft Order",
+        "descricao": "Generate a stock-out order",
+        "pergunta": "Purchases: Create a draft order for the critical stock-out items."
+      },
+      "clientes": {
+        "titulo": "Top Customers",
+        "descricao": "Top 5 customers of the month",
+        "pergunta": "CRM: Who are our top 5 customers this month?"
+      },
+      "historico": {
+        "titulo": "Customer History",
+        "descricao": "Look up a customer's purchases",
+        "pergunta": "CRM: Show the purchase history of the customer with NUIT 123456789"
+      }
+    }
+  },
+  "hitl": {
+    "titulo": {
+      "UPDATE_PRODUCT_PRICE": "Action Requested: Update Price",
+      "ADJUST_STOCK": "Action Requested: Stock Adjustment",
+      "TRANSFER_STOCK": "Action Requested: Stock Transfer",
+      "CREATE_USER": "Action Requested: New Employee",
+      "TOGGLE_USER_STATUS": "Action Requested: Change Access",
+      "REGISTER_EXPENSE": "Action Requested: Record Expense",
+      "PAY_BILL": "Action Requested: Settle Invoice / Expense",
+      "outra": "Action Requested"
+    },
+    "produto": "Product:",
+    "preco_atual": "Current Price:",
+    "novo_preco": "New Price:",
+    "armazem": "Warehouse:",
+    "ajuste": "Adjustment to apply:",
+    "novo_saldo": "Expected New Balance:",
+    "motivo": "Reason: {{motivo}}",
+    "origem": "From:",
+    "destino": "To:",
+    "qtd_transferir": "Qty. to Transfer:",
+    "nome": "Name:",
+    "email": "Email:",
+    "perfil": "Role:",
+    "funcionario": "Employee:",
+    "accao": "Action:",
+    "ativar_acesso": "Enable Access",
+    "bloquear_acesso": "Block/Disable Access",
+    "descricao": "Description:",
+    "valor": "Amount:",
+    "vencimento": "Due Date:",
+    "estado_inicial": "Initial Status:",
+    "pago": "PAID",
+    "pendente": "PENDING",
+    "conta_descricao": "Bill Description:",
+    "valor_liquidar": "Amount to Settle:",
+    "vencimento_original": "Original Due Date:",
+    "aviso_pagar": "This action will mark the bill as PAID at the current time.",
+    "confirmar": "Confirm",
+    "cancelar": "Cancel",
+    "cancelei": "I cancelled the action."
+  },
+  "historico": {
+    "titulo": "History",
+    "nova_conversa": "New Conversation",
+    "vazio": "No history found."
+  },
+  "voz": {
+    "a_ligar": "Connecting...",
+    "a_ouvir": "Listening",
+    "a_responder": "Responding",
+    "a_consultar": "Looking up the data...",
+    "a_pensar": "Thinking...",
+    "nao_ligou": "Could not connect",
+    "toque_para_falar": "Tap the microphone to speak",
+    "voltar": "Back to the written conversation",
+    "titulo": "Voice",
+    "placeholder": "Type your question...",
+    "enviar": "Send",
+    "escrever": "Type instead of speaking",
+    "ligar_de_novo": "Reconnect",
+    "sair": "Leave voice mode",
+    "erro": {
+      "sem_reconhecimento": "Your browser does not support local speech recognition.",
+      "sem_microfone": "Could not access the microphone. Check the permissions.",
+      "tempo_esgotado": "Could not connect to the voice server at {{host}}. Check your connection.",
+      "falha_ligar": "Failed to connect to the voice server: {{detalhe}}",
+      "sessao_expirada": "Session expired. Please sign in again."
+    }
+  }
+}

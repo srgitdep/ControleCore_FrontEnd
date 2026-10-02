@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Blocks, Plus, Loader2, X, Edit2, Trash2, Power } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   useModulos,
   useCriarModulo,
@@ -10,10 +11,7 @@ import {
 } from '../hooks/useModulos';
 import type { Modulo } from '../api/modulos.api';
 import { ConfirmDialog } from '@/shared/ui';
-import { cn } from '@/shared/utils';
-
-const mt = (v: number) =>
-  `${Number(v).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`;
+import { cn, formatMoeda } from '@/shared/utils';
 
 /**
  * O catálogo global de módulos: o que existe para uma empresa contratar.
@@ -24,6 +22,7 @@ const mt = (v: number) =>
  * aqui é o CRUD em si, e só faz sentido para quem administra o SaaS.
  */
 export function ModulosPage() {
+  const { t } = useTranslation('modulos');
   const [incluirInativos, setIncluirInativos] = useState(false);
   const { data: modulos = [], isLoading } = useModulos(incluirInativos);
 
@@ -42,8 +41,8 @@ export function ModulosPage() {
             <Blocks className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Módulos</h2>
-            <p className="text-sm text-slate-500">O catálogo do que as empresas podem contratar</p>
+            <h2 className="text-xl font-semibold text-slate-900">{t('pagina.titulo')}</h2>
+            <p className="text-sm text-slate-500">{t('pagina.subtitulo')}</p>
           </div>
         </div>
 
@@ -51,7 +50,7 @@ export function ModulosPage() {
           onClick={() => setACriar(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
         >
-          <Plus size={16} /> Novo módulo
+          <Plus size={16} /> {t('pagina.novo')}
         </button>
       </div>
 
@@ -62,7 +61,7 @@ export function ModulosPage() {
           onChange={(e) => setIncluirInativos(e.target.checked)}
           className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
         />
-        Mostrar módulos desactivados
+        {t('pagina.mostrar_desactivados')}
       </label>
 
       {isLoading ? (
@@ -72,17 +71,17 @@ export function ModulosPage() {
       ) : modulos.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 py-14 text-center">
           <Blocks size={26} className="mx-auto text-slate-300" />
-          <p className="mt-2 text-sm text-slate-500">Ainda não há módulos no catálogo.</p>
+          <p className="mt-2 text-sm text-slate-500">{t('pagina.vazio')}</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-2.5 font-medium">Módulo</th>
-                <th className="px-3 py-2.5 font-medium">Código</th>
-                <th className="px-3 py-2.5 text-right font-medium">Preço / mês</th>
-                <th className="px-3 py-2.5 font-medium">Estado</th>
+                <th className="px-4 py-2.5 font-medium">{t('pagina.col_modulo')}</th>
+                <th className="px-3 py-2.5 font-medium">{t('pagina.col_codigo')}</th>
+                <th className="px-3 py-2.5 text-right font-medium">{t('pagina.col_preco')}</th>
+                <th className="px-3 py-2.5 font-medium">{t('pagina.col_estado')}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -96,7 +95,7 @@ export function ModulosPage() {
                     )}
                   </td>
                   <td className="px-3 py-3 font-mono text-xs text-slate-500">{m.codigo}</td>
-                  <td className="px-3 py-3 text-right text-slate-700">{mt(m.precoMensal)}</td>
+                  <td className="px-3 py-3 text-right text-slate-700">{formatMoeda(m.precoMensal)}</td>
                   <td className="px-3 py-3">
                     <span
                       className={cn(
@@ -106,14 +105,14 @@ export function ModulosPage() {
                           : 'bg-slate-100 text-slate-500',
                       )}
                     >
-                      {m.isAtivo ? 'Activo' : 'Desactivado'}
+                      {m.isAtivo ? t('pagina.activo') : t('pagina.desactivado')}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => mudarEstado.mutate({ id: m.id, isAtivo: !m.isAtivo })}
-                        title={m.isAtivo ? 'Desactivar' : 'Activar'}
+                        title={m.isAtivo ? t('pagina.desactivar') : t('pagina.activar')}
                         className={cn(
                           'p-2 transition-colors',
                           m.isAtivo
@@ -125,14 +124,14 @@ export function ModulosPage() {
                       </button>
                       <button
                         onClick={() => setAEditar(m)}
-                        title="Editar"
+                        title={t('acoes.editar')}
                         className="p-2 text-slate-400 transition-colors hover:text-indigo-600"
                       >
                         <Edit2 size={15} />
                       </button>
                       <button
                         onClick={() => setAApagar(m)}
-                        title="Apagar"
+                        title={t('acoes.apagar')}
                         className="p-2 text-slate-400 transition-colors hover:text-rose-600"
                       >
                         <Trash2 size={15} />
@@ -152,13 +151,9 @@ export function ModulosPage() {
 
       <ConfirmDialog
         isOpen={aApagar !== null}
-        title="Apagar módulo"
-        message={
-          aApagar
-            ? `Apagar «${aApagar.nome}»? Se houver empresas com este módulo activo, o servidor recusa — desactive-o em vez disso.`
-            : ''
-        }
-        confirmText="Apagar"
+        title={t('pagina.apagar_titulo')}
+        message={aApagar ? t('pagina.apagar_mensagem', { nome: aApagar.nome }) : ''}
+        confirmText={t('acoes.apagar')}
         variant="danger"
         isLoading={apagar.isPending}
         onConfirm={() => {
@@ -172,6 +167,7 @@ export function ModulosPage() {
 }
 
 function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () => void }) {
+  const { t } = useTranslation('modulos');
   const [form, setForm] = useState({
     codigo: modulo?.codigo ?? '',
     nome: modulo?.nome ?? '',
@@ -186,10 +182,10 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.codigo.trim()) return toast.error('Indique o código do módulo.');
-    if (!form.nome.trim()) return toast.error('Indique o nome do módulo.');
+    if (!form.codigo.trim()) return toast.error(t('modal.codigo_obrigatorio'));
+    if (!form.nome.trim()) return toast.error(t('modal.nome_obrigatorio'));
     const preco = Number(form.precoMensal);
-    if (!(preco >= 0)) return toast.error('O preço mensal tem de ser um número válido.');
+    if (!(preco >= 0)) return toast.error(t('modal.preco_invalido'));
 
     const dto = {
       codigo: form.codigo.trim(),
@@ -211,7 +207,7 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
           <h2 className="text-lg font-bold text-slate-900">
-            {modulo ? 'Editar módulo' : 'Novo módulo'}
+            {modulo ? t('modal.titulo_editar') : t('pagina.novo')}
           </h2>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
             <X size={20} />
@@ -221,18 +217,18 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
         <form onSubmit={submeter} className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Código</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('modal.codigo')}</label>
               <input
                 type="text"
                 value={form.codigo}
                 onChange={(e) => setForm({ ...form, codigo: e.target.value })}
-                placeholder="Ex.: pos"
+                placeholder={t('modal.codigo_exemplo')}
                 disabled={!!modulo}
                 className="w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Ordem</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('modal.ordem')}</label>
               <input
                 type="number"
                 value={form.ordem}
@@ -244,19 +240,19 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Nome</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('modal.nome')}</label>
             <input
               type="text"
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
-              placeholder="Ex.: Ponto de Venda"
+              placeholder={t('modal.nome_exemplo')}
               className="w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Descrição <span className="font-normal text-slate-400">(opcional)</span>
+              {t('modal.descricao')} <span className="font-normal text-slate-400">{t('modal.opcional')}</span>
             </label>
             <textarea
               value={form.descricao}
@@ -268,7 +264,7 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
-              Preço mensal (MT)
+              {t('modal.preco')}
             </label>
             <input
               type="number"
@@ -286,7 +282,7 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
               onClick={onClose}
               className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
-              Cancelar
+              {t('acoes.cancelar')}
             </button>
             <button
               type="submit"
@@ -294,7 +290,7 @@ function ModuloModal({ modulo, onClose }: { modulo: Modulo | null; onClose: () =
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {isSaving && <Loader2 size={16} className="animate-spin" />}
-              Guardar
+              {t('acoes.guardar')}
             </button>
           </div>
         </form>

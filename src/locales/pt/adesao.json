@@ -71,5 +71,50 @@
     "ver_fornecedores": "Ver os fornecedores da plataforma",
     "so_comprar": "Só quer comprar numa loja?",
     "ir_loja": "Ir à loja online"
+  },
+  "gestao": {
+    "titulo": "Pedidos de adesão",
+    "subtitulo": "Empresas que pediram para ser clientes. Aprovar cria a empresa, o administrador e a assinatura, e envia o código de acesso por e-mail.",
+    "filtro_todos": "Todos",
+    "estado": {
+      "PENDENTE": "Pendente",
+      "APROVADO": "Aprovado",
+      "RECUSADO": "Recusado"
+    },
+    "a_carregar": "A carregar a fila…",
+    "vazio_pendente": "Nenhum pedido à espera de decisão.",
+    "vazio_estado": "Nenhum pedido neste estado.",
+    "referencia": "Referência {{ref}}",
+    "dado": {
+      "cidade": "Cidade",
+      "empresa_email": "E-mail da empresa",
+      "empresa_telefone": "Telefone da empresa",
+      "gestor_nome": "Responsável",
+      "gestor_cargo": "Cargo",
+      "gestor_email": "E-mail do responsável",
+      "gestor_telefone": "Telefone do responsável"
+    },
+    "o_que_precisa": "O que precisa resolver",
+    "decidido_por": "{{estado}} por {{nome}}",
+    "empresa_criada": "Empresa criada:",
+    "modulos_titulo": "Módulos a subscrever",
+    "modulos_ajuda": "Uma empresa sem módulos subscritos é uma empresa cujo primeiro ecrã recusa tudo. Escolha ao menos um.",
+    "motivo": "Motivo",
+    "motivo_ajuda": "(obrigatório ao recusar — é o que o requerente vai ler)",
+    "motivo_exemplo": "O NUIT indicado não corresponde à empresa nomeada.",
+    "aprovar_1": "Vai criar a empresa",
+    "aprovar_2": ", o administrador",
+    "aprovar_3": ", e uma assinatura com {{n}} módulo(s). O código de acesso e a senha vão para",
+    "aprovar_4": ". Não se desfaz.",
+    "recusar_1": "Vai enviar o motivo para",
+    "recusar_2": ". O pedido não volta à fila — quem corrigir o que estava errado tem de submeter um pedido novo.",
+    "confirmar_aprovacao": "Confirmar aprovação",
+    "confirmar_recusa": "Confirmar recusa",
+    "voltar_atras": "Voltar atrás",
+    "recusar": "Recusar",
+    "aprovar": "Aprovar",
+    "erro_decisao": "Não foi possível registar a decisão.",
+    "erro_motivo_curto": "Recusar exige um motivo com ao menos 5 caracteres.",
+    "erro_sem_modulo": "Escolha ao menos um módulo antes de aprovar."
   }
 }

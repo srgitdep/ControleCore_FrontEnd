@@ -1,0 +1,32 @@
+{
+  "acao": {
+    "CREATE": "Criação",
+    "UPDATE": "Atualização",
+    "DELETE": "Remoção",
+    "LOGIN": "Login",
+    "LOGOUT": "Logout",
+    "SALE_COMPLETED": "Venda ConcluÍda",
+    "SALE_CANCELLED": "Venda Cancelada"
+  },
+  "tabela": {
+    "sem_dados_exportar": "Sem dados para exportar.",
+    "pdf_titulo": "Histórico no Sistema",
+    "pdf_gerado": "Gerado a: {{data}}",
+    "col_utilizador": "Utilizador",
+    "col_acao": "Ação",
+    "col_detalhes": "Detalhes",
+    "col_data_hora": "Data & Hora",
+    "col_perfil": "Perfil",
+    "sistema_desconhecido": "Sistema / Desconhecido",
+    "perfil_padrao": "Padrão",
+    "titulo": "Registos de Auditoria",
+    "exportar_pdf": "Exportar PDF",
+    "utilizador_desconhecido": "Utilizador desconhecido",
+    "desconhecido": "Desconhecido",
+    "nenhum": "Nenhum registo encontrado."
+  },
+  "pagina": {
+    "global": "Acções de todos os utilizadores da empresa.",
+    "pessoal": "As suas acções no sistema."
+  }
+}

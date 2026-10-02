@@ -16,21 +16,26 @@ import { stockApi } from '@/features/stock';
 import { suppliersApi } from '@/features/fornecedores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Button, CapturaPorFoto } from '@/shared/ui';
+import { formatMoeda } from '@/shared/utils';
 import { catalogApi } from '../api/catalog.api';
 import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
-const productSchema = z.object({
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+// Função, e não constante: as mensagens de validação seguem a língua activa, que só se
+// conhece com o `t` do componente.
+const criarSchemaBase = (t: TFunction<'produtos'>) => z.object({
+  nome: z.string().min(2, t('validacao.nome_curto')),
   codigoBarras: z.string().optional(),
   sku: z.string().optional(),
-  imagemUrl: z.string().url('O URL da imagem é inválido').optional().or(z.literal('')),
+  imagemUrl: z.string().url(t('validacao.imagem_url')).optional().or(z.literal('')),
   categoriaId: z.string().optional(),
   descricao: z.string().optional(),
-  precoCusto: z.coerce.number().min(0, 'Preço de custo não pode ser negativo'),
-  precoVenda: z.coerce.number().min(0, 'Preço de venda não pode ser negativo'),
+  precoCusto: z.coerce.number().min(0, t('validacao.custo_negativo')),
+  precoVenda: z.coerce.number().min(0, t('validacao.venda_negativa')),
   taxaIva: z.coerce.number().min(0).max(100),
-  unidadeMedida: z.string().min(1, 'Unidade de medida é obrigatória'),
+  unidadeMedida: z.string().min(1, t('validacao.unidade_obrigatoria')),
   peso: z.coerce.number().optional(),
   isWeighable: z.boolean().default(false),
 
@@ -41,7 +46,7 @@ const productSchema = z.object({
   // datas, a tabela de lotes fica vazia e os alertas nunca disparam.
   temValidade: z.boolean().default(false),
   rastreavelPorLote: z.boolean().default(false),
-  diasAvisoValidade: z.coerce.number().min(1, 'O aviso tem de ser de pelo menos 1 dia').optional(),
+  diasAvisoValidade: z.coerce.number().min(1, t('validacao.aviso_minimo')).optional(),
   isActive: z.boolean().default(true),
 
   // ─── Stock inicial ────────────────────────────────────────────────────────
@@ -51,8 +56,8 @@ const productSchema = z.object({
   // autor e motivo próprios — para isso há os ajustes na secção Stock (e os mínimos
   // por armazém, que se editam numa tabela própria).
   armazemId: z.string().optional(),
-  quantidadeInicial: z.coerce.number().min(0, 'A quantidade não pode ser negativa').optional(),
-  stockMinimo: z.coerce.number().min(0, 'O mínimo não pode ser negativo').optional(),
+  quantidadeInicial: z.coerce.number().min(0, t('validacao.quantidade_negativa')).optional(),
+  stockMinimo: z.coerce.number().min(0, t('validacao.minimo_negativo')).optional(),
 });
 
 /**
@@ -74,15 +79,15 @@ const productSchema = z.object({
  * numa tabela própria (`MinimosPorArmazem`), com uma linha por armazém; exigir um valor
  * único aqui contradiria isso.
  */
-const construirSchema = (aCriar: boolean) =>
-  productSchema.superRefine((dados, ctx) => {
+const construirSchema = (aCriar: boolean, t: TFunction<'produtos'>) =>
+  criarSchemaBase(t).superRefine((dados, ctx) => {
     if (!aCriar) return;
 
     if (!dados.armazemId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['armazemId'],
-        message: 'Escolha o armazém a que o stock deste produto se refere.',
+        message: t('validacao.escolher_armazem'),
       });
     }
 
@@ -92,18 +97,21 @@ const construirSchema = (aCriar: boolean) =>
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['stockMinimo'],
-        message: 'Indique o stock mínimo.',
+        message: t('validacao.indicar_minimo'),
       });
     } else if (dados.stockMinimo <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['stockMinimo'],
-        message: 'O mínimo tem de ser maior que zero — abaixo dele o produto entra nos alertas.',
+        message: t('validacao.minimo_zero'),
       });
     }
   });
 
-type ProductFormData = z.infer<typeof productSchema>;
+// Os códigos vão à API; a etiqueta de cada um vem do catálogo (`unidades.<código>`).
+const UNIDADES = ['UN', 'KG', 'G', 'L', 'ML', 'CX', 'PCT'] as const;
+
+type ProductFormData = z.infer<ReturnType<typeof criarSchemaBase>>;
 
 interface ProductFormModalProps {
   productToEdit?: Product;
@@ -111,6 +119,7 @@ interface ProductFormModalProps {
 }
 
 export function ProductFormModal({ productToEdit, onClose }: ProductFormModalProps) {
+  const { t } = useTranslation('produtos');
   const { mutateAsync: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { data: categoriesData } = useCategories();
@@ -125,9 +134,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
     setValue,
     getValues,
     formState: { errors },
-  } = useForm<z.input<typeof productSchema>, any, ProductFormData>({
+  } = useForm<z.input<ReturnType<typeof criarSchemaBase>>, any, ProductFormData>({
     // O mínimo é obrigatório ao criar e não ao editar — ver `construirSchema`.
-    resolver: zodResolver(construirSchema(!productToEdit)),
+    resolver: zodResolver(construirSchema(!productToEdit, t)),
     defaultValues: productToEdit
       ? {
           nome: productToEdit.nome,
@@ -306,7 +315,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               <PackagePlus className="h-5 w-5 text-indigo-600" />
             </div>
             <h2 className="text-lg font-bold text-slate-800">
-              {productToEdit ? 'Editar Produto' : 'Novo Produto'}
+              {productToEdit ? t('form.titulo_editar') : t('form.titulo_novo')}
             </h2>
           </div>
           <button
@@ -339,31 +348,31 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.nome')}</label>
                 <input
                   {...register('nome')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Ex: Arroz Tio João 5kg"
+                  placeholder={t('form.nome_exemplo')}
                 />
                 {errors.nome && <p className="text-xs text-rose-500 mt-1">{errors.nome.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Código de Barras (EAN)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.codigo_barras')}</label>
                 <input
                   {...register('codigoBarras')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Deixe vazio para auto-gerar SKU interno"
+                  placeholder={t('form.codigo_barras_exemplo')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.categoria')}</label>
                 <select
                   {...register('categoriaId')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="">Selecione uma categoria...</option>
+                  <option value="">{t('form.categoria_escolher')}</option>
                   {categories.map((cat: any) => (
                     <option key={cat.id} value={cat.id}>{cat.nome}</option>
                   ))}
@@ -372,24 +381,24 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  URL externo da imagem {productToEdit && '(alternativa a carregar um ficheiro, abaixo)'}
+                  {t('form.imagem_url')} {productToEdit && t('form.imagem_url_alternativa')}
                 </label>
                 <input
                   type="url"
                   {...register('imagemUrl')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="https://exemplo.com/imagem.png"
+                  placeholder={t('form.imagem_url_exemplo')}
                 />
                 {errors.imagemUrl && <p className="text-xs text-rose-500 mt-1">{errors.imagemUrl.message}</p>}
                 {!productToEdit && (
                   <p className="mt-1 text-xs text-slate-400">
-                    Para carregar um ficheiro em vez de colar um link, crie o produto primeiro e depois edite-o.
+                    {t('form.imagem_criar_primeiro')}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Custo (MZN) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.preco_custo')}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -400,7 +409,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda (MZN) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.preco_venda')}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -412,7 +421,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
               <div className="md:col-span-2">
                 <div className={`p-3 rounded-lg flex items-center justify-between border ${projectedMargin < 15 ? 'bg-rose-50 border-rose-100' : projectedMargin > 30 ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-100'}`}>
-                  <span className="text-sm font-medium text-slate-700">Margem de Lucro Projetada:</span>
+                  <span className="text-sm font-medium text-slate-700">{t('form.margem')}</span>
                   <span className={`text-lg font-bold ${projectedMargin < 15 ? 'text-rose-700' : projectedMargin > 30 ? 'text-emerald-700' : 'text-slate-700'}`}>
                     {projectedMargin.toFixed(2)}%
                   </span>
@@ -420,7 +429,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Taxa IVA (%) *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.taxa_iva')}</label>
                 <input
                   type="number"
                   {...register('taxaIva')}
@@ -429,18 +438,14 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Unidade de Medida *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.unidade')}</label>
                 <select
                   {...register('unidadeMedida')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="UN">Unidade (UN)</option>
-                  <option value="KG">Quilograma (KG)</option>
-                  <option value="G">Grama (G)</option>
-                  <option value="L">Litro (L)</option>
-                  <option value="ML">Mililitro (ML)</option>
-                  <option value="CX">Caixa (CX)</option>
-                  <option value="PCT">Pacote (PCT)</option>
+                  {UNIDADES.map((u) => (
+                    <option key={u} value={u}>{t(`unidades.${u}`)}</option>
+                  ))}
                 </select>
               </div>
 
@@ -450,7 +455,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   embalagem e o valor ia para um campo que ninguém via. */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Peso / Volume
+                  {t('form.peso')}
                 </label>
                 <input
                   type="number"
@@ -458,10 +463,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   min="0"
                   {...register('peso')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Ex: 0.75 para 750ml"
+                  placeholder={t('form.peso_exemplo')}
                 />
                 <p className="mt-1 text-xs text-slate-400">
-                  Na unidade escolhida acima. Deixe zero se não se aplicar.
+                  {t('form.peso_ajuda')}
                 </p>
                 {errors.peso && (
                   <p className="text-xs text-rose-500 mt-1">{errors.peso.message}</p>
@@ -477,9 +482,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                 />
                 <label htmlFor="isWeighable" className={`text-sm font-medium ${unidadeMedida !== 'KG' ? 'text-slate-400' : 'text-slate-700'}`}>
-                  Produto Pesável (Balança no PDV)
+                  {t('form.pesavel')}
                   <p className="text-xs font-normal text-slate-500 mt-0.5">
-                    Se marcado, o PDV solicitará o peso ou lerá a etiqueta da balança. Requer unidade KG.
+                    {t('form.pesavel_ajuda')}
                   </p>
                 </label>
               </div>
@@ -496,11 +501,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <label htmlFor="temValidade" className="text-sm font-medium text-slate-700">
-                    Controlar prazo de validade
+                    {t('form.validade_controlar')}
                     <p className="mt-0.5 text-xs font-normal text-slate-500">
-                      A data de validade passa a ser <strong>obrigatória</strong> em cada entrada
-                      de mercadoria deste produto. É o que faz os alertas existirem — sem a
-                      exigência, as datas não são registadas e não há nada para vigiar.
+                      {t('form.validade_ajuda_antes')} <strong>{t('form.validade_ajuda_forte')}</strong>{' '}
+                      {t('form.validade_ajuda_depois')}
                     </p>
                   </label>
                 </div>
@@ -512,7 +516,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                         htmlFor="diasAvisoValidade"
                         className="mb-1 block text-sm font-medium text-slate-700"
                       >
-                        Avisar quantos dias antes?
+                        {t('form.aviso_dias')}
                       </label>
                       <input
                         type="number"
@@ -523,7 +527,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                         className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                       <p className="mt-1 text-xs text-slate-400">
-                        Vazio usa 45 dias. O prazo útil de um iogurte não é o de uma conserva.
+                        {t('form.aviso_ajuda')}
                       </p>
                       {errors.diasAvisoValidade && (
                         <p className="mt-1 text-xs text-rose-500">
@@ -543,10 +547,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                         htmlFor="rastreavelPorLote"
                         className="text-sm font-medium text-slate-700"
                       >
-                        Exigir código de lote
+                        {t('form.lote_exigir')}
                         <p className="mt-0.5 text-xs font-normal text-slate-500">
-                          Sem isto, o lote é derivado da própria validade — que já basta para
-                          distinguir mercadoria no armazém.
+                          {t('form.lote_ajuda')}
                         </p>
                       </label>
                     </div>
@@ -580,18 +583,16 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               <div className="mt-6 pt-5 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                   <Warehouse className="h-4 w-4 text-slate-400" />
-                  <h3 className="text-sm font-semibold text-slate-700">Stock</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">{t('stock_inicial.titulo')}</h3>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  O armazém e o stock mínimo são obrigatórios: sem mínimo definido, o produto
-                  não entra nos alertas de ruptura nem nas sugestões de compra. A quantidade é
-                  opcional — deixe a zero se a mercadoria ainda não chegou.
+                  {t('stock_inicial.intro')}
                 </p>
 
                 <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-3">
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Armazém <span className="text-rose-500">*</span>
+                      {t('stock_inicial.armazem')} <span className="text-rose-500">*</span>
                     </label>
                     <select
                       {...register('armazemId')}
@@ -599,7 +600,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
                     >
                       <option value="">
-                        {isLoadingArmazens ? 'A carregar armazéns...' : 'Escolher armazém...'}
+                        {isLoadingArmazens ? t('stock_inicial.a_carregar_armazens') : t('stock_inicial.escolher_armazem')}
                       </option>
                       {armazens.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -612,14 +613,14 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                     )}
                     {!isLoadingArmazens && armazens.length === 0 && (
                       <p className="mt-1 text-xs text-amber-600">
-                        Não há armazéns activos. Crie um em Armazéns antes de dar entrada de stock.
+                        {t('stock_inicial.sem_armazens')}
                       </p>
                     )}
                   </div>
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Quantidade
+                      {t('stock_inicial.quantidade')}
                     </label>
                     <input
                       type="number"
@@ -636,21 +637,21 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Stock mínimo <span className="text-rose-500">*</span>
+                      {t('stock_inicial.minimo')} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
                       step="any"
                       min="0"
                       {...register('stockMinimo')}
-                      placeholder="Ex: 10"
+                      placeholder={t('stock_inicial.minimo_exemplo')}
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     {errors.stockMinimo && (
                       <p className="mt-1 text-xs text-rose-600">{errors.stockMinimo.message}</p>
                     )}
                     <p className="mt-1 text-xs text-slate-400">
-                      Abaixo dele o produto entra nos alertas e nas sugestões de compra.
+                      {t('stock_inicial.minimo_ajuda')}
                     </p>
                   </div>
 
@@ -659,12 +660,9 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   {valorEntrada > 0 && (
                     <div className="flex items-end md:col-span-1">
                       <div className="w-full rounded-lg bg-slate-50 px-3 py-2">
-                        <p className="text-xs text-slate-500">Valor da entrada</p>
+                        <p className="text-xs text-slate-500">{t('stock_inicial.valor_entrada')}</p>
                         <p className="text-sm font-semibold text-slate-800">
-                          {valorEntrada.toLocaleString('pt-MZ', {
-                            style: 'currency',
-                            currency: 'MZN',
-                          })}
+                          {formatMoeda(valorEntrada)}
                         </p>
                       </div>
                     </div>
@@ -677,10 +675,10 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
           {/* Footer */}
           <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 mt-auto">
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-              Cancelar
+              {t('acoes.cancelar')}
             </Button>
             <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-              {isPending ? 'A guardar...' : 'Guardar Produto'}
+              {isPending ? t('form.a_guardar') : t('form.guardar_produto')}
             </Button>
           </div>
         </form>
@@ -701,6 +699,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
  * outra falhar sem o utilizador saber qual.
  */
 function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
+  const { t } = useTranslation('produtos');
   const queryClient = useQueryClient();
   const [emEdicao, setEmEdicao] = useState<Record<string, string>>({});
   const [aGuardar, setAGuardar] = useState<string | null>(null);
@@ -714,13 +713,13 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
     const minimo = Number(valor);
 
     if (!Number.isFinite(minimo) || minimo < 0) {
-      return toast.error('O stock mínimo não pode ser negativo.');
+      return toast.error(t('minimos.negativo'));
     }
 
     setAGuardar(stockId);
     try {
       await stockApi.definirMinimo(stockId, minimo);
-      toast.success('Stock mínimo actualizado.');
+      toast.success(t('minimos.actualizado'));
 
       // Os alertas e a listagem de saldos leem este valor.
       queryClient.invalidateQueries({ queryKey: ['stock-posicoes', produtoId] });
@@ -732,7 +731,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
         return novo;
       });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao guardar o stock mínimo.');
+      toast.error(error?.response?.data?.message || t('minimos.erro_guardar'));
     } finally {
       setAGuardar(null);
     }
@@ -741,7 +740,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
   if (isLoading) {
     return (
       <div className="mt-6 border-t border-slate-100 pt-5">
-        <p className="text-sm text-slate-500">A carregar os saldos por armazém...</p>
+        <p className="text-sm text-slate-500">{t('minimos.a_carregar')}</p>
       </div>
     );
   }
@@ -754,11 +753,10 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
       <div className="mt-6 border-t border-slate-100 pt-5">
         <div className="flex items-center gap-2">
           <Warehouse className="h-4 w-4 text-amber-500" />
-          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('minimos.titulo')}</h3>
         </div>
         <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Não foi possível carregar os saldos por armazém. Se o servidor foi actualizado
-          há pouco, reinicie-o — esta secção usa um endpoint novo.
+          {t('minimos.erro')}
         </p>
       </div>
     );
@@ -769,10 +767,10 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
       <div className="mt-6 border-t border-slate-100 pt-5">
         <div className="flex items-center gap-2">
           <Warehouse className="h-4 w-4 text-slate-400" />
-          <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('minimos.titulo')}</h3>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Este produto não tem posições de stock. Crie um armazém na secção Armazéns.
+          {t('minimos.vazio')}
         </p>
       </div>
     );
@@ -782,20 +780,19 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
     <div className="mt-6 border-t border-slate-100 pt-5">
       <div className="flex items-center gap-2">
         <Warehouse className="h-4 w-4 text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-700">Stock por armazém</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{t('minimos.titulo')}</h3>
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        O ponto de reposição é por armazém. Abaixo dele o produto entra nos alertas e nas
-        sugestões de compra. Zero significa «sem mínimo definido».
+        {t('minimos.intro')}
       </p>
 
       <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-3 py-2 font-medium">Armazém</th>
-              <th className="px-3 py-2 text-right font-medium">Saldo</th>
-              <th className="w-40 px-3 py-2 font-medium">Mínimo</th>
+              <th className="px-3 py-2 font-medium">{t('minimos.col_armazem')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('minimos.col_saldo')}</th>
+              <th className="w-40 px-3 py-2 font-medium">{t('minimos.col_minimo')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -810,7 +807,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
                     <span className="text-slate-800">{p.armazem.nome}</span>
                     {!p.armazem.isActive && (
                       <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                        inactivo
+                        {t('minimos.inactivo')}
                       </span>
                     )}
                   </td>
@@ -839,7 +836,7 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
                           disabled={aGuardar === p.id}
                           className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                         >
-                          {aGuardar === p.id ? '...' : 'Guardar'}
+                          {aGuardar === p.id ? '...' : t('acoes.guardar')}
                         </button>
                       )}
                     </div>
@@ -854,9 +851,6 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
   );
 }
 
-const moeda = (v: number) =>
-  v.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
-
 /**
  * A imagem real do produto — Docs/plano_feature_compra_facil.md §4.10.
  *
@@ -866,6 +860,7 @@ const moeda = (v: number) =>
  * substitui a anterior.
  */
 function ImagemDoProduto({ produtoId }: { produtoId: string }) {
+  const { t } = useTranslation('produtos');
   const inputRef = useRef<HTMLInputElement>(null);
   const carregar = useCarregarImagemProduto();
   const remover = useRemoverImagemProduto();
@@ -888,7 +883,7 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
     <div className="mt-6 border-t border-slate-100 pt-5">
       <div className="flex items-center gap-2">
         <ImageIcon className="h-4 w-4 text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-700">Imagem do produto</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{t('imagem.titulo')}</h3>
       </div>
 
       <div className="mt-3 flex items-center gap-3">
@@ -912,7 +907,7 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
             ) : (
               <Upload size={13} />
             )}
-            {carregar.isPending ? 'A carregar...' : imagemPrincipal ? 'Substituir imagem' : 'Carregar imagem'}
+            {carregar.isPending ? t('imagem.a_carregar') : imagemPrincipal ? t('imagem.substituir') : t('imagem.carregar')}
           </button>
           {imagemPrincipal && (
             <button
@@ -921,10 +916,10 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
               onClick={() => remover.mutate({ produtoId, imagemId: imagemPrincipal.id })}
               className="text-xs font-medium text-rose-600 hover:underline disabled:opacity-50"
             >
-              Remover
+              {t('acoes.remover')}
             </button>
           )}
-          <p className="text-xs text-slate-400">JPEG, PNG ou WEBP até 5MB — convertida para WebP.</p>
+          <p className="text-xs text-slate-400">{t('imagem.formatos')}</p>
         </div>
 
         <input
@@ -948,6 +943,7 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
  * referência único; este é o preço praticado por cada fornecedor concreto.
  */
 function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
+  const { t } = useTranslation('produtos');
   const queryClient = useQueryClient();
   const [aAdicionar, setAAdicionar] = useState(false);
   const [fornecedorId, setFornecedorId] = useState('');
@@ -976,9 +972,9 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
 
   const adicionar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fornecedorId) return toast.error('Escolha o fornecedor.');
+    if (!fornecedorId) return toast.error(t('fornecedores.escolha'));
     const valor = Number(custo);
-    if (!(valor >= 0)) return toast.error('O custo de compra tem de ser um número válido.');
+    if (!(valor >= 0)) return toast.error(t('fornecedores.custo_invalido'));
 
     setAGuardar(true);
     try {
@@ -987,14 +983,14 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
         referenciaFornecedor: referencia.trim() || undefined,
         custoCompra: valor,
       });
-      toast.success('Fornecedor vinculado.');
+      toast.success(t('fornecedores.vinculado'));
       invalidar();
       setAAdicionar(false);
       setFornecedorId('');
       setReferencia('');
       setCusto('');
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao vincular o fornecedor.');
+      toast.error(error?.response?.data?.message || t('fornecedores.erro_vincular'));
     } finally {
       setAGuardar(false);
     }
@@ -1004,10 +1000,10 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
     setARemover(fId);
     try {
       await catalogApi.removeFornecedorProduto(produtoId, fId);
-      toast.success('Fornecedor removido do produto.');
+      toast.success(t('fornecedores.removido'));
       invalidar();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao remover o fornecedor.');
+      toast.error(error?.response?.data?.message || t('fornecedores.erro_remover'));
     } finally {
       setARemover(null);
     }
@@ -1018,7 +1014,7 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Truck className="h-4 w-4 text-slate-400" />
-          <h3 className="text-sm font-semibold text-slate-700">Fornecedores</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('fornecedores.titulo')}</h3>
         </div>
         {!aAdicionar && (
           <button
@@ -1026,27 +1022,26 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
             onClick={() => setAAdicionar(true)}
             className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
           >
-            <Plus size={13} /> Vincular
+            <Plus size={13} /> {t('fornecedores.vincular')}
           </button>
         )}
       </div>
       <p className="mt-1 text-xs text-slate-500">
-        Um produto pode ter mais do que um fornecedor. A sugestão de compras usa o custo
-        mais baixo entre eles.
+        {t('fornecedores.intro')}
       </p>
 
       {isLoading ? (
-        <p className="mt-3 text-sm text-slate-500">A carregar...</p>
+        <p className="mt-3 text-sm text-slate-500">{t('fornecedores.a_carregar')}</p>
       ) : vinculados.length === 0 ? (
-        <p className="mt-3 text-xs text-slate-400">Nenhum fornecedor vinculado.</p>
+        <p className="mt-3 text-xs text-slate-400">{t('fornecedores.nenhum')}</p>
       ) : (
         <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Fornecedor</th>
-                <th className="px-3 py-2 font-medium">Referência</th>
-                <th className="px-3 py-2 text-right font-medium">Custo</th>
+                <th className="px-3 py-2 font-medium">{t('fornecedores.col_fornecedor')}</th>
+                <th className="px-3 py-2 font-medium">{t('fornecedores.col_referencia')}</th>
+                <th className="px-3 py-2 text-right font-medium">{t('fornecedores.col_custo')}</th>
                 <th className="w-10 px-3 py-2" />
               </tr>
             </thead>
@@ -1055,14 +1050,14 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
                 <tr key={v.fornecedorId}>
                   <td className="px-3 py-2 text-slate-800">{v.fornecedor.nome}</td>
                   <td className="px-3 py-2 text-slate-500">{v.referenciaFornecedor || '—'}</td>
-                  <td className="px-3 py-2 text-right text-slate-700">{moeda(v.custoCompra)}</td>
+                  <td className="px-3 py-2 text-right text-slate-700">{formatMoeda(v.custoCompra)}</td>
                   <td className="px-3 py-2">
                     <button
                       type="button"
                       onClick={() => remover(v.fornecedorId)}
                       disabled={aRemover === v.fornecedorId}
                       className="p-1 text-slate-400 hover:text-rose-600 disabled:opacity-50"
-                      title="Remover"
+                      title={t('acoes.remover')}
                     >
                       {aRemover === v.fornecedorId ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -1088,7 +1083,7 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
             onChange={(e) => setFornecedorId(e.target.value)}
             className="rounded border border-slate-200 px-2 py-1.5 text-sm"
           >
-            <option value="">Fornecedor...</option>
+            <option value="">{t('fornecedores.escolher')}</option>
             {disponiveis.map((f) => (
               <option key={f.id} value={f.id}>{f.nome}</option>
             ))}
@@ -1097,7 +1092,7 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
             type="text"
             value={referencia}
             onChange={(e) => setReferencia(e.target.value)}
-            placeholder="Referência (opcional)"
+            placeholder={t('fornecedores.referencia_opcional')}
             className="rounded border border-slate-200 px-2 py-1.5 text-sm"
           />
           <input
@@ -1106,7 +1101,7 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
             step="any"
             value={custo}
             onChange={(e) => setCusto(e.target.value)}
-            placeholder="Custo"
+            placeholder={t('fornecedores.custo')}
             className="rounded border border-slate-200 px-2 py-1.5 text-sm"
           />
           <div className="flex gap-1">
@@ -1115,7 +1110,7 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
               disabled={aGuardar}
               className="flex-1 rounded bg-indigo-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
-              {aGuardar ? '...' : 'Guardar'}
+              {aGuardar ? '...' : t('acoes.guardar')}
             </button>
             <button
               type="button"

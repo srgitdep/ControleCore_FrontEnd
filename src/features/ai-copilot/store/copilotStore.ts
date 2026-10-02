@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from 'i18next';
 import { sendChatMessageApi, executeHitlActionApi, getCopilotSessionsApi, getCopilotSessionMessagesApi } from '../api/copilot.api';
 import type { ChatMessage, HitlActionPayload } from '../api/copilot.api';
 
@@ -25,9 +26,13 @@ interface CopilotState {
 }
 
 // Mensagem de boas-vindas padrão (não enviada para o backend como histórico real)
+// `content` é um getter: o texto resolve-se na língua activa quando é lido, e a identidade do
+// objecto mantém-se — é por ela que `sendMessage` o exclui do histórico enviado à API.
 const WELCOME_MESSAGE: ChatMessage = {
   role: 'model',
-  content: 'Olá! Sou a Mayra, o seu assistente inteligente ControlCore. Como posso ajudar na gestão da sua empresa hoje?',
+  get content() {
+    return i18n.t('boas_vindas', { ns: 'copiloto' });
+  },
 };
 
 export const useCopilotStore = create<CopilotState>((set, get) => ({
@@ -70,7 +75,7 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       set({ messages: mappedMsgs, currentSessionId: sessionId, isLoading: false, error: null });
     } catch (e) {
       console.error(e);
-      set({ isLoading: false, error: 'Erro ao carregar sessão.' });
+      set({ isLoading: false, error: i18n.t('erro.carregar_sessao', { ns: 'copiloto' }) });
     }
   },
 
@@ -135,7 +140,7 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       }));
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Ocorreu um erro de comunicação com a IA.',
+        error: error.response?.data?.message || i18n.t('erro.comunicacao', { ns: 'copiloto' }),
         isLoading: false,
       });
     }
@@ -148,7 +153,7 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       
       const successMessage: ChatMessage = {
         role: 'model',
-        content: `✅ Sucesso: ${response.reply}`,
+        content: i18n.t('sucesso', { ns: 'copiloto', resposta: response.reply }),
       };
 
       set((state) => ({
@@ -160,7 +165,7 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       }));
     } catch (error: any) {
       set({
-        error: error.response?.data?.message || 'Erro ao executar a ação solicitada.',
+        error: error.response?.data?.message || i18n.t('erro.executar_accao', { ns: 'copiloto' }),
         isLoading: false,
       });
     }

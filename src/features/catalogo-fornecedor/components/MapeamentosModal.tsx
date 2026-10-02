@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { X, Package, Loader2 } from 'lucide-react';
-import { catalogoFornecedorApi, ROTULO_METODO } from '../api/catalogo.api';
-import { cn } from '@/shared/utils';
-
-const mt = (v: number) =>
-  `${v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT`;
+import { useTranslation } from 'react-i18next';
+import { catalogoFornecedorApi } from '../api/catalogo.api';
+import { cn, formatMoeda } from '@/shared/utils';
 
 interface Props {
   fornecedorId: string;
@@ -20,6 +18,7 @@ interface Props {
  * catálogo deste fornecedor diz hoje, independentemente de qual importação o criou.
  */
 export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Props) {
+  const { t } = useTranslation('catalogo');
   const { data: mapeamentos = [], isLoading } = useQuery({
     queryKey: ['catalogo-mapeamentos', fornecedorId],
     queryFn: () => catalogoFornecedorApi.mapeamentos(fornecedorId),
@@ -32,7 +31,7 @@ export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Prop
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
               <Package size={16} className="text-slate-400" />
-              Catálogo mapeado
+              {t('mapeamentos.titulo')}
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">{nomeFornecedor}</p>
           </div>
@@ -45,22 +44,21 @@ export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Prop
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              A carregar...
+              {t('mapeamentos.a_carregar')}
             </div>
           ) : mapeamentos.length === 0 ? (
             <p className="py-16 text-center text-sm text-slate-500">
-              Este fornecedor ainda não tem produtos mapeados. Importe um catálogo para
-              começar.
+              {t('mapeamentos.vazio')}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-3 py-2 font-medium">Produto</th>
-                    <th className="px-3 py-2 font-medium">Referência</th>
-                    <th className="px-3 py-2 text-right font-medium">Custo actual</th>
-                    <th className="px-3 py-2 font-medium">Como mapeou</th>
+                    <th className="px-3 py-2 font-medium">{t('mapeamentos.col_produto')}</th>
+                    <th className="px-3 py-2 font-medium">{t('mapeamentos.col_referencia')}</th>
+                    <th className="px-3 py-2 text-right font-medium">{t('mapeamentos.col_custo')}</th>
+                    <th className="px-3 py-2 font-medium">{t('mapeamentos.col_como')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -73,7 +71,7 @@ export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Prop
                         )}
                       </td>
                       <td className="px-3 py-2 text-slate-500">{m.referenciaFornecedor || '—'}</td>
-                      <td className="px-3 py-2 text-right text-slate-700">{mt(m.custoCompra)}</td>
+                      <td className="px-3 py-2 text-right text-slate-700">{formatMoeda(m.custoCompra)}</td>
                       <td className="px-3 py-2">
                         <span
                           className={cn(
@@ -83,7 +81,7 @@ export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Prop
                               : 'bg-slate-100 text-slate-600',
                           )}
                         >
-                          {ROTULO_METODO[m.metodoMapeamento]}
+                          {t(`metodo.${m.metodoMapeamento}`)}
                         </span>
                       </td>
                     </tr>
@@ -99,7 +97,7 @@ export function MapeamentosModal({ fornecedorId, nomeFornecedor, onClose }: Prop
             onClick={onClose}
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
           >
-            Fechar
+            {t('mapeamentos.fechar')}
           </button>
         </div>
       </div>

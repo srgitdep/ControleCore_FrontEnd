@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
+import { formatDataHora } from '@/shared/utils';
 import { reservasApi, type CriarReservaPayload, type LibertarPayload, type ReterPayload } from '../api/reservas.api';
 import type { EstadoReserva } from '../types/stock.types';
 
@@ -43,7 +45,7 @@ export function useReservaMutations() {
     // A mensagem do servidor é a que interessa: diz quantas unidades estão reservadas, em
     // quarentena ou bloqueadas, e quantas faltam. Substituí-la por «ocorreu um erro» apagaria
     // precisamente a informação que resolve o problema.
-    toast.error(erro?.response?.data?.message || 'Não foi possível concluir a operação.');
+    toast.error(erro?.response?.data?.message || i18n.t('stock:operacao.erro_generico'));
   };
 
   const criar = useMutation({
@@ -52,8 +54,11 @@ export function useReservaMutations() {
       invalidar();
       toast.success(
         reserva.expiraEm
-          ? `${reserva.quantidade} unidades reservadas até ${new Date(reserva.expiraEm).toLocaleString('pt-PT')}.`
-          : `${reserva.quantidade} unidades reservadas, sem prazo.`,
+          ? i18n.t('stock:reservas.criada_ate', {
+              count: reserva.quantidade,
+              data: formatDataHora(reserva.expiraEm),
+            })
+          : i18n.t('stock:reservas.criada_sem_prazo', { count: reserva.quantidade }),
       );
     },
     onError: aoFalhar,
@@ -64,7 +69,7 @@ export function useReservaMutations() {
       reservasApi.libertar(reservaId, { motivo }),
     onSuccess: (reserva) => {
       invalidar();
-      toast.success(`${reserva.quantidade} unidades devolvidas ao stock disponível.`);
+      toast.success(i18n.t('stock:reservas.libertada', { count: reserva.quantidade }));
     },
     onError: aoFalhar,
   });
@@ -75,8 +80,11 @@ export function useReservaMutations() {
       invalidar();
       toast.success(
         resultado.expiradas === 0
-          ? 'Nenhuma reserva com prazo passado.'
-          : `${resultado.expiradas} reservas caducadas, ${resultado.quantidadeLibertada} unidades devolvidas.`,
+          ? i18n.t('stock:reservas.nenhuma_caducada')
+          : i18n.t('stock:reservas.caducadas', {
+              count: resultado.expiradas,
+              unidades: resultado.quantidadeLibertada,
+            }),
       );
     },
     onError: aoFalhar,
@@ -88,7 +96,7 @@ export function useReservaMutations() {
     onSuccess: (posicao) => {
       invalidar();
       toast.success(
-        `Mercadoria em quarentena. Disponível passou a ${posicao.estados.disponivel}.`,
+        i18n.t('stock:reservas.quarentena_aplicada', { disponivel: posicao.estados.disponivel }),
       );
     },
     onError: aoFalhar,
@@ -99,7 +107,9 @@ export function useReservaMutations() {
       reservasApi.libertarDaQuarentena(stockId, payload),
     onSuccess: (posicao) => {
       invalidar();
-      toast.success(`Libertada da quarentena. Disponível: ${posicao.estados.disponivel}.`);
+      toast.success(
+        i18n.t('stock:reservas.quarentena_libertada', { disponivel: posicao.estados.disponivel }),
+      );
     },
     onError: aoFalhar,
   });
@@ -109,7 +119,9 @@ export function useReservaMutations() {
       reservasApi.bloquear(stockId, payload),
     onSuccess: (posicao) => {
       invalidar();
-      toast.success(`Mercadoria bloqueada. Disponível passou a ${posicao.estados.disponivel}.`);
+      toast.success(
+        i18n.t('stock:reservas.bloqueada', { disponivel: posicao.estados.disponivel }),
+      );
     },
     onError: aoFalhar,
   });
@@ -119,7 +131,9 @@ export function useReservaMutations() {
       reservasApi.desbloquear(stockId, payload),
     onSuccess: (posicao) => {
       invalidar();
-      toast.success(`Desbloqueada. Disponível: ${posicao.estados.disponivel}.`);
+      toast.success(
+        i18n.t('stock:reservas.desbloqueada', { disponivel: posicao.estados.disponivel }),
+      );
     },
     onError: aoFalhar,
   });

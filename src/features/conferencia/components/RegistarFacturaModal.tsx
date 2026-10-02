@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cn } from '@/shared/utils';
+import { useTranslation } from 'react-i18next';
+import { cn, formatMoeda } from '@/shared/utils';
 import { conferenciaApi } from '../api/conferencia.api';
 import { suppliersApi } from '@/features/fornecedores';
 import { purchasesApi } from '@/features/compras';
 import type { PurchaseOrderItem } from '@/features/compras';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' });
 
 interface Linha {
   itemId?: string;
@@ -43,6 +41,7 @@ interface RegistarFacturaModalProps {
  * existe para apanhar.
  */
 export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModalProps) {
+  const { t } = useTranslation('conferencia');
   const [loading, setLoading] = useState(false);
   const [fornecedorId, setFornecedorId] = useState('');
   const [pedidoId, setPedidoId] = useState('');
@@ -84,7 +83,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
         const linhasDoPedido = (pedido.itens ?? []).map((item: PurchaseOrderItem) => ({
           itemId: item.id,
           produtoId: item.produtoId,
-          descricao: item.produto?.nome ?? 'Produto',
+          descricao: item.produto?.nome ?? t('comum.produto'),
           quantidade: item.quantidadePedida,
           precoUnitario: item.custoUnitario,
           taxaIva: item.taxaIva,
@@ -93,7 +92,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
         setLinhas(linhasDoPedido.length > 0 ? linhasDoPedido : [linhaVazia()]);
       })
       .catch(() => {
-        if (activo) toast.error('Não foi possível carregar as linhas do pedido.');
+        if (activo) toast.error(t('registar.erro_carregar_pedido'));
       })
       .finally(() => {
         if (activo) setIsLoadingPedido(false);
@@ -102,7 +101,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
     return () => {
       activo = false;
     };
-  }, [pedidoId]);
+  }, [pedidoId, t]);
 
   const actualizarLinha = (index: number, campo: keyof Linha, valor: string | number) => {
     setLinhas((antes) => antes.map((l, i) => (i === index ? { ...l, [campo]: valor } : l)));
@@ -120,11 +119,11 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
   const totalDeclarado = totalLinhas + totalImposto + frete;
 
   const submeter = async () => {
-    if (!fornecedorId) return toast.error('Escolha o fornecedor.');
-    if (!numero.trim()) return toast.error('Indique o número da factura.');
-    if (!dataEmissao) return toast.error('Indique a data de emissão.');
+    if (!fornecedorId) return toast.error(t('registar.erro_fornecedor'));
+    if (!numero.trim()) return toast.error(t('registar.erro_numero'));
+    if (!dataEmissao) return toast.error(t('registar.erro_emissao'));
     if (linhasValidas.length === 0) {
-      return toast.error('Adicione pelo menos uma linha com descrição e quantidade.');
+      return toast.error(t('registar.erro_linhas'));
     }
 
     setLoading(true);
@@ -142,11 +141,11 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
         linhas: linhasValidas,
       });
 
-      toast.success('Factura registada. Fica em análise até ser conferida.');
+      toast.success(t('registar.registada'));
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Erro ao registar a factura.');
+      toast.error(error?.response?.data?.message || t('registar.erro'));
     } finally {
       setLoading(false);
     }
@@ -161,14 +160,14 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Registar factura</h2>
-              <p className="text-sm text-slate-500">Entra em análise até ser conferida.</p>
+              <h2 className="text-lg font-semibold text-slate-900">{t('registar.titulo')}</h2>
+              <p className="text-sm text-slate-500">{t('registar.subtitulo')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label={t('comum.fechar')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -178,14 +177,14 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Fornecedor <span className="text-rose-500">*</span>
+                {t('comum.fornecedor')} <span className="text-rose-500">*</span>
               </label>
               <select
                 value={fornecedorId}
                 onChange={(e) => setFornecedorId(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="">Escolher...</option>
+                <option value="">{t('registar.escolher')}</option>
                 {elegiveis.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.nome}
@@ -196,7 +195,8 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Pedido de compra <span className="font-normal text-slate-400">(opcional)</span>
+                {t('registar.pedido_compra')}{' '}
+                <span className="font-normal text-slate-400">{t('registar.opcional')}</span>
               </label>
               <select
                 value={pedidoId}
@@ -204,7 +204,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
                 disabled={!fornecedorId}
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50"
               >
-                <option value="">Sem pedido associado</option>
+                <option value="">{t('registar.sem_pedido')}</option>
                 {pedidosDoFornecedor.map((p) => (
                   <option key={p.id} value={p.id}>
                     #{p.id.slice(0, 8)}
@@ -215,13 +215,13 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Número da factura <span className="text-rose-500">*</span>
+                {t('registar.numero')} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={numero}
                 onChange={(e) => setNumero(e.target.value)}
-                placeholder="Ex: FT-2026/001"
+                placeholder={t('registar.placeholder_numero')}
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -229,7 +229,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Emissão <span className="text-rose-500">*</span>
+                  {t('comum.emissao')} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -240,7 +240,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Vencimento
+                  {t('registar.vencimento')}
                 </label>
                 <input
                   type="date"
@@ -253,11 +253,11 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
           </div>
 
           <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-sm font-semibold text-slate-900">Linhas</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{t('comum.linhas')}</h3>
             {isLoadingPedido && (
               <span className="flex items-center gap-1.5 text-xs text-slate-500">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                A carregar linhas do pedido...
+                {t('registar.a_carregar_linhas')}
               </span>
             )}
           </div>
@@ -270,19 +270,19 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               >
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-slate-600 sm:hidden">
-                    Descrição
+                    {t('registar.descricao')}
                   </span>
                   <input
                     type="text"
                     value={linha.descricao}
                     onChange={(e) => actualizarLinha(index, 'descricao', e.target.value)}
-                    placeholder="Descrição"
+                    placeholder={t('registar.descricao')}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                   />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-slate-600 sm:hidden">
-                    Quantidade
+                    {t('registar.quantidade')}
                   </span>
                   <input
                     type="number"
@@ -295,7 +295,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-slate-600 sm:hidden">
-                    Preço unit.
+                    {t('registar.preco_unit')}
                   </span>
                   <input
                     type="number"
@@ -311,7 +311,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
                 <button
                   onClick={() => removerLinha(index)}
                   disabled={linhas.length === 1}
-                  title="Remover linha"
+                  title={t('registar.remover_linha')}
                   className={cn(
                     'flex items-center justify-center rounded-lg p-2 text-slate-400 transition-colors',
                     linhas.length === 1
@@ -329,12 +329,12 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
             onClick={() => setLinhas((antes) => [...antes, linhaVazia()])}
             className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
           >
-            <Plus className="h-4 w-4" /> Adicionar linha
+            <Plus className="h-4 w-4" /> {t('registar.adicionar_linha')}
           </button>
 
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Imposto</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('comum.imposto')}</label>
               <input
                 type="number"
                 min="0"
@@ -345,7 +345,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Frete</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">{t('comum.frete')}</label>
               <input
                 type="number"
                 min="0"
@@ -358,7 +358,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
           </div>
 
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium text-slate-700">Observações</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700">{t('comum.observacoes')}</label>
             <textarea
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
@@ -370,7 +370,8 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 p-4">
           <p className="text-sm text-slate-600">
-            Total declarado: <strong className="text-slate-900">{moeda(totalDeclarado)}</strong>
+            {t('registar.total_declarado')}{' '}
+            <strong className="text-slate-900">{formatMoeda(totalDeclarado)}</strong>
           </p>
           <div className="flex gap-2">
             <button
@@ -378,7 +379,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               disabled={loading}
               className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Cancelar
+              {t('comum.cancelar')}
             </button>
             <button
               onClick={submeter}
@@ -386,7 +387,7 @@ export function RegistarFacturaModal({ onClose, onSuccess }: RegistarFacturaModa
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Registar factura
+              {t('registar.titulo')}
             </button>
           </div>
         </div>

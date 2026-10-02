@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/shared/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
 import { api } from '@/shared/config';
@@ -13,6 +14,7 @@ interface Role {
 }
 
 export function PermissionsPage() {
+  const { t } = useTranslation('shell');
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   
@@ -32,13 +34,13 @@ export function PermissionsPage() {
           setSelectedRoleId(data[0].id);
         }
       } catch (error) {
-        toast.error('Erro ao carregar os perfis.');
+        toast.error(t('permissoes.erro_perfis'));
       } finally {
         setIsLoadingRoles(false);
       }
     }
     loadRoles();
-  }, []);
+  }, [t]);
 
   // 2. Carregar Permissões quando um Role for selecionado
   useEffect(() => {
@@ -54,14 +56,14 @@ export function PermissionsPage() {
           : [];
         setSelectedPermissions(new Set(flat));
       } catch (error) {
-        toast.error('Erro ao carregar permissões deste perfil.');
+        toast.error(t('permissoes.erro_permissoes'));
       } finally {
         setIsLoadingPerms(false);
       }
     }
     
     loadPermissions();
-  }, [selectedRoleId]);
+  }, [selectedRoleId, t]);
 
   const handleToggle = (actionId: string, resourceId: string) => {
     const permission = `${actionId}:${resourceId}`;
@@ -102,11 +104,11 @@ export function PermissionsPage() {
 
     try {
       await api.post(`/perfis/${selectedRoleId}/permissoes`, { permissionIds: flatPermissions });
-      toast.success('Permissões atualizadas com sucesso!');
+      toast.success(t('permissoes.sucesso'));
     } catch (error) {
       // O servidor explica a recusa — ex.: um perfil de sistema só a SRG o pode alterar.
       // A mensagem fixa escondia o motivo e deixava o ADMIN a tentar outra vez.
-      toast.error(mensagemDeErro(error, 'Erro ao atualizar permissões.'));
+      toast.error(mensagemDeErro(error, t('permissoes.erro_guardar')));
     } finally {
       setIsSaving(false);
     }
@@ -127,7 +129,7 @@ export function PermissionsPage() {
           um ecrã de deslocamento antes de a matriz aparecer. */}
       <div className="lg:hidden">
         <label htmlFor="perfil" className="mb-1.5 block text-sm font-medium text-slate-700">
-          Perfil de acesso
+          {t('permissoes.perfil_acesso')}
         </label>
         <select
           id="perfil"
@@ -136,7 +138,7 @@ export function PermissionsPage() {
           disabled={isLoadingRoles}
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-50"
         >
-          {isLoadingRoles && <option>A carregar...</option>}
+          {isLoadingRoles && <option>{t('permissoes.a_carregar')}</option>}
           {roles.map((role) => (
             <option key={role.id} value={role.id}>
               {role.nome}
@@ -150,14 +152,14 @@ export function PermissionsPage() {
         <div className="p-5 border-b border-slate-200 bg-slate-50">
           <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
             <Users className="w-5 h-5 text-emerald-600" />
-            Perfis de Acesso
+            {t('permissoes.perfis_titulo')}
           </h2>
-          <p className="text-xs text-slate-500 mt-1">Selecione o perfil para configurar as permissões.</p>
+          <p className="text-xs text-slate-500 mt-1">{t('permissoes.perfis_ajuda')}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
           {isLoadingRoles ? (
-            <p className="text-center text-sm text-slate-400 py-4">A carregar...</p>
+            <p className="text-center text-sm text-slate-400 py-4">{t('permissoes.a_carregar')}</p>
           ) : roles.map((role) => (
             <button
               key={role.id}
@@ -191,13 +193,13 @@ export function PermissionsPage() {
             <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="min-w-0">
                 <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold text-slate-800 sm:text-lg">
-                  Matriz de Permissões
+                  {t('permissoes.matriz_titulo')}
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-normal text-emerald-600">
                     {selectedRole.nome}
                   </span>
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  Assinale o que este perfil pode ver e fazer.
+                  {t('permissoes.matriz_ajuda')}
                 </p>
               </div>
               <button
@@ -206,7 +208,7 @@ export function PermissionsPage() {
                 className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-70"
               >
                 <Save className="h-4 w-4" />
-                {isSaving ? 'A guardar...' : 'Guardar Alterações'}
+                {isSaving ? t('permissoes.a_guardar') : t('permissoes.guardar')}
               </button>
             </div>
 
@@ -217,17 +219,17 @@ export function PermissionsPage() {
                 para a direita deixa de se saber de que recurso é cada caixa. */}
             <div className="flex-1 overflow-auto custom-scrollbar">
               {isLoadingPerms ? (
-                <div className="flex justify-center p-12 text-slate-500">A carregar permissões do servidor...</div>
+                <div className="flex justify-center p-12 text-slate-500">{t('permissoes.a_carregar_servidor')}</div>
               ) : (
                 <table className="w-full min-w-[560px] text-left text-sm text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-20 shadow-sm">
                     <tr>
                       <th className="sticky left-0 z-30 w-1/4 min-w-[140px] bg-slate-50 px-4 py-4 font-medium sm:px-6">
-                        Módulo / Recurso
+                        {t('permissoes.coluna_recurso')}
                       </th>
                       {AVAILABLE_ACTIONS.map((action) => (
                         <th key={action.id} className="px-3 py-4 text-center font-medium sm:px-6">
-                          {action.label}
+                          {t(`permissoes.accao.${action.id}`)}
                         </th>
                       ))}
                     </tr>
@@ -238,7 +240,7 @@ export function PermissionsPage() {
                         {/* `bg-white` explícito: uma célula fixa transparente deixaria
                             ver as colunas a passar por baixo dela. */}
                         <td className="sticky left-0 z-10 min-w-[140px] bg-white px-4 py-4 font-medium text-slate-800 group-hover:bg-slate-50 sm:px-6">
-                          {resource.label}
+                          {t(`permissoes.recurso.${resource.id}`)}
                         </td>
 
 
@@ -275,7 +277,7 @@ export function PermissionsPage() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
             <Shield className="w-12 h-12 mb-4 text-slate-300" />
-            <p>Selecione um perfil à esquerda para configurar.</p>
+            <p>{t('permissoes.escolha_perfil')}</p>
           </div>
         )}
       </div>

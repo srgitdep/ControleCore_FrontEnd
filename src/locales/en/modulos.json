@@ -1,0 +1,50 @@
+{
+  "acoes": {
+    "cancelar": "Cancel",
+    "guardar": "Save",
+    "editar": "Edit",
+    "apagar": "Delete"
+  },
+  "pagina": {
+    "titulo": "Modules",
+    "subtitulo": "The catalogue of what companies can subscribe to",
+    "novo": "New module",
+    "mostrar_desactivados": "Show deactivated modules",
+    "vazio": "There are no modules in the catalogue yet.",
+    "col_modulo": "Module",
+    "col_codigo": "Code",
+    "col_preco": "Price / month",
+    "col_estado": "Status",
+    "activo": "Active",
+    "desactivado": "Deactivated",
+    "desactivar": "Deactivate",
+    "activar": "Activate",
+    "apagar_titulo": "Delete module",
+    "apagar_mensagem": "Delete \"{{nome}}\"? If any company has this module active, the server will refuse — deactivate it instead."
+  },
+  "modal": {
+    "codigo_obrigatorio": "Enter the module code.",
+    "nome_obrigatorio": "Enter the module name.",
+    "preco_invalido": "The monthly price must be a valid number.",
+    "titulo_editar": "Edit module",
+    "codigo": "Code",
+    "codigo_exemplo": "E.g. pos",
+    "ordem": "Order",
+    "nome": "Name",
+    "nome_exemplo": "E.g. Point of Sale",
+    "descricao": "Description",
+    "opcional": "(optional)",
+    "preco": "Monthly price (MT)"
+  },
+  "mensagens": {
+    "criado": "Module created.",
+    "erro_criar": "Error creating the module.",
+    "actualizado": "Module updated.",
+    "erro_actualizar": "Error updating the module.",
+    "activado": "\"{{nome}}\" activated.",
+    "desactivado": "\"{{nome}}\" deactivated.",
+    "erro_estado": "Error changing the module status.",
+    "apagado": "Module deleted.",
+    "erro_apagar": "Error deleting the module."
+  }
+}

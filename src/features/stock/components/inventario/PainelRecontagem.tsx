@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { useRecontagensPendentes, useAtribuirRecontagem, useRegistrarRecontagem } from '@/features/stock';
 import { Button } from '@/shared/ui';
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
  * nenhum campo de teórico, mesmo que viesse por engano.
  */
 export function PainelRecontagem({ cycleId }: { cycleId: string }) {
+  const { t } = useTranslation('stock');
   const { data: pendentes = [], isLoading } = useRecontagensPendentes(cycleId);
   const atribuir = useAtribuirRecontagem(cycleId);
   const registrar = useRegistrarRecontagem(cycleId);
@@ -31,9 +33,9 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
         <div className="p-4 bg-emerald-50 rounded-full mb-4">
           <CheckCircle2 className="h-8 w-8 text-emerald-500" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">Sem recontagens pendentes</h3>
+        <h3 className="text-lg font-semibold text-slate-700 mb-2">{t('recontagem.sem_pendentes')}</h3>
         <p className="text-slate-500 text-sm max-w-sm">
-          Todas as divergências deste ciclo já foram recontadas ou não excederam a tolerância.
+          {t('recontagem.sem_pendentes_texto')}
         </p>
       </div>
     );
@@ -48,7 +50,7 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
         setQuantidade('');
       },
       onError: (err: any) =>
-        toast.error(err?.response?.data?.message ?? 'Não foi possível atribuir esta recontagem.'),
+        toast.error(err?.response?.data?.message ?? t('recontagem.erro_atribuir')),
     });
   };
 
@@ -63,8 +65,8 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
         onSuccess: (res) => {
           toast.success(
             res.divergenciaConfirmada
-              ? 'Recontagem registada — a divergência foi confirmada e segue para análise.'
-              : 'Recontagem registada — o valor bate com o esperado.',
+              ? t('recontagem.confirmada')
+              : t('recontagem.bate_certo'),
           );
           setItemEmContagemId(null);
           setQuantidade('');
@@ -78,8 +80,8 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
       <div className="flex items-start gap-3 rounded-xl border border-purple-100 bg-purple-50/60 px-4 py-3">
         <ShieldCheck className="h-5 w-5 shrink-0 text-purple-500" />
         <p className="text-xs text-purple-700">
-          <span className="font-semibold">Recontagem cega.</span> Você vê apenas produto, foto e
-          localização — nunca o stock teórico, a primeira contagem ou a divergência.
+          <span className="font-semibold">{t('recontagem.cega_titulo')}</span>{' '}
+          {t('recontagem.cega_texto')}
         </p>
       </div>
 
@@ -108,7 +110,7 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
           </div>
 
           <label className="mb-1.5 block text-xs font-medium text-slate-600 text-center">
-            Quantidade encontrada
+            {t('recontagem.quantidade_encontrada')}
           </label>
           <input
             type="number"
@@ -124,14 +126,14 @@ export function PainelRecontagem({ cycleId }: { cycleId: string }) {
 
           <div className="mt-4 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setItemEmContagemId(null)}>
-              Cancelar
+              {t('geral.cancelar')}
             </Button>
             <Button
               className="flex-1 bg-purple-600 hover:bg-purple-700"
               disabled={quantidade.trim() === '' || registrar.isPending}
               onClick={confirmar}
             >
-              {registrar.isPending ? 'A registar...' : 'Registar Recontagem'}
+              {registrar.isPending ? t('contagem_item.a_registar') : t('recontagem.registar')}
             </Button>
           </div>
         </div>

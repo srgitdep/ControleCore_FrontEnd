@@ -9,6 +9,11 @@ import {
 } from '../api/empresa.api';
 import type { UpdateBrandingPayload } from '../types';
 import toast from 'react-hot-toast';
+import i18n from '@/i18n';
+
+// Fora de componentes não há hook: `getFixedT` com língua nula segue a língua activa em cada
+// chamada, e não a do momento em que o módulo carregou.
+const t = i18n.getFixedT(null, 'empresas');
 
 export function useEmpresas() {
   return useQuery({
@@ -31,11 +36,11 @@ export function useCreateEmpresa() {
   return useMutation({
     mutationFn: createEmpresa,
     onSuccess: () => {
-      toast.success('Empresa criada com sucesso!');
+      toast.success(t('mensagens.criada'));
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar empresa.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_criar'));
     }
   });
 }
@@ -46,12 +51,12 @@ export function useUpdateEmpresa() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateEmpresa(id, data),
     onSuccess: (_, variables) => {
-      toast.success('Empresa atualizada com sucesso!');
+      toast.success(t('mensagens.actualizada'));
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       queryClient.invalidateQueries({ queryKey: ['empresa', variables.id] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao atualizar empresa.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_actualizar'));
     }
   });
 }
@@ -62,12 +67,12 @@ export function useUpdateBranding() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateBrandingPayload }) => updateBranding(id, data),
     onSuccess: (_, variables) => {
-      toast.success('Identidade visual actualizada.');
+      toast.success(t('mensagens.branding_actualizado'));
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       queryClient.invalidateQueries({ queryKey: ['empresa', variables.id] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao actualizar a identidade visual.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_branding'));
     },
   });
 }
@@ -78,11 +83,11 @@ export function useDeleteEmpresa() {
   return useMutation({
     mutationFn: deleteEmpresa,
     onSuccess: () => {
-      toast.success('Empresa eliminada com sucesso!');
+      toast.success(t('mensagens.eliminada'));
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao eliminar empresa.');
+      toast.error(error.response?.data?.message || t('mensagens.erro_eliminar'));
     }
   });
 }
