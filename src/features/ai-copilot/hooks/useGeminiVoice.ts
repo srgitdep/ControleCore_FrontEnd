@@ -112,8 +112,17 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
   /**
    * Sanitiza o texto para leitura natural pelo sintetizador do browser.
+   *
+   * As expansões de abreviatura (`kg` → «quilos», `%` → «por cento») são por língua: a
+   * detecção corre sobre o texto em bruto, antes de qualquer substituição, porque depois
+   * de trocar siglas por palavras portuguesas o detector veria português mesmo numa
+   * resposta em inglês. Sem isto, uma resposta em inglês lia "50%" como "50 por cento" —
+   * a frase ficava com uma palavra portuguesa a meio de uma frase inglesa, pior do que
+   * deixar o símbolo por expandir.
    */
   const cleanTextForSpeech = useCallback((rawText: string): string => {
+    const emIngles = detectarIdioma(rawText) === 'en-US';
+
     let cleaned = rawText
       .replace(/\[PERSONA:[^\]]+\]/gi, '')
       .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -121,14 +130,14 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       .replace(/```[\s\S]*?```/g, '')
       .replace(/`([^`]+)`/g, '$1')
       .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
-      .replace(/\bMZN\b/g, 'meticais')
-      .replace(/\bUSD\b/g, 'dólares')
+      .replace(/\bMZN\b/g, emIngles ? 'meticals' : 'meticais')
+      .replace(/\bUSD\b/g, emIngles ? 'US dollars' : 'dólares')
       .replace(/\bEUR\b/g, 'euros')
-      .replace(/\bkg\b/g, 'quilos')
-      .replace(/%/g, ' por cento')
-      .replace(/\bSr\.\b/g, 'Senhor')
-      .replace(/\bSra\.\b/g, 'Senhora')
-      .replace(/\bEng\.\b/g, 'Engenheiro')
+      .replace(/\bkg\b/g, emIngles ? 'kilos' : 'quilos')
+      .replace(/%/g, emIngles ? ' percent' : ' por cento')
+      .replace(/\bSr\.\b/g, emIngles ? 'Mr.' : 'Senhor')
+      .replace(/\bSra\.\b/g, emIngles ? 'Mrs.' : 'Senhora')
+      .replace(/\bEng\.\b/g, emIngles ? 'Eng.' : 'Engenheiro')
       .trim();
 
     if (cleaned.length > 350) {
