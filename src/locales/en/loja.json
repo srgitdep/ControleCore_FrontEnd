@@ -44,7 +44,8 @@
     "sem_stock": "Out of stock in this shop right now.",
     "sem_stock_curto": "Out of stock in this shop",
     "favoritar": "Add to favourites",
-    "desfavoritar": "Remove from favourites"
+    "desfavoritar": "Remove from favourites",
+    "desconto": "-{{percentual}}%"
   },
   "favoritos": {
     "titulo": "My favourites",

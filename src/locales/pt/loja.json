@@ -44,7 +44,8 @@
     "sem_stock": "Sem stock nesta loja de momento.",
     "sem_stock_curto": "Sem stock nesta loja",
     "favoritar": "Adicionar aos favoritos",
-    "desfavoritar": "Remover dos favoritos"
+    "desfavoritar": "Remover dos favoritos",
+    "desconto": "-{{percentual}}%"
   },
   "favoritos": {
     "titulo": "Os meus favoritos",

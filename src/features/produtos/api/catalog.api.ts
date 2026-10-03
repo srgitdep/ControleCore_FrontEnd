@@ -205,6 +205,14 @@ export const catalogApi = {
     await api.delete(`/produtos/${produtoId}/imagens/${imagemId}`);
   },
 
+  definirImagemPrincipal: async (produtoId: string, imagemId: string) => {
+    await api.patch(`/produtos/${produtoId}/imagens/${imagemId}/principal`);
+  },
+
+  reordenarImagensProduto: async (produtoId: string, imagemIds: string[]) => {
+    await api.patch(`/produtos/${produtoId}/imagens/reordenar`, { imagemIds });
+  },
+
   // ─── Fornecedores do produto ────────────────────────────────────────────────
   //
   // Um produto pode ter mais do que um fornecedor, cada um com o seu preço de custo e

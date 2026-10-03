@@ -215,8 +215,11 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   - **Necessidades de Compra (DT01)** — `NecessidadeCompra`,
     `NecessidadeHistorico`, `TransferenciaLoja`.
   - **Compra Fácil (Commerce)** — `ContaCliente`, `Pedido`, `PedidoItem`,
-    `PedidoItemSubstituicao`, `ReservaStock`, `ProdutoImagem`,
-    `FavoritoCliente`, `ComercioConfiguracao`.
+    `PedidoItemSubstituicao`, `ReservaStock`, `ProdutoImagem` (galeria, até 6 por
+    produto — `GerirImagensProdutoUseCase`), `FavoritoCliente`,
+    `ComercioConfiguracao`, `Promocao` (desconto por produto/categoria com
+    período — módulo `promocao`, `PrecoPromocionalService` aplica o desconto
+    tanto no catálogo público como no checkout).
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à

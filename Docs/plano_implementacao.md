@@ -973,21 +973,58 @@ esse merge trouxe.
   >   para `CONFIRMADO`/`PRONTO`, não para `CRIADO`). Limpeza a acompanhar em
   >   `pedido-estado.ts`/`.spec.ts` e em quatro ficheiros de tradução do frontend
   >   (`loja`/`lojaGestao`, pt/en) que ainda listavam os dois estados.
-  > - **Não implementado, por decisão de produto já tomada no código**: a galeria
-  >   de fotos do produto. `GerirImagensProdutoUseCase` já documenta a escolha —
-  >   "uma galeria com várias fotos e reordenação fica para quando houver procura
-  >   real por isso" — e o catálogo público do Compra Fácil só lê `isPrincipal`.
-  >   Implementar agora seria reverter essa decisão sem ela ter sido revista, não
-  >   corrigir uma lacuna.
-  > - **Não implementado, por exigirem decisão que não compete à IA tomar
-  >   sozinha**: cobrança M-Pesa/e-Mola no checkout (gateway, conta de
-  >   comerciante, reembolsos — ver Secção 3); CRM/recomendações com risco de
-  >   stock (ferramenta nova da Mayra sobre promoções, cuja existência como
-  >   conceito ainda não está confirmada no sistema); histórico de compras entre
-  >   empresas (contradiz deliberadamente o isolamento multi-tenant actual).
-  > - **Não implementado, por não ser código**: confirmar que a chave Gemini em
-  >   produção pertence à facturação da SRG — verificação na consola da Google
-  >   Cloud, só o utilizador a pode fazer.
+  > - **Confirmado pelo utilizador**: a chave Gemini em produção é da facturação
+  >   da SRG — fecha o item pendente desde 28/09/2026.
+  > - **Esclarecimento do utilizador sobre "histórico de compras entre empresas"**:
+  >   o pedido original da lista semanal não era sobre identidade de cliente entre
+  >   empresas (que continua fora de âmbito, por contradizer o isolamento
+  >   multi-tenant) — era sobre a loja/empresa ver o histórico das suas próprias
+  >   vendas online. Resolvido: ver a entrada própria no backlog («Histórico de
+  >   vendas online, por empresa/loja»).
+  >
+  > **Autorizado pelo utilizador e implementado nesta extensão** (revertendo a
+  > avaliação anterior de que exigiam decisão de produto):
+  >
+  > - **Galeria de fotos do produto.** `GerirImagensProdutoUseCase` passa a
+  >   acrescentar em vez de substituir (até 6 imagens por produto — `sharp`
+  >   continua a converter tudo para WebP); a primeira imagem nasce principal,
+  >   novos endpoints `PATCH .../imagens/:imagemId/principal` e
+  >   `PATCH .../imagens/reordenar` trocam isso depois. ERP: grelha de miniaturas
+  >   com estrela (definir principal) e remover. Compra Fácil: carrossel com
+  >   miniaturas no detalhe do produto, em vez de uma imagem só.
+  > - **Promoções com risco de stock.** Novo módulo `promocao`: modelo `Promocao`
+  >   (desconto 1–90% por produto ou por categoria, com período), domínio puro
+  >   `calcularRiscoStockPromocao` (heurística declarada: elasticidade assumida de
+  >   1.5 — cada 10% de desconto sobe a procura esperada 15% sobre a média
+  >   histórica de 30 dias; devolve `SEM_DADOS` sem histórico de vendas, nunca uma
+  >   previsão inventada), `PrecoPromocionalService` (prioriza promoção directa do
+  >   produto sobre a da categoria) e tool da MAYRA `assess_promotion_stock_risk`
+  >   (avalia uma promoção hipotética, antes de criar). **O desconto é real, não
+  >   só visual**: `CatalogoPublicoService` e `CriarPedidoUseCase` chamam o mesmo
+  >   `PrecoPromocionalService` — o preço que o catálogo mostra é o preço que o
+  >   checkout cobra. Só `Gestor`/`Admin` podem criar/cancelar (`promocao.gerir`,
+  >   migração `20261003050000_promocao_permissoes`). Frontend: página
+  >   `/promocoes` (criar com preview do risco antes de confirmar; listar;
+  >   cancelar), preço promocional riscado + badge de desconto no detalhe do
+  >   produto do Compra Fácil. Fica por fazer a *recomendação* automática (a MAYRA
+  >   sugerir por iniciativa própria que promover) — ver item próprio no backlog.
+  > - **Histórico de vendas online por empresa/loja.** Nenhum endpoint novo — o
+  >   `ListarPedidosGestaoUseCase` já aceitava `estado=CONCLUIDO` e `lojaId`. Só
+  >   faltava mostrar isso como histórico: `PedidosCommercePage` passa a somar e
+  >   contar os pedidos concluídos num resumo visível quando esse filtro está
+  >   activo.
+  >
+  > **Ainda não implementado** (sem novidade sobre a avaliação anterior):
+  > cobrança M-Pesa/e-Mola no checkout (gateway, conta de comerciante, reembolsos
+  > — ver Secção 3); CRM, recomendação por regras (a MAYRA sugerir promoções por
+  > iniciativa própria — distinto da avaliação de risco, já feita); histórico de
+  > compras entre empresas diferentes (identidade de cliente cross-tenant,
+  > continua fora de âmbito).
+  >
+  > **Testes desta extensão**: `risco-stock-promocao.spec.ts` (5),
+  > `preco-com-desconto.spec.ts` (2), `preco-promocional.service.spec.ts` (6) —
+  > todos novos, domínio puro sem mocks de I/O onde possível. Backend 2352 (suite
+  > completa), frontend 148 — ambos limpos; `tsc` sem erros nos dois repositórios.
 
 ---
 
@@ -999,22 +1036,34 @@ esse merge trouxe.
 
 ### Compra Fácil
 
-- [ ] **CRM, recomendação por regras e promoções** (Compra Fácil). Fonte:
-      `plano_feature_compra_facil.md` §8.3 (documento de planeamento já
-      removido do `Docs/` por estar superado; texto completo no histórico git,
-      commit `feat/compra-facil-fase11`). Depende do núcleo do pedido estar
-      estável (Fases 11–12, já concluídas).
+- [ ] **CRM, recomendação por regras** (Compra Fácil) — a MAYRA sugerir, por
+      iniciativa própria, que produtos promover. Distinto do item de promoções
+      abaixo, já resolvido: aqui falta a parte de *recomendação*, não a de
+      *avaliação*. Fonte: `plano_feature_compra_facil.md` §8.3 (documento de
+      planeamento já removido do `Docs/` por estar superado; texto completo no
+      histórico git, commit `feat/compra-facil-fase11`).
 - [x] `FavoritoCliente` — resolvido em 2026-10-03 (Fase 21): endpoints
       `GET/POST /commerce/favoritos`, `DELETE /commerce/favoritos/:produtoId`, botão
       de coração no cartão de produto e página «Os meus favoritos».
-- [ ] Promoções com verificação de risco de stock (`assess_promotion_stock_risk`,
-      tool da MAYRA prevista para uma fase futura).
+- [x] **Promoções com verificação de risco de stock** — resolvido em 2026-10-03
+      (Fase 21): novo módulo `promocao` (desconto por produto ou categoria, com
+      período), tool da MAYRA `assess_promotion_stock_risk`, e o desconto aplicado
+      de verdade no catálogo público e no checkout (não é só visual). Ver §4.3 para
+      o detalhe. Fica a faltar a *recomendação por regras* (item acima).
 - [ ] Histórico de compras entre empresas diferentes — hoje "lojas onde já
       comprei" só vê a empresa da `ContaCliente` autenticada actual (Fase 13);
       exigiria um projecto de identidade de cliente entre empresas, fora do
-      âmbito do mercado.
-- [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
-      produto, herdado da Fase 11).
+      âmbito do mercado. **Não confundir** com o item seguinte, que é outra coisa.
+- [x] Histórico de vendas online, por empresa/loja — resolvido em 2026-10-03 (Fase
+      21). Pedido esclarecido pelo utilizador: não é sobre identidade de cliente
+      entre empresas (item acima), é sobre o **lojista** ver o que já vendeu online.
+      `ListarPedidosGestaoUseCase` já aceitava filtrar por `estado=CONCLUIDO` e por
+      loja — só faltava um resumo visível; a fila de gestão (`PedidosCommercePage`)
+      mostra agora a contagem e o total vendido quando esse filtro está activo.
+- [x] Galeria de produto com várias fotos no mercado — resolvido em 2026-10-03
+      (Fase 21): `GerirImagensProdutoUseCase` passa a acrescentar em vez de
+      substituir (até 6 imagens), com `definirPrincipal`/`reordenar`; o ERP mostra
+      a grelha e o Compra Fácil mostra um carrossel com miniaturas.
 - [x] Mostrar no ecrã de stock quanto está reservado por pedidos online — resolvido
       em 2026-10-03 (Fase 21): `GetStockQueriesUseCase` soma as `ReservaStock`
       activas por posição (produto × armazém) e a tabela de stock mostra a legenda
@@ -1179,10 +1228,9 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       (Fase 21): `src/shared/gemini-model.ts` centraliza as 8 chamadas que recorriam
       a `'gemini-2.0-flash'` (modelo retirado da API); `main.ts` recusa o arranque,
       com mensagem clara, se `GEMINI_MODEL` faltar.
-- [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
-      facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
-      desenvolvimento para repor a Mayra. Verificação administrativa na consola da
-      Google Cloud — não é código, continua por fazer.
+- [x] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
+      facturação da SRG — confirmado pelo utilizador em 2026-10-03: a chave é da
+      empresa SRG.
 - [x] Teste instável `bater-ponto.use-case.spec.ts` — resolvido em 2026-09-29 (Fase 17):
       relógio fixo no teste, testes no fuso de Maputo e `TZ` no servidor, que
       corria em UTC e calculava o atraso do ponto 2 h ao lado.
@@ -1219,6 +1267,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 | --- | --- | --- | --- |
 | 4.1 | Entrega ao domicílio (Compra Fácil) | Aprovado — decisões de 2026-09-29; começa depois da Fase 1 da §4.2 | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Aprovado — decisões de 2026-09-29; Fase 1 é a próxima | Secção 3 → «Multilínguas» |
+| 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -2802,6 +2851,59 @@ cd C:/Documentos/SRG/ControlCore/ControleCore_FrontEnd && npm run lint && npm ru
 - Backend primeiro, frontend depois: o frontend passa a ler `idioma` de `/auth/eu`.
 - Confirmar que `src/i18n/` foi copiado para `dist/` na imagem — sem isso o backend
   arranca, mas todas as traduções caem no recurso em português.
+
+---
+
+### 4.3 Promoções com risco de stock (Compra Fácil)
+
+Implementado em 2026-10-03 (Fase 21), a pedido directo do utilizador — sem passar
+por «Fase em curso», por ser menor que a Entrega ao Domicílio ou o Multilínguas e
+não exigir fases sequenciais.
+
+**O que é:** desconto por período num produto ou numa categoria inteira do Compra
+Fácil, com uma avaliação de risco de rutura de stock antes de a promoção ser
+lançada — nunca bloqueante, só informativa (mesmo princípio de `saude-stock.ts`:
+este sistema informa, não decide por quem lança a promoção).
+
+**Dados** (`prisma/schema.prisma`): `enum TipoPromocao { PRODUTO, CATEGORIA }`;
+`model Promocao` (`empresaId`, `nome`, `tipo`, `produtoId?`, `categoriaId?`,
+`percentualDesconto` 1–90, `dataInicio`, `dataFim`, `isActive`, `criadoPorId?`).
+Migração `20261003040000_promocoes`. O preço com desconto **nunca é persistido**
+— calcula-se sempre na leitura, para a promoção acabar sozinha em `dataFim` sem
+ser preciso repor nada.
+
+**A heurística do risco** (`src/modules/promocao/domain/risco-stock-promocao.ts`,
+testado sem I/O): sem dados históricos de elasticidade de preço reais — nenhuma
+promoção tinha corrido ainda —, assume-se uma elasticidade de 1.5: cada 10% de
+desconto sobe a procura esperada 15% sobre a média de vendas dos últimos 30 dias.
+É uma estimativa declarada, não uma previsão; `SEM_DADOS` é devolvido em vez de
+um número quando não há histórico de vendas. Classifica `BAIXO`/`MEDIO`/`ALTO`
+comparando a cobertura do stock disponível com a duração da promoção.
+
+**O desconto é real, não só visual** — o mesmo `PrecoPromocionalService`
+(`src/modules/promocao/application/services/`) é chamado por
+`CatalogoPublicoService` (o que o cliente vê) e por `CriarPedidoUseCase` (o que o
+cliente paga no checkout). Prioridade: uma promoção directa no produto vale mais
+do que uma da sua categoria. Sem isto, uma promoção seria decorativa — o
+catálogo mostraria um preço que o checkout não cobraria.
+
+**Tool da MAYRA** `assess_promotion_stock_risk`
+(`src/modules/ai-copilot/infrastructure/tools/crm/`): avalia uma promoção
+hipotética por nome de produto ou categoria, antes de ela existir — não cria
+nada, só informa.
+
+**Permissões:** `promocao.ver`/`promocao.gerir`, só ligadas ao perfil de sistema
+`Gestor` (migração `20261003050000_promocao_permissoes`) — decidir um desconto de
+preço é decisão de gestão, ao contrário da fila de pedidos, que o Caixa também
+opera.
+
+**Frontend:** página `/promocoes` — criar (com o risco mostrado antes de
+confirmar, nunca bloqueando), listar, cancelar. Preço promocional riscado + badge
+de desconto no detalhe do produto do Compra Fácil (`ProdutoDetalhePage`).
+
+**Fica por fazer:** a MAYRA *recomendar* por iniciativa própria que produtos
+promover (`CRM, recomendação por regras` no backlog) — este plano cobre só a
+*avaliação* de uma promoção já decidida por uma pessoa.
 
 ---
 

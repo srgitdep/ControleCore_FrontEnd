@@ -21,6 +21,7 @@ import { PurchasesPage } from '@/features/compras';
 import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/features/necessidades';
 import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
+import { PromocoesPage } from '@/features/promocoes';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -233,6 +234,7 @@ export const router = createBrowserRouter([
           // (@ModuloNecessario('commerce') + @Permissao) e do <Can> dentro da página;
           // aqui só a rota, como as restantes desta secção.
           { path: '/commerce/pedidos', element: <PedidosCommercePage /> },
+          { path: '/promocoes', element: <PromocoesPage /> },
           { path: '/compras',       element: <PurchasesPage /> },
           // As requisições vivem em rota própria e não como separador de Compras.
           //

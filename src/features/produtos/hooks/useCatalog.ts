@@ -75,6 +75,38 @@ export function useRemoverImagemProduto() {
   });
 }
 
+export function useDefinirImagemPrincipal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ produtoId, imagemId }: { produtoId: string; imagemId: string }) =>
+      catalogApi.definirImagemPrincipal(produtoId, imagemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || t('mensagens.erro_carregar_imagem'));
+    },
+  });
+}
+
+export function useReordenarImagensProduto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ produtoId, imagemIds }: { produtoId: string; imagemIds: string[] }) =>
+      catalogApi.reordenarImagensProduto(produtoId, imagemIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || t('mensagens.erro_carregar_imagem'));
+    },
+  });
+}
+
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 

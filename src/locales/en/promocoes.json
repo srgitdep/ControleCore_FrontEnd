@@ -1,0 +1,46 @@
+{
+  "titulo": "Promotions",
+  "nova": "New promotion",
+  "vazio": "No promotions yet.",
+  "formulario": {
+    "titulo": "New promotion",
+    "nome": "Name",
+    "tipo": "Applies to",
+    "tipo_produto": "A product",
+    "tipo_categoria": "A category",
+    "produto": "Product",
+    "categoria": "Category",
+    "escolher": "Choose...",
+    "percentual": "Discount (%)",
+    "data_inicio": "Start",
+    "data_fim": "End",
+    "criar": "Create promotion",
+    "fechar": "Close",
+    "criada_titulo": "Promotion created. Stock risk during the period:",
+    "risco_sem_dados": "Not enough sales history to estimate demand — review carefully before announcing the promotion.",
+    "risco_detalhe": "Expected demand: {{procura}} units. Available stock: {{stock}}. Coverage: {{cobertura}} days."
+  },
+  "risco": {
+    "SEM_DADOS": "No data",
+    "BAIXO": "Low risk",
+    "MEDIO": "Medium risk",
+    "ALTO": "High risk of stockout"
+  },
+  "tabela": {
+    "nome": "Name",
+    "alvo": "Applies to",
+    "desconto": "Discount",
+    "periodo": "Period",
+    "estado": "Status",
+    "activa": "Active",
+    "terminada": "Ended",
+    "cancelada": "Cancelled",
+    "cancelar": "Cancel"
+  },
+  "mensagens": {
+    "criada": "Promotion created.",
+    "cancelada": "Promotion cancelled.",
+    "erro_criar": "Could not create the promotion.",
+    "erro_cancelar": "Could not cancel the promotion."
+  }
+}

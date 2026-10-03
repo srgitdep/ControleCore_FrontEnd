@@ -19,6 +19,7 @@
       "armazens": "Armazéns",
       "transferencias": "Transferências",
       "pedidos_commerce": "Pedidos Compra Fácil",
+      "promocao": "Promoções",
       "necessidades": "Necessidades",
       "requisicoes": "Requisições",
       "compras": "Compras",
@@ -144,7 +145,8 @@
       "rh": "Recursos Humanos",
       "vendas": "Vendas",
       "clientes": "Clientes / CRM",
-      "pedidos_commerce": "Pedidos Compra Fácil"
+      "pedidos_commerce": "Pedidos Compra Fácil",
+      "promocao": "Promoções"
     },
     "accao": {
       "read": "Visualizar",

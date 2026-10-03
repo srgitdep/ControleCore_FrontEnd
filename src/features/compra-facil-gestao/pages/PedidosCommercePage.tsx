@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getLojas } from '@/features/lojas';
-import { cn, mensagemDeErro } from '@/shared/utils';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaPedidosCommerce } from '../components/TabelaPedidosCommerce';
 import { DetalhePedidoCommerceDrawer } from '../components/DetalhePedidoCommerceDrawer';
@@ -40,6 +40,14 @@ export function PedidosCommercePage() {
   // O drawer segue os dados mais recentes da lista (cada mutação invalida-a),
   // em vez de ficar preso à cópia do momento em que foi aberto.
   const pedidoActual = pedidoAberto ? (pedidos?.find((p) => p.id === pedidoAberto.id) ?? pedidoAberto) : null;
+
+  // "Concluído" é, por definição, o histórico de vendas feitas online — o pedido só
+  // chega a este estado depois de `ConfirmarLevantamentoUseCase` gerar a venda real
+  // (`vendaId` fica preenchido). O total aqui é o mesmo valor que entrou no caixa.
+  const totalHistorico = useMemo(
+    () => pedidos?.reduce((soma, p) => soma + p.totalFinal, 0) ?? 0,
+    [pedidos],
+  );
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -89,6 +97,21 @@ export function PedidosCommercePage() {
           </button>
         ))}
       </div>
+
+      {/* O histórico de vendas online por loja já existia tecnicamente — filtrar por
+          "Concluído" e escolher a loja no selector acima. Faltava só este resumo
+          para a fila genérica também servir de relatório. */}
+      {estado === 'CONCLUIDO' && !isLoading && (
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <TrendingUp size={18} className="text-emerald-600" />
+          <p className="text-sm text-emerald-800">
+            {t('pagina.resumo_historico', {
+              count: pedidos?.length ?? 0,
+              total: formatMoeda(totalHistorico),
+            })}
+          </p>
+        </div>
+      )}
 
       {isError ? (
         <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">

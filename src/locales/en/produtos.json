@@ -89,11 +89,13 @@
     "erro_guardar": "Error saving the minimum stock."
   },
   "imagem": {
-    "titulo": "Product image",
+    "titulo": "Product images",
     "a_carregar": "Uploading...",
     "substituir": "Replace image",
-    "carregar": "Upload image",
-    "formatos": "JPEG, PNG or WEBP up to 5MB — converted to WebP."
+    "carregar": "Upload",
+    "e_principal": "This is the main image",
+    "tornar_principal": "Set as main",
+    "formatos": "JPEG, PNG or WEBP up to 5MB — converted to WebP. Up to 6 images."
   },
   "fornecedores": {
     "titulo": "Suppliers",
