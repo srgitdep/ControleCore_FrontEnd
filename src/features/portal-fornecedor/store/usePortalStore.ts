@@ -1,4 +1,4 @@
-import { aplicarIdiomaGuardado } from '@/i18n';
+import { aplicarIdiomaGuardado, adoptarIdiomaSeNuncaEscolhido } from '@/i18n';
 import { create } from 'zustand';
 import { portal, registarQuedaDeSessao } from '../api/portal.api';
 import type { Conformidade, UtilizadorPortal } from '../api/portal.api';
@@ -62,6 +62,7 @@ export const usePortalStore = create<EstadoPortal>((set, get) => ({
     // lê `/eu` e traz o resto — nome da organização e conformidade incluídos.
     const { utilizador } = await portal.entrar({ identificador, password });
     aplicarIdiomaGuardado(utilizador.idioma);
+    adoptarIdiomaSeNuncaEscolhido(utilizador.idioma, (idioma) => portal.actualizarPerfil({ idioma }));
 
     set({ fornecedor: utilizador, autenticado: true, aCarregar: false });
 

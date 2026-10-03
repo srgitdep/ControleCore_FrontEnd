@@ -1,7 +1,7 @@
 import { Children, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
-import { useBreakpoint } from '@/shared/hooks';
+import { BREAKPOINTS, useBreakpoint } from '@/shared/hooks';
 
 /**
  * Cartões que se deslizam na horizontal, com pontos de posição.
@@ -47,9 +47,31 @@ export function CardCarousel({ children, label, colunas = 4, className }: CardCa
   const { t } = useTranslation('shell');
   const slides = Children.toArray(children).filter(Boolean);
   const pista = useRef<HTMLDivElement>(null);
+  const invólucro = useRef<HTMLDivElement>(null);
   const [activo, setActivo] = useState(0);
 
-  const emEcraLargo = useBreakpoint('lg');
+  // Falha segura para a primeira renderização e para quando o `ResizeObserver` ainda
+  // não mediu nada (SSR, Vitest sem essa API).
+  const janelaLarga = useBreakpoint('lg');
+  const [largoMedido, setLargoMedido] = useState<number | null>(null);
+
+  // A decisão é sobre a largura que o PRÓPRIO componente tem, não a da janela: um
+  // painel ao lado (a Mayra, por exemplo — ver `CopilotWidget`) encolhe o conteúdo sem
+  // encolher a janela, e `useBreakpoint('lg')` continuava a mandar a grelha de 5
+  // colunas, que depois espremia o texto de cada cartão. Foi assim que apareceu: textos
+  // mais longos em inglês tornaram visível um problema que já existia em português.
+  useEffect(() => {
+    const el = invólucro.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const observador = new ResizeObserver(([entrada]) => {
+      setLargoMedido(entrada.contentRect.width);
+    });
+    observador.observe(el);
+    return () => observador.disconnect();
+  }, []);
+
+  const emEcraLargo = largoMedido !== null ? largoMedido >= BREAKPOINTS.lg : janelaLarga;
 
   /**
    * Qual o cartão mais próximo do início da área visível.
@@ -89,77 +111,78 @@ export function CardCarousel({ children, label, colunas = 4, className }: CardCa
     setActivo(indice);
   };
 
-  // ── Grelha, em ecrã largo ──────────────────────────────────────────────────
-  if (emEcraLargo) {
-    return (
-      <div
-        className={cn(
-          'grid gap-4',
-          colunas === 2 && 'grid-cols-2',
-          colunas === 3 && 'grid-cols-3',
-          colunas === 4 && 'grid-cols-4',
-          colunas === 5 && 'grid-cols-5',
-          className,
-        )}
-      >
-        {children}
-      </div>
-    );
-  }
-
-  // Um cartão só não é um carrossel: os pontos e o deslize não teriam para onde ir.
-  if (slides.length <= 1) {
-    return <div className={className}>{children}</div>;
-  }
-
+  // O invólucro mede sempre, nos dois modos — é o que deixa o `ResizeObserver` a
+  // observar o mesmo nó mesmo quando se troca de grelha para carrossel e vice-versa.
   return (
-    <div className={className}>
-      <div
-        ref={pista}
-        role="group"
-        aria-label={label}
-        className={cn(
-          'flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1',
-          // A barra é escondida porque os pontos já dizem a posição — e uma barra
-          // debaixo de quatro cartões é ruído. A classe está definida no `index.css`.
-          'hide-scrollbar',
-          // `-mx-4 px-4` deixa o primeiro e o último cartão alinhados com o resto da
-          // página, mas permite que o deslize chegue à margem: sem isto, o último
-          // cartão encosta ao bordo do ecrã e parece cortado.
-          '-mx-4 px-4 sm:-mx-6 sm:px-6',
-        )}
-      >
-        {slides.map((slide, i) => (
+    <div ref={invólucro}>
+      {emEcraLargo ? (
+        // ── Grelha, em ecrã largo ──────────────────────────────────────────
+        <div
+          className={cn(
+            'grid gap-4',
+            colunas === 2 && 'grid-cols-2',
+            colunas === 3 && 'grid-cols-3',
+            colunas === 4 && 'grid-cols-4',
+            colunas === 5 && 'grid-cols-5',
+            className,
+          )}
+        >
+          {children}
+        </div>
+      ) : slides.length <= 1 ? (
+        // Um cartão só não é um carrossel: os pontos e o deslize não teriam para onde ir.
+        <div className={className}>{children}</div>
+      ) : (
+        <div className={className}>
           <div
-            key={i}
-            // `basis` a 78% em telemóvel deixa o cartão seguinte meio visível — é o que
-            // indica que há mais para o lado, antes de o utilizador ver os pontos.
-            className="min-w-0 shrink-0 grow-0 basis-[78%] snap-start sm:basis-[45%]"
-          >
-            {slide}
-          </div>
-        ))}
-      </div>
-
-      {/* ── Os pontos ─────────────────────────────────────────────────────────
-          São botões e não `<span>`: além de indicarem a posição, levam até ao cartão.
-          Numa lista de quatro, tocar no último é mais rápido do que deslizar três vezes. */}
-      <div className="mt-3 flex items-center justify-center gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => irPara(i)}
-            aria-label={t('carrossel.ir_para', { n: i + 1, total: slides.length })}
-            aria-current={i === activo}
+            ref={pista}
+            role="group"
+            aria-label={label}
             className={cn(
-              'h-1.5 rounded-full transition-all duration-300',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
-              i === activo ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
+              'flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1',
+              // A barra é escondida porque os pontos já dizem a posição — e uma barra
+              // debaixo de quatro cartões é ruído. A classe está definida no `index.css`.
+              'hide-scrollbar',
+              // `-mx-4 px-4` deixa o primeiro e o último cartão alinhados com o resto da
+              // página, mas permite que o deslize chegue à margem: sem isto, o último
+              // cartão encosta ao bordo do ecrã e parece cortado.
+              '-mx-4 px-4 sm:-mx-6 sm:px-6',
             )}
-          />
-        ))}
-      </div>
+          >
+            {slides.map((slide, i) => (
+              <div
+                key={i}
+                // `basis` a 78% em telemóvel deixa o cartão seguinte meio visível — é o
+                // que indica que há mais para o lado, antes de o utilizador ver os pontos.
+                className="min-w-0 shrink-0 grow-0 basis-[78%] snap-start sm:basis-[45%]"
+              >
+                {slide}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Os pontos ───────────────────────────────────────────────────
+              São botões e não `<span>`: além de indicarem a posição, levam até ao
+              cartão. Numa lista de quatro, tocar no último é mais rápido do que
+              deslizar três vezes. */}
+          <div className="mt-3 flex items-center justify-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => irPara(i)}
+                aria-label={t('carrossel.ir_para', { n: i + 1, total: slides.length })}
+                aria-current={i === activo}
+                className={cn(
+                  'h-1.5 rounded-full transition-all duration-300',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+                  i === activo ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400',
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

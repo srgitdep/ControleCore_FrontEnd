@@ -93,6 +93,27 @@ export function aplicarIdiomaGuardado(idioma: string | null | undefined) {
   }
 }
 
+/**
+ * O complemento de `aplicarIdiomaGuardado`: quando a conta **nunca** escolheu língua
+ * nenhuma (`idioma` nulo), adopta a deste browser como preferência da conta.
+ *
+ * É o momento em que alguém escolhe inglês como visitante — na landing, no ecrã de
+ * login — e entra pela primeira vez. Sem isto, a escolha ficava só neste browser: a
+ * mesma conta, aberta noutro aparelho ou depois de limpar o `localStorage`, voltava a
+ * mostrar-se em português, e a pessoa tinha de escolher inglês outra vez em cada ecrã
+ * novo — exactamente o sintoma que levou a escrever esta função.
+ *
+ * Silenciosa de propósito: é uma gravação implícita, não um pedido explícito da
+ * pessoa — uma falha de rede aqui não pode interromper o login.
+ */
+export function adoptarIdiomaSeNuncaEscolhido(
+  idiomaDaConta: string | null | undefined,
+  gravar: (idioma: Idioma) => Promise<unknown>,
+) {
+  if (idiomaDaConta != null) return; // já escolheu — a conta manda, o browser não a pisa
+  void gravar(idiomaActivo()).catch(() => {});
+}
+
 // O `lang` da página segue a língua activa: leitores de ecrã e a tradução automática do
 // browser lêem-no. O `index.html` dizia `lang="en"` com a interface em português.
 const actualizarLangDaPagina = () => {

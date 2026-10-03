@@ -884,6 +884,28 @@ esse merge trouxe.
   > versões da expansão. `fix/mayra-voz-tts-ingles`, mesclado directamente (correcção
   > pequena e já verificada, sobre trabalho desta mesma fase já autorizado).
 
+- **2026-10-03 · [FE] · Antonio Mambo** — `fix(i18n): tres falhas encontradas depois de
+  fechada a Fase 20`
+
+  > Três defeitos encontrados numa segunda passagem pelo produto em inglês, já depois de
+  > fechada a Fase 20:
+  >
+  > - `CardCarousel` decidia grelha/carrossel pela largura da **janela**, não pela do seu
+  >   próprio contentor — com o painel da Mayra aberto ao lado, a janela continuava larga
+  >   mas o espaço do carrossel ficava espremido numa grelha de 5 colunas, cortando o texto
+  >   dos cartões (mais visível em inglês, por o texto ser nalguns casos mais longo, mas o
+  >   defeito já existia em português). Passa a decidir por `ResizeObserver` sobre o próprio
+  >   componente.
+  > - `site.css`: o CTA da barra do site público («Pedir demonstração») só se escondia abaixo
+  >   de 560px, limiar pensado para o texto em português; entre 561 e 900px a barra não tinha
+  >   espaço para logótipo + selector de idioma + dois botões sem transbordar, e só não
+  >   transbordava em inglês por o texto ser mais curto. Passa a esconder-se no mesmo ponto do
+  >   menu móvel (900px), com a acção reposta dentro do menu.
+  > - `adoptarIdiomaSeNuncaEscolhido()` (`src/i18n/index.ts`): quando a conta nunca gravou
+  >   uma língua, passa a adoptar a do browser no login — antes, escolher inglês como
+  >   visitante não chegava a gravar-se na conta, e a mesma conta voltava a português noutro
+  >   aparelho ou sessão. Ligado em `useAuthStore`, `useContaClienteStore` e `usePortalStore`.
+
 ---
 
 ## 3. Backlog — Por Fazer
