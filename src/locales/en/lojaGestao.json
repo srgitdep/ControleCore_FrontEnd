@@ -1,11 +1,9 @@
 {
   "estado": {
     "CRIADO": "New",
-    "AGUARDA_CONFIRMACAO": "Awaiting confirmation",
     "CONFIRMADO": "Confirmed",
     "EM_PREPARACAO": "Being prepared",
     "PRONTO": "Ready for collection",
-    "AGUARDA_LEVANTAMENTO": "Awaiting collection",
     "CONCLUIDO": "Completed",
     "CANCELADO": "Cancelled"
   },
@@ -22,7 +20,10 @@
     "resumo_other": "{{count}} orders",
     "todas_lojas": "All stores",
     "todos_estados": "All",
-    "erro_carregar": "Could not load the Compra Fácil orders."
+    "erro_carregar": "Could not load the Compra Fácil orders.",
+    "resumo_historico_zero": "{{count}} online sales · {{total}}",
+    "resumo_historico_one": "{{count}} online sale · {{total}}",
+    "resumo_historico_other": "{{count}} online sales · {{total}}"
   },
   "tabela": {
     "col_pedido": "Order",

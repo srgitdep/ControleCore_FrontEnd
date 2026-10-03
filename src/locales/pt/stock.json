@@ -53,6 +53,7 @@
     "bloqueadas": "{{n}} bloqueadas",
     "fisico_em_armazem": "{{n}} em armazém",
     "comprometido_excede": "Comprometido excede o saldo em armazém — verificar",
+    "reservado_compra_facil": "{{n}} reservadas para o Compra Fácil",
     "minimo": "Mínimo",
     "acoes": "Ações",
     "ver_ledger": "Ver Ledger / Histórico",

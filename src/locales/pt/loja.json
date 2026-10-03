@@ -42,7 +42,18 @@
     "disponiveis_other": "{{count}} disponíveis",
     "esgotado": "Esgotado",
     "sem_stock": "Sem stock nesta loja de momento.",
-    "sem_stock_curto": "Sem stock nesta loja"
+    "sem_stock_curto": "Sem stock nesta loja",
+    "favoritar": "Adicionar aos favoritos",
+    "desfavoritar": "Remover dos favoritos",
+    "desconto": "-{{percentual}}%"
+  },
+  "favoritos": {
+    "titulo": "Os meus favoritos",
+    "vazio": "Ainda não tem produtos favoritos.",
+    "vazio_dica": "Toque no coração de um produto para o guardar aqui.",
+    "erro_adicionar": "Não foi possível adicionar aos favoritos.",
+    "erro_remover": "Não foi possível remover dos favoritos.",
+    "produto_desactivado": "Já não está à venda"
   },
   "carrinho": {
     "titulo": "O meu carrinho",
@@ -64,11 +75,9 @@
   },
   "estadoPedido": {
     "CRIADO": "Recebido",
-    "AGUARDA_CONFIRMACAO": "A aguardar confirmação",
     "CONFIRMADO": "Confirmado",
     "EM_PREPARACAO": "Em preparação",
     "PRONTO": "Pronto",
-    "AGUARDA_LEVANTAMENTO": "Pronto para levantar",
     "CONCLUIDO": "Concluído",
     "CANCELADO": "Cancelado"
   },

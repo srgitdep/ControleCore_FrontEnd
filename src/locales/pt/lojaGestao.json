@@ -1,11 +1,9 @@
 {
   "estado": {
     "CRIADO": "Novo",
-    "AGUARDA_CONFIRMACAO": "A aguardar confirmação",
     "CONFIRMADO": "Confirmado",
     "EM_PREPARACAO": "Em preparação",
     "PRONTO": "Pronto para levantar",
-    "AGUARDA_LEVANTAMENTO": "A aguardar levantamento",
     "CONCLUIDO": "Concluído",
     "CANCELADO": "Cancelado"
   },
@@ -22,7 +20,10 @@
     "resumo_other": "{{count}} pedidos",
     "todas_lojas": "Todas as lojas",
     "todos_estados": "Todos",
-    "erro_carregar": "Não foi possível carregar os pedidos do Compra Fácil."
+    "erro_carregar": "Não foi possível carregar os pedidos do Compra Fácil.",
+    "resumo_historico_zero": "{{count}} vendas online · {{total}}",
+    "resumo_historico_one": "{{count}} venda online · {{total}}",
+    "resumo_historico_other": "{{count}} vendas online · {{total}}"
   },
   "tabela": {
     "col_pedido": "Pedido",

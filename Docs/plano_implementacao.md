@@ -906,6 +906,126 @@ esse merge trouxe.
   >   visitante não chegava a gravar-se na conta, e a mesma conta voltava a português noutro
   >   aparelho ou sessão. Ligado em `useAuthStore`, `useContaClienteStore` e `usePortalStore`.
 
+### Fase 21 — Reservado do Compra Fácil no stock, favoritos e modelo Gemini centralizado (3 Out 2026)
+
+- **2026-10-03 · [BE+FE] · Antonio Mambo** — itens do backlog «Compra Fácil» e «Infra /
+  observação» pedidos directamente pelo utilizador, sem passar por «Fase em curso»
+  (três correcções pontuais, não uma funcionalidade nova com plano próprio).
+
+  > **Reservado por pedidos online, na listagem de stock.** `GetStockQueriesUseCase`
+  > soma as `ReservaStock` activas por posição (produto × armazém,
+  > `IStockRepository.getReservadoPorPosicoes`) e devolve `reservadoCommerce` em cada
+  > linha; a tabela mostra «N reservadas para o Compra Fácil» sob o disponível. Antes de
+  > implementar, verificou-se que o frontend já tem um mecanismo mais amplo
+  > (`Stock.estados`, `RetencaoModal`, `useReservas`) — mas está desligado do backend
+  > real (ver achado na Secção 3, «Infra / observação»), por isso o campo novo é
+  > independente e não reutiliza esse caminho.
+  >
+  > **Favoritos (`FavoritoCliente`).** O modelo já existia no schema desde a Fase 11;
+  > faltava a funcionalidade. Novo `FavoritoController` (`GET/POST /commerce/favoritos`,
+  > `DELETE /commerce/favoritos/:produtoId`), idempotente nos dois sentidos (favoritar
+  > duas vezes não duplica, desfavoritar o que já não está marcado não é erro), com
+  > validação de que o produto pertence à empresa da conta. Frontend: botão de coração
+  > no `ProdutoCartao` (mercado e catálogo de loja) e página «Os meus favoritos»
+  > (`/loja/:lojaId/favoritos`), ligada no topo ao lado de «Os meus pedidos».
+  >
+  > **Modelo Gemini centralizado.** Novo `src/shared/gemini-model.ts`: as 8 chamadas
+  > que recorriam a `'gemini-2.0-flash'` (retirado da API) quando `GEMINI_MODEL`
+  > faltava passam a usar `modeloGeminiPadrao(config)`, que lança em vez de recair no
+  > modelo morto. `main.ts` chama `validarModeloGeminiNoArranque()` antes de
+  > `app.listen` — sem `GEMINI_MODEL`, a aplicação recusa-se a arrancar, com mensagem
+  > clara, em vez de falhar horas depois num 404 sem relação óbvia com a causa.
+  >
+  > **Testes**: `adicionar-favorito.use-case.spec.ts` novo (produto de outra empresa
+  > recusado; idempotência do `upsert`); dois mocks de `ConfigService` existentes
+  > (`analisar-necessidades-mayra`, `analisar-excecao-mayra`) ajustados para incluir
+  > `GEMINI_MODEL` — caíam no fallback antigo e passavam por acidente, mesmo simulando
+  > um ambiente correctamente configurado. Catálogo de erros: nova chave
+  > `commerce.favorito.produto_nao_encontrado` em `pt`/`en`. Backend 2335 (suite
+  > completa), frontend 147 — ambos limpos; `tsc`/`npm run build` sem erros nos dois
+  > repositórios.
+  >
+  > **Não implementado nesta entrega, por decisão ou âmbito** (itens dos mesmos dois
+  > blocos do backlog que ficam por fazer — ver Secção 3 para o porquê de cada um):
+  > cobrança M-Pesa/e-Mola no checkout; CRM/recomendações/promoções com risco de
+  > stock; histórico de compras entre empresas; galeria de produto com várias fotos;
+  > decisão `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` (amarrada à migração da
+  > Entrega ao Domicílio); confirmar em produção a estabilidade da voz da Mayra;
+  > confirmar que a chave do Gemini pertence à facturação da SRG (verificação
+  > administrativa, não código).
+  >
+  > **Achado durante a análise, fora de âmbito, não corrigido**: o sistema de
+  > retenção manual de stock que o frontend já tem construído
+  > (`RetencaoModal`/`useReservas`/`reservas.api.ts`, rotas `/stock/reservas`,
+  > `/stock/:id/quarentena`, `/stock/:id/bloqueio`) não existe no backend — ver
+  > entrada própria na Secção 3.
+
+  > **Extensão da mesma entrega (2026-10-03, mesmo dia)**: pedido para avançar os
+  > restantes sub-pontos dos blocos «Compra Fácil» e «Infra / observação» que fosse
+  > possível implementar sem decisão nova.
+  >
+  > - **Confirmado pelo utilizador**: a voz da Mayra está estável em produção —
+  >   fecha o item pendente desde as Fases 8–9.
+  > - **`AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` removidos do enum
+  >   `EstadoPedido`**, antecipando a decisão já tomada para a Entrega ao Domicílio
+  >   (§4.1) — ver essa secção para o detalhe da migração
+  >   (`20261003030000_remove_estados_mortos_pedido`) e o desvio ao plano (mapear
+  >   para `CONFIRMADO`/`PRONTO`, não para `CRIADO`). Limpeza a acompanhar em
+  >   `pedido-estado.ts`/`.spec.ts` e em quatro ficheiros de tradução do frontend
+  >   (`loja`/`lojaGestao`, pt/en) que ainda listavam os dois estados.
+  > - **Confirmado pelo utilizador**: a chave Gemini em produção é da facturação
+  >   da SRG — fecha o item pendente desde 28/09/2026.
+  > - **Esclarecimento do utilizador sobre "histórico de compras entre empresas"**:
+  >   o pedido original da lista semanal não era sobre identidade de cliente entre
+  >   empresas (que continua fora de âmbito, por contradizer o isolamento
+  >   multi-tenant) — era sobre a loja/empresa ver o histórico das suas próprias
+  >   vendas online. Resolvido: ver a entrada própria no backlog («Histórico de
+  >   vendas online, por empresa/loja»).
+  >
+  > **Autorizado pelo utilizador e implementado nesta extensão** (revertendo a
+  > avaliação anterior de que exigiam decisão de produto):
+  >
+  > - **Galeria de fotos do produto.** `GerirImagensProdutoUseCase` passa a
+  >   acrescentar em vez de substituir (até 6 imagens por produto — `sharp`
+  >   continua a converter tudo para WebP); a primeira imagem nasce principal,
+  >   novos endpoints `PATCH .../imagens/:imagemId/principal` e
+  >   `PATCH .../imagens/reordenar` trocam isso depois. ERP: grelha de miniaturas
+  >   com estrela (definir principal) e remover. Compra Fácil: carrossel com
+  >   miniaturas no detalhe do produto, em vez de uma imagem só.
+  > - **Promoções com risco de stock.** Novo módulo `promocao`: modelo `Promocao`
+  >   (desconto 1–90% por produto ou por categoria, com período), domínio puro
+  >   `calcularRiscoStockPromocao` (heurística declarada: elasticidade assumida de
+  >   1.5 — cada 10% de desconto sobe a procura esperada 15% sobre a média
+  >   histórica de 30 dias; devolve `SEM_DADOS` sem histórico de vendas, nunca uma
+  >   previsão inventada), `PrecoPromocionalService` (prioriza promoção directa do
+  >   produto sobre a da categoria) e tool da MAYRA `assess_promotion_stock_risk`
+  >   (avalia uma promoção hipotética, antes de criar). **O desconto é real, não
+  >   só visual**: `CatalogoPublicoService` e `CriarPedidoUseCase` chamam o mesmo
+  >   `PrecoPromocionalService` — o preço que o catálogo mostra é o preço que o
+  >   checkout cobra. Só `Gestor`/`Admin` podem criar/cancelar (`promocao.gerir`,
+  >   migração `20261003050000_promocao_permissoes`). Frontend: página
+  >   `/promocoes` (criar com preview do risco antes de confirmar; listar;
+  >   cancelar), preço promocional riscado + badge de desconto no detalhe do
+  >   produto do Compra Fácil. Fica por fazer a *recomendação* automática (a MAYRA
+  >   sugerir por iniciativa própria que promover) — ver item próprio no backlog.
+  > - **Histórico de vendas online por empresa/loja.** Nenhum endpoint novo — o
+  >   `ListarPedidosGestaoUseCase` já aceitava `estado=CONCLUIDO` e `lojaId`. Só
+  >   faltava mostrar isso como histórico: `PedidosCommercePage` passa a somar e
+  >   contar os pedidos concluídos num resumo visível quando esse filtro está
+  >   activo.
+  >
+  > **Ainda não implementado** (sem novidade sobre a avaliação anterior):
+  > cobrança M-Pesa/e-Mola no checkout (gateway, conta de comerciante, reembolsos
+  > — ver Secção 3); CRM, recomendação por regras (a MAYRA sugerir promoções por
+  > iniciativa própria — distinto da avaliação de risco, já feita); histórico de
+  > compras entre empresas diferentes (identidade de cliente cross-tenant,
+  > continua fora de âmbito).
+  >
+  > **Testes desta extensão**: `risco-stock-promocao.spec.ts` (5),
+  > `preco-com-desconto.spec.ts` (2), `preco-promocional.service.spec.ts` (6) —
+  > todos novos, domínio puro sem mocks de I/O onde possível. Backend 2352 (suite
+  > completa), frontend 148 — ambos limpos; `tsc` sem erros nos dois repositórios.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -916,33 +1036,48 @@ esse merge trouxe.
 
 ### Compra Fácil
 
-- [ ] **CRM, recomendação por regras e promoções** (Compra Fácil). Fonte:
-      `plano_feature_compra_facil.md` §8.3 (documento de planeamento já
-      removido do `Docs/` por estar superado; texto completo no histórico git,
-      commit `feat/compra-facil-fase11`). Depende do núcleo do pedido estar
-      estável (Fases 11–12, já concluídas).
-- [ ] `FavoritoCliente` — pendência opcional deixada em aberto na Fase 11 (o
-      modelo já existe no schema Prisma; falta a funcionalidade de topo).
-- [ ] Promoções com verificação de risco de stock (`assess_promotion_stock_risk`,
-      tool da MAYRA prevista para uma fase futura).
+- [ ] **CRM, recomendação por regras** (Compra Fácil) — a MAYRA sugerir, por
+      iniciativa própria, que produtos promover. Distinto do item de promoções
+      abaixo, já resolvido: aqui falta a parte de *recomendação*, não a de
+      *avaliação*. Fonte: `plano_feature_compra_facil.md` §8.3 (documento de
+      planeamento já removido do `Docs/` por estar superado; texto completo no
+      histórico git, commit `feat/compra-facil-fase11`).
+- [x] `FavoritoCliente` — resolvido em 2026-10-03 (Fase 21): endpoints
+      `GET/POST /commerce/favoritos`, `DELETE /commerce/favoritos/:produtoId`, botão
+      de coração no cartão de produto e página «Os meus favoritos».
+- [x] **Promoções com verificação de risco de stock** — resolvido em 2026-10-03
+      (Fase 21): novo módulo `promocao` (desconto por produto ou categoria, com
+      período), tool da MAYRA `assess_promotion_stock_risk`, e o desconto aplicado
+      de verdade no catálogo público e no checkout (não é só visual). Ver §4.3 para
+      o detalhe. Fica a faltar a *recomendação por regras* (item acima).
 - [ ] Histórico de compras entre empresas diferentes — hoje "lojas onde já
       comprei" só vê a empresa da `ContaCliente` autenticada actual (Fase 13);
       exigiria um projecto de identidade de cliente entre empresas, fora do
-      âmbito do mercado.
-- [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
-      produto, herdado da Fase 11).
-- [ ] Mostrar no ecrã de stock quanto está reservado por pedidos online. O POS já
-      desconta as reservas ao vender (Fase 11), mas a listagem de stock mostra
-      `currentQuantity` cru: o gestor vê 10 unidades sem saber que 3 estão
-      prometidas a pedidos por levantar. Não é defeito de venda — é de leitura.
+      âmbito do mercado. **Não confundir** com o item seguinte, que é outra coisa.
+- [x] Histórico de vendas online, por empresa/loja — resolvido em 2026-10-03 (Fase
+      21). Pedido esclarecido pelo utilizador: não é sobre identidade de cliente
+      entre empresas (item acima), é sobre o **lojista** ver o que já vendeu online.
+      `ListarPedidosGestaoUseCase` já aceitava filtrar por `estado=CONCLUIDO` e por
+      loja — só faltava um resumo visível; a fila de gestão (`PedidosCommercePage`)
+      mostra agora a contagem e o total vendido quando esse filtro está activo.
+- [x] Galeria de produto com várias fotos no mercado — resolvido em 2026-10-03
+      (Fase 21): `GerirImagensProdutoUseCase` passa a acrescentar em vez de
+      substituir (até 6 imagens), com `definirPrincipal`/`reordenar`; o ERP mostra
+      a grelha e o Compra Fácil mostra um carrossel com miniaturas.
+- [x] Mostrar no ecrã de stock quanto está reservado por pedidos online — resolvido
+      em 2026-10-03 (Fase 21): `GetStockQueriesUseCase` soma as `ReservaStock`
+      activas por posição (produto × armazém) e a tabela de stock mostra a legenda
+      sob o disponível. Independente do mecanismo `estados`/retenção manual — ver
+      achado fora de âmbito mais abaixo.
 - [x] Devolução de uma compra online entrava no CRM como `DEVOLUCAO_POS`/canal
       `POS` — resolvido em 2026-09-22 (Fase 14), com `DEVOLUCAO_ECOMMERCE` novo
       no enum `TipoEventoCliente`.
 - [x] Anular a venda não revertia o pedido — resolvido em 2026-09-22 (Fase 14):
       o pedido passa a `CANCELADO` dentro da transacção de anulação.
-- [ ] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
-      mas nenhum código os escreve — o frontend tem etiquetas para eles que nunca
-      aparecem. Decidir entre usá-los ou removê-los do enum.
+- [x] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
+      mas nenhum código os escreve — resolvido em 2026-10-03 (Fase 21): removidos do
+      enum, antecipando a decisão já tomada para a migração da Entrega ao Domicílio
+      (ver nota nessa secção).
 - [x] Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis das
       lojas — resolvido em 2026-09-29 (Fase 16): migração
       `20260929090000`, e o cargo passa a escolher o perfil de sistema. Verificado
@@ -980,7 +1115,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       (1) **Leaflet + OpenStreetMap** (gratuito; o Google Maps chegou a
       ser escolhido e foi trocado no mesmo dia); (2) `Pedido.estado` **espelha** a entrega;
       (3) um estafeta **pode servir várias lojas** da empresa; (4) **remover**
-      `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO`, na migração da entrega.
+      `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` — **antecipado para 2026-10-03
+      (Fase 21), fora desta migração**: não dependiam de nenhuma decisão da entrega
+      em si, só da remoção em si, e ficar à espera só atrasava uma limpeza já
+      decidida. A migração da entrega já nasce sem eles no enum.
 - [ ] **Fase 0 — Preparar.** Migração `entrega_domicilio` (não destrutiva);
       `JWT_ESTAFETA_SECRET` nos `fly secrets` antes do deploy; coordenadas nas
       lojas piloto — hoje não há nenhuma coordenada no schema.
@@ -1083,18 +1221,16 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 ### Infra / observação
 
-- [ ] Confirmar em produção, com tráfego real, que as correcções de voz da Mayra
+- [x] Confirmar em produção, com tráfego real, que as correcções de voz da Mayra
       (Fases 8–9) resolveram definitivamente a latência e os turnos perdidos na
-      Gemini Live API — as últimas entradas da Fase 8 são `diag(...)`, ainda a
-      confirmar por logs, não uma correcção fechada com certeza absoluta.
-- [ ] Trocar o modelo por defeito do Gemini no código: 9 chamadas recorrem a
-      `'gemini-2.0-flash'` quando `GEMINI_MODEL` falta, e esse modelo já não
-      existe na API. Centralizar num só sítio e falhar no arranque com mensagem
-      clara em vez de recorrer a um modelo retirado. Encontrado em 28/09/2026,
-      fora do âmbito da correcção do 503.
-- [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
-      facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
-      desenvolvimento para repor a Mayra.
+      Gemini Live API — confirmado pelo utilizador em 2026-10-03: a voz está estável.
+- [x] Trocar o modelo por defeito do Gemini no código — resolvido em 2026-10-03
+      (Fase 21): `src/shared/gemini-model.ts` centraliza as 8 chamadas que recorriam
+      a `'gemini-2.0-flash'` (modelo retirado da API); `main.ts` recusa o arranque,
+      com mensagem clara, se `GEMINI_MODEL` faltar.
+- [x] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
+      facturação da SRG — confirmado pelo utilizador em 2026-10-03: a chave é da
+      empresa SRG.
 - [x] Teste instável `bater-ponto.use-case.spec.ts` — resolvido em 2026-09-29 (Fase 17):
       relógio fixo no teste, testes no fuso de Maputo e `TZ` no servidor, que
       corria em UTC e calculava o atraso do ponto 2 h ao lado.
@@ -1102,6 +1238,18 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       `Africa/Maputo` (`fly.toml`). Só é preciso se o SaaS for vendido fora de
       Moçambique; entra com a §4.2 (Multilínguas) ou antes, se aparecer um cliente
       noutro fuso.
+- [ ] **Achado fora de âmbito, não corrigido (2026-10-03):** o frontend do stock
+      (`RetencaoModal`, `useReservas`, `reservas.api.ts`) chama
+      `/stock/reservas`, `/stock/:id/quarentena`, `/stock/:id/bloqueio` e os
+      endpoints de libertação — **nenhum existe no backend**
+      (`stock.controller.ts` não os declara). Qualquer clique em "Reservar",
+      "Quarentena" ou "Bloquear" no ecrã de stock dá 404. O mesmo vale para
+      `Stock.estados` (reservado/quarentena/bloqueado/disponível): o tipo é
+      opcional e nunca chega preenchido da listagem real — é código escrito a
+      antecipar um backend que não foi implementado. Encontrado ao verificar que
+      "mostrar reservado por pedidos online" (acima) não colidia com este
+      mecanismo; ficou de fora por ser um projecto à parte (cinco endpoints e o
+      cálculo de `EstadosDaPosicao` no servidor), não uma correcção pontual.
 
 ---
 
@@ -1119,6 +1267,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 | --- | --- | --- | --- |
 | 4.1 | Entrega ao domicílio (Compra Fácil) | Aprovado — decisões de 2026-09-29; começa depois da Fase 1 da §4.2 | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Aprovado — decisões de 2026-09-29; Fase 1 é a próxima | Secção 3 → «Multilínguas» |
+| 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -1381,19 +1530,15 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
 - [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**.
-- [ ] **[obrigatório — decidido: remover]** `AGUARDA_CONFIRMACAO` e
-      `AGUARDA_LEVANTAMENTO`. Se a decisão for **remover** (recomendado), é a parte
-      destrutiva da migração e a estratégia fica escrita aqui, como o `CLAUDE.md` exige:
-      1. Mapear antes de remover, sem falhar: `UPDATE pedidos SET estado = 'CRIADO'
-         WHERE estado = 'AGUARDA_CONFIRMACAO'` e `… = 'PRONTO' WHERE estado =
-         'AGUARDA_LEVANTAMENTO'`. Nenhum código os escreve, por isso o esperado é zero
-         linhas; mapear em vez de abortar porque uma migração que falha impede o
-         contentor de arrancar (`migrate deploy` corre no `CMD`).
-      2. Recriar o tipo (Postgres não remove valores de enum): renomear o antigo, criar
-         o novo, `ALTER TABLE pedidos ALTER COLUMN estado TYPE … USING estado::text::…`,
-         repor o `DEFAULT`, apagar o antigo.
-      3. No mesmo commit: tirar os dois de `pedido-estado.ts` e de
-         `ETIQUETA_ESTADO_PEDIDO` no frontend.
+- [x] **[já feito, fora desta migração]** `AGUARDA_CONFIRMACAO` e
+      `AGUARDA_LEVANTAMENTO` — removidos em 2026-10-03 (Fase 21), antes desta
+      funcionalidade ter código. Migração
+      `20261003030000_remove_estados_mortos_pedido`: mapeou
+      `AGUARDA_CONFIRMACAO → CONFIRMADO` e `AGUARDA_LEVANTAMENTO → PRONTO` (não
+      `CRIADO`, como este plano previa — mapear para a frente é mais seguro do que
+      recuar um pedido de estado, e o esperado continua a ser zero linhas em
+      qualquer dos dois destinos), depois recriou o tipo sem os dois valores. Já
+      sem código de `pedido-estado.ts` nem de etiquetas no frontend a referenciá-los.
 - [ ] **[obrigatório]** `EnderecoCliente`, `ZonaEntregaLoja` (espelha
       `ZonaEntregaFornecedor`, incluindo a nota sobre índices únicos parciais no SQL),
       `Estafeta`, `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`,
@@ -2706,6 +2851,59 @@ cd C:/Documentos/SRG/ControlCore/ControleCore_FrontEnd && npm run lint && npm ru
 - Backend primeiro, frontend depois: o frontend passa a ler `idioma` de `/auth/eu`.
 - Confirmar que `src/i18n/` foi copiado para `dist/` na imagem — sem isso o backend
   arranca, mas todas as traduções caem no recurso em português.
+
+---
+
+### 4.3 Promoções com risco de stock (Compra Fácil)
+
+Implementado em 2026-10-03 (Fase 21), a pedido directo do utilizador — sem passar
+por «Fase em curso», por ser menor que a Entrega ao Domicílio ou o Multilínguas e
+não exigir fases sequenciais.
+
+**O que é:** desconto por período num produto ou numa categoria inteira do Compra
+Fácil, com uma avaliação de risco de rutura de stock antes de a promoção ser
+lançada — nunca bloqueante, só informativa (mesmo princípio de `saude-stock.ts`:
+este sistema informa, não decide por quem lança a promoção).
+
+**Dados** (`prisma/schema.prisma`): `enum TipoPromocao { PRODUTO, CATEGORIA }`;
+`model Promocao` (`empresaId`, `nome`, `tipo`, `produtoId?`, `categoriaId?`,
+`percentualDesconto` 1–90, `dataInicio`, `dataFim`, `isActive`, `criadoPorId?`).
+Migração `20261003040000_promocoes`. O preço com desconto **nunca é persistido**
+— calcula-se sempre na leitura, para a promoção acabar sozinha em `dataFim` sem
+ser preciso repor nada.
+
+**A heurística do risco** (`src/modules/promocao/domain/risco-stock-promocao.ts`,
+testado sem I/O): sem dados históricos de elasticidade de preço reais — nenhuma
+promoção tinha corrido ainda —, assume-se uma elasticidade de 1.5: cada 10% de
+desconto sobe a procura esperada 15% sobre a média de vendas dos últimos 30 dias.
+É uma estimativa declarada, não uma previsão; `SEM_DADOS` é devolvido em vez de
+um número quando não há histórico de vendas. Classifica `BAIXO`/`MEDIO`/`ALTO`
+comparando a cobertura do stock disponível com a duração da promoção.
+
+**O desconto é real, não só visual** — o mesmo `PrecoPromocionalService`
+(`src/modules/promocao/application/services/`) é chamado por
+`CatalogoPublicoService` (o que o cliente vê) e por `CriarPedidoUseCase` (o que o
+cliente paga no checkout). Prioridade: uma promoção directa no produto vale mais
+do que uma da sua categoria. Sem isto, uma promoção seria decorativa — o
+catálogo mostraria um preço que o checkout não cobraria.
+
+**Tool da MAYRA** `assess_promotion_stock_risk`
+(`src/modules/ai-copilot/infrastructure/tools/crm/`): avalia uma promoção
+hipotética por nome de produto ou categoria, antes de ela existir — não cria
+nada, só informa.
+
+**Permissões:** `promocao.ver`/`promocao.gerir`, só ligadas ao perfil de sistema
+`Gestor` (migração `20261003050000_promocao_permissoes`) — decidir um desconto de
+preço é decisão de gestão, ao contrário da fila de pedidos, que o Caixa também
+opera.
+
+**Frontend:** página `/promocoes` — criar (com o risco mostrado antes de
+confirmar, nunca bloqueando), listar, cancelar. Preço promocional riscado + badge
+de desconto no detalhe do produto do Compra Fácil (`ProdutoDetalhePage`).
+
+**Fica por fazer:** a MAYRA *recomendar* por iniciativa própria que produtos
+promover (`CRM, recomendação por regras` no backlog) — este plano cobre só a
+*avaliação* de uma promoção já decidida por uma pessoa.
 
 ---
 

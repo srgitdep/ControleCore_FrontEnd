@@ -31,6 +31,7 @@ import type pesquisa from '../locales/pt/pesquisa.json';
 import type lojaGestao from '../locales/pt/lojaGestao.json';
 import type copiloto from '../locales/pt/copiloto.json';
 import type shell from '../locales/pt/shell.json';
+import type promocoes from '../locales/pt/promocoes.json';
 
 // As chaves do `t()` passam a ser verificadas pelo `tsc` contra o catálogo português, que
 // é a língua de origem: uma chave mal escrita é erro de compilação, e não um texto em
@@ -71,6 +72,7 @@ declare module 'i18next' {
       lojaGestao: typeof lojaGestao;
       copiloto: typeof copiloto;
       shell: typeof shell;
+      promocoes: typeof promocoes;
     };
   }
 }

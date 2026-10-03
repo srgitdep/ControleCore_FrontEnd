@@ -9,18 +9,14 @@ import { VoltarLink } from '../components/VoltarLink';
 import type { EstadoPedido, MetodoPagamentoCommerce } from '../api/pedidos.api';
 
 /** Estados a partir dos quais o cliente ainda pode desistir — espelha o backend. */
-const CANCELAVEL: EstadoPedido[] = ['CRIADO', 'AGUARDA_CONFIRMACAO', 'CONFIRMADO'];
+const CANCELAVEL: EstadoPedido[] = ['CRIADO', 'CONFIRMADO'];
 
-/**
- * Os passos que o cliente vê — Fase 12. `AGUARDA_CONFIRMACAO` conta como
- * "Recebido" e `AGUARDA_LEVANTAMENTO` como "Pronto a levantar": são variações
- * internas do mesmo momento visto de fora, não passos extra.
- */
+/** Os passos que o cliente vê — Fase 12. */
 const PASSOS = [
-  { estados: ['CRIADO', 'AGUARDA_CONFIRMACAO'], chave: 'recebido' },
+  { estados: ['CRIADO'], chave: 'recebido' },
   { estados: ['CONFIRMADO'], chave: 'confirmado' },
   { estados: ['EM_PREPARACAO'], chave: 'em_preparacao' },
-  { estados: ['PRONTO', 'AGUARDA_LEVANTAMENTO'], chave: 'pronto' },
+  { estados: ['PRONTO'], chave: 'pronto' },
   { estados: ['CONCLUIDO'], chave: 'entregue' },
 ] as const satisfies readonly { estados: EstadoPedido[]; chave: string }[];
 
@@ -164,11 +160,9 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
   const { t } = useTranslation('loja');
   const config: Record<EstadoPedido, { cor: string; icone: typeof Clock }> = {
     CRIADO: { cor: 'bg-amber-100 text-amber-800', icone: Clock },
-    AGUARDA_CONFIRMACAO: { cor: 'bg-amber-100 text-amber-800', icone: Clock },
     CONFIRMADO: { cor: 'bg-blue-100 text-blue-800', icone: Clock },
     EM_PREPARACAO: { cor: 'bg-blue-100 text-blue-800', icone: PackageCheck },
     PRONTO: { cor: 'bg-emerald-100 text-emerald-800', icone: PackageCheck },
-    AGUARDA_LEVANTAMENTO: { cor: 'bg-emerald-100 text-emerald-800', icone: PackageCheck },
     CONCLUIDO: { cor: 'bg-emerald-100 text-emerald-800', icone: CheckCircle2 },
     CANCELADO: { cor: 'bg-rose-100 text-rose-800', icone: XCircle },
   };

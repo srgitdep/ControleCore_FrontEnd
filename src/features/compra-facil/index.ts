@@ -1,6 +1,7 @@
 export * from './api/catalogo.api';
 export * from './api/conta.api';
 export * from './api/pedidos.api';
+export * from './api/favoritos.api';
 export * from './store/useContaClienteStore';
 export * from './store/useCarrinhoStore';
 export * from './components/CompraFacilSessao';
@@ -14,3 +15,4 @@ export * from './pages/EntrarContaPage';
 export * from './pages/CriarContaPage';
 export * from './pages/MeusPedidosPage';
 export * from './pages/PedidoDetalhePage';
+export * from './pages/FavoritosPage';

@@ -19,6 +19,7 @@
       "armazens": "Warehouses",
       "transferencias": "Transfers",
       "pedidos_commerce": "Compra Fácil Orders",
+      "promocao": "Promotions",
       "necessidades": "Needs",
       "requisicoes": "Requisitions",
       "compras": "Purchases",
@@ -144,7 +145,8 @@
       "rh": "Human Resources",
       "vendas": "Sales",
       "clientes": "Customers / CRM",
-      "pedidos_commerce": "Compra Fácil Orders"
+      "pedidos_commerce": "Compra Fácil Orders",
+      "promocao": "Promotions"
     },
     "accao": {
       "read": "View",

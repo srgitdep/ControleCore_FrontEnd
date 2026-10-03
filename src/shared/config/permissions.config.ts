@@ -15,6 +15,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'vendas' },
   { id: 'clientes' },
   { id: 'pedidos_commerce' },
+  { id: 'promocao' },
 ] as const;
 
 export const AVAILABLE_ACTIONS = [
@@ -33,4 +34,8 @@ export const IGNORED_PERMISSIONS = [
   // commerce_permissoes_gestao) — não há um "criar" ou "apagar" pedido pela gestão.
   'write:pedidos_commerce',
   'delete:pedidos_commerce',
+  // Só existem `read`/`manage` para este recurso (migração promocao_permissoes) —
+  // criar/cancelar passam por `manage`, não há um "write"/"delete" próprios.
+  'write:promocao',
+  'delete:promocao',
 ];

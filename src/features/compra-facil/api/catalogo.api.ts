@@ -26,7 +26,11 @@ export interface ProdutoLoja {
   id: string;
   nome: string;
   descricao: string | null;
+  /** Já com o desconto de uma promoção activa aplicado, quando há uma. */
   precoVenda: number;
+  /** O preço sem desconto, só quando há uma promoção activa — senão `null`. */
+  precoOriginal: number | null;
+  percentualDesconto: number | null;
   taxaIva: number;
   unidadeMedida: string;
   isWeighable: boolean;

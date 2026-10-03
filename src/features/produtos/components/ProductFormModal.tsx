@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { X, PackagePlus, Warehouse, Truck, Plus, Trash2, Loader2, Image as ImageIcon, Upload } from 'lucide-react';
+import { X, PackagePlus, Warehouse, Truck, Plus, Trash2, Loader2, Image as ImageIcon, Upload, Star } from 'lucide-react';
 import type { Product } from '../types';
 import {
   useCreateProduct,
@@ -10,6 +10,7 @@ import {
   useCategories,
   useCarregarImagemProduto,
   useRemoverImagemProduto,
+  useDefinirImagemPrincipal,
 } from '../hooks/useCatalog';
 import { useArmazens } from '@/features/lojas';
 import { stockApi } from '@/features/stock';
@@ -851,26 +852,31 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
   );
 }
 
+/** A galeria de um produto nunca passa disto — ver `MAXIMO_IMAGENS_POR_PRODUTO` no backend. */
+const MAXIMO_IMAGENS = 6;
+
 /**
- * A imagem real do produto — Docs/plano_feature_compra_facil.md §4.10.
+ * A galeria de imagens do produto — Docs/plano_feature_compra_facil.md §4.10.
  *
- * Substitui o "cole aqui um URL": o ficheiro escolhido vai para o object
+ * Substitui o "cole aqui um URL": cada ficheiro escolhido vai para o object
  * storage (o servidor converte sempre para WebP, ver `GerirImagensProdutoUseCase`)
- * e fica associado ao produto como a imagem principal. Carregar uma nova
- * substitui a anterior.
+ * e acrescenta-se à galeria, até ao máximo. A primeira imagem nasce principal; as
+ * seguintes trocam-se com a estrela.
  */
 function ImagemDoProduto({ produtoId }: { produtoId: string }) {
   const { t } = useTranslation('produtos');
   const inputRef = useRef<HTMLInputElement>(null);
   const carregar = useCarregarImagemProduto();
   const remover = useRemoverImagemProduto();
+  const definirPrincipal = useDefinirImagemPrincipal();
 
   const { data: produto } = useQuery({
     queryKey: ['produto-detalhe', produtoId],
     queryFn: () => catalogApi.getProduct(produtoId),
   });
 
-  const imagemPrincipal = produto?.imagens?.find((i) => i.isPrincipal) ?? null;
+  const imagens = produto?.imagens ?? [];
+  const atingiuLimite = imagens.length >= MAXIMO_IMAGENS;
 
   const aoEscolherFicheiro = (evento: React.ChangeEvent<HTMLInputElement>) => {
     const ficheiro = evento.target.files?.[0];
@@ -881,46 +887,68 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
 
   return (
     <div className="mt-6 border-t border-slate-100 pt-5">
-      <div className="flex items-center gap-2">
-        <ImageIcon className="h-4 w-4 text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-700">{t('imagem.titulo')}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-700">{t('imagem.titulo')}</h3>
+        </div>
+        <span className="text-xs text-slate-400">{imagens.length}/{MAXIMO_IMAGENS}</span>
       </div>
 
-      <div className="mt-3 flex items-center gap-3">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-          {imagemPrincipal?.url ? (
-            <img src={imagemPrincipal.url} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <ImageIcon size={22} className="text-slate-300" />
-          )}
-        </div>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {imagens.map((imagem) => (
+          <div key={imagem.id} className="group relative h-20 w-20 shrink-0">
+            <div
+              className={`flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-slate-50 ${
+                imagem.isPrincipal ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-200'
+              }`}
+            >
+              {imagem.url ? (
+                <img src={imagem.url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon size={20} className="text-slate-300" />
+              )}
+            </div>
 
-        <div className="flex flex-col items-start gap-1">
+            <button
+              type="button"
+              title={imagem.isPrincipal ? t('imagem.e_principal') : t('imagem.tornar_principal')}
+              disabled={definirPrincipal.isPending || imagem.isPrincipal}
+              onClick={() => definirPrincipal.mutate({ produtoId, imagemId: imagem.id })}
+              className={`absolute -left-1.5 -top-1.5 rounded-full p-1 shadow-sm ${
+                imagem.isPrincipal
+                  ? 'bg-amber-400 text-white'
+                  : 'bg-white text-slate-400 opacity-0 hover:text-amber-500 group-hover:opacity-100'
+              }`}
+            >
+              <Star size={11} fill={imagem.isPrincipal ? 'currentColor' : 'none'} />
+            </button>
+
+            <button
+              type="button"
+              title={t('acoes.remover')}
+              disabled={remover.isPending}
+              onClick={() => remover.mutate({ produtoId, imagemId: imagem.id })}
+              className="absolute -right-1.5 -top-1.5 rounded-full bg-white p-1 text-slate-400 opacity-0 shadow-sm hover:text-rose-600 group-hover:opacity-100"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        ))}
+
+        {!atingiuLimite && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={carregar.isPending}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-500 disabled:opacity-50"
           >
-            {carregar.isPending ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Upload size={13} />
-            )}
-            {carregar.isPending ? t('imagem.a_carregar') : imagemPrincipal ? t('imagem.substituir') : t('imagem.carregar')}
+            {carregar.isPending ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            <span className="text-[10px] font-medium">
+              {carregar.isPending ? t('imagem.a_carregar') : t('imagem.carregar')}
+            </span>
           </button>
-          {imagemPrincipal && (
-            <button
-              type="button"
-              disabled={remover.isPending}
-              onClick={() => remover.mutate({ produtoId, imagemId: imagemPrincipal.id })}
-              className="text-xs font-medium text-rose-600 hover:underline disabled:opacity-50"
-            >
-              {t('acoes.remover')}
-            </button>
-          )}
-          <p className="text-xs text-slate-400">{t('imagem.formatos')}</p>
-        </div>
+        )}
 
         <input
           ref={inputRef}
@@ -930,6 +958,8 @@ function ImagemDoProduto({ produtoId }: { produtoId: string }) {
           onChange={aoEscolherFicheiro}
         />
       </div>
+
+      <p className="mt-2 text-xs text-slate-400">{t('imagem.formatos')}</p>
     </div>
   );
 }

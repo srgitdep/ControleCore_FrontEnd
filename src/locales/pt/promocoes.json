@@ -1,0 +1,46 @@
+{
+  "titulo": "Promoções",
+  "nova": "Nova promoção",
+  "vazio": "Ainda não há promoções.",
+  "formulario": {
+    "titulo": "Nova promoção",
+    "nome": "Nome",
+    "tipo": "Aplica-se a",
+    "tipo_produto": "Um produto",
+    "tipo_categoria": "Uma categoria",
+    "produto": "Produto",
+    "categoria": "Categoria",
+    "escolher": "Escolher...",
+    "percentual": "Desconto (%)",
+    "data_inicio": "Início",
+    "data_fim": "Fim",
+    "criar": "Criar promoção",
+    "fechar": "Fechar",
+    "criada_titulo": "Promoção criada. Risco de stock durante o período:",
+    "risco_sem_dados": "Sem histórico de vendas suficiente para estimar a procura — avalie com cuidado antes de divulgar a promoção.",
+    "risco_detalhe": "Procura esperada: {{procura}} unidades. Stock disponível: {{stock}}. Cobertura: {{cobertura}} dias."
+  },
+  "risco": {
+    "SEM_DADOS": "Sem dados",
+    "BAIXO": "Risco baixo",
+    "MEDIO": "Risco médio",
+    "ALTO": "Risco alto de ruptura"
+  },
+  "tabela": {
+    "nome": "Nome",
+    "alvo": "Aplica-se a",
+    "desconto": "Desconto",
+    "periodo": "Período",
+    "estado": "Estado",
+    "activa": "Activa",
+    "terminada": "Terminada",
+    "cancelada": "Cancelada",
+    "cancelar": "Cancelar"
+  },
+  "mensagens": {
+    "criada": "Promoção criada.",
+    "cancelada": "Promoção cancelada.",
+    "erro_criar": "Não foi possível criar a promoção.",
+    "erro_cancelar": "Não foi possível cancelar a promoção."
+  }
+}

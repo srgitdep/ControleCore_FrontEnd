@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Minus, Package, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,7 +14,17 @@ export function ProdutoDetalhePage() {
   const { data: produto, isLoading, isError } = useProdutoLoja(lojaId, produtoId);
   const adicionar = useCarrinhoStore((s) => s.adicionar);
   const [quantidade, setQuantidade] = useState(1);
+  // Começa em 0 e segue a imagem principal quando os dados chegam — não pode
+  // depender de `produto` no valor inicial, porque este hook corre antes dos
+  // retornos condicionais abaixo (isLoading/isError), antes de `produto` existir.
+  const [imagemActiva, setImagemActiva] = useState(0);
   const { t } = useTranslation('loja');
+
+  useEffect(() => {
+    if (!produto) return;
+    const indice = produto.imagens.findIndex((i) => i.isPrincipal);
+    if (indice >= 0) setImagemActiva(indice);
+  }, [produto]);
 
   if (!lojaId || !produtoId) return null;
 
@@ -47,7 +57,12 @@ export function ProdutoDetalhePage() {
     setQuantidade(1);
   };
 
-  const imagemPrincipal = produto.imagens.find((i) => i.isPrincipal)?.url ?? produto.imagemUrl;
+  const imagens = produto.imagens.length > 0
+    ? produto.imagens
+    : produto.imagemUrl
+      ? [{ url: produto.imagemUrl, ordem: 0, isPrincipal: true }]
+      : [];
+  const imagemEmDestaque = imagens[imagemActiva]?.url ?? null;
 
   return (
     <div>
@@ -57,11 +72,36 @@ export function ProdutoDetalhePage() {
         <VoltarLink to={`/loja/${lojaId}`}>{t('navegacao.voltar_catalogo')}</VoltarLink>
 
         <div className="grid gap-8 md:grid-cols-2">
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-50">
-            {imagemPrincipal ? (
-              <img src={imagemPrincipal} alt={produto.nome} className="h-full w-full object-cover" />
-            ) : (
-              <Package size={64} className="text-slate-300" />
+          <div>
+            <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-slate-50">
+              {imagemEmDestaque ? (
+                <img src={imagemEmDestaque} alt={produto.nome} className="h-full w-full object-cover" />
+              ) : (
+                <Package size={64} className="text-slate-300" />
+              )}
+            </div>
+
+            {imagens.length > 1 && (
+              <div className="mt-3 flex gap-2 overflow-x-auto">
+                {imagens.map((imagem, indice) => (
+                  <button
+                    key={imagem.url ?? indice}
+                    type="button"
+                    onClick={() => setImagemActiva(indice)}
+                    className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 ${
+                      indice === imagemActiva ? 'border-blue-600' : 'border-transparent'
+                    }`}
+                  >
+                    {imagem.url ? (
+                      <img src={imagem.url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                        <Package size={18} className="text-slate-300" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
@@ -70,7 +110,18 @@ export function ProdutoDetalhePage() {
               <p className="text-xs uppercase tracking-wide text-slate-400">{produto.categoria.nome}</p>
             )}
             <h1 className="mt-1 text-2xl font-bold text-slate-900">{produto.nome}</h1>
-            <p className="mt-3 text-3xl font-bold text-slate-900">{formatMoeda(produto.precoVenda)}</p>
+
+            <div className="mt-3 flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-slate-900">{formatMoeda(produto.precoVenda)}</p>
+              {produto.precoOriginal != null && (
+                <>
+                  <p className="text-base text-slate-400 line-through">{formatMoeda(produto.precoOriginal)}</p>
+                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                    {t('produto.desconto', { percentual: produto.percentualDesconto })}
+                  </span>
+                </>
+              )}
+            </div>
             <p className="text-sm text-slate-400">{t('produto.por_unidade', { unidade: produto.unidadeMedida.toLowerCase() })}</p>
 
             {produto.descricao && (

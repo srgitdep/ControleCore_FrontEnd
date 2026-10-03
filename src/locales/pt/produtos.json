@@ -89,11 +89,13 @@
     "erro_guardar": "Erro ao guardar o stock mínimo."
   },
   "imagem": {
-    "titulo": "Imagem do produto",
+    "titulo": "Imagens do produto",
     "a_carregar": "A carregar...",
     "substituir": "Substituir imagem",
-    "carregar": "Carregar imagem",
-    "formatos": "JPEG, PNG ou WEBP até 5MB — convertida para WebP."
+    "carregar": "Carregar",
+    "e_principal": "Esta é a imagem principal",
+    "tornar_principal": "Tornar principal",
+    "formatos": "JPEG, PNG ou WEBP até 5MB — convertida para WebP. Até 6 imagens."
   },
   "fornecedores": {
     "titulo": "Fornecedores",

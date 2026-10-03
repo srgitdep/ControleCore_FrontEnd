@@ -97,6 +97,14 @@ export interface Stock {
    * Opcional: respostas de endpoints que ainda não o incluem chegam sem ele.
    */
   estados?: EstadosDaPosicao;
+  /**
+   * Quanto desta posição está prometido a pedidos do Compra Fácil por levantar.
+   *
+   * Vem de `ReservaStock` (uma por pedido, nunca a soma dos estados acima — esse
+   * mecanismo não tem endpoint no servidor ainda). O POS já descontava isto ao vender
+   * desde a Fase 11; só faltava mostrá-lo aqui.
+   */
+  reservadoCommerce?: number;
   createdAt: string;
   updatedAt: string;
 
