@@ -45,6 +45,7 @@ import {
   CriarContaPage,
   MeusPedidosPage,
   PedidoDetalhePage,
+  FavoritosPage,
 } from '@/features/compra-facil';
 import {
   AdesoesPage,
@@ -136,6 +137,7 @@ export const router = createBrowserRouter([
           { path: ':lojaId/criar-conta', element: <CriarContaPage /> },
           { path: ':lojaId/pedidos', element: <MeusPedidosPage /> },
           { path: ':lojaId/pedidos/:pedidoId', element: <PedidoDetalhePage /> },
+          { path: ':lojaId/favoritos', element: <FavoritosPage /> },
         ],
       },
     ],

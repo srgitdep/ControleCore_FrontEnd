@@ -231,8 +231,12 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   produção `gemini-3.8-flash` desde 28/09/2026, antes `gemini-3.1-flash-lite`), com
   *function calling* sobre tools internas (ex. `get_warehouse_stock`,
   `get_my_daily_sales`, `list_supplier_products`, `receive_goods`) — todas com
-  escopo por `empresaId`. Sem a variável, o código recorre a `gemini-2.0-flash`, que
-  já não existe na API — por isso tem de estar sempre definida.
+  escopo por `empresaId`. Centralizado em `src/shared/gemini-model.ts`
+  (`modeloGeminiPadrao`); sem a variável, a aplicação **recusa-se a arrancar**
+  (`validarModeloGeminiNoArranque()`, chamado em `main.ts` antes de `app.listen`) —
+  troca um 404 tardio e sem relação óbvia com a causa por um erro claro no deploy.
+  Já não recai sobre `gemini-2.0-flash` (retirado da API) em nenhum dos 8 pontos de
+  chamada.
 - **Resiliência:** as chamadas de texto passam por `comRetryGemini`
   (`src/shared/gemini-retry.ts`) — até duas repetições (500 ms, 2 s) quando o
   Gemini devolve 503 por sobrecarga. Outros erros (chave inválida, modelo

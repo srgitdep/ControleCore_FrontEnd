@@ -1,9 +1,11 @@
-import { Link } from 'react-router-dom';
-import { Package, Plus, Store } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Package, Plus, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
+import { useContaClienteStore } from '../store/useContaClienteStore';
+import { useAlternarFavorito, useFavoritos } from '../hooks/useFavoritos';
 import { corDaCategoria } from '../utils/corCategoria';
 import type { ProdutoLoja } from '../api/catalogo.api';
 
@@ -24,7 +26,13 @@ interface ProdutoCartaoProps {
 export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps) {
   const adicionar = useCarrinhoStore((s) => s.adicionar);
   const { t } = useTranslation('loja');
+  const navigate = useNavigate();
   const cor = produto.categoria ? corDaCategoria(produto.categoria.nome) : null;
+
+  const autenticado = useContaClienteStore((s) => s.autenticado);
+  const { data: listaFavoritos } = useFavoritos();
+  const { adicionar: adicionarFavorito, remover: removerFavorito } = useAlternarFavorito();
+  const eFavorito = !!listaFavoritos?.some((f) => f.produtoId === produto.id);
 
   const handleAdicionar = () => {
     const resultado = adicionar(lojaId, produto, 1);
@@ -33,6 +41,19 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
       return;
     }
     toast.success(t('produto.adicionado', { nome: produto.nome }));
+  };
+
+  const handleFavoritar = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!autenticado) {
+      navigate(`/loja/${lojaId}/entrar`);
+      return;
+    }
+    if (eFavorito) {
+      removerFavorito.mutate(produto.id);
+    } else {
+      adicionarFavorito.mutate(produto.id);
+    }
   };
 
   return (
@@ -53,6 +74,18 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
           )}
         </div>
 
+        <button
+          type="button"
+          onClick={handleFavoritar}
+          title={eFavorito ? t('produto.desfavoritar') : t('produto.favoritar')}
+          className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm transition-transform hover:scale-110"
+        >
+          <Heart
+            size={15}
+            className={eFavorito ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}
+          />
+        </button>
+
         {cor && (
           <span
             className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${cor.chip}`}
@@ -62,7 +95,7 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
         )}
 
         {!produto.disponivel && (
-          <span className="absolute right-2 top-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+          <span className="absolute right-2 top-11 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white">
             {t('produto.esgotado')}
           </span>
         )}

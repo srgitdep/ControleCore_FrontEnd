@@ -266,7 +266,8 @@ function StockCurrentTab() {
         // visível na linha de baixo quando os dois divergem.
         header: t('lista.disponivel'),
         cell: ({ row }) => {
-          const { currentQuantity, product, abaixoDoMinimo, estados } = row.original;
+          const { currentQuantity, product, abaixoDoMinimo, estados, reservadoCommerce } =
+            row.original;
           // A mesma regra do painel, calculada no servidor. Ver `getRowStatus`.
           const isCritical = !!abaixoDoMinimo;
           const unidade = product?.unidadeMedida ?? 'UN';
@@ -316,6 +317,16 @@ function StockCurrentTab() {
               {estados?.inconsistente && (
                 <span className="text-[11px] font-medium leading-tight text-amber-700">
                   {t('lista.comprometido_excede')}
+                </span>
+              )}
+
+              {/* Independente de `estados` (esse mecanismo ainda não tem endpoint no
+                  servidor): o POS já descontava estas reservas do Compra Fácil ao
+                  vender desde a Fase 11, mas o gestor via aqui o saldo cru, sem saber
+                  que parte já tinha destino. */}
+              {!!reservadoCommerce && (
+                <span className="text-[11px] leading-tight text-blue-600">
+                  {t('lista.reservado_compra_facil', { n: reservadoCommerce })}
                 </span>
               )}
             </div>

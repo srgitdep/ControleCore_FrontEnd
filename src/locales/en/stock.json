@@ -53,6 +53,7 @@
     "bloqueadas": "{{n}} blocked",
     "fisico_em_armazem": "{{n}} in warehouse",
     "comprometido_excede": "Committed exceeds the warehouse balance — check",
+    "reservado_compra_facil": "{{n}} reserved for Compra Fácil orders",
     "minimo": "Minimum",
     "acoes": "Actions",
     "ver_ledger": "View ledger / history",

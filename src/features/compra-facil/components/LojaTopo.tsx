@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
+import { Heart, LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { SelectorIdioma } from '@/shared/ui';
 import { conta } from '../api/conta.api';
@@ -81,6 +81,13 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
                 className="hidden text-sm text-slate-600 hover:text-blue-600 sm:inline"
               >
                 {t('pedidos.os_meus')}
+              </Link>
+              <Link
+                to={`/loja/${lojaId}/favoritos`}
+                title={t('favoritos.titulo')}
+                className="inline-flex items-center text-slate-500 hover:text-rose-500"
+              >
+                <Heart size={16} />
               </Link>
               <button
                 type="button"

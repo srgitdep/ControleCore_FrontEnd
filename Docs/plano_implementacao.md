@@ -906,6 +906,60 @@ esse merge trouxe.
   >   visitante não chegava a gravar-se na conta, e a mesma conta voltava a português noutro
   >   aparelho ou sessão. Ligado em `useAuthStore`, `useContaClienteStore` e `usePortalStore`.
 
+### Fase 21 — Reservado do Compra Fácil no stock, favoritos e modelo Gemini centralizado (3 Out 2026)
+
+- **2026-10-03 · [BE+FE] · Antonio Mambo** — itens do backlog «Compra Fácil» e «Infra /
+  observação» pedidos directamente pelo utilizador, sem passar por «Fase em curso»
+  (três correcções pontuais, não uma funcionalidade nova com plano próprio).
+
+  > **Reservado por pedidos online, na listagem de stock.** `GetStockQueriesUseCase`
+  > soma as `ReservaStock` activas por posição (produto × armazém,
+  > `IStockRepository.getReservadoPorPosicoes`) e devolve `reservadoCommerce` em cada
+  > linha; a tabela mostra «N reservadas para o Compra Fácil» sob o disponível. Antes de
+  > implementar, verificou-se que o frontend já tem um mecanismo mais amplo
+  > (`Stock.estados`, `RetencaoModal`, `useReservas`) — mas está desligado do backend
+  > real (ver achado na Secção 3, «Infra / observação»), por isso o campo novo é
+  > independente e não reutiliza esse caminho.
+  >
+  > **Favoritos (`FavoritoCliente`).** O modelo já existia no schema desde a Fase 11;
+  > faltava a funcionalidade. Novo `FavoritoController` (`GET/POST /commerce/favoritos`,
+  > `DELETE /commerce/favoritos/:produtoId`), idempotente nos dois sentidos (favoritar
+  > duas vezes não duplica, desfavoritar o que já não está marcado não é erro), com
+  > validação de que o produto pertence à empresa da conta. Frontend: botão de coração
+  > no `ProdutoCartao` (mercado e catálogo de loja) e página «Os meus favoritos»
+  > (`/loja/:lojaId/favoritos`), ligada no topo ao lado de «Os meus pedidos».
+  >
+  > **Modelo Gemini centralizado.** Novo `src/shared/gemini-model.ts`: as 8 chamadas
+  > que recorriam a `'gemini-2.0-flash'` (retirado da API) quando `GEMINI_MODEL`
+  > faltava passam a usar `modeloGeminiPadrao(config)`, que lança em vez de recair no
+  > modelo morto. `main.ts` chama `validarModeloGeminiNoArranque()` antes de
+  > `app.listen` — sem `GEMINI_MODEL`, a aplicação recusa-se a arrancar, com mensagem
+  > clara, em vez de falhar horas depois num 404 sem relação óbvia com a causa.
+  >
+  > **Testes**: `adicionar-favorito.use-case.spec.ts` novo (produto de outra empresa
+  > recusado; idempotência do `upsert`); dois mocks de `ConfigService` existentes
+  > (`analisar-necessidades-mayra`, `analisar-excecao-mayra`) ajustados para incluir
+  > `GEMINI_MODEL` — caíam no fallback antigo e passavam por acidente, mesmo simulando
+  > um ambiente correctamente configurado. Catálogo de erros: nova chave
+  > `commerce.favorito.produto_nao_encontrado` em `pt`/`en`. Backend 2335 (suite
+  > completa), frontend 147 — ambos limpos; `tsc`/`npm run build` sem erros nos dois
+  > repositórios.
+  >
+  > **Não implementado nesta entrega, por decisão ou âmbito** (itens dos mesmos dois
+  > blocos do backlog que ficam por fazer — ver Secção 3 para o porquê de cada um):
+  > cobrança M-Pesa/e-Mola no checkout; CRM/recomendações/promoções com risco de
+  > stock; histórico de compras entre empresas; galeria de produto com várias fotos;
+  > decisão `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` (amarrada à migração da
+  > Entrega ao Domicílio); confirmar em produção a estabilidade da voz da Mayra;
+  > confirmar que a chave do Gemini pertence à facturação da SRG (verificação
+  > administrativa, não código).
+  >
+  > **Achado durante a análise, fora de âmbito, não corrigido**: o sistema de
+  > retenção manual de stock que o frontend já tem construído
+  > (`RetencaoModal`/`useReservas`/`reservas.api.ts`, rotas `/stock/reservas`,
+  > `/stock/:id/quarentena`, `/stock/:id/bloqueio`) não existe no backend — ver
+  > entrada própria na Secção 3.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -921,8 +975,9 @@ esse merge trouxe.
       removido do `Docs/` por estar superado; texto completo no histórico git,
       commit `feat/compra-facil-fase11`). Depende do núcleo do pedido estar
       estável (Fases 11–12, já concluídas).
-- [ ] `FavoritoCliente` — pendência opcional deixada em aberto na Fase 11 (o
-      modelo já existe no schema Prisma; falta a funcionalidade de topo).
+- [x] `FavoritoCliente` — resolvido em 2026-10-03 (Fase 21): endpoints
+      `GET/POST /commerce/favoritos`, `DELETE /commerce/favoritos/:produtoId`, botão
+      de coração no cartão de produto e página «Os meus favoritos».
 - [ ] Promoções com verificação de risco de stock (`assess_promotion_stock_risk`,
       tool da MAYRA prevista para uma fase futura).
 - [ ] Histórico de compras entre empresas diferentes — hoje "lojas onde já
@@ -931,10 +986,11 @@ esse merge trouxe.
       âmbito do mercado.
 - [ ] Galeria de produto com várias fotos no mercado (hoje é uma imagem só por
       produto, herdado da Fase 11).
-- [ ] Mostrar no ecrã de stock quanto está reservado por pedidos online. O POS já
-      desconta as reservas ao vender (Fase 11), mas a listagem de stock mostra
-      `currentQuantity` cru: o gestor vê 10 unidades sem saber que 3 estão
-      prometidas a pedidos por levantar. Não é defeito de venda — é de leitura.
+- [x] Mostrar no ecrã de stock quanto está reservado por pedidos online — resolvido
+      em 2026-10-03 (Fase 21): `GetStockQueriesUseCase` soma as `ReservaStock`
+      activas por posição (produto × armazém) e a tabela de stock mostra a legenda
+      sob o disponível. Independente do mecanismo `estados`/retenção manual — ver
+      achado fora de âmbito mais abaixo.
 - [x] Devolução de uma compra online entrava no CRM como `DEVOLUCAO_POS`/canal
       `POS` — resolvido em 2026-09-22 (Fase 14), com `DEVOLUCAO_ECOMMERCE` novo
       no enum `TipoEventoCliente`.
@@ -1087,14 +1143,14 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       (Fases 8–9) resolveram definitivamente a latência e os turnos perdidos na
       Gemini Live API — as últimas entradas da Fase 8 são `diag(...)`, ainda a
       confirmar por logs, não uma correcção fechada com certeza absoluta.
-- [ ] Trocar o modelo por defeito do Gemini no código: 9 chamadas recorrem a
-      `'gemini-2.0-flash'` quando `GEMINI_MODEL` falta, e esse modelo já não
-      existe na API. Centralizar num só sítio e falhar no arranque com mensagem
-      clara em vez de recorrer a um modelo retirado. Encontrado em 28/09/2026,
-      fora do âmbito da correcção do 503.
+- [x] Trocar o modelo por defeito do Gemini no código — resolvido em 2026-10-03
+      (Fase 21): `src/shared/gemini-model.ts` centraliza as 8 chamadas que recorriam
+      a `'gemini-2.0-flash'` (modelo retirado da API); `main.ts` recusa o arranque,
+      com mensagem clara, se `GEMINI_MODEL` faltar.
 - [ ] Verificar se a chave do Gemini em produção pertence ao projecto Google e à
       facturação da SRG — em 28/09/2026 foi copiada do `.env` local de
-      desenvolvimento para repor a Mayra.
+      desenvolvimento para repor a Mayra. Verificação administrativa na consola da
+      Google Cloud — não é código, continua por fazer.
 - [x] Teste instável `bater-ponto.use-case.spec.ts` — resolvido em 2026-09-29 (Fase 17):
       relógio fixo no teste, testes no fuso de Maputo e `TZ` no servidor, que
       corria em UTC e calculava o atraso do ponto 2 h ao lado.
@@ -1102,6 +1158,18 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       `Africa/Maputo` (`fly.toml`). Só é preciso se o SaaS for vendido fora de
       Moçambique; entra com a §4.2 (Multilínguas) ou antes, se aparecer um cliente
       noutro fuso.
+- [ ] **Achado fora de âmbito, não corrigido (2026-10-03):** o frontend do stock
+      (`RetencaoModal`, `useReservas`, `reservas.api.ts`) chama
+      `/stock/reservas`, `/stock/:id/quarentena`, `/stock/:id/bloqueio` e os
+      endpoints de libertação — **nenhum existe no backend**
+      (`stock.controller.ts` não os declara). Qualquer clique em "Reservar",
+      "Quarentena" ou "Bloquear" no ecrã de stock dá 404. O mesmo vale para
+      `Stock.estados` (reservado/quarentena/bloqueado/disponível): o tipo é
+      opcional e nunca chega preenchido da listagem real — é código escrito a
+      antecipar um backend que não foi implementado. Encontrado ao verificar que
+      "mostrar reservado por pedidos online" (acima) não colidia com este
+      mecanismo; ficou de fora por ser um projecto à parte (cinco endpoints e o
+      cálculo de `EstadosDaPosicao` no servidor), não uma correcção pontual.
 
 ---
 
