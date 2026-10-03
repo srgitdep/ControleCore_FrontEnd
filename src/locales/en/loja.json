@@ -74,11 +74,9 @@
   },
   "estadoPedido": {
     "CRIADO": "Received",
-    "AGUARDA_CONFIRMACAO": "Awaiting confirmation",
     "CONFIRMADO": "Confirmed",
     "EM_PREPARACAO": "Being prepared",
     "PRONTO": "Ready",
-    "AGUARDA_LEVANTAMENTO": "Ready for collection",
     "CONCLUIDO": "Completed",
     "CANCELADO": "Cancelled"
   },

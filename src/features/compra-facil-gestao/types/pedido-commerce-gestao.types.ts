@@ -10,11 +10,9 @@
 
 export type EstadoPedidoCommerce =
   | 'CRIADO'
-  | 'AGUARDA_CONFIRMACAO'
   | 'CONFIRMADO'
   | 'EM_PREPARACAO'
   | 'PRONTO'
-  | 'AGUARDA_LEVANTAMENTO'
   | 'CONCLUIDO'
   | 'CANCELADO';
 

@@ -960,6 +960,35 @@ esse merge trouxe.
   > `/stock/:id/quarentena`, `/stock/:id/bloqueio`) não existe no backend — ver
   > entrada própria na Secção 3.
 
+  > **Extensão da mesma entrega (2026-10-03, mesmo dia)**: pedido para avançar os
+  > restantes sub-pontos dos blocos «Compra Fácil» e «Infra / observação» que fosse
+  > possível implementar sem decisão nova.
+  >
+  > - **Confirmado pelo utilizador**: a voz da Mayra está estável em produção —
+  >   fecha o item pendente desde as Fases 8–9.
+  > - **`AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` removidos do enum
+  >   `EstadoPedido`**, antecipando a decisão já tomada para a Entrega ao Domicílio
+  >   (§4.1) — ver essa secção para o detalhe da migração
+  >   (`20261003030000_remove_estados_mortos_pedido`) e o desvio ao plano (mapear
+  >   para `CONFIRMADO`/`PRONTO`, não para `CRIADO`). Limpeza a acompanhar em
+  >   `pedido-estado.ts`/`.spec.ts` e em quatro ficheiros de tradução do frontend
+  >   (`loja`/`lojaGestao`, pt/en) que ainda listavam os dois estados.
+  > - **Não implementado, por decisão de produto já tomada no código**: a galeria
+  >   de fotos do produto. `GerirImagensProdutoUseCase` já documenta a escolha —
+  >   "uma galeria com várias fotos e reordenação fica para quando houver procura
+  >   real por isso" — e o catálogo público do Compra Fácil só lê `isPrincipal`.
+  >   Implementar agora seria reverter essa decisão sem ela ter sido revista, não
+  >   corrigir uma lacuna.
+  > - **Não implementado, por exigirem decisão que não compete à IA tomar
+  >   sozinha**: cobrança M-Pesa/e-Mola no checkout (gateway, conta de
+  >   comerciante, reembolsos — ver Secção 3); CRM/recomendações com risco de
+  >   stock (ferramenta nova da Mayra sobre promoções, cuja existência como
+  >   conceito ainda não está confirmada no sistema); histórico de compras entre
+  >   empresas (contradiz deliberadamente o isolamento multi-tenant actual).
+  > - **Não implementado, por não ser código**: confirmar que a chave Gemini em
+  >   produção pertence à facturação da SRG — verificação na consola da Google
+  >   Cloud, só o utilizador a pode fazer.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -996,9 +1025,10 @@ esse merge trouxe.
       no enum `TipoEventoCliente`.
 - [x] Anular a venda não revertia o pedido — resolvido em 2026-09-22 (Fase 14):
       o pedido passa a `CANCELADO` dentro da transacção de anulação.
-- [ ] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
-      mas nenhum código os escreve — o frontend tem etiquetas para eles que nunca
-      aparecem. Decidir entre usá-los ou removê-los do enum.
+- [x] `AGUARDA_CONFIRMACAO` e `AGUARDA_LEVANTAMENTO` existem em `EstadoPedido`
+      mas nenhum código os escreve — resolvido em 2026-10-03 (Fase 21): removidos do
+      enum, antecipando a decisão já tomada para a migração da Entrega ao Domicílio
+      (ver nota nessa secção).
 - [x] Atribuir `commerce.pedido.ler` e `commerce.pedido.gerir` aos perfis das
       lojas — resolvido em 2026-09-29 (Fase 16): migração
       `20260929090000`, e o cargo passa a escolher o perfil de sistema. Verificado
@@ -1036,7 +1066,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       (1) **Leaflet + OpenStreetMap** (gratuito; o Google Maps chegou a
       ser escolhido e foi trocado no mesmo dia); (2) `Pedido.estado` **espelha** a entrega;
       (3) um estafeta **pode servir várias lojas** da empresa; (4) **remover**
-      `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO`, na migração da entrega.
+      `AGUARDA_CONFIRMACAO`/`AGUARDA_LEVANTAMENTO` — **antecipado para 2026-10-03
+      (Fase 21), fora desta migração**: não dependiam de nenhuma decisão da entrega
+      em si, só da remoção em si, e ficar à espera só atrasava uma limpeza já
+      decidida. A migração da entrega já nasce sem eles no enum.
 - [ ] **Fase 0 — Preparar.** Migração `entrega_domicilio` (não destrutiva);
       `JWT_ESTAFETA_SECRET` nos `fly secrets` antes do deploy; coordenadas nas
       lojas piloto — hoje não há nenhuma coordenada no schema.
@@ -1139,10 +1172,9 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 ### Infra / observação
 
-- [ ] Confirmar em produção, com tráfego real, que as correcções de voz da Mayra
+- [x] Confirmar em produção, com tráfego real, que as correcções de voz da Mayra
       (Fases 8–9) resolveram definitivamente a latência e os turnos perdidos na
-      Gemini Live API — as últimas entradas da Fase 8 são `diag(...)`, ainda a
-      confirmar por logs, não uma correcção fechada com certeza absoluta.
+      Gemini Live API — confirmado pelo utilizador em 2026-10-03: a voz está estável.
 - [x] Trocar o modelo por defeito do Gemini no código — resolvido em 2026-10-03
       (Fase 21): `src/shared/gemini-model.ts` centraliza as 8 chamadas que recorriam
       a `'gemini-2.0-flash'` (modelo retirado da API); `main.ts` recusa o arranque,
@@ -1449,19 +1481,15 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
 - [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**.
-- [ ] **[obrigatório — decidido: remover]** `AGUARDA_CONFIRMACAO` e
-      `AGUARDA_LEVANTAMENTO`. Se a decisão for **remover** (recomendado), é a parte
-      destrutiva da migração e a estratégia fica escrita aqui, como o `CLAUDE.md` exige:
-      1. Mapear antes de remover, sem falhar: `UPDATE pedidos SET estado = 'CRIADO'
-         WHERE estado = 'AGUARDA_CONFIRMACAO'` e `… = 'PRONTO' WHERE estado =
-         'AGUARDA_LEVANTAMENTO'`. Nenhum código os escreve, por isso o esperado é zero
-         linhas; mapear em vez de abortar porque uma migração que falha impede o
-         contentor de arrancar (`migrate deploy` corre no `CMD`).
-      2. Recriar o tipo (Postgres não remove valores de enum): renomear o antigo, criar
-         o novo, `ALTER TABLE pedidos ALTER COLUMN estado TYPE … USING estado::text::…`,
-         repor o `DEFAULT`, apagar o antigo.
-      3. No mesmo commit: tirar os dois de `pedido-estado.ts` e de
-         `ETIQUETA_ESTADO_PEDIDO` no frontend.
+- [x] **[já feito, fora desta migração]** `AGUARDA_CONFIRMACAO` e
+      `AGUARDA_LEVANTAMENTO` — removidos em 2026-10-03 (Fase 21), antes desta
+      funcionalidade ter código. Migração
+      `20261003030000_remove_estados_mortos_pedido`: mapeou
+      `AGUARDA_CONFIRMACAO → CONFIRMADO` e `AGUARDA_LEVANTAMENTO → PRONTO` (não
+      `CRIADO`, como este plano previa — mapear para a frente é mais seguro do que
+      recuar um pedido de estado, e o esperado continua a ser zero linhas em
+      qualquer dos dois destinos), depois recriou o tipo sem os dois valores. Já
+      sem código de `pedido-estado.ts` nem de etiquetas no frontend a referenciá-los.
 - [ ] **[obrigatório]** `EnderecoCliente`, `ZonaEntregaLoja` (espelha
       `ZonaEntregaFornecedor`, incluindo a nota sobre índices únicos parciais no SQL),
       `Estafeta`, `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`,

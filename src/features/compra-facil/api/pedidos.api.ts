@@ -2,11 +2,9 @@ import { contaApi } from './conta.api';
 
 export type EstadoPedido =
   | 'CRIADO'
-  | 'AGUARDA_CONFIRMACAO'
   | 'CONFIRMADO'
   | 'EM_PREPARACAO'
   | 'PRONTO'
-  | 'AGUARDA_LEVANTAMENTO'
   | 'CONCLUIDO'
   | 'CANCELADO';
 

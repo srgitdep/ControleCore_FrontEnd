@@ -1,11 +1,9 @@
 {
   "estado": {
     "CRIADO": "New",
-    "AGUARDA_CONFIRMACAO": "Awaiting confirmation",
     "CONFIRMADO": "Confirmed",
     "EM_PREPARACAO": "Being prepared",
     "PRONTO": "Ready for collection",
-    "AGUARDA_LEVANTAMENTO": "Awaiting collection",
     "CONCLUIDO": "Completed",
     "CANCELADO": "Cancelled"
   },
