@@ -70,7 +70,10 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 bundle inicial, os outros carregam-se por `import()` quando um ecrã os pede). Chaves
 tipadas contra o catálogo português (`src/i18n/tipos.d.ts`). Língua activa: a da sessão
 (vem no login — a escolha da pessoa ou a da empresa) → a guardada no browser
-(`localStorage.idioma`) → a do browser → português. Todas as instâncias do axios enviam
+(`localStorage.idioma`) → a do browser → português. Se a conta nunca gravou uma língua,
+`adoptarIdiomaSeNuncaEscolhido()` grava-lhe no login a do browser (`useAuthStore`,
+`useContaClienteStore`, `usePortalStore`) — sem isto, escolher inglês como visitante não
+sobrevivia a outro aparelho ou sessão. Todas as instâncias do axios enviam
 `Accept-Language` com a língua activa (`enviarLinguaActiva`). `formatMoeda`/`formatData`
 seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdioma`
 (`src/shared/ui/`) no ERP, na loja (também na página inicial, que tem topo próprio), no
