@@ -253,16 +253,19 @@
   .cc-duas--heroi > *:last-child { order: 2; }
 }
 
-/* A navegação larga esconde-se, e o botão de menu aparece. */
+/* A navegação larga esconde-se, e o botão de menu aparece.
+ *
+ * O CTA da barra («Pedir demonstração» / «Request a demo») esconde-se no mesmo ponto —
+ * era um limiar à parte, 560px, pensado para o texto em português; em inglês («Sign
+ * in» + «Request a demo») cabia mais abaixo do que isso, e entre os dois limiares (561
+ * a 900px) a barra tinha logótipo + selector + dois botões a disputar 68px de altura
+ * sem espaço para encolher (`white-space: nowrap` nos botões impede-os de o fazer) —
+ * só não transbordava em inglês por o texto ser mais curto. Um só limiar, repartido
+ * pelo mesmo breakpoint da navegação, elimina essa faixa: a partir daqui o telemóvel
+ * fica só com logótipo, selector, «Entrar» e o menu — a acção se repete lá dentro. */
 @media (max-width: 900px) {
   .cc-nav-larga { display: none !important; }
   .cc-nav-botao { display: grid !important; }
-}
-
-/* Em telemóvel o CTA da barra cede o lugar: dois botões de 40 px numa barra de
- * 68 px não cabem com o logótipo. Fica o «Entrar», e a acção principal repete-se
- * ao longo da página. */
-@media (max-width: 560px) {
   .cc-barra-cta { display: none !important; }
 }
 

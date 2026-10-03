@@ -134,6 +134,17 @@ export function BarraDoSitio() {
               </Link>
             );
           })}
+
+          {/* O CTA da barra esconde-se com ela (ver a nota em `site.css`) — mas a acção
+              não pode desaparecer, só mudar de sítio. */}
+          <a
+            href="#comecar"
+            onClick={() => setAberto(false)}
+            className="cc-botao cc-botao--cheio"
+            style={{ marginTop: 12, textAlign: 'center' }}
+          >
+            {COPY.SITIO.DEMONSTRACAO}
+          </a>
         </nav>
       )}
     </header>

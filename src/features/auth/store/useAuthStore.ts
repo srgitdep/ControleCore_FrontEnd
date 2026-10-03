@@ -1,7 +1,7 @@
-import { aplicarIdiomaGuardado } from '@/i18n';
+import { aplicarIdiomaGuardado, adoptarIdiomaSeNuncaEscolhido } from '@/i18n';
 import { create } from 'zustand';
 import type { AuthUser, LoginPayload, Role } from '../types';
-import { logoutApi, loginApi } from '../api/auth.api';
+import { logoutApi, loginApi, definirIdiomaApi } from '../api/auth.api';
 import { queryClient } from '@/main';
 import { useCopilotStore } from '../../ai-copilot/store/copilotStore';
 
@@ -33,6 +33,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const data = await loginApi(payload);
     const userPermissions = (data.user as any).permissions ?? [];
     aplicarIdiomaGuardado(data.user.idioma);
+    adoptarIdiomaSeNuncaEscolhido(data.user.idioma, definirIdiomaApi);
 
     sessionStorage.setItem('authUser', JSON.stringify(data.user));
 
@@ -46,6 +47,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   entrarComSessao: (user: AuthUser) => {
     const userPermissions = (user as any).permissions ?? [];
     aplicarIdiomaGuardado(user.idioma);
+    adoptarIdiomaSeNuncaEscolhido(user.idioma, definirIdiomaApi);
     sessionStorage.setItem('authUser', JSON.stringify(user));
     set({ user, permissions: userPermissions, isAuthenticated: true });
   },
