@@ -49,10 +49,10 @@ export function BarraDoSitio() {
         <nav
           aria-label={COPY.OUTROS.NAV_PRINCIPAL}
           className="cc-nav-larga"
-          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 28 }}
+          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 24 }}
         >
           {COPY.SITIO.NAV.map((l) => {
-            const estilo: React.CSSProperties = { fontSize: 14, fontWeight: 500, color: 'var(--tinta-suave)', textDecoration: 'none' };
+            const estilo: React.CSSProperties = { fontSize: 14, fontWeight: 500, color: 'var(--tinta-suave)', textDecoration: 'none', whiteSpace: 'nowrap' };
             // Uma âncora `/#modulos` faz deslocar a página; só as rotas reais vão pelo `Link`.
             return l.para.startsWith('/#') ? (
               <a key={l.para} href={l.para} style={estilo}>

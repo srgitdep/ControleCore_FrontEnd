@@ -1156,6 +1156,16 @@ esse merge trouxe.
   >   obrigatória no mapa). Para tráfego sério, trocar `URL_TILES` em `MapaEntrega.tsx`.
   > - Backend primeiro, frontend depois (o frontend novo chama `/commerce/enderecos`).
 
+### Fase 24 — Barra de navegação do site sem quebras de linha (6 Out 2026)
+
+- **2026-10-06 · [FE] · Antonio Mambo** — `fix/navbar-site-quebra-de-linha`
+  - fix(landing): as ligações da barra (`A operação`, `A Mayra`, `Como começa`, `Comprar online`)
+    partiam em duas linhas e ficavam desalinhadas; ganham `white-space: nowrap` e o menu móvel
+    passa a entrar abaixo de 1120px (era 900px)
+
+  > A barra precisa de ~1100px para logótipo, seis ligações, selector e dois botões; entre 900 e
+  > 1120px não cabia e as ligações de duas palavras quebravam. Frontend apenas; sem notas de deploy.
+
 ---
 
 ## 3. Backlog — Por Fazer
