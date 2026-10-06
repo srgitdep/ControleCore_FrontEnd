@@ -104,6 +104,11 @@
     "sem_armazens": "No warehouses registered in this store.",
     "gestor_label": "Store manager / person in charge",
     "gestor_ajuda": "Only users with the ADMIN or MANAGER level can be store managers.",
-    "guardar_gestor": "Save manager"
+    "guardar_gestor": "Save manager",
+    "localizacao_label": "Store location",
+    "localizacao_ajuda": "Mark where the store is on the map. Home delivery distances are measured from here.",
+    "guardar_localizacao": "Save location",
+    "localizacao_guardada": "Location saved",
+    "erro_localizacao": "Could not save the location"
   }
 }

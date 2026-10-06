@@ -55,6 +55,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | Leitura de código de barras | @zxing/browser + @zxing/library | ^0.2.1 / 0.23.0 | usa a câmara do telemóvel (exige contexto seguro: `localhost` ou HTTPS) |
 | Markdown | react-markdown + remark-gfm | ^10.1.0 / ^4.0.1 | respostas da Mayra |
 | Login social | @react-oauth/google | ^0.13.5 | "Continuar com Google" no Compra Fácil (Google Identity Services) |
+| Mapas | leaflet + react-leaflet + @types/leaflet | ^1.9.4 / ^5.0.0 | escolha de morada e localização da loja; só em `src/shared/ui/mapa/MapaEntrega.tsx`, carregado com `React.lazy` (chunk à parte, ~159 kB). Tiles do OpenStreetMap |
 | Datas | date-fns | ^4.4.0 | |
 | Tradução (i18n) | i18next + react-i18next + i18next-browser-languagedetector | ^26.4.2 / ^17.0.15 / ^8.2.1 | português e inglês; ver «Multilínguas» abaixo |
 | Utilitários CSS | clsx + tailwind-merge + class-variance-authority | — | |
@@ -80,7 +81,7 @@ seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdiom
 portal, no login e nas páginas públicas. Teste de paridade (`src/i18n/paridade.test.ts`)
 falha se uma chave faltar numa das línguas.
 
-Namespaces existentes (29): `comum`, `loja` (Compra Fácil), `auth` (login, recuperação e
+Namespaces existentes (30): `comum`, `loja` (Compra Fácil), `auth` (login, recuperação e
 redefinição de senha), `portal` e `mercado` (B2B), `site` (landing/login — substitui
 `copywriting.ts`; lido com `useCopy()`, `src/shared/hooks/useCopy.ts`), `precos`
 (`PrecosPage`/`TabelaDeCapacidades`; `precos.dados.ts` ficou só com números, booleanos e
@@ -88,7 +89,7 @@ códigos), `adesao` (pedido público e fila de gestão), e as 24 áreas do ERP/P
 `stock`, `armazens`, `transferencias`, `compras`, `conferencia`, `catalogo`, `crm`, `rh`,
 `financeiro`, `fornecedores`, `b2b`, `produtos`, `lojas`, `empresas`, `utilizadores`,
 `modulos`, `painel`, `historico`, `pesquisa`, `lojaGestao` (gestão do Compra Fácil no
-ERP), `copiloto` (UI da Mayra) e `shell` (layout, guards, componentes genéricos de
+ERP), `entrega` (zonas e configuração da entrega), `copiloto` (UI da Mayra) e `shell` (layout, guards, componentes genéricos de
 `shared/ui/`). **Todos vão no bundle inicial**, juntos por `import.meta.glob`:
 carregá-los sob pedido deixava o ecrã com as chaves cruas enquanto o ficheiro descarregava
 (não há `Suspense`) — se o ERP (crescimento futuro) fizer o bundle crescer muito, revê-se
@@ -220,8 +221,9 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `ComercioConfiguracao`, `Promocao` (desconto por produto/categoria com
     período — módulo `promocao`, `PrecoPromocionalService` aplica o desconto
     tanto no catálogo público como no checkout).
-  - **Entrega ao domicílio** (desde a Fase 22; **ainda sem código que escreva nelas** —
-    Fases 1 a 6 do plano) — `EnderecoCliente`, `ZonaEntregaLoja` (faixas de distância à
+  - **Entrega ao domicílio** (modelo desde a Fase 22; **a Fase 23 passou a escrever em
+    `EnderecoCliente`, `ZonaEntregaLoja`, `Pedido.tipoEntrega/enderecoId/taxaEntrega` e
+    `ComercioConfiguracao`** — as restantes tabelas esperam as Fases 2 a 6) — `EnderecoCliente`, `ZonaEntregaLoja` (faixas de distância à
     loja, por haversine), `Estafeta` (identidade própria, não é um `User`; liga-se a várias
     lojas), `EntregaPedido` (guarda o destino **copiado** da morada), `EventoEntrega`,
     `AcertoEstafeta`, `WebhookSubscricao` (também a identidade do operador externo),
@@ -229,6 +231,18 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `(operadorId, eventoExternoId)`); `Pedido.tipoEntrega/enderecoId/taxaEntrega`,
     `Venda.taxaEntrega`, `Loja.latitude/longitude`, `ComercioConfiguracao.entregaActiva` e
     afins. O enum chama-se `EstadoEntregaPedido` — `EstadoEntrega` é o das mensagens do CRM.
+  - **Entrega ao domicílio — Fase 1 (cliente escolhe entrega).** Módulo `src/modules/entrega/`:
+    `domain/` puro (`distancia-haversine.ts`, `calcular-taxa.ts`, `validar-faixas.ts`),
+    zonas `GET/POST/PATCH /entregas/zonas` e configuração `GET/PATCH /entregas/configuracao`
+    (ambos `GERIR_ZONAS_ENTREGA` + `ModuloAccessGuard('commerce')`; zonas não se apagam, desactivam-se),
+    `CotarEntregaUseCase` e `DisponibilidadeEntregaService` (exportados). No `CommerceModule`:
+    `GET/POST/PATCH/DELETE /commerce/enderecos` e `POST /commerce/entrega/cotacao`
+    (`@ContaCliente()`). A taxa é por **distância em linha recta** em faixas `[min,max)` por loja;
+    `CriarPedidoUseCase` recota no servidor antes da transacção e recusa com
+    `commerce.pedido.entrega_indisponivel`; `Pedido.totalFinal = subtotal + taxaEntrega`.
+    `ConfirmarLevantamentoUseCase` recusa pedidos de entrega; `ConferirPedidoUseCase` preserva a taxa.
+    `GET /commerce/lojas` devolve `entregaDisponivel`; `CreateLojaDto/UpdateLojaDto` aceitam
+    `latitude`/`longitude` (juntas). Erros novos em `erros.json` (`entrega.*`, `commerce.endereco.*`).
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à
@@ -302,6 +316,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 | **Google Identity Services (OAuth)** | "Continuar com Google" no Compra Fácil | Gratuito | `GOOGLE_CLIENT_ID` (backend) / `VITE_GOOGLE_CLIENT_ID` (frontend) — sem client secret, só verificação de ID token |
 | **Zavu** (`@zavudev/sdk`) | SMS, WhatsApp e (antigo) e-mail de campanhas do CRM | Pago | `ZAVU_API_KEY`, `ZAVU_SENDER_ID`. Se faltar, o backend arranca e os envios ficam registados como não enviados — não bloqueia o POS |
 | **SMTP** (ex. Gmail) | E-mail transaccional e, desde a Fase 11 do CRM, e-mail de campanhas (via `MailerService`) | Gratuito com Gmail pessoal (limites de envio); pago se SMTP dedicado | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` |
+| **OpenStreetMap (tiles)** | Mapa das moradas e da localização da loja (Leaflet) | Gratuito, com política de uso (uso moderado, atribuição «© OpenStreetMap contributors» visível); tráfego sério pede servidor de tiles próprio ou pago | Sem chave. URL num só sítio: `URL_TILES` em `MapaEntrega.tsx`. Se falhar, o mapa fica cinzento e a morada não se consegue marcar |
 | **GitHub Actions** | CI/CD do backend | Gratuito nos limites do plano da organização | `.github/workflows/deploy.yml` |
 
 > Nenhuma chave paga fica no repositório — todas em `fly secrets` (runtime) ou

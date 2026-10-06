@@ -65,7 +65,7 @@
     "diminuir": "Diminuir quantidade de {{nome}}",
     "aumentar": "Aumentar quantidade de {{nome}}",
     "remover": "Remover",
-    "no_levantamento": "No levantamento",
+    "no_levantamento": "No levantamento ou na entrega",
     "continuar_checkout": "Continuar para o checkout",
     "entrar_para_continuar": "Entrar para continuar",
     "apenas_disponiveis_one": "Apenas {{count}} disponível.",
@@ -86,7 +86,8 @@
     "confirmado": "Confirmado",
     "em_preparacao": "Em preparação",
     "pronto": "Pronto a levantar",
-    "entregue": "Entregue"
+    "entregue": "Entregue",
+    "pronto_entrega": "Pronto a entregar"
   },
   "metodoPagamento": {
     "NUMERARIO": "Numerário no levantamento",
@@ -103,7 +104,11 @@
     "confirmar": "Confirmar pedido",
     "pagamento_no_levantamento": "Pagamento no levantamento",
     "nao_cobrado_agora": "Não é cobrado agora. Paga na loja, no momento em que levantar o pedido.",
-    "nao_cobrado_agora_curto": "Não é cobrado agora — paga na loja, no momento do levantamento."
+    "nao_cobrado_agora_curto": "Não é cobrado agora — paga na loja, no momento do levantamento.",
+    "pagamento_na_entrega": "Pagamento na entrega",
+    "nao_cobrado_agora_entrega": "Não é cobrado agora. Paga ao estafeta, quando receber o pedido.",
+    "nao_cobrado_agora_curto_entrega": "Não é cobrado agora — paga na entrega.",
+    "taxa_entrega": "Taxa de entrega"
   },
   "pedidos": {
     "os_meus": "Os meus pedidos",
@@ -137,5 +142,64 @@
     "erro_criar": "Não foi possível criar a conta.",
     "erro_google": "Não foi possível entrar com a Google.",
     "ou": "ou"
+  },
+  "metodoPagamentoEntrega": {
+    "NUMERARIO": "Numerário na entrega",
+    "MPESA": "M-Pesa na entrega",
+    "EMOLA": "e-Mola na entrega"
+  },
+  "entrega": {
+    "titulo": "Como quer receber?",
+    "levantar": "Levantar na loja",
+    "entregar": "Entrega ao domicílio",
+    "morada": "Morada de entrega",
+    "sem_moradas": "Ainda não tem moradas guardadas.",
+    "gerir_moradas": "Gerir as minhas moradas",
+    "a_calcular": "A calcular a taxa de entrega…",
+    "erro_cotacao": "Não foi possível calcular a entrega. Tente outra vez.",
+    "taxa": "Taxa de entrega",
+    "prazo": "Cerca de {{minutos}} min",
+    "motivo": {
+      "desactivada": "Esta loja não faz entregas neste momento.",
+      "loja_sem_coordenadas": "Esta loja ainda não está preparada para entregas.",
+      "acima_do_raio": "Esta morada fica fora da área de entrega (máximo {{raio}} km).",
+      "fora_de_area": "Não entregamos nesta morada: está a {{distancia}} km da loja, fora das zonas de entrega.",
+      "abaixo_do_minimo": "Para entregar nesta morada o pedido tem de ser de pelo menos {{minimo}}. Faltam {{falta}}.",
+      "desconhecido": "Não é possível entregar nesta morada."
+    }
+  },
+  "moradas": {
+    "titulo": "As minhas moradas",
+    "voltar": "Voltar",
+    "nova": "Nova morada",
+    "editar": "Editar morada",
+    "remover": "Remover morada",
+    "padrao": "Padrão",
+    "nenhuma": "Ainda não guardou nenhuma morada.",
+    "erro_carregar": "Não foi possível carregar as suas moradas.",
+    "guardada": "Morada guardada.",
+    "removida": "Morada removida.",
+    "erro_guardar": "Não foi possível guardar a morada.",
+    "erro_remover": "Não foi possível remover a morada.",
+    "campo_rotulo": "Nome (Casa, Trabalho…)",
+    "rotulo_exemplo": "Casa",
+    "campo_linha1": "Rua e número",
+    "campo_referencia": "Ponto de referência",
+    "referencia_exemplo": "Em frente à farmácia…",
+    "campo_bairro": "Bairro",
+    "campo_cidade": "Cidade",
+    "campo_provincia": "Província",
+    "escolher_provincia": "Escolha a província",
+    "pino": "Localização no mapa",
+    "pino_ajuda": "Toque no mapa para marcar o sítio exacto onde recebe a entrega.",
+    "pino_obrigatorio": "Marque o sítio no mapa.",
+    "usar_localizacao": "Usar a minha localização",
+    "localizacao_negada": "Não foi possível obter a sua localização. Marque-a no mapa.",
+    "campo_contacto_nome": "Quem recebe (se não for você)",
+    "campo_contacto_telefone": "Telefone de contacto",
+    "tornar_padrao": "Usar como morada padrão",
+    "obrigatorio": "Campo obrigatório",
+    "cancelar": "Cancelar",
+    "guardar": "Guardar morada"
   }
 }

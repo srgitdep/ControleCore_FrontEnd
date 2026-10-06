@@ -22,6 +22,7 @@ import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/feat
 import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
+import { ZonasEntregaPage } from '@/features/entrega-gestao';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -47,6 +48,7 @@ import {
   MeusPedidosPage,
   PedidoDetalhePage,
   FavoritosPage,
+  MoradasPage,
 } from '@/features/compra-facil';
 import {
   AdesoesPage,
@@ -139,6 +141,7 @@ export const router = createBrowserRouter([
           { path: ':lojaId/pedidos', element: <MeusPedidosPage /> },
           { path: ':lojaId/pedidos/:pedidoId', element: <PedidoDetalhePage /> },
           { path: ':lojaId/favoritos', element: <FavoritosPage /> },
+          { path: ':lojaId/moradas', element: <MoradasPage /> },
         ],
       },
     ],
@@ -235,6 +238,13 @@ export const router = createBrowserRouter([
           // aqui só a rota, como as restantes desta secção.
           { path: '/commerce/pedidos', element: <PedidosCommercePage /> },
           { path: '/promocoes', element: <PromocoesPage /> },
+          // As zonas e taxas da entrega ao domicílio — só ADMIN (a permissão fina é do backend:
+          // GERIR_ZONAS_ENTREGA + módulo commerce).
+          {
+            path: '/entregas/zonas',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,
+            children: [{ index: true, element: <ZonasEntregaPage /> }]
+          },
           { path: '/compras',       element: <PurchasesPage /> },
           // As requisições vivem em rota própria e não como separador de Compras.
           //

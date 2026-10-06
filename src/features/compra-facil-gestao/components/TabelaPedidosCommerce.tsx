@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
+import { Truck } from 'lucide-react';
 import { formatDataHora, formatMoeda } from '@/shared/utils';
 import { ResponsiveTable } from '@/shared/ui';
 import { BadgeEstadoPedidoCommerce } from './BadgeEstadoPedidoCommerce';
@@ -25,6 +26,12 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
           return (
             <button type="button" onClick={() => onAbrir(pedido)} className="text-left font-medium text-slate-800 hover:underline">
               {pedido.numeroPedido}
+              {pedido.tipoEntrega === 'ENTREGA' && (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-700">
+                  <Truck size={10} />
+                  {t('tabela.entrega')}
+                </span>
+              )}
             </button>
           );
         },

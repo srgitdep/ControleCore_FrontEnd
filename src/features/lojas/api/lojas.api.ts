@@ -15,7 +15,7 @@ export const createLoja = async (loja: { nome: string; endereco?: string; cidade
   return data;
 };
 
-export const updateLoja = async (id: string, loja: { nome?: string; endereco?: string; cidade?: string; gestorId?: string; isActive?: boolean }) => {
+export const updateLoja = async (id: string, loja: { nome?: string; endereco?: string; cidade?: string; gestorId?: string; isActive?: boolean; latitude?: number; longitude?: number }) => {
   const { data } = await api.patch(`/lojas/${id}`, loja);
   return data;
 };

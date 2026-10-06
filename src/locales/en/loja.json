@@ -65,7 +65,7 @@
     "diminuir": "Decrease quantity of {{nome}}",
     "aumentar": "Increase quantity of {{nome}}",
     "remover": "Remove",
-    "no_levantamento": "On collection",
+    "no_levantamento": "On pickup or delivery",
     "continuar_checkout": "Continue to checkout",
     "entrar_para_continuar": "Sign in to continue",
     "apenas_disponiveis_one": "Only {{count}} available.",
@@ -86,7 +86,8 @@
     "confirmado": "Confirmed",
     "em_preparacao": "Being prepared",
     "pronto": "Ready to collect",
-    "entregue": "Collected"
+    "entregue": "Collected",
+    "pronto_entrega": "Ready for delivery"
   },
   "metodoPagamento": {
     "NUMERARIO": "Cash on collection",
@@ -103,7 +104,11 @@
     "confirmar": "Place order",
     "pagamento_no_levantamento": "Pay on collection",
     "nao_cobrado_agora": "You are not charged now. You pay in store when you collect your order.",
-    "nao_cobrado_agora_curto": "Not charged now — you pay in store when you collect."
+    "nao_cobrado_agora_curto": "Not charged now — you pay in store when you collect.",
+    "pagamento_na_entrega": "Payment on delivery",
+    "nao_cobrado_agora_entrega": "You are not charged now. You pay the courier when you receive the order.",
+    "nao_cobrado_agora_curto_entrega": "Not charged now — you pay on delivery.",
+    "taxa_entrega": "Delivery fee"
   },
   "pedidos": {
     "os_meus": "My orders",
@@ -137,5 +142,64 @@
     "erro_criar": "We could not create your account.",
     "erro_google": "We could not sign you in with Google.",
     "ou": "or"
+  },
+  "metodoPagamentoEntrega": {
+    "NUMERARIO": "Cash on delivery",
+    "MPESA": "M-Pesa on delivery",
+    "EMOLA": "e-Mola on delivery"
+  },
+  "entrega": {
+    "titulo": "How would you like to receive it?",
+    "levantar": "Pick up in store",
+    "entregar": "Home delivery",
+    "morada": "Delivery address",
+    "sem_moradas": "You have no saved addresses yet.",
+    "gerir_moradas": "Manage my addresses",
+    "a_calcular": "Calculating the delivery fee…",
+    "erro_cotacao": "We could not calculate the delivery. Please try again.",
+    "taxa": "Delivery fee",
+    "prazo": "About {{minutos}} min",
+    "motivo": {
+      "desactivada": "This store is not delivering at the moment.",
+      "loja_sem_coordenadas": "This store is not set up for deliveries yet.",
+      "acima_do_raio": "This address is outside the delivery area (maximum {{raio}} km).",
+      "fora_de_area": "We do not deliver to this address: it is {{distancia}} km from the store, outside the delivery zones.",
+      "abaixo_do_minimo": "To deliver to this address the order must be at least {{minimo}}. You are {{falta}} short.",
+      "desconhecido": "We cannot deliver to this address."
+    }
+  },
+  "moradas": {
+    "titulo": "My addresses",
+    "voltar": "Back",
+    "nova": "New address",
+    "editar": "Edit address",
+    "remover": "Remove address",
+    "padrao": "Default",
+    "nenhuma": "You have not saved any address yet.",
+    "erro_carregar": "We could not load your addresses.",
+    "guardada": "Address saved.",
+    "removida": "Address removed.",
+    "erro_guardar": "We could not save the address.",
+    "erro_remover": "We could not remove the address.",
+    "campo_rotulo": "Name (Home, Work…)",
+    "rotulo_exemplo": "Home",
+    "campo_linha1": "Street and number",
+    "campo_referencia": "Landmark",
+    "referencia_exemplo": "In front of the pharmacy…",
+    "campo_bairro": "Neighbourhood",
+    "campo_cidade": "City",
+    "campo_provincia": "Province",
+    "escolher_provincia": "Choose the province",
+    "pino": "Location on the map",
+    "pino_ajuda": "Tap the map to mark the exact spot where you receive the delivery.",
+    "pino_obrigatorio": "Mark the spot on the map.",
+    "usar_localizacao": "Use my location",
+    "localizacao_negada": "We could not get your location. Mark it on the map.",
+    "campo_contacto_nome": "Who receives it (if not you)",
+    "campo_contacto_telefone": "Contact phone",
+    "tornar_padrao": "Use as default address",
+    "obrigatorio": "Required field",
+    "cancelar": "Cancel",
+    "guardar": "Save address"
   }
 }

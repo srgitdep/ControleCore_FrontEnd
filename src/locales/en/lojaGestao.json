@@ -33,7 +33,8 @@
     "col_total": "Total",
     "col_criado": "Created",
     "abrir": "Open",
-    "vazio": "No Compra Fácil orders in this queue."
+    "vazio": "No Compra Fácil orders in this queue.",
+    "entrega": "Delivery"
   },
   "drawer": {
     "sem_telefone": "no phone number",
@@ -61,7 +62,10 @@
     "cancelar_pedido": "Cancel order",
     "aviso_cancelar": "This cancels the order and releases the stock reservation. The customer is notified with the reason.",
     "motivo_placeholder": "Reason — e.g. customer did not collect within three days",
-    "a_cancelar": "Cancelling..."
+    "a_cancelar": "Cancelling...",
+    "taxa_entrega": "Delivery fee",
+    "entrega_titulo": "Home delivery",
+    "entrega_pronta": "Order ready for delivery. Assigning a courier and closing the delivery arrive in a later phase — for now it cannot be closed as a pickup."
   },
   "modal": {
     "titulo": "Record substitution",

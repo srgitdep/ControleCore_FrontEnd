@@ -33,7 +33,8 @@
     "col_total": "Total",
     "col_criado": "Criado",
     "abrir": "Abrir",
-    "vazio": "Nenhum pedido do Compra Fácil nesta fila."
+    "vazio": "Nenhum pedido do Compra Fácil nesta fila.",
+    "entrega": "Entrega"
   },
   "drawer": {
     "sem_telefone": "sem telefone",
@@ -61,7 +62,10 @@
     "cancelar_pedido": "Cancelar pedido",
     "aviso_cancelar": "Isto cancela a encomenda e liberta a reserva de stock. O cliente é avisado com o motivo.",
     "motivo_placeholder": "Motivo — ex.: cliente não levantou em três dias",
-    "a_cancelar": "A cancelar..."
+    "a_cancelar": "A cancelar...",
+    "taxa_entrega": "Taxa de entrega",
+    "entrega_titulo": "Entrega ao domicílio",
+    "entrega_pronta": "Pedido pronto para entrega. A atribuição a um estafeta e o fecho da entrega chegam numa fase seguinte — por agora não se fecha como levantamento."
   },
   "modal": {
     "titulo": "Registar substituição",

@@ -1,0 +1,51 @@
+{
+  "titulo": "Delivery zones and fees",
+  "subtitulo": "How much delivery costs, by distance from the store.",
+  "configuracao": {
+    "titulo": "Home delivery",
+    "ajuda": "When enabled, the Compra Fácil checkout offers «Home delivery» in stores that are ready.",
+    "activa": "Enabled",
+    "desactivada": "Disabled",
+    "preparacao": "Preparation time (min)",
+    "raio": "Maximum radius (km)",
+    "raio_sem_limite": "No limit",
+    "guardar": "Save settings",
+    "lojas": "Status of each store",
+    "com_coordenadas": "Has location",
+    "sem_coordenadas": "No location (set it in Stores & Tills)",
+    "zonas_activas_one": "{{count}} active zone",
+    "zonas_activas_other": "{{count}} active zones"
+  },
+  "zonas": {
+    "titulo": "Delivery zones",
+    "loja": "Store",
+    "nova": "New zone",
+    "editar": "Edit zone",
+    "nome": "Name",
+    "de_km": "From (km)",
+    "ate_km": "To (km)",
+    "taxa": "Fee (MZN)",
+    "prazo": "Extra time (min)",
+    "minimo": "Minimum order value (MZN)",
+    "ajuda_faixa": "The range includes «from» and excludes «to». Two active zones of the same store cannot overlap. Extra time is added to the preparation time.",
+    "faixa": "Range",
+    "prazo_curto": "Extra time",
+    "minimo_curto": "Minimum",
+    "estado": "Status",
+    "activa": "Active",
+    "inactiva": "Inactive",
+    "cancelar": "Cancel",
+    "guardar": "Save zone",
+    "nenhuma": "This store has no delivery zones yet.",
+    "sem_lojas": "There are no active stores.",
+    "erro_carregar": "Could not load the zones."
+  },
+  "mensagens": {
+    "zona_criada": "Zone created",
+    "zona_actualizada": "Zone updated",
+    "erro_zona": "Could not save the zone",
+    "configuracao_guardada": "Settings saved",
+    "erro_configuracao": "Could not save the settings",
+    "erro_carregar": "Could not load the delivery settings."
+  }
+}

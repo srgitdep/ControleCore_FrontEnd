@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { mensagemDeErro } from '@/shared/utils';
 import { pedidos } from '../api/pedidos.api';
-import type { MetodoPagamentoCommerce } from '../api/pedidos.api';
+import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
 
 const CHAVE = 'loja';
 
@@ -35,6 +35,8 @@ export function useCriarPedido() {
       lojaId: string;
       itens: { produtoId: string; quantidade: number }[];
       metodoPagamento: MetodoPagamentoCommerce;
+      tipoEntrega?: TipoEntregaPedido;
+      enderecoId?: string;
     }) => pedidos.criar(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'pedidos'] });

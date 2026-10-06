@@ -1103,6 +1103,59 @@ esse merge trouxe.
   >   preciso nos `fly secrets` agora.
   > - Backend primeiro, frontend depois.
 
+### Fase 23 — Entrega ao domicílio, Fase 1: O cliente escolhe entrega (6 Out 2026)
+
+- **2026-10-06 · [BE+FE] · Antonio Mambo** — `feat/entrega-fase1-cliente-escolhe`
+  - feat(entrega): módulo `entrega` — domínio puro (haversine, cálculo da taxa por faixas,
+    validação de sobreposição), zonas (`/entregas/zonas`), configuração
+    (`/entregas/configuracao`) e `CotarEntregaUseCase`
+  - feat(commerce): moradas do cliente (`/commerce/enderecos`), cotação
+    (`POST /commerce/entrega/cotacao`) e `tipoEntrega`/`enderecoId` no pedido, com a taxa
+    recotada no servidor
+  - feat(loja): `latitude`/`longitude` na loja; `entregaDisponivel` em `GET /commerce/lojas`
+  - feat(compra-facil): moradas com mapa, escolha Levantar/Entregar no checkout, taxa e prazo
+  - feat(entrega-gestao): ecrã de zonas e configuração (ADMIN), localização da loja, distintivo
+    «Entrega» e morada na fila de pedidos
+
+  > **Regras.** A taxa decide-se pela distância em linha recta loja→morada, em faixas
+  > `[min, max)` por loja; zona inactiva é como se não existisse; duas zonas activas da mesma
+  > loja não se sobrepõem (recusado ao gravar). `calcularTaxa` ordena os motivos de recusa:
+  > entrega desactivada → loja sem coordenadas → acima do raio → fora de área → abaixo do
+  > valor mínimo; cada um é um código com parâmetros, traduzido no frontend. O servidor
+  > **recota** ao criar o pedido (nunca confia na taxa do cliente), antes de reservar stock, e
+  > o valor mínimo avalia-se sobre o subtotal já com promoções. `totalFinal = subtotal + taxa`;
+  > levantamento não cota nem cobra (testado). Activação por empresa (`entregaActiva`),
+  > disponibilidade por loja (coordenadas + zona activa); ligar sem nenhuma loja pronta é 400.
+  > Apagar uma morada desactiva-a; 409 se um pedido em curso a usa. Todas as consultas de
+  > morada levam `clienteId` e `empresaId`.
+  >
+  > **Protecções.** `ConfirmarLevantamentoUseCase` recusa pedidos de entrega
+  > (`commerce.levantamento.pedido_de_entrega`); a notificação «pronto» tem variantes de entrega
+  > (pt/en); o botão de levantamento some do detalhe de gestão para esses pedidos.
+  >
+  > **Desvios ao plano.** (1) `ConferirPedidoUseCase` recalculava `totalFinal` sem a taxa — a
+  > taxa desaparecia ao marcar o pedido como pronto; corrigido (`+ taxaEntrega`), com
+  > a regressão coberta pelos testes do pedido. (2) `MapaEntrega` ficou em `src/shared/ui/mapa/`
+  > e não em `compra-facil`, porque a gestão de lojas também o usa; continua a ser o único
+  > ficheiro que conhece o Leaflet. (3) O texto do carrinho passou a «No levantamento ou na
+  > entrega». (4) Namespace i18n novo `entrega` (gestão); os textos do cliente ficaram em
+  > `loja`.
+  >
+  > **Verificação.** Backend: `tsc --noEmit` limpo, 2418 testes. Frontend: `tsc -b` limpo, 149
+  > testes, `npm run build` (o mapa sai num chunk à parte, ~159 kB). **Não foi exercitado no
+  > browser** nem contra a base de dados real.
+  >
+  > **Notas de deploy.**
+  >
+  > - Sem migração nova e sem variáveis de ambiente novas.
+  > - `entregaActiva` continua desligada em produção: o checkout só mostra «Entregar» depois de
+  >   uma loja ter coordenadas **e** zona activa **e** a empresa ligar a entrega. Até lá o
+  >   comportamento é o de sempre.
+  > - Os pedidos de entrega ficam em «Pronto» até à Fase 2 (despacho e estafeta).
+  > - Os tiles do mapa vêm do servidor público do OpenStreetMap (uso moderado; atribuição
+  >   obrigatória no mapa). Para tráfego sério, trocar `URL_TILES` em `MapaEntrega.tsx`.
+  > - Backend primeiro, frontend depois (o frontend novo chama `/commerce/enderecos`).
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1201,13 +1254,14 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       permissões ligadas a perfis na migração e no seed, `.env.example`. **Desvio:** os
       três estados novos de `EstadoPedido` ficam para a migração da Fase 2.
 - [ ] Coordenadas (`latitude`/`longitude`) das lojas piloto — as colunas existem desde a
-      Fase 22, mas nenhuma loja as tem preenchidas. **Bloqueia a Fase 1**: sem elas todas as
-      moradas caem em «fora de área».
+      Fase 22, mas nenhuma loja as tem preenchidas. **Bloqueia a activação**: sem elas (e sem
+      uma zona activa) a loja não oferece entrega no checkout.
 - [ ] `JWT_ESTAFETA_SECRET` nos `fly secrets` — só antes do deploy que o passe a ler
       (Fase 4); já está no `.env.example`.
-- [ ] **Fase 1 — O cliente escolhe entrega.** Moradas do cliente, zonas de entrega
-      por loja com taxa e prazo, cotação da taxa, e escolha entrega/levantamento no
-      checkout com a taxa como linha própria no resumo.
+- [x] **Fase 1 — O cliente escolhe entrega.** Concluída em 2026-10-06 (Fase 23): moradas
+      do cliente, zonas por loja com taxa e prazo, cotação, e escolha entrega/levantamento no
+      checkout com a taxa como linha própria. **Desvio:** corrigido o total do pedido na
+      conferência, que perdia a taxa. `entregaActiva` fica desligada até haver lojas piloto.
 - [ ] **Fase 2 — A loja despacha.** Registo de estafetas, acção "Despachar" (nasce
       a venda, sai o stock), painel de entregas em curso, marcar entregue/falhada,
       devolução com reposição de stock e anulação da venda (reutiliza
@@ -1358,7 +1412,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fase 0 (Preparar) concluída em 2026-10-06 (Fase 22); a seguir a Fase 1 | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22) e 1 (Fase 23) concluídas em 2026-10-06; a seguir a Fase 2 (despacho) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 
