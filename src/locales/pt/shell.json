@@ -146,7 +146,12 @@
       "vendas": "Vendas",
       "clientes": "Clientes / CRM",
       "pedidos_commerce": "Pedidos Compra Fácil",
-      "promocao": "Promoções"
+      "promocao": "Promoções",
+      "entregas": "Entregas ao domicílio",
+      "estafetas": "Estafetas",
+      "acertos_estafeta": "Acertos de contas dos estafetas",
+      "zonas_entrega": "Zonas e taxas de entrega",
+      "webhooks": "Webhooks de entrega"
     },
     "accao": {
       "read": "Visualizar",
