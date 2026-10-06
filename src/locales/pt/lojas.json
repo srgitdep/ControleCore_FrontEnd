@@ -104,6 +104,11 @@
     "sem_armazens": "Nenhum armazém registado nesta loja.",
     "gestor_label": "Responsável / Gestor de Loja",
     "gestor_ajuda": "Apenas utilizadores com o nÍvel ADMIN ou MANAGER podem ser gestores de loja.",
-    "guardar_gestor": "Guardar Gestor"
+    "guardar_gestor": "Guardar Gestor",
+    "localizacao_label": "Localização da loja",
+    "localizacao_ajuda": "Marque no mapa onde fica a loja. É daqui que se mede a distância das entregas ao domicílio.",
+    "guardar_localizacao": "Guardar localização",
+    "localizacao_guardada": "Localização guardada",
+    "erro_localizacao": "Não foi possível guardar a localização"
   }
 }

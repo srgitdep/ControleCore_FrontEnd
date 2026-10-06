@@ -10,6 +10,8 @@ export type EstadoPedido =
 
 export type MetodoPagamentoCommerce = 'NUMERARIO' | 'MPESA' | 'EMOLA';
 
+export type TipoEntregaPedido = 'LEVANTAMENTO' | 'ENTREGA';
+
 export interface SubstituicaoPedidoItem {
   produtoSubstitutoId: string | null;
   quantidadeAceite: number;
@@ -36,6 +38,9 @@ export interface Pedido {
   subtotal: number;
   totalDesconto: number;
   totalFinal: number;
+  tipoEntrega: TipoEntregaPedido;
+  /** Parte do `totalFinal`; 0 no levantamento. */
+  taxaEntrega: number;
   createdAt: string;
   canceladoEm?: string | null;
   motivoCancelamento?: string | null;
@@ -49,6 +54,8 @@ export const pedidos = {
     lojaId: string;
     itens: { produtoId: string; quantidade: number }[];
     metodoPagamento: MetodoPagamentoCommerce;
+    tipoEntrega?: TipoEntregaPedido;
+    enderecoId?: string;
   }) => {
     const { data } = await contaApi.post<Pedido>(BASE, payload);
     return data;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Loader2, RefreshCw, X } from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCw, Truck, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { Can } from '@/features/auth';
@@ -108,6 +108,30 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
             <BadgeEstadoPedidoCommerce estado={pedido.estado} />
           </div>
 
+          {pedido.tipoEntrega === 'ENTREGA' && pedido.endereco && (
+            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 text-sm">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase text-blue-700">
+                <Truck size={12} />
+                {t('drawer.entrega_titulo')}
+              </p>
+              <p className="mt-1.5 font-medium text-slate-800">
+                {pedido.endereco.linha1}
+                {pedido.endereco.bairro ? `, ${pedido.endereco.bairro}` : ''}
+              </p>
+              <p className="text-xs text-slate-500">
+                {pedido.endereco.cidade}, {pedido.endereco.provincia}
+              </p>
+              {pedido.endereco.referencia && (
+                <p className="mt-1 text-xs text-slate-500">{pedido.endereco.referencia}</p>
+              )}
+              {(pedido.endereco.contactoNome || pedido.endereco.contactoTelefone) && (
+                <p className="mt-1 text-xs text-slate-500">
+                  {[pedido.endereco.contactoNome, pedido.endereco.contactoTelefone].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+          )}
+
           {pedido.estado === 'CANCELADO' && pedido.motivoCancelamento && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{pedido.motivoCancelamento}</p>
           )}
@@ -191,6 +215,13 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
             </ul>
           </div>
 
+          {pedido.tipoEntrega === 'ENTREGA' && (
+            <div className="flex justify-between border-t border-slate-100 pt-3 text-sm text-slate-600">
+              <span>{t('drawer.taxa_entrega')}</span>
+              <span>{formatMoeda(pedido.taxaEntrega)}</span>
+            </div>
+          )}
+
           <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
             <span>{t('drawer.total')}</span>
             <span>{formatMoeda(pedido.totalFinal)}</span>
@@ -262,7 +293,15 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
                 </>
               )}
 
-              {pedido.estado === 'PRONTO' && (
+              {pedido.estado === 'PRONTO' && pedido.tipoEntrega === 'ENTREGA' && (
+                // O servidor recusa fechar uma entrega como levantamento. A atribuição ao
+                // estafeta e o fecho pela entrega chegam nas fases seguintes.
+                <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                  {t('drawer.entrega_pronta')}
+                </p>
+              )}
+
+              {pedido.estado === 'PRONTO' && pedido.tipoEntrega !== 'ENTREGA' && (
                 <>
                   {!aConfirmarLevantamento ? (
                     <button

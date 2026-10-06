@@ -43,6 +43,20 @@ export interface PedidoItemCommerce {
   substituicao: SubstituicaoPedidoItem | null;
 }
 
+export type TipoEntregaPedidoGestao = 'LEVANTAMENTO' | 'ENTREGA';
+
+/** A morada de um pedido de entrega — `EnderecoCliente` do backend, sem o que o ecrã não usa. */
+export interface EnderecoDoPedido {
+  rotulo: string | null;
+  linha1: string;
+  referencia: string | null;
+  bairro: string | null;
+  cidade: string;
+  provincia: string;
+  contactoNome: string | null;
+  contactoTelefone: string | null;
+}
+
 export interface PedidoCommerceGestao {
   id: string;
   numeroPedido: string;
@@ -51,6 +65,10 @@ export interface PedidoCommerceGestao {
   subtotal: number;
   totalDesconto: number;
   totalFinal: number;
+  tipoEntrega: TipoEntregaPedidoGestao;
+  taxaEntrega: number;
+  /** Só nos pedidos de entrega. */
+  endereco: EnderecoDoPedido | null;
   createdAt: string;
   canceladoEm: string | null;
   motivoCancelamento: string | null;

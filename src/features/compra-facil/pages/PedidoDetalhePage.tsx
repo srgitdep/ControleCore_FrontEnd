@@ -6,7 +6,7 @@ import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCancelarPedido, usePedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import type { EstadoPedido, MetodoPagamentoCommerce } from '../api/pedidos.api';
+import type { EstadoPedido, MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
 
 /** Estados a partir dos quais o cliente ainda pode desistir — espelha o backend. */
 const CANCELAVEL: EstadoPedido[] = ['CRIADO', 'CONFIRMADO'];
@@ -63,7 +63,7 @@ export function PedidoDetalhePage() {
                 </p>
               )}
 
-              {pedido.estado !== 'CANCELADO' && <LinhaDoTempoPedido estado={pedido.estado} />}
+              {pedido.estado !== 'CANCELADO' && <LinhaDoTempoPedido estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />}
 
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
                 {pedido.itens.map((item) => (
@@ -86,13 +86,22 @@ export function PedidoDetalhePage() {
                 ))}
               </ul>
 
+              {pedido.tipoEntrega === 'ENTREGA' && (
+                <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-sm text-slate-600">
+                  <span>{t('checkout.taxa_entrega')}</span>
+                  <span>{formatMoeda(pedido.taxaEntrega)}</span>
+                </div>
+              )}
+
               <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
                 <span>{t('resumo.total')}</span>
                 <span>{formatMoeda(pedido.totalFinal)}</span>
               </div>
 
               <p className="mt-2 text-xs text-slate-400">
-                {t(`metodoPagamento.${pedido.metodoPagamento as MetodoPagamentoCommerce}`)}
+                {pedido.tipoEntrega === 'ENTREGA'
+                  ? t(`metodoPagamentoEntrega.${pedido.metodoPagamento as MetodoPagamentoCommerce}`)
+                  : t(`metodoPagamento.${pedido.metodoPagamento as MetodoPagamentoCommerce}`)}
               </p>
             </div>
 
@@ -115,7 +124,7 @@ export function PedidoDetalhePage() {
 }
 
 /** A linha do tempo do acompanhamento — Fase 12. Nunca mostrada para um pedido cancelado. */
-function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
+function LinhaDoTempoPedido({ estado, tipoEntrega }: { estado: EstadoPedido; tipoEntrega: TipoEntregaPedido }) {
   const { t } = useTranslation('loja');
   const passoActual = PASSOS.findIndex((passo) => (passo.estados as readonly EstadoPedido[]).includes(estado));
 
@@ -143,7 +152,9 @@ function LinhaDoTempoPedido({ estado }: { estado: EstadoPedido }) {
                   actual ? 'font-semibold text-slate-700' : 'text-slate-400',
                 )}
               >
-                {t(`passoPedido.${passo.chave}`)}
+                {passo.chave === 'pronto' && tipoEntrega === 'ENTREGA'
+                  ? t('passoPedido.pronto_entrega')
+                  : t(`passoPedido.${passo.chave}`)}
               </span>
             </div>
             {indice < PASSOS.length - 1 && (

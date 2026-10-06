@@ -4,6 +4,8 @@ import { criarCaixa, removerCaixa } from '@/features/vendas';
 import { createArmazem, deleteArmazem, updateLoja, TIPOS_ARMAZEM } from '@/features/lojas';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
+import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void }) {
   const { t } = useTranslation('lojas');
@@ -19,6 +21,25 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
   const [gestorId, setGestorId] = useState(loja.gestorId || '');
   const [isSavingGestor, setIsSavingGestor] = useState(false);
   const [isCreatingCaixa, setIsCreatingCaixa] = useState(false);
+  // A localização da loja é o ponto de partida das distâncias da entrega ao domicílio.
+  const [localizacao, setLocalizacao] = useState<PontoNoMapa | null>(
+    loja.latitude != null && loja.longitude != null ? { latitude: loja.latitude, longitude: loja.longitude } : null,
+  );
+  const [isSavingLocalizacao, setIsSavingLocalizacao] = useState(false);
+
+  const handleSaveLocalizacao = async () => {
+    if (!localizacao) return;
+    setIsSavingLocalizacao(true);
+    try {
+      await updateLoja(loja.id, { latitude: localizacao.latitude, longitude: localizacao.longitude });
+      toast.success(t('detalhes.localizacao_guardada'));
+      onUpdate();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || t('detalhes.erro_localizacao'));
+    } finally {
+      setIsSavingLocalizacao(false);
+    }
+  };
 
   const handleCreateCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,6 +300,25 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                 >
                   <CheckCircle2 size={18} /> {t('detalhes.guardar_gestor')}
                 </button>
+              </div>
+              <div className="border-t border-slate-100 pt-4">
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('detalhes.localizacao_label')}</label>
+                <p className="text-xs text-slate-500 mb-2">{t('detalhes.localizacao_ajuda')}</p>
+                <MapaEntregaLazy marcador={localizacao} aoEscolher={setLocalizacao} />
+                {localizacao && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    {localizacao.latitude.toFixed(5)}, {localizacao.longitude.toFixed(5)}
+                  </p>
+                )}
+                <div className="flex justify-end pt-3">
+                  <button
+                    onClick={handleSaveLocalizacao}
+                    disabled={isSavingLocalizacao || !localizacao}
+                    className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <CheckCircle2 size={18} /> {t('detalhes.guardar_localizacao')}
+                  </button>
+                </div>
               </div>
             </div>
           )}

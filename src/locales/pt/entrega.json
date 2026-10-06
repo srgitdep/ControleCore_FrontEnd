@@ -1,0 +1,51 @@
+{
+  "titulo": "Zonas e taxas de entrega",
+  "subtitulo": "Quanto custa entregar, consoante a distância à loja.",
+  "configuracao": {
+    "titulo": "Entrega ao domicílio",
+    "ajuda": "Quando activa, o checkout do Compra Fácil oferece «Entrega ao domicílio» nas lojas que estejam prontas.",
+    "activa": "Activa",
+    "desactivada": "Desactivada",
+    "preparacao": "Tempo de preparação (min)",
+    "raio": "Raio máximo (km)",
+    "raio_sem_limite": "Sem limite",
+    "guardar": "Guardar parâmetros",
+    "lojas": "Estado de cada loja",
+    "com_coordenadas": "Com localização",
+    "sem_coordenadas": "Sem localização (defina-a em Lojas & Caixas)",
+    "zonas_activas_one": "{{count}} zona activa",
+    "zonas_activas_other": "{{count}} zonas activas"
+  },
+  "zonas": {
+    "titulo": "Zonas de entrega",
+    "loja": "Loja",
+    "nova": "Nova zona",
+    "editar": "Editar zona",
+    "nome": "Nome",
+    "de_km": "De (km)",
+    "ate_km": "Até (km)",
+    "taxa": "Taxa (MZN)",
+    "prazo": "Prazo extra (min)",
+    "minimo": "Valor mínimo do pedido (MZN)",
+    "ajuda_faixa": "A faixa inclui o «de» e exclui o «até». Duas zonas activas da mesma loja não se podem sobrepor. O prazo extra soma-se ao tempo de preparação.",
+    "faixa": "Faixa",
+    "prazo_curto": "Prazo extra",
+    "minimo_curto": "Mínimo",
+    "estado": "Estado",
+    "activa": "Activa",
+    "inactiva": "Inactiva",
+    "cancelar": "Cancelar",
+    "guardar": "Guardar zona",
+    "nenhuma": "Esta loja ainda não tem zonas de entrega.",
+    "sem_lojas": "Não há lojas activas.",
+    "erro_carregar": "Não foi possível carregar as zonas."
+  },
+  "mensagens": {
+    "zona_criada": "Zona criada",
+    "zona_actualizada": "Zona actualizada",
+    "erro_zona": "Não foi possível guardar a zona",
+    "configuracao_guardada": "Configuração guardada",
+    "erro_configuracao": "Não foi possível guardar a configuração",
+    "erro_carregar": "Não foi possível carregar a configuração da entrega."
+  }
+}

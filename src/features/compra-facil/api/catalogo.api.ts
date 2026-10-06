@@ -20,6 +20,8 @@ export interface LojaCommerce {
   nome: string;
   endereco: string | null;
   cidade: string | null;
+  /** Há entrega ao domicílio nesta loja (activa, com coordenadas e zona). */
+  entregaDisponivel: boolean;
 }
 
 export interface ProdutoLoja {

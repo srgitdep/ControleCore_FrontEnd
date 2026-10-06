@@ -6,9 +6,12 @@ import { cn, formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCriarPedido } from '../hooks/usePedidosCommerce';
+import { useLojasCommerce } from '../hooks/useCatalogoCommerce';
+import { useCotacaoEntrega, useEnderecos } from '../hooks/useEntrega';
+import { SeleccaoEntrega } from '../components/SeleccaoEntrega';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import type { MetodoPagamentoCommerce } from '../api/pedidos.api';
+import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
 
 const METODOS: MetodoPagamentoCommerce[] = ['NUMERARIO', 'MPESA', 'EMOLA'];
 
@@ -39,6 +42,28 @@ export function CheckoutPage() {
   const { t } = useTranslation('loja');
 
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamentoCommerce>('NUMERARIO');
+  const [tipoEscolhido, setTipoEscolhido] = useState<TipoEntregaPedido>('LEVANTAMENTO');
+  const [enderecoEscolhido, setEnderecoEscolhido] = useState<string | null>(null);
+
+  // «Entregar» só existe se a loja o oferece; uma loja sem entrega mostra o checkout de sempre.
+  const lojas = useLojasCommerce();
+  const entregaDisponivel = lojas.data?.find((l) => l.id === lojaId)?.entregaDisponivel ?? false;
+  const tipo: TipoEntregaPedido = entregaDisponivel ? tipoEscolhido : 'LEVANTAMENTO';
+  const aEntregar = tipo === 'ENTREGA';
+
+  const enderecos = useEnderecos(autenticado && aEntregar);
+  // A morada seleccionada, ou a padrão, ou a primeira — nunca uma que entretanto foi apagada.
+  const listaEnderecos = enderecos.data ?? [];
+  const enderecoId =
+    listaEnderecos.find((e) => e.id === enderecoEscolhido)?.id ??
+    listaEnderecos.find((e) => e.isPadrao)?.id ??
+    listaEnderecos[0]?.id ??
+    null;
+
+  const subtotal = getSubtotal();
+  const cotacao = useCotacaoEntrega(lojaId, aEntregar ? enderecoId : null, subtotal);
+  const taxa = aEntregar && cotacao.data?.disponivel ? cotacao.data.taxa : 0;
+  const podeConfirmar = !aEntregar || (!!enderecoId && cotacao.data?.disponivel === true);
 
   if (!lojaId) return null;
 
@@ -64,6 +89,7 @@ export function CheckoutPage() {
         lojaId,
         itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade })),
         metodoPagamento,
+        ...(aEntregar && enderecoId ? { tipoEntrega: 'ENTREGA' as const, enderecoId } : {}),
       },
       {
         onSuccess: (pedido) => {
@@ -106,10 +132,25 @@ export function CheckoutPage() {
               </ul>
             </div>
 
+            {entregaDisponivel && (
+              <SeleccaoEntrega
+                lojaId={lojaId}
+                tipo={tipo}
+                aoMudarTipo={setTipoEscolhido}
+                enderecos={listaEnderecos}
+                aCarregarEnderecos={enderecos.isLoading}
+                enderecoId={enderecoId}
+                aoEscolherEndereco={setEnderecoEscolhido}
+                cotacao={cotacao.data}
+                aCotar={cotacao.isLoading}
+                erroCotacao={cotacao.isError}
+              />
+            )}
+
             {/* Método de pagamento */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                {t('checkout.pagamento_no_levantamento')}
+                {aEntregar ? t('checkout.pagamento_na_entrega') : t('checkout.pagamento_no_levantamento')}
               </h2>
 
               <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
@@ -139,7 +180,7 @@ export function CheckoutPage() {
                       )}
                       <Icone size={20} className={seleccionado ? 'text-blue-700' : 'text-slate-400'} />
                       <span className={cn('text-xs font-semibold', seleccionado ? 'text-blue-700' : 'text-slate-600')}>
-                        {t(`metodoPagamento.${metodo}`)}
+                        {aEntregar ? t(`metodoPagamentoEntrega.${metodo}`) : t(`metodoPagamento.${metodo}`)}
                       </span>
                     </label>
                   );
@@ -147,7 +188,7 @@ export function CheckoutPage() {
               </div>
 
               <p className="mt-4 text-xs text-slate-400">
-                {t('checkout.nao_cobrado_agora')}
+                {aEntregar ? t('checkout.nao_cobrado_agora_entrega') : t('checkout.nao_cobrado_agora')}
               </p>
             </div>
           </div>
@@ -160,23 +201,31 @@ export function CheckoutPage() {
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex justify-between text-slate-600">
                   <span>{t('artigos', { count: totalItens })}</span>
-                  <span>{formatMoeda(getSubtotal())}</span>
+                  <span>{formatMoeda(subtotal)}</span>
                 </div>
+                {aEntregar && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>{t('checkout.taxa_entrega')}</span>
+                    <span>{cotacao.data?.disponivel ? formatMoeda(taxa) : '—'}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-slate-400">
                   <span>{t('resumo.pagamento')}</span>
-                  <span>{t(`metodoPagamento.${metodoPagamento}`)}</span>
+                  <span>
+                    {aEntregar ? t(`metodoPagamentoEntrega.${metodoPagamento}`) : t(`metodoPagamento.${metodoPagamento}`)}
+                  </span>
                 </div>
               </div>
 
               <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-4">
                 <span className="text-sm font-semibold text-slate-900">{t('resumo.total')}</span>
-                <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(getSubtotal())}</span>
+                <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(subtotal + taxa)}</span>
               </div>
 
               <button
                 type="button"
                 onClick={confirmar}
-                disabled={criarPedido.isPending}
+                disabled={criarPedido.isPending || !podeConfirmar}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-transform hover:scale-[1.02] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
               >
                 {criarPedido.isPending && <Loader2 size={16} className="animate-spin" />}
@@ -184,7 +233,7 @@ export function CheckoutPage() {
               </button>
 
               <p className="mt-3 text-center text-[11px] text-slate-400">
-                {t('checkout.nao_cobrado_agora_curto')}
+                {aEntregar ? t('checkout.nao_cobrado_agora_curto_entrega') : t('checkout.nao_cobrado_agora_curto')}
               </p>
             </div>
           </div>
