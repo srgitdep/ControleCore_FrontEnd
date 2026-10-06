@@ -1065,6 +1065,13 @@ esse merge trouxe.
   > - **O SQL gerou-se por `prisma migrate diff` entre o `schema.prisma` do `main` e o
   >   novo**, sem *shadow database* — ver o achado abaixo.
   >
+  > **Correcção à migração antes de ir para produção (2026-10-06).** Relendo a Fase 1
+  > (US-01), a morada pedia província e o modelo só tinha cidade e bairro:
+  > `EnderecoCliente.provincia` (obrigatória) acrescentada **na própria
+  > `20261005100000_entrega_domicilio`**, que ainda não tinha sido publicada — não numa
+  > migração nova. Quem já a aplicou à mão num branch de ensaio tem de o repor. O texto da
+  > US-02 foi reescrito para só faixas de distância, como o schema.
+  >
   > **Achado, fora de âmbito, não corrigido: o histórico de migrações não se reaplica do
   > zero.** Aplicada a uma base vazia, a `20260730125000_plano02_empresa_id_obrigatorio`
   > falha com «a tabela `copilot_sessions` não existe» (P3006). Consequência: `prisma
@@ -2196,15 +2203,19 @@ escrever a cada compra.
 por quanto entregamos.
 
 **Pronto quando:**
-- Crio zonas por bairro, cidade ou província, e/ou por raio em km à volta da loja.
-- Cada zona tem taxa, prazo estimado em minutos, valor mínimo de pedido (opcional) e
-  interruptor activa/inactiva.
+- Crio zonas por **faixa de distância à loja** (de X a Y km, em linha recta), cada uma com
+  nome, taxa, prazo estimado em minutos, valor mínimo de pedido (opcional) e interruptor
+  activa/inactiva. *(Decidido em 2026-10-06: só faixas de distância — bairro, cidade e
+  província em texto livre são pouco fiáveis em Maputo e não decidem a taxa. O plano
+  original previa também zonas por bairro/cidade/província.)*
 - Uma loja **sem coordenadas** não deixa activar entrega, com mensagem clara a dizer porquê.
-- Zonas sobrepostas: ganha a mais específica (bairro > raio > cidade > província).
+- **Faixas sobrepostas são recusadas ao gravar**, com mensagem a dizer com qual colide — em
+  vez de uma regra de «ganha a mais específica» que ninguém vê. Daí que a cotação nunca
+  tenha de escolher entre duas zonas.
 
-**Tarefas:** modelo `ZonaEntregaLoja` (espelha `ZonaEntregaFornecedor`, que já existe —
-**ler esse modelo antes de escrever este**) · índices únicos parciais no SQL da migração,
-não no `@@unique` do Prisma · `ZonasEntregaPage.tsx`.
+**Tarefas:** modelo `ZonaEntregaLoja` (**já existe desde a Fase 22**, por faixas de
+distância; só a unicidade parcial do nome entre zonas activas está no SQL da migração, não
+no `@@unique` do Prisma) · validação de sobreposição no domínio · `ZonasEntregaPage.tsx`.
 
 ###### US-03 · Saber quanto custa entregar · 5 pts · [BE]
 
