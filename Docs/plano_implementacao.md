@@ -1166,6 +1166,20 @@ esse merge trouxe.
   > A barra precisa de ~1100px para logótipo, seis ligações, selector e dois botões; entre 900 e
   > 1120px não cabia e as ligações de duas palavras quebravam. Frontend apenas; sem notas de deploy.
 
+### Fase 25 — Localização da loja: separador próprio, GPS e atalho na lista (6 Out 2026)
+
+- **2026-10-06 · [FE] · Antonio Mambo** — `fix/loja-localizacao-separador-e-gps`
+  - fix(lojas): a localização da loja saiu do separador «Gestor principal» (onde ninguém a
+    procurava) para um separador próprio, «Localização», em «Gerir Infraestrutura»
+  - feat(lojas): botão «Usar a minha localização (GPS)», com aviso de precisão (>100 m) e
+    escondido fora de contexto seguro; marcar no mapa continua possível e substitui o GPS
+  - feat(lojas): a lista de lojas mostra se a localização está definida e abre o separador
+    directamente
+
+  > A localização decide se uma loja pode fazer entregas, e estava dois cliques e um scroll
+  > dentro de um modal. O GPS não grava sozinho: preenche o pino e o gestor confirma em
+  > «Guardar localização». Frontend apenas; sem migração nem variáveis novas.
+
 ---
 
 ## 3. Backlog — Por Fazer
