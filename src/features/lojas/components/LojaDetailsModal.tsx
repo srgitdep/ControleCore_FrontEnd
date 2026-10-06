@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2 } from 'lucide-react';
+import { X, Box, MonitorSmartphone, Plus, Trash2, CheckCircle2, User, Loader2, MapPin, LocateFixed } from 'lucide-react';
 import { criarCaixa, removerCaixa } from '@/features/vendas';
 import { createArmazem, deleteArmazem, updateLoja, TIPOS_ARMAZEM } from '@/features/lojas';
 import toast from 'react-hot-toast';
@@ -7,9 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
 
-export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void }) {
+export type AbaLoja = 'INFO' | 'ARMAZENS' | 'CAIXAS' | 'LOCALIZACAO';
+
+export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 'CAIXAS' }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void; abaInicial?: AbaLoja }) {
   const { t } = useTranslation('lojas');
-  const [activeTab, setActiveTab] = useState<'INFO' | 'ARMAZENS' | 'CAIXAS'>('CAIXAS');
+  const [activeTab, setActiveTab] = useState<AbaLoja>(abaInicial);
   
   // States para novos
   const [novoCaixa, setNovoCaixa] = useState('');
@@ -26,6 +28,30 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
     loja.latitude != null && loja.longitude != null ? { latitude: loja.latitude, longitude: loja.longitude } : null,
   );
   const [isSavingLocalizacao, setIsSavingLocalizacao] = useState(false);
+  const [aLocalizar, setALocalizar] = useState(false);
+  // Metros de erro do último GPS — um gestor dentro da loja com sinal fraco pode receber
+  // 500 m de erro, e gravar isso sem aviso estragaria todas as distâncias da entrega.
+  const [precisaoGps, setPrecisaoGps] = useState<number | null>(null);
+
+  // A geolocalização só existe em contexto seguro (HTTPS ou localhost): fora dele o botão
+  // nem aparece, em vez de falhar em silêncio ao ser premido.
+  const podeUsarGps = typeof window !== 'undefined' && window.isSecureContext && 'geolocation' in navigator;
+
+  const handleUsarGps = () => {
+    setALocalizar(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocalizacao({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        setPrecisaoGps(Math.round(pos.coords.accuracy));
+        setALocalizar(false);
+      },
+      () => {
+        toast.error(t('detalhes.gps_negado'));
+        setALocalizar(false);
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+    );
+  };
 
   const handleSaveLocalizacao = async () => {
     if (!localizacao) return;
@@ -141,7 +167,13 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
           >
             <Box size={16} /> {t('detalhes.aba_armazens')}
           </button>
-          <button 
+          <button
+            onClick={() => setActiveTab('LOCALIZACAO')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'LOCALIZACAO' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            <MapPin size={16} /> {t('detalhes.aba_localizacao')}
+          </button>
+          <button
             onClick={() => setActiveTab('INFO')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'INFO' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
@@ -278,6 +310,63 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
             </div>
           )}
 
+          {activeTab === 'LOCALIZACAO' && (
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">{t('detalhes.localizacao_label')}</h3>
+                <p className="text-xs text-slate-500 mt-1">{t('detalhes.localizacao_ajuda')}</p>
+              </div>
+
+              {podeUsarGps ? (
+                <button
+                  type="button"
+                  onClick={handleUsarGps}
+                  disabled={aLocalizar}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 disabled:opacity-50"
+                >
+                  {aLocalizar ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
+                  {t('detalhes.usar_gps')}
+                </button>
+              ) : (
+                <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{t('detalhes.gps_indisponivel')}</p>
+              )}
+
+              {precisaoGps !== null && (
+                <p className={precisaoGps > 100 ? 'text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2' : 'text-xs text-emerald-700'}>
+                  {precisaoGps > 100
+                    ? t('detalhes.gps_precisao_baixa', { metros: precisaoGps })
+                    : t('detalhes.gps_precisao', { metros: precisaoGps })}
+                </p>
+              )}
+
+              <MapaEntregaLazy
+                marcador={localizacao}
+                aoEscolher={(p) => {
+                  setLocalizacao(p);
+                  // Marcar à mão substitui o GPS: a precisão deixa de se aplicar.
+                  setPrecisaoGps(null);
+                }}
+              />
+              {localizacao ? (
+                <p className="text-xs text-slate-500">
+                  {localizacao.latitude.toFixed(5)}, {localizacao.longitude.toFixed(5)}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400">{t('detalhes.localizacao_sem_ponto')}</p>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSaveLocalizacao}
+                  disabled={isSavingLocalizacao || !localizacao}
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSavingLocalizacao ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />} {t('detalhes.guardar_localizacao')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'INFO' && (
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
               <div>
@@ -300,25 +389,6 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate }: { loja: any
                 >
                   <CheckCircle2 size={18} /> {t('detalhes.guardar_gestor')}
                 </button>
-              </div>
-              <div className="border-t border-slate-100 pt-4">
-                <label className="block text-sm font-medium text-slate-700 mb-1">{t('detalhes.localizacao_label')}</label>
-                <p className="text-xs text-slate-500 mb-2">{t('detalhes.localizacao_ajuda')}</p>
-                <MapaEntregaLazy marcador={localizacao} aoEscolher={setLocalizacao} />
-                {localizacao && (
-                  <p className="mt-2 text-xs text-slate-500">
-                    {localizacao.latitude.toFixed(5)}, {localizacao.longitude.toFixed(5)}
-                  </p>
-                )}
-                <div className="flex justify-end pt-3">
-                  <button
-                    onClick={handleSaveLocalizacao}
-                    disabled={isSavingLocalizacao || !localizacao}
-                    className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    <CheckCircle2 size={18} /> {t('detalhes.guardar_localizacao')}
-                  </button>
-                </div>
               </div>
             </div>
           )}

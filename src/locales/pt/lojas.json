@@ -70,7 +70,9 @@
     "nome_caixa_exemplo": "Ex: Caixa Principal, Caixa 01",
     "loja_associada_obrig": "Loja Associada *",
     "selecionar_loja": "Selecione uma loja...",
-    "desactivar_mensagem": "Desactivar \"{{nome}}\"? Deixa de aparecer nas escolhas de venda e requisição, mas o histórico mantém-se."
+    "desactivar_mensagem": "Desactivar \"{{nome}}\"? Deixa de aparecer nas escolhas de venda e requisição, mas o histórico mantém-se.",
+    "definir_localizacao": "Definir localização no mapa",
+    "localizacao_definida": "Localização definida · alterar"
   },
   "detalhes": {
     "caixa_adicionado": "Caixa adicionado",
@@ -106,9 +108,16 @@
     "gestor_ajuda": "Apenas utilizadores com o nÍvel ADMIN ou MANAGER podem ser gestores de loja.",
     "guardar_gestor": "Guardar Gestor",
     "localizacao_label": "Localização da loja",
-    "localizacao_ajuda": "Marque no mapa onde fica a loja. É daqui que se mede a distância das entregas ao domicílio.",
+    "localizacao_ajuda": "Use o GPS se estiver dentro da loja, ou toque no mapa para marcar o sítio. É daqui que se mede a distância das entregas ao domicílio.",
     "guardar_localizacao": "Guardar localização",
     "localizacao_guardada": "Localização guardada",
-    "erro_localizacao": "Não foi possível guardar a localização"
+    "erro_localizacao": "Não foi possível guardar a localização",
+    "aba_localizacao": "Localização",
+    "usar_gps": "Usar a minha localização (GPS)",
+    "gps_negado": "Não foi possível obter a localização. Autorize o acesso no browser ou marque no mapa.",
+    "gps_indisponivel": "O GPS só funciona numa ligação segura (HTTPS). Marque a loja no mapa.",
+    "gps_precisao": "Precisão do GPS: cerca de {{metros}} m.",
+    "gps_precisao_baixa": "Precisão fraca (cerca de {{metros}} m). Aproxime-se de uma janela ou marque o ponto exacto no mapa.",
+    "localizacao_sem_ponto": "Ainda não há ponto marcado."
   }
 }

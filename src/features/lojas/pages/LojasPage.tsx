@@ -6,6 +6,7 @@ import { getUsers } from '@/features/users';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { LojaDetailsModal } from '../components/LojaDetailsModal';
+import type { AbaLoja } from '../components/LojaDetailsModal';
 import { ConfirmDialog } from '@/shared/ui';
 import { mensagemDeErro } from '@/shared/utils';
 
@@ -28,6 +29,7 @@ export function LojasPage() {
   const [newCaixa, setNewCaixa] = useState({ nome: '', lojaId: '' });
   
   const [selectedLoja, setSelectedLoja] = useState<any | null>(null);
+  const [abaDoModal, setAbaDoModal] = useState<AbaLoja>('CAIXAS');
   const [lojaADesactivar, setLojaADesactivar] = useState<any | null>(null);
   const [aDesactivar, setADesactivar] = useState(false);
 
@@ -239,6 +241,18 @@ export function LojasPage() {
                         <MapPin size={16} />
                         {loja.cidade || '-'}
                       </div>
+                      {/* A localização decide se a loja pode fazer entregas: por isso o estado
+                          e o atalho estão à vista, e não só dentro de «Gerir Infraestrutura». */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAbaDoModal('LOCALIZACAO');
+                          setSelectedLoja(loja);
+                        }}
+                        className={`mt-1 text-xs font-medium hover:underline ${loja.latitude != null && loja.longitude != null ? 'text-emerald-700' : 'text-amber-700'}`}
+                      >
+                        {loja.latitude != null && loja.longitude != null ? t('pagina.localizacao_definida') : t('pagina.definir_localizacao')}
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       {loja.gestor ? (
@@ -272,7 +286,10 @@ export function LojasPage() {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => setSelectedLoja(loja)}
+                          onClick={() => {
+                            setAbaDoModal('CAIXAS');
+                            setSelectedLoja(loja);
+                          }}
                           className="text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                         >
                           {t('pagina.gerir_infraestrutura')}
@@ -435,6 +452,7 @@ export function LojasPage() {
       {selectedLoja && (
         <LojaDetailsModal 
           loja={selectedLoja} 
+          abaInicial={abaDoModal}
           users={users}
           onClose={() => setSelectedLoja(null)} 
           onUpdate={fetchData} 

@@ -70,7 +70,9 @@
     "nome_caixa_exemplo": "E.g. Main Till, Till 01",
     "loja_associada_obrig": "Linked store *",
     "selecionar_loja": "Select a store...",
-    "desactivar_mensagem": "Deactivate \"{{nome}}\"? It no longer appears in sale and requisition choices, but the history is kept."
+    "desactivar_mensagem": "Deactivate \"{{nome}}\"? It no longer appears in sale and requisition choices, but the history is kept.",
+    "definir_localizacao": "Set location on the map",
+    "localizacao_definida": "Location set · change"
   },
   "detalhes": {
     "caixa_adicionado": "Till added",
@@ -106,9 +108,16 @@
     "gestor_ajuda": "Only users with the ADMIN or MANAGER level can be store managers.",
     "guardar_gestor": "Save manager",
     "localizacao_label": "Store location",
-    "localizacao_ajuda": "Mark where the store is on the map. Home delivery distances are measured from here.",
+    "localizacao_ajuda": "Use GPS if you are inside the store, or tap the map to mark the spot. Home delivery distances are measured from here.",
     "guardar_localizacao": "Save location",
     "localizacao_guardada": "Location saved",
-    "erro_localizacao": "Could not save the location"
+    "erro_localizacao": "Could not save the location",
+    "aba_localizacao": "Location",
+    "usar_gps": "Use my location (GPS)",
+    "gps_negado": "Could not get the location. Allow access in the browser or mark it on the map.",
+    "gps_indisponivel": "GPS only works on a secure connection (HTTPS). Mark the store on the map.",
+    "gps_precisao": "GPS accuracy: about {{metros}} m.",
+    "gps_precisao_baixa": "Poor accuracy (about {{metros}} m). Move closer to a window or mark the exact point on the map.",
+    "localizacao_sem_ponto": "No point marked yet."
   }
 }
