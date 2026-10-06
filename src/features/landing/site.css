@@ -262,8 +262,14 @@
  * sem espaço para encolher (`white-space: nowrap` nos botões impede-os de o fazer) —
  * só não transbordava em inglês por o texto ser mais curto. Um só limiar, repartido
  * pelo mesmo breakpoint da navegação, elimina essa faixa: a partir daqui o telemóvel
- * fica só com logótipo, selector, «Entrar» e o menu — a acção se repete lá dentro. */
-@media (max-width: 900px) {
+ * fica só com logótipo, selector, «Entrar» e o menu — a acção se repete lá dentro.
+ *
+ * O limiar é 1120px, e não 900: com seis ligações em português («Comprar online», «Como
+ * começa»…), logótipo, selector e dois botões, a barra precisa de ~1100px. Abaixo disso as
+ * ligações de duas palavras partiam em duas linhas e ficavam desalinhadas das de uma só
+ * (sintoma visto a ~1150px de largura). As ligações têm `white-space: nowrap`, por isso o
+ * que não cabe passa para o menu em vez de quebrar. */
+@media (max-width: 1120px) {
   .cc-nav-larga { display: none !important; }
   .cc-nav-botao { display: grid !important; }
   .cc-barra-cta { display: none !important; }
