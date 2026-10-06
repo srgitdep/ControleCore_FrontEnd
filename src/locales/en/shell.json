@@ -146,7 +146,12 @@
       "vendas": "Sales",
       "clientes": "Customers / CRM",
       "pedidos_commerce": "Compra Fácil Orders",
-      "promocao": "Promotions"
+      "promocao": "Promotions",
+      "entregas": "Home deliveries",
+      "estafetas": "Couriers",
+      "acertos_estafeta": "Courier cash settlements",
+      "zonas_entrega": "Delivery zones and fees",
+      "webhooks": "Delivery webhooks"
     },
     "accao": {
       "read": "View",

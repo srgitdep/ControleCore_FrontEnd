@@ -220,10 +220,26 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `ComercioConfiguracao`, `Promocao` (desconto por produto/categoria com
     período — módulo `promocao`, `PrecoPromocionalService` aplica o desconto
     tanto no catálogo público como no checkout).
+  - **Entrega ao domicílio** (desde a Fase 22; **ainda sem código que escreva nelas** —
+    Fases 1 a 6 do plano) — `EnderecoCliente`, `ZonaEntregaLoja` (faixas de distância à
+    loja, por haversine), `Estafeta` (identidade própria, não é um `User`; liga-se a várias
+    lojas), `EntregaPedido` (guarda o destino **copiado** da morada), `EventoEntrega`,
+    `AcertoEstafeta`, `WebhookSubscricao` (também a identidade do operador externo),
+    `WebhookEnvio` (*outbox*), `WebhookEventoRecebido` (idempotência por
+    `(operadorId, eventoExternoId)`); `Pedido.tipoEntrega/enderecoId/taxaEntrega`,
+    `Venda.taxaEntrega`, `Loja.latitude/longitude`, `ComercioConfiguracao.entregaActiva` e
+    afins. O enum chama-se `EstadoEntregaPedido` — `EstadoEntrega` é o das mensagens do CRM.
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à
-  mão em produção.
+  mão em produção. **O histórico não se reaplica do zero** (a
+  `20260730125000_plano02_empresa_id_obrigatorio` falha numa base vazia): não há
+  *shadow database* que sirva, `prisma migrate dev` e `migrate diff --from-migrations`
+  não funcionam. O SQL de uma migração nova gera-se com `prisma migrate diff
+  --from-schema-datamodel <schema do main> --to-schema-datamodel prisma/schema.prisma
+  --script` (sem base de dados), e acrescentam-se à mão o que o Prisma não declara
+  (índices únicos parciais, permissões). Ensaia-se num branch do Neon reposto a
+  partir do principal.
 
 ---
 
@@ -337,6 +353,9 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     (back-office).
   - `JWT_FORNECEDOR_SECRET` (8h) — portal do fornecedor (B2B).
   - `JWT_CLIENTE_SECRET` (7 dias) — conta de cliente final (Compra Fácil).
+  - `JWT_ESTAFETA_SECRET` — estafeta (entrega ao domicílio). Declarado no
+    `.env.example` desde a Fase 22, mas **nada o lê ainda**: o `estafeta-token.ts` chega na
+    Fase 4. Pôr nos `fly secrets` antes do deploy que o passe a ler.
   Se um destes segredos faltar, a autenticação correspondente **falha** — não há
   fallback para outro segredo.
 - Guards por rota: `JwtAuthGuard`, `PermissoesGuard` (`@Permissao(...)`),
@@ -351,7 +370,12 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   corre em produção — uma permissão nova para eles liga-se **numa migração**, por
   nome, e também nas listas do seed (que apaga e recria as ligações dos perfis de
   sistema). Desde 29/09/2026, `Gestor` e `Funcionário / Caixa` têm `read` e
-  `manage` sobre `pedidos_commerce` (fila de pedidos do Compra Fácil).
+  `manage` sobre `pedidos_commerce` (fila de pedidos do Compra Fácil). Desde a
+  Fase 22 há seis permissões da entrega (`commerce.entrega.ler/gerir`, `estafeta.gerir`,
+  `acerto.gerir`, `zona_entrega.gerir`, `webhook.gerir`): `Gestor` tem `entregas`
+  (ler e gerir), `estafetas` e `acertos_estafeta`; `Funcionário / Caixa` só `entregas` em
+  leitura; `zonas_entrega` e `webhooks` só ADMIN. Desde a Fase 21, `promocao.ver/gerir`
+  só para `Gestor`.
 - **O perfil de cada utilizador:** o `perfilId` dele; sem perfil próprio, o perfil de
   sistema do **cargo** (`src/shared/perfil-por-cargo.ts`: `CASHIER` → «Funcionário /
   Caixa», `MANAGER` → «Gestor», `STOCK_KEEPER` → «Armazenista»; `USER` não tem). O

@@ -16,6 +16,11 @@ export const AVAILABLE_RESOURCES = [
   { id: 'clientes' },
   { id: 'pedidos_commerce' },
   { id: 'promocao' },
+  { id: 'entregas' },
+  { id: 'estafetas' },
+  { id: 'acertos_estafeta' },
+  { id: 'zonas_entrega' },
+  { id: 'webhooks' },
 ] as const;
 
 export const AVAILABLE_ACTIONS = [
@@ -38,4 +43,21 @@ export const IGNORED_PERMISSIONS = [
   // criar/cancelar passam por `manage`, não há um "write"/"delete" próprios.
   'write:promocao',
   'delete:promocao',
+  // Entrega ao domicílio (migração entrega_domicilio): só `read`/`manage`, como
+  // `pedidos_commerce`. `estafetas`, `acertos_estafeta`, `zonas_entrega` e `webhooks` só
+  // têm `manage`; `entregas` tem `read` e `manage`.
+  'write:entregas',
+  'delete:entregas',
+  'write:estafetas',
+  'delete:estafetas',
+  'read:estafetas',
+  'write:acertos_estafeta',
+  'delete:acertos_estafeta',
+  'read:acertos_estafeta',
+  'write:zonas_entrega',
+  'delete:zonas_entrega',
+  'read:zonas_entrega',
+  'write:webhooks',
+  'delete:webhooks',
+  'read:webhooks',
 ];

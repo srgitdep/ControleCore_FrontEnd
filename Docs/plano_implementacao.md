@@ -1026,6 +1026,76 @@ esse merge trouxe.
   > todos novos, domínio puro sem mocks de I/O onde possível. Backend 2352 (suite
   > completa), frontend 148 — ambos limpos; `tsc` sem erros nos dois repositórios.
 
+### Fase 22 — Entrega ao domicílio, Fase 0: Preparar (6 Out 2026)
+
+- **2026-10-06 · [BE+FE] · Antonio Mambo** — `feat/entrega-fase0-preparar`
+  - feat(entrega): migração `20261005100000_entrega_domicilio` — só acrescenta: cinco
+    enums, nove modelos, colunas novas em `Loja`, `Pedido`, `Venda` e
+    `ComercioConfiguracao`, e as seis permissões da entrega
+  - feat(permissoes): `entregas`, `estafetas`, `acertos_estafeta`, `zonas_entrega` e
+    `webhooks` no editor de perfis (pt/en)
+
+  > **O que entra.** Enums `TipoEntregaPedido`, `EstadoEntregaPedido` (não
+  > `EstadoEntrega`, que é o das mensagens do CRM), `EstadoEstafeta`, `EstadoAcerto`,
+  > `EstadoWebhookEnvio`; modelos `EnderecoCliente`, `ZonaEntregaLoja`, `Estafeta`,
+  > `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`, `WebhookSubscricao`,
+  > `WebhookEnvio`, `WebhookEventoRecebido` (mais a tabela de ligação estafeta–loja);
+  > `Pedido` (+`tipoEntrega`, `enderecoId`, `taxaEntrega`), `Venda.taxaEntrega`,
+  > `Loja.latitude/longitude`, `ComercioConfiguracao` (+`entregaActiva`,
+  > `tempoPreparacaoMinutos`, `raioMaximoKm`, `permiteAgendamento`). Os pedidos existentes
+  > ficam `LEVANTAMENTO` com taxa 0. Nada escreve nestas tabelas até à Fase 1/2.
+  >
+  > **Permissões.** `commerce.entrega.ler/gerir`, `estafeta.gerir`, `acerto.gerir`,
+  > `zona_entrega.gerir`, `webhook.gerir`. `Gestor`: entregas (ler e gerir), estafetas,
+  > acertos; `Funcionário / Caixa`: entregas só em leitura; `zonas_entrega` e `webhooks`
+  > só ADMIN (*bypass*). Na migração **e** no `seed.ts` (senão o seed desfazia a migração).
+  > `permissoes.guard.spec.ts` ganha um caso por permissão e um teste de que as raízes novas
+  > não colidem com as existentes.
+  >
+  > **Desvios ao plano.**
+  >
+  > - **Os três estados novos de `EstadoPedido`** (`EXPEDIDO`, `EM_ROTA`, `FALHADA`)
+  >   **não entram aqui**: sem escritor até à Fase 2 seriam o mesmo «estado morto» que a
+  >   Fase 21 removeu. Entram na migração da Fase 2, com a classificação em
+  >   `pedido-estado.ts` (D12).
+  > - **`ZonaEntregaLoja` é por faixas de distância à loja** (haversine), não por
+  >   província/cidade como `ZonaEntregaFornecedor`.
+  > - **A §4.1 não definia os campos dos nove modelos** («como na versão anterior», que já
+  >   não existia): desenhados nesta fase e aprovados pelo utilizador.
+  > - **O SQL gerou-se por `prisma migrate diff` entre o `schema.prisma` do `main` e o
+  >   novo**, sem *shadow database* — ver o achado abaixo.
+  >
+  > **Achado, fora de âmbito, não corrigido: o histórico de migrações não se reaplica do
+  > zero.** Aplicada a uma base vazia, a `20260730125000_plano02_empresa_id_obrigatorio`
+  > falha com «a tabela `copilot_sessions` não existe» (P3006). Consequência: `prisma
+  > migrate dev` e `migrate diff --from-migrations` não funcionam (precisam de uma *shadow
+  > database*), e uma máquina nova só sobe a partir de uma cópia da base existente. É a mesma
+  > família de lacunas que o `fix(prisma): recupera a DDL do Inventário v1.1` já fechou uma vez.
+  > Está no backlog (Secção 3, «Infra / observação»).
+  >
+  > **Verificação.** Backend 2359 testes e frontend 148, `tsc` limpo nos dois. Migração sem
+  > nenhum `DROP`/`TRUNCATE`/`DELETE`. **Ensaiada num branch do Neon reposto a partir do
+  > principal**, aplicando em SQL as quatro migrações que a produção ainda não tem (as três da
+  > Fase 21 e esta), numa transacção: pedidos todos `LEVANTAMENTO` e taxa 0; `EstadoPedido`
+  > sem os dois estados mortos; as 11 tabelas e o índice parcial das zonas; as 8 permissões
+  > novas (6 da entrega + 2 das promoções) e as ligações certas aos perfis. **Limites:** o
+  > branch tinha só 2 pedidos (verificação fraca dos valores por omissão) e aplicou-se à mão,
+  > não por `prisma migrate deploy` — o caminho do arranque do contentor não foi exercitado.
+  >
+  > **Notas de deploy.**
+  >
+  > - A primeira publicação leva **quatro** migrações, não uma: as três da Fase 21 (que
+  >   ainda não foram para produção) e esta. A `20261003030000` recria o enum
+  >   `EstadoPedido` — convém um ponto de segurança (branch do Neon a partir do principal)
+  >   antes de publicar.
+  > - A Fase 21 trouxe uma validação que recusa o arranque sem `GEMINI_MODEL`: confirmar com
+  >   `fly secrets list` (só mostra nomes) que está definido antes de publicar.
+  > - Depois de publicar: invalidar `permissions:*` no Redis (cache de 24 h), senão quem não
+  >   é ADMIN só vê as permissões novas no dia seguinte.
+  > - `JWT_ESTAFETA_SECRET` está no `.env.example`, mas **nada o lê** até à Fase 4 — não é
+  >   preciso nos `fly secrets` agora.
+  > - Backend primeiro, frontend depois.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1119,9 +1189,15 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       (Fase 21), fora desta migração**: não dependiam de nenhuma decisão da entrega
       em si, só da remoção em si, e ficar à espera só atrasava uma limpeza já
       decidida. A migração da entrega já nasce sem eles no enum.
-- [ ] **Fase 0 — Preparar.** Migração `entrega_domicilio` (não destrutiva);
-      `JWT_ESTAFETA_SECRET` nos `fly secrets` antes do deploy; coordenadas nas
-      lojas piloto — hoje não há nenhuma coordenada no schema.
+- [x] **Fase 0 — Preparar.** Concluída em 2026-10-06 (Fase 22): migração
+      `20261005100000_entrega_domicilio` (não destrutiva, ensaiada num branch do Neon),
+      permissões ligadas a perfis na migração e no seed, `.env.example`. **Desvio:** os
+      três estados novos de `EstadoPedido` ficam para a migração da Fase 2.
+- [ ] Coordenadas (`latitude`/`longitude`) das lojas piloto — as colunas existem desde a
+      Fase 22, mas nenhuma loja as tem preenchidas. **Bloqueia a Fase 1**: sem elas todas as
+      moradas caem em «fora de área».
+- [ ] `JWT_ESTAFETA_SECRET` nos `fly secrets` — só antes do deploy que o passe a ler
+      (Fase 4); já está no `.env.example`.
 - [ ] **Fase 1 — O cliente escolhe entrega.** Moradas do cliente, zonas de entrega
       por loja com taxa e prazo, cotação da taxa, e escolha entrega/levantamento no
       checkout com a taxa como linha própria no resumo.
@@ -1139,12 +1215,15 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       é opcional e corta-se sob pressão de prazo.
 - [ ] **Fase 5 — Rastreio ao vivo.** Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; mapa no detalhe do
-      pedido, com recurso a consulta periódica quando não há WebSocket.
+      pedido, com recurso a consulta periódica quando não há WebSocket. Inclui o
+      rasto do percurso, a rota prevista e o tempo estimado de chegada (serviço de
+      rotas externo — fornecedor por decidir, ver US-19b na §4.3).
 - [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria.
-- [ ] Ligar as permissões novas da entrega aos perfis de sistema `Gestor` e
-      `Funcionário / Caixa`, **na migração e no `seed.ts`** — o seed apaga e recria
+- [x] Ligar as permissões novas da entrega aos perfis de sistema `Gestor` e
+      `Funcionário / Caixa` — feito em 2026-10-06 (Fase 22), na migração e no seed;
+      `zonas_entrega` e `webhooks` só ADMIN. Texto original: **na migração e no `seed.ts`** — o seed apaga e recria
       as ligações dos perfis de sistema, e desfaria a migração. A parte do commerce
       (`pedidos_commerce`, que o "Despachar" exige) ficou feita em 2026-09-29 —
       Fase 16; seguir o mesmo padrão da migração `20260929090000`.
@@ -1238,6 +1317,13 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       `Africa/Maputo` (`fly.toml`). Só é preciso se o SaaS for vendido fora de
       Moçambique; entra com a §4.2 (Multilínguas) ou antes, se aparecer um cliente
       noutro fuso.
+- [ ] **Achado fora de âmbito, não corrigido (2026-10-06): o histórico de migrações não se
+      reaplica do zero.** A `20260730125000_plano02_empresa_id_obrigatorio` falha numa base
+      vazia («a tabela `copilot_sessions` não existe», P3006), pelo que `prisma migrate dev` e
+      `migrate diff --from-migrations` não funcionam e uma máquina nova só sobe a partir de
+      uma cópia da base. Não está claro quantas migrações têm este defeito — só a primeira a
+      falhar aparece. Corrigir exige uma *baseline*: uma migração inicial com o esquema
+      actual, marcada como já aplicada em produção (`migrate resolve`) — projecto à parte.
 - [ ] **Achado fora de âmbito, não corrigido (2026-10-03):** o frontend do stock
       (`RetencaoModal`, `useReservas`, `reservas.api.ts`) chama
       `/stock/reservas`, `/stock/:id/quarentena`, `/stock/:id/bloqueio` e os
@@ -1265,8 +1351,8 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Aprovado — decisões de 2026-09-29; começa depois da Fase 1 da §4.2 | Secção 3 → «Entrega ao domicílio» |
-| 4.2 | Multilínguas (internacionalização) | Aprovado — decisões de 2026-09-29; Fase 1 é a próxima | Secção 3 → «Multilínguas» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fase 0 (Preparar) concluída em 2026-10-06 (Fase 22); a seguir a Fase 1 | Secção 3 → «Entrega ao domicílio» |
+| 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
@@ -1525,11 +1611,11 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
 **Não destrutiva** na versão base — só adiciona. Os pedidos existentes ficam
 `tipoEntrega = 'LEVANTAMENTO'`.
 
-- [ ] **[obrigatório]** Enums novos: `TipoEntregaPedido { LEVANTAMENTO, ENTREGA }` ·
+- [x] **[obrigatório]** Enums novos: `TipoEntregaPedido { LEVANTAMENTO, ENTREGA }` ·
       `EstadoEntregaPedido { AGUARDA_RECOLHA, ATRIBUIDA, RECOLHIDA, EM_ROTA, ENTREGUE,
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
-- [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**.
+- [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**. **Adiado para a migração da Fase 2** (decisão de 2026-10-05): sem escritor antes disso seriam estados mortos.
 - [x] **[já feito, fora desta migração]** `AGUARDA_CONFIRMACAO` e
       `AGUARDA_LEVANTAMENTO` — removidos em 2026-10-03 (Fase 21), antes desta
       funcionalidade ter código. Migração
@@ -1539,25 +1625,25 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       recuar um pedido de estado, e o esperado continua a ser zero linhas em
       qualquer dos dois destinos), depois recriou o tipo sem os dois valores. Já
       sem código de `pedido-estado.ts` nem de etiquetas no frontend a referenciá-los.
-- [ ] **[obrigatório]** `EnderecoCliente`, `ZonaEntregaLoja` (espelha
+- [x] **[obrigatório]** (Fase 22: `ZonaEntregaLoja` por **faixas de distância**, não por província/cidade) `EnderecoCliente`, `ZonaEntregaLoja` (espelha
       `ZonaEntregaFornecedor`, incluindo a nota sobre índices únicos parciais no SQL),
       `Estafeta`, `EntregaPedido`, `EventoEntrega`, `AcertoEstafeta`,
       `WebhookSubscricao`, `WebhookEnvio`, `WebhookEventoRecebido` — campos como na
       versão anterior. `EntregaPedido` ganha `metodoCobrado?` e `referenciaPagamento?`
       (M-Pesa/e-Mola recebidos na porta).
-- [ ] **[obrigatório]** `Pedido`: `tipoEntrega @default(LEVANTAMENTO)`, `enderecoId?`,
+- [x] **[obrigatório]** `Pedido`: `tipoEntrega @default(LEVANTAMENTO)`, `enderecoId?`,
       `taxaEntrega Float @default(0)`, relação `entrega`.
-- [ ] **[obrigatório]** `Venda.taxaEntrega Float @default(0)`, com comentário no schema
+- [x] **[obrigatório]** `Venda.taxaEntrega Float @default(0)`, com comentário no schema
       a dizer que não entra em `totalCogs` nem `grossMargin`.
-- [ ] **[obrigatório]** `Loja.latitude/longitude` opcionais;
+- [x] **[obrigatório]** `Loja.latitude/longitude` opcionais;
       `ComercioConfiguracao` + `entregaActiva`, `tempoPreparacaoMinutos`,
       `raioMaximoKm?`, `permiteAgendamento`.
-- [ ] **[obrigatório]** **Permissões na migração**: `INSERT INTO permissoes` das seis
+- [x] **[obrigatório]** **Permissões na migração**: `INSERT INTO permissoes` das seis
       linhas da §3.1 com `ON CONFLICT DO NOTHING` **sem alvo** (a tabela tem duas
       restrições de unicidade — mesma nota da migração `20260920070000`); e
       `INSERT INTO perfil_permissoes … SELECT` a ligar aos perfis de sistema por nome
       (`Gestor`, `Funcionário / Caixa`, `Administrador`), **incluindo `pedidos_commerce`**.
-- [ ] **[obrigatório]** `prisma/seed.ts`: `pedidos_commerce`, `entregas`, `estafetas`,
+- [x] **[obrigatório]** `prisma/seed.ts`: `pedidos_commerce`, `entregas`, `estafetas`,
       `acertos_estafeta` nas listas de `permissoesGestor`; `pedidos_commerce` e
       `entregas` na de `permissoesCaixa`. Sem isto, o seed desfaz a migração (R14).
 - [ ] **[opcional]** Seed de zonas de Maputo num script de desenvolvimento, não numa
@@ -1711,7 +1797,10 @@ Sem alterações de fundo face à versão anterior:
 - [ ] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no
       mapa; geolocalização **escondida** fora de contexto seguro.
 - [ ] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`;
-      namespace `/entregas`; sem WebSocket, consulta a cada 30 s.
+      namespace `/entregas`; sem WebSocket, consulta a cada 30 s. O mapa desenha o rasto
+      das posições recebidas (só em memória) e o marcador da morada; mais a rota
+      prevista até à morada e o tempo estimado (US-19b, ver Sprint 5), vindos do
+      backend — o ecrã não fala com o fornecedor de rotas.
 - [ ] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e
       `ETIQUETA_ESTADO_PEDIDO` com `EXPEDIDO` ("A caminho"), `EM_ROTA` ("O estafeta está a
       caminho"), `FALHADA` ("Não foi possível entregar"); sem os `AGUARDA_*` se a
@@ -2338,6 +2427,40 @@ estafeta e o valor de auditoria está nos eventos, não no rasto.
 mapa com o estafeta · **sem WebSocket, degrada para consulta de 30 em 30 segundos** — um
 mapa parado sem aviso é pior do que um mapa lento · etiquetas em linguagem de cliente ("O
 estafeta está a caminho"), nunca o nome do estado do sistema.
+
+**Percurso no mapa (acrescentado em 2026-10-05, a pedido do utilizador).** O mapa não
+mostra só o ponto actual:
+- **Rasto no ecrã** — `MapaEntrega` desenha uma linha com as posições recebidas desde
+  que o ecrã abriu. Vive só na memória do browser: **não se grava nada** (a decisão de
+  não guardar o rasto, acima, mantém-se). Quem abre o mapa a meio da entrega vê o rasto
+  a partir desse momento, não o percurso desde a recolha.
+- **Marcador da morada** de destino, com a distância em linha recta.
+- **Rota prevista e tempo estimado de chegada (US-19b) — [obrigatório], decidido pelo
+  utilizador em 2026-10-05. Pontos por estimar: os 13 do Sprint 5 e o total de 124 do
+  plano não a incluem.** Linha da posição actual do estafeta à morada, e o tempo
+  restante, no ecrã do cliente e na página de entregas da loja.
+  - **Serviço de rotas atrás de uma interface** (`ServicoRotas`, no estilo do
+    `CanalEntrega`, D5): o ecrã e o domínio não sabem qual é o fornecedor.
+  - **Chamado pelo backend, nunca pelo browser:** a chave não vai para o cliente e o
+    resultado partilha-se — cliente e loja a ver a mesma entrega gastam um pedido, não
+    dois. Rota e tempo guardam-se em cache (Redis, que já existe), por entrega.
+  - **Recalcula-se pouco:** só quando o estafeta se desviou da rota guardada mais de
+    ~100 m, ou passado ~1 minuto. Cada pedido de rota custa cota; recalcular a cada
+    posição (15 s) gastaria quatro vezes mais sem o cliente notar a diferença.
+  - **Sem serviço, sem número:** se o fornecedor falhar ou a cota acabar, o ecrã
+    mantém o rasto e a linha recta até à morada e **não mostra tempo estimado** — nunca
+    um valor inventado. Mensagem concreta, não um mapa que parece avariado.
+  - **Variáveis de ambiente** (no `.env.example`, cada uma com o que acontece se
+    faltar): chave e endereço do fornecedor. Faltar = só desliga a rota prevista, não
+    impede o arranque nem o rastreio.
+  - **Decisão por tomar — o fornecedor** (bloqueia só esta US, não a Fase 0 nem as
+    Fases 1 a 4): recomendo começar pelo **OpenRouteService** (plano gratuito com
+    chave, cobertura OpenStreetMap), por não exigir infra nossa; o servidor público de
+    demonstração do **OSRM não serve** para produção (política de uso, sem garantias).
+    Se a cota gratuita não chegar ao volume real, o caminho seguinte é um OSRM próprio
+    numa máquina Fly com o extracto de Moçambique do OpenStreetMap. **Antes de fechar:
+    confirmar a cota e os termos actuais do fornecedor e orçamentá-la contra o número
+    de entregas simultâneas esperado** — não os assumi aqui de memória.
 
 ---
 
