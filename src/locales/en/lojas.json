@@ -118,6 +118,8 @@
     "gps_indisponivel": "GPS only works on a secure connection (HTTPS). Mark the store on the map.",
     "gps_precisao": "GPS accuracy: about {{metros}} m.",
     "gps_precisao_baixa": "Poor accuracy (about {{metros}} m). Move closer to a window or mark the exact point on the map.",
-    "localizacao_sem_ponto": "No point marked yet."
+    "localizacao_sem_ponto": "No point marked yet.",
+    "a_afinar": "Refining the position…",
+    "ver_no_mapa": "View on Google Maps"
   }
 }

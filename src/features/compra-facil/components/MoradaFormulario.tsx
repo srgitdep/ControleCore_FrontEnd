@@ -7,6 +7,7 @@ import { Loader2, LocateFixed } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
+import { ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
 import { PROVINCIAS_MOCAMBIQUE } from '../api/entrega.api';
 import type { DadosEndereco, EnderecoCliente } from '../api/entrega.api';
 
@@ -45,6 +46,7 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
   );
   const [semPonto, setSemPonto] = useState(false);
   const [aLocalizar, setALocalizar] = useState(false);
+  const [precisao, setPrecisao] = useState<number | null>(null);
 
   const {
     register,
@@ -69,20 +71,19 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
   // o botão nem aparece, em vez de falhar em silêncio ao ser premido.
   const podeLocalizar = typeof window !== 'undefined' && window.isSecureContext && 'geolocation' in navigator;
 
+  // Ouve o GPS alguns segundos e fica com a melhor posição (a primeira costuma ser a rede
+  // Wi-Fi ou o IP, com centenas de metros de erro). Cada melhoria aparece logo no mapa.
   const localizar = () => {
     setALocalizar(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPonto({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+    obterMelhorPosicao(navigator.geolocation, {
+      aoMelhorar: (p) => {
+        setPonto({ latitude: p.latitude, longitude: p.longitude });
+        setPrecisao(p.precisaoMetros);
         setSemPonto(false);
-        setALocalizar(false);
       },
-      () => {
-        toast.error(t('moradas.localizacao_negada'));
-        setALocalizar(false);
-      },
-      { enableHighAccuracy: true, timeout: 10_000 },
-    );
+    })
+      .catch(() => toast.error(t('moradas.localizacao_negada')))
+      .finally(() => setALocalizar(false));
   };
 
   const submeter = handleSubmit((v) => {
@@ -161,18 +162,38 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               {aLocalizar ? <Loader2 size={12} className="animate-spin" /> : <LocateFixed size={12} />}
-              {t('moradas.usar_localizacao')}
+              {aLocalizar ? t('moradas.a_afinar') : t('moradas.usar_localizacao')}
             </button>
           )}
         </div>
         <p className="mb-2 text-xs text-slate-400">{t('moradas.pino_ajuda')}</p>
         <MapaEntregaLazy
           marcador={ponto}
+          precisaoMetros={precisao}
           aoEscolher={(p) => {
             setPonto(p);
+            // Marcar à mão substitui o GPS: a margem de erro deixa de se aplicar.
+            setPrecisao(null);
             setSemPonto(false);
           }}
         />
+        {ponto && (
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
+            <span className="font-mono">
+              {ponto.latitude.toFixed(5)}, {ponto.longitude.toFixed(5)}
+            </span>
+            {precisao !== null && (
+              <span className={precisao > 100 ? 'text-amber-700' : 'text-emerald-700'}>
+                {precisao > 100
+                  ? t('moradas.gps_precisao_baixa', { metros: precisao })
+                  : t('moradas.gps_precisao', { metros: precisao })}
+              </span>
+            )}
+            <a href={ligacaoNoMapa(ponto.latitude, ponto.longitude)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+              {t('moradas.ver_no_mapa')}
+            </a>
+          </p>
+        )}
         {semPonto && <p className="mt-1 text-xs text-red-600">{t('moradas.pino_obrigatorio')}</p>}
       </div>
 

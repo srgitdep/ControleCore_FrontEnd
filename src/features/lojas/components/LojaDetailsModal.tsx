@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
+import { ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
 
 export type AbaLoja = 'INFO' | 'ARMAZENS' | 'CAIXAS' | 'LOCALIZACAO';
 
@@ -37,20 +38,18 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
   // nem aparece, em vez de falhar em silêncio ao ser premido.
   const podeUsarGps = typeof window !== 'undefined' && window.isSecureContext && 'geolocation' in navigator;
 
+  // Fica a ouvir o GPS alguns segundos e guarda a melhor posição: a primeira costuma vir
+  // da rede Wi-Fi ou do IP, com centenas de metros de erro. Cada melhoria aparece no mapa.
   const handleUsarGps = () => {
     setALocalizar(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocalizacao({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        setPrecisaoGps(Math.round(pos.coords.accuracy));
-        setALocalizar(false);
+    obterMelhorPosicao(navigator.geolocation, {
+      aoMelhorar: (p) => {
+        setLocalizacao({ latitude: p.latitude, longitude: p.longitude });
+        setPrecisaoGps(p.precisaoMetros);
       },
-      () => {
-        toast.error(t('detalhes.gps_negado'));
-        setALocalizar(false);
-      },
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
-    );
+    })
+      .catch(() => toast.error(t('detalhes.gps_negado')))
+      .finally(() => setALocalizar(false));
   };
 
   const handleSaveLocalizacao = async () => {
@@ -325,7 +324,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 disabled:opacity-50"
                 >
                   {aLocalizar ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
-                  {t('detalhes.usar_gps')}
+                  {aLocalizar ? t('detalhes.a_afinar') : t('detalhes.usar_gps')}
                 </button>
               ) : (
                 <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{t('detalhes.gps_indisponivel')}</p>
@@ -341,6 +340,7 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
 
               <MapaEntregaLazy
                 marcador={localizacao}
+                precisaoMetros={precisaoGps}
                 aoEscolher={(p) => {
                   setLocalizacao(p);
                   // Marcar à mão substitui o GPS: a precisão deixa de se aplicar.
@@ -348,8 +348,18 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
                 }}
               />
               {localizacao ? (
-                <p className="text-xs text-slate-500">
-                  {localizacao.latitude.toFixed(5)}, {localizacao.longitude.toFixed(5)}
+                <p className="text-xs text-slate-600 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-mono">
+                    {localizacao.latitude.toFixed(5)}, {localizacao.longitude.toFixed(5)}
+                  </span>
+                  <a
+                    href={ligacaoNoMapa(localizacao.latitude, localizacao.longitude)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {t('detalhes.ver_no_mapa')}
+                  </a>
                 </p>
               ) : (
                 <p className="text-xs text-slate-400">{t('detalhes.localizacao_sem_ponto')}</p>
