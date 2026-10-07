@@ -118,6 +118,8 @@
     "gps_indisponivel": "O GPS só funciona numa ligação segura (HTTPS). Marque a loja no mapa.",
     "gps_precisao": "Precisão do GPS: cerca de {{metros}} m.",
     "gps_precisao_baixa": "Precisão fraca (cerca de {{metros}} m). Aproxime-se de uma janela ou marque o ponto exacto no mapa.",
-    "localizacao_sem_ponto": "Ainda não há ponto marcado."
+    "localizacao_sem_ponto": "Ainda não há ponto marcado.",
+    "a_afinar": "A afinar a posição…",
+    "ver_no_mapa": "Ver no Google Maps"
   }
 }

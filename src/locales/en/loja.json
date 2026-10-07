@@ -200,6 +200,10 @@
     "tornar_padrao": "Use as default address",
     "obrigatorio": "Required field",
     "cancelar": "Cancel",
-    "guardar": "Save address"
+    "guardar": "Save address",
+    "a_afinar": "Refining…",
+    "ver_no_mapa": "View on Google Maps",
+    "gps_precisao": "Accuracy: about {{metros}} m",
+    "gps_precisao_baixa": "Poor accuracy (about {{metros}} m) — check the point on the map"
   }
 }

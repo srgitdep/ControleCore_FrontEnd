@@ -55,7 +55,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | Leitura de código de barras | @zxing/browser + @zxing/library | ^0.2.1 / 0.23.0 | usa a câmara do telemóvel (exige contexto seguro: `localhost` ou HTTPS) |
 | Markdown | react-markdown + remark-gfm | ^10.1.0 / ^4.0.1 | respostas da Mayra |
 | Login social | @react-oauth/google | ^0.13.5 | "Continuar com Google" no Compra Fácil (Google Identity Services) |
-| Mapas | leaflet + react-leaflet + @types/leaflet | ^1.9.4 / ^5.0.0 | escolha de morada e localização da loja; só em `src/shared/ui/mapa/MapaEntrega.tsx`, carregado com `React.lazy` (chunk à parte, ~159 kB). Tiles do OpenStreetMap |
+| Mapas | leaflet + react-leaflet + @types/leaflet | ^1.9.4 / ^5.0.0 | escolha de morada e localização da loja; só em `src/shared/ui/mapa/MapaEntrega.tsx`, carregado com `React.lazy` (chunk à parte, ~159 kB). Tiles do OpenStreetMap. **GPS** (`shared/utils/geolocalizacao.ts`, `obterMelhorPosicao`): ouve `watchPosition` até ~15 s e guarda a posição de menor erro (a primeira costuma vir do Wi-Fi/IP, com centenas de metros de erro); só existe em contexto seguro (HTTPS/`localhost`), fora dele o botão esconde-se. O mapa remede-se com `ResizeObserver` (`invalidateSize`) — dentro de modais os tiles ficavam deslocados |
 | Datas | date-fns | ^4.4.0 | |
 | Tradução (i18n) | i18next + react-i18next + i18next-browser-languagedetector | ^26.4.2 / ^17.0.15 / ^8.2.1 | português e inglês; ver «Multilínguas» abaixo |
 | Utilitários CSS | clsx + tailwind-merge + class-variance-authority | — | |

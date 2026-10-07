@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import L from 'leaflet';
-import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import iconeMarcador from 'leaflet/dist/images/marker-icon.png';
 import iconeMarcador2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -42,6 +42,8 @@ interface MapaEntregaProps {
   marcador: PontoNoMapa | null;
   /** Presente = o mapa é de selecção: tocar nele move o pino. */
   aoEscolher?: (ponto: PontoNoMapa) => void;
+  /** Erro, em metros, da posição vinda do GPS — desenha-se como um círculo à volta do pino. */
+  precisaoMetros?: number | null;
   /** A loja, só para contexto visual (modo leitura). */
   loja?: PontoNoMapa | null;
   className?: string;
@@ -54,16 +56,45 @@ function CliqueNoMapa({ aoEscolher }: { aoEscolher: (p: PontoNoMapa) => void }) 
   return null;
 }
 
-/** Acompanha o pino quando ele muda por fora (geolocalização, morada guardada seleccionada). */
-function SeguirMarcador({ ponto }: { ponto: PontoNoMapa | null }) {
+/**
+ * Mostra o pino quando ele muda por fora (GPS, morada seleccionada).
+ *
+ * Com a precisão do GPS, enquadra o círculo de erro inteiro — a pessoa vê de uma vez onde
+ * o dispositivo acha que está e com que margem. Sem ela (clique no mapa), só se mexe na
+ * vista se o pino ficou fora dela: mover o mapa debaixo do dedo a cada toque desorienta.
+ */
+function SeguirMarcador({ ponto, precisaoMetros }: { ponto: PontoNoMapa | null; precisaoMetros?: number | null }) {
   const mapa = useMap();
   useEffect(() => {
-    if (ponto) mapa.setView([ponto.latitude, ponto.longitude], Math.max(mapa.getZoom(), 15));
-  }, [mapa, ponto]);
+    if (!ponto) return;
+    const centro = L.latLng(ponto.latitude, ponto.longitude);
+    if (precisaoMetros && precisaoMetros > 0) {
+      mapa.fitBounds(L.circle(centro, { radius: precisaoMetros }).getBounds(), { maxZoom: 18, animate: false });
+    } else if (!mapa.getBounds().contains(centro)) {
+      mapa.setView(centro, Math.max(mapa.getZoom(), 16), { animate: false });
+    }
+  }, [mapa, ponto, precisaoMetros]);
   return null;
 }
 
-export default function MapaEntrega({ marcador, aoEscolher, loja, className }: MapaEntregaProps) {
+/**
+ * O Leaflet mede o contentor **uma vez**, ao criar o mapa. Dentro de um modal ou de um
+ * separador que acabou de aparecer, o contentor ainda não tem o tamanho final nesse
+ * instante — e os tiles ficam deslocados, mostrando outro sítio, até algo forçar a remedir.
+ */
+function RemedirAoMudarDeTamanho() {
+  const mapa = useMap();
+  useEffect(() => {
+    const contentor = mapa.getContainer();
+    const observador = new ResizeObserver(() => mapa.invalidateSize());
+    observador.observe(contentor);
+    mapa.invalidateSize();
+    return () => observador.disconnect();
+  }, [mapa]);
+  return null;
+}
+
+export default function MapaEntrega({ marcador, aoEscolher, precisaoMetros, loja, className }: MapaEntregaProps) {
   const centro = marcador ?? loja ?? CENTRO_OMISSAO;
 
   return (
@@ -75,7 +106,15 @@ export default function MapaEntrega({ marcador, aoEscolher, loja, className }: M
     >
       <TileLayer url={URL_TILES} attribution={ATRIBUICAO} />
       {aoEscolher && <CliqueNoMapa aoEscolher={aoEscolher} />}
-      <SeguirMarcador ponto={marcador} />
+      <RemedirAoMudarDeTamanho />
+      <SeguirMarcador ponto={marcador} precisaoMetros={precisaoMetros} />
+      {marcador && precisaoMetros ? (
+        <Circle
+          center={[marcador.latitude, marcador.longitude]}
+          radius={precisaoMetros}
+          pathOptions={{ color: '#2563eb', weight: 1, fillOpacity: 0.12 }}
+        />
+      ) : null}
       {marcador && <Marker position={[marcador.latitude, marcador.longitude]} icon={ICONE} />}
       {loja && <Marker position={[loja.latitude, loja.longitude]} icon={ICONE} opacity={0.6} />}
     </MapContainer>

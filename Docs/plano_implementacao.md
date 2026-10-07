@@ -1180,6 +1180,21 @@ esse merge trouxe.
   > dentro de um modal. O GPS não grava sozinho: preenche o pino e o gestor confirma em
   > «Guardar localização». Frontend apenas; sem migração nem variáveis novas.
 
+### Fase 26 — Mapa e GPS: precisão, tamanho do mapa e posição à vista (7 Out 2026)
+
+- **2026-10-07 · [FE] · Antonio Mambo** — `fix/mapa-gps-precisao-e-visibilidade`
+  - fix(mapa): o GPS passa a ouvir o dispositivo até ~15 s (`watchPosition`) e fica com a posição
+    de menor erro, em vez da primeira que `getCurrentPosition` devolve (Wi-Fi/IP, com centenas de
+    metros ou quilómetros de erro); cada melhoria aparece no mapa
+  - fix(mapa): o mapa remede-se ao mudar de tamanho (`invalidateSize` + `ResizeObserver`) — dentro
+    do modal os tiles ficavam deslocados e mostravam outro sítio
+  - feat(mapa): círculo com a margem de erro do GPS, coordenadas em texto e ligação «Ver no Google
+    Maps» para conferir o ponto; aviso a amarelo acima de 100 m (loja e morada do cliente)
+
+  > Utilitário `obterMelhorPosicao` em `src/shared/utils/geolocalizacao.ts`, com testes. Num
+  > computador sem GPS a precisão continua fraca (a posição vem da rede): o aviso diz-o, e o
+  > ponto deve ser marcado à mão. Frontend apenas; sem migração nem variáveis novas.
+
 ---
 
 ## 3. Backlog — Por Fazer
