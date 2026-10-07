@@ -246,6 +246,25 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     vence, o outro recebe `commerce.pedido.estado_inesperado` e não notifica o cliente.
     `GET /commerce/lojas` devolve `entregaDisponivel`; `CreateLojaDto/UpdateLojaDto` aceitam
     `latitude`/`longitude` (juntas). Erros novos em `erros.json` (`entrega.*`, `commerce.endereco.*`).
+  - **Entrega ao domicílio — Fase 2A (despachar).** `EstadoPedido` ganha `EXPEDIDO`, `EM_ROTA` e
+    `FALHADA` (migração `20261007100000`, só acrescenta). `ExpedirPedidoUseCase`
+    (`POST /commerce/gestao/pedidos/:id/expedir`, `GERIR_PEDIDOS_COMMERCE`, exige caixa aberto na
+    loja do pedido): `updateMany` condicional `PRONTO → EXPEDIDO`, reservas → `CONSUMIDA`,
+    `EntregaPedido` (`AGUARDA_RECOLHA`, destino copiado da morada) + `EventoEntrega`, venda
+    (`ProcessarVendaUseCase`, canal `ECOMMERCE`) e `RegistroFinanceiro` `RECEITA`/`PENDING` sem
+    cliente; se a venda falhar, o despacho é revertido e o pedido volta a `PRONTO`. Método de
+    pagamento `A_COBRAR_NA_ENTREGA` (texto em `PagamentoVenda.metodo`; só `ECOMMERCE`, isolado, sem
+    troco; **fora do saldo do caixa e do fecho**, que só somam `NUMERARIO` —
+    `numerarioLiquidoDaGaveta`) e `Venda.taxaEntrega` (a taxa soma-se ao total, fora do COGS e da
+    margem; `opcoes.taxaEntrega` só se passa por dentro, nunca no DTO do POS).
+    `pedido-estado.ts`: `lojaPodeCancelar`, `ESTADOS_EM_ENTREGA`/`estaEmEntrega`, `FALHADA` em
+    `ESTADOS_PENDENTES`. Com a mercadoria na rua, `CancelarPedidoGestaoUseCase` recusa (400) e
+    `AnularVendaUseCase` recusa (409, `venda.anular.pedido_em_entrega`). `fecho-pedido.ts`
+    (`calcularItensFinais`, `recusarLojaDiferenteDaDoCaixa`) é partilhado com o levantamento.
+    Notificação `pedido.expedido` (pt/en). Frontend: botão «Despachar» na gaveta do pedido, estados
+    novos na fila e no detalhe do cliente («A caminho»). **Risco por resolver:** o total da venda usa
+    `precoVenda` + IVA do catálogo, o do pedido o preço com promoção e sem IVA — com IVA > 0 ou
+    promoção a venda falha («pago insuficiente»), no levantamento e no despacho.
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à

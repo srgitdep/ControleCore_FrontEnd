@@ -5,7 +5,11 @@
     "EM_PREPARACAO": "Em preparação",
     "PRONTO": "Pronto para levantar",
     "CONCLUIDO": "Concluído",
-    "CANCELADO": "Cancelado"
+    "CANCELADO": "Cancelado",
+    "PRONTO_ENTREGA": "Pronto para entrega",
+    "EXPEDIDO": "Expedido",
+    "EM_ROTA": "Em rota",
+    "FALHADA": "Entrega falhada"
   },
   "canal": {
     "SMS": "SMS",
@@ -65,7 +69,12 @@
     "a_cancelar": "A cancelar...",
     "taxa_entrega": "Taxa de entrega",
     "entrega_titulo": "Entrega ao domicílio",
-    "entrega_pronta": "Pedido pronto para entrega. A atribuição a um estafeta e o fecho da entrega chegam numa fase seguinte — por agora não se fecha como levantamento."
+    "entrega_pronta": "Pedido pronto para entrega. A atribuição a um estafeta e o fecho da entrega chegam numa fase seguinte — por agora não se fecha como levantamento.",
+    "despachar": "Despachar",
+    "aviso_despacho": "A mercadoria sai da loja: o stock baixa e nasce a venda (a cobrar na entrega). Exige caixa aberto nesta loja. Confirma?",
+    "a_despachar": "A despachar...",
+    "sim_despachar": "Sim, despachar",
+    "entrega_na_rua": "A mercadoria já saiu da loja. Não se cancela: se a entrega falhar, regista-se a falha e devolve-se. A atribuição ao estafeta e o fecho da entrega chegam numa fase seguinte."
   },
   "modal": {
     "titulo": "Registar substituição",
@@ -93,6 +102,8 @@
     "substituicao_registada": "Substituição registada.",
     "erro_substituir": "Não foi possível registar a substituição.",
     "levantamento_confirmado": "Levantamento confirmado — venda criada.",
-    "erro_confirmar_levantamento": "Não foi possível confirmar o levantamento — verifique se tem uma sessão de caixa aberta."
+    "erro_confirmar_levantamento": "Não foi possível confirmar o levantamento — verifique se tem uma sessão de caixa aberta.",
+    "despachado": "Pedido despachado — venda criada e stock abatido.",
+    "erro_despachar": "Não foi possível despachar o pedido — verifique se tem o caixa aberto na loja do pedido."
   }
 }

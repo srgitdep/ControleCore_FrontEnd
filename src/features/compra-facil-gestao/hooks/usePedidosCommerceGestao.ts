@@ -123,3 +123,21 @@ export function useConfirmarLevantamentoCommerce() {
     onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_confirmar_levantamento'))),
   });
 }
+
+/**
+ * Despachar: sai o stock e nasce a venda, por isso o erro do servidor (caixa fechado, caixa
+ * noutra loja, pedido já despachado por outra pessoa) chega ao ecrã com a causa, e não uma
+ * frase genérica.
+ */
+export function useExpedirPedidoCommerce() {
+  const { t } = useTranslation('lojaGestao');
+  const invalidar = useInvalidarPedidosCommerce();
+  return useMutation({
+    mutationFn: (id: string) => pedidosCommerceGestaoApi.expedir(id),
+    onSuccess: () => {
+      toast.success(t('mensagens.despachado'));
+      invalidar();
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_despachar'))),
+  });
+}

@@ -15,6 +15,9 @@ const ESTADOS: EstadoPedidoCommerce[] = [
   'CONFIRMADO',
   'EM_PREPARACAO',
   'PRONTO',
+  'EXPEDIDO',
+  'EM_ROTA',
+  'FALHADA',
   'CONCLUIDO',
   'CANCELADO',
 ];

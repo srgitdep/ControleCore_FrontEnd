@@ -9,6 +9,7 @@ import {
   useCancelarPedidoCommerce,
   useConferirPedidoCommerce,
   useConfirmarLevantamentoCommerce,
+  useExpedirPedidoCommerce,
   useConfirmarPedidoCommerce,
   useIniciarPreparacaoCommerce,
   useSubstituirItemCommerce,
@@ -35,6 +36,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [itemASubstituir, setItemASubstituir] = useState<PedidoItemCommerce | null>(null);
   const [aConfirmarLevantamento, setAConfirmarLevantamento] = useState(false);
+  const [aDespachar, setADespachar] = useState(false);
   const [aCancelar, setACancelar] = useState(false);
   const [motivoCancelamento, setMotivoCancelamento] = useState('');
   // A sugestão de sequência de picking (por localização no armazém) só vem na
@@ -47,6 +49,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
   const conferir = useConferirPedidoCommerce();
   const substituirItem = useSubstituirItemCommerce();
   const confirmarLevantamento = useConfirmarLevantamentoCommerce();
+  const expedir = useExpedirPedidoCommerce();
   const cancelarPedido = useCancelarPedidoCommerce();
 
   // Só reinicia ao abrir um pedido *diferente* — não a cada refetch automático
@@ -57,6 +60,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
     if (!pedido) return;
     setQuantidades(Object.fromEntries(pedido.itens.map((item) => [item.id, item.quantidade])));
     setAConfirmarLevantamento(false);
+    setADespachar(false);
     setACancelar(false);
     setMotivoCancelamento('');
     setSequenciaPickingIds(null);
@@ -105,7 +109,7 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
               <p className="font-medium text-slate-800">{pedido.cliente.nome}</p>
               <p className="text-xs text-slate-400">{pedido.cliente.telefone ?? t('drawer.sem_telefone')} · {pedido.loja.nome}</p>
             </div>
-            <BadgeEstadoPedidoCommerce estado={pedido.estado} />
+            <BadgeEstadoPedidoCommerce estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />
           </div>
 
           {pedido.tipoEntrega === 'ENTREGA' && pedido.endereco && (
@@ -134,6 +138,12 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
 
           {pedido.estado === 'CANCELADO' && pedido.motivoCancelamento && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{pedido.motivoCancelamento}</p>
+          )}
+
+          {(pedido.estado === 'EXPEDIDO' || pedido.estado === 'EM_ROTA' || pedido.estado === 'FALHADA') && (
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+              {t('drawer.entrega_na_rua')}
+            </p>
           )}
 
           {pedido.estado === 'CONCLUIDO' && (
@@ -294,11 +304,47 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
               )}
 
               {pedido.estado === 'PRONTO' && pedido.tipoEntrega === 'ENTREGA' && (
-                // O servidor recusa fechar uma entrega como levantamento. A atribuição ao
-                // estafeta e o fecho pela entrega chegam nas fases seguintes.
-                <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-                  {t('drawer.entrega_pronta')}
-                </p>
+                <>
+                  {!aDespachar ? (
+                    <button
+                      type="button"
+                      onClick={() => setADespachar(true)}
+                      className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      {t('drawer.despachar')}
+                    </button>
+                  ) : (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-sm text-amber-800">{t('drawer.aviso_despacho')}</p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setADespachar(false)}
+                          className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                        >
+                          {t('drawer.voltar')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={expedir.isPending}
+                          onClick={() => expedir.mutate(pedido.id, { onSettled: () => setADespachar(false) })}
+                          className={cn(
+                            'flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700',
+                            expedir.isPending && 'opacity-50',
+                          )}
+                        >
+                          {expedir.isPending ? (
+                            <span className="flex items-center justify-center gap-1.5">
+                              <Loader2 size={14} className="animate-spin" /> {t('drawer.a_despachar')}
+                            </span>
+                          ) : (
+                            t('drawer.sim_despachar')
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {pedido.estado === 'PRONTO' && pedido.tipoEntrega !== 'ENTREGA' && (

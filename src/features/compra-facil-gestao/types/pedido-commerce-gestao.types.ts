@@ -13,6 +13,10 @@ export type EstadoPedidoCommerce =
   | 'CONFIRMADO'
   | 'EM_PREPARACAO'
   | 'PRONTO'
+  // Entrega ao domicílio: a mercadoria já saiu da loja.
+  | 'EXPEDIDO'
+  | 'EM_ROTA'
+  | 'FALHADA'
   | 'CONCLUIDO'
   | 'CANCELADO';
 

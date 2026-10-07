@@ -46,7 +46,9 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
       }),
       helper.accessor('estado', {
         header: t('tabela.col_estado'),
-        cell: (info) => <BadgeEstadoPedidoCommerce estado={info.getValue()} />,
+        cell: (info) => (
+          <BadgeEstadoPedidoCommerce estado={info.getValue()} tipoEntrega={info.row.original.tipoEntrega} />
+        ),
       }),
       helper.accessor('totalFinal', {
         header: t('tabela.col_total'),

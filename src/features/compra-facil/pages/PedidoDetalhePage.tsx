@@ -20,6 +20,20 @@ const PASSOS = [
   { estados: ['CONCLUIDO'], chave: 'entregue' },
 ] as const satisfies readonly { estados: EstadoPedido[]; chave: string }[];
 
+/**
+ * A linha do tempo de um pedido de **entrega**: depois de «pronto», a mercadoria sai da loja
+ * (EXPEDIDO e EM_ROTA são «a caminho» para quem compra — a diferença entre os dois é do
+ * estafeta e da loja). `FALHADA` não é um passo: tem a sua própria nota.
+ */
+const PASSOS_ENTREGA = [
+  { estados: ['CRIADO'], chave: 'recebido' },
+  { estados: ['CONFIRMADO'], chave: 'confirmado' },
+  { estados: ['EM_PREPARACAO'], chave: 'em_preparacao' },
+  { estados: ['PRONTO'], chave: 'pronto' },
+  { estados: ['EXPEDIDO', 'EM_ROTA'], chave: 'a_caminho' },
+  { estados: ['CONCLUIDO'], chave: 'entregue' },
+] as const satisfies readonly { estados: EstadoPedido[]; chave: string }[];
+
 export function PedidoDetalhePage() {
   const { lojaId, pedidoId } = useParams<{ lojaId: string; pedidoId: string }>();
   const { autenticado, aCarregar } = useContaClienteStore();
@@ -63,7 +77,15 @@ export function PedidoDetalhePage() {
                 </p>
               )}
 
-              {pedido.estado !== 'CANCELADO' && <LinhaDoTempoPedido estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />}
+              {pedido.estado === 'FALHADA' && (
+                <p className="mt-3 rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                  {t('pedido.entrega_falhada')}
+                </p>
+              )}
+
+              {pedido.estado !== 'CANCELADO' && pedido.estado !== 'FALHADA' && (
+                <LinhaDoTempoPedido estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />
+              )}
 
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
                 {pedido.itens.map((item) => (
@@ -126,11 +148,12 @@ export function PedidoDetalhePage() {
 /** A linha do tempo do acompanhamento — Fase 12. Nunca mostrada para um pedido cancelado. */
 function LinhaDoTempoPedido({ estado, tipoEntrega }: { estado: EstadoPedido; tipoEntrega: TipoEntregaPedido }) {
   const { t } = useTranslation('loja');
-  const passoActual = PASSOS.findIndex((passo) => (passo.estados as readonly EstadoPedido[]).includes(estado));
+  const passos = tipoEntrega === 'ENTREGA' ? PASSOS_ENTREGA : PASSOS;
+  const passoActual = passos.findIndex((passo) => (passo.estados as readonly EstadoPedido[]).includes(estado));
 
   return (
     <ol className="mt-4 flex items-center border-t border-slate-100 pt-4">
-      {PASSOS.map((passo, indice) => {
+      {passos.map((passo, indice) => {
         const concluido = indice < passoActual;
         const actual = indice === passoActual;
         return (
@@ -157,7 +180,7 @@ function LinhaDoTempoPedido({ estado, tipoEntrega }: { estado: EstadoPedido; tip
                   : t(`passoPedido.${passo.chave}`)}
               </span>
             </div>
-            {indice < PASSOS.length - 1 && (
+            {indice < passos.length - 1 && (
               <div className={cn('mx-1 h-0.5 flex-1', concluido ? 'bg-emerald-500' : 'bg-slate-100')} />
             )}
           </li>
@@ -174,6 +197,9 @@ function EstadoBadge({ estado }: { estado: EstadoPedido }) {
     CONFIRMADO: { cor: 'bg-blue-100 text-blue-800', icone: Clock },
     EM_PREPARACAO: { cor: 'bg-blue-100 text-blue-800', icone: PackageCheck },
     PRONTO: { cor: 'bg-emerald-100 text-emerald-800', icone: PackageCheck },
+    EXPEDIDO: { cor: 'bg-sky-100 text-sky-800', icone: PackageCheck },
+    EM_ROTA: { cor: 'bg-sky-100 text-sky-800', icone: PackageCheck },
+    FALHADA: { cor: 'bg-orange-100 text-orange-800', icone: XCircle },
     CONCLUIDO: { cor: 'bg-emerald-100 text-emerald-800', icone: CheckCircle2 },
     CANCELADO: { cor: 'bg-rose-100 text-rose-800', icone: XCircle },
   };

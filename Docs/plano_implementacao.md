@@ -1208,6 +1208,58 @@ esse merge trouxe.
   > perdida, estado inesperado, outra empresa). Pré-requisito da Fase 2 da entrega, que mexe nas
   > mesmas transições. Backend apenas; sem migração nem variáveis novas.
 
+### Fase 28 — Entrega ao domicílio, Fase 2A: Despachar (7 Out 2026)
+
+- **2026-10-07 · [BE+FE] · Antonio Mambo** — `feat/entrega-fase2a-despachar`
+  - feat(entrega): migração `20261007100000_entrega_estados_pedido` — `EstadoPedido` +
+    `EXPEDIDO`, `EM_ROTA`, `FALHADA` (só acrescenta)
+  - feat(commerce): `ExpedirPedidoUseCase` e `POST /commerce/gestao/pedidos/:id/expedir` —
+    despachar um pedido de entrega: sai o stock, nasce a venda e a `EntregaPedido`
+  - feat(vendas): método `A_COBRAR_NA_ENTREGA` (só canal `ECOMMERCE`, sem troco, fora da gaveta)
+    e `taxaEntrega` na venda, fora do COGS e da margem
+  - fix(commerce,vendas): com a mercadoria na rua o pedido já não se cancela (400) nem a venda se
+    anula (409)
+  - feat(compra-facil-gestao): «Despachar» na gaveta do pedido, estados novos na fila
+  - feat(compra-facil): passo «A caminho» e nota de entrega falhada no detalhe do pedido
+
+  > **Ordem do despacho** (cada passo com a sua razão no comentário do código): (1) loja do caixa
+  > = loja do pedido; (2) `updateMany` condicional `PRONTO → EXPEDIDO` com `count === 1`, que
+  > decide entre dois despachos simultâneos; (3) reservas → `CONSUMIDA`; (4) `EntregaPedido` em
+  > `AGUARDA_RECOLHA` com o destino copiado da morada, mais um `EventoEntrega`; (5) a venda;
+  > (6) a conta a receber (`RECEITA`/`PENDING`, sem cliente). Vende o que a conferência decidiu
+  > (`calcularItensFinais`, partilhado com o levantamento).
+  >
+  > **Dinheiro.** O pagamento é `A_COBRAR_NA_ENTREGA`: não conta para o saldo do caixa nem para o
+  > fecho (só `NUMERARIO` conta — `numerarioLiquidoDaGaveta`, com testes). A taxa soma-se ao total
+  > mas não entra na margem. O POS recusa este método e a taxa (só se passam por dentro).
+  >
+  > **Desvios ao plano.** (1) **Se a venda falhar, o despacho desfaz-se** (entrega e evento
+  > apagados, reservas de volta, pedido em `PRONTO`), em vez de deixar «EXPEDIDO sem venda» como
+  > no levantamento — aqui a falha não é rara (stock alterado, total que não bate). Se nem a
+  > reversão correr, regista-se um erro bem visível. (2) `recusarLojaDiferenteDaDoCaixa` e
+  > `calcularItensFinais` extraídas para funções (não para um provider), para os testes do
+  > levantamento passarem **sem alteração**. (3) A Fase 2 dividiu-se em 2A (esta) e 2B.
+  >
+  > **Verificação.** Backend: `tsc --noEmit` limpo, 2477 testes (despacho: 13, incluindo «dois
+  > funcionários criam uma só venda» e o desfazer). Frontend: `tsc -b` limpo, 155 testes. **Não foi
+  > exercitado contra a base de dados real nem num browser.**
+  >
+  > **Risco que já existia e que o despacho herda — por resolver.** `ProcessarVendaUseCase`
+  > recalcula o total a partir de `precoVenda` + IVA do catálogo, mas o pedido guarda o preço
+  > **com promoção** e **sem IVA** (`CriarPedidoUseCase`). Um produto com IVA > 0 ou em promoção faz
+  > o total da venda exceder o pedido e a venda falha com «pago insuficiente» — no levantamento (já
+  > hoje) e agora no despacho (que desfaz e diz porquê). Só passa quando o IVA é 0 e não há
+  > promoção. Registado no backlog; precisa de decisão (o preço do pedido manda, ou o do catálogo?).
+  >
+  > **Notas de deploy.**
+  >
+  > - **Uma migração nova**, só `ALTER TYPE ... ADD VALUE` ×3 (um valor de enum não se retira):
+  >   branch de segurança no Neon antes de publicar.
+  > - Sem variáveis novas. Backend primeiro, frontend depois.
+  > - **Não activar a entrega numa loja real** antes da Fase 2B: um pedido despachado fica em
+  >   `EXPEDIDO` sem forma de o fechar (entregar, falhar, devolver).
+  > - Invalidar `permissions:*` só se ainda não foi feito desde a Fase 22.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1314,13 +1366,22 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       do cliente, zonas por loja com taxa e prazo, cotação, e escolha entrega/levantamento no
       checkout com a taxa como linha própria. **Desvio:** corrigido o total do pedido na
       conferência, que perdia a taxa. `entregaActiva` fica desligada até haver lojas piloto.
-- [ ] **Fase 2 — A loja despacha.** Registo de estafetas, acção "Despachar" (nasce
-      a venda, sai o stock), painel de entregas em curso, marcar entregue/falhada,
-      devolução com reposição de stock e anulação da venda (reutiliza
-      `AnularVendaUseCase`). Inclui fechar dois buracos do código actual: o
-      cancelamento pela loja e a anulação da venda passam a recusar pedidos com a
-      mercadoria já com o estafeta. **A partir daqui já se opera entregas a
-      sério**, com o gestor a marcar os estados à mão.
+- [x] **Fase 2A — Despachar.** Concluída em 2026-10-07 (Fase 28): migração dos estados
+      `EXPEDIDO`/`EM_ROTA`/`FALHADA`, «Despachar» (sai o stock, nasce a venda e a entrega),
+      pagamento `A_COBRAR_NA_ENTREGA`, e os dois buracos fechados (com a mercadoria na rua o
+      pedido não se cancela nem a venda se anula). **Desvio:** o despacho desfaz-se se a venda
+      falhar. **Não activar a entrega numa loja real antes da 2B.**
+- [ ] **Fase 2B — Operar.** Registo de estafetas (US-05), painel de entregas em curso
+      (US-07, com consulta periódica de 30 s — o socket é da Fase 5), marcar
+      recolhida/em rota/entregue/falhada pelo gestor (US-08, com rotas que a Fase 4 reutiliza
+      para o estafeta) e devolver (US-09: `AnularVendaUseCase` aceita a sessão fechada quando
+      a venda é de entrega sem numerário; a reversão do pedido aceita `FALHADA`).
+      **A partir daqui já se opera entregas a sério**, com o gestor a marcar os estados à mão.
+- [ ] **Total da venda vs. total do pedido** (risco que já existia, visto na Fase 28):
+      `ProcessarVendaUseCase` usa `precoVenda` + IVA do catálogo; o pedido guarda o preço com
+      promoção e sem IVA. Com IVA > 0 ou promoção, o levantamento e o despacho falham com
+      «pago insuficiente». Decidir qual dos preços manda e alinhar. Antes da 2B, para a
+      entrega poder ir para produção.
 - [ ] **Fase 3 — As contas batem.** Valor cobrado na entrega, acerto de contas do
       estafeta a gerar `MovimentoCaixa(REFORCO)`, visão do que cada estafeta deve.
 - [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:
@@ -1462,7 +1523,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22) e 1 (Fase 23) concluídas em 2026-10-06; a seguir a Fase 2 (despacho) | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23) e 2A (Fase 28) concluídas; a seguir a Fase 2B (operar) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 

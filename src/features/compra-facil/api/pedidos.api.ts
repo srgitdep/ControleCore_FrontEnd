@@ -5,6 +5,9 @@ export type EstadoPedido =
   | 'CONFIRMADO'
   | 'EM_PREPARACAO'
   | 'PRONTO'
+  | 'EXPEDIDO'
+  | 'EM_ROTA'
+  | 'FALHADA'
   | 'CONCLUIDO'
   | 'CANCELADO';
 
