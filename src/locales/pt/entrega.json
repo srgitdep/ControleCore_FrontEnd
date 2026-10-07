@@ -46,6 +46,129 @@
     "erro_zona": "Não foi possível guardar a zona",
     "configuracao_guardada": "Configuração guardada",
     "erro_configuracao": "Não foi possível guardar a configuração",
-    "erro_carregar": "Não foi possível carregar a configuração da entrega."
+    "erro_carregar": "Não foi possível carregar a configuração da entrega.",
+    "entrega_actualizada": "Entrega actualizada.",
+    "entrega_devolvida": "Entrega devolvida — stock reposto e venda anulada.",
+    "erro_operacao": "Não foi possível concluir a operação.",
+    "estafeta_actualizado": "Estafeta actualizado.",
+    "erro_estafeta": "Não foi possível guardar o estafeta.",
+    "erro_repor_senha": "Não foi possível repor a senha."
+  },
+  "estado_entrega": {
+    "AGUARDA_RECOLHA": "Aguarda recolha",
+    "ATRIBUIDA": "Atribuída",
+    "RECOLHIDA": "Recolhida",
+    "EM_ROTA": "Em rota",
+    "ENTREGUE": "Entregue",
+    "FALHADA": "Falhada",
+    "DEVOLVIDA": "Devolvida",
+    "CANCELADA": "Cancelada"
+  },
+  "motivo_falha": {
+    "CLIENTE_AUSENTE": "Cliente ausente",
+    "MORADA_ERRADA": "Morada errada",
+    "RECUSOU": "O cliente recusou",
+    "INACESSIVEL": "Morada inacessível",
+    "OUTRO": "Outro motivo"
+  },
+  "metodo_cobranca": {
+    "NUMERARIO": "Numerário",
+    "MPESA": "M-Pesa",
+    "EMOLA": "e-Mola"
+  },
+  "accao": {
+    "atribuir": "Atribuir",
+    "reatribuir": "Reatribuir",
+    "recolhida": "Recolhida",
+    "iniciar_rota": "Em rota",
+    "entregue": "Entregue",
+    "falhada": "Falhou",
+    "devolver": "Devolver"
+  },
+  "painel": {
+    "titulo": "Entregas",
+    "subtitulo": "O que está na rua e em que fase. Actualiza sozinho de 30 em 30 segundos.",
+    "filtro_loja": "Filtrar por loja",
+    "todas_lojas": "Todas as lojas",
+    "filtro_estafeta": "Filtrar por estafeta",
+    "todos_estafetas": "Todos os estafetas",
+    "mostrar_fechadas": "Mostrar entregues e devolvidas",
+    "actualizar": "Actualizar",
+    "vazio": "Nenhuma entrega em curso.",
+    "coluna_vazia": "—",
+    "erro": "Não foi possível carregar as entregas.",
+    "repetir": "Tentar outra vez",
+    "sem_estafeta": "Sem estafeta",
+    "a_cobrar": "A cobrar"
+  },
+  "dialogo": {
+    "cancelar": "Cancelar",
+    "atribuir": {
+      "titulo": "Atribuir {{pedido}}",
+      "estafeta": "Estafeta",
+      "escolher": "Escolha o estafeta",
+      "sem_elegiveis": "Não há estafetas activos que sirvam a loja deste pedido. Registe um em «Estafetas».",
+      "confirmar": "Atribuir"
+    },
+    "entregar": {
+      "titulo": "Entregar {{pedido}}",
+      "valor": "Cobrar à porta: {{valor}}",
+      "metodo": "Como o cliente pagou",
+      "referencia": "Referência da transacção",
+      "referencia_ajuda": "O código da mensagem M-Pesa ou e-Mola. Serve para conferir depois.",
+      "confirmar": "Confirmar entrega"
+    },
+    "falhar": {
+      "titulo": "Entrega falhada — {{pedido}}",
+      "aviso": "A mercadoria regressa à loja. Depois, em «Devolver», o stock volta e a venda anula-se.",
+      "motivo": "Motivo",
+      "nota": "Nota",
+      "confirmar": "Registar falha"
+    },
+    "devolver": {
+      "titulo": "Devolver {{pedido}}",
+      "aviso": "Só depois de a mercadoria ter regressado à loja. O stock volta ao armazém, a venda é anulada e o pedido fica cancelado. Isto não se desfaz.",
+      "motivo": "Motivo (fica na venda anulada)",
+      "confirmar": "Devolver e anular venda"
+    }
+  },
+  "estafetas": {
+    "titulo": "Estafetas",
+    "subtitulo": "Quem faz as entregas. O código de acesso e a senha são gerados pelo sistema.",
+    "novo": "Novo estafeta",
+    "editar": "Editar estafeta",
+    "editar_curto": "Editar",
+    "nome": "Nome",
+    "telefone": "Telefone",
+    "email": "E-mail",
+    "veiculo": "Veículo",
+    "matricula": "Matrícula",
+    "lojas": "Lojas que serve",
+    "lojas_ajuda": "Sem nenhuma marcada, serve todas as lojas.",
+    "lojas_todas": "Serve todas as lojas",
+    "guardar": "Guardar",
+    "inactivo": "Inactivo",
+    "indisponivel": "Indisponível",
+    "em_entrega_one": "{{count}} entrega em curso",
+    "em_entrega_other": "{{count}} entregas em curso",
+    "marcar_disponivel": "Marcar disponível",
+    "marcar_indisponivel": "Marcar indisponível",
+    "repor_senha": "Repor senha",
+    "repor_confirmar": "Gerar uma senha nova para {{nome}}? A anterior deixa de funcionar.",
+    "desactivar": "Desactivar",
+    "reactivar": "Reactivar",
+    "mostrar_inactivos": "Mostrar inactivos",
+    "vazio": "Ainda não há estafetas. Registe o primeiro para poder atribuir entregas.",
+    "erro": "Não foi possível carregar os estafetas.",
+    "credenciais": {
+      "titulo": "Credenciais de {{nome}}",
+      "aviso": "Anote-as agora: a senha não volta a ser mostrada. Se se perder, use «Repor senha».",
+      "codigo": "Código de acesso",
+      "senha": "Senha",
+      "copiar": "Copiar",
+      "copiado": "Copiado",
+      "copiar_falhou": "Não foi possível copiar — anote à mão.",
+      "fechar": "Já anotei"
+    }
   }
 }

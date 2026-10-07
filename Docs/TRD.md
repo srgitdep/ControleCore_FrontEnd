@@ -265,6 +265,25 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     novos na fila e no detalhe do cliente («A caminho»). **Risco por resolver:** o total da venda usa
     `precoVenda` + IVA do catálogo, o do pedido o preço com promoção e sem IVA — com IVA > 0 ou
     promoção a venda falha («pago insuficiente»), no levantamento e no despacho.
+  - **Entrega ao domicílio — Fase 2B (operar).** Estafetas: `GET/POST/PATCH /entregas/estafetas` e
+    `POST /entregas/estafetas/:id/repor-senha` (`GERIR_ESTAFETAS`). O servidor gera o código `E####`
+    (`gerarCodigo('E')`, único, com tratamento de colisões) e a senha inicial (`gerarSenhaInicial`);
+    guarda só o hash `bcrypt` (`BCRYPT_ROUNDS`) e devolve a senha **uma só vez**; nunca se devolve o hash
+    (`select` explícito). Telefone único por empresa; desactivar com entregas em curso dá 409. Operação:
+    `OperarEntregaService` (`atribuir`, `recolher`, `iniciarRota`, `entregar`, `falhar`) —
+    `PATCH /entregas/:id/{atribuir,recolher,iniciar-rota,entregar,falhar}` (`GERIR_ENTREGAS`); cada uma é
+    uma transacção com `updateMany` condicional ao estado da entrega **e** do pedido, `count` verificado
+    e um `EventoEntrega` imutável (autor `FUNCIONARIO`/`ESTAFETA`); as transições estão em
+    `entrega/domain/entrega-estado.ts` (`falhar` vale de qualquer estado antes de `ENTREGUE`; `EM_ROTA`
+    pode ser saltado). `entregar` grava método (`NUMERARIO`/`MPESA`/`EMOLA`), referência (obrigatória fora
+    do numerário) e `cobradoEm`; não mexe no caixa (acerto na Fase 3). Painel: `GET /entregas` (filtros por
+    estado, loja, estafeta e data; por omissão só o que está por fazer) e `GET /entregas/:id` (com os
+    eventos), `VER_ENTREGAS`. `POST /entregas/:id/devolver` (`DevolverEntregaUseCase`): anula a venda por
+    `AnularVendaUseCase` e, numa transacção, `FALHADA → DEVOLVIDA` + conta a receber `CANCELLED`;
+    repetível. `AnularVendaUseCase` aceita sessão de caixa fechada só para venda de entrega **sem
+    numerário**; `anularVendaTransacional` reverte o pedido também em `FALHADA`. Notificação
+    `pedido.entrega_falhada` (pt/en). Frontend: páginas `/entregas` (painel por colunas, consulta de 30 s) e
+    `/entregas/estafetas`.
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à
