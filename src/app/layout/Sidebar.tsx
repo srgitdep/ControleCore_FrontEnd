@@ -26,6 +26,7 @@ import {
   PackageCheck,
   Percent,
   Truck,
+  Bike,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -43,7 +44,7 @@ import { SelectorIdioma } from '@/shared/ui';
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
-  | 'pedidos_commerce' | 'entregas_zonas' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'entregas_zonas' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
@@ -106,6 +107,8 @@ const navGroups: NavGroup[] = [
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).
+      { chave: 'entregas', icon: Truck, path: '/entregas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
+      { chave: 'estafetas', icon: Bike, path: '/entregas/estafetas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'entregas_zonas', icon: Truck, path: '/entregas/zonas', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a

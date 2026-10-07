@@ -22,7 +22,7 @@ import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/feat
 import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
-import { ZonasEntregaPage } from '@/features/entrega-gestao';
+import { EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -240,6 +240,18 @@ export const router = createBrowserRouter([
           { path: '/promocoes', element: <PromocoesPage /> },
           // As zonas e taxas da entrega ao domicílio — só ADMIN (a permissão fina é do backend:
           // GERIR_ZONAS_ENTREGA + módulo commerce).
+          // O painel de entregas e os estafetas: quem despacha e quem gere a frota. A permissão
+          // fina (VER_ENTREGAS / GERIR_ENTREGAS / GERIR_ESTAFETAS) é do backend e do <Can>.
+          {
+            path: '/entregas',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER']} />,
+            children: [{ index: true, element: <EntregasPage /> }]
+          },
+          {
+            path: '/entregas/estafetas',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            children: [{ index: true, element: <EstafetasPage /> }]
+          },
           {
             path: '/entregas/zonas',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,

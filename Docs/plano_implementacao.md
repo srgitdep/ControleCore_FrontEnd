@@ -1260,6 +1260,68 @@ esse merge trouxe.
   >   `EXPEDIDO` sem forma de o fechar (entregar, falhar, devolver).
   > - Invalidar `permissions:*` só se ainda não foi feito desde a Fase 22.
 
+### Fase 29 — Entrega ao domicílio, Fase 2B: Operar (7 Out 2026)
+
+- **2026-10-07 · [BE+FE] · Antonio Mambo** — `feat/entrega-fase2b-operar`
+  - feat(entrega): estafetas (`/entregas/estafetas`, código `E####` e senha gerados pelo servidor,
+    mostrados uma só vez, «repor senha»)
+  - feat(entrega): operar a entrega à mão — atribuir, recolher, iniciar rota, entregar, falhar
+    (`PATCH /entregas/:id/...`), com `EventoEntrega` imutável e aviso ao cliente
+  - feat(entrega): painel (`GET /entregas`, `GET /entregas/:id`) e **devolver**
+    (`POST /entregas/:id/devolver`: repõe o stock e anula a venda)
+  - fix(vendas): `AnularVendaUseCase` aceita a sessão de caixa fechada quando a venda é de entrega
+    sem numerário; a reversão do pedido aceita `FALHADA`
+  - feat(entrega-gestao): páginas «Entregas» (painel por estados) e «Estafetas», com diálogos de
+    atribuir, entregar, falhar e devolver
+
+  > **Uma só forma de transitar.** `OperarEntregaService.transitar` faz, numa transacção: (1) a
+  > entrega muda por `updateMany` condicional ao estado de onde a operação é permitida, (2) o pedido
+  > muda por `updateMany` condicional ao estado em que é coerente, (3) grava-se o evento. Dois gestores a
+  > avançar a mesma entrega: só um passa, o outro recebe 409. Se o pedido já não estiver onde devia,
+  > desfaz-se tudo (`entrega.pedido_incoerente`). O autor é um parâmetro (`FUNCIONARIO` agora): a
+  > Fase 4 reutiliza o serviço para o `ESTAFETA`. As transições estão por extenso em
+  > `entrega/domain/entrega-estado.ts`, com teste de invariante.
+  >
+  > **Devolver** corre em dois tempos e é seguro de repetir: (1) `AnularVendaUseCase` (a parte
+  > irreversível, com a sua guarda de concorrência; «já anulada» não é erro); (2) numa transacção,
+  > `FALHADA → DEVOLVIDA` e conta a receber `PENDING → CANCELLED`, ambos condicionais. Só um gestor
+  > (a anulação já o exige). A sessão de caixa fechada só se aceita para venda de entrega **sem
+  > numerário**; uma venda de POS com a sessão fechada continua recusada (teste de regressão).
+  >
+  > **Decisões do utilizador (as seis do plano, com as recomendações):** credenciais geradas pelo
+  > servidor; login pelo código `E####`; «em entrega» deriva-se das entregas em curso (o gestor só
+  > marca disponível/indisponível); `falhar` vale de qualquer estado antes de `ENTREGUE` (substitui
+  > `cancelar`); atribuir só a estafeta activo da mesma loja (ou sem lojas = serve todas); entregar
+  > grava método, referência (obrigatória fora do numerário) e hora — o valor é o `valorACobrar`.
+  >
+  > **Desvios ao plano.** (1) Cinco casos de uso viraram **um serviço** (`OperarEntregaService`) com
+  > cinco operações, porque partilham a transacção. (2) `entregar` também vale a partir de
+  > `RECOLHIDA` (salta `EM_ROTA`): com o gestor a marcar à mão, um clique que não diz nada de novo só
+  > convidava a deixar o estado por actualizar. (3) `NotificarClientePedidoService` é registado
+  > **também** no `EntregaModule` (instância sem estado) em vez de importado do `CommerceModule`:
+  > importá-lo fechava um ciclo commerce ⇄ entrega. (4) `VendasModule` passa a exportar
+  > `AnularVendaUseCase`. (5) `EntregaController` tem de ser o **último** do módulo (`GET /entregas/:id`
+  > apanharia `zonas`, `configuracao` e `estafetas`).
+  >
+  > **Verificação.** Backend: `tsc --noEmit` limpo, 2563 testes; o `AppModule` compila e resolve as
+  > dependências (verificado com um teste descartável). Frontend: `tsc -b` limpo, 155 testes, build.
+  > **Não foi exercitado contra a base de dados real nem num browser.**
+  >
+  > **Por fazer / limites.** A ligação do detalhe do pedido da gestão à sua entrega não foi feita
+  > (o painel mostra o número do pedido). O estafeta ainda não tem aplicação nem login (Fase 4): as
+  > credenciais ficam gravadas e prontas. A diferença entre o que se cobrou e o que devia e o acerto de
+  > contas são da Fase 3. **O risco do total da venda (IVA e promoções, Fase 28) continua por
+  > resolver e bloqueia a entrega real.**
+  >
+  > **Notas de deploy.**
+  >
+  > - **Sem migração nova e sem variáveis novas.**
+  > - Backend primeiro, frontend depois.
+  > - Invalidar `permissions:*` no Redis se ainda não foi feito desde a Fase 22 (a gestão usa
+  >   `VER_ENTREGAS`, `GERIR_ENTREGAS` e `GERIR_ESTAFETAS`).
+  > - **Não activar a entrega numa loja real** antes de decidir o preço (IVA/promoções) e de ensaiar o
+  >   fluxo completo numa loja piloto.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1371,12 +1433,12 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       pagamento `A_COBRAR_NA_ENTREGA`, e os dois buracos fechados (com a mercadoria na rua o
       pedido não se cancela nem a venda se anula). **Desvio:** o despacho desfaz-se se a venda
       falhar. **Não activar a entrega numa loja real antes da 2B.**
-- [ ] **Fase 2B — Operar.** Registo de estafetas (US-05), painel de entregas em curso
-      (US-07, com consulta periódica de 30 s — o socket é da Fase 5), marcar
-      recolhida/em rota/entregue/falhada pelo gestor (US-08, com rotas que a Fase 4 reutiliza
-      para o estafeta) e devolver (US-09: `AnularVendaUseCase` aceita a sessão fechada quando
-      a venda é de entrega sem numerário; a reversão do pedido aceita `FALHADA`).
-      **A partir daqui já se opera entregas a sério**, com o gestor a marcar os estados à mão.
+- [x] **Fase 2B — Operar.** Concluída em 2026-10-07 (Fase 29): estafetas (credenciais geradas pelo
+      servidor, mostradas uma vez), atribuir / recolher / rota / entregar / falhar, painel de entregas e
+      devolver (stock reposto, venda anulada, mesmo com o caixa de quem despachou já fechado). **A partir
+      daqui já se opera entregas a sério**, com o gestor a marcar os estados à mão. **Desvios:** um
+      serviço único para as cinco operações; `entregar` também a partir de `RECOLHIDA`. **Por fazer:** a
+      ligação do detalhe do pedido à sua entrega.
 - [ ] **Total da venda vs. total do pedido** (risco que já existia, visto na Fase 28):
       `ProcessarVendaUseCase` usa `precoVenda` + IVA do catálogo; o pedido guarda o preço com
       promoção e sem IVA. Com IVA > 0 ou promoção, o levantamento e o despacho falham com
@@ -1523,7 +1585,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23) e 2A (Fase 28) concluídas; a seguir a Fase 2B (operar) | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28) e 2B (Fase 29) concluídas; a seguir a Fase 3 (as contas batem) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 

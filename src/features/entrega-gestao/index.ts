@@ -2,3 +2,8 @@ export * from './api/entrega-gestao.api';
 export * from './types';
 export * from './hooks/useEntregaGestao';
 export * from './pages/ZonasEntregaPage';
+export * from './types/operacao';
+export * from './api/operacao.api';
+export * from './hooks/useOperacao';
+export * from './pages/EntregasPage';
+export * from './pages/EstafetasPage';
