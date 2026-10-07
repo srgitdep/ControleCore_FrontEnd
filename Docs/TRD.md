@@ -241,6 +241,9 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `CriarPedidoUseCase` recota no servidor antes da transacção e recusa com
     `commerce.pedido.entrega_indisponivel`; `Pedido.totalFinal = subtotal + taxaEntrega`.
     `ConfirmarLevantamentoUseCase` recusa pedidos de entrega; `ConferirPedidoUseCase` preserva a taxa.
+    `TransitarEstadoPedidoUseCase` (confirmar / iniciar preparação) avança o estado com `updateMany`
+    condicional ao estado esperado e verifica `count`: com dois operadores em simultâneo só um
+    vence, o outro recebe `commerce.pedido.estado_inesperado` e não notifica o cliente.
     `GET /commerce/lojas` devolve `entregaDisponivel`; `CreateLojaDto/UpdateLojaDto` aceitam
     `latitude`/`longitude` (juntas). Erros novos em `erros.json` (`entrega.*`, `commerce.endereco.*`).
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.

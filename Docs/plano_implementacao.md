@@ -1195,6 +1195,19 @@ esse merge trouxe.
   > computador sem GPS a precisão continua fraca (a posição vem da rede): o aviso diz-o, e o
   > ponto deve ser marcado à mão. Frontend apenas; sem migração nem variáveis novas.
 
+### Fase 27 — Transição de estado do pedido sem corrida (7 Out 2026)
+
+- **2026-10-07 · [BE] · Antonio Mambo** — `fix/transitar-estado-pedido-concorrencia`
+  - fix(commerce): `TransitarEstadoPedidoUseCase.transitar` passa a usar `updateMany` condicional
+    ao estado esperado (e à empresa), verificando `count`; antes lia e depois fazia `update` por
+    id, e dois funcionários a avançar o mesmo pedido passavam ambos
+
+  > Antes, dois «confirmar» em simultâneo passavam ambos a validação e o segundo notificava o
+  > cliente em duplicado. Agora só um vence; o outro recebe `commerce.pedido.estado_inesperado`
+  > com o estado real e **não** notifica. Quatro testes novos (condição do update, corrida
+  > perdida, estado inesperado, outra empresa). Pré-requisito da Fase 2 da entrega, que mexe nas
+  > mesmas transições. Backend apenas; sem migração nem variáveis novas.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1327,11 +1340,9 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       as ligações dos perfis de sistema, e desfaria a migração. A parte do commerce
       (`pedidos_commerce`, que o "Despachar" exige) ficou feita em 2026-09-29 —
       Fase 16; seguir o mesmo padrão da migração `20260929090000`.
-- [ ] Defeito pré-existente, encontrado no planeamento e **fora do âmbito** desta
-      funcionalidade: `TransitarEstadoPedidoUseCase.transitar` lê o pedido e só
-      depois o actualiza, sem update condicional atómico. Dois funcionários a
-      avançar o mesmo pedido ao mesmo tempo passam os dois. Corrigir em `fix/`
-      próprio; o código novo da entrega já nasce com o update condicional.
+- [x] Defeito pré-existente: `TransitarEstadoPedidoUseCase.transitar` lia o pedido e só
+      depois o actualizava, sem update condicional atómico. Corrigido em 2026-10-07
+      (Fase 27), com `updateMany` condicional ao estado e testes.
 - [ ] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
       Fase 4 — **não existe hoje** e não está estimada no plano da entrega.
       Encontrado no planeamento multilíngue (2026-09-28).
