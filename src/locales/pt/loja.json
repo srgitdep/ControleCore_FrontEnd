@@ -79,7 +79,10 @@
     "EM_PREPARACAO": "Em preparação",
     "PRONTO": "Pronto",
     "CONCLUIDO": "Concluído",
-    "CANCELADO": "Cancelado"
+    "CANCELADO": "Cancelado",
+    "EXPEDIDO": "A caminho",
+    "EM_ROTA": "A caminho",
+    "FALHADA": "Entrega não concluída"
   },
   "passoPedido": {
     "recebido": "Recebido",
@@ -87,7 +90,8 @@
     "em_preparacao": "Em preparação",
     "pronto": "Pronto a levantar",
     "entregue": "Entregue",
-    "pronto_entrega": "Pronto a entregar"
+    "pronto_entrega": "Pronto a entregar",
+    "a_caminho": "A caminho"
   },
   "metodoPagamento": {
     "NUMERARIO": "Numerário no levantamento",
@@ -121,7 +125,8 @@
     "cancelar": "Cancelar pedido",
     "cancelado": "Pedido cancelado.",
     "erro_criar": "Não foi possível criar o pedido.",
-    "erro_cancelar": "Não foi possível cancelar o pedido."
+    "erro_cancelar": "Não foi possível cancelar o pedido.",
+    "entrega_falhada": "Não foi possível entregar o seu pedido. A loja vai contactá-lo."
   },
   "conta": {
     "entrar": "Entrar",

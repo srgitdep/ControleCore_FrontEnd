@@ -47,6 +47,14 @@ export const pedidosCommerceGestaoApi = {
     return data;
   },
 
+  /** Despachar um pedido de entrega: sai o stock, nasce a venda e a entrega. */
+  expedir: async (id: string) => {
+    const { data } = await api.post<{ pedido: PedidoCommerceGestao; entregaId: string; vendaId: string }>(
+      `${BASE}/${id}/expedir`,
+    );
+    return data;
+  },
+
   confirmarLevantamento: async (id: string) => {
     const { data } = await api.post<PedidoCommerceGestao>(`${BASE}/${id}/confirmar-levantamento`);
     return data;

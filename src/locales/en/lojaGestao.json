@@ -5,7 +5,11 @@
     "EM_PREPARACAO": "Being prepared",
     "PRONTO": "Ready for collection",
     "CONCLUIDO": "Completed",
-    "CANCELADO": "Cancelled"
+    "CANCELADO": "Cancelled",
+    "PRONTO_ENTREGA": "Ready for delivery",
+    "EXPEDIDO": "Dispatched",
+    "EM_ROTA": "On the way",
+    "FALHADA": "Delivery failed"
   },
   "canal": {
     "SMS": "SMS",
@@ -65,7 +69,12 @@
     "a_cancelar": "Cancelling...",
     "taxa_entrega": "Delivery fee",
     "entrega_titulo": "Home delivery",
-    "entrega_pronta": "Order ready for delivery. Assigning a courier and closing the delivery arrive in a later phase — for now it cannot be closed as a pickup."
+    "entrega_pronta": "Order ready for delivery. Assigning a courier and closing the delivery arrive in a later phase — for now it cannot be closed as a pickup.",
+    "despachar": "Dispatch",
+    "aviso_despacho": "The goods leave the store: stock goes down and the sale is created (to be collected on delivery). Requires an open till at this store. Confirm?",
+    "a_despachar": "Dispatching...",
+    "sim_despachar": "Yes, dispatch",
+    "entrega_na_rua": "The goods have already left the store. It cannot be cancelled: if the delivery fails, record the failure and return it. Assigning a courier and closing the delivery arrive in a later phase."
   },
   "modal": {
     "titulo": "Record substitution",
@@ -93,6 +102,8 @@
     "substituicao_registada": "Substitution recorded.",
     "erro_substituir": "Could not record the substitution.",
     "levantamento_confirmado": "Collection confirmed — sale created.",
-    "erro_confirmar_levantamento": "Could not confirm the collection — check whether you have an open till session."
+    "erro_confirmar_levantamento": "Could not confirm the collection — check whether you have an open till session.",
+    "despachado": "Order dispatched — sale created and stock deducted.",
+    "erro_despachar": "Could not dispatch the order — check that your till is open at the order’s store."
   }
 }

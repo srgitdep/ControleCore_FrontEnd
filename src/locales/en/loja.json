@@ -79,7 +79,10 @@
     "EM_PREPARACAO": "Being prepared",
     "PRONTO": "Ready",
     "CONCLUIDO": "Completed",
-    "CANCELADO": "Cancelled"
+    "CANCELADO": "Cancelled",
+    "EXPEDIDO": "On the way",
+    "EM_ROTA": "On the way",
+    "FALHADA": "Delivery not completed"
   },
   "passoPedido": {
     "recebido": "Received",
@@ -87,7 +90,8 @@
     "em_preparacao": "Being prepared",
     "pronto": "Ready to collect",
     "entregue": "Collected",
-    "pronto_entrega": "Ready for delivery"
+    "pronto_entrega": "Ready for delivery",
+    "a_caminho": "On the way"
   },
   "metodoPagamento": {
     "NUMERARIO": "Cash on collection",
@@ -121,7 +125,8 @@
     "cancelar": "Cancel order",
     "cancelado": "Order cancelled.",
     "erro_criar": "We could not place the order.",
-    "erro_cancelar": "We could not cancel the order."
+    "erro_cancelar": "We could not cancel the order.",
+    "entrega_falhada": "We could not deliver your order. The store will contact you."
   },
   "conta": {
     "entrar": "Sign in",
