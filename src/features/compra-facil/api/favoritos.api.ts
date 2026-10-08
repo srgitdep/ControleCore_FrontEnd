@@ -8,6 +8,8 @@ export interface ProdutoFavoritado {
     id: string;
     nome: string;
     precoVenda: number;
+    /** O que o cliente paga: preço mais IVA. */
+    precoComIva: number;
     imagemUrl: string | null;
     unidadeMedida: string;
     isActive: boolean;

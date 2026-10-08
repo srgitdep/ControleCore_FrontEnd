@@ -31,7 +31,8 @@ import type { ProdutoLoja } from '../api/catalogo.api';
 export interface ItemCarrinho {
   produtoId: string;
   nome: string;
-  precoVenda: number;
+  /** O que o cliente paga por unidade: o preço **com IVA** (e com a promoção, se houver). */
+  precoComIva: number;
   imagemUrl: string | null;
   unidadeMedida: string;
   quantidade: number;
@@ -88,7 +89,7 @@ export const useCarrinhoStore = create<EstadoCarrinho>()(
               {
                 produtoId: produto.id,
                 nome: produto.nome,
-                precoVenda: produto.precoVenda,
+                precoComIva: produto.precoComIva,
                 imagemUrl: produto.imagemUrl,
                 unidadeMedida: produto.unidadeMedida,
                 quantidade,
@@ -127,11 +128,19 @@ export const useCarrinhoStore = create<EstadoCarrinho>()(
 
       limpar: () => set({ itens: [], lojaId: null }),
 
-      // Um só número: `precoVenda` é o preço final mostrado ao cliente
-      // (Docs/plano_compra_facil.md, secção 4.2 — não há quebra de IVA separada no
-      // pedido da v1; essa contabilidade acontece na Venda, no levantamento).
-      getSubtotal: () => get().itens.reduce((acc, i) => acc + i.precoVenda * i.quantidade, 0),
+      // A soma do que o cliente paga pela mercadoria: preços **com IVA**, como no POS. O servidor
+      // refaz esta conta ao criar o pedido (`totaisDoPedido`) e cobra o mesmo valor — antes o
+      // carrinho somava o preço sem IVA e a venda, ao levantar, calculava outro total, o que
+      // bloqueava o levantamento («pago insuficiente»).
+      getSubtotal: () => get().itens.reduce((acc, i) => acc + i.precoComIva * i.quantidade, 0),
     }),
-    { name: 'compra-facil-carrinho' },
+    {
+      name: 'compra-facil-carrinho',
+      // Versão 1: os itens passaram a guardar o preço **com IVA** (`precoComIva`). Um carrinho
+      // guardado antes tem o campo antigo (`precoVenda`, sem IVA) e mostraria um total errado até
+      // ao checkout — descarta-se, e o cliente volta a juntar os produtos, já ao preço certo.
+      version: 1,
+      migrate: () => ({ lojaId: null, itens: [] }),
+    },
   ),
 );

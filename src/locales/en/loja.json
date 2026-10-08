@@ -210,5 +210,6 @@
     "ver_no_mapa": "View on Google Maps",
     "gps_precisao": "Accuracy: about {{metros}} m",
     "gps_precisao_baixa": "Poor accuracy (about {{metros}} m) — check the point on the map"
-  }
+  },
+  "iva_incluido": "VAT included"
 }

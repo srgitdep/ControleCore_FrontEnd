@@ -28,10 +28,17 @@ export interface ProdutoLoja {
   id: string;
   nome: string;
   descricao: string | null;
-  /** Já com o desconto de uma promoção activa aplicado, quando há uma. */
+  /** Sem IVA e já com o desconto de uma promoção activa, quando há uma. A base do preço. */
   precoVenda: number;
-  /** O preço sem desconto, só quando há uma promoção activa — senão `null`. */
+  /**
+   * O que o cliente **paga** por unidade: o preço a cobrar mais o IVA, como no POS. É o que a
+   * montra mostra e o carrinho soma — o servidor calcula o mesmo total no pedido, com a mesma conta.
+   */
+  precoComIva: number;
+  /** O preço sem desconto (e sem IVA), só quando há uma promoção activa — senão `null`. */
   precoOriginal: number | null;
+  /** O preço sem desconto, com IVA — para o riscado ao lado do preço promocional. */
+  precoOriginalComIva: number | null;
   percentualDesconto: number | null;
   taxaIva: number;
   unidadeMedida: string;

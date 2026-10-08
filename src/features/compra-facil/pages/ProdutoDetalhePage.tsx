@@ -112,10 +112,11 @@ export function ProdutoDetalhePage() {
             <h1 className="mt-1 text-2xl font-bold text-slate-900">{produto.nome}</h1>
 
             <div className="mt-3 flex items-baseline gap-2">
-              <p className="text-3xl font-bold text-slate-900">{formatMoeda(produto.precoVenda)}</p>
+              <p className="text-3xl font-bold text-slate-900">{formatMoeda(produto.precoComIva)}</p>
+              <p className="text-xs text-slate-400">{t('iva_incluido')}</p>
               {produto.precoOriginal != null && (
                 <>
-                  <p className="text-base text-slate-400 line-through">{formatMoeda(produto.precoOriginal)}</p>
+                  <p className="text-base text-slate-400 line-through">{formatMoeda(produto.precoOriginalComIva ?? produto.precoOriginal)}</p>
                   <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
                     {t('produto.desconto', { percentual: produto.percentualDesconto })}
                   </span>

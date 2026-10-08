@@ -262,9 +262,13 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `AnularVendaUseCase` recusa (409, `venda.anular.pedido_em_entrega`). `fecho-pedido.ts`
     (`calcularItensFinais`, `recusarLojaDiferenteDaDoCaixa`) é partilhado com o levantamento.
     Notificação `pedido.expedido` (pt/en). Frontend: botão «Despachar» na gaveta do pedido, estados
-    novos na fila e no detalhe do cliente («A caminho»). **Risco por resolver:** o total da venda usa
-    `precoVenda` + IVA do catálogo, o do pedido o preço com promoção e sem IVA — com IVA > 0 ou
-    promoção a venda falha («pago insuficiente»), no levantamento e no despacho.
+    novos na fila e no detalhe do cliente («A caminho»). **Preço (Fase 31):** o cliente paga **preço + IVA**, como no POS, com a promoção
+    aplicada antes do IVA. O pedido guarda o preço acordado (`PedidoItem.precoUnitario`, sem IVA e com
+    promoção) e o total com IVA (`Pedido.totalFinal`; `Pedido.subtotal` é a base sem IVA). `totaisDoPedido`
+    (`commerce/domain/totais-pedido.ts`) calcula-o com a mesma aritmética da venda — a venda do Compra Fácil
+    usa o **preço acordado** (`ProcessarVendaUseCase`, `opcoes.precosAcordados`, só canal `ECOMMERCE`) e
+    tolera meio cêntimo de ruído no valor pago. A conferência refaz o total com o IVA do produto que sai.
+    O catálogo e os favoritos devolvem `precoComIva` / `precoOriginalComIva`; o carrinho soma-os.
   - **Entrega ao domicílio — Fase 2B (operar).** Estafetas: `GET/POST/PATCH /entregas/estafetas` e
     `POST /entregas/estafetas/:id/repor-senha` (`GERIR_ESTAFETAS`). O servidor gera o código `E####`
     (`gerarCodigo('E')`, único, com tratamento de colisões) e a senha inicial (`gerarSenhaInicial`);

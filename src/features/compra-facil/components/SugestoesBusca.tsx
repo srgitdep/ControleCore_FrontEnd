@@ -6,7 +6,8 @@ import { formatMoeda } from '@/shared/utils';
 export interface SugestaoProduto {
   id: string;
   nome: string;
-  precoVenda: number;
+  /** O que o cliente paga: preço mais IVA. */
+  precoComIva: number;
   imagemUrl: string | null;
   lojaId: string;
 }
@@ -63,7 +64,7 @@ export function SugestoesBusca({ aberto, aCarregar, termo, sugestoes, onEscolher
             </div>
             <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{produto.nome}</span>
             <span className="shrink-0 text-sm font-semibold text-blue-700">
-              {formatMoeda(produto.precoVenda)}
+              {formatMoeda(produto.precoComIva)}
             </span>
           </Link>
         ))}

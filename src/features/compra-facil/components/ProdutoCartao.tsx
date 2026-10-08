@@ -121,7 +121,7 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div>
-            <p className="text-lg font-extrabold text-blue-700">{formatMoeda(produto.precoVenda)}</p>
+            <p className="text-lg font-extrabold text-blue-700">{formatMoeda(produto.precoComIva)}</p>
             <p className="text-[11px] text-slate-400">{t('produto.por_unidade', { unidade: produto.unidadeMedida.toLowerCase() })}</p>
           </div>
 

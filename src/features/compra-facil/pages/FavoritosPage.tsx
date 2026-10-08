@@ -68,7 +68,7 @@ export function FavoritosPage() {
                   </p>
                   {favorito.produto.isActive ? (
                     <p className="text-sm font-semibold text-blue-700">
-                      {formatMoeda(favorito.produto.precoVenda)}
+                      {formatMoeda(favorito.produto.precoComIva)}
                     </p>
                   ) : (
                     <p className="text-xs text-rose-600">{t('favoritos.produto_desactivado')}</p>

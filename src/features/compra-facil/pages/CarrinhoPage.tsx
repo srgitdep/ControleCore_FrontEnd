@@ -84,7 +84,7 @@ export function CarrinhoPage() {
                       <p className="truncate text-sm font-semibold text-slate-900">{item.nome}</p>
                       <p className="mt-0.5 text-xs text-slate-400">
                         {t('carrinho.preco_por_unidade', {
-                          preco: formatMoeda(item.precoVenda),
+                          preco: formatMoeda(item.precoComIva),
                           unidade: item.unidadeMedida.toLowerCase(),
                         })}
                       </p>
@@ -122,7 +122,7 @@ export function CarrinhoPage() {
                     </div>
 
                     <p className="shrink-0 text-right text-sm font-bold text-blue-700">
-                      {formatMoeda(item.precoVenda * item.quantidade)}
+                      {formatMoeda(item.precoComIva * item.quantidade)}
                     </p>
                   </div>
                 ))}
@@ -151,6 +151,7 @@ export function CarrinhoPage() {
                   <span className="text-sm font-semibold text-slate-900">{t('resumo.total')}</span>
                   <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(getSubtotal())}</span>
                 </div>
+                <p className="mt-1 text-right text-[11px] text-slate-400">{t('iva_incluido')}</p>
 
                 <button
                   type="button"

@@ -125,7 +125,7 @@ export function CheckoutPage() {
                       <span className="font-semibold text-slate-900">{item.quantidade}×</span> {item.nome}
                     </span>
                     <span className="shrink-0 font-medium text-slate-900">
-                      {formatMoeda(item.precoVenda * item.quantidade)}
+                      {formatMoeda(item.precoComIva * item.quantidade)}
                     </span>
                   </li>
                 ))}
@@ -221,6 +221,7 @@ export function CheckoutPage() {
                 <span className="text-sm font-semibold text-slate-900">{t('resumo.total')}</span>
                 <span className="text-2xl font-extrabold text-blue-700">{formatMoeda(subtotal + taxa)}</span>
               </div>
+              <p className="mt-1 text-right text-[11px] text-slate-400">{t('iva_incluido')}</p>
 
               <button
                 type="button"
