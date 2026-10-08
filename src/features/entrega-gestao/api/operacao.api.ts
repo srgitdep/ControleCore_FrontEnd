@@ -3,7 +3,7 @@ import type {
   Acerto,
   AcertoPendente,
   ActualizarEstafetaPayload,
-  CredenciaisEstafeta,
+  EnvioDeCredenciais,
   CriarEstafetaPayload,
   EntregaPainel,
   EstadoEntrega,
@@ -27,7 +27,7 @@ export const operacaoApi = {
   },
 
   criarEstafeta: async (payload: CriarEstafetaPayload) => {
-    const { data } = await api.post<{ estafeta: Estafeta; credenciais: CredenciaisEstafeta }>(
+    const { data } = await api.post<{ estafeta: Estafeta } & EnvioDeCredenciais>(
       '/entregas/estafetas',
       payload,
     );
@@ -40,7 +40,7 @@ export const operacaoApi = {
   },
 
   reporSenhaEstafeta: async (id: string) => {
-    const { data } = await api.post<{ credenciais: CredenciaisEstafeta }>(`/entregas/estafetas/${id}/repor-senha`);
+    const { data } = await api.post<EnvioDeCredenciais>(`/entregas/estafetas/${id}/repor-senha`);
     return data;
   },
 

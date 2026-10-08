@@ -272,8 +272,12 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   - **Entrega ao domicílio — Fase 2B (operar).** Estafetas: `GET/POST/PATCH /entregas/estafetas` e
     `POST /entregas/estafetas/:id/repor-senha` (`GERIR_ESTAFETAS`). O servidor gera o código `E####`
     (`gerarCodigo('E')`, único, com tratamento de colisões) e a senha inicial (`gerarSenhaInicial`);
-    guarda só o hash `bcrypt` (`BCRYPT_ROUNDS`) e devolve a senha **uma só vez**; nunca se devolve o hash
-    (`select` explícito). Telefone único por empresa; desactivar com entregas em curso dá 409. Operação:
+    guarda só o hash `bcrypt` (`BCRYPT_ROUNDS`) e **envia o código e a senha por e-mail ao estafeta**
+    (`MailerService.sendWelcomeEstafetaEmail` + `EmailTemplates.getWelcomeEstafetaTemplate`, pt/en pela língua
+    da empresa; o SMTP é o que já envia os restantes e-mails, sem variáveis novas) — a senha **nunca** vai na
+    resposta da API: esta traz `emailEnviado` (`false` se o SMTP falhar; o estafeta fica criado e «repor senha»
+    reenvia). `email` é obrigatório no DTO; repor senha sem e-mail registado dá 400
+    `entrega.estafeta.sem_email`. Nunca se devolve o hash (`select` explícito). Telefone único por empresa; desactivar com entregas em curso dá 409. Operação:
     `OperarEntregaService` (`atribuir`, `recolher`, `iniciarRota`, `entregar`, `falhar`) —
     `PATCH /entregas/:id/{atribuir,recolher,iniciar-rota,entregar,falhar}` (`GERIR_ENTREGAS`); cada uma é
     uma transacção com `updateMany` condicional ao estado da entrega **e** do pedido, `count` verificado

@@ -54,7 +54,11 @@
     "erro_estafeta": "Não foi possível guardar o estafeta.",
     "erro_repor_senha": "Não foi possível repor a senha.",
     "acerto_feito": "Acerto feito — o dinheiro entrou no caixa.",
-    "erro_acerto": "Não foi possível fechar o acerto."
+    "erro_acerto": "Não foi possível fechar o acerto.",
+    "credenciais_enviadas": "Estafeta registado. Os dados de acesso foram enviados para {{email}}.",
+    "credenciais_nao_enviadas": "{{nome}} ficou registado, mas o e-mail com os dados de acesso não saiu. Use «Repor senha» para tentar de novo.",
+    "senha_enviada": "Senha nova enviada para {{email}}.",
+    "senha_nao_enviada": "A senha de {{nome}} foi reposta, mas o e-mail não saiu. Use «Repor senha» para tentar de novo."
   },
   "estado_entrega": {
     "AGUARDA_RECOLHA": "Aguarda recolha",
@@ -140,13 +144,14 @@
   },
   "estafetas": {
     "titulo": "Estafetas",
-    "subtitulo": "Quem faz as entregas. O código de acesso e a senha são gerados pelo sistema.",
+    "subtitulo": "Quem faz as entregas. O código de acesso e a senha são gerados pelo sistema e enviados por e-mail ao estafeta.",
     "novo": "Novo estafeta",
     "editar": "Editar estafeta",
     "editar_curto": "Editar",
     "nome": "Nome",
     "telefone": "Telefone",
     "email": "E-mail",
+    "email_ajuda": "O código de acesso e a senha são enviados para este e-mail.",
     "veiculo": "Veículo",
     "matricula": "Matrícula",
     "lojas": "Lojas que serve",
@@ -160,22 +165,12 @@
     "marcar_disponivel": "Marcar disponível",
     "marcar_indisponivel": "Marcar indisponível",
     "repor_senha": "Repor senha",
-    "repor_confirmar": "Gerar uma senha nova para {{nome}}? A anterior deixa de funcionar.",
+    "repor_confirmar": "Gerar uma senha nova para {{nome}} e enviá-la por e-mail? A anterior deixa de funcionar.",
     "desactivar": "Desactivar",
     "reactivar": "Reactivar",
     "mostrar_inactivos": "Mostrar inactivos",
     "vazio": "Ainda não há estafetas. Registe o primeiro para poder atribuir entregas.",
-    "erro": "Não foi possível carregar os estafetas.",
-    "credenciais": {
-      "titulo": "Credenciais de {{nome}}",
-      "aviso": "Anote-as agora: a senha não volta a ser mostrada. Se se perder, use «Repor senha».",
-      "codigo": "Código de acesso",
-      "senha": "Senha",
-      "copiar": "Copiar",
-      "copiado": "Copiado",
-      "copiar_falhou": "Não foi possível copiar — anote à mão.",
-      "fechar": "Já anotei"
-    }
+    "erro": "Não foi possível carregar os estafetas."
   },
   "acertos": {
     "titulo": "Acerto dos estafetas",

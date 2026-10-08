@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Bike, Check, Copy, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
+import { AlertTriangle, Bike, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import { Can } from '@/features/auth';
@@ -11,81 +11,16 @@ import {
   useEstafetas,
   useReporSenhaEstafeta,
 } from '../hooks/useOperacao';
-import type { CredenciaisEstafeta, Estafeta } from '../types/operacao';
+import type { Estafeta } from '../types/operacao';
 
 const classeCampo =
   'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
-
-/**
- * As credenciais de um estafeta, **mostradas uma só vez**. O servidor só guarda o hash da senha:
- * se a janela se fechar sem a anotar, não há como a ver outra vez — a saída é «repor senha».
- */
-function CredenciaisUmaVez({
-  nome,
-  credenciais,
-  aoFechar,
-}: {
-  nome: string;
-  credenciais: CredenciaisEstafeta;
-  aoFechar: () => void;
-}) {
-  const { t } = useTranslation('entrega');
-  const [copiado, setCopiado] = useState(false);
-
-  const copiar = async () => {
-    const texto = `${t('estafetas.credenciais.codigo')}: ${credenciais.codigo}\n${t('estafetas.credenciais.senha')}: ${credenciais.senha}`;
-    try {
-      await navigator.clipboard.writeText(texto);
-      setCopiado(true);
-    } catch {
-      // Sem permissão de área de transferência (HTTP, browser antigo): a pessoa copia à mão.
-      toast.error(t('estafetas.credenciais.copiar_falhou'));
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-        <h2 className="text-base font-bold text-slate-900">{t('estafetas.credenciais.titulo', { nome })}</h2>
-        <p className="mt-2 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-          {t('estafetas.credenciais.aviso')}
-        </p>
-
-        <dl className="mt-4 space-y-3">
-          <div>
-            <dt className="text-xs font-medium text-slate-500">{t('estafetas.credenciais.codigo')}</dt>
-            <dd className="mt-1 rounded-lg bg-slate-100 px-3 py-2 font-mono text-lg font-bold tracking-wider text-slate-900">{credenciais.codigo}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-slate-500">{t('estafetas.credenciais.senha')}</dt>
-            <dd className="mt-1 rounded-lg bg-slate-100 px-3 py-2 font-mono text-lg font-bold tracking-wider text-slate-900">{credenciais.senha}</dd>
-          </div>
-        </dl>
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => void copiar()}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            {copiado ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-            {copiado ? t('estafetas.credenciais.copiado') : t('estafetas.credenciais.copiar')}
-          </button>
-          <button type="button" onClick={aoFechar} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            {t('estafetas.credenciais.fechar')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface FormularioProps {
   estafeta?: Estafeta;
   lojas: { id: string; nome: string }[];
   aProcessar: boolean;
-  aoGuardar: (dados: { nome: string; telefone: string; email?: string; veiculo?: string; matricula?: string; lojaIds: string[] }) => void;
+  aoGuardar: (dados: { nome: string; telefone: string; email: string; veiculo?: string; matricula?: string; lojaIds: string[] }) => void;
   aoFechar: () => void;
 }
 
@@ -111,7 +46,7 @@ function FormularioEstafeta({ estafeta, lojas, aProcessar, aoGuardar, aoFechar }
           aoGuardar({
             nome: nome.trim(),
             telefone: telefone.trim(),
-            ...(email.trim() ? { email: email.trim() } : {}),
+            email: email.trim(),
             ...(veiculo.trim() ? { veiculo: veiculo.trim() } : {}),
             ...(matricula.trim() ? { matricula: matricula.trim() } : {}),
             lojaIds,
@@ -135,8 +70,9 @@ function FormularioEstafeta({ estafeta, lojas, aProcessar, aoGuardar, aoFechar }
             <input value={telefone} onChange={(e) => setTelefone(e.target.value)} required maxLength={30} type="tel" className={classeCampo} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700">{t('estafetas.email')}</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={classeCampo} />
+            <label className="block text-xs font-medium text-slate-700">{t('estafetas.email')} *</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} required type="email" className={classeCampo} />
+            {!estafeta && <p className="mt-1 text-xs text-slate-400">{t('estafetas.email_ajuda')}</p>}
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700">{t('estafetas.veiculo')}</label>
@@ -173,7 +109,7 @@ function FormularioEstafeta({ estafeta, lojas, aProcessar, aoGuardar, aoFechar }
           </button>
           <button
             type="submit"
-            disabled={aProcessar || nome.trim() === '' || telefone.trim() === ''}
+            disabled={aProcessar || nome.trim() === '' || telefone.trim() === '' || email.trim() === ''}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {aProcessar && <Loader2 size={14} className="animate-spin" />}
@@ -186,8 +122,8 @@ function FormularioEstafeta({ estafeta, lojas, aProcessar, aoGuardar, aoFechar }
 }
 
 /**
- * Quem faz as entregas (US-05). O servidor gera o código `E####` e a senha inicial; o gestor
- * entrega-os ao estafeta e **vê-os uma só vez**. «Em entrega» não é um estado guardado: deriva-se
+ * Quem faz as entregas (US-05). O servidor gera o código `E####` e a senha inicial e **envia-os por
+ * e-mail ao estafeta** — como no onboarding do resto do sistema; o gestor nunca vê a senha. «Em entrega» não é um estado guardado: deriva-se
  * das entregas em curso, para nunca ficar desalinhado do painel.
  */
 export function EstafetasPage() {
@@ -201,7 +137,6 @@ export function EstafetasPage() {
 
   // `undefined` = fechado; `null` = novo; objecto = a editar.
   const [aEditar, setAEditar] = useState<Estafeta | null | undefined>(undefined);
-  const [credenciais, setCredenciais] = useState<{ nome: string; dados: CredenciaisEstafeta } | null>(null);
   const lojas = configuracao.data?.lojas ?? [];
 
   const guardar: FormularioProps['aoGuardar'] = (dados) => {
@@ -212,14 +147,24 @@ export function EstafetasPage() {
     criar.mutate(dados, {
       onSuccess: (resposta) => {
         setAEditar(undefined);
-        setCredenciais({ nome: resposta.estafeta.nome, dados: resposta.credenciais });
+        // O estafeta já existe; se o e-mail não saiu, o remédio é «repor senha» — di-lo, não finge sucesso.
+        if (resposta.emailEnviado) {
+          toast.success(t('mensagens.credenciais_enviadas', { email: resposta.estafeta.email }));
+        } else {
+          toast.error(t('mensagens.credenciais_nao_enviadas', { nome: resposta.estafeta.nome }), { duration: 8000 });
+        }
       },
     });
   };
 
   const repor = (e: Estafeta) => {
     if (!window.confirm(t('estafetas.repor_confirmar', { nome: e.nome }))) return;
-    reporSenha.mutate(e.id, { onSuccess: (r) => setCredenciais({ nome: e.nome, dados: r.credenciais }) });
+    reporSenha.mutate(e.id, {
+      onSuccess: (r) =>
+        r.emailEnviado
+          ? toast.success(t('mensagens.senha_enviada', { email: e.email }))
+          : toast.error(t('mensagens.senha_nao_enviada', { nome: e.nome }), { duration: 8000 }),
+    });
   };
 
   return (
@@ -283,7 +228,7 @@ export function EstafetasPage() {
                     )}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {[e.telefone, e.veiculo, e.matricula].filter(Boolean).join(' · ')}
+                    {[e.telefone, e.email, e.veiculo, e.matricula].filter(Boolean).join(' · ')}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
                     {e.lojas.length === 0 ? t('estafetas.lojas_todas') : e.lojas.map((l) => l.nome).join(', ')}
@@ -350,10 +295,6 @@ export function EstafetasPage() {
           aoGuardar={guardar}
           aoFechar={() => setAEditar(undefined)}
         />
-      )}
-
-      {credenciais && (
-        <CredenciaisUmaVez nome={credenciais.nome} credenciais={credenciais.dados} aoFechar={() => setCredenciais(null)} />
       )}
     </div>
   );

@@ -1477,6 +1477,32 @@ esse merge trouxe.
   > build. **O mapa continua sem teste automático de renderização** — a correcção do GPS não foi
   > exercitada num browser por mim. Notas de deploy: só frontend, sem variáveis novas.
 
+### Fase 33 — Estafeta: os dados de acesso seguem por e-mail (8 Out 2026)
+
+- **2026-10-08 · [BE+FE] · Antonio Mambo** — `feat/estafeta-credenciais-por-email`
+  - feat(estafeta): ao registar um estafeta, o servidor gera o código `E####` e a senha e **envia-os por
+    e-mail ao estafeta** (`MailerService.sendWelcomeEstafetaEmail`, modelo `getWelcomeEstafetaTemplate`,
+    pt/en conforme a língua da empresa) — a mesma lógica de onboarding do resto do sistema. A senha **já não
+    aparece no ecrã** nem viaja na resposta da API; o diálogo «credenciais mostradas uma só vez» foi removido
+  - feat(estafeta): **nome, telefone e e-mail passam a obrigatórios** (DTO e formulário); «Repor senha» gera
+    outra e envia-a por e-mail (400 `entrega.estafeta.sem_email` se o estafeta não tiver e-mail — os criados
+    antes desta fase podem não ter)
+  - feat(estafeta): se o SMTP falhar, o estafeta fica criado e a resposta traz `emailEnviado: false`; o ecrã
+    di-lo e manda usar «Repor senha». Não se desfaz a criação por causa do e-mail
+  - fix(auth): no login, um código `E####` falhado mostra que **os estafetas ainda não entram por este ecrã**
+    em vez de «utilizador não existe», que fazia crer que a conta não tinha sido criada
+
+  > **Porque o login do estafeta «não existe».** `POST /auth/entrar` só procura utilizadores e fornecedores;
+  > o login do estafeta e a aplicação dele são a **Fase 4**, ainda por construir. O código e a senha estão
+  > certos e gravados — só não há onde os usar. O e-mail di-lo explicitamente e não traz ligação.
+  >
+  > **Verificação.** Backend: `tsc` limpo; 162 testes do módulo `entrega` e `i18n` (e-mail com código e
+  > senha; resposta sem senha; hash da senha enviada; falha do SMTP; repor senha; sem e-mail → 400).
+  > Frontend: `tsc -b` limpo, 182 testes. **O e-mail real não foi enviado a partir daqui** (o `.env` local
+  > não alcança o Neon) — confirmar com um registo em produção. Notas de deploy: **sem migração e sem
+  > variáveis novas** (usa o SMTP que já envia os e-mails do sistema); backend primeiro, depois o frontend —
+  > o frontend novo espera `emailEnviado` em vez de `credenciais`.
+
 ---
 
 ## 3. Backlog — Por Fazer

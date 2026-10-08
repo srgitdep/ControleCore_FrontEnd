@@ -24,9 +24,9 @@ export function useEstafetas(inactivos = false) {
 }
 
 /**
- * Criar devolve as credenciais **uma só vez**: quem chama guarda-as no estado do ecrã, no
- * `onSuccess` da mutação. Não voltam a vir do servidor, e a cache do TanStack Query não as
- * guarda — por isso só se invalida a lista.
+ * O servidor envia as credenciais por e-mail ao estafeta e só devolve se o envio correu bem
+ * (`emailEnviado`): a senha nunca passa por aqui. Quem chama decide o aviso; aqui só se invalida a
+ * lista.
  */
 export function useCriarEstafeta() {
   const { t } = useTranslation('entrega');
