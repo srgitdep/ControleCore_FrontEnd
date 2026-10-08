@@ -1440,6 +1440,43 @@ esse merge trouxe.
   > dois deploys o catálogo já devolve `precoComIva` mas o frontend antigo ainda soma sem IVA: faz o
   > deploy do frontend logo a seguir.
 
+### Fase 32 — Mapa: o nome do local, e a correcção do GPS que deitava a página abaixo (8 Out 2026)
+
+- **2026-10-08 · [FE] · Antonio Mambo** — `fix/mapa-nome-do-local`
+  - fix(mapa): **o GPS rebentava a página inteira** («Cannot read properties of undefined (reading
+    'layerPointToLatLng')»). O enquadramento do círculo de precisão usava `L.circle(...).getBounds()`, que
+    só funciona com o círculo desenhado num mapa; passa a `limitesDoCirculo` (conta simples, testada)
+  - fix(mapa): uma falha do mapa já não derruba a página — `BarreiraDoMapa` mostra «não foi possível
+    mostrar o mapa» e o resto do ecrã continua a funcionar
+  - feat(mapa): o nome do sítio (rua, bairro, cidade, província) por cima das coordenadas, na
+    localização da loja e na morada do cliente, para a pessoa conferir se o ponto é o certo; avisa a
+    vermelho se o ponto cair **fora de Moçambique**
+  - fix(mapa): **uma posição de GPS aproximada demais já não vai para o mapa** — acima de 1 km de erro
+    (um computador sem GPS dá a posição pela rede/IP e pode pôr o pino noutra província: aconteceu com
+    a loja, que ficou em Cabo Delgado) explica-se porquê e sugere-se o telemóvel; entre 100 m e 1 km usa-se
+    com aviso (`avaliarPrecisao`)
+  - feat(mapa): **pesquisar o local por nome** («Bairro Central, Maputo»), só em Moçambique, na loja e na
+    morada do cliente — a saída quando o GPS não ajuda
+
+  > **O defeito (da Fase 26).** O erro estava em produção desde a Fase 26 e nunca foi apanhado porque o
+  > mapa não foi aberto num browser durante o desenvolvimento: só havia testes do utilitário de GPS, não do
+  > mapa. Foi o utilizador que o encontrou ao carregar em «Usar a minha localização (GPS)».
+  >
+  > **O nome do local** vem do **Nominatim** (o serviço de pesquisa do OpenStreetMap, o mesmo dos tiles):
+  > gratuito, sem chave, com política de uso — no máximo 1 pedido por segundo. Por isso espera 800 ms
+  > depois da última mudança do pino e guarda cada resposta (`staleTime: Infinity`, `retry: 0`). As
+  > coordenadas da loja ou da morada que a pessoa marca são enviadas ao servidor do OSM. Se o serviço
+  > falhar, não bloqueia nada: diz que não conseguiu obter o nome e a pessoa confere no mapa.
+  >
+  > **Porque a localização estava errada.** O GPS não tinha bug de leitura (latitude e longitude vão
+  > pela ordem certa): a posição vinha de um computador, que sem GPS dá a que a rede ou o IP adivinham,
+  > com erros de dezenas de km. Nenhum navegador pode garantir mais do que isso; o que se garante agora é que
+  > uma posição assim **não é aceite em silêncio**, e que o nome do sítio aparece para se conferir.
+  >
+  > **Verificação.** `tsc -b` limpo, 182 testes (o enquadramento: 6; o nome e a pesquisa: 13; a qualidade da posição: 3),
+  > build. **O mapa continua sem teste automático de renderização** — a correcção do GPS não foi
+  > exercitada num browser por mim. Notas de deploy: só frontend, sem variáveis novas.
+
 ---
 
 ## 3. Backlog — Por Fazer

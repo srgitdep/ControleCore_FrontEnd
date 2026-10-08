@@ -163,5 +163,18 @@
       "delete": "Remover",
       "manage": "Gerir Tudo"
     }
+  },
+  "mapa": {
+    "a_identificar": "A identificar o local…",
+    "sem_nome": "Este ponto não tem nome no mapa. Confirme a posição olhando para o mapa.",
+    "nome_indisponivel": "Não foi possível obter o nome do local. Confirme a posição olhando para o mapa.",
+    "fora_de_mocambique": "Este ponto fica fora de Moçambique ({{local}}). Provavelmente o GPS ou o clique estão errados — corrija antes de guardar.",
+    "indisponivel": "Não foi possível mostrar o mapa. Pode continuar a preencher os restantes campos.",
+    "pesquisar_titulo": "Pesquisar o local por nome",
+    "pesquisar_placeholder": "Ex.: Bairro Central, Maputo",
+    "pesquisar": "Pesquisar",
+    "sem_resultados": "Não encontrámos este local em Moçambique. Tente outro nome, ou marque-o no mapa.",
+    "erro_pesquisa": "Não foi possível pesquisar agora. Marque o local no mapa.",
+    "gps_aproximado": "O dispositivo só deu uma posição aproximada (cerca de {{km}} km de erro), por isso não a usei: poria o pino no sítio errado. Os computadores sem GPS dão posições assim. Use o telemóvel, ao ar livre, ou pesquise o local por nome."
   }
 }

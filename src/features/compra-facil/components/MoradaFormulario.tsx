@@ -7,7 +7,9 @@ import { Loader2, LocateFixed } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
-import { ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
+import { NomeDoLocal } from '@/shared/ui/mapa/NomeDoLocal';
+import { avaliarPrecisao, ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
+import { PesquisaDeLocal } from '@/shared/ui/mapa/PesquisaDeLocal';
 import { PROVINCIAS_MOCAMBIQUE } from '../api/entrega.api';
 import type { DadosEndereco, EnderecoCliente } from '../api/entrega.api';
 
@@ -41,12 +43,15 @@ const classeCampo =
  */
 export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: MoradaFormularioProps) {
   const { t } = useTranslation('loja');
+  const { t: tMapa } = useTranslation('shell');
   const [ponto, setPonto] = useState<PontoNoMapa | null>(
     inicial ? { latitude: inicial.latitude, longitude: inicial.longitude } : null,
   );
   const [semPonto, setSemPonto] = useState(false);
   const [aLocalizar, setALocalizar] = useState(false);
   const [precisao, setPrecisao] = useState<number | null>(null);
+  // O erro (em metros) de uma posição que **não se usou** por ser aproximada demais.
+  const [gpsAproximadoMetros, setGpsAproximadoMetros] = useState<number | null>(null);
 
   const {
     register,
@@ -75,13 +80,20 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
   // Wi-Fi ou o IP, com centenas de metros de erro). Cada melhoria aparece logo no mapa.
   const localizar = () => {
     setALocalizar(true);
+    setGpsAproximadoMetros(null);
     obterMelhorPosicao(navigator.geolocation, {
       aoMelhorar: (p) => {
+        // Uma posição aproximada demais (um computador sem GPS) não vai para o mapa: a entrega seria
+        // cotada a partir de um sítio que não é o da casa. Ver `avaliarPrecisao`.
+        if (avaliarPrecisao(p.precisaoMetros) === 'inutilizavel') return;
         setPonto({ latitude: p.latitude, longitude: p.longitude });
         setPrecisao(p.precisaoMetros);
         setSemPonto(false);
       },
     })
+      .then((melhor) => {
+        if (avaliarPrecisao(melhor.precisaoMetros) === 'inutilizavel') setGpsAproximadoMetros(melhor.precisaoMetros);
+      })
       .catch(() => toast.error(t('moradas.localizacao_negada')))
       .finally(() => setALocalizar(false));
   };
@@ -167,6 +179,21 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
           )}
         </div>
         <p className="mb-2 text-xs text-slate-400">{t('moradas.pino_ajuda')}</p>
+        {gpsAproximadoMetros !== null && (
+          <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800" role="alert">
+            {tMapa('mapa.gps_aproximado', { km: Math.round(gpsAproximadoMetros / 1000) })}
+          </p>
+        )}
+        <div className="mb-2">
+          <PesquisaDeLocal
+            aoEscolher={(p) => {
+              setPonto(p);
+              setPrecisao(null);
+              setGpsAproximadoMetros(null);
+              setSemPonto(false);
+            }}
+          />
+        </div>
         <MapaEntregaLazy
           marcador={ponto}
           precisaoMetros={precisao}
@@ -174,9 +201,13 @@ export function MoradaFormulario({ inicial, aGuardar, aoGuardar, aoCancelar }: M
             setPonto(p);
             // Marcar à mão substitui o GPS: a margem de erro deixa de se aplicar.
             setPrecisao(null);
+            setGpsAproximadoMetros(null);
             setSemPonto(false);
           }}
         />
+        <div className="mt-2">
+          <NomeDoLocal ponto={ponto} />
+        </div>
         {ponto && (
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
             <span className="font-mono">
