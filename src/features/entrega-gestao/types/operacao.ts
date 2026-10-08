@@ -68,6 +68,8 @@ export interface EntregaPainel {
   taxa: number;
   valorACobrar: number;
   metodoCobrado: string | null;
+  /** O que se cobrou de facto; `null` = o previsto (`valorACobrar`). */
+  valorCobrado: number | null;
   motivoFalha: string | null;
   createdAt: string;
   loja: { id: string; nome: string };
@@ -80,4 +82,46 @@ export interface FiltrosEntregas {
   estafetaId?: string;
   /** Incluir as já fechadas (entregues e devolvidas). */
   fechadas?: boolean;
+}
+
+// ── Acertos de contas (Fase 3) ──────────────────────────────────────────────
+
+/** Uma entrega que compõe o valor em aberto de um estafeta. */
+export interface EntregaPorAcertar {
+  id: string;
+  numeroPedido: string;
+  /** O que vale para o acerto: o cobrado, ou o previsto se ninguém o corrigiu. */
+  valor: number;
+  valorACobrar: number;
+  entregueEm: string | null;
+}
+
+/** `GET /entregas/acertos/pendentes` — só numerário, entregue e ainda sem acerto. */
+export interface AcertoPendente {
+  estafeta: { id: string; nome: string; codigo: string; telefone: string };
+  valorEmAberto: number;
+  entregasPendentes: number;
+  ultimoAcertoEm: string | null;
+  entregas: EntregaPorAcertar[];
+}
+
+export interface Acerto {
+  id: string;
+  estado: 'ACERTADO' | 'COM_DIFERENCA';
+  totalDevido: number;
+  totalEntregue: number;
+  /** `totalEntregue − totalDevido`: negativa = o estafeta trouxe menos. */
+  diferenca: number;
+  notas: string | null;
+  createdAt: string;
+  estafeta: { id: string; nome: string; codigo: string };
+  acertadoPor: { id: string; name: string };
+  _count: { entregas: number };
+}
+
+export interface ResultadoAcerto {
+  entregasAcertadas: number;
+  totalDevido: number;
+  totalEntregue: number;
+  diferenca: number;
 }

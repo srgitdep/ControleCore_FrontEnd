@@ -52,7 +52,9 @@
     "erro_operacao": "Could not complete the operation.",
     "estafeta_actualizado": "Courier updated.",
     "erro_estafeta": "Could not save the courier.",
-    "erro_repor_senha": "Could not reset the password."
+    "erro_repor_senha": "Could not reset the password.",
+    "acerto_feito": "Settlement done — the money went into the till.",
+    "erro_acerto": "Could not close the settlement."
   },
   "estado_entrega": {
     "AGUARDA_RECOLHA": "Awaiting pickup",
@@ -99,7 +101,8 @@
     "erro": "Could not load the deliveries.",
     "repetir": "Try again",
     "sem_estafeta": "No courier",
-    "a_cobrar": "To collect"
+    "a_cobrar": "To collect",
+    "cobrado_diferente": "Collected: {{valor}} (differs from expected)"
   },
   "dialogo": {
     "cancelar": "Cancel",
@@ -116,7 +119,10 @@
       "metodo": "How the customer paid",
       "referencia": "Transaction reference",
       "referencia_ajuda": "The code from the M-Pesa or e-Mola message. Used for checking later.",
-      "confirmar": "Confirm delivery"
+      "confirmar": "Confirm delivery",
+      "valor_cobrado": "Amount collected",
+      "diferenca_a_mais": "You collected {{valor}} more than expected. It is recorded.",
+      "diferenca_a_menos": "You collected {{valor}} less than expected. It is recorded."
     },
     "falhar": {
       "titulo": "Delivery failed — {{pedido}}",
@@ -169,6 +175,44 @@
       "copiado": "Copied",
       "copiar_falhou": "Could not copy — write it down by hand.",
       "fechar": "I wrote them down"
+    }
+  },
+  "acertos": {
+    "titulo": "Courier settlements",
+    "subtitulo": "The cash each courier collected at the door and has not yet handed to the store. M-Pesa and e-Mola are not included.",
+    "total_na_rua": "Store money on the road",
+    "por_acertar": "To settle",
+    "nada_por_acertar": "No courier has cash left to settle.",
+    "erro": "Could not load the settlements.",
+    "entregas_pendentes_one": "{{count}} delivery to settle",
+    "entregas_pendentes_other": "{{count}} deliveries to settle",
+    "ultimo_acerto": "last settled on {{data}}",
+    "nunca_acertou": "never settled",
+    "acertar": "Settle",
+    "historico": "Settlement history",
+    "historico_vazio": "No settlements yet.",
+    "erro_historico": "Could not load the history.",
+    "col_data": "Date",
+    "col_estafeta": "Courier",
+    "col_devido": "Due",
+    "col_entregue": "Handed over",
+    "col_diferenca": "Difference",
+    "col_por": "By",
+    "certo": "Exact",
+    "dialogo": {
+      "titulo": "Settle {{nome}}’s account",
+      "entregas_one": "{{count}} delivery",
+      "entregas_other": "{{count}} deliveries",
+      "previsto": "expected {{valor}}",
+      "total_devido": "Total due",
+      "entregou": "What the courier handed over",
+      "sem_diferenca": "Matches the amount due.",
+      "falta": "{{valor}} short.",
+      "sobra": "{{valor}} over.",
+      "nao_bloqueia": "The difference is recorded and does not stop the settlement. The till receives what was handed over.",
+      "notas": "Notes (to explain a difference)",
+      "caixa_aviso": "The money goes into your open cash session. Without an open till, the settlement is refused.",
+      "confirmar": "Close the settlement"
     }
   }
 }

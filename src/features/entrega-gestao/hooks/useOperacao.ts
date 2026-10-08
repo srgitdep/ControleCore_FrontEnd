@@ -108,8 +108,15 @@ export const useIniciarRotaEntrega = () =>
 
 export const useEntregarEntrega = () =>
   useOperacaoEntrega(
-    ({ id, ...corpo }: { id: string; metodoCobrado: MetodoCobranca; referenciaPagamento?: string }) =>
-      operacaoApi.entregar(id, corpo),
+    ({
+      id,
+      ...corpo
+    }: {
+      id: string;
+      metodoCobrado: MetodoCobranca;
+      referenciaPagamento?: string;
+      valorCobrado?: number;
+    }) => operacaoApi.entregar(id, corpo),
     'entrega_actualizada',
   );
 
@@ -124,3 +131,36 @@ export const useDevolverEntrega = () =>
     ({ id, motivo }: { id: string; motivo: string }) => operacaoApi.devolver(id, motivo),
     'entrega_devolvida',
   );
+
+// ── Acertos de contas ───────────────────────────────────────────────────────
+
+export function useAcertosPendentes() {
+  return useQuery({
+    queryKey: [CHAVE, 'acertos', 'pendentes'],
+    queryFn: () => operacaoApi.listarAcertosPendentes(),
+    refetchInterval: TRINTA_SEGUNDOS,
+  });
+}
+
+export function useAcertos() {
+  return useQuery({
+    queryKey: [CHAVE, 'acertos', 'historico'],
+    queryFn: () => operacaoApi.listarAcertos(),
+  });
+}
+
+/**
+ * Fechar as contas de um estafeta. O erro do servidor chega ao ecrã com a causa — sem caixa aberto
+ * (409, com a instrução), já acertado por outra pessoa (409). Refaz sempre as listas: uma recusa
+ * por «já acertado» quer dizer que o ecrã estava desactualizado.
+ */
+export function useAcertarContas() {
+  const { t } = useTranslation('entrega');
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (corpo: { estafetaId: string; totalEntregue: number; notas?: string }) => operacaoApi.acertar(corpo),
+    onSuccess: () => toast.success(t('mensagens.acerto_feito')),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_acerto'))),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: [CHAVE, 'acertos'] }),
+  });
+}

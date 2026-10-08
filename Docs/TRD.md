@@ -288,6 +288,24 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     numerário**; `anularVendaTransacional` reverte o pedido também em `FALHADA`. Notificação
     `pedido.entrega_falhada` (pt/en). Frontend: páginas `/entregas` (painel por colunas, consulta de 30 s) e
     `/entregas/estafetas`.
+  - **Entrega ao domicílio — Fase 3 (as contas batem).** `EntregaPedido.valorCobrado` (anulável;
+    `NULL` = o previsto, `valorACobrar`). `entregar` aceita `valorCobrado` (≥ 0), regista a
+    diferença no evento e **não bloqueia**; com M-Pesa/e-Mola a conta a receber da venda passa a
+    `PAID` na mesma transacção. Acerto: `GET /entregas/acertos/pendentes` (por estafeta, maior valor
+    primeiro), `GET /entregas/acertos` (histórico, 50) e `POST /entregas/acertos`
+    (`GERIR_ACERTOS_ESTAFETA`) → `AcertarContasEstafetaUseCase`: numa transacção cria o
+    `AcertoEstafeta`, **reclama** as entregas (`updateMany … acertoId: null`, `count` conferido — dois
+    acertos em simultâneo dão 409), cria o `MovimentoCaixa(REFORCO)` com o valor **entregue** na sessão
+    aberta de quem recebe (`caixa/domain/movimento-caixa.ts`: `deltaDoMovimento`, partilhado com o
+    caixa) e passa as contas a receber a `PAID`. Só entram entregas `ENTREGUE`, `NUMERARIO` e sem
+    acerto (`entrega/domain/acerto.ts`). Sem sessão aberta: 409. A diferença regista-se
+    (`COM_DIFERENCA`) e não bloqueia. Segregação `ENTREGA_MARCAR_ACERTAR` (`EXCEPCAO_AUTORIZADA`):
+    marca no evento de auditoria. Frontend: `/entregas/acertos`.
+    **Audit Log:** `AuditoriaEntregaService` regista no Histórico, depois de a transacção confirmar,
+    cada transição da entrega (`EntregaPedido`, com antes/depois), o despacho (`Pedido`), a devolução
+    e as alterações à configuração (`ComercioConfiguracao`) — porque `updateMany` e `upsert` não passam
+    pela auditoria automática do `PrismaService`. `EventoEntrega` está nos modelos ignorados dessa
+    auditoria automática.
   - **IA/Copiloto** — `CopilotSession`, `CopilotMessage`.
 - **Migrações:** versionadas em `prisma/migrations/<timestamp>_<nome>/`, aplicadas
   no arranque do contentor (`prisma migrate deploy`, via `Dockerfile`). Nunca à
