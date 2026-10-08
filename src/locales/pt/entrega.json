@@ -52,7 +52,9 @@
     "erro_operacao": "Não foi possível concluir a operação.",
     "estafeta_actualizado": "Estafeta actualizado.",
     "erro_estafeta": "Não foi possível guardar o estafeta.",
-    "erro_repor_senha": "Não foi possível repor a senha."
+    "erro_repor_senha": "Não foi possível repor a senha.",
+    "acerto_feito": "Acerto feito — o dinheiro entrou no caixa.",
+    "erro_acerto": "Não foi possível fechar o acerto."
   },
   "estado_entrega": {
     "AGUARDA_RECOLHA": "Aguarda recolha",
@@ -99,7 +101,8 @@
     "erro": "Não foi possível carregar as entregas.",
     "repetir": "Tentar outra vez",
     "sem_estafeta": "Sem estafeta",
-    "a_cobrar": "A cobrar"
+    "a_cobrar": "A cobrar",
+    "cobrado_diferente": "Cobrado: {{valor}} (diferente do previsto)"
   },
   "dialogo": {
     "cancelar": "Cancelar",
@@ -116,7 +119,10 @@
       "metodo": "Como o cliente pagou",
       "referencia": "Referência da transacção",
       "referencia_ajuda": "O código da mensagem M-Pesa ou e-Mola. Serve para conferir depois.",
-      "confirmar": "Confirmar entrega"
+      "confirmar": "Confirmar entrega",
+      "valor_cobrado": "Valor cobrado",
+      "diferenca_a_mais": "Cobrou {{valor}} a mais do que o previsto. Fica registado.",
+      "diferenca_a_menos": "Cobrou {{valor}} a menos do que o previsto. Fica registado."
     },
     "falhar": {
       "titulo": "Entrega falhada — {{pedido}}",
@@ -169,6 +175,44 @@
       "copiado": "Copiado",
       "copiar_falhou": "Não foi possível copiar — anote à mão.",
       "fechar": "Já anotei"
+    }
+  },
+  "acertos": {
+    "titulo": "Acerto dos estafetas",
+    "subtitulo": "O numerário que cada estafeta cobrou à porta e ainda não entregou à loja. M-Pesa e e-Mola não entram aqui.",
+    "total_na_rua": "Dinheiro da loja na rua",
+    "por_acertar": "Por acertar",
+    "nada_por_acertar": "Nenhum estafeta tem numerário por acertar.",
+    "erro": "Não foi possível carregar os acertos.",
+    "entregas_pendentes_one": "{{count}} entrega por acertar",
+    "entregas_pendentes_other": "{{count}} entregas por acertar",
+    "ultimo_acerto": "último acerto em {{data}}",
+    "nunca_acertou": "ainda sem acertos",
+    "acertar": "Acertar contas",
+    "historico": "Histórico de acertos",
+    "historico_vazio": "Ainda não há acertos.",
+    "erro_historico": "Não foi possível carregar o histórico.",
+    "col_data": "Data",
+    "col_estafeta": "Estafeta",
+    "col_devido": "Devido",
+    "col_entregue": "Entregue",
+    "col_diferenca": "Diferença",
+    "col_por": "Por",
+    "certo": "Certo",
+    "dialogo": {
+      "titulo": "Acertar contas de {{nome}}",
+      "entregas_one": "{{count}} entrega",
+      "entregas_other": "{{count}} entregas",
+      "previsto": "previsto {{valor}}",
+      "total_devido": "Total devido",
+      "entregou": "O que o estafeta entregou",
+      "sem_diferenca": "Confere com o devido.",
+      "falta": "Faltam {{valor}}.",
+      "sobra": "Sobram {{valor}}.",
+      "nao_bloqueia": "A diferença fica registada e não impede o acerto. No caixa entra o que foi entregue.",
+      "notas": "Notas (para explicar uma diferença)",
+      "caixa_aviso": "O dinheiro entra na sua sessão de caixa aberta. Sem caixa aberto, o acerto é recusado.",
+      "confirmar": "Fechar o acerto"
     }
   }
 }

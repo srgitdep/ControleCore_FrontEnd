@@ -143,13 +143,19 @@ export function EntregarDialog({
 }: {
   entrega: EntregaPainel;
   aProcessar: boolean;
-  aoConfirmar: (corpo: { metodoCobrado: MetodoCobranca; referenciaPagamento?: string }) => void;
+  aoConfirmar: (corpo: { metodoCobrado: MetodoCobranca; referenciaPagamento?: string; valorCobrado: number }) => void;
   aoFechar: () => void;
 }) {
   const { t } = useTranslation('entrega');
   const [metodo, setMetodo] = useState<MetodoCobranca>('NUMERARIO');
   const [referencia, setReferencia] = useState('');
+  // Pré-preenchido com o previsto: o caso comum é cobrar exactamente isso.
+  const [valor, setValor] = useState(String(entrega.valorACobrar));
   const precisaReferencia = metodo !== 'NUMERARIO';
+  const valorNumerico = Number(valor);
+  const valorValido = valor.trim() !== '' && Number.isFinite(valorNumerico) && valorNumerico >= 0;
+  // Uma diferença não bloqueia: regista-se e vê-se (o plano recusa bloquear o estafeta por 50 MZN).
+  const diferenca = valorValido ? Math.round((valorNumerico - entrega.valorACobrar) * 100) / 100 : 0;
 
   return (
     <Casca titulo={t('dialogo.entregar.titulo', { pedido: entrega.pedido.numeroPedido })} aoFechar={aoFechar}>
@@ -157,12 +163,35 @@ export function EntregarDialog({
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          aoConfirmar({ metodoCobrado: metodo, ...(precisaReferencia ? { referenciaPagamento: referencia.trim() } : {}) });
+          aoConfirmar({
+            metodoCobrado: metodo,
+            valorCobrado: valorNumerico,
+            ...(precisaReferencia ? { referenciaPagamento: referencia.trim() } : {}),
+          });
         }}
       >
         <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
           {t('dialogo.entregar.valor', { valor: formatMoeda(entrega.valorACobrar) })}
         </p>
+        <div>
+          <label className="block text-xs font-medium text-slate-700">{t('dialogo.entregar.valor_cobrado')} *</label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className={classeCampo}
+            aria-describedby="diferenca-cobranca"
+          />
+          {diferenca !== 0 && (
+            <p id="diferenca-cobranca" className="mt-1 text-xs font-medium text-amber-700">
+              {t(diferenca > 0 ? 'dialogo.entregar.diferenca_a_mais' : 'dialogo.entregar.diferenca_a_menos', {
+                valor: formatMoeda(Math.abs(diferenca)),
+              })}
+            </p>
+          )}
+        </div>
         <div>
           <label className="block text-xs font-medium text-slate-700">{t('dialogo.entregar.metodo')}</label>
           <select value={metodo} onChange={(e) => setMetodo(e.target.value as MetodoCobranca)} className={classeCampo}>
@@ -183,7 +212,7 @@ export function EntregarDialog({
         <Rodape
           aoFechar={aoFechar}
           confirmar={t('dialogo.entregar.confirmar')}
-          desactivado={precisaReferencia && referencia.trim() === ''}
+          desactivado={!valorValido || (precisaReferencia && referencia.trim() === '')}
           aProcessar={aProcessar}
         />
       </form>

@@ -22,7 +22,7 @@ import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/feat
 import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
-import { EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
+import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -251,6 +251,13 @@ export const router = createBrowserRouter([
             path: '/entregas/estafetas',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
             children: [{ index: true, element: <EstafetasPage /> }]
+          },
+          // O acerto de contas dos estafetas: o numerário cobrado à porta chega ao caixa.
+          // Sem CASHIER nem STOCK_KEEPER: quem mexe em dinheiro do caixa de outros é gestão.
+          {
+            path: '/entregas/acertos',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            children: [{ index: true, element: <AcertosPage /> }]
           },
           {
             path: '/entregas/zonas',

@@ -7,3 +7,4 @@ export * from './api/operacao.api';
 export * from './hooks/useOperacao';
 export * from './pages/EntregasPage';
 export * from './pages/EstafetasPage';
+export * from './pages/AcertosPage';

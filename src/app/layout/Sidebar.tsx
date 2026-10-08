@@ -27,6 +27,7 @@ import {
   Percent,
   Truck,
   Bike,
+  Banknote,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -44,7 +45,7 @@ import { SelectorIdioma } from '@/shared/ui';
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
-  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'entregas_zonas' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'acertos_estafeta' | 'entregas_zonas' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
@@ -109,6 +110,7 @@ const navGroups: NavGroup[] = [
       // contrário (DT01 1).
       { chave: 'entregas', icon: Truck, path: '/entregas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
       { chave: 'estafetas', icon: Bike, path: '/entregas/estafetas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'acertos_estafeta', icon: Banknote, path: '/entregas/acertos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'entregas_zonas', icon: Truck, path: '/entregas/zonas', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a

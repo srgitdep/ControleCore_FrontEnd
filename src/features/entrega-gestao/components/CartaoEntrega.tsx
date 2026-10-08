@@ -76,6 +76,12 @@ export function CartaoEntrega({
         <span className="text-sm font-semibold text-slate-900">{formatMoeda(entrega.valorACobrar)}</span>
       </p>
 
+      {entrega.valorCobrado !== null && entrega.valorCobrado !== entrega.valorACobrar && (
+        <p className="mt-1 text-xs font-medium text-amber-700">
+          {t('painel.cobrado_diferente', { valor: formatMoeda(entrega.valorCobrado) })}
+        </p>
+      )}
+
       {entrega.estado === 'FALHADA' && entrega.motivoFalha && (
         <p className="mt-2 rounded-lg bg-orange-50 px-2 py-1.5 text-xs text-orange-800">
           {t(`motivo_falha.${entrega.motivoFalha as 'OUTRO'}`)}

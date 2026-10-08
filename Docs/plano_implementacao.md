@@ -1322,6 +1322,76 @@ esse merge trouxe.
   > - **Não activar a entrega numa loja real** antes de decidir o preço (IVA/promoções) e de ensaiar o
   >   fluxo completo numa loja piloto.
 
+### Fase 30 — Entrega ao domicílio, Fase 3: As contas batem (8 Out 2026)
+
+- **2026-10-08 · [BE+FE] · Antonio Mambo** — `feat/entrega-fase3-contas`
+  - feat(entrega): migração `20261007200000_entrega_valor_cobrado` — `EntregaPedido.valorCobrado`
+    (anulável, só acrescenta); `entregar` aceita o valor cobrado e regista a diferença
+  - feat(entrega): M-Pesa e e-Mola fecham a conta a receber ao entregar; o numerário fica por acertar
+  - feat(entrega): acerto de contas dos estafetas — `GET /entregas/acertos/pendentes`,
+    `POST /entregas/acertos`, `GET /entregas/acertos`; o reforço entra no caixa de quem recebe
+  - feat(entrega-gestao): página «Acerto dos estafetas» (por acertar e histórico) e o valor
+    cobrado no diálogo «Entregue», com a diferença em tempo real
+
+  > **O que entra no acerto.** Só as entregas `ENTREGUE`, cobradas em `NUMERARIO` e sem `acertoId`.
+  > M-Pesa e e-Mola nunca entram (o dinheiro foi para a carteira da loja; contá-lo aqui seria
+  > contá-lo duas vezes) e uma entrega acertada não volta a entrar. As contas são puras e testadas
+  > em `entrega/domain/acerto.ts` (arredondamento a 2 casas; `valorCobrado ?? valorACobrar`, de modo
+  > que um valor cobrado a **zero** é zero e não «o previsto»).
+  >
+  > **O acerto, numa só transacção:** (1) cria o `AcertoEstafeta`; (2) **reclama** as entregas com
+  > `updateMany … acertoId: null` e confere o número — dois acertos em simultâneo: só um as leva, o
+  > outro recebe 409 (`entrega.acerto.ja_acertada`) e nada fica; (3) `MovimentoCaixa(REFORCO)` com o
+  > valor **entregue** e o saldo da sessão a subir (`deltaDoMovimento`, extraído do caixa para as
+  > duas escritas aplicarem a mesma conta); (4) as contas a receber das vendas passam a `PAID`.
+  > O que entra no caixa é o que foi entregue, não o devido. Sem sessão de caixa aberta do operador:
+  > 409 com a instrução (antes de tocar em nada). `totalEntregue = 0` regista o acerto sem movimento.
+  >
+  > **A diferença não bloqueia** — nem ao cobrar (`entregar`) nem ao acertar: regista-se
+  > (`COM_DIFERENCA`, `diferenca`, notas) e vê-se no painel e no histórico. As contas a receber
+  > fecham mesmo com diferença: o dinheiro que não veio é uma diferença a explicar, não uma dívida
+  > por cobrar do cliente.
+  >
+  > **Segregação de funções.** Nova regra `ENTREGA_MARCAR_ACERTAR` em `EXCEPCAO_AUTORIZADA`: quem
+  > marcou as entregas como entregues pode fechar o acerto delas, mas o evento de auditoria leva a
+  > marca `segregacao`. Nunca bloqueia (uma loja com uma só pessoa tem de poder acertar).
+  >
+  > **Decisões do utilizador (aprovadas com as recomendações):** valor cobrado numa coluna nova
+  > (omitido = o previsto); M-Pesa/e-Mola fora do acerto; o acerto não bloqueia por diferença; o
+  > reforço entra na sessão de caixa de quem recebe, de qualquer loja; a segregação como excepção
+  > autorizada. A decisão 1 (**preço: IVA e promoções**) ficou à parte e foi resolvida na Fase 31.
+  >
+  > **Desvios ao plano.** (1) A marca de segregação fica no evento de auditoria e não numa coluna: a
+  > consulta é sobre o `AuditLog`. (2) «Por acertar» só lista estafetas com numerário em aberto.
+  > (3) `GET /entregas/acertos` devolve os últimos 50, sem paginação.
+  >
+  > **Audit Log (acrescentado a pedido do utilizador, 2026-10-08).** O `PrismaService` audita sozinho
+  > cada `create`, `update` e `delete` (senhas mascaradas) — o que já cobria estafetas, zonas, a
+  > criação da entrega e o reforço do caixa —, mas **não vê `updateMany` nem `upsert`**, e é por
+  > `updateMany` condicional que se move o dinheiro e o stock: despachar, atribuir, recolher, rota,
+  > entregar, falhar e devolver ficavam **sem rasto no Histórico**; o mesmo para a configuração
+  > (`upsert`). Passa a haver `AuditoriaEntregaService`, que regista **uma linha por operação, depois
+  > de a transacção confirmar** (uma operação desfeita ou perdida numa corrida não deixa linha), com o
+  > antes e o depois: `EntregaPedido` (estado, operação, estafeta, método e valor cobrado, diferença,
+  > motivo da falha), `Pedido` no despacho (venda, entrega, total, taxa) e `ComercioConfiguracao`
+  > (ligar/desligar a entrega). O estafeta (Fase 4) audita-se sem `userId` e com `depois.autor`.
+  > `EventoEntrega` saiu da auditoria automática (é ele próprio o rasto, e duplicava cada transição).
+  > Quatro testes novos por operação garantem que cada uma regista, e que a recusada não regista.
+  >
+  > **Verificação.** Backend: `tsc --noEmit` limpo, 2667 testes (já com a correcção do preço da Fase 31;
+  > acerto: 21; valor cobrado e conta a receber: 8; domínio do acerto: 14; auditoria: 17). O `AppModule`
+  > compila e resolve as dependências. Frontend: `tsc -b` limpo, 160 testes, build. **Não foi exercitado
+  > contra a base de dados real nem num browser.**
+  >
+  > **Notas de deploy.**
+  >
+  > - **Uma migração nova, só uma coluna anulável** (`ADD COLUMN`, sem `DEFAULT`; as entregas que
+  >   existem ficam com `NULL` = o previsto). Branch de segurança no Neon antes de publicar, por rotina.
+  > - Sem variáveis novas. Backend primeiro, frontend depois.
+  > - A página usa `GERIR_ACERTOS_ESTAFETA`: invalidar `permissions:*` no Redis se ainda não foi feito.
+  > - O preço (IVA e promoções) já está resolvido na Fase 31. Antes de activar a entrega numa loja real,
+  >   falta ensaiar o fluxo completo numa loja piloto.
+
 ### Fase 31 — Preço do Compra Fácil com IVA e promoção: o pedido e a venda passam a coincidir (8 Out 2026)
 
 - **2026-10-08 · [BE+FE] · Antonio Mambo** — `fix/preco-pedido-com-iva-e-promocao`
@@ -1490,8 +1560,11 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [x] **Total da venda vs. total do pedido.** Resolvido em 2026-10-08 (Fase 31): o cliente paga preço +
       IVA como no POS, o pedido e a venda usam a mesma conta e a venda reutiliza o preço acordado. **Sem
       migração.** Antes de activar a entrega: ver as notas de deploy da Fase 31.
-- [ ] **Fase 3 — As contas batem.** Valor cobrado na entrega, acerto de contas do
-      estafeta a gerar `MovimentoCaixa(REFORCO)`, visão do que cada estafeta deve.
+- [x] **Fase 3 — As contas batem.** Concluída em 2026-10-08 (Fase 30): valor cobrado e diferença
+      registados (sem bloquear), M-Pesa/e-Mola a fechar a conta a receber, e o acerto de contas do
+      estafeta (reforço de caixa com o valor entregue, contas a receber pagas, segregação marcada).
+      Migração aditiva (`valorCobrado`). O preço (IVA e promoções), que bloqueava a entrega real, ficou
+      resolvido na Fase 31.
 - [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:
       aceitar, recolher, entregar, falhar. Atribuição automática por proximidade
       é opcional e corta-se sob pressão de prazo.
@@ -1631,7 +1704,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28) e 2B (Fase 29) concluídas; a seguir a Fase 3 (as contas batem) | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28), 2B (Fase 29) e 3 (Fase 30) concluídas; a seguir a Fase 4 (o estafeta na rua) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 

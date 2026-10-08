@@ -1,5 +1,7 @@
 import { api } from '@/shared/config';
 import type {
+  Acerto,
+  AcertoPendente,
   ActualizarEstafetaPayload,
   CredenciaisEstafeta,
   CriarEstafetaPayload,
@@ -9,6 +11,7 @@ import type {
   FiltrosEntregas,
   MetodoCobranca,
   MotivoFalha,
+  ResultadoAcerto,
 } from '../types/operacao';
 
 type Resultado = { id: string; estado: EstadoEntrega };
@@ -62,8 +65,14 @@ export const operacaoApi = {
     return data;
   },
 
-  entregar: async (id: string, corpo: { metodoCobrado: MetodoCobranca; referenciaPagamento?: string }) => {
-    const { data } = await api.patch<Resultado>(`/entregas/${id}/entregar`, corpo);
+  entregar: async (
+    id: string,
+    corpo: { metodoCobrado: MetodoCobranca; referenciaPagamento?: string; valorCobrado?: number },
+  ) => {
+    const { data } = await api.patch<Resultado & { valorCobrado: number; diferenca: number }>(
+      `/entregas/${id}/entregar`,
+      corpo,
+    );
     return data;
   },
 
@@ -77,6 +86,22 @@ export const operacaoApi = {
       `/entregas/${id}/devolver`,
       { motivo },
     );
+    return data;
+  },
+
+  // ── Acertos de contas ─────────────────────────────────────────────────────
+  listarAcertosPendentes: async () => {
+    const { data } = await api.get<AcertoPendente[]>('/entregas/acertos/pendentes');
+    return data;
+  },
+
+  listarAcertos: async () => {
+    const { data } = await api.get<Acerto[]>('/entregas/acertos');
+    return data;
+  },
+
+  acertar: async (corpo: { estafetaId: string; totalEntregue: number; notas?: string }) => {
+    const { data } = await api.post<ResultadoAcerto>('/entregas/acertos', corpo);
     return data;
   },
 };
