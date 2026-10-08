@@ -1322,6 +1322,54 @@ esse merge trouxe.
   > - **Não activar a entrega numa loja real** antes de decidir o preço (IVA/promoções) e de ensaiar o
   >   fluxo completo numa loja piloto.
 
+### Fase 31 — Preço do Compra Fácil com IVA e promoção: o pedido e a venda passam a coincidir (8 Out 2026)
+
+- **2026-10-08 · [BE+FE] · Antonio Mambo** — `fix/preco-pedido-com-iva-e-promocao`
+  - fix(commerce): o pedido calcula o total **com IVA** (`totaisDoPedido`), com a mesma aritmética da
+    venda; a conferência refaz o total com o IVA do produto que sai (o substituto, se o houve)
+  - fix(vendas): a venda do Compra Fácil usa o **preço acordado no pedido** (sem IVA, com promoção) em
+    vez do do catálogo; aceita meio cêntimo de ruído de vírgula flutuante no valor pago
+  - fix(compra-facil): a montra, o carrinho e o checkout mostram o preço **com IVA** («IVA incluído»)
+
+  > **O defeito.** O pedido guardava o preço **sem IVA e com promoção**; a venda, ao levantar ou
+  > despachar, recalculava o total com o **preço do catálogo mais IVA**, sem a promoção. Com qualquer
+  > produto com IVA > 0 o total da venda excedia o do pedido, e a venda falhava com «pago
+  > insuficiente»: o levantamento não fechava e o despacho desfazia-se. Confirmado em produção a
+  > 2026-10-08: **8 dos 10 produtos activos têm IVA** (0 promoções activas). Já afectava o levantamento.
+  >
+  > **A regra (decisão do utilizador, depois de conferir os recibos do POS):** os preços do catálogo
+  > são sem IVA e o cliente paga **preço + IVA**, como no POS; a promoção aplica-se antes do IVA
+  > ((100 − 10%) + 16% = 104,40). `PedidoItem.precoUnitario` continua sem IVA e com promoção — é o
+  > **preço acordado**, que a venda reutiliza; `PedidoItem.subtotal` e `Pedido.totalFinal` passam a
+  > levar IVA; `Pedido.subtotal` é a base sem IVA (o IVA é `totalFinal − subtotal − taxaEntrega`).
+  > Só comentários no schema: **sem migração**.
+  >
+  > **A mesma conta nos dois sítios.** `totaisDoPedido` copia a ordem de operações de
+  > `ProcessarVendaUseCase` (bruto da linha, IVA da linha, soma de cada um, total). Cinco testes põem
+  > o total do pedido e o da venda lado a lado (IVA, promoção, várias taxas, taxa de entrega, peso) e
+  > exigem igualdade a 9 casas. A venda só usa preços acordados no canal `ECOMMERCE` (o POS é sempre o
+  > catálogo) e valida que correspondem aos itens.
+  >
+  > **O valor mínimo da zona de entrega** avalia-se sobre o total da mercadoria **com IVA** (o que o
+  > cliente vê), e o catálogo e os favoritos devolvem `precoComIva` / `precoOriginalComIva`.
+  >
+  > **Efeitos a ter em conta.** (1) O cliente online passa a pagar o preço do catálogo mais o IVA: o que
+  > antes via 100 passa a ver 116 nos produtos com IVA. (2) Os carrinhos guardados no browser antes do
+  > deploy são **descartados** (`version: 1` do carrinho): tinham o preço sem IVA. (3) Um pedido que já
+  > estivesse em `PRONTO` antes do deploy tem o total antigo (sem IVA) e **não** se refaz — só a
+  > conferência o recalcula; esses poucos pedidos, se existirem, têm de voltar a `EM_PREPARACAO`/serem
+  > conferidos de novo ou cancelados. (4) O IVA usado ao levantar é o actual do produto; se o IVA de um
+  > produto mudar entre o pedido e o levantamento, a venda leva o novo. (5) Os favoritos continuam a
+  > mostrar o preço de tabela (sem promoção), agora com IVA.
+  >
+  > **Verificação.** Backend: `tsc --noEmit` limpo, 2602 testes. Frontend: `tsc -b` limpo, 160 testes,
+  > build. **Não foi exercitado contra a base de dados real nem num browser.** Para ver em produção:
+  > fazer um pedido de levantamento com um produto com IVA e confirmar que fecha.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. Backend primeiro, frontend depois. Entre os
+  > dois deploys o catálogo já devolve `precoComIva` mas o frontend antigo ainda soma sem IVA: faz o
+  > deploy do frontend logo a seguir.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1439,11 +1487,9 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       daqui já se opera entregas a sério**, com o gestor a marcar os estados à mão. **Desvios:** um
       serviço único para as cinco operações; `entregar` também a partir de `RECOLHIDA`. **Por fazer:** a
       ligação do detalhe do pedido à sua entrega.
-- [ ] **Total da venda vs. total do pedido** (risco que já existia, visto na Fase 28):
-      `ProcessarVendaUseCase` usa `precoVenda` + IVA do catálogo; o pedido guarda o preço com
-      promoção e sem IVA. Com IVA > 0 ou promoção, o levantamento e o despacho falham com
-      «pago insuficiente». Decidir qual dos preços manda e alinhar. Antes da 2B, para a
-      entrega poder ir para produção.
+- [x] **Total da venda vs. total do pedido.** Resolvido em 2026-10-08 (Fase 31): o cliente paga preço +
+      IVA como no POS, o pedido e a venda usam a mesma conta e a venda reutiliza o preço acordado. **Sem
+      migração.** Antes de activar a entrega: ver as notas de deploy da Fase 31.
 - [ ] **Fase 3 — As contas batem.** Valor cobrado na entrega, acerto de contas do
       estafeta a gerar `MovimentoCaixa(REFORCO)`, visão do que cada estafeta deve.
 - [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:

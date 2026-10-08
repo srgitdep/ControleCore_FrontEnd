@@ -210,5 +210,6 @@
     "ver_no_mapa": "Ver no Google Maps",
     "gps_precisao": "Precisão: cerca de {{metros}} m",
     "gps_precisao_baixa": "Precisão fraca (cerca de {{metros}} m) — confirme o ponto no mapa"
-  }
+  },
+  "iva_incluido": "IVA incluído"
 }
