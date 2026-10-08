@@ -6,12 +6,15 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
-import { ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
+import { NomeDoLocal } from '@/shared/ui/mapa/NomeDoLocal';
+import { avaliarPrecisao, ligacaoNoMapa, obterMelhorPosicao } from '@/shared/utils/geolocalizacao';
+import { PesquisaDeLocal } from '@/shared/ui/mapa/PesquisaDeLocal';
 
 export type AbaLoja = 'INFO' | 'ARMAZENS' | 'CAIXAS' | 'LOCALIZACAO';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 'CAIXAS' }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void; abaInicial?: AbaLoja }) {
   const { t } = useTranslation('lojas');
+  const { t: tMapa } = useTranslation('shell');
   const [activeTab, setActiveTab] = useState<AbaLoja>(abaInicial);
   
   // States para novos
@@ -33,6 +36,8 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
   // Metros de erro do último GPS — um gestor dentro da loja com sinal fraco pode receber
   // 500 m de erro, e gravar isso sem aviso estragaria todas as distâncias da entrega.
   const [precisaoGps, setPrecisaoGps] = useState<number | null>(null);
+  // O erro (em metros) de uma posição que **não se usou** por ser aproximada demais — ver abaixo.
+  const [gpsAproximadoMetros, setGpsAproximadoMetros] = useState<number | null>(null);
 
   // A geolocalização só existe em contexto seguro (HTTPS ou localhost): fora dele o botão
   // nem aparece, em vez de falhar em silêncio ao ser premido.
@@ -42,12 +47,20 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
   // da rede Wi-Fi ou do IP, com centenas de metros de erro. Cada melhoria aparece no mapa.
   const handleUsarGps = () => {
     setALocalizar(true);
+    setGpsAproximadoMetros(null);
     obterMelhorPosicao(navigator.geolocation, {
       aoMelhorar: (p) => {
+        // Uma posição aproximada demais (um computador sem GPS, a adivinhar pela rede ou pelo IP) não
+        // vai para o mapa: gravaria a loja noutra cidade, ou noutra província, e a distância de todas
+        // as entregas ficava errada. Ver `avaliarPrecisao`.
+        if (avaliarPrecisao(p.precisaoMetros) === 'inutilizavel') return;
         setLocalizacao({ latitude: p.latitude, longitude: p.longitude });
         setPrecisaoGps(p.precisaoMetros);
       },
     })
+      .then((melhor) => {
+        if (avaliarPrecisao(melhor.precisaoMetros) === 'inutilizavel') setGpsAproximadoMetros(melhor.precisaoMetros);
+      })
       .catch(() => toast.error(t('detalhes.gps_negado')))
       .finally(() => setALocalizar(false));
   };
@@ -330,6 +343,12 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
                 <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{t('detalhes.gps_indisponivel')}</p>
               )}
 
+              {gpsAproximadoMetros !== null && (
+                <p className="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2" role="alert">
+                  {tMapa('mapa.gps_aproximado', { km: Math.round(gpsAproximadoMetros / 1000) })}
+                </p>
+              )}
+
               {precisaoGps !== null && (
                 <p className={precisaoGps > 100 ? 'text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2' : 'text-xs text-emerald-700'}>
                   {precisaoGps > 100
@@ -338,6 +357,15 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
                 </p>
               )}
 
+              {/* Quando o GPS não ajuda: procurar o sítio pelo nome e pôr o pino lá. */}
+              <PesquisaDeLocal
+                aoEscolher={(p) => {
+                  setLocalizacao(p);
+                  setPrecisaoGps(null);
+                  setGpsAproximadoMetros(null);
+                }}
+              />
+
               <MapaEntregaLazy
                 marcador={localizacao}
                 precisaoMetros={precisaoGps}
@@ -345,8 +373,11 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
                   setLocalizacao(p);
                   // Marcar à mão substitui o GPS: a precisão deixa de se aplicar.
                   setPrecisaoGps(null);
+                  setGpsAproximadoMetros(null);
                 }}
               />
+              {/* O nome do sítio, para conferir: umas coordenadas sozinhas não dizem nada. */}
+              <NomeDoLocal ponto={localizacao} />
               {localizacao ? (
                 <p className="text-xs text-slate-600 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="font-mono">

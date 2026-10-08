@@ -73,3 +73,25 @@ export function obterMelhorPosicao(fonte: FonteGps, opcoes: Opcoes = {}): Promis
 export function ligacaoNoMapa(latitude: number, longitude: number): string {
   return `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
+
+/** Até aqui é GPS a sério (ao ar livre, num telemóvel). */
+export const PRECISAO_BOA_METROS = 100;
+/**
+ * Acima disto a posição **não se usa**: é a rede Wi-Fi ou o IP a adivinhar (um computador sem GPS
+ * dá erros de dezenas de quilómetros e pode pôr o pino noutra cidade, ou noutra província). Aceitá-la
+ * em silêncio faria gravar a loja ou a morada no sítio errado, e a distância de todas as entregas
+ * seria calculada a partir daí.
+ */
+export const PRECISAO_MAXIMA_ACEITAVEL_METROS = 1000;
+
+export type QualidadeDaPosicao = 'boa' | 'fraca' | 'inutilizavel';
+
+/**
+ * `boa` (≤ 100 m): usa-se. `fraca` (até 1 km): usa-se, mas avisa-se. `inutilizavel` (> 1 km): não se
+ * usa — diz-se porquê e sugere-se outra via (telemóvel, pesquisar o local, marcar no mapa).
+ */
+export function avaliarPrecisao(precisaoMetros: number): QualidadeDaPosicao {
+  if (precisaoMetros <= PRECISAO_BOA_METROS) return 'boa';
+  if (precisaoMetros <= PRECISAO_MAXIMA_ACEITAVEL_METROS) return 'fraca';
+  return 'inutilizavel';
+}

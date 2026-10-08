@@ -163,5 +163,18 @@
       "delete": "Remove",
       "manage": "Manage All"
     }
+  },
+  "mapa": {
+    "a_identificar": "Identifying the place…",
+    "sem_nome": "This point has no name on the map. Check the position by looking at the map.",
+    "nome_indisponivel": "Could not get the place name. Check the position by looking at the map.",
+    "fora_de_mocambique": "This point is outside Mozambique ({{local}}). The GPS or the click is probably wrong — fix it before saving.",
+    "indisponivel": "The map could not be shown. You can keep filling in the other fields.",
+    "pesquisar_titulo": "Search the place by name",
+    "pesquisar_placeholder": "E.g.: Bairro Central, Maputo",
+    "pesquisar": "Search",
+    "sem_resultados": "We could not find this place in Mozambique. Try another name, or mark it on the map.",
+    "erro_pesquisa": "Could not search right now. Mark the place on the map.",
+    "gps_aproximado": "The device only gave an approximate position (about {{km}} km off), so I did not use it: it would put the pin in the wrong place. Computers without GPS give positions like this. Use your phone, outdoors, or search the place by name."
   }
 }

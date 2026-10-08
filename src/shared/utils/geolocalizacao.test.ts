@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { obterMelhorPosicao } from './geolocalizacao';
+import { avaliarPrecisao, obterMelhorPosicao } from './geolocalizacao';
 
 /** Um GPS de brincar: o teste decide quando chega cada posição ou erro. */
 function gpsFalso() {
@@ -90,5 +90,22 @@ describe('obterMelhorPosicao', () => {
 
     await verificado;
     expect(gps.clearWatch).toHaveBeenCalled();
+  });
+});
+
+describe('avaliarPrecisao', () => {
+  it('até 100 m é boa', () => {
+    expect(avaliarPrecisao(5)).toBe('boa');
+    expect(avaliarPrecisao(100)).toBe('boa');
+  });
+
+  it('entre 100 m e 1 km é fraca: usa-se, mas avisa-se', () => {
+    expect(avaliarPrecisao(101)).toBe('fraca');
+    expect(avaliarPrecisao(1000)).toBe('fraca');
+  });
+
+  it('🔴 acima de 1 km é inutilizável: o computador sem GPS que põe o pino noutra província', () => {
+    expect(avaliarPrecisao(1001)).toBe('inutilizavel');
+    expect(avaliarPrecisao(25_000)).toBe('inutilizavel');
   });
 });

@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import iconeMarcador from 'leaflet/dist/images/marker-icon.png';
 import iconeMarcador2x from 'leaflet/dist/images/marker-icon-2x.png';
 import sombraMarcador from 'leaflet/dist/images/marker-shadow.png';
+import { limitesDoCirculo } from '@/shared/utils/geo';
 
 /**
  * O único ficheiro que conhece o Leaflet. Trocar de fornecedor de mapas (Mapbox, Google)
@@ -69,7 +70,8 @@ function SeguirMarcador({ ponto, precisaoMetros }: { ponto: PontoNoMapa | null; 
     if (!ponto) return;
     const centro = L.latLng(ponto.latitude, ponto.longitude);
     if (precisaoMetros && precisaoMetros > 0) {
-      mapa.fitBounds(L.circle(centro, { radius: precisaoMetros }).getBounds(), { maxZoom: 18, animate: false });
+      // Sem `L.circle(...).getBounds()`: precisa de o círculo estar desenhado num mapa, e rebentava.
+      mapa.fitBounds(limitesDoCirculo(ponto.latitude, ponto.longitude, precisaoMetros), { maxZoom: 18, animate: false });
     } else if (!mapa.getBounds().contains(centro)) {
       mapa.setView(centro, Math.max(mapa.getZoom(), 16), { animate: false });
     }
