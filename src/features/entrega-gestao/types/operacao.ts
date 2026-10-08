@@ -38,7 +38,8 @@ export interface Estafeta {
 export interface CriarEstafetaPayload {
   nome: string;
   telefone: string;
-  email?: string;
+  /** Obrigatório: é para lá que o servidor envia o código de acesso e a senha. */
+  email: string;
   veiculo?: string;
   matricula?: string;
   /** Vazio ou omitido = serve todas as lojas. */
@@ -50,10 +51,12 @@ export interface ActualizarEstafetaPayload extends Partial<CriarEstafetaPayload>
   isActive?: boolean;
 }
 
-/** Devolvidas **uma só vez** pelo servidor: a senha não se guarda em claro. */
-export interface CredenciaisEstafeta {
-  codigo: string;
-  senha: string;
+/**
+ * O servidor envia o código e a senha por e-mail e **não os devolve**: a senha nunca chega a este
+ * browser. `false` = o estafeta ficou criado (ou a senha reposta) mas o e-mail não saiu.
+ */
+export interface EnvioDeCredenciais {
+  emailEnviado: boolean;
 }
 
 /** `GET /entregas` — o que o painel mostra de cada entrega. */

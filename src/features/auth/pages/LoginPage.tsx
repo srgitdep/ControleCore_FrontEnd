@@ -88,6 +88,12 @@ export function LoginPage() {
       toast.success(t('login.sucesso'), { duration: 2000 });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
+      // Um código E#### é de estafeta, que ainda não tem aplicação (Fase 4 do plano): o servidor responde
+      // «utilizador não existe», o que faria crer que a conta não foi criada. Diz-se a verdade.
+      if (/^E\d{4}$/i.test(data.code.trim())) {
+        toast.error(t('login.estafeta_sem_aplicacao'), { duration: 8000 });
+        return;
+      }
       let message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       if (Array.isArray(message)) message = message[0];
       toast.error(message || t('login.erro_generico'));
