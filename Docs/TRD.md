@@ -221,6 +221,14 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `ComercioConfiguracao`, `Promocao` (desconto por produto/categoria com
     período — módulo `promocao`, `PrecoPromocionalService` aplica o desconto
     tanto no catálogo público como no checkout).
+  - **Conta única e registo da procura online** (Fase 0 do plano §4.4, desde 09/10/2026; **ainda não lida pelo
+    código** — a Fase 1 liga-a) — `ContaClienteEmpresa` (liga a conta de uma pessoa ao seu `Cliente` em cada
+    empresa), `EnderecoCliente.contaClienteId` (a morada é da conta), `ProcuraOnlineEvento`
+    (`procura_online_eventos`, enum `TipoProcuraOnline`): os factos da procura de toda a plataforma — pedido
+    (`PEDIDO_CRIADO`) e produtos do pedido (`PEDIDO_ITEM`), mais os de navegação que a Fase 3 emite. É da
+    plataforma e não do CRM de uma empresa (por isso não é `ClienteEvento`); **sem chaves estrangeiras** (é
+    histórico); só guarda a célula de ~1 km (`latitude:longitude` a 2 casas) e bairro/cidade/província, nunca
+    coordenadas exactas; `(chaveOrigem, tipo)` único para o *backfill* e a emissão serem idempotentes.
   - **Entrega ao domicílio** (modelo desde a Fase 22; **a Fase 23 passou a escrever em
     `EnderecoCliente`, `ZonaEntregaLoja`, `Pedido.tipoEntrega/enderecoId/taxaEntrega` e
     `ComercioConfiguracao`** — as restantes tabelas esperam as Fases 2 a 6) — `EnderecoCliente`, `ZonaEntregaLoja` (faixas de distância à
@@ -457,7 +465,8 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   sistema). Desde 29/09/2026, `Gestor` e `Funcionário / Caixa` têm `read` e
   `manage` sobre `pedidos_commerce` (fila de pedidos do Compra Fácil). Desde a
   Fase 22 há seis permissões da entrega (`commerce.entrega.ler/gerir`, `estafeta.gerir`,
-  `acerto.gerir`, `zona_entrega.gerir`, `webhook.gerir`): `Gestor` tem `entregas`
+  `acerto.gerir`, `zona_entrega.gerir`, `webhook.gerir`; e `commerce.procura.ler` — `VER_PROCURA_ONLINE`, `read` sobre
+  `procura_online`, ligada ao `Gestor` pela migração `20261009100000`): `Gestor` tem `entregas`
   (ler e gerir), `estafetas` e `acertos_estafeta`; `Funcionário / Caixa` só `entregas` em
   leitura; `zonas_entrega` e `webhooks` só ADMIN. Desde a Fase 21, `promocao.ver/gerir`
   só para `Gestor`.

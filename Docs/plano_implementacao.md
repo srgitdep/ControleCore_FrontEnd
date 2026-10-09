@@ -1529,6 +1529,42 @@ esse merge trouxe.
   > automático** — por verificar no browser com uma conta de outra empresa. Notas de deploy: sem migração e
   > sem variáveis; backend primeiro.
 
+### Fase 35 — Conta de cliente única, Fase 0: o esquema e o primeiro registo da procura (9 Out 2026)
+
+- **2026-10-09 · [BE] · Antonio Mambo** — `feat/conta-cliente-unica-fase0` (plano §4.4)
+  - feat(prisma): tabela `contas_cliente_empresa` (liga a conta de uma pessoa ao seu `Cliente` **em cada empresa**;
+    única por `(contaClienteId, empresaId)`); `enderecos_cliente.contaClienteId` (a morada passa a poder ser da conta);
+    tabela `procura_online_eventos` + enum `TipoProcuraOnline` (os factos da procura online de toda a plataforma)
+  - feat(prisma): *backfill* — cada conta existente fica ligada ao seu `Cliente`; as moradas recebem a conta; cada
+    pedido já feito entra no registo como `PEDIDO_CRIADO` (uma linha por pedido) e `PEDIDO_ITEM` (uma por produto)
+  - feat(permissoes): `VER_PROCURA_ONLINE` (`commerce.procura.ler`, `read` sobre `procura_online`), ligada ao perfil
+    `Gestor` na migração e no `seed.ts`
+  - **Nada muda para quem usa o sistema:** é puramente aditiva, e o backend e o frontend em produção não a leem
+    ainda. O comportamento muda na Fase 1.
+
+  > **Desvios ao plano §4.4.** (1) `ContaCliente.empresaId` opcional e `clienteId` deixar de ser único **passaram para a
+  > Fase 1**: relaxá-los agora não traria nada (o código ainda os exige) e deixava de ser aditiva. (2) Acrescentei o tipo
+  > `PEDIDO_ITEM`: um evento por produto de cada pedido, separado do `PEDIDO_CRIADO`, porque «mais pedidos» e frequência
+  > são por produto, e somar valores e taxas no mesmo evento contaria duas vezes. (3) O *backfill* só cria os eventos de
+  > **criação**; cancelamento e conclusão chegam com a Fase 3. (4) A reconciliação de contas com o mesmo e-mail não era
+  > necessária: com 4 contas e uma por empresa, não há duplicados; fica para a Fase 1, que muda o registo.
+  >
+  > **Decisões de desenho.** `procura_online_eventos` **não tem chaves estrangeiras** de propósito: é histórico, apagar
+  > uma loja ou um produto não pode apagá-lo nem bloqueá-lo. Guarda célula de ~1 km e bairro/cidade/província, nunca
+  > coordenadas exactas. `(chaveOrigem, tipo)` é único: repetir o *backfill* (a Fase 3 vai repeti-lo para os pedidos feitos
+  > até lá) não duplica.
+  >
+  > **Verificação.** `prisma validate` e `migrate diff` limpos; `tsc` limpo; 2679 testes (novo: o mapeamento
+  > `VER_PROCURA_ONLINE`). A migração foi corrida **contra a base real dentro de uma transacção desfeita no fim** (nada
+  > ficou gravado): 4 contas ligadas, 6 eventos (2 pedidos + 4 itens), permissão ligada ao Gestor, e **idempotente** (repetir o
+  > *backfill* não muda as contagens). A fórmula de distância (Haversine) e a célula foram conferidas com valores
+  > conhecidos. **Limite do teste:** os 2 pedidos reais são de levantamento, por isso o *backfill* **da geografia** de um
+  > pedido de entrega não correu sobre dados reais — só a fórmula isolada.
+  >
+  > **Notas de deploy.** Migração `20261009100000_conta_cliente_unica_fase0`, aplicada no arranque do contentor. **Criar antes
+  > uma branch de segurança no Neon** (`backup-pre-conta-unica-fase0-2026-10-09`). Sem variáveis novas. Só backend (o frontend
+  > não muda). Depois do deploy, **invalidar `permissions:*` no Redis** para o Gestor ganhar a permissão nova.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1795,8 +1831,10 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 Pedido do utilizador, 2026-10-09. Plano em **§4.4** (rascunho, a aguardar aprovação). Decidido pelo utilizador: a
 implementação vem **antes** de retomar o ensaio da entrega.
 
-- [ ] **Fase 0 — Esquema.** Ligação conta↔`Cliente` por empresa; moradas da conta; tabela `procura_online_eventos`;
-      migração aditiva com reconciliação das contas existentes e *backfill* dos pedidos já feitos.
+- [x] **Fase 0 — Esquema.** Concluída em 2026-10-09 (Fase 35): `contas_cliente_empresa`, moradas da conta, `procura_online_eventos`,
+      *backfill* de contas, moradas e pedidos, permissão `VER_PROCURA_ONLINE`. Puramente aditiva. **Por aplicar em produção** (a
+      migração corre no deploy; criar antes a branch `backup-` no Neon). **Desvio:** relaxar `ContaCliente.empresaId`/`clienteId`
+      passou para a Fase 1.
 - [ ] **Fase 1 — Servidor (conta única).** Token sem `empresaId`; o `Cliente` da empresa resolve-se pela loja; pedido,
       cotação, moradas, favoritos e «os meus pedidos» deixam de exigir a mesma empresa. Remove o 403
       `commerce.conta_de_outra_empresa` (Fase 34).
@@ -3612,22 +3650,22 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
 
 #### 5. Plano de implementação
 
-##### Fase 0 — Dados (aditiva) **[obrigatório]**
+##### Fase 0 — Dados (aditiva) **[obrigatório]** — ✅ feita em 2026-10-09 (Fase 35)
 
-- [ ] `ContaClienteEmpresa(id, contaClienteId, empresaId, clienteId, createdAt)`, únicos `(contaClienteId, empresaId)` e `clienteId`;
+- [x] `ContaClienteEmpresa(id, contaClienteId, empresaId, clienteId, createdAt)`, únicos `(contaClienteId, empresaId)` e `clienteId`;
       *backfill* a partir das `ContaCliente` actuais (cada uma passa a ter uma linha).
-- [ ] `ContaCliente.empresaId` opcional, `clienteId` deixa de ser único; `googleId` mantém-se único (já é global).
-- [ ] Moradas da conta: `EnderecoCliente.contaClienteId` (preenchido por *backfill* via `Cliente.contaCliente`).
-- [ ] `ProcuraOnlineEvento`: `id`, `ocorridoEm`, `tipo`, `empresaId?`, `lojaId?`, `produtoId?`, `categoriaId?`,
+- [x] ~~`ContaCliente.empresaId` opcional, `clienteId` deixa de ser único~~ — **passou para a Fase 1** (só faz sentido quando o código deixar de os exigir). `googleId` mantém-se único (já é global).
+- [x] Moradas da conta: `EnderecoCliente.contaClienteId` (preenchido por *backfill* via `Cliente.contaCliente`).
+- [x] `ProcuraOnlineEvento`: `id`, `ocorridoEm`, `tipo`, `empresaId?`, `lojaId?`, `produtoId?`, `categoriaId?`,
       `contaClienteId?`, `sessaoId?`, `pedidoId?`, `termo?`, `quantidade?`, `valor?` (Decimal), `tipoEntrega?`,
       `metodoPagamento?`, `provincia?`, `cidade?`, `bairro?`, `celula?` (ex. `-25.97:32.58`), `distanciaKm?`, `taxa?`,
       `chaveOrigem?`; único `(chaveOrigem, tipo)` (idempotência, como `ClienteEvento`); índices por loja, produto, célula, tempo.
       `TipoProcuraOnline`: `PESQUISA`, `PRODUTO_VISTO`, `CARRINHO_ADICIONADO`, `CARRINHO_REMOVIDO`, `CHECKOUT_INICIADO`,
-      `PEDIDO_CRIADO`, `PEDIDO_CONCLUIDO`, `PEDIDO_CANCELADO`.
-- [ ] *Backfill* dos pedidos existentes como `PEDIDO_CRIADO` (`chaveOrigem = pedido:<id>`), geografia a partir da morada actual
+      `PEDIDO_CRIADO`, `PEDIDO_ITEM` (acrescentado: uma linha por produto do pedido), `PEDIDO_CONCLUIDO`, `PEDIDO_CANCELADO`.
+- [x] *Backfill* dos pedidos existentes como `PEDIDO_CRIADO` (`chaveOrigem = pedido:<id>`) e `PEDIDO_ITEM` (`pedido-item:<id>`), geografia a partir da morada actual
       (aproximada: pode ter sido editada) e da loja.
-- [ ] Migração aditiva, verificada com `prisma migrate diff`; **branch de segurança no Neon antes** de correr.
-- [ ] Permissão `VER_PROCURA_ONLINE` (migração + `seed.ts`).
+- [x] Migração aditiva, verificada com `prisma migrate diff`; **branch de segurança no Neon antes** de correr.
+- [x] Permissão `VER_PROCURA_ONLINE` (migração + `seed.ts`).
 
 ##### Fase 1 — Backend: conta única **[obrigatório]**
 
