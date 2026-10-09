@@ -1654,6 +1654,17 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       estafeta (reforço de caixa com o valor entregue, contas a receber pagas, segregação marcada).
       Migração aditiva (`valorCobrado`). O preço (IVA e promoções), que bloqueava a entrega real, ficou
       resolvido na Fase 31.
+- [ ] **Ensaio real da entrega — SHOPRITE Central (loja piloto).** Em curso desde 2026-10-09, **pausado** até à
+      implementação da conta única (§4.4), por decisão do utilizador. Estado por passo: **A — preparar a loja:**
+      ✅ feito (localização, zona 0–5 km a 100 MT, «Entrega ao domicílio» ligada; confirmado em produção: `entrega: true`).
+      **B — estafeta e caixa:** ✅ feito (estafeta registado, e-mail com código e senha recebido — **foi para o spam**; caixa aberto).
+      **C — dois pedidos como cliente (entrega e levantamento):** ⏳ por fazer. **D — despachar e percorrer
+      atribuir → recolhida → em rota → entregue:** ⏳. **E — acerto de contas:** ⏳. **F — entrega falhada e devolução:** ⏳.
+      **G — conferir tudo no Histórico do Sistema:** ⏳. **Achados do ensaio:** (1) o checkout com a conta de outra empresa
+      dava «Loja não encontrada» — remendado na Fase 34, resolvido de raiz pela §4.4; (2) o e-mail do estafeta cai no spam.
+- [ ] **E-mails do sistema vão para o spam.** O envio é por uma conta Gmail normal ("ControlCore Support", `SMTP_USER`),
+      sem domínio próprio. Afecta todos os e-mails (fornecedor, recuperação de senha, estafeta). Solução: domínio da
+      empresa com **SPF e DKIM** ou um serviço de e-mail transaccional. Por decidir e planear.
 - [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:
       aceitar, recolher, entregar, falhar. Atribuição automática por proximidade
       é opcional e corta-se sob pressão de prazo.
