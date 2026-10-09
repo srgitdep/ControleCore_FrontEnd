@@ -1779,17 +1779,22 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       mecanismo; ficou de fora por ser um projecto à parte (cinco endpoints e o
       cálculo de `EstadosDaPosicao` no servidor), não uma correcção pontual.
 
-### Conta de cliente única — comprar em qualquer loja (Compra Fácil)
+### Conta de cliente única e registo da procura online (Compra Fácil)
 
-Pedido do utilizador, 2026-10-09, durante o ensaio da entrega. Plano em **§4.4**. **Só depois do ensaio e
-da aprovação do plano.**
+Pedido do utilizador, 2026-10-09. Plano em **§4.4** (rascunho, a aguardar aprovação). Decidido pelo utilizador: a
+implementação vem **antes** de retomar o ensaio da entrega.
 
-- [ ] **Fase 0 — Esquema.** Ligação entre a conta do cliente e o seu `Cliente` em cada empresa; migração aditiva com
-      reconciliação das contas existentes.
-- [ ] **Fase 1 — Servidor.** Token sem `empresaId`; o `Cliente` da empresa resolve-se pela loja; pedido, cotação, moradas,
-      favoritos e «os meus pedidos» deixam de exigir a mesma empresa. Remove o 403 `commerce.conta_de_outra_empresa` (Fase 34).
-- [ ] **Fase 2 — Frontend.** Comprar em qualquer loja com a mesma sessão; «lojas onde já comprei» de todas as empresas.
-- [ ] **Fase 3 — Descoberta.** Escolher a loja por distância, preço e histórico.
+- [ ] **Fase 0 — Esquema.** Ligação conta↔`Cliente` por empresa; moradas da conta; tabela `procura_online_eventos`;
+      migração aditiva com reconciliação das contas existentes e *backfill* dos pedidos já feitos.
+- [ ] **Fase 1 — Servidor (conta única).** Token sem `empresaId`; o `Cliente` da empresa resolve-se pela loja; pedido,
+      cotação, moradas, favoritos e «os meus pedidos» deixam de exigir a mesma empresa. Remove o 403
+      `commerce.conta_de_outra_empresa` (Fase 34).
+- [ ] **Fase 2 — Frontend (conta única).** Comprar em qualquer loja com a mesma sessão; aviso de partilha de dados na
+      primeira compra de cada empresa; «lojas onde já comprei» de todas as empresas.
+- [ ] **Fase 3 — Registo da procura.** Cada pedido online fica registado, com o destino congelado; telemetria de
+      navegação (pesquisa, produto visto, carrinho, checkout) anónima.
+- [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
+- [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
 
 ---
 
@@ -1808,7 +1813,7 @@ da aprovação do plano.**
 | 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28), 2B (Fase 29) e 3 (Fase 30) concluídas; a seguir a Fase 4 (o estafeta na rua) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
-| 4.4 | Conta de cliente única — comprar em qualquer loja (Compra Fácil) | **Proposto** — a aguardar o fim do ensaio da entrega e a aprovação | Secção 3 → «Conta de cliente única» |
+| 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -3487,87 +3492,214 @@ de desconto no detalhe do produto do Compra Fácil (`ProdutoDetalhePage`).
 promover (`CRM, recomendação por regras` no backlog) — este plano cobre só a
 *avaliação* de uma promoção já decidida por uma pessoa.
 
-### 4.4 Conta de cliente única — comprar em qualquer loja (Compra Fácil)
+### 4.4 Conta de cliente única e registo da procura online (Compra Fácil)
 
-> **Estado: proposto (2026-10-09).** Registado a pedido do utilizador durante o ensaio da entrega; **não
-> implementar** antes de o ensaio acabar e de este plano ser aprovado. Pontos a decidir em «Perguntas em aberto».
+- **Data:** 2026-10-09 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Ordem combinada:** aprovar → implementar → retomar o ensaio da entrega (SHOPRITE Central).
 
 #### 1. Objectivo
 
-O cliente que compra online **não pertence a uma loja nem a uma empresa**. Procura um produto, compara lojas
-(distância, preço, histórico) e compra onde lhe convier, com **uma só conta e uma só sessão**. O que fica por
-loja/empresa é a relação comercial (o seu registo de cliente, pontos, crédito), não a identidade.
+Duas coisas que se alimentam uma à outra:
 
-#### 2. O que existe hoje (e porque não serve)
+1. **Comprar em qualquer loja.** O cliente não pertence a uma loja nem a uma empresa. Procura, compara (distância,
+   preço, histórico) e compra onde quiser, com **uma só conta**. O histórico de lojas onde já comprou é só uma lista.
+2. **Registar toda a procura online**, de todas as lojas e empresas, com o máximo de detalhe útil: que produtos se
+   pedem, com que frequência, **de que zonas** se pede, para onde se entrega, a que horas. É o activo que, mais tarde,
+   permitirá dizer a uma loja «a sua promoção interessa a estas zonas e a este tipo de cliente» — a base do futuro
+   **tráfego pago** (promoções patrocinadas). Este plano **só prepara os dados**; a publicidade em si é outro plano.
 
-- `ContaCliente` tem `empresaId` e `clienteId @unique`; `Cliente` é o registo de CRM **de uma empresa**
-  (`empresaId`, pontos, `totalGasto`, crédito, consentimentos, identidades). A conta é, portanto, de **uma** empresa.
-- O token (`tokenCliente`) leva o `empresaId`; o guarda (`conta-cliente.guard.ts`) exige que bata com o registo.
-- `CriarPedidoUseCase` e `CotarEntregaUseCase` recusam quando a loja é de outra empresa. A **Fase 34** limitou-se a
-  trocar o «Loja não encontrada» por um aviso honesto — **não resolve** o problema, só o explica.
-- O registo (`registar-conta-cliente`) e a entrada pedem um `lojaId` para descobrir a empresa; o mesmo e-mail pode
-  ter contas separadas em empresas diferentes, com senhas diferentes.
-- Moradas (`EnderecoCliente`) e favoritos (`FavoritoCliente`) são do `Cliente`, logo de uma empresa.
-- O catálogo público já é **entre empresas** (lista todas as lojas): a montra é de marketplace, a conta não.
+#### 2. O que existe hoje (verificado no código, 2026-10-09)
 
-#### 3. Decisão de desenho (proposta)
-
-Separar **identidade** de **relação comercial**:
-
-| Conceito | Hoje | Proposto |
+| Facto | Onde | Consequência |
 | --- | --- | --- |
-| Identidade (e-mail, senha, Google, idioma) | `ContaCliente` por empresa | `ContaCliente` **global** (sem `empresaId` obrigatório) |
-| Registo de CRM | `Cliente` por empresa, 1–1 com a conta | `Cliente` **continua por empresa**; várias contas → n `Cliente` (um por empresa), ligados à mesma conta |
-| Pontos, crédito, histórico de compras, consentimentos | por `Cliente` | **igual** — cada empresa guarda só o que vendeu e o que lhe foi dado a conhecer |
-| Moradas | por `Cliente` (empresa) | da **conta** (a casa da pessoa não muda por loja) |
-| Favoritos | por `Cliente` | por `Cliente` (um produto é de uma empresa); a lista da conta junta os de todas |
-| Token | leva `empresaId` | só a conta; a empresa **deduz-se da loja** em cada pedido |
+| `ContaCliente` tem `empresaId` e `clienteId @unique`; `Cliente` é o registo de CRM **de uma empresa** | `prisma/schema.prisma` | a conta é presa a uma empresa |
+| O token `tokenCliente` leva `empresaId` e o guarda compara-o com o registo | `commerce/infrastructure/auth/cliente-token.ts`, `conta-cliente.guard.ts` | idem |
+| `CriarPedidoUseCase` e `CotarEntregaUseCase` recusam loja de outra empresa (403 `commerce.conta_de_outra_empresa`, Fase 34) | `commerce/application/use-cases/criar-pedido.use-case.ts`, `entrega/.../cotar-entrega.use-case.ts` | a Fase 34 só **explicou** o problema |
+| Registo e entrada pedem `lojaId` para descobrir a empresa; o mesmo e-mail pode ter contas separadas | `registar-conta-cliente.use-case.ts`, `autenticar-conta-cliente.use-case.ts` | duplicação de contas |
+| `EnderecoCliente` e `FavoritoCliente` são do `Cliente` (empresa) | schema | moradas e favoritos presos |
+| `ClienteEvento` (timeline do CRM) é **por empresa** e exige `clienteId`; o enum `TipoEventoCliente` já reserva `PRODUTO_VISTO`, `PRODUTO_PESQUISADO`, `CARRINHO_*`, `CHECKOUT_INICIADO` **sem emissor** | schema, `crm/events/application/cliente-evento.listener.ts` | só `COMPRA_ECOMMERCE` é registado, e só quando a **venda** se conclui; não há registo de procura, de visitantes anónimos nem de geografia |
+| `Pedido` guarda `enderecoId`, mas a morada pode ser **editada depois**; `EntregaPedido` congela o destino só no despacho | schema | sem destino imutável por pedido |
+| Existe `GET /relatorios/dashboard/sistema` (`SUPER_ADMIN_ONLY`) | `dashboard/dashboard.controller.ts` | ponto natural para a visão macro |
 
-Primeira compra numa empresa: o servidor procura o `Cliente` dessa empresa ligado à conta (ou pela identidade
-e-mail/telefone, como já faz para ligar um cliente de balcão) e **cria-o** se não existir. A empresa passa a ver o
-cliente só a partir desse momento.
+#### 3. Requisito interpretado
 
-#### 4. Plano por fases
+Separar **identidade** de **relação comercial**, e acrescentar uma camada de **factos de procura** própria da plataforma
+(não do CRM de nenhuma empresa). Interpretação que diverge do literal em dois pontos: (a) o pedido fala em «registar tudo»;
+aqui separa-se o que é **transaccional** (pedidos — registado sempre) do que é **comportamento de navegação**
+(pesquisa, vistas — anónimo, e só ligado à pessoa com consentimento); (b) a localização é guardada **em grelha de ~1 km**
+e por bairro/cidade, nunca as coordenadas exactas, para a análise não identificar uma casa.
 
-1. **Fase 0 — Esquema (aditiva).** Tabela de ligação conta↔`Cliente` (ou `Cliente.contaClienteId`, único por
-   `(contaClienteId, empresaId)`); `EnderecoCliente` passa a poder ser da conta; `ContaCliente.empresaId` deixa de ser
-   obrigatório. **Reconciliação:** contas existentes com o mesmo e-mail em empresas diferentes fundem-se numa só
-   (estratégia da senha em «Perguntas em aberto»). Migração aditiva, verificada com `prisma migrate diff`, com `backup-`
-   no Neon antes de correr.
-2. **Fase 1 — Servidor.** Guarda e token sem `empresaId`; um serviço `ResolverClienteDaEmpresa(conta, loja)` usado por
-   criar pedido, cotação, moradas, favoritos e listagem de pedidos; `lojasCompradas` passa a ser de todas as empresas;
-   **remove** o 403 `commerce.conta_de_outra_empresa` (Fase 34) e o teste que o cobre. Testes de **isolamento**: uma
-   empresa nunca lê o `Cliente`, os pontos ou os pedidos de outra.
-3. **Fase 2 — Frontend.** O checkout deixa de pedir «entrar nesta loja»; registar/entrar já não exige `lojaId` para
-   escolher a empresa; «Os meus pedidos» e favoritos juntam todas as lojas; ecrã de entrada único.
-4. **Fase 3 — Descoberta.** Pesquisa de produtos entre lojas, ordenar/filtrar por distância (a partir da morada),
-   preço e «já comprei aqui». É a parte de produto do pedido e pode ser planeada à parte.
+##### Decisões já tomadas pelo utilizador (2026-10-09)
 
-#### 5. Riscos
+| # | Pergunta | Decisão |
+| --- | --- | --- |
+| 1 | Mesmo e-mail com senhas diferentes em empresas diferentes | Fica a senha da conta **usada mais recentemente**; nas outras a senha antiga deixa de valer (usam «esqueci a senha») |
+| 2 | Moradas | São da **conta**: cadastra-se uma vez e vale em qualquer loja |
+| 3 | O que a empresa passa a ver | **Aviso no checkout**, com aceitação, na primeira compra de cada empresa: «esta loja recebe o seu nome, telefone e e-mail» |
 
-- **Privacidade (o principal).** Ao comprar numa empresa nova, o nome, telefone e e-mail do cliente passam a ser
-  visíveis a essa empresa. Tem de ficar claro no checkout e no consentimento transaccional; o consentimento de
-  marketing **continua por empresa** e nunca se herda.
-- **Isolamento multi-empresa.** A regra «toda a consulta filtra por `empresaId`» mantém-se, mas o `empresaId` passa a vir
-  da **loja** e não do token: é aqui que um erro vazaria dados de uma empresa para outra. Merece testes próprios.
-- **Fusão de duplicados.** `ClienteIdentidade` é única por `(empresaId, tipo, valor)`; a reconciliação não pode violar
-  essa regra nem partir `ClienteFusao`.
-- **Contas existentes.** Senhas diferentes para o mesmo e-mail; login Google (`googleId` já é único globalmente).
+##### Actores e permissões
 
-#### 6. Perguntas em aberto
+| Actor | O que pode |
+| --- | --- |
+| Cliente | Uma conta, comprar em qualquer loja, gerir as suas moradas, ver os pedidos de **todas** as lojas |
+| Gestor da empresa | Ver a **procura das suas lojas** (nova permissão `VER_PROCURA_ONLINE`); nunca a de outras empresas |
+| Super Admin | Ver a procura **de toda a plataforma** (macro), em `relatorios/…/sistema` |
+| Visitante anónimo | Gera eventos de navegação anónimos (sem identificação) |
 
-1. **Senha na reconciliação.** Quando o mesmo e-mail tem contas com senhas diferentes em empresas diferentes: manter a
-   da conta usada mais recentemente e exigir «repor senha» nas restantes, ou obrigar a repor em todas?
-2. **Moradas.** Da conta (proposto) ou copiadas por empresa na primeira compra?
-3. **O que a empresa vê.** O cliente aceita, na primeira compra de cada empresa, partilhar nome/telefone/e-mail
-   (mensagem no checkout), ou basta a política de privacidade geral?
-4. **Descoberta (Fase 3).** Critérios e ordem por omissão: distância, preço, histórico? Fica para um plano próprio.
+##### Regras de negócio
 
-#### 7. Verificação
+1. Uma `ContaCliente` global; um `Cliente` (CRM) por empresa, criado na **primeira compra** nessa empresa e ligado à conta.
+2. A empresa de um pedido deduz-se da **loja** e nunca do token. É a regra «toda a consulta filtra por `empresaId`», com a
+   fonte do `empresaId` trocada — o ponto onde um erro vazaria dados entre empresas.
+3. Pontos, crédito, histórico e consentimentos continuam **por empresa**; o consentimento de marketing nunca se herda.
+4. Cada pedido criado gera um facto imutável com o destino **copiado** (morada, bairro, cidade, província, célula de
+   ~1 km, distância à loja, taxa) — editar a morada depois não reescreve o histórico.
+5. Eventos de navegação são anónimos por omissão (id de sessão). Só se ligam à conta com consentimento explícito de
+   personalização (desligado por omissão).
+6. Nenhuma vista mostra coordenadas exactas. Qualquer agregado **partilhado fora da empresa dona** (benchmarks, públicos
+   para anúncios) só mostra uma célula com pelo menos 5 pedidos.
 
-Backend: testes de isolamento entre empresas, de criação do `Cliente` na primeira compra e de reconciliação;
-migração testada contra uma branch do Neon com cópia dos dados. Frontend: uma conta, duas lojas de empresas
-diferentes, dois pedidos; cada empresa vê **só** o seu cliente e o seu pedido.
+##### Fora de âmbito
+
+- O produto de **tráfego pago** (escolher público, cobrar, mostrar patrocinados) — este plano só garante os dados.
+- *Benchmarks* para as empresas («a sua zona pede X») — decisão futura, exige regras de partilha.
+- Recomendações automáticas da Mayra a partir destes dados.
+
+#### 4. Análise técnica
+
+##### Impacto
+
+| Camada | Criar | Alterar |
+| --- | --- | --- |
+| Dados | `ContaClienteEmpresa` (liga conta↔`Cliente` por empresa, único por `(contaClienteId, empresaId)`); `ProcuraOnlineEvento` + enum `TipoProcuraOnline`; `EnderecoConta` (ou `EnderecoCliente` com `contaClienteId`) | `ContaCliente.empresaId` deixa de ser obrigatório; `ContaCliente.clienteId` deixa de ser único |
+| Backend | `ResolverClienteDaEmpresaService`; `RegistarProcuraService` (ouvinte, engole erros como `cliente-evento.listener.ts`); `TelemetriaController` (`POST /commerce/telemetria`, `@Public()` deliberado); casos de uso de consulta (`procura-online`) | guarda e token; `registar/autenticar/entrar-com-google`; `criar-pedido`; `cotar-entrega`; `enderecos-cliente`; `listar-favoritos`; `listar-lojas-compradas`; `dashboard.controller.ts` |
+| Frontend | `useTelemetria`; página «Procura» na gestão; aviso de partilha no checkout; aviso de consentimento | `useContaClienteStore`, `conta.api.ts`, `CheckoutPage`, registo/entrada, «os meus pedidos», favoritos |
+| Permissões | `VER_PROCURA_ONLINE` (+ migração a ligar aos perfis e ao `seed.ts`, como as da entrega) | — |
+
+##### Decisões de arquitectura
+
+| Decisão | Alternativa descartada | Porquê |
+| --- | --- | --- |
+| Tabela própria `procura_online_eventos`, da plataforma | Reutilizar `ClienteEvento` | `ClienteEvento` é CRM **de uma empresa** e exige `clienteId`; a análise é entre empresas e inclui visitantes anónimos. Misturar apagaria quem é dono e quem vê o quê |
+| Grelha de ~1 km (lat/lng a 2 casas) + bairro/cidade/província | Guardar coordenadas exactas | Privacidade: a zona chega para marketing e não identifica uma casa |
+| Consultas directas por `GROUP BY` sobre os eventos, com índices | Tabela de agregados diários logo à partida | Com o volume actual chega; acrescenta-se `procura_online_diaria` quando for lento (opcional na Fase 4) |
+| Facto de pedido emitido por ouvinte, **sem bloquear** o pedido | Gravar dentro da transacção do pedido | Uma falha de analítica nunca pode impedir uma venda; mesma regra do ouvinte do CRM |
+| Navegação anónima por omissão; ligação à conta só com consentimento | Ligar sempre ao cliente autenticado | Menor risco legal e de confiança; os pedidos (transaccionais) ficam sempre ligados |
+| `ClienteEvento` mantém-se como timeline do CRM | Remover | Cada empresa continua a ver só o seu cliente |
+
+##### Riscos
+
+| Risco | Impacto | Mitigação |
+| --- | --- | --- |
+| `empresaId` passa a vir da loja: um erro vaza dados entre empresas | **Alto** | `ResolverClienteDaEmpresaService` único; testes de **isolamento** (empresa A nunca lê cliente, pontos ou pedidos da B) |
+| Privacidade: a empresa nova passa a ver nome, telefone e e-mail | **Alto** | Aviso com aceitação no checkout; consentimento de marketing nunca herdado |
+| Reconciliação de contas com o mesmo e-mail | Médio | Migração aditiva testada numa branch do Neon com cópia dos dados; `backup-` antes; respeitar `ClienteIdentidade` única por `(empresaId, tipo, valor)` e `ClienteFusao` |
+| Telemetria pública abusada (spam de eventos) | Médio | Lista fechada de tipos, limite de pedidos por IP, tamanho máximo do lote, nada de dados pessoais no corpo |
+| Enquadramento legal da protecção de dados | **Alto** (só a telemetria) | Pergunta em aberto 1: validar **antes** de a telemetria ir a produção |
+| Crescimento da tabela de eventos | Médio | Índices por `(lojaId, ocorridoEm)` e `(produtoId, ocorridoEm)`; retenção a decidir (pergunta 3) |
+
+#### 5. Plano de implementação
+
+##### Fase 0 — Dados (aditiva) **[obrigatório]**
+
+- [ ] `ContaClienteEmpresa(id, contaClienteId, empresaId, clienteId, createdAt)`, únicos `(contaClienteId, empresaId)` e `clienteId`;
+      *backfill* a partir das `ContaCliente` actuais (cada uma passa a ter uma linha).
+- [ ] `ContaCliente.empresaId` opcional, `clienteId` deixa de ser único; `googleId` mantém-se único (já é global).
+- [ ] Moradas da conta: `EnderecoCliente.contaClienteId` (preenchido por *backfill* via `Cliente.contaCliente`).
+- [ ] `ProcuraOnlineEvento`: `id`, `ocorridoEm`, `tipo`, `empresaId?`, `lojaId?`, `produtoId?`, `categoriaId?`,
+      `contaClienteId?`, `sessaoId?`, `pedidoId?`, `termo?`, `quantidade?`, `valor?` (Decimal), `tipoEntrega?`,
+      `metodoPagamento?`, `provincia?`, `cidade?`, `bairro?`, `celula?` (ex. `-25.97:32.58`), `distanciaKm?`, `taxa?`,
+      `chaveOrigem?`; único `(chaveOrigem, tipo)` (idempotência, como `ClienteEvento`); índices por loja, produto, célula, tempo.
+      `TipoProcuraOnline`: `PESQUISA`, `PRODUTO_VISTO`, `CARRINHO_ADICIONADO`, `CARRINHO_REMOVIDO`, `CHECKOUT_INICIADO`,
+      `PEDIDO_CRIADO`, `PEDIDO_CONCLUIDO`, `PEDIDO_CANCELADO`.
+- [ ] *Backfill* dos pedidos existentes como `PEDIDO_CRIADO` (`chaveOrigem = pedido:<id>`), geografia a partir da morada actual
+      (aproximada: pode ter sido editada) e da loja.
+- [ ] Migração aditiva, verificada com `prisma migrate diff`; **branch de segurança no Neon antes** de correr.
+- [ ] Permissão `VER_PROCURA_ONLINE` (migração + `seed.ts`).
+
+##### Fase 1 — Backend: conta única **[obrigatório]**
+
+- [ ] Guarda e token sem `empresaId` (só a conta); contas antigas continuam a abrir sessão (o campo extra é ignorado).
+- [ ] `ResolverClienteDaEmpresaService.obter(conta, loja)`: devolve (ou cria, na primeira compra) o `Cliente` da empresa da loja,
+      ligando por identidade (e-mail/telefone) como já se faz para o cliente de balcão. Usado por criar pedido, cotação,
+      favoritos, «os meus pedidos» e `lojas-compradas` (agora de todas as empresas).
+- [ ] `criar-pedido`/`cotar-entrega`: deixam de recusar loja de outra empresa; **remover** o 403 `commerce.conta_de_outra_empresa`,
+      a sua função, o seu teste e a chave de `erros.json`.
+- [ ] Registo/entrada: `lojaId` deixa de ser necessário para escolher a empresa. Reconciliação da senha conforme a decisão 1.
+- [ ] Aceitação do aviso de partilha gravada (por empresa, na primeira compra) como `ClienteConsentimento` transaccional.
+
+##### Fase 2 — Frontend: conta única **[obrigatório]**
+
+- [ ] Remover o aviso âmbar da Fase 34; o checkout deixa de depender de `lojaId` para a sessão.
+- [ ] Aviso de partilha + caixa de aceitação na primeira compra de cada empresa (pedir ao backend se já aceitou).
+- [ ] «Os meus pedidos», favoritos e «lojas onde comprei» juntam todas as lojas; moradas da conta.
+- [ ] Textos pt/en nos namespaces existentes (`loja`), com paridade.
+
+##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]**
+
+- [ ] `RegistarProcuraService` ouve `COMMERCE_PEDIDO_RESERVADO` (já emitido por `criar-pedido`) e grava `PEDIDO_CRIADO` com o
+      destino congelado, distância à loja e taxa; ouve o cancelamento e a conclusão (venda) para `PEDIDO_CANCELADO`/`PEDIDO_CONCLUIDO`.
+      Engole os próprios erros e regista-os no log: nunca derruba o pedido.
+- [ ] `POST /commerce/telemetria` (`@Public()`): lote de eventos `PESQUISA`, `PRODUTO_VISTO`, `CARRINHO_*`, `CHECKOUT_INICIADO`;
+      validação por DTO (lista fechada de tipos, máximo de eventos por lote, `sessaoId` UUID), limite de pedidos por IP.
+- [ ] Frontend `useTelemetria` (`sendBeacon`, `sessaoId` em `sessionStorage`, falha silenciosa); consentimento de personalização
+      desligado por omissão.
+
+##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]**
+
+- [ ] `GET /commerce/procura` (`VER_PROCURA_ONLINE`, **sempre** filtrado por `empresaId` do utilizador): produtos mais pedidos e
+      frequência (pedidos/semana), zonas e bairros que mais pedem, distância média de entrega, horas e dias de pico, ticket médio.
+- [ ] Página «Procura» na gestão, com loading, erro, vazio e sucesso.
+- [ ] `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`): a mesma visão **entre empresas**, com quebra por empresa e loja.
+- [ ] **[opcional]** tabela de agregados diários se as consultas ficarem lentas.
+
+##### Fase 5 — Descoberta de lojas **[plano próprio]**
+
+Pesquisa de produtos entre lojas, ordenar e filtrar por distância (a partir da morada), preço e «já comprei aqui».
+
+#### 6. Ficheiros afectados (verificados)
+
+| Repositório | Ficheiro | Acção |
+| --- | --- | --- |
+| BE | `prisma/schema.prisma` + migração nova | criar modelos, alterar `ContaCliente`/`EnderecoCliente` |
+| BE | `commerce/infrastructure/auth/{cliente-token,conta-cliente.guard}.ts` | alterar |
+| BE | `commerce/application/use-cases/{registar-conta-cliente,autenticar-conta-cliente,entrar-com-google,criar-pedido,enderecos-cliente.use-cases,listar-favoritos,listar-lojas-compradas}.ts` | alterar |
+| BE | `entrega/application/use-cases/cotar-entrega.use-case.ts`, `commerce/domain/conta-de-outra-empresa.ts` | alterar / **apagar** |
+| BE | `commerce/application/services/resolver-cliente-da-empresa.service.ts`, `registar-procura.service.ts`, `telemetria.controller.ts`, DTOs, casos de uso de consulta | criar |
+| BE | `dashboard/dashboard.controller.ts` | alterar |
+| FE | `features/compra-facil/{store/useContaClienteStore.ts,api/conta.api.ts,pages/CheckoutPage.tsx}` e páginas de registo/entrada, pedidos, favoritos | alterar |
+| FE | `features/compra-facil/hooks/useTelemetria.ts`; página «Procura» (`features/` da gestão); `locales/{pt,en}/*.json` | criar / alterar |
+| Docs | `plano_implementacao.md` e `TRD.md` (os dois repos) | actualizar por fase |
+
+#### 7. Assunções
+
+1. Existem poucas contas reais (sobretudo de teste): a reconciliação por «a senha mais recente» é aceitável sem aviso prévio.
+2. O Super Admin é o único a ver dados entre empresas; as empresas só veem os seus.
+3. A célula de ~1 km (lat/lng a 2 casas) chega para o marketing de zona.
+4. Pedidos de **levantamento** não têm destino: a geografia vem da morada predefinida da conta, se existir; senão fica vazia.
+5. A telemetria usa só `sessaoId` anónimo até haver consentimento de personalização.
+6. O volume actual dispensa agregados pré-calculados.
+
+#### 8. Perguntas em aberto
+
+1. **Bloqueante só para a telemetria de navegação (Fase 3, parte 2):** o enquadramento legal da protecção de dados em
+   Moçambique e o texto do consentimento. Os **pedidos** (transaccionais) não dependem disto. Sem resposta, a telemetria
+   fica por ligar e o resto avança.
+2. **Retenção:** quanto tempo guardar os eventos brutos? Proposta: 24 meses brutos e agregados indefinidamente.
+3. **Benchmarks para as empresas:** querem ver a procura da sua zona (anonimizada)? Fica fora deste plano; muda a regra 6.
+
+#### 9. Ordem de execução e verificação
+
+1. Fase 0 (BE, com branch de segurança no Neon) → 2. Fase 1 (BE) → 3. Fase 2 (FE) → 4. Fase 3 (BE depois FE) → 5. Fase 4.
+   Cada fase sai em branch própria, backend primeiro, com os documentos actualizados no mesmo commit.
+
+**Como verificar:** (a) uma conta, duas lojas de **empresas diferentes**, dois pedidos, e cada empresa vê só o seu cliente e o seu
+pedido; (b) a empresa B não consegue ler nada da A (teste de isolamento); (c) criar um pedido de entrega e ver o facto com
+bairro, célula, distância e taxa; (d) editar a morada depois e confirmar que o facto não muda; (e) a página «Procura» mostra
+só as lojas da empresa; o dashboard do sistema mostra todas; (f) `npm run build` e `npm test` nos dois repos.
+
+**Notas de deploy:** migração aditiva (branch `backup-` no Neon antes); backend primeiro; sem variáveis novas previstas.
 
 ---
 
