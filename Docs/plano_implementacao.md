@@ -1503,6 +1503,32 @@ esse merge trouxe.
   > variáveis novas** (usa o SMTP que já envia os e-mails do sistema); backend primeiro, depois o frontend —
   > o frontend novo espera `emailEnviado` em vez de `credenciais`.
 
+### Fase 34 — Checkout: «Loja não encontrada» passa a dizer que a conta é de outra empresa (9 Out 2026)
+
+- **2026-10-09 · [BE+FE] · Antonio Mambo** — `fix/checkout-conta-de-outra-empresa`
+  - fix(commerce): quem tinha sessão de cliente numa empresa e abria o checkout de uma loja **de outra
+    empresa** recebia «Loja não encontrada» (404) — a loja existia e estava activa. Passa a 403 com o código
+    `commerce.conta_de_outra_empresa` e uma mensagem que diz o que se passa (`CriarPedidoUseCase` e
+    `CotarEntregaUseCase`; função `contaDeOutraEmpresa` em `commerce/domain`)
+  - fix(compra-facil): o checkout mostra um aviso com o botão «Sair e entrar nesta loja» (sai da conta e
+    leva ao ecrã de entrada da loja, com regresso ao checkout) em vez de só um toast
+
+  > **Causa.** O catálogo público lista as lojas de **todas** as empresas, mas a conta do cliente (cookie
+  > `tokenCliente`) pertence a uma só. O frontend só verificava se havia sessão, não se era desta loja. Foi
+  > encontrado pelo utilizador com a conta «Nexel» num checkout de outra empresa. Não confirmei a empresa da
+  > conta na BD (o `.env` local não alcança o Neon); a causa é a única que o código deixa.
+  >
+  > **Decisões.** 403 e não 401: o interceptor do frontend trata 401 como sessão caída e limparia a sessão sem
+  > explicação. Dizer que a loja é de outra empresa não revela nada — a loja é pública. A cotação (`CotarEntrega`)
+  > continua a procurar a loja **com** o `empresaId` do cliente; só depois de falhar faz uma consulta que
+  > diz se a loja existe, sem devolver dados dela. **Fica por fazer:** impedir a situação à partida (por ex. o
+  > carrinho ou a página da loja avisarem antes do checkout) — exige o `/eu` devolver a empresa da conta.
+  >
+  > **Verificação.** Backend: `tsc` limpo; 288 testes de `commerce`, `entrega` e `i18n` (novo: loja de
+  > outra empresa → 403). Frontend: `tsc -b` limpo, 182 testes; **o aviso do checkout não tem teste
+  > automático** — por verificar no browser com uma conta de outra empresa. Notas de deploy: sem migração e
+  > sem variáveis; backend primeiro.
+
 ---
 
 ## 3. Backlog — Por Fazer

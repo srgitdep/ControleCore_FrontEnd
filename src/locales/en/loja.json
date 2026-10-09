@@ -112,7 +112,9 @@
     "pagamento_na_entrega": "Payment on delivery",
     "nao_cobrado_agora_entrega": "You are not charged now. You pay the courier when you receive the order.",
     "nao_cobrado_agora_curto_entrega": "Not charged now — you pay on delivery.",
-    "taxa_entrega": "Delivery fee"
+    "taxa_entrega": "Delivery fee",
+    "conta_alheia_aviso": "Your account belongs to another company and cannot buy from this store. Sign out and sign in (or register) with an account for this store.",
+    "conta_alheia_acao": "Sign out and sign in to this store"
   },
   "pedidos": {
     "os_meus": "My orders",

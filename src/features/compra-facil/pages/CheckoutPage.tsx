@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Banknote, Check, Loader2, Smartphone } from 'lucide-react';
+import { AlertTriangle, Banknote, Check, Loader2, Smartphone } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
@@ -12,6 +12,12 @@ import { SeleccaoEntrega } from '../components/SeleccaoEntrega';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
 import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
+
+/** O código com que o servidor diz que a sessão é de outra empresa que a da loja (`contaDeOutraEmpresa` no backend). */
+const CONTA_DE_OUTRA_EMPRESA = 'commerce.conta_de_outra_empresa';
+
+const eContaDeOutraEmpresa = (erro: unknown) =>
+  (erro as { response?: { data?: { codigo?: string } } } | null)?.response?.data?.codigo === CONTA_DE_OUTRA_EMPRESA;
 
 const METODOS: MetodoPagamentoCommerce[] = ['NUMERARIO', 'MPESA', 'EMOLA'];
 
@@ -37,7 +43,7 @@ export function CheckoutPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const navegar = useNavigate();
   const { itens, lojaId: lojaDoCarrinho, getSubtotal, limpar } = useCarrinhoStore();
-  const { autenticado, aCarregar } = useContaClienteStore();
+  const { autenticado, aCarregar, sair } = useContaClienteStore();
   const criarPedido = useCriarPedido();
   const { t } = useTranslation('loja');
 
@@ -64,6 +70,9 @@ export function CheckoutPage() {
   const cotacao = useCotacaoEntrega(lojaId, aEntregar ? enderecoId : null, subtotal);
   const taxa = aEntregar && cotacao.data?.disponivel ? cotacao.data.taxa : 0;
   const podeConfirmar = !aEntregar || (!!enderecoId && cotacao.data?.disponivel === true);
+  // O catálogo mostra lojas de todas as empresas, mas a conta é de uma só: quem entrou noutra empresa
+  // chega aqui com sessão válida e o servidor recusa. Fica um aviso com a saída, em vez de só um toast.
+  const contaAlheia = eContaDeOutraEmpresa(criarPedido.error) || eContaDeOutraEmpresa(cotacao.error);
 
   if (!lojaId) return null;
 
@@ -82,6 +91,11 @@ export function CheckoutPage() {
   if (itens.length === 0 || lojaDoCarrinho !== lojaId) {
     return <Navigate to={`/loja/${lojaId}/carrinho`} replace />;
   }
+
+  const trocarDeConta = async () => {
+    await sair();
+    navegar(`/loja/${lojaId}/entrar`, { state: { de: `/loja/${lojaId}/checkout` } });
+  };
 
   const confirmar = () => {
     criarPedido.mutate(
@@ -110,6 +124,22 @@ export function CheckoutPage() {
         <VoltarLink to={`/loja/${lojaId}/carrinho`}>{t('navegacao.voltar_carrinho')}</VoltarLink>
 
         <h1 className="mb-6 text-2xl font-extrabold text-slate-900">{t('checkout.titulo')}</h1>
+
+        {contaAlheia && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4" role="alert">
+            <p className="flex items-start gap-2 text-sm text-amber-900">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              {t('checkout.conta_alheia_aviso')}
+            </p>
+            <button
+              type="button"
+              onClick={() => void trocarDeConta()}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+            >
+              {t('checkout.conta_alheia_acao')}
+            </button>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           <div className="space-y-6 lg:col-span-2">

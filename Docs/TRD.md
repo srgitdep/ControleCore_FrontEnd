@@ -435,7 +435,9 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   - `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` — utilizadores internos
     (back-office).
   - `JWT_FORNECEDOR_SECRET` (8h) — portal do fornecedor (B2B).
-  - `JWT_CLIENTE_SECRET` (7 dias) — conta de cliente final (Compra Fácil).
+  - `JWT_CLIENTE_SECRET` (7 dias) — conta de cliente final (Compra Fácil). A conta pertence a **uma** empresa: comprar numa loja
+    de outra empresa (o catálogo público lista todas) dá 403 `commerce.conta_de_outra_empresa` no
+    `POST /commerce/pedidos` e na cotação de entrega — não 404 nem 401 (o 401 faz o frontend largar a sessão).
   - `JWT_ESTAFETA_SECRET` — estafeta (entrega ao domicílio). Declarado no
     `.env.example` desde a Fase 22, mas **nada o lê ainda**: o `estafeta-token.ts` chega na
     Fase 4. Pôr nos `fly secrets` antes do deploy que o passe a ler.
