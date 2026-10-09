@@ -1779,6 +1779,18 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       mecanismo; ficou de fora por ser um projecto à parte (cinco endpoints e o
       cálculo de `EstadosDaPosicao` no servidor), não uma correcção pontual.
 
+### Conta de cliente única — comprar em qualquer loja (Compra Fácil)
+
+Pedido do utilizador, 2026-10-09, durante o ensaio da entrega. Plano em **§4.4**. **Só depois do ensaio e
+da aprovação do plano.**
+
+- [ ] **Fase 0 — Esquema.** Ligação entre a conta do cliente e o seu `Cliente` em cada empresa; migração aditiva com
+      reconciliação das contas existentes.
+- [ ] **Fase 1 — Servidor.** Token sem `empresaId`; o `Cliente` da empresa resolve-se pela loja; pedido, cotação, moradas,
+      favoritos e «os meus pedidos» deixam de exigir a mesma empresa. Remove o 403 `commerce.conta_de_outra_empresa` (Fase 34).
+- [ ] **Fase 2 — Frontend.** Comprar em qualquer loja com a mesma sessão; «lojas onde já comprei» de todas as empresas.
+- [ ] **Fase 3 — Descoberta.** Escolher a loja por distância, preço e histórico.
+
 ---
 
 ## 4. Planos de funcionalidades
@@ -1796,6 +1808,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 | 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28), 2B (Fase 29) e 3 (Fase 30) concluídas; a seguir a Fase 4 (o estafeta na rua) | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
+| 4.4 | Conta de cliente única — comprar em qualquer loja (Compra Fácil) | **Proposto** — a aguardar o fim do ensaio da entrega e a aprovação | Secção 3 → «Conta de cliente única» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -3473,6 +3486,88 @@ de desconto no detalhe do produto do Compra Fácil (`ProdutoDetalhePage`).
 **Fica por fazer:** a MAYRA *recomendar* por iniciativa própria que produtos
 promover (`CRM, recomendação por regras` no backlog) — este plano cobre só a
 *avaliação* de uma promoção já decidida por uma pessoa.
+
+### 4.4 Conta de cliente única — comprar em qualquer loja (Compra Fácil)
+
+> **Estado: proposto (2026-10-09).** Registado a pedido do utilizador durante o ensaio da entrega; **não
+> implementar** antes de o ensaio acabar e de este plano ser aprovado. Pontos a decidir em «Perguntas em aberto».
+
+#### 1. Objectivo
+
+O cliente que compra online **não pertence a uma loja nem a uma empresa**. Procura um produto, compara lojas
+(distância, preço, histórico) e compra onde lhe convier, com **uma só conta e uma só sessão**. O que fica por
+loja/empresa é a relação comercial (o seu registo de cliente, pontos, crédito), não a identidade.
+
+#### 2. O que existe hoje (e porque não serve)
+
+- `ContaCliente` tem `empresaId` e `clienteId @unique`; `Cliente` é o registo de CRM **de uma empresa**
+  (`empresaId`, pontos, `totalGasto`, crédito, consentimentos, identidades). A conta é, portanto, de **uma** empresa.
+- O token (`tokenCliente`) leva o `empresaId`; o guarda (`conta-cliente.guard.ts`) exige que bata com o registo.
+- `CriarPedidoUseCase` e `CotarEntregaUseCase` recusam quando a loja é de outra empresa. A **Fase 34** limitou-se a
+  trocar o «Loja não encontrada» por um aviso honesto — **não resolve** o problema, só o explica.
+- O registo (`registar-conta-cliente`) e a entrada pedem um `lojaId` para descobrir a empresa; o mesmo e-mail pode
+  ter contas separadas em empresas diferentes, com senhas diferentes.
+- Moradas (`EnderecoCliente`) e favoritos (`FavoritoCliente`) são do `Cliente`, logo de uma empresa.
+- O catálogo público já é **entre empresas** (lista todas as lojas): a montra é de marketplace, a conta não.
+
+#### 3. Decisão de desenho (proposta)
+
+Separar **identidade** de **relação comercial**:
+
+| Conceito | Hoje | Proposto |
+| --- | --- | --- |
+| Identidade (e-mail, senha, Google, idioma) | `ContaCliente` por empresa | `ContaCliente` **global** (sem `empresaId` obrigatório) |
+| Registo de CRM | `Cliente` por empresa, 1–1 com a conta | `Cliente` **continua por empresa**; várias contas → n `Cliente` (um por empresa), ligados à mesma conta |
+| Pontos, crédito, histórico de compras, consentimentos | por `Cliente` | **igual** — cada empresa guarda só o que vendeu e o que lhe foi dado a conhecer |
+| Moradas | por `Cliente` (empresa) | da **conta** (a casa da pessoa não muda por loja) |
+| Favoritos | por `Cliente` | por `Cliente` (um produto é de uma empresa); a lista da conta junta os de todas |
+| Token | leva `empresaId` | só a conta; a empresa **deduz-se da loja** em cada pedido |
+
+Primeira compra numa empresa: o servidor procura o `Cliente` dessa empresa ligado à conta (ou pela identidade
+e-mail/telefone, como já faz para ligar um cliente de balcão) e **cria-o** se não existir. A empresa passa a ver o
+cliente só a partir desse momento.
+
+#### 4. Plano por fases
+
+1. **Fase 0 — Esquema (aditiva).** Tabela de ligação conta↔`Cliente` (ou `Cliente.contaClienteId`, único por
+   `(contaClienteId, empresaId)`); `EnderecoCliente` passa a poder ser da conta; `ContaCliente.empresaId` deixa de ser
+   obrigatório. **Reconciliação:** contas existentes com o mesmo e-mail em empresas diferentes fundem-se numa só
+   (estratégia da senha em «Perguntas em aberto»). Migração aditiva, verificada com `prisma migrate diff`, com `backup-`
+   no Neon antes de correr.
+2. **Fase 1 — Servidor.** Guarda e token sem `empresaId`; um serviço `ResolverClienteDaEmpresa(conta, loja)` usado por
+   criar pedido, cotação, moradas, favoritos e listagem de pedidos; `lojasCompradas` passa a ser de todas as empresas;
+   **remove** o 403 `commerce.conta_de_outra_empresa` (Fase 34) e o teste que o cobre. Testes de **isolamento**: uma
+   empresa nunca lê o `Cliente`, os pontos ou os pedidos de outra.
+3. **Fase 2 — Frontend.** O checkout deixa de pedir «entrar nesta loja»; registar/entrar já não exige `lojaId` para
+   escolher a empresa; «Os meus pedidos» e favoritos juntam todas as lojas; ecrã de entrada único.
+4. **Fase 3 — Descoberta.** Pesquisa de produtos entre lojas, ordenar/filtrar por distância (a partir da morada),
+   preço e «já comprei aqui». É a parte de produto do pedido e pode ser planeada à parte.
+
+#### 5. Riscos
+
+- **Privacidade (o principal).** Ao comprar numa empresa nova, o nome, telefone e e-mail do cliente passam a ser
+  visíveis a essa empresa. Tem de ficar claro no checkout e no consentimento transaccional; o consentimento de
+  marketing **continua por empresa** e nunca se herda.
+- **Isolamento multi-empresa.** A regra «toda a consulta filtra por `empresaId`» mantém-se, mas o `empresaId` passa a vir
+  da **loja** e não do token: é aqui que um erro vazaria dados de uma empresa para outra. Merece testes próprios.
+- **Fusão de duplicados.** `ClienteIdentidade` é única por `(empresaId, tipo, valor)`; a reconciliação não pode violar
+  essa regra nem partir `ClienteFusao`.
+- **Contas existentes.** Senhas diferentes para o mesmo e-mail; login Google (`googleId` já é único globalmente).
+
+#### 6. Perguntas em aberto
+
+1. **Senha na reconciliação.** Quando o mesmo e-mail tem contas com senhas diferentes em empresas diferentes: manter a
+   da conta usada mais recentemente e exigir «repor senha» nas restantes, ou obrigar a repor em todas?
+2. **Moradas.** Da conta (proposto) ou copiadas por empresa na primeira compra?
+3. **O que a empresa vê.** O cliente aceita, na primeira compra de cada empresa, partilhar nome/telefone/e-mail
+   (mensagem no checkout), ou basta a política de privacidade geral?
+4. **Descoberta (Fase 3).** Critérios e ordem por omissão: distância, preço, histórico? Fica para um plano próprio.
+
+#### 7. Verificação
+
+Backend: testes de isolamento entre empresas, de criação do `Cliente` na primeira compra e de reconciliação;
+migração testada contra uma branch do Neon com cópia dos dados. Frontend: uma conta, duas lojas de empresas
+diferentes, dois pedidos; cada empresa vê **só** o seu cliente e o seu pedido.
 
 ---
 
