@@ -45,12 +45,16 @@ export function MeusPedidosPage() {
           {pedidos?.map((pedido) => (
             <Link
               key={pedido.id}
-              to={`/loja/${lojaId}/pedidos/${pedido.id}`}
+              // O pedido pode ser de outra loja (a conta é da pessoa): abre na loja do próprio pedido.
+              to={`/loja/${pedido.lojaId}/pedidos/${pedido.id}`}
               className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 hover:border-blue-300"
             >
               <div>
                 <p className="text-sm font-semibold text-slate-900">{pedido.numeroPedido}</p>
-                <p className="text-xs text-slate-400">{formatData(pedido.createdAt)}</p>
+                <p className="text-xs text-slate-400">
+                  {pedido.loja && pedido.lojaId !== lojaId ? `${pedido.loja.nome} · ` : ''}
+                  {formatData(pedido.createdAt)}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-slate-900">{formatMoeda(pedido.totalFinal)}</p>

@@ -1565,6 +1565,81 @@ esse merge trouxe.
   > uma branch de segurança no Neon** (`backup-pre-conta-unica-fase0-2026-10-09`). Sem variáveis novas. Só backend (o frontend
   > não muda). Depois do deploy, **invalidar `permissions:*` no Redis** para o Gestor ganhar a permissão nova.
 
+### Fase 36 — Conta de cliente única, Fase 1: o servidor (9 Out 2026)
+
+- **2026-10-09 · [BE] · Antonio Mambo** — `feat/conta-cliente-unica-fase1` (plano §4.4)
+  - feat(commerce): **a conta passa a ser da pessoa e compra em qualquer loja de qualquer empresa.** O pedido fica na
+    empresa da **loja** e no `Cliente` que a conta tem nessa empresa; já não se compara com a empresa do token
+  - feat(commerce): `ClienteDaEmpresaService` — devolve o `Cliente` de uma conta numa empresa e **cria-o na primeira
+    compra**, só depois de a pessoa aceitar a partilha de dados (`aceitaPartilhaDados` em `POST /commerce/pedidos`, 409
+    `commerce.partilha_dados_necessaria` se faltar). Reaproveita o `Cliente` de balcão com o mesmo e-mail, concede o
+    consentimento transaccional, é idempotente sob concorrência e cura a linha de origem de contas criadas depois da Fase 0
+  - feat(commerce): `GET /commerce/conta/partilha/:lojaId` diz ao checkout se é a primeira compra (e de que empresa)
+  - feat(commerce): **entrar procura o e-mail/telefone em todas as empresas** (já não só na da loja; `lojaId` ficou opcional);
+    **registar** recusa um e-mail com conta em qualquer empresa; **Google** liga-se à conta existente em qualquer empresa.
+    Contas repetidas (só de antes) valem pela usada mais recentemente
+  - feat(commerce): moradas da **conta** (qualquer empresa); «os meus pedidos» e cancelar pela conta, com a loja de cada um;
+    favoritos de qualquer loja (guardados no `Cliente` de origem) e listados de todos os `Cliente` da conta
+  - feat(entrega): `CotarEntregaUseCase` cota para a loja de **qualquer** empresa (zonas e configuração são as da empresa da loja)
+  - **remove** o 403 `commerce.conta_de_outra_empresa` da Fase 34 e o guarda que comparava a empresa do token
+
+  > **Contrato.** O token passa a levar só `sub` e `email`; os tokens antigos (7 dias) continuam válidos, com os campos
+  > extra ignorados. `ClienteAutenticado` passou a `{contaClienteId, email, empresaIdOrigem, clienteIdOrigem}` (a empresa e o
+  > `Cliente` de origem guardam moradas e favoritos e dão nome/e-mail a uma empresa nova — nunca decidem onde se compra).
+  >
+  > **Desvios ao plano §4.4.** (1) **Sem migração:** `ContaCliente.empresaId/clienteId` **não se relaxam** — a conta nasce
+  > com a empresa e o `Cliente` da loja onde se registou, que passam a ser a «origem». (2) Os **favoritos ficam no `Cliente`
+  > de origem**, com o `empresaId` do produto, em vez de criar um `Cliente` por favoritar: favoritar não é comprar e a empresa
+  > não deve saber quem a pessoa é antes de ela aceitar. Nenhum código do CRM lê favoritos. Só se aceitam produtos que o
+  > catálogo público mostra (activos, de empresa com o módulo `commerce`). (3) A **reconciliação de contas repetidas** não foi
+  > precisa: confirmei na base real que as 4 contas têm 4 e-mails distintos. (4) O `Cliente` nasce **antes** da transacção do
+  > pedido: se o stock faltar a seguir, o `Cliente` já existe — inofensivo, a pessoa aceitou ao confirmar.
+  >
+  > **Pontos sensíveis.** A empresa de cada pedido vem da **loja**; os pedidos e as moradas filtram só pela **conta**.
+  > Os testes de isolamento cobrem: a morada nunca se procura por empresa nem por pessoa alheia; «os meus pedidos» só lê os da
+  > conta; o `Cliente` só nasce na empresa da loja e só com aceitação; duas compras em simultâneo não duplicam; um `Cliente` já
+  > ligado a outra conta recusa em vez de ser partilhado.
+  >
+  > **Verificação.** `tsc` limpo, `nest build`, 2716 testes (+37 sobre os 2679 anteriores, e vários specs reescritos: o resolver, o login global, o registo, a
+  > partilha, os pedidos da conta, as moradas, os favoritos e a cotação). Contra a base real, **só leitura**: as consultas novas
+  > executam (login global, `orderBy` aninhado do Google, moradas da conta) e há 0 e-mails com mais de uma conta. **A criação do
+  > `Cliente` na primeira compra não correu contra a base real** (gravaria na produção): fica por verificar com a Fase 2.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. Só backend. **Entre este deploy e o da Fase 2 (frontend), a primeira
+  > compra numa empresa nova recusa** com «aceite a partilha de dados» (o frontend antigo não tem a caixa); a compra na empresa
+  > de origem e a navegação não mudam. Fazer o deploy da Fase 2 logo a seguir. Quem tem sessão aberta continua com ela.
+
+### Fase 37 — Conta de cliente única, Fase 2: o frontend (9 Out 2026)
+
+- **2026-10-09 · [FE + BE] · Antonio Mambo** — `feat/conta-cliente-unica-fase2` (frontend) e `feat/conta-cliente-unica-fase1` (backend), plano §4.4
+  - feat(compra-facil): **o checkout pede a aceitação na primeira compra de cada empresa** — um cartão «A sua primeira compra
+    nesta loja» (diz que empresa passa a receber o nome, telefone e e-mail) com uma caixa que tem de estar marcada para confirmar.
+    Consulta `GET /commerce/conta/partilha/:lojaId` e envia `aceitaPartilhaDados: true`; depois de comprar, a cache é invalidada
+    para o aviso não voltar na compra seguinte
+  - **remove** o aviso âmbar «a sua conta pertence a outra empresa» da Fase 34 (o problema deixou de existir) e as suas chaves de tradução
+  - feat(compra-facil): «os meus pedidos» juntam as lojas de todas as empresas — cada pedido abre na **sua** loja e mostra o nome dela
+    quando não é a actual
+  - feat(compra-facil): a página de favoritos de uma loja mostra só o que se compra nela (`GET /commerce/favoritos?lojaId=`, backend
+    novo, devolve só os favoritos da empresa dessa loja); o coração dos cartões de produto continua a usar a lista completa
+  - Textos pt/en no namespace `loja`, com paridade
+
+  > **Porque o filtro dos favoritos.** A Fase 1 fez os favoritos de **todas** as lojas, mas o carrinho é por loja: um produto de outra
+  > empresa na página de favoritos de uma loja não se conseguia pôr no carrinho dali. Com `?lojaId=` cada loja mostra só o que
+  > vende; uma página «os meus favoritos» global fica para a Fase 5 (descoberta).
+  >
+  > **Entrar e registar não mudaram no frontend:** continuam a enviar o `lojaId` (o backend aceita-o e já não escolhe a empresa por ele); o
+  > comentário que dizia «a conta é da empresa» foi corrigido. As moradas já eram da conta no servidor.
+  >
+  > **Verificação.** Frontend: `tsc -b` limpo, 182 testes, lint sem avisos novos. Backend: `tsc` limpo, 2718 testes (os 2 novos cobrem o
+  > filtro de favoritos por loja). **O checkout não tem teste automático nem foi exercitado num browser por mim** (a criação do `Cliente`
+  > numa empresa nova gravaria na produção). Por verificar à mão: com uma conta de uma empresa, abrir o checkout de uma loja de **outra** —
+  > aparece o cartão de aceitação; o botão fica desactivado até marcar; o pedido cria-se; na compra seguinte o cartão já não aparece; e
+  > «os meus pedidos» mostra os dois.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. **Enviar as Fases 36 e 37 juntas, backend primeiro:** o frontend novo precisa
+  > de `/commerce/conta/partilha/:lojaId` e do `aceitaPartilhaDados`. O frontend antigo contra o backend novo só falha na primeira compra
+  > numa empresa nova.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1835,11 +1910,14 @@ implementação vem **antes** de retomar o ensaio da entrega.
       *backfill* de contas, moradas e pedidos, permissão `VER_PROCURA_ONLINE`. Puramente aditiva. **Por aplicar em produção** (a
       migração corre no deploy; criar antes a branch `backup-` no Neon). **Desvio:** relaxar `ContaCliente.empresaId`/`clienteId`
       passou para a Fase 1.
-- [ ] **Fase 1 — Servidor (conta única).** Token sem `empresaId`; o `Cliente` da empresa resolve-se pela loja; pedido,
-      cotação, moradas, favoritos e «os meus pedidos» deixam de exigir a mesma empresa. Remove o 403
-      `commerce.conta_de_outra_empresa` (Fase 34).
-- [ ] **Fase 2 — Frontend (conta única).** Comprar em qualquer loja com a mesma sessão; aviso de partilha de dados na
-      primeira compra de cada empresa; «lojas onde já comprei» de todas as empresas.
+- [x] **Fase 1 — Servidor (conta única).** Concluída em 2026-10-09 (Fase 36): token sem `empresaId`; o `Cliente` da empresa resolve-se
+      pela loja e nasce na primeira compra, com aceitação da partilha de dados; pedido, cotação, moradas, favoritos e «os meus
+      pedidos» deixam de exigir a mesma empresa; login e registo globais. Remove o 403 da Fase 34. **Sem migração. Em teste:** a
+      criação do `Cliente` numa empresa nova só se verifica com a Fase 2 (frontend). **Desvios:** sem relaxar `ContaCliente`; favoritos
+      no `Cliente` de origem.
+- [x] **Fase 2 — Frontend (conta única).** Concluída em 2026-10-09 (Fase 37): comprar em qualquer loja com a mesma sessão; cartão de
+      aceitação da partilha de dados na primeira compra de cada empresa; «os meus pedidos» de todas as lojas; favoritos filtrados pela
+      loja. **Em teste:** falta confirmar à mão no browser (ver a Fase 37).
 - [ ] **Fase 3 — Registo da procura.** Cada pedido online fica registado, com o destino congelado; telemetria de
       navegação (pesquisa, produto visto, carrinho, checkout) anónima.
 - [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
@@ -3667,23 +3745,28 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
 - [x] Migração aditiva, verificada com `prisma migrate diff`; **branch de segurança no Neon antes** de correr.
 - [x] Permissão `VER_PROCURA_ONLINE` (migração + `seed.ts`).
 
-##### Fase 1 — Backend: conta única **[obrigatório]**
+##### Fase 1 — Backend: conta única **[obrigatório]** — ✅ feita em 2026-10-09 (Fase 36)
 
-- [ ] Guarda e token sem `empresaId` (só a conta); contas antigas continuam a abrir sessão (o campo extra é ignorado).
-- [ ] `ResolverClienteDaEmpresaService.obter(conta, loja)`: devolve (ou cria, na primeira compra) o `Cliente` da empresa da loja,
-      ligando por identidade (e-mail/telefone) como já se faz para o cliente de balcão. Usado por criar pedido, cotação,
-      favoritos, «os meus pedidos» e `lojas-compradas` (agora de todas as empresas).
-- [ ] `criar-pedido`/`cotar-entrega`: deixam de recusar loja de outra empresa; **remover** o 403 `commerce.conta_de_outra_empresa`,
-      a sua função, o seu teste e a chave de `erros.json`.
-- [ ] Registo/entrada: `lojaId` deixa de ser necessário para escolher a empresa. Reconciliação da senha conforme a decisão 1.
-- [ ] Aceitação do aviso de partilha gravada (por empresa, na primeira compra) como `ClienteConsentimento` transaccional.
+- [x] Guarda e token sem `empresaId` (só a conta); os tokens antigos continuam válidos (o campo extra é ignorado).
+- [x] `ClienteDaEmpresaService` (nome final; o plano dizia `ResolverClienteDaEmpresaService`): devolve ou cria, na primeira compra, o
+      `Cliente` da empresa da loja, ligando por e-mail ao de balcão. Usado por criar pedido; as listas de pedidos e de
+      lojas compradas filtram pela conta, e os favoritos usam `todosOsClientes`.
+- [x] `criar-pedido`/`cotar-entrega` deixam de recusar loja de outra empresa; **removidos** o 403 `commerce.conta_de_outra_empresa`, a sua
+      função, o seu teste e a chave de `erros.json`.
+- [x] Registo/entrada/Google: procura global; `lojaId` já não escolhe a empresa. Contas repetidas: vale a mais recente (decisão 1).
+- [x] Aceitação da partilha: `aceitaPartilhaDados` no pedido (409 se faltar) e `GET /commerce/conta/partilha/:lojaId`; grava-se como
+      `ClienteConsentimento` transaccional com `origem = COMPRA_FACIL_PRIMEIRA_COMPRA`.
+- [x] ~~Relaxar `ContaCliente.empresaId/clienteId`~~ — **cancelado**: a conta guarda a empresa e o `Cliente` «de origem», que servem às
+      moradas e aos favoritos. Sem migração.
 
-##### Fase 2 — Frontend: conta única **[obrigatório]**
+##### Fase 2 — Frontend: conta única **[obrigatório]** — ✅ feita em 2026-10-09 (Fase 37), a confirmar no browser
 
-- [ ] Remover o aviso âmbar da Fase 34; o checkout deixa de depender de `lojaId` para a sessão.
-- [ ] Aviso de partilha + caixa de aceitação na primeira compra de cada empresa (pedir ao backend se já aceitou).
-- [ ] «Os meus pedidos», favoritos e «lojas onde comprei» juntam todas as lojas; moradas da conta.
-- [ ] Textos pt/en nos namespaces existentes (`loja`), com paridade.
+- [x] Remover o aviso âmbar da Fase 34. (O checkout nunca dependeu do `lojaId` para a sessão — só do carrinho.)
+- [x] Cartão de partilha + caixa de aceitação na primeira compra de cada empresa (consulta `GET /commerce/conta/partilha/:lojaId`).
+- [x] «Os meus pedidos» juntam todas as lojas e cada um abre na sua; favoritos filtrados pela loja (`?lojaId=`, acrescentado no backend);
+      moradas da conta (já eram, no servidor); «lojas onde comprei» já vinha de todas as empresas.
+- [x] Textos pt/en no namespace `loja`, com paridade.
+- [ ] «Os meus favoritos» global (todas as lojas) — **fica para a Fase 5** (descoberta).
 
 ##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]**
 

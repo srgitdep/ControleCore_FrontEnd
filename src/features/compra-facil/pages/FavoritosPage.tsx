@@ -10,7 +10,7 @@ import { VoltarLink } from '../components/VoltarLink';
 export function FavoritosPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const { autenticado, aCarregar } = useContaClienteStore();
-  const { data: favoritos, isLoading } = useFavoritos();
+  const { data: favoritos, isLoading } = useFavoritos(lojaId);
   const { remover } = useAlternarFavorito();
   const { t } = useTranslation('loja');
 
