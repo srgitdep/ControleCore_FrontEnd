@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Banknote, Check, Loader2, ShieldCheck, Smartphone } from 'lucide-react';
@@ -9,6 +9,7 @@ import { useCriarPedido } from '../hooks/usePedidosCommerce';
 import { useLojasCommerce } from '../hooks/useCatalogoCommerce';
 import { useCotacaoEntrega, useEnderecos } from '../hooks/useEntrega';
 import { usePartilhaDados } from '../hooks/usePartilhaDados';
+import { registarProcura } from '../telemetria';
 import { SeleccaoEntrega } from '../components/SeleccaoEntrega';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
@@ -60,6 +61,11 @@ export function CheckoutPage() {
     listaEnderecos.find((e) => e.isPadrao)?.id ??
     listaEnderecos[0]?.id ??
     null;
+
+  // Chegou ao checkout (uma vez por loja; autenticado, para não contar o redirecionamento para a entrada).
+  useEffect(() => {
+    if (lojaId && autenticado) registarProcura({ tipo: 'CHECKOUT_INICIADO', lojaId });
+  }, [lojaId, autenticado]);
 
   const subtotal = getSubtotal();
   const cotacao = useCotacaoEntrega(lojaId, aEntregar ? enderecoId : null, subtotal);

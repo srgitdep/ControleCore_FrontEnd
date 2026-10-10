@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Minus, Package, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { registarProcura } from '../telemetria';
 import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
@@ -112,7 +113,10 @@ export function CarrinhoPage() {
 
                         <button
                           type="button"
-                          onClick={() => remover(item.produtoId)}
+                          onClick={() => {
+                            remover(item.produtoId);
+                            if (lojaId) registarProcura({ tipo: 'CARRINHO_REMOVIDO', lojaId, produtoId: item.produtoId });
+                          }}
                           className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500"
                         >
                           <Trash2 size={13} />

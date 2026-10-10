@@ -221,14 +221,22 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `ComercioConfiguracao`, `Promocao` (desconto por produto/categoria com
     período — módulo `promocao`, `PrecoPromocionalService` aplica o desconto
     tanto no catálogo público como no checkout).
-  - **Conta única e registo da procura online** (Fase 0 do plano §4.4, desde 09/10/2026; **ainda não lida pelo
-    código** — a Fase 1 liga-a) — `ContaClienteEmpresa` (liga a conta de uma pessoa ao seu `Cliente` em cada
+  - **Conta única e registo da procura online** (plano §4.4; o esquema desde 09/10/2026 — a conta única é lida desde a Fase 1 e o registo da
+    procura desde a Fase 3, 10/10/2026) — `ContaClienteEmpresa` (liga a conta de uma pessoa ao seu `Cliente` em cada
     empresa), `EnderecoCliente.contaClienteId` (a morada é da conta), `ProcuraOnlineEvento`
     (`procura_online_eventos`, enum `TipoProcuraOnline`): os factos da procura de toda a plataforma — pedido
     (`PEDIDO_CRIADO`) e produtos do pedido (`PEDIDO_ITEM`), mais os de navegação que a Fase 3 emite. É da
     plataforma e não do CRM de uma empresa (por isso não é `ClienteEvento`); **sem chaves estrangeiras** (é
     histórico); só guarda a célula de ~1 km (`latitude:longitude` a 2 casas) e bairro/cidade/província, nunca
     coordenadas exactas; `(chaveOrigem, tipo)` único para o *backfill* e a emissão serem idempotentes.
+    **Módulo `procura`** (`src/modules/procura/`, desde a Fase 3): `RegistarProcuraService` ouve `procura.pedido_criado` (emitido por
+    `CriarPedidoUseCase` depois da transacção) e grava `PEDIDO_CRIADO` + `PEDIDO_ITEM` com o destino copiado — não bloqueia nem desfaz o pedido;
+    `SincronizarProcuraTask` (`@Cron` de 10 em 10 minutos, SQL idempotente sobre os últimos 7 dias) deriva do estado dos pedidos o
+    desfecho (`PEDIDO_CONCLUIDO`/`PEDIDO_CANCELADO`) e regista o que o ouvinte não apanhou. `POST /commerce/telemetria` (`@Public()`, 204, 60/min
+    por IP, lote ≤ 20, tipos de navegação em lista fechada) grava a navegação **anónima** (`sessaoId`, sem conta nem geografia), com a
+    empresa e a categoria deduzidas da loja e do produto na base de dados. `ProcuraOnlineEvento` está em `ignoredModels` da auditoria.
+    **Variáveis:** `TELEMETRIA_PROCURA_ACTIVA` (backend) e `VITE_TELEMETRIA_PROCURA` (frontend, no build) — só o valor `true` liga; **ambas desligadas por
+    omissão** até haver validação legal da recolha; os pedidos são sempre registados.
   - **Entrega ao domicílio** (modelo desde a Fase 22; **a Fase 23 passou a escrever em
     `EnderecoCliente`, `ZonaEntregaLoja`, `Pedido.tipoEntrega/enderecoId/taxaEntrega` e
     `ComercioConfiguracao`** — as restantes tabelas esperam as Fases 2 a 6) — `EnderecoCliente`, `ZonaEntregaLoja` (faixas de distância à

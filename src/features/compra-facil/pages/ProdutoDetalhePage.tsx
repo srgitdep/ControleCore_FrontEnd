@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { registarProcura } from '../telemetria';
 import { useParams } from 'react-router-dom';
 import { Loader2, Minus, Package, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -19,6 +20,11 @@ export function ProdutoDetalhePage() {
   // retornos condicionais abaixo (isLoading/isError), antes de `produto` existir.
   const [imagemActiva, setImagemActiva] = useState(0);
   const { t } = useTranslation('loja');
+
+  // Uma visita ao produto (conta quando os dados chegam, não à montagem: um id inválido não é uma vista).
+  useEffect(() => {
+    if (lojaId && produto) registarProcura({ tipo: 'PRODUTO_VISTO', lojaId, produtoId: produto.id });
+  }, [lojaId, produto?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!produto) return;
@@ -54,6 +60,7 @@ export function ProdutoDetalhePage() {
       return;
     }
     toast.success(t('produto.adicionado', { nome: produto.nome }));
+    registarProcura({ tipo: 'CARRINHO_ADICIONADO', lojaId, produtoId: produto.id, quantidade });
     setQuantidade(1);
   };
 

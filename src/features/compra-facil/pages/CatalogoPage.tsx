@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { registarProcura } from '../telemetria';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, PackageSearch } from 'lucide-react';
@@ -14,6 +15,12 @@ export function CatalogoPage() {
   const [busca, setBusca] = useState('');
   const buscaComDebounce = useDebounce(busca, 300);
   const { t } = useTranslation('loja');
+
+  // O que se pesquisa (já com debounce, para não registar cada tecla). Menos de 2 letras é ruído.
+  useEffect(() => {
+    const termo = buscaComDebounce.trim();
+    if (lojaId && termo.length >= 2) registarProcura({ tipo: 'PESQUISA', lojaId, termo });
+  }, [lojaId, buscaComDebounce]);
 
   const { data, isLoading, isError } = useProdutosLoja(lojaId, {
     search: buscaComDebounce || undefined,

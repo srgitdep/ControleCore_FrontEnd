@@ -1640,6 +1640,50 @@ esse merge trouxe.
   > de `/commerce/conta/partilha/:lojaId` e do `aceitaPartilhaDados`. O frontend antigo contra o backend novo só falha na primeira compra
   > numa empresa nova.
 
+### Fase 38 — Registo da procura online, Fase 3 (10 Out 2026)
+
+- **2026-10-10 · [BE + FE] · Antonio Mambo** — `feat/procura-online-fase3` (plano §4.4)
+  - feat(procura): **cada pedido do Compra Fácil fica registado na procura online** no momento em que é criado — um facto `PEDIDO_CRIADO`
+    (valor total, taxa, tipo de entrega, método de pagamento) e um `PEDIDO_ITEM` por produto (quantidade, valor, categoria), com o
+    **destino copiado** (bairro, cidade, província, célula de ~1 km, distância à loja). Novo módulo `procura` (`RegistarProcuraService`),
+    ligado por um evento emitido depois da transacção do pedido: uma falha de analítica nunca desfaz uma venda
+  - feat(procura): **varrimento de 10 em 10 minutos** (`SincronizarProcuraTask`) que deriva do estado dos pedidos o **desfecho**
+    (`PEDIDO_CONCLUIDO`, `PEDIDO_CANCELADO`) e funciona como rede de segurança da criação. É também o *backfill* dos pedidos feitos entre a
+    Fase 0 e este deploy — **sem migração nova**
+  - feat(procura): `POST /commerce/telemetria` (público, `204`) para a **navegação anónima** — pesquisa, produto visto, carrinho
+    adicionado/removido, checkout iniciado. **Desligada por omissão**: com `TELEMETRIA_PROCURA_ACTIVA` diferente de `true` responde 204
+    e não grava nada
+  - feat(compra-facil): `telemetria.ts` envia esses eventos a partir da pesquisa (com *debounce*), da página de produto, de adicionar e
+    remover do carrinho e do checkout — **desligado por omissão** (`VITE_TELEMETRIA_PROCURA`). `sessaoId` anónimo em `sessionStorage`
+  - `ProcuraOnlineEvento` fica fora da auditoria (`ignoredModels`): é analítica escrita pelo sistema
+
+  > **Porque o desfecho vem de um varrimento.** Um pedido conclui-se (levantamento, entrega) e cancela-se (cliente, gestão, expiração da
+  > reserva, anulação da venda) por **seis caminhos** no código. Emitir um evento em cada um é esquecer um na próxima alteração; ler o
+  > estado final é um sítio só. O custo: a hora do desfecho é aproximada (`updatedAt`, ou `canceladoEm` nos cancelamentos) e pode
+  > atrasar até 10 minutos. A **criação** é diferente: precisa do destino **no momento do pedido** (a morada pode ser editada depois), por
+  > isso é um evento síncrono; o varrimento só a regista, com a morada de agora, se o evento falhar.
+  >
+  > **O que a navegação NÃO faz.** É anónima: só leva o `sessaoId` — nunca a conta, a morada ou coordenadas. O servidor deduz a empresa
+  > e a categoria da loja e do produto **na base de dados**, descarta ids inexistentes ou incoerentes e usa a **sua** hora. Os tipos são uma
+  > lista fechada: o browser não consegue forjar `PEDIDO_*`. Ligá-la a uma pessoa exige um consentimento de personalização que **ainda
+  > não existe**.
+  >
+  > **A telemetria fica desligada até haver resposta à pergunta 1 do plano** (o enquadramento legal da recolha em Moçambique e o texto de
+  > consentimento). Para a ligar são precisos **dois** interruptores: `fly secrets set TELEMETRIA_PROCURA_ACTIVA=true` **e** `VITE_TELEMETRIA_PROCURA=true`
+  > no build do frontend. Os pedidos, que são transaccionais, são registados sempre.
+  >
+  > **Verificação.** Backend: `tsc` limpo, `nest build`, 2755 testes (+37: a célula, o construtor de factos, o ouvinte, o varrimento, a
+  > navegação e a validação do DTO público). Frontend: `tsc -b` limpo, lint limpo, 188 testes (+6), build. Contra a **base real**, numa
+  > transacção desfeita no fim: o SQL do varrimento corre, é **idempotente** (a 2.ª execução dá 0), cria os 2 cancelamentos dos pedidos
+  > reais com a hora de `canceladoEm`, e a **célula do TypeScript é igual à do SQL** em 6 casos (incluindo negativos e perto de zero).
+  > **Limites:** os 2 pedidos reais são de levantamento e cancelados, por isso **nunca correu sobre dados reais** o ramo de um pedido de
+  > **entrega** (geografia e distância) nem o de **concluído**; só a fórmula isolada e os testes unitários. O ouvinte ao vivo e a navegação
+  > também não foram exercitados num servidor a sério. Confirmar depois do deploy com um pedido de entrega (Passo C do ensaio).
+  >
+  > **Notas de deploy.** **Sem migração.** Variável nova de backend `TELEMETRIA_PROCURA_ACTIVA` (omissão: desligada; nada a fazer no Fly) e de
+  > frontend `VITE_TELEMETRIA_PROCURA` (omissão: desligada). Backend primeiro. O varrimento arranca sozinho no primeiro ciclo e regista os
+  > pedidos dos últimos 7 dias que ainda não tenham factos.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1918,8 +1962,9 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Fase 2 — Frontend (conta única).** Concluída em 2026-10-09 (Fase 37): comprar em qualquer loja com a mesma sessão; cartão de
       aceitação da partilha de dados na primeira compra de cada empresa; «os meus pedidos» de todas as lojas; favoritos filtrados pela
       loja. **Em teste:** falta confirmar à mão no browser (ver a Fase 37).
-- [ ] **Fase 3 — Registo da procura.** Cada pedido online fica registado, com o destino congelado; telemetria de
-      navegação (pesquisa, produto visto, carrinho, checkout) anónima.
+- [x] **Fase 3 — Registo da procura.** Concluída em 2026-10-10 (Fase 38): cada pedido online fica registado, com o destino congelado
+      (criação ao vivo; desfecho por varrimento); telemetria de navegação anónima **construída mas desligada** até haver validação legal
+      (`TELEMETRIA_PROCURA_ACTIVA` + `VITE_TELEMETRIA_PROCURA`). **Em teste:** o ramo de um pedido de entrega só se confirma com dados reais.
 - [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
 - [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
 
@@ -3768,15 +3813,18 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
 - [x] Textos pt/en no namespace `loja`, com paridade.
 - [ ] «Os meus favoritos» global (todas as lojas) — **fica para a Fase 5** (descoberta).
 
-##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]**
+##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]** — ✅ feita em 2026-10-10 (Fase 38)
 
-- [ ] `RegistarProcuraService` ouve `COMMERCE_PEDIDO_RESERVADO` (já emitido por `criar-pedido`) e grava `PEDIDO_CRIADO` com o
-      destino congelado, distância à loja e taxa; ouve o cancelamento e a conclusão (venda) para `PEDIDO_CANCELADO`/`PEDIDO_CONCLUIDO`.
-      Engole os próprios erros e regista-os no log: nunca derruba o pedido.
-- [ ] `POST /commerce/telemetria` (`@Public()`): lote de eventos `PESQUISA`, `PRODUTO_VISTO`, `CARRINHO_*`, `CHECKOUT_INICIADO`;
-      validação por DTO (lista fechada de tipos, máximo de eventos por lote, `sessaoId` UUID), limite de pedidos por IP.
-- [ ] Frontend `useTelemetria` (`sendBeacon`, `sessaoId` em `sessionStorage`, falha silenciosa); consentimento de personalização
-      desligado por omissão.
+- [x] `RegistarProcuraService` (módulo `procura`) ouve um evento próprio, `procura.pedido_criado`, emitido por `criar-pedido` **depois** da transacção, e
+      grava `PEDIDO_CRIADO` + `PEDIDO_ITEM` com o destino congelado, a distância e a taxa. **Desvio:** não ouve `COMMERCE_PEDIDO_RESERVADO` (o payload
+      não leva o id do pedido); engole os erros — nunca derruba o pedido.
+- [x] **Desvio:** o **desfecho** (`PEDIDO_CONCLUIDO`/`PEDIDO_CANCELADO`) não se emite em cada caminho — há seis; deriva-se do estado do pedido por um
+      varrimento de 10 em 10 minutos (`SincronizarProcuraTask`), que é também a rede de segurança da criação e o *backfill* dos pedidos desde a Fase 0.
+- [x] `POST /commerce/telemetria` (`@Public()`): lote de até 20 eventos, tipos em lista fechada, `sessaoId` UUID, termo até 80 caracteres, limite de
+      60 pedidos por minuto por IP; **desligado por omissão** (`TELEMETRIA_PROCURA_ACTIVA`).
+- [x] Frontend `telemetria.ts` (**desvio:** `fetch` com `keepalive` e não `sendBeacon` — o corpo é JSON com cabeçalho; `sessaoId` em `sessionStorage`; falha
+      silenciosa); ligado a pesquisa, produto, carrinho e checkout; **desligado por omissão** (`VITE_TELEMETRIA_PROCURA`).
+- [ ] Consentimento de personalização (ligar a navegação a uma pessoa) — **não feito**: exige a resposta à pergunta 1 e fica fora de âmbito até lá.
 
 ##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]**
 
