@@ -33,6 +33,7 @@ import type copiloto from '../locales/pt/copiloto.json';
 import type shell from '../locales/pt/shell.json';
 import type promocoes from '../locales/pt/promocoes.json';
 import type entrega from '../locales/pt/entrega.json';
+import type procura from '../locales/pt/procura.json';
 
 // As chaves do `t()` passam a ser verificadas pelo `tsc` contra o catálogo português, que
 // é a língua de origem: uma chave mal escrita é erro de compilação, e não um texto em
@@ -75,6 +76,7 @@ declare module 'i18next' {
       shell: typeof shell;
       promocoes: typeof promocoes;
       entrega: typeof entrega;
+      procura: typeof procura;
     };
   }
 }

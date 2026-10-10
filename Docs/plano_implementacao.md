@@ -1684,6 +1684,41 @@ esse merge trouxe.
   > frontend `VITE_TELEMETRIA_PROCURA` (omissão: desligada). Backend primeiro. O varrimento arranca sozinho no primeiro ciclo e regista os
   > pedidos dos últimos 7 dias que ainda não tenham factos.
 
+### Fase 39 — Procura online, Fase 4: os painéis (10 Out 2026)
+
+- **2026-10-10 · [BE + FE] · Antonio Mambo** — `feat/procura-online-fase4` (plano §4.4)
+  - feat(procura): `GET /procura-online` (`VER_PROCURA_ONLINE` + módulo `commerce`) — a procura **das lojas da empresa**: produtos mais
+    pedidos e frequência (pedidos por semana), zonas (bairro/cidade) que mais pedem, distância média das entregas, pedidos por hora e por dia
+    da semana (hora de Maputo), ticket médio, concluídos e cancelados, quebra por loja e, se a recolha estiver ligada, o funil de navegação
+    e o que mais se pesquisa. Filtros: período (`dias`, 1–365, omissão 30) e loja
+  - feat(procura): `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`) — a mesma visão **entre empresas**, com a quebra por empresa
+  - feat(procura-online): página **«Procura online»** (`/procura`, para ADMIN e MANAGER) e **«Procura (plataforma)»** (`/procura/sistema`, só
+    SUPER_ADMIN), com indicadores, produtos, zonas, gráficos de horas e de dias (`recharts`, já existente — sem dependência nova), por loja e por
+    empresa; estados de carregamento, erro e vazio. Textos pt/en no namespace novo `procura`; entradas no menu e o recurso `procura_online` na
+    lista de permissões
+
+  > **O alcance decide-se pela rota, nunca por um parâmetro.** A rota da empresa lê o `empresaId` do **token**; um `empresaId` no pedido é
+  > ignorado (o DTO nem o aceita). Uma `lojaId` que não é da empresa responde 404 `procura.loja_nao_encontrada`. Só a rota do sistema consulta sem
+  > filtro de empresa, e exige `SUPER_ADMIN_ONLY`. Esconder o menu é conforto; a autorização é do servidor.
+  >
+  > **Privacidade.** Os painéis mostram **bairro/cidade** e contagens, nunca coordenadas nem células. O limiar de 5 pedidos por célula do
+  > plano só passa a ser necessário quando houver partilha **fora** da empresa dona (benchmarks), que continua fora de âmbito; a visão do sistema é
+  > do Super Admin, dono da plataforma.
+  >
+  > **Desvios ao plano §4.4.** (1) A rota da empresa é `GET /procura-online` (e não `/commerce/procura`): o módulo `procura` é da plataforma, não do
+  > commerce. (2) A **tabela de agregados diários** (opcional) **não foi feita**: as consultas são `GROUP BY` sobre eventos indexados e, com o
+  > volume actual, chegam; faz-se quando alguma ficar lenta. (3) As zonas mostram só **entregas** (os levantamentos não têm morada).
+  >
+  > **Verificação.** Backend: `tsc` limpo, 2775 testes (+20; os novos: contas puras, isolamento — **todas** as consultas da empresa levam o
+  > `empresaId` e as do sistema não —, o controlador e a protecção das rotas por metadados). Frontend: `tsc -b` limpo, lint sem avisos novos, 189 testes
+  > (inclui a paridade pt/en do namespace novo), build. Contra a **base real** (só leitura): as 10 consultas executam, o fuso está certo (pedidos
+  > das 15:35 UTC aparecem às 17h, e o dia 1 é segunda-feira), a empresa vê os seus 2 pedidos e **outra empresa vê 0**. **Limites:** com os dados
+  > actuais (2 pedidos de levantamento) as zonas e a distância saem **vazias**, por isso essas partes só se confirmam com um pedido de **entrega**
+  > real; **a página não foi aberta num browser por mim** e não tem teste automático de renderização.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. A permissão `VER_PROCURA_ONLINE` já existe (Fase 35); **invalidar `permissions:*` no Redis**
+  > para o Gestor a ter. Backend primeiro.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1965,7 +2000,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Fase 3 — Registo da procura.** Concluída em 2026-10-10 (Fase 38): cada pedido online fica registado, com o destino congelado
       (criação ao vivo; desfecho por varrimento); telemetria de navegação anónima **construída mas desligada** até haver validação legal
       (`TELEMETRIA_PROCURA_ACTIVA` + `VITE_TELEMETRIA_PROCURA`). **Em teste:** o ramo de um pedido de entrega só se confirma com dados reais.
-- [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
+- [x] **Fase 4 — Painéis.** Concluída em 2026-10-10 (Fase 39): «Procura online» por empresa (`/procura`) e visão macro para o Super Admin
+      (`/procura/sistema`). **Em teste:** a página não foi aberta num browser, e as zonas só se confirmam com um pedido de entrega real.
 - [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
 
 ---
@@ -3826,13 +3862,13 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
       silenciosa); ligado a pesquisa, produto, carrinho e checkout; **desligado por omissão** (`VITE_TELEMETRIA_PROCURA`).
 - [ ] Consentimento de personalização (ligar a navegação a uma pessoa) — **não feito**: exige a resposta à pergunta 1 e fica fora de âmbito até lá.
 
-##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]**
+##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]** — ✅ feita em 2026-10-10 (Fase 39), a confirmar no browser
 
-- [ ] `GET /commerce/procura` (`VER_PROCURA_ONLINE`, **sempre** filtrado por `empresaId` do utilizador): produtos mais pedidos e
-      frequência (pedidos/semana), zonas e bairros que mais pedem, distância média de entrega, horas e dias de pico, ticket médio.
-- [ ] Página «Procura» na gestão, com loading, erro, vazio e sucesso.
-- [ ] `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`): a mesma visão **entre empresas**, com quebra por empresa e loja.
-- [ ] **[opcional]** tabela de agregados diários se as consultas ficarem lentas.
+- [x] `GET /procura-online` (**desvio:** não `/commerce/procura`) com `VER_PROCURA_ONLINE`, **sempre** filtrado pelo `empresaId` do token: produtos mais
+      pedidos e frequência (pedidos/semana), zonas e bairros que mais pedem, distância média de entrega, horas e dias de pico, ticket médio.
+- [x] Página «Procura online» na gestão, com carregamento, erro, vazio e sucesso (filtros: período e loja).
+- [x] `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`): a mesma visão **entre empresas**, com quebra por empresa e loja; página própria.
+- [ ] **[opcional]** tabela de agregados diários — **não feita**: com o volume actual as consultas directas chegam.
 
 ##### Fase 5 — Descoberta de lojas **[plano próprio]**
 

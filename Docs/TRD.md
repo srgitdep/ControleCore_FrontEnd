@@ -235,6 +235,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     desfecho (`PEDIDO_CONCLUIDO`/`PEDIDO_CANCELADO`) e regista o que o ouvinte não apanhou. `POST /commerce/telemetria` (`@Public()`, 204, 60/min
     por IP, lote ≤ 20, tipos de navegação em lista fechada) grava a navegação **anónima** (`sessaoId`, sem conta nem geografia), com a
     empresa e a categoria deduzidas da loja e do produto na base de dados. `ProcuraOnlineEvento` está em `ignoredModels` da auditoria.
+    **Painéis (Fase 4, 10/10/2026):** `GET /procura-online` (`VER_PROCURA_ONLINE` + módulo `commerce`, **sempre** por `empresaId` do token) e
+    `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`, entre empresas, com quebra por empresa) — `ConsultarProcuraUseCase` agrega com
+    `GROUP BY` parametrizado sobre `procura_online_eventos` (horas e dias na hora de Maputo); mostram bairro/cidade e contagens, nunca coordenadas.
+    No frontend, `features/procura-online` (rotas `/procura` e `/procura/sistema`, gráficos `recharts`, namespace i18n `procura`).
     **Variáveis:** `TELEMETRIA_PROCURA_ACTIVA` (backend) e `VITE_TELEMETRIA_PROCURA` (frontend, no build) — só o valor `true` liga; **ambas desligadas por
     omissão** até haver validação legal da recolha; os pedidos são sempre registados.
   - **Entrega ao domicílio** (modelo desde a Fase 22; **a Fase 23 passou a escrever em

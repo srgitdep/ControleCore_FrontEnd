@@ -23,6 +23,7 @@ import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
 import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
+import { ProcuraPage, ProcuraSistemaPage } from '@/features/procura-online';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -251,6 +252,18 @@ export const router = createBrowserRouter([
             path: '/entregas/estafetas',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
             children: [{ index: true, element: <EstafetasPage /> }]
+          },
+          // A procura online: a das lojas da empresa (gestão) e a da plataforma (só Super Admin). A
+          // protecção que conta é a do servidor (VER_PROCURA_ONLINE / SUPER_ADMIN_ONLY).
+          {
+            path: '/procura',
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            children: [{ index: true, element: <ProcuraPage /> }]
+          },
+          {
+            path: '/procura/sistema',
+            element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
+            children: [{ index: true, element: <ProcuraSistemaPage /> }]
           },
           // O acerto de contas dos estafetas: o numerário cobrado à porta chega ao caixa.
           // Sem CASHIER nem STOCK_KEEPER: quem mexe em dinheiro do caixa de outros é gestão.

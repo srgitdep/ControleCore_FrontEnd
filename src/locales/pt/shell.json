@@ -30,7 +30,9 @@
       "conferencia": "Conferência",
       "lojas": "Lojas & Caixas",
       "rh": "Recursos Humanos",
-      "historico": "Histórico no Sistema"
+      "historico": "Histórico no Sistema",
+      "procura": "Procura online",
+      "procura_sistema": "Procura (plataforma)"
     },
     "fechar": "Fechar menu",
     "expandir": "Expandir sidebar",
@@ -154,6 +156,7 @@
       "entregas": "Entregas ao domicílio",
       "estafetas": "Estafetas",
       "acertos_estafeta": "Acertos de contas dos estafetas",
+      "procura_online": "Procura online",
       "zonas_entrega": "Zonas e taxas de entrega",
       "webhooks": "Webhooks de entrega"
     },
