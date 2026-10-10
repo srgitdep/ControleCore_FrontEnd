@@ -59,6 +59,8 @@ export interface EntrarPayload {
 
 export type RespostaEntrar =
   | { tipo: 'COMPRADOR'; user: AuthUser }
+  // O código `E####` de um estafeta (plano da entrega §4.5): a aplicação dele vive em `/estafeta`.
+  | { tipo: 'ESTAFETA'; utilizador: { estafetaId: string; nome: string; codigo: string; idioma: string | null } }
   | {
       tipo: 'FORNECEDOR';
       utilizador: {

@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 // https://vite.dev/config/
@@ -27,6 +28,44 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       ...(comHttps ? [basicSsl()] : []),
+
+      // A PWA do estafeta (plano §4.5, D6) — só dela. O ControlCore, a loja e o portal não são PWA.
+      //  - `manifest: false` e `injectRegister: false`: o manifest é `public/estafeta.webmanifest` e liga-se (e o
+      //    service worker regista-se, com âmbito `/estafeta/`) só quando a aplicação do estafeta monta —
+      //    ver `features/estafeta-app/pwa.ts`. Sem isto o plugin metia o manifest e um worker de âmbito `/` em
+      //    todas as páginas do sistema.
+      //  - Sem `precache` (`globPatterns: []`): a aplicação é uma só e grande, e só uma parte é do estafeta;
+      //    guarda-se o que se usa, à medida (`runtimeCaching`).
+      //  - **Nunca a API**: dados de entregas velhos seriam pior do que um aviso «sem ligação».
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: false,
+        manifest: false,
+        workbox: {
+          globPatterns: [],
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
+          navigateFallback: undefined,
+          runtimeCaching: [
+            {
+              // Ficheiros da aplicação: têm `hash` no nome, nunca mudam com o mesmo nome.
+              urlPattern: ({ url }) => url.pathname.startsWith('/assets/'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'estafeta-ficheiros',
+                expiration: { maxEntries: 120, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              },
+            },
+            {
+              // As páginas `/estafeta`: a rede primeiro (versão nova), a guardada se não houver rede.
+              urlPattern: ({ request, url }) => request.mode === 'navigate' && url.pathname.startsWith('/estafeta'),
+              handler: 'NetworkFirst',
+              options: { cacheName: 'estafeta-paginas', networkTimeoutSeconds: 4 },
+            },
+          ],
+        },
+      }),
     ],
     resolve: {
       alias: {
