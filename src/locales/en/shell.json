@@ -30,7 +30,9 @@
       "conferencia": "Reconciliation",
       "lojas": "Stores & Tills",
       "rh": "Human Resources",
-      "historico": "System History"
+      "historico": "System History",
+      "procura": "Online demand",
+      "procura_sistema": "Demand (platform)"
     },
     "fechar": "Close menu",
     "expandir": "Expand sidebar",
@@ -154,6 +156,7 @@
       "entregas": "Home deliveries",
       "estafetas": "Couriers",
       "acertos_estafeta": "Courier cash settlements",
+      "procura_online": "Online demand",
       "zonas_entrega": "Delivery zones and fees",
       "webhooks": "Delivery webhooks"
     },

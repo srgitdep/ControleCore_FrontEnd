@@ -1640,6 +1640,85 @@ esse merge trouxe.
   > de `/commerce/conta/partilha/:lojaId` e do `aceitaPartilhaDados`. O frontend antigo contra o backend novo só falha na primeira compra
   > numa empresa nova.
 
+### Fase 38 — Registo da procura online, Fase 3 (10 Out 2026)
+
+- **2026-10-10 · [BE + FE] · Antonio Mambo** — `feat/procura-online-fase3` (plano §4.4)
+  - feat(procura): **cada pedido do Compra Fácil fica registado na procura online** no momento em que é criado — um facto `PEDIDO_CRIADO`
+    (valor total, taxa, tipo de entrega, método de pagamento) e um `PEDIDO_ITEM` por produto (quantidade, valor, categoria), com o
+    **destino copiado** (bairro, cidade, província, célula de ~1 km, distância à loja). Novo módulo `procura` (`RegistarProcuraService`),
+    ligado por um evento emitido depois da transacção do pedido: uma falha de analítica nunca desfaz uma venda
+  - feat(procura): **varrimento de 10 em 10 minutos** (`SincronizarProcuraTask`) que deriva do estado dos pedidos o **desfecho**
+    (`PEDIDO_CONCLUIDO`, `PEDIDO_CANCELADO`) e funciona como rede de segurança da criação. É também o *backfill* dos pedidos feitos entre a
+    Fase 0 e este deploy — **sem migração nova**
+  - feat(procura): `POST /commerce/telemetria` (público, `204`) para a **navegação anónima** — pesquisa, produto visto, carrinho
+    adicionado/removido, checkout iniciado. **Desligada por omissão**: com `TELEMETRIA_PROCURA_ACTIVA` diferente de `true` responde 204
+    e não grava nada
+  - feat(compra-facil): `telemetria.ts` envia esses eventos a partir da pesquisa (com *debounce*), da página de produto, de adicionar e
+    remover do carrinho e do checkout — **desligado por omissão** (`VITE_TELEMETRIA_PROCURA`). `sessaoId` anónimo em `sessionStorage`
+  - `ProcuraOnlineEvento` fica fora da auditoria (`ignoredModels`): é analítica escrita pelo sistema
+
+  > **Porque o desfecho vem de um varrimento.** Um pedido conclui-se (levantamento, entrega) e cancela-se (cliente, gestão, expiração da
+  > reserva, anulação da venda) por **seis caminhos** no código. Emitir um evento em cada um é esquecer um na próxima alteração; ler o
+  > estado final é um sítio só. O custo: a hora do desfecho é aproximada (`updatedAt`, ou `canceladoEm` nos cancelamentos) e pode
+  > atrasar até 10 minutos. A **criação** é diferente: precisa do destino **no momento do pedido** (a morada pode ser editada depois), por
+  > isso é um evento síncrono; o varrimento só a regista, com a morada de agora, se o evento falhar.
+  >
+  > **O que a navegação NÃO faz.** É anónima: só leva o `sessaoId` — nunca a conta, a morada ou coordenadas. O servidor deduz a empresa
+  > e a categoria da loja e do produto **na base de dados**, descarta ids inexistentes ou incoerentes e usa a **sua** hora. Os tipos são uma
+  > lista fechada: o browser não consegue forjar `PEDIDO_*`. Ligá-la a uma pessoa exige um consentimento de personalização que **ainda
+  > não existe**.
+  >
+  > **A telemetria fica desligada até haver resposta à pergunta 1 do plano** (o enquadramento legal da recolha em Moçambique e o texto de
+  > consentimento). Para a ligar são precisos **dois** interruptores: `fly secrets set TELEMETRIA_PROCURA_ACTIVA=true` **e** `VITE_TELEMETRIA_PROCURA=true`
+  > no build do frontend. Os pedidos, que são transaccionais, são registados sempre.
+  >
+  > **Verificação.** Backend: `tsc` limpo, `nest build`, 2755 testes (+37: a célula, o construtor de factos, o ouvinte, o varrimento, a
+  > navegação e a validação do DTO público). Frontend: `tsc -b` limpo, lint limpo, 188 testes (+6), build. Contra a **base real**, numa
+  > transacção desfeita no fim: o SQL do varrimento corre, é **idempotente** (a 2.ª execução dá 0), cria os 2 cancelamentos dos pedidos
+  > reais com a hora de `canceladoEm`, e a **célula do TypeScript é igual à do SQL** em 6 casos (incluindo negativos e perto de zero).
+  > **Limites:** os 2 pedidos reais são de levantamento e cancelados, por isso **nunca correu sobre dados reais** o ramo de um pedido de
+  > **entrega** (geografia e distância) nem o de **concluído**; só a fórmula isolada e os testes unitários. O ouvinte ao vivo e a navegação
+  > também não foram exercitados num servidor a sério. Confirmar depois do deploy com um pedido de entrega (Passo C do ensaio).
+  >
+  > **Notas de deploy.** **Sem migração.** Variável nova de backend `TELEMETRIA_PROCURA_ACTIVA` (omissão: desligada; nada a fazer no Fly) e de
+  > frontend `VITE_TELEMETRIA_PROCURA` (omissão: desligada). Backend primeiro. O varrimento arranca sozinho no primeiro ciclo e regista os
+  > pedidos dos últimos 7 dias que ainda não tenham factos.
+
+### Fase 39 — Procura online, Fase 4: os painéis (10 Out 2026)
+
+- **2026-10-10 · [BE + FE] · Antonio Mambo** — `feat/procura-online-fase4` (plano §4.4)
+  - feat(procura): `GET /procura-online` (`VER_PROCURA_ONLINE` + módulo `commerce`) — a procura **das lojas da empresa**: produtos mais
+    pedidos e frequência (pedidos por semana), zonas (bairro/cidade) que mais pedem, distância média das entregas, pedidos por hora e por dia
+    da semana (hora de Maputo), ticket médio, concluídos e cancelados, quebra por loja e, se a recolha estiver ligada, o funil de navegação
+    e o que mais se pesquisa. Filtros: período (`dias`, 1–365, omissão 30) e loja
+  - feat(procura): `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`) — a mesma visão **entre empresas**, com a quebra por empresa
+  - feat(procura-online): página **«Procura online»** (`/procura`, para ADMIN e MANAGER) e **«Procura (plataforma)»** (`/procura/sistema`, só
+    SUPER_ADMIN), com indicadores, produtos, zonas, gráficos de horas e de dias (`recharts`, já existente — sem dependência nova), por loja e por
+    empresa; estados de carregamento, erro e vazio. Textos pt/en no namespace novo `procura`; entradas no menu e o recurso `procura_online` na
+    lista de permissões
+
+  > **O alcance decide-se pela rota, nunca por um parâmetro.** A rota da empresa lê o `empresaId` do **token**; um `empresaId` no pedido é
+  > ignorado (o DTO nem o aceita). Uma `lojaId` que não é da empresa responde 404 `procura.loja_nao_encontrada`. Só a rota do sistema consulta sem
+  > filtro de empresa, e exige `SUPER_ADMIN_ONLY`. Esconder o menu é conforto; a autorização é do servidor.
+  >
+  > **Privacidade.** Os painéis mostram **bairro/cidade** e contagens, nunca coordenadas nem células. O limiar de 5 pedidos por célula do
+  > plano só passa a ser necessário quando houver partilha **fora** da empresa dona (benchmarks), que continua fora de âmbito; a visão do sistema é
+  > do Super Admin, dono da plataforma.
+  >
+  > **Desvios ao plano §4.4.** (1) A rota da empresa é `GET /procura-online` (e não `/commerce/procura`): o módulo `procura` é da plataforma, não do
+  > commerce. (2) A **tabela de agregados diários** (opcional) **não foi feita**: as consultas são `GROUP BY` sobre eventos indexados e, com o
+  > volume actual, chegam; faz-se quando alguma ficar lenta. (3) As zonas mostram só **entregas** (os levantamentos não têm morada).
+  >
+  > **Verificação.** Backend: `tsc` limpo, 2775 testes (+20; os novos: contas puras, isolamento — **todas** as consultas da empresa levam o
+  > `empresaId` e as do sistema não —, o controlador e a protecção das rotas por metadados). Frontend: `tsc -b` limpo, lint sem avisos novos, 189 testes
+  > (inclui a paridade pt/en do namespace novo), build. Contra a **base real** (só leitura): as 10 consultas executam, o fuso está certo (pedidos
+  > das 15:35 UTC aparecem às 17h, e o dia 1 é segunda-feira), a empresa vê os seus 2 pedidos e **outra empresa vê 0**. **Limites:** com os dados
+  > actuais (2 pedidos de levantamento) as zonas e a distância saem **vazias**, por isso essas partes só se confirmam com um pedido de **entrega**
+  > real; **a página não foi aberta num browser por mim** e não tem teste automático de renderização.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. A permissão `VER_PROCURA_ONLINE` já existe (Fase 35); **invalidar `permissions:*` no Redis**
+  > para o Gestor a ter. Backend primeiro.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1918,9 +1997,11 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Fase 2 — Frontend (conta única).** Concluída em 2026-10-09 (Fase 37): comprar em qualquer loja com a mesma sessão; cartão de
       aceitação da partilha de dados na primeira compra de cada empresa; «os meus pedidos» de todas as lojas; favoritos filtrados pela
       loja. **Em teste:** falta confirmar à mão no browser (ver a Fase 37).
-- [ ] **Fase 3 — Registo da procura.** Cada pedido online fica registado, com o destino congelado; telemetria de
-      navegação (pesquisa, produto visto, carrinho, checkout) anónima.
-- [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
+- [x] **Fase 3 — Registo da procura.** Concluída em 2026-10-10 (Fase 38): cada pedido online fica registado, com o destino congelado
+      (criação ao vivo; desfecho por varrimento); telemetria de navegação anónima **construída mas desligada** até haver validação legal
+      (`TELEMETRIA_PROCURA_ACTIVA` + `VITE_TELEMETRIA_PROCURA`). **Em teste:** o ramo de um pedido de entrega só se confirma com dados reais.
+- [x] **Fase 4 — Painéis.** Concluída em 2026-10-10 (Fase 39): «Procura online» por empresa (`/procura`) e visão macro para o Super Admin
+      (`/procura/sistema`). **Em teste:** a página não foi aberta num browser, e as zonas só se confirmam com um pedido de entrega real.
 - [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
 
 ---
@@ -3768,23 +3849,26 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
 - [x] Textos pt/en no namespace `loja`, com paridade.
 - [ ] «Os meus favoritos» global (todas as lojas) — **fica para a Fase 5** (descoberta).
 
-##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]**
+##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]** — ✅ feita em 2026-10-10 (Fase 38)
 
-- [ ] `RegistarProcuraService` ouve `COMMERCE_PEDIDO_RESERVADO` (já emitido por `criar-pedido`) e grava `PEDIDO_CRIADO` com o
-      destino congelado, distância à loja e taxa; ouve o cancelamento e a conclusão (venda) para `PEDIDO_CANCELADO`/`PEDIDO_CONCLUIDO`.
-      Engole os próprios erros e regista-os no log: nunca derruba o pedido.
-- [ ] `POST /commerce/telemetria` (`@Public()`): lote de eventos `PESQUISA`, `PRODUTO_VISTO`, `CARRINHO_*`, `CHECKOUT_INICIADO`;
-      validação por DTO (lista fechada de tipos, máximo de eventos por lote, `sessaoId` UUID), limite de pedidos por IP.
-- [ ] Frontend `useTelemetria` (`sendBeacon`, `sessaoId` em `sessionStorage`, falha silenciosa); consentimento de personalização
-      desligado por omissão.
+- [x] `RegistarProcuraService` (módulo `procura`) ouve um evento próprio, `procura.pedido_criado`, emitido por `criar-pedido` **depois** da transacção, e
+      grava `PEDIDO_CRIADO` + `PEDIDO_ITEM` com o destino congelado, a distância e a taxa. **Desvio:** não ouve `COMMERCE_PEDIDO_RESERVADO` (o payload
+      não leva o id do pedido); engole os erros — nunca derruba o pedido.
+- [x] **Desvio:** o **desfecho** (`PEDIDO_CONCLUIDO`/`PEDIDO_CANCELADO`) não se emite em cada caminho — há seis; deriva-se do estado do pedido por um
+      varrimento de 10 em 10 minutos (`SincronizarProcuraTask`), que é também a rede de segurança da criação e o *backfill* dos pedidos desde a Fase 0.
+- [x] `POST /commerce/telemetria` (`@Public()`): lote de até 20 eventos, tipos em lista fechada, `sessaoId` UUID, termo até 80 caracteres, limite de
+      60 pedidos por minuto por IP; **desligado por omissão** (`TELEMETRIA_PROCURA_ACTIVA`).
+- [x] Frontend `telemetria.ts` (**desvio:** `fetch` com `keepalive` e não `sendBeacon` — o corpo é JSON com cabeçalho; `sessaoId` em `sessionStorage`; falha
+      silenciosa); ligado a pesquisa, produto, carrinho e checkout; **desligado por omissão** (`VITE_TELEMETRIA_PROCURA`).
+- [ ] Consentimento de personalização (ligar a navegação a uma pessoa) — **não feito**: exige a resposta à pergunta 1 e fica fora de âmbito até lá.
 
-##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]**
+##### Fase 4 — Painéis **[obrigatório a vista por empresa; macro opcional]** — ✅ feita em 2026-10-10 (Fase 39), a confirmar no browser
 
-- [ ] `GET /commerce/procura` (`VER_PROCURA_ONLINE`, **sempre** filtrado por `empresaId` do utilizador): produtos mais pedidos e
-      frequência (pedidos/semana), zonas e bairros que mais pedem, distância média de entrega, horas e dias de pico, ticket médio.
-- [ ] Página «Procura» na gestão, com loading, erro, vazio e sucesso.
-- [ ] `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`): a mesma visão **entre empresas**, com quebra por empresa e loja.
-- [ ] **[opcional]** tabela de agregados diários se as consultas ficarem lentas.
+- [x] `GET /procura-online` (**desvio:** não `/commerce/procura`) com `VER_PROCURA_ONLINE`, **sempre** filtrado pelo `empresaId` do token: produtos mais
+      pedidos e frequência (pedidos/semana), zonas e bairros que mais pedem, distância média de entrega, horas e dias de pico, ticket médio.
+- [x] Página «Procura online» na gestão, com carregamento, erro, vazio e sucesso (filtros: período e loja).
+- [x] `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`): a mesma visão **entre empresas**, com quebra por empresa e loja; página própria.
+- [ ] **[opcional]** tabela de agregados diários — **não feita**: com o volume actual as consultas directas chegam.
 
 ##### Fase 5 — Descoberta de lojas **[plano próprio]**
 

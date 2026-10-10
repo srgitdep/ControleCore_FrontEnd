@@ -1,0 +1,69 @@
+{
+  "titulo": "Procura online",
+  "subtitulo": "O que os clientes pedem nas suas lojas, de onde, a que horas e com que frequência.",
+  "erro": "Não foi possível carregar a procura online.",
+  "vazio": "Ainda não há pedidos online nos últimos {{dias}} dias. Quando houver, aparecem aqui os produtos mais pedidos, as zonas e as horas de pico.",
+  "filtro": {
+    "loja": "Loja",
+    "todas_lojas": "Todas as lojas",
+    "periodo": "Período",
+    "ultimos": "Últimos {{dias}} dias"
+  },
+  "kpi": {
+    "pedidos": "Pedidos",
+    "pedidos_nota": "{{concluidos}} concluídos · {{cancelados}} cancelados",
+    "valor": "Valor pedido",
+    "valor_nota": "Taxas de entrega: {{taxas}}",
+    "ticket": "Valor médio por pedido",
+    "entregas": "Entregas / levantamentos",
+    "entregas_nota": "Sem distância registada",
+    "distancia_nota": "Distância média {{km}} km"
+  },
+  "produtos": {
+    "titulo": "Produtos mais pedidos",
+    "vazio": "Sem produtos no período.",
+    "linha": "{{pedidos}} pedidos · {{unidades}} un. · {{frequencia}}/semana"
+  },
+  "zonas": {
+    "titulo": "Zonas que mais pedem (entregas)",
+    "vazio": "Sem entregas no período — as zonas vêm das moradas de entrega.",
+    "sem_nome": "Zona sem nome",
+    "linha": "{{pedidos}} pedidos · {{valor}}"
+  },
+  "horas": {
+    "titulo": "Pedidos por hora do dia",
+    "pedidos": "Pedidos",
+    "nota": "Hora de Maputo."
+  },
+  "dias": {
+    "titulo": "Pedidos por dia da semana"
+  },
+  "dia": {
+    "d0": "Dom",
+    "d1": "Seg",
+    "d2": "Ter",
+    "d3": "Qua",
+    "d4": "Qui",
+    "d5": "Sex",
+    "d6": "Sáb"
+  },
+  "lojas": {
+    "titulo": "Por loja"
+  },
+  "empresas": {
+    "titulo": "Por empresa"
+  },
+  "navegacao": {
+    "titulo": "Navegação (antes do pedido)",
+    "pesquisas": "Pesquisas",
+    "vistos": "Produtos vistos",
+    "carrinho": "Postos no carrinho",
+    "checkout": "Checkouts iniciados",
+    "termos": "O que mais se pesquisa",
+    "desligada": "Ainda sem dados de navegação: a recolha anónima está desligada até estar validado o enquadramento legal. Os pedidos acima são sempre registados."
+  },
+  "sistema": {
+    "titulo": "Procura online — toda a plataforma",
+    "subtitulo": "A visão entre empresas, com a quebra por empresa e por loja. Só para o Super Admin."
+  }
+}

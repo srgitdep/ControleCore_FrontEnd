@@ -6,6 +6,7 @@ import { formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useAlternarFavorito, useFavoritos } from '../hooks/useFavoritos';
+import { registarProcura } from '../telemetria';
 import { corDaCategoria } from '../utils/corCategoria';
 import type { ProdutoLoja } from '../api/catalogo.api';
 
@@ -41,6 +42,7 @@ export function ProdutoCartao({ produto, lojaId, lojaNome }: ProdutoCartaoProps)
       return;
     }
     toast.success(t('produto.adicionado', { nome: produto.nome }));
+    registarProcura({ tipo: 'CARRINHO_ADICIONADO', lojaId, produtoId: produto.id, quantidade: 1 });
   };
 
   const handleFavoritar = (e: React.MouseEvent) => {

@@ -19,6 +19,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'entregas' },
   { id: 'estafetas' },
   { id: 'acertos_estafeta' },
+  { id: 'procura_online' },
   { id: 'zonas_entrega' },
   { id: 'webhooks' },
 ] as const;
@@ -51,6 +52,10 @@ export const IGNORED_PERMISSIONS = [
   'write:estafetas',
   'delete:estafetas',
   'read:estafetas',
+  // Procura online (migração conta_cliente_unica_fase0): só `read` (VER_PROCURA_ONLINE).
+  'write:procura_online',
+  'delete:procura_online',
+  'manage:procura_online',
   'write:acertos_estafeta',
   'delete:acertos_estafeta',
   'read:acertos_estafeta',

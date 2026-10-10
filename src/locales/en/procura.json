@@ -1,0 +1,69 @@
+{
+  "titulo": "Online demand",
+  "subtitulo": "What customers order from your stores, from where, at what time and how often.",
+  "erro": "Could not load the online demand.",
+  "vazio": "No online orders in the last {{dias}} days yet. When there are, the most ordered products, areas and peak hours show up here.",
+  "filtro": {
+    "loja": "Store",
+    "todas_lojas": "All stores",
+    "periodo": "Period",
+    "ultimos": "Last {{dias}} days"
+  },
+  "kpi": {
+    "pedidos": "Orders",
+    "pedidos_nota": "{{concluidos}} completed · {{cancelados}} cancelled",
+    "valor": "Value ordered",
+    "valor_nota": "Delivery fees: {{taxas}}",
+    "ticket": "Average order value",
+    "entregas": "Deliveries / pick-ups",
+    "entregas_nota": "No distance recorded",
+    "distancia_nota": "Average distance {{km}} km"
+  },
+  "produtos": {
+    "titulo": "Most ordered products",
+    "vazio": "No products in the period.",
+    "linha": "{{pedidos}} orders · {{unidades}} units · {{frequencia}}/week"
+  },
+  "zonas": {
+    "titulo": "Areas that order most (deliveries)",
+    "vazio": "No deliveries in the period — areas come from delivery addresses.",
+    "sem_nome": "Unnamed area",
+    "linha": "{{pedidos}} orders · {{valor}}"
+  },
+  "horas": {
+    "titulo": "Orders by hour of the day",
+    "pedidos": "Orders",
+    "nota": "Maputo time."
+  },
+  "dias": {
+    "titulo": "Orders by day of the week"
+  },
+  "dia": {
+    "d0": "Sun",
+    "d1": "Mon",
+    "d2": "Tue",
+    "d3": "Wed",
+    "d4": "Thu",
+    "d5": "Fri",
+    "d6": "Sat"
+  },
+  "lojas": {
+    "titulo": "By store"
+  },
+  "empresas": {
+    "titulo": "By company"
+  },
+  "navegacao": {
+    "titulo": "Browsing (before the order)",
+    "pesquisas": "Searches",
+    "vistos": "Products viewed",
+    "carrinho": "Added to cart",
+    "checkout": "Checkouts started",
+    "termos": "Most searched",
+    "desligada": "No browsing data yet: anonymous collection is switched off until the legal framework is validated. The orders above are always recorded."
+  },
+  "sistema": {
+    "titulo": "Online demand — whole platform",
+    "subtitulo": "The cross-company view, broken down by company and store. Super Admin only."
+  }
+}
