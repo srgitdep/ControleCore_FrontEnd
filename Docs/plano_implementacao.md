@@ -1609,6 +1609,37 @@ esse merge trouxe.
   > compra numa empresa nova recusa** com «aceite a partilha de dados» (o frontend antigo não tem a caixa); a compra na empresa
   > de origem e a navegação não mudam. Fazer o deploy da Fase 2 logo a seguir. Quem tem sessão aberta continua com ela.
 
+### Fase 37 — Conta de cliente única, Fase 2: o frontend (9 Out 2026)
+
+- **2026-10-09 · [FE + BE] · Antonio Mambo** — `feat/conta-cliente-unica-fase2` (frontend) e `feat/conta-cliente-unica-fase1` (backend), plano §4.4
+  - feat(compra-facil): **o checkout pede a aceitação na primeira compra de cada empresa** — um cartão «A sua primeira compra
+    nesta loja» (diz que empresa passa a receber o nome, telefone e e-mail) com uma caixa que tem de estar marcada para confirmar.
+    Consulta `GET /commerce/conta/partilha/:lojaId` e envia `aceitaPartilhaDados: true`; depois de comprar, a cache é invalidada
+    para o aviso não voltar na compra seguinte
+  - **remove** o aviso âmbar «a sua conta pertence a outra empresa» da Fase 34 (o problema deixou de existir) e as suas chaves de tradução
+  - feat(compra-facil): «os meus pedidos» juntam as lojas de todas as empresas — cada pedido abre na **sua** loja e mostra o nome dela
+    quando não é a actual
+  - feat(compra-facil): a página de favoritos de uma loja mostra só o que se compra nela (`GET /commerce/favoritos?lojaId=`, backend
+    novo, devolve só os favoritos da empresa dessa loja); o coração dos cartões de produto continua a usar a lista completa
+  - Textos pt/en no namespace `loja`, com paridade
+
+  > **Porque o filtro dos favoritos.** A Fase 1 fez os favoritos de **todas** as lojas, mas o carrinho é por loja: um produto de outra
+  > empresa na página de favoritos de uma loja não se conseguia pôr no carrinho dali. Com `?lojaId=` cada loja mostra só o que
+  > vende; uma página «os meus favoritos» global fica para a Fase 5 (descoberta).
+  >
+  > **Entrar e registar não mudaram no frontend:** continuam a enviar o `lojaId` (o backend aceita-o e já não escolhe a empresa por ele); o
+  > comentário que dizia «a conta é da empresa» foi corrigido. As moradas já eram da conta no servidor.
+  >
+  > **Verificação.** Frontend: `tsc -b` limpo, 182 testes, lint sem avisos novos. Backend: `tsc` limpo, 2718 testes (os 2 novos cobrem o
+  > filtro de favoritos por loja). **O checkout não tem teste automático nem foi exercitado num browser por mim** (a criação do `Cliente`
+  > numa empresa nova gravaria na produção). Por verificar à mão: com uma conta de uma empresa, abrir o checkout de uma loja de **outra** —
+  > aparece o cartão de aceitação; o botão fica desactivado até marcar; o pedido cria-se; na compra seguinte o cartão já não aparece; e
+  > «os meus pedidos» mostra os dois.
+  >
+  > **Notas de deploy.** Sem migração e sem variáveis novas. **Enviar as Fases 36 e 37 juntas, backend primeiro:** o frontend novo precisa
+  > de `/commerce/conta/partilha/:lojaId` e do `aceitaPartilhaDados`. O frontend antigo contra o backend novo só falha na primeira compra
+  > numa empresa nova.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1884,8 +1915,9 @@ implementação vem **antes** de retomar o ensaio da entrega.
       pedidos» deixam de exigir a mesma empresa; login e registo globais. Remove o 403 da Fase 34. **Sem migração. Em teste:** a
       criação do `Cliente` numa empresa nova só se verifica com a Fase 2 (frontend). **Desvios:** sem relaxar `ContaCliente`; favoritos
       no `Cliente` de origem.
-- [ ] **Fase 2 — Frontend (conta única).** Comprar em qualquer loja com a mesma sessão; aviso de partilha de dados na
-      primeira compra de cada empresa; «lojas onde já comprei» de todas as empresas.
+- [x] **Fase 2 — Frontend (conta única).** Concluída em 2026-10-09 (Fase 37): comprar em qualquer loja com a mesma sessão; cartão de
+      aceitação da partilha de dados na primeira compra de cada empresa; «os meus pedidos» de todas as lojas; favoritos filtrados pela
+      loja. **Em teste:** falta confirmar à mão no browser (ver a Fase 37).
 - [ ] **Fase 3 — Registo da procura.** Cada pedido online fica registado, com o destino congelado; telemetria de
       navegação (pesquisa, produto visto, carrinho, checkout) anónima.
 - [ ] **Fase 4 — Painéis.** «Procura» por empresa (as suas lojas) e visão macro para o Super Admin.
@@ -3727,12 +3759,14 @@ e por bairro/cidade, nunca as coordenadas exactas, para a análise não identifi
 - [x] ~~Relaxar `ContaCliente.empresaId/clienteId`~~ — **cancelado**: a conta guarda a empresa e o `Cliente` «de origem», que servem às
       moradas e aos favoritos. Sem migração.
 
-##### Fase 2 — Frontend: conta única **[obrigatório]**
+##### Fase 2 — Frontend: conta única **[obrigatório]** — ✅ feita em 2026-10-09 (Fase 37), a confirmar no browser
 
-- [ ] Remover o aviso âmbar da Fase 34; o checkout deixa de depender de `lojaId` para a sessão.
-- [ ] Aviso de partilha + caixa de aceitação na primeira compra de cada empresa (pedir ao backend se já aceitou).
-- [ ] «Os meus pedidos», favoritos e «lojas onde comprei» juntam todas as lojas; moradas da conta.
-- [ ] Textos pt/en nos namespaces existentes (`loja`), com paridade.
+- [x] Remover o aviso âmbar da Fase 34. (O checkout nunca dependeu do `lojaId` para a sessão — só do carrinho.)
+- [x] Cartão de partilha + caixa de aceitação na primeira compra de cada empresa (consulta `GET /commerce/conta/partilha/:lojaId`).
+- [x] «Os meus pedidos» juntam todas as lojas e cada um abre na sua; favoritos filtrados pela loja (`?lojaId=`, acrescentado no backend);
+      moradas da conta (já eram, no servidor); «lojas onde comprei» já vinha de todas as empresas.
+- [x] Textos pt/en no namespace `loja`, com paridade.
+- [ ] «Os meus favoritos» global (todas as lojas) — **fica para a Fase 5** (descoberta).
 
 ##### Fase 3 — Registo da procura **[obrigatório para os pedidos; telemetria condicionada à pergunta 1]**
 

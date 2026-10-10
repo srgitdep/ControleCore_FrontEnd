@@ -1,23 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, Banknote, Check, Loader2, Smartphone } from 'lucide-react';
+import { Banknote, Check, Loader2, ShieldCheck, Smartphone } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCriarPedido } from '../hooks/usePedidosCommerce';
 import { useLojasCommerce } from '../hooks/useCatalogoCommerce';
 import { useCotacaoEntrega, useEnderecos } from '../hooks/useEntrega';
+import { usePartilhaDados } from '../hooks/usePartilhaDados';
 import { SeleccaoEntrega } from '../components/SeleccaoEntrega';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
 import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
-
-/** O código com que o servidor diz que a sessão é de outra empresa que a da loja (`contaDeOutraEmpresa` no backend). */
-const CONTA_DE_OUTRA_EMPRESA = 'commerce.conta_de_outra_empresa';
-
-const eContaDeOutraEmpresa = (erro: unknown) =>
-  (erro as { response?: { data?: { codigo?: string } } } | null)?.response?.data?.codigo === CONTA_DE_OUTRA_EMPRESA;
 
 const METODOS: MetodoPagamentoCommerce[] = ['NUMERARIO', 'MPESA', 'EMOLA'];
 
@@ -43,7 +38,7 @@ export function CheckoutPage() {
   const { lojaId } = useParams<{ lojaId: string }>();
   const navegar = useNavigate();
   const { itens, lojaId: lojaDoCarrinho, getSubtotal, limpar } = useCarrinhoStore();
-  const { autenticado, aCarregar, sair } = useContaClienteStore();
+  const { autenticado, aCarregar } = useContaClienteStore();
   const criarPedido = useCriarPedido();
   const { t } = useTranslation('loja');
 
@@ -69,10 +64,17 @@ export function CheckoutPage() {
   const subtotal = getSubtotal();
   const cotacao = useCotacaoEntrega(lojaId, aEntregar ? enderecoId : null, subtotal);
   const taxa = aEntregar && cotacao.data?.disponivel ? cotacao.data.taxa : 0;
-  const podeConfirmar = !aEntregar || (!!enderecoId && cotacao.data?.disponivel === true);
-  // O catálogo mostra lojas de todas as empresas, mas a conta é de uma só: quem entrou noutra empresa
-  // chega aqui com sessão válida e o servidor recusa. Fica um aviso com a saída, em vez de só um toast.
-  const contaAlheia = eContaDeOutraEmpresa(criarPedido.error) || eContaDeOutraEmpresa(cotacao.error);
+
+  // A conta é da pessoa e compra em qualquer loja. Na primeira compra numa empresa nova, a empresa
+  // passa a receber o nome, telefone e e-mail dela — por isso o checkout pede que aceite. Se a
+  // consulta falhar não bloqueia o botão: o servidor volta a exigir a aceitação e diz porquê.
+  const partilha = usePartilhaDados(lojaId);
+  const [aceitaPartilha, setAceitaPartilha] = useState(false);
+  const precisaAceitar = partilha.data?.necessaria === true;
+  const faltaAceitar = precisaAceitar && !aceitaPartilha;
+
+  const podeConfirmar =
+    (!aEntregar || (!!enderecoId && cotacao.data?.disponivel === true)) && !faltaAceitar && !partilha.isLoading;
 
   if (!lojaId) return null;
 
@@ -92,11 +94,6 @@ export function CheckoutPage() {
     return <Navigate to={`/loja/${lojaId}/carrinho`} replace />;
   }
 
-  const trocarDeConta = async () => {
-    await sair();
-    navegar(`/loja/${lojaId}/entrar`, { state: { de: `/loja/${lojaId}/checkout` } });
-  };
-
   const confirmar = () => {
     criarPedido.mutate(
       {
@@ -104,6 +101,7 @@ export function CheckoutPage() {
         itens: itens.map((i) => ({ produtoId: i.produtoId, quantidade: i.quantidade })),
         metodoPagamento,
         ...(aEntregar && enderecoId ? { tipoEntrega: 'ENTREGA' as const, enderecoId } : {}),
+        ...(precisaAceitar ? { aceitaPartilhaDados: true } : {}),
       },
       {
         onSuccess: (pedido) => {
@@ -124,22 +122,6 @@ export function CheckoutPage() {
         <VoltarLink to={`/loja/${lojaId}/carrinho`}>{t('navegacao.voltar_carrinho')}</VoltarLink>
 
         <h1 className="mb-6 text-2xl font-extrabold text-slate-900">{t('checkout.titulo')}</h1>
-
-        {contaAlheia && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4" role="alert">
-            <p className="flex items-start gap-2 text-sm text-amber-900">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-              {t('checkout.conta_alheia_aviso')}
-            </p>
-            <button
-              type="button"
-              onClick={() => void trocarDeConta()}
-              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
-            >
-              {t('checkout.conta_alheia_acao')}
-            </button>
-          </div>
-        )}
 
         <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
           <div className="space-y-6 lg:col-span-2">
@@ -221,6 +203,28 @@ export function CheckoutPage() {
                 {aEntregar ? t('checkout.nao_cobrado_agora_entrega') : t('checkout.nao_cobrado_agora')}
               </p>
             </div>
+
+            {/* Primeira compra nesta empresa: a loja passa a receber os dados da pessoa */}
+            {precisaAceitar && (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-5">
+                <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  <ShieldCheck size={16} className="text-blue-600" />
+                  {t('checkout.partilha_titulo')}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  {t('checkout.partilha_texto', { empresa: partilha.data?.empresaNome })}
+                </p>
+                <label className="mt-3 flex cursor-pointer items-start gap-2.5 text-sm font-medium text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={aceitaPartilha}
+                    onChange={(e) => setAceitaPartilha(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  />
+                  {t('checkout.partilha_aceito')}
+                </label>
+              </div>
+            )}
           </div>
 
           {/* Resumo do pedido — o mesmo cartão do carrinho, o passo seguinte do mesmo fluxo */}

@@ -450,7 +450,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `POST /commerce/pedidos`; 409 `commerce.partilha_dados_necessaria`; `GET /commerce/conta/partilha/:lojaId` diz se é preciso) —
     `ClienteDaEmpresaService`. Entrar procura o e-mail/telefone em **todas** as empresas (contas repetidas: vale a usada mais
     recentemente); registar recusa um e-mail com conta em qualquer empresa. Moradas, «os meus pedidos» e cancelar filtram pela
-    **conta**; favoritos ficam no `Cliente` de origem. `ContaCliente.empresaId/clienteId` são a empresa e o `Cliente` **de origem**.
+    **conta**; favoritos ficam no `Cliente` de origem e `GET /commerce/favoritos?lojaId=` filtra pela empresa da loja (a página de favoritos de uma loja mostra o que se compra nela). `ContaCliente.empresaId/clienteId` são a empresa e o `Cliente` **de origem**.
   - `JWT_ESTAFETA_SECRET` — estafeta (entrega ao domicílio). Declarado no
     `.env.example` desde a Fase 22, mas **nada o lê ainda**: o `estafeta-token.ts` chega na
     Fase 4. Pôr nos `fly secrets` antes do deploy que o passe a ler.

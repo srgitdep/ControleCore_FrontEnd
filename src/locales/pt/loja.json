@@ -113,8 +113,9 @@
     "nao_cobrado_agora_entrega": "Não é cobrado agora. Paga ao estafeta, quando receber o pedido.",
     "nao_cobrado_agora_curto_entrega": "Não é cobrado agora — paga na entrega.",
     "taxa_entrega": "Taxa de entrega",
-    "conta_alheia_aviso": "A sua conta pertence a outra empresa e não pode comprar nesta loja. Saia e entre (ou registe-se) com uma conta desta loja.",
-    "conta_alheia_acao": "Sair e entrar nesta loja"
+    "partilha_titulo": "A sua primeira compra nesta loja",
+    "partilha_texto": "Ao comprar, {{empresa}} passa a receber o seu nome, telefone e e-mail para preparar e entregar o pedido. Só a primeira vez é que pedimos esta confirmação.",
+    "partilha_aceito": "Aceito que esta loja receba os meus dados"
   },
   "pedidos": {
     "os_meus": "Os meus pedidos",

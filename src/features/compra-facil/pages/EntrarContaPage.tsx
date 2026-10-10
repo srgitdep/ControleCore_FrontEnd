@@ -11,8 +11,9 @@ import { VoltarLink } from '../components/VoltarLink';
 /**
  * A entrada na conta de cliente — ecrã próprio, molde de `EntrarPortalPage`.
  *
- * Sempre com `lojaId` na rota: a conta é da empresa, mas o cliente sempre chegou aqui
- * a partir de uma loja, e é para essa loja que volta depois de entrar.
+ * Sempre com `lojaId` na rota: a conta é da pessoa e vale em qualquer loja, mas o cliente chega aqui
+ * a partir de uma loja, e é para essa loja que volta depois de entrar. O `lojaId` já não escolhe a
+ * conta (procura-se em todas as empresas); só diz a que loja regressar.
  */
 export function EntrarContaPage() {
   const { lojaId } = useParams<{ lojaId: string }>();

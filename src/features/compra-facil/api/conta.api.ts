@@ -93,13 +93,24 @@ export const conta = {
     return data;
   },
 
+  /**
+   * A primeira compra nesta loja exige aceitar a partilha de dados? A conta é da pessoa e vale em
+   * qualquer loja; a empresa de cada loja só fica a conhecê-la quando ela compra lá pela primeira vez.
+   */
+  partilha: async (lojaId: string) => {
+    const { data } = await contaApi.get<{ necessaria: boolean; empresaNome: string }>(
+      `${BASE}/partilha/${lojaId}`,
+    );
+    return data;
+  },
+
   /** Grava a língua da loja e dos e-mails de pedido deste cliente. */
   definirIdioma: async (idioma: string) => {
     const { data } = await contaApi.patch<{ idioma: string }>(`${BASE}/eu/idioma`, { idioma });
     return data;
   },
 
-  /** As lojas onde esta conta já comprou — só as da mesma empresa desta sessão. */
+  /** As lojas onde esta conta já comprou, de todas as empresas. */
   lojasCompradas: async () => {
     const { data } = await contaApi.get<{ lojaId: string; lojaNome: string }[]>(
       `${BASE}/lojas-compradas`,

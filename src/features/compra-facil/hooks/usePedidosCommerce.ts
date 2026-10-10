@@ -37,9 +37,13 @@ export function useCriarPedido() {
       metodoPagamento: MetodoPagamentoCommerce;
       tipoEntrega?: TipoEntregaPedido;
       enderecoId?: string;
+      aceitaPartilhaDados?: boolean;
     }) => pedidos.criar(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'pedidos'] });
+      // Depois da primeira compra numa empresa já não se pede a aceitação: sem isto a cache ainda diria
+      // «é preciso» e o aviso voltava na compra seguinte.
+      void queryClient.invalidateQueries({ queryKey: [CHAVE, 'partilha'] });
     },
     onError: (erro) => toast.error(mensagemDeErro(erro, t('pedido.erro_criar'))),
   });

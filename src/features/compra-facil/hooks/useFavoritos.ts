@@ -8,17 +8,18 @@ import { favoritos } from '../api/favoritos.api';
 const CHAVE = 'loja';
 
 /**
- * A lista de favoritos do cliente autenticado.
+ * A lista de favoritos do cliente autenticado. Com `lojaId`, só os da empresa dessa loja (a página de
+ * favoritos de uma loja mostra o que se compra nela); sem ele, todos (o coração dos cartões de produto).
  *
  * Desligada sem sessão (`enabled`): um visitante sem conta não tem favoritos, e a
  * chamada daria 401 em cada cartão de produto do mercado.
  */
-export function useFavoritos() {
+export function useFavoritos(lojaId?: string) {
   const autenticado = useContaClienteStore((s) => s.autenticado);
 
   return useQuery({
-    queryKey: [CHAVE, 'favoritos'],
-    queryFn: () => favoritos.listar(),
+    queryKey: [CHAVE, 'favoritos', lojaId ?? 'todos'],
+    queryFn: () => favoritos.listar(lojaId),
     enabled: autenticado,
   });
 }

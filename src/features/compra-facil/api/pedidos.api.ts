@@ -36,6 +36,10 @@ export interface PedidoItem {
 export interface Pedido {
   id: string;
   numeroPedido: string;
+  /** A loja do pedido: os pedidos da conta vêm de todas as lojas e empresas. */
+  lojaId: string;
+  /** Só na lista «os meus pedidos». */
+  loja?: { id: string; nome: string };
   estado: EstadoPedido;
   metodoPagamento: string;
   subtotal: number;
@@ -59,6 +63,8 @@ export const pedidos = {
     metodoPagamento: MetodoPagamentoCommerce;
     tipoEntrega?: TipoEntregaPedido;
     enderecoId?: string;
+    /** Obrigatório (true) na primeira compra numa empresa: a pessoa aceitou partilhar os seus dados com ela. */
+    aceitaPartilhaDados?: boolean;
   }) => {
     const { data } = await contaApi.post<Pedido>(BASE, payload);
     return data;

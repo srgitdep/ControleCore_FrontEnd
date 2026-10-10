@@ -19,8 +19,11 @@ export interface ProdutoFavoritado {
 const BASE = '/commerce/favoritos';
 
 export const favoritos = {
-  listar: async () => {
-    const { data } = await contaApi.get<ProdutoFavoritado[]>(BASE);
+  /** Com `lojaId` só vêm os produtos da empresa dessa loja — o que se pode comprar nela. */
+  listar: async (lojaId?: string) => {
+    const { data } = await contaApi.get<ProdutoFavoritado[]>(BASE, {
+      params: lojaId ? { lojaId } : undefined,
+    });
     return data;
   },
 
