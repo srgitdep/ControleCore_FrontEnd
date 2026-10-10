@@ -1855,9 +1855,12 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [ ] **E-mails do sistema vão para o spam.** O envio é por uma conta Gmail normal ("ControlCore Support", `SMTP_USER`),
       sem domínio próprio. Afecta todos os e-mails (fornecedor, recuperação de senha, estafeta). Solução: domínio da
       empresa com **SPF e DKIM** ou um serviço de e-mail transaccional. Por decidir e planear.
-- [ ] **Fase 4 — O estafeta na rua.** Aplicação web (PWA) com login próprio:
-      aceitar, recolher, entregar, falhar. Atribuição automática por proximidade
-      é opcional e corta-se sob pressão de prazo.
+- [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (rascunho, a aguardar aprovação). Aplicação web (PWA): entrar com o
+      código `E####`, ver as suas entregas, recolher, iniciar rota, entregar (com a cobrança) e falhar. **Desvios ao plano 4.1:** sem o passo
+      «aceitar» e o login passa a ser o ecrã único (e não `/estafeta/entrar`). Atribuição automática e foto de prova ficam fora.
+  - [ ] **4A — Servidor.** `estafeta-token.ts`, guarda, 3.º ramo do login único, `GET/PATCH /estafeta/…`, posse da entrega, testes.
+  - [ ] **4B — A aplicação.** PWA (manifest, service worker, ícones), ecrãs do estafeta, ligação ao login.
+  - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
 - [ ] **Fase 5 — Rastreio ao vivo.** Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; mapa no detalhe do
       pedido, com recurso a consulta periódica quando não há WebSocket. Inclui o
@@ -2022,6 +2025,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
+| 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 4 |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -3916,6 +3920,203 @@ bairro, célula, distância e taxa; (d) editar a morada depois e confirmar que o
 só as lojas da empresa; o dashboard do sistema mostra todas; (f) `npm run build` e `npm test` nos dois repos.
 
 **Notas de deploy:** migração aditiva (branch `backup-` no Neon antes); backend primeiro; sem variáveis novas previstas.
+
+### 4.5 Entrega ao domicílio — Fase 4: a aplicação do estafeta
+
+- **Data:** 2026-10-10 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o §4.1:** detalha e **corrige** a Fase 4 desse plano com o que o código é hoje (a §4.1 foi escrita antes das Fases 22 a 30).
+
+#### 1. Objectivo
+
+Hoje o gestor marca tudo à mão: atribui, e depois clica «recolhida», «em rota» e «entregue» por conta do estafeta. A Fase 4 dá ao
+estafeta **a sua própria aplicação, no telemóvel**, para ver as entregas que lhe foram atribuídas e fazer ele próprio os passos — recolher,
+iniciar a rota, entregar (registando o que cobrou) e falhar (com o motivo). O gestor passa a ver o estado real em vez de o adivinhar.
+
+#### 2. O que existe hoje (verificado no código, 2026-10-10)
+
+| Facto | Onde | Consequência para a fase |
+| --- | --- | --- |
+| `OperarEntregaService` já aceita o autor `ESTAFETA` e grava-o no `EventoEntrega` e na auditoria | `entrega/application/services/operar-entrega.service.ts` | as acções do estafeta **reutilizam** este serviço — as regras são as mesmas |
+| Mas `transitar` procura a entrega só por `(id, empresaId)`: **não verifica de quem é** | idem, `transitar` | **ponto de segurança central:** um estafeta não pode operar a entrega de outro. Tem de entrar na condição do `updateMany` |
+| `Estafeta` tem `codigo` (único), `password` (hash), `estado`, `isActive`, `lojas`, `idioma`, `ultimoLoginEm` e já tem `ultimaLatitude/Longitude/PosicaoEm` | `prisma/schema.prisma` | **sem migração**; a posição é da Fase 5 |
+| O login único `POST /auth/entrar` resolve comprador **ou** fornecedor; o resto cai no comprador | `auth/application/use-cases/resolver-entrada.use-case.ts` | o código `E7827` dá «utilizador não existe» — foi o que o utilizador encontrou em 2026-10-08 |
+| O `LoginPage` já diz, para um `E####` falhado, que os estafetas ainda não têm aplicação | `features/auth/pages/LoginPage.tsx` | passa a **entrar**; a mensagem sai |
+| `JWT_ESTAFETA_SECRET` está no `.env.example` desde a Fase 22 e **nada o lê** | `.env.example` | o `estafeta-token.ts` lê-o e **lança sem ele** (como `cliente-token.ts`); o segredo tem de estar no Fly **antes** do deploy |
+| **Não existe nada de PWA**: sem `vite-plugin-pwa`, manifest, service worker nem ícones | `package.json`, `public/`, `index.html` | trabalho novo, **não estimado** no §4.1 |
+| Os estados da entrega são `AGUARDA_RECOLHA → ATRIBUIDA → RECOLHIDA → EM_ROTA → ENTREGUE` (e `FALHADA`): **não há «aceite»** | `entrega/domain/entrega-estado.ts` | a US-14 do §4.1 («aceitar, ou voltar à fila») **não cabe** sem mexer na máquina de estados |
+| O e-mail de boas-vindas do estafeta diz que **não há** ligação, porque a aplicação não existia | `EmailTemplates.getWelcomeEstafetaTemplate` | passa a levar a ligação |
+| A autenticação do cliente (`cliente-token.ts`, `ContaClienteGuard`, `@ContaCliente()`) é o molde: segredo, audience e cookie próprios, confirmação na BD a cada pedido | `commerce/infrastructure/auth/` | copia-se a estrutura |
+
+#### 3. Requisito interpretado
+
+O estafeta entra **no mesmo ecrã de entrada** que todos (código `E####` + a senha que recebeu por e-mail), ganha um cookie próprio de 12 h
+e cai numa aplicação de telemóvel com três ecrãs: **as minhas entregas**, **o detalhe de uma entrega** (morada com «abrir no mapa», telefone do
+cliente com «ligar», o que cobrar, e os botões do passo seguinte) e **o meu estado** (disponível / indisponível, sair). Tudo o que faz passa
+pelo `OperarEntregaService`. Diverge do literal do §4.1 em dois pontos, justificados nas decisões D1 e D2.
+
+##### Actores e permissões
+
+| Actor | O que pode |
+| --- | --- |
+| **Estafeta** | Só as **suas** entregas: ver, recolher, iniciar rota, entregar, falhar; mudar o seu estado; sair. Não atribui, não devolve, não vê as dos outros nem nada de gestão |
+| **Gestor** | Como hoje (atribuir, devolver, acertar). Desactivar um estafeta **tira-lhe o acesso no pedido seguinte** |
+
+O estafeta **não tem perfil nem permissões** do ControlCore: é uma identidade própria (D10 do §4.1), como o cliente e o fornecedor.
+
+##### Regras de negócio
+
+1. Um estafeta só opera entregas com `estafetaId` igual ao seu — **na própria condição da escrita**, para uma reatribuição pelo gestor a meio
+   não deixar o antigo estafeta marcar a entrega que já não é dele (409).
+2. As transições são as de sempre (`TRANSICOES`): entregar sem ter recolhido, por exemplo, é recusado com a mensagem do serviço.
+3. `entregar` pede o método de cobrança (e a referência em M-Pesa/e-Mola) e aceita um valor cobrado diferente do previsto — regista-se a diferença, não bloqueia.
+4. `falhar` exige um motivo da lista fechada (e nota com «outro»).
+5. Uma conta de estafeta **desactivada** deixa de entrar e perde a sessão aberta (o guarda confirma a BD a cada pedido).
+6. O código `E####` e a senha são os que o sistema já gera e envia por e-mail; **não há registo nem recuperação de senha** nesta fase (o gestor usa «Repor senha»).
+
+##### Fora de âmbito
+
+- **Aceitar ou recusar** uma atribuição e o regresso à fila por falta de resposta (US-14 do §4.1) — ver D2.
+- **Atribuição automática** por proximidade (US-16, já marcada opcional).
+- **Posição ao vivo e mapa de rastreio** (Fase 5), incluindo o canal WebSocket.
+- **Foto de prova** da entrega (US-15, opcional) — o bucket S3 existe, fica para depois.
+- **Fila offline** (acções feitas sem rede, enviadas depois) — ver riscos.
+- Webhooks e operadores externos (Fase 6).
+
+#### 4. Análise técnica
+
+##### Impacto
+
+| Camada | Criar | Alterar |
+| --- | --- | --- |
+| Dados | — (**sem migração**) | — |
+| Backend | `estafeta-token.ts`, `EstafetaGuard` + `@Estafeta()`/`GetEstafeta`; `AutenticarEstafetaUseCase`; `estafeta-app.controller.ts` (`/estafeta/…`); casos de uso das minhas entregas | `ResolverEntradaUseCase` (3.º ramo), `auth.controller.ts` (`entrar`, `eu`), `OperarEntregaService` (posse), `email.templates.ts`, `entrega.module.ts` |
+| Frontend | `features/estafeta-app/` (layout, ecrãs, store, API, hooks); manifest, ícones, service worker | `LoginPage.tsx` (ramo `ESTAFETA`, sai a mensagem do `E####`), `router/index.tsx`, `vite.config.ts`, `index.html`, locales |
+| Permissões | nenhuma (o estafeta não tem perfil) | — |
+| Configuração | `JWT_ESTAFETA_EXPIRES_IN`; **segredo no Fly** | `.env.example` |
+
+##### Decisões de arquitectura
+
+| # | Decisão | Alternativa descartada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Login único:** o `E####` entra em `POST /auth/entrar` (3.º ramo, `tipo: 'ESTAFETA'`) e o frontend reencaminha para `/estafeta` | `/estafeta/entrar` com telefone + senha (§4.1, US-13) | O que enviamos por e-mail é o **código**, não o telefone; o telefone só é único **por empresa**, o código é global. E o ecrã único já existe e é onde o estafeta tentou entrar. O ramo por **código** não é ambíguo: o identificador tem de existir na tabela `estafetas` |
+| **D2** | **Sem passo «aceitar»** (v1): o gestor atribui e o estafeta executa | Estado `ACEITE` + recusar + regresso à fila (US-14) | A máquina de estados não o tem e o gestor atribui directamente a quem está disponível; acrescentá-lo é uma migração e uma tarefa agendada por uma regra de negócio que ninguém pediu. Se na prática houver recusas, faz-se à parte |
+| **D3** | **Reutilizar `OperarEntregaService`** com `autor: ESTAFETA` e acrescentar a **posse** (`estafetaId`) à condição do `updateMany` | Duplicar a lógica nas rotas do estafeta | As duas vias têm de respeitar as mesmas regras; só a posse é nova, e tem de estar **na escrita**, não numa leitura antes dela (corrida com uma reatribuição) |
+| **D4** | **Token próprio:** `JWT_ESTAFETA_SECRET`, audience `controlcore-estafeta`, cookie `tokenEstafeta`, 12 h (um turno), sem renovação | Reaproveitar o do cliente ou o do funcionário | Mesma razão do `cliente-token.ts`: um token de estafeta nunca pode ser aceite por um guarda de funcionário. **Lança** se o segredo faltar |
+| **D5** | **Cookie *first-party*** pelo `/api/*` do Vercel (já é assim) | Token em `localStorage` ou cabeçalho | Safari/iOS bloqueia cookies de terceiros; é o que o CLAUDE.md manda. Aplica-se a uma PWA instalada |
+| **D6** | **PWA com `vite-plugin-pwa`** (nova dependência → TRD): manifest, ícones, *service worker* que guarda só o **casco** da aplicação e **nunca** `/api` | PWA escrita à mão; app nativa | Ecrã inicial, ecrã inteiro e abertura rápida sem loja de aplicações. Cachear a API serviria dados de entregas velhos — pior do que um aviso «sem ligação» |
+| **D7** | **Actualização por consulta de 30 s** (`refetchInterval`), como o painel do gestor | WebSocket já | O canal em tempo real é a Fase 5; antes disso, 30 s chega para ver uma entrega nova |
+| **D8** | O estafeta vê o **telefone** e o **valor a cobrar** do cliente; nunca o e-mail nem dados da conta | Esconder o telefone | Sem telefone não há como ligar ao cliente à porta; é o mínimo para entregar |
+
+##### Riscos e pontos sensíveis
+
+| Risco | Impacto | Mitigação |
+| --- | --- | --- |
+| Um estafeta opera ou **lê** a entrega de outro | **Alto** (dinheiro e dados do cliente) | Posse na condição da escrita (D3) e em **toda** a leitura (`WHERE estafetaId`); testes de isolamento entre dois estafetas e entre empresas |
+| Token de estafeta aceite por um guarda de funcionário (ou ao contrário) | **Alto** | Segredo, audience e cookie próprios; o guarda lê só o seu cookie; teste que prova a recusa cruzada |
+| Telemóvel perdido ou estafeta que sai da empresa | Alto | O guarda confirma `isActive` **a cada pedido**; desactivar corta o acesso de imediato; a senha reposta invalida a antiga |
+| Código `E####` igual a um código de funcionário | Médio | O ramo só dispara se o identificador **existe** em `estafetas`; se existir nas duas tabelas, a resposta já é «identificador ambíguo» |
+| Tentativas de adivinhar a senha | Médio | O limite de pedidos de `/auth/entrar` já existe; a senha tem 16 hexadecimais |
+| *Service worker* a servir uma versão velha da aplicação | Médio | `registerType: 'autoUpdate'`, `index.html` sem cache (já é assim no `vercel.json`), e o *worker* nunca guarda `/api` |
+| Sem rede na rua (cobertura em Maputo) | Médio | Aviso claro «sem ligação — a acção não foi enviada», nunca a falhar em silêncio; a fila offline é o que **não** se corta se houver prazo (ver §7) |
+| Cobrança registada errada (dinheiro) | Alto | Pede-se o método e, em M-Pesa/e-Mola, a referência; a diferença para o previsto regista-se e vai ao acerto do gestor (Fase 3) |
+
+#### 5. Plano de implementação
+
+##### 4A — Servidor **[obrigatório]**
+
+- [ ] `entrega/infrastructure/auth/estafeta-token.ts` (cópia estrutural de `commerce/infrastructure/auth/cliente-token.ts`: `COOKIE_ESTAFETA`, `AUDIENCE_ESTAFETA`,
+      `segredoEstafeta()` que lança, `validadeEstafeta()` = `JWT_ESTAFETA_EXPIRES_IN` ou 12 h) e `estafeta.guard.ts` (`EstafetaGuard`, `@Estafeta()`,
+      `@GetEstafeta()` → `{ estafetaId, empresaId, nome, codigo }`; confirma na BD que existe e está activo).
+- [ ] `AutenticarEstafetaUseCase`: procura por `codigo` (normalizado a maiúsculas), compara `bcrypt` em **tempo constante** (hash de referência quando
+      não existe), recusa inactivo com a **mesma** mensagem de credenciais inválidas, actualiza `ultimoLoginEm`, devolve o token e `{ nome, codigo, idioma }`.
+- [ ] `ResolverEntradaUseCase`: 3.º ramo — se o identificador existe em `estafetas` → `{ tipo: 'ESTAFETA', sessao }`; ambiguidade com `User`/fornecedor → a
+      resposta que já existe. `auth.controller.ts`: `entrar` põe o cookie `tokenEstafeta` (12 h, `httpOnly`, `sameSite: 'lax'`, `secure` em produção); `eu` e
+      `sair` cobrem o estafeta.
+- [ ] `OperarEntregaService`: quando o autor é `ESTAFETA`, a condição do `findFirst` **e** a do `updateMany` levam `estafetaId = autor.id`; sem isso, 404/409.
+- [ ] `estafeta-app.controller.ts` (`@Controller('estafeta')`, tudo `@Estafeta()`): rotas abaixo; casos de uso `ListarMinhasEntregasUseCase`,
+      `ObterMinhaEntregaUseCase` (só as do estafeta; o telefone do cliente e o valor a cobrar, nunca o e-mail), `DefinirEstadoEstafetaUseCase`.
+- [ ] `email.templates.ts`: o e-mail do estafeta ganha a ligação para `/estafeta` e deixa de dizer que «a aplicação ainda não existe» (pt/en).
+- [ ] `erros.json` pt/en para os códigos novos (paridade); `.env.example`: `JWT_ESTAFETA_SECRET` (obrigatório, o que acontece se faltar) e `JWT_ESTAFETA_EXPIRES_IN`.
+
+###### Endpoints
+
+| Método | Rota | Entrada | Resposta | Erros | Protecção |
+| --- | --- | --- | --- | --- | --- |
+| POST | `/auth/entrar` (existente) | `{ identificador, password }` | `{ tipo: 'ESTAFETA', utilizador }` + cookie | 401 | pública, com limite |
+| GET | `/estafeta/eu` | — | `{ nome, codigo, estado, idioma, lojas }` | 401 | `@Estafeta()` |
+| PATCH | `/estafeta/eu/estado` | `{ estado: 'DISPONIVEL' \| 'INDISPONIVEL' }` | `{ estado }` | 400, 401 | `@Estafeta()` |
+| POST | `/estafeta/sair` | — | `{ ok }` | — | `@Estafeta()` |
+| GET | `/estafeta/entregas` | `?historico=true` | as minhas, por estado (por fazer primeiro) | 401 | `@Estafeta()` |
+| GET | `/estafeta/entregas/:id` | — | detalhe | 404 (**também** se for de outro) | `@Estafeta()` |
+| PATCH | `/estafeta/entregas/:id/recolher` | — | `{ id, estado }` | 404, 409 | `@Estafeta()` |
+| PATCH | `/estafeta/entregas/:id/iniciar-rota` | — | idem | 404, 409 | `@Estafeta()` |
+| PATCH | `/estafeta/entregas/:id/entregar` | `EntregarDto` (existente) | idem | 400, 404, 409 | `@Estafeta()` |
+| PATCH | `/estafeta/entregas/:id/falhar` | `FalharEntregaDto` (existente) | idem | 400, 404, 409 | `@Estafeta()` |
+
+##### 4B — A aplicação **[obrigatório]**
+
+- [ ] `vite-plugin-pwa` (`registerType: 'autoUpdate'`, `navigateFallbackDenylist: [/^\/api/]`, **sem** cache de `/api`), `manifest` (nome, `display: 'standalone'`,
+      `start_url: '/estafeta'`, cor, ícones 192/512 e *maskable*), `<meta name="theme-color">` e `apple-touch-icon` em `index.html`.
+- [ ] `features/estafeta-app/`: `api/estafeta.api.ts` (instância **própria** de axios, como `contaApi` — nunca `api` do funcionário, que mandava para `/login` num 401),
+      `store/useEstafetaStore.ts` (sessão), `hooks/useMinhasEntregas.ts` (`refetchInterval: 30_000`), `components/EstafetaLayout.tsx` (guarda a sessão contra o servidor e
+      redirecciona para `/login`), `pages/MinhasEntregasPage.tsx`, `pages/EntregaPage.tsx`, `components/{AccaoEntrega,EntregarFolha,FalharFolha,EstadoDoEstafeta}.tsx`.
+- [ ] Telemóvel primeiro: uma mão, alvos de toque grandes, contraste alto, sem tabelas; **«Abrir no mapa»** (ligação `geo:`/Google Maps com as coordenadas do destino) e **«Ligar»** (`tel:`).
+- [ ] Os quatro estados em cada chamada: carregamento (esqueleto), erro (com «tentar de novo»), vazio («Sem entregas atribuídas») e sucesso; **sem ligação** tem aviso próprio e nunca finge que enviou.
+- [ ] `LoginPage.tsx`: o ramo `ESTAFETA` navega para `/estafeta`; sai a mensagem do `E####` (e a chave `login.estafeta_sem_aplicacao` de `auth.json`).
+- [ ] `router/index.tsx`: `/estafeta/*` **fora** do `ProtectedRoute` (como `/loja` e `/fornecedor`), com o `EstafetaLayout`.
+- [ ] Textos pt/en no namespace novo `estafeta` (língua do `Estafeta.idioma` ou do browser), tipados em `i18n/tipos.d.ts`, com paridade.
+
+##### 4C — Fecho **[obrigatório]**
+
+- [ ] **Teste num telemóvel real**, com um estafeta real: instalar no ecrã inicial, entrar com o código do e-mail, percorrer recolher → rota → entregar com numerário e com M-Pesa, e uma falhada.
+- [ ] Documentação: entrada na Secção 2, Fase 4 marcada na Secção 3, TRD (a dependência nova, o segredo, as rotas, o cookie), nos dois repositórios.
+
+#### 6. Ficheiros afectados
+
+| Repositório | Ficheiro | Acção |
+| --- | --- | --- |
+| BE | `src/modules/entrega/infrastructure/auth/{estafeta-token.ts,estafeta.guard.ts}` | criar |
+| BE | `src/modules/entrega/application/use-cases/{autenticar-estafeta,minhas-entregas}.use-case(s).ts` + specs | criar |
+| BE | `src/modules/entrega/estafeta-app.controller.ts`, `dto/` | criar |
+| BE | `src/modules/auth/application/use-cases/resolver-entrada.use-case.ts`, `auth.controller.ts`, `dto/entrar.dto.ts` | alterar |
+| BE | `src/modules/entrega/application/services/operar-entrega.service.ts` (+ spec), `entrega.module.ts` | alterar |
+| BE | `src/utils/email.templates.ts`, `src/i18n/{pt,en}/erros.json`, `.env.example` | alterar |
+| FE | `src/features/estafeta-app/**`, `src/locales/{pt,en}/estafeta.json` | criar |
+| FE | `vite.config.ts`, `index.html`, `public/` (ícones), `package.json` (`vite-plugin-pwa`) | alterar / criar |
+| FE | `src/features/auth/pages/LoginPage.tsx`, `src/router/index.tsx`, `src/i18n/tipos.d.ts`, `src/locales/{pt,en}/auth.json` | alterar |
+| Docs | `plano_implementacao.md` e `TRD.md` (os dois repositórios) | actualizar |
+
+#### 7. Assunções
+
+1. O estafeta entra **só pelo código** `E####` (o telefone não entra: é único por empresa, não globalmente).
+2. Uma só sessão por estafeta de cada vez **não** é imposta: um telemóvel perdido resolve-se desactivando ou repondo a senha.
+3. Não há renovação do token: ao fim de 12 h entra-se outra vez, no início do turno.
+4. O volume é pequeno (dezenas de estafetas): a consulta de 30 s e a lista sem paginação chegam.
+5. Os ícones e a cor da aplicação usam a identidade já existente do ControlCore (não há desenho novo).
+6. **A fila offline não se faz nesta fase.** Se houver prazo, é a primeira coisa a acrescentar (uma entrega marcada sem rede é o pior caso na rua).
+
+#### 8. Perguntas em aberto
+
+Nenhuma **bloqueia** o início; cada resposta muda pouco:
+
+1. **Aceitar/recusar atribuição (D2):** confirmas que a v1 não precisa? Se precisar, é uma migração (estado `ACEITE`) e um regresso à fila — +1 fase.
+2. **Foto de prova:** preferes **antes** do teste real (as disputas com clientes resolvem-se com ela) ou depois? É o bucket S3 que já existe; estimo ~2 dias.
+3. **Fila offline:** vale o risco de a deixar para depois, sabendo que sem rede o estafeta não consegue marcar a entrega?
+4. **O estafeta pode mudar o seu estado** (disponível/indisponível) ou só o gestor? Assumi que **ele** pode.
+
+#### 9. Ordem de execução e verificação
+
+1. **Antes de tudo:** criar o segredo no Fly (`fly secrets set JWT_ESTAFETA_SECRET=…`) — sem ele o backend **não arranca** a ler o módulo.
+2. **4A** (backend, branch própria, sem migração) → deploy → **4B** (frontend) → **4C** (teste real). Backend primeiro, como sempre.
+3. Cada subfase em branch própria, com plano em «Fase em curso» e documentos no mesmo commit.
+
+**Como verificar:** `npx tsc --noEmit` e `npx jest` (backend); `npx tsc -b`, `npx vitest run`, `npm run build` (frontend). Testes que **têm** de existir: um estafeta nunca lê nem opera a entrega de outro (nem de outra
+empresa); o token do estafeta é recusado por um guarda de funcionário e ao contrário; um estafeta desactivado perde a sessão; entregar sem recolher é recusado; uma reatribuição a meio não deixa o antigo estafeta marcar (409).
+Manual: o guião da fase 4C, num telemóvel.
+
+**Notas de deploy:** **sem migração.** Variável nova obrigatória no backend (`JWT_ESTAFETA_SECRET`) e opcional (`JWT_ESTAFETA_EXPIRES_IN`); dependência nova no frontend (`vite-plugin-pwa`). Backend primeiro.
+Os estafetas já criados mantêm o código e a senha; os que ainda não receberam o e-mail com a ligação usam «Repor senha».
 
 ---
 
