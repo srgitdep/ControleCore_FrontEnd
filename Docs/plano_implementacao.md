@@ -2060,6 +2060,13 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [x] **5B — Os ecrãs.** Concluída em 2026-10-11 (Fase 43): o estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
   - [x] **5C — Rota prevista e tempo estimado.** Escrita em 2026-10-11 (Fase 43) para o OpenRouteService e **desligada sem `ORS_API_KEY`**. Falta confirmar a cota/termos do plano gratuito e criar a chave.
   - [ ] **5D — Fecho.** Teste real, num telemóvel, de uma entrega seguida do outro lado; documentação.
+- [ ] **Notificações dentro da aplicação (cliente, gestão e estafeta).** Pedido do utilizador em 2026-10-11: tudo o que muda num pedido e numa
+      entrega — embalado, entregue ao estafeta, a caminho, **o estafeta chegou**, entregue, falhada — tem de aparecer **dentro** do ControlCore a quem está envolvido,
+      sem SMS nem WhatsApp. O cliente é quem mais precisa de saber. Plano detalhado em **§4.7** (rascunho, a aguardar aprovação). Substitui o ecrã de Webhooks, que sai do menu.
+  - [ ] **N1 — Servidor.** Tabela `notificacoes` (migração), serviço que cria e empurra por WebSocket, três pontos de leitura (um por tipo de utilizador), a operação «Cheguei».
+  - [ ] **N2 — Os ecrãs.** Sino com contador e lista no cabeçalho do cliente, da gestão e do estafeta; avisos em tempo real; «Cheguei» na aplicação do estafeta.
+  - [ ] **N3 — Retirar o ecrã de Webhooks** do menu e o «Delegar» do painel (o servidor dos webhooks fica adormecido).
+  - [ ] **N4 — Fecho.** Testes, documentação, teste real em telemóvel.
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
@@ -2221,6 +2228,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
 | 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Aprovado** — 4A e 4B feitas (Fases 40 e 41); falta o teste num telemóvel (4C) | Secção 3 → «Entrega ao domicílio» → Fase 4 |
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
+| 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações dentro da aplicação» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4489,6 +4497,109 @@ recusado no outro; só se aceita posição com entrega `EM_ROTA`; posições inv
 Manual: o guião da 5D.
 
 **Notas de deploy:** **sem migração.** O namespace é novo e **não** toca no raiz. `VITE_SOCKET_URL` já aponta para o Fly (os `rewrites` da Vercel não encaminham WebSockets). Backend primeiro. 5C acrescenta variáveis de ambiente e um segredo no Fly.
+
+---
+
+### 4.7 Notificações dentro da aplicação (cliente, gestão e estafeta)
+
+- **Data:** 2026-10-11 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Origem:** pedido do utilizador em 2026-10-11, ao ver o ecrã de Webhooks: «não precisa de uma secção dedicada a isso; qualquer agente envolvido numa transacção online — gestores, quem gere as entregas, o estafeta e, sobretudo, o cliente — tem de ser actualizado **dentro da aplicação** sobre o que está a acontecer, sem sair dela nem receber SMS ou WhatsApp. Embalado, entregue ao estafeta, a caminho, **o estafeta já chegou**: tudo notificado ali mesmo». O sistema é centralizado: não há aplicações externas.
+
+#### 1. O que existe hoje (verificado no código)
+
+| O quê | Estado |
+| --- | --- |
+| Cliente avisado de uma mudança do pedido | **Só por e-mail** (`NotificarClientePedidoService` → `EnviarMensagemUseCase`, canal EMAIL). Os e-mails do sistema vão para o spam (pendente na Secção 3). Dentro da aplicação, o cliente só vê o estado se abrir o pedido (com consulta ou canal em tempo real, Fases 42–43) |
+| Gestão | Um sino no cabeçalho (`Header.tsx`) que mostra **só alertas de reposição** (`useAlertas`). Não há aviso de pedido novo nem de mudança de entrega; o painel de entregas consulta de 30 em 30 s |
+| Estafeta | Lista que se refaz de 30 em 30 s. **Não há aviso** de entrega atribuída, reatribuída ou retirada |
+| Tabela de notificações | **Não existe** (`prisma/schema.prisma` não tem nenhuma) |
+| Canal em tempo real | Existe: namespace `/entregas` (Fase 42), com salas `empresa_<id>`, `estafeta_<id>`, `pedido_<id>`. O cliente só entra em `pedido_<id>` com `seguir` |
+| «O estafeta chegou» | **Não existe.** A entrega vai de `EM_ROTA` a `ENTREGUE`; nada marca a chegada |
+| Pontos onde o estado muda | `OperarEntregaService` (entrega, já emite `entrega.estado_mudou`), os casos de uso do pedido (já chamam `NotificarClientePedidoService`), `CriarPedidoUseCase` (pedido novo) |
+
+#### 2. Interpretação
+
+Um **centro de notificações** dentro do ControlCore, igual para os três tipos de utilizador: cada mudança relevante gera uma notificação **guardada** para quem deve saber, **empurrada em tempo real** se essa pessoa tiver a aplicação aberta, e **visível depois** num sino com contador e numa lista — para quem abre a aplicação mais tarde. O cliente é o destinatário prioritário. O texto não se guarda pronto: guarda-se o tipo e os parâmetros, e o ecrã traduz na língua de quem lê (pt/en).
+
+#### 3. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | Tabela própria `notificacoes`, **uma linha por destinatário** (utilizador, estafeta ou conta de cliente), com `tipo`, `parametros` (JSON), `pedidoId?`, `entregaId?`, `lidaEm?` | Reaproveitar `WebhookEnvio`; guardar a frase pronta | O estado «lida» é de cada pessoa; a frase pronta fixaria a língua de quem disparou, e o cliente pode ler noutra |
+| **D2** | O destinatário vem **sempre do token**, nunca de um parâmetro. Três pontos de leitura: `GET /notificacoes` (funcionário), `GET /commerce/conta/notificacoes` (cliente), `GET /estafeta/notificacoes` (estafeta), cada um com `/contagem` e `PATCH /:id/lida` + `/lidas` | Um só endpoint com `?destinatarioId=` | Um endpoint com o destinatário no pedido é uma fuga de dados esperando um erro |
+| **D3** | **Criar no mesmo sítio onde o estado já muda**: o `NotificarClientePedidoService` (cliente: confirmado, pronto, expedido, entregue, falhada, cancelado) e um ouvinte do evento interno `entrega.estado_mudou` (gestão, estafeta e os passos da rota do cliente). Depois de gravar, **melhor esforço**: uma falha de notificação nunca desfaz a transição (a regra que o serviço de e-mail já segue) | Gravar a notificação dentro da transacção | Um aviso perdido é aceitável; uma entrega que não fecha por causa de um aviso, não |
+| **D4** | **Empurrar por WebSocket** no `/entregas` já existente: o cliente entra automaticamente numa sala `conta_<id>` (o servidor deduz-a do token, o cliente não a escolhe), o funcionário em `utilizador_<id>`, o estafeta já tem `estafeta_<id>`. Evento `notificacao.nova` com o mínimo (id, tipo, parâmetros, instante, ids) | Consulta de 30 s; um canal novo | Reaproveita a autenticação, os tokens e o isolamento já testados; com o canal em baixo, o sino refaz-se por consulta |
+| **D5** | **Quem recebe o quê** — tabela na secção 4. A gestão recebe por **permissão** (`VER_ENTREGAS` para as entregas, `GERIR_PEDIDOS_COMMERCE` para os pedidos novos), da mesma empresa | Notificar toda a gente de tudo | Ruído: um caixa não precisa de saber de todas as entregas |
+| **D6** | **«O estafeta chegou»**: nova operação do estafeta `PATCH /estafeta/entregas/:id/cheguei` (só em `EM_ROTA`, condicional, idempotente), que grava `EntregaPedido.chegouEm` (migração aditiva) e gera a notificação ao cliente e à gestão. **Não** muda o estado da entrega (continua `EM_ROTA` até «Entreguei»). Aviso automático por proximidade fica **fora** desta fase | Detecção automática pelo GPS | Um GPS impreciso avisaria «chegou» a 300 m, ou nunca; o botão é fiável e o estafeta já está com o telemóvel na mão |
+| **D7** | O ecrã de **Webhooks sai do menu** e o botão «Delegar» sai do painel. O servidor dos webhooks (a caixa de saída, o envio e o endpoint de entrada) **fica adormecido**: sem subscrições, não grava nem envia nada | Apagar todo o código dos webhooks | Está testado e sem custo adormecido; apagá-lo é uma decisão separada (ver pergunta 1) |
+| **D8** | Retenção: as lidas apagam-se aos 30 dias e as não lidas aos 90, por tarefa diária | Guardar para sempre | A tabela cresce com cada mudança de cada entrega |
+
+#### 4. Quem é avisado de quê (proposta)
+
+| Acontece | Cliente | Gestão (por permissão) | Estafeta |
+| --- | --- | --- | --- |
+| Pedido criado | «Recebemos o seu pedido» | **Novo pedido** (`GERIR_PEDIDOS_COMMERCE`) | — |
+| Pedido confirmado / em preparação | «Confirmado» / «Está a ser preparado» | — | — |
+| Pedido **pronto** («embalado») | «O seu pedido está pronto» | — | — |
+| Entrega **atribuída** | «Já tem estafeta» (primeiro nome) | Atribuída a X | **Nova entrega para si** (morada e valor a cobrar) |
+| Entrega **reatribuída** | — | Reatribuída | **«Já não é sua»** ao antigo; «nova entrega» ao novo |
+| **Recolhida** («entregue ao estafeta») | «O estafeta recolheu o seu pedido» | Recolhida | — |
+| **Em rota** («a caminho») | «O estafeta está a caminho» (com ligação ao mapa) | Em rota | — |
+| **Cheguei** | **«O estafeta chegou»** | Chegou à morada | — |
+| **Entregue** | «Entregue. Obrigado!» | Entregue (com o valor cobrado) | — |
+| **Falhada** | «Não foi possível entregar» (motivo) | **Falhou** (motivo) | — |
+| Cancelado pela loja | «Cancelado» (motivo) | — | «Entrega cancelada» (se tinha) |
+
+#### 5. Plano de implementação
+
+##### N1 — Servidor **[obrigatório]**
+
+- [ ] **Migração aditiva** `notificacoes_na_aplicacao`: enum `DestinatarioNotificacao { FUNCIONARIO, ESTAFETA, CLIENTE }`; tabela `notificacoes` (`id`, `empresaId`, `destinatarioTipo`, `destinatarioId`, `tipo`, `parametros Json`, `pedidoId?`, `entregaId?`, `lidaEm?`, `createdAt`; índice `(destinatarioTipo, destinatarioId, lidaEm, createdAt)`); coluna `entregas_pedido.chegouEm` (nulável). Sem dados a migrar.
+- [ ] `NotificacaoService` (`criar(destinatarios, tipo, parametros, …)`, `listar`, `contar`, `marcarLida`, `marcarTodasLidas`): **sempre** com o destinatário vindo do chamador autenticado; `criar` agrupa num `createMany` e empurra `notificacao.nova` ao canal; nunca lança.
+- [ ] **Quem recebe (gestão):** consulta dos utilizadores da empresa com a permissão do evento (reaproveitar a resolução de permissões já usada pelo guarda).
+- [ ] **Cliente:** estender `NotificarClientePedidoService` para criar a notificação **além** do e-mail (mantém-se) e juntar os tipos que faltam (`em_preparacao`, `atribuida`, `recolhida`, `em_rota`, `chegou`). **Estafeta e gestão:** `@OnEvent('entrega.estado_mudou')` + o pedido novo.
+- [ ] `EntregasGateway`: o cliente entra em `conta_<id>` e o funcionário em `utilizador_<id>` **por dedução do token**; testes de que nenhum entra na sala de outro.
+- [ ] `PATCH /estafeta/entregas/:id/cheguei` → `OperarEntregaService.chegar` (condicional a `EM_ROTA` e `chegouEm IS NULL`, posse do estafeta, auditoria, repetir não duplica o aviso).
+- [ ] Os três pontos de leitura (D2), tarefa de retenção (D8), códigos de erro pt/en, testes.
+
+##### N2 — Os ecrãs **[obrigatório]**
+
+- [ ] **Componente partilhado** `SinoDeNotificacoes` (contador, lista, «marcar todas como lidas», cada linha leva ao pedido ou à entrega) em `src/shared/ui/`; os quatro estados (a carregar, erro, vazio, sucesso); pt/en; `aria-live` para o contador.
+- [ ] `useNotificacoes(tipo)`: lista e contagem por consulta, **mais o canal** `notificacao.nova` (invalida e mostra um aviso passageiro); sem canal, consulta a cada 30 s.
+- [ ] **Cliente:** sino no `LojaTopo` e página «As minhas notificações»; o aviso «O estafeta chegou» destacado. **Gestão:** o sino do `Header` passa a juntar os alertas de reposição e as notificações (separados por título). **Estafeta:** sino na `EstafetaLayout`, aviso de «nova entrega» e o botão grande **«Cheguei»** na entrega em rota.
+- [ ] Textos: um namespace `notificacoes` (pt/en) com uma frase por tipo e os seus parâmetros; teste de paridade já existente.
+
+##### N3 — Retirar o ecrã de Webhooks **[obrigatório]**
+
+- [ ] Sai a entrada do menu (`Sidebar`), a rota `/entregas/webhooks` e o «Delegar» do painel; o código do ecrã apaga-se do frontend (sem consumo, é código morto). O servidor fica como está (D7).
+
+##### N4 — Fecho **[obrigatório]**
+
+- [ ] Testes: isolamento (cada pessoa só lê as suas), a tabela da secção 4 caso a caso, melhor esforço (uma falha não desfaz a transição), «Cheguei» idempotente, retenção. `tsc`, `jest`, `vitest` e *builds*.
+- [ ] Documentação: Secção 2, esta secção, TRD (tabela, canal, salas, retenção), nos dois repositórios. **Teste real no telemóvel** com o cliente a ver cada passo.
+
+#### 6. Riscos
+
+| Risco | Gravidade | Mitigação |
+| --- | --- | --- |
+| **O estafeta só vê o aviso com a aplicação aberta** (é uma PWA; fechada, não há aviso nenhum) | **Alta para a operação** | Dito com todas as letras no ecrã. A solução real são notificações *push* do navegador (precisa de chaves VAPID e permissão do utilizador): proponho como **fase seguinte**, não nesta |
+| O cliente também só vê os avisos quando abre a loja | Média | O e-mail mantém-se como segundo canal |
+| Ruído para a gestão | Média | Por permissão (D5); sem preferências nesta fase |
+| Crescimento da tabela | Baixa | Retenção (D8) |
+| Fuga entre pessoas | Alta se falhar | Destinatário sempre do token; salas deduzidas; testes de isolamento |
+
+#### 7. Perguntas
+
+1. **O ecrã de Webhooks:** retiro só o ecrã e o «Delegar» e **deixo o servidor adormecido** (recomendo), ou **apago também o servidor** dos webhooks? Apagar é mais limpo mas perde-se código testado que pode servir a um operador externo no futuro.
+2. **Notificações *push*** (para o estafeta e o cliente verem o aviso com a aplicação fechada): deixo para uma fase própria depois desta (recomendo), ou queres já nesta?
+3. **«O estafeta chegou»** por botão (recomendo) — confirmas, ou queres também o aviso automático quando ele está a menos de ~100 m?
+4. **Os e-mails ao cliente** mantêm-se como estão enquanto não se resolver o spam — confirmas?
+
+#### 8. Ficheiros afectados (previsão)
+
+- **Backend:** `prisma/schema.prisma` + migração; `modules/notificacao/` (serviço, três controladores, tarefa, DTOs); `commerce/application/services/notificar-cliente-pedido.service.ts`; `entrega/application/services/operar-entrega.service.ts` (+ `chegar`); `entrega/infrastructure/socket/entregas.gateway.ts`; `entrega/estafeta-app.controller.ts`; `i18n/{pt,en}/{erros,notificacoes}.json`.
+- **Frontend:** `shared/ui/SinoDeNotificacoes.tsx`, `shared/hooks/useNotificacoes.ts`; `LojaTopo.tsx`, `Header.tsx`, `EstafetaLayout.tsx`, página de notificações do cliente; `estafeta-app` (botão «Cheguei»); retirada do ecrã de Webhooks (`Sidebar`, router, `entrega-gestao`); `locales/{pt,en}/notificacoes.json`.
 
 ---
 
