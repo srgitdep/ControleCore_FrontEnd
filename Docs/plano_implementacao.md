@@ -40,7 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-Nenhuma fase em curso.
+**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). A **5A (servidor)** está feita no backend (Fase 42); falta a **5B (ecrãs)** e a **5D (teste real)**. A **5C** (rota prevista e tempo estimado) aguarda a escolha do fornecedor. Quando a 5B e a 5D acabarem, este bloco apaga-se.
 
 ---
 
@@ -1781,6 +1781,30 @@ esse merge trouxe.
   > de um estafeta é por `/login` com o código do e-mail; quem já tinha o código recebeu um e-mail **sem** a ligação — usa «Repor senha» para o receber de novo, ou abre
   > `/estafeta` directamente.
 
+### Fase 42 — Entrega ao domicílio, Fase 5A: o servidor do rastreio ao vivo (11 Out 2026)
+
+- **2026-10-11 · [BE] · Antonio Mambo** — `feat/rastreio-fase5` (plano §4.6, subfase 5A; **sem migração**)
+  - feat(entrega): **canal `/entregas`** (`EntregasGateway`, namespace próprio — a raiz `EventsGateway` não se toca). Três tipos de ligação, cada um na sua sala: **funcionário** → `empresa_<id>`;
+    **estafeta** → `estafeta_<id>` (confirma-se na base que continua activo); **cliente** → **nenhuma** à entrada, só entra em `pedido_<id>` com `seguir`, e o servidor confirma que o pedido é da sua conta (máximo 20 seguidos)
+  - feat(entrega): **três tokens de socket** de 15 min, pedidos por REST (a Vercel não encaminha o cookie para o WebSocket): `GET /entregas/socket-token` (`VER_ENTREGAS`),
+    `GET /commerce/conta/socket-token` (conta de cliente), `GET /estafeta/socket-token` (estafeta). São assinados com um segredo **derivado** (`HMAC(segredo do tipo, 'entregas-socket:<tipo>')`) e
+    audience própria: um token de socket nunca serve de token do REST, nem o contrário. O cookie **não** é lido no WebSocket. Sem o segredo do tipo, não se emite
+  - feat(entrega): **posição do estafeta** (`posicao`): só é aceite com uma entrega `EM_ROTA`; o servidor valida (coordenadas dentro de Moçambique, precisão ≤ 100 m, ≥ 10 s desde a anterior, velocidade ≤ 150 km/h;
+    a anterior esquece-se após 10 min). Guarda **só a última** posição (`Estafeta.ultima*`, sem rasto). A loja recebe-a com o estafeta; o cliente **sem** o identificador dele
+  - feat(entrega): **`OperarEntregaService`** emite `entrega.estado_mudou` depois de gravar (o gateway difunde `entrega.estado` à loja, ao pedido e ao estafeta) e **apaga a última posição** quando o estafeta
+    deixa de ter entregas em rota. Falhas do socket ou da limpeza registam-se e nunca desfazem a entrega
+  - feat(commerce): `GET /commerce/pedidos/:id/entrega` — o que o cliente vê: estado, linha do tempo, destino, loja, **só o primeiro nome** do estafeta e, em rota e com menos de 2 min, a posição; senão `posicaoDesactualizada`
+  - i18n: `entrega.socket.token_invalido` e `entrega.socket.sem_empresa` (pt/en)
+
+  > **Não se faz nada ao Redis nem ao `fly.toml`.** As salas vivem na memória do processo, o que serve enquanto o Fly corre **uma** máquina. Com duas, um evento emitido numa máquina não chega aos sockets da
+  > outra: seria preciso o adaptador Redis do socket.io. Fica registado no TRD.
+  >
+  > **Verificação.** `tsc` limpo, `nest build` limpo, **2916 testes (206 suites)** (+75 face aos 2841 da Fase 41: a validação da posição, os tokens — incluindo forjar o tipo e trocar entre REST e socket —, o isolamento das salas,
+  > a posse do pedido, o que o cliente nunca recebe, a emissão do evento e a limpeza da posição). **Não liguei um cliente socket.io real**: o gateway testa-se com sockets simulados; a ligação ponta a ponta só
+  > se confirma com a 5B e o teste real (5D).
+  >
+  > **Notas de deploy.** Sem migração e **sem variável nova** (reutiliza `JWT_ACCESS_SECRET`, `JWT_CLIENTE_SECRET` e `JWT_ESTAFETA_SECRET`). Backend primeiro; nada muda para o utilizador até a 5B sair.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1925,10 +1949,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [x] **4B — A aplicação.** Concluída em 2026-10-10 (Fase 41): PWA só do estafeta (manifest, *service worker* de âmbito `/estafeta/`, ícones), ecrãs, ligação ao login.
         **Por enviar com a 4A, e por confirmar num telemóvel (4C).**
   - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
-- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (rascunho, a aguardar aprovação). Namespace WebSocket `/entregas` que aceita
+- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (aprovado em 2026-10-11; 5A feita). Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; o estafeta emite a posição **só em rota**; mapa para o cliente (no pedido) e para a loja (no painel),
       com recurso a consulta de 30 s quando não há WebSocket. A rota prevista e o tempo estimado ficam na **5C**, que depende de um fornecedor de rotas por decidir.
-  - [ ] **5A — Servidor.** `/entregas` (3 tokens de socket, salas), posição do estafeta validada, eventos de estado, endpoint do cliente, testes.
+  - [x] **5A — Servidor.** Concluída em 2026-10-11 (Fase 42): `/entregas` (3 tokens de socket, salas), posição do estafeta validada, eventos de estado, endpoint do cliente, testes.
   - [ ] **5B — Os ecrãs.** O estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
   - [ ] **5C — Rota prevista e tempo estimado.** `ServicoRotas` + fornecedor + cache. **Bloqueada pela escolha do fornecedor.**
   - [ ] **5D — Fecho.** Teste real, num telemóvel, de uma entrega seguida do outro lado; documentação.
@@ -2092,7 +2116,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
 | 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 4 |
-| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 5 |
+| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A feita, 5B em curso | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4187,7 +4211,7 @@ Os estafetas já criados mantêm o código e a senha; os que ainda não recebera
 
 ### 4.6 Entrega ao domicílio — Fase 5: o rastreio ao vivo
 
-- **Data:** 2026-10-11 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Data:** 2026-10-11 · **Estado:** **aprovado em 2026-10-11** — 5A feita (Fase 42); 5B em curso; 5C aguarda fornecedor
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o §4.1:** detalha e **corrige** a Fase 5 desse plano (US-17, US-18, US-19 e US-19b) com o que o código é hoje.
 
@@ -4284,14 +4308,16 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 
 ##### 5A — Servidor **[obrigatório]**
 
-- [ ] `entrega/domain/validar-posicao.ts` (puro, testado): coordenadas plausíveis, precisão, intervalo e velocidade implícita (Haversine, já existente em `distancia-haversine.ts`).
-- [ ] `entrega/infrastructure/socket/entregas-socket-token.ts`: os três tokens de socket (segredo do respectivo tipo, audience `…-socket`, 15 min) e a sua verificação; `EntregasGateway` (`@WebSocketGateway({ namespace: '/entregas' })`, **sem** tocar na raiz): no `handleConnection` extrai o token (`extrairTokenDoHandshake`, já existente), identifica o tipo,
+- [x] `entrega/domain/validar-posicao.ts` (puro, testado): coordenadas plausíveis, precisão, intervalo e velocidade implícita (Haversine, já existente em `distancia-haversine.ts`).
+- [x] `entrega/infrastructure/socket/entregas-socket-token.ts`: os três tokens de socket (segredo do respectivo tipo, audience `…-socket`, 15 min) e a sua verificação; `EntregasGateway` (`@WebSocketGateway({ namespace: '/entregas' })`, **sem** tocar na raiz): no `handleConnection` extrai o token (`extrairTokenDoHandshake`, já existente), identifica o tipo,
       e junta **só** à sala certa — funcionário → `empresa_<id>`; estafeta → `estafeta_<id>`; cliente → nenhuma até pedir `seguir` com um `pedidoId` cuja posse o servidor confirma → `pedido_<id>`.
-- [ ] `RegistarPosicaoUseCase`: (evento `posicao` do estafeta) confirma que o estafeta existe/está activo e tem uma entrega `EM_ROTA`; valida (D4); sobrescreve `ultimaLatitude/Longitude/PosicaoEm`; difunde `entrega.posicao` para `empresa_<id>` e para o `pedido_<id>` de cada entrega em rota desse estafeta.
-- [ ] `OperarEntregaService`: depois da transacção, emite o evento interno `entrega.estado_mudou` (`{ empresaId, entregaId, pedidoId, estado, estafetaId }`); o gateway ouve-o e difunde `entrega.estado` às mesmas salas; quando o estafeta fica sem entregas em rota, **apaga** a última posição (D9). Falhas engolidas e registadas — nunca desfazem a entrega.
-- [ ] Endpoints de token: `GET /entregas/socket-token` (`VER_ENTREGAS`), `GET /commerce/conta/socket-token` (`@ContaCliente()`), `GET /estafeta/socket-token` (`@Estafeta()`).
-- [ ] `GET /commerce/pedidos/:id/entrega` (`@ContaCliente()`, **só do próprio pedido**): estado em linguagem de cliente, linha do tempo (hora de cada passo), destino, loja, primeiro nome do estafeta, e — só se `EM_ROTA` e a posição for recente — a posição. Nunca o telefone, o código nem a lista de estafetas.
-- [ ] `erros.json` pt/en para os códigos novos; testes (secção 5.4). **Sem migração.**
+- [x] `RegistarPosicaoUseCase`: (evento `posicao` do estafeta) confirma que o estafeta existe/está activo e tem uma entrega `EM_ROTA`; valida (D4); sobrescreve `ultimaLatitude/Longitude/PosicaoEm`; difunde `entrega.posicao` para `empresa_<id>` e para o `pedido_<id>` de cada entrega em rota desse estafeta.
+- [x] `OperarEntregaService`: depois da transacção, emite o evento interno `entrega.estado_mudou` (`{ empresaId, entregaId, pedidoId, estado, estafetaId }`); o gateway ouve-o e difunde `entrega.estado` às mesmas salas; quando o estafeta fica sem entregas em rota, **apaga** a última posição (D9). Falhas engolidas e registadas — nunca desfazem a entrega.
+- [x] Endpoints de token: `GET /entregas/socket-token` (`VER_ENTREGAS`), `GET /commerce/conta/socket-token` (`@ContaCliente()`), `GET /estafeta/socket-token` (`@Estafeta()`).
+- [x] `GET /commerce/pedidos/:id/entrega` (`@ContaCliente()`, **só do próprio pedido**): estado em linguagem de cliente, linha do tempo (hora de cada passo), destino, loja, primeiro nome do estafeta, e — só se `EM_ROTA` e a posição for recente — a posição. Nunca o telefone, o código nem a lista de estafetas.
+- [x] `erros.json` pt/en para os códigos novos; testes (secção 5.4). **Sem migração.**
+
+> **Desvio.** O evento interno `entrega.estado_mudou` leva também `lojaId`, `estadoAnterior` (o gateway precisa dele para o painel da loja e a limpeza da posição precisa de saber se o estafeta saiu de `EM_ROTA`).
 
 ###### Eventos do socket
 

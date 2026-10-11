@@ -431,6 +431,14 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **WebSockets:** exigem endereço absoluto (`VITE_SOCKET_URL`) — os *rewrites* do
   Vercel não encaminham WebSockets. Deliberadamente diferente do REST, que sai
   por caminho relativo.
+- **Canal `/entregas` (rastreio ao vivo, Fase 42, 11/10/2026):** namespace socket.io próprio (`EntregasGateway`; a raiz `EventsGateway` fica intacta). A ligação usa um token de socket de
+  15 min pedido por REST (`GET /entregas/socket-token`, `GET /commerce/conta/socket-token`, `GET /estafeta/socket-token`), assinado com um segredo **derivado** de
+  `JWT_ACCESS_SECRET` / `JWT_CLIENTE_SECRET` / `JWT_ESTAFETA_SECRET` (`HMAC(segredo, 'entregas-socket:<tipo>')`) e audience `controlcore-entregas-socket`; o cookie não é lido. Salas:
+  `empresa_<id>` (funcionário), `estafeta_<id>`, `pedido_<id>` (cliente, só após `seguir` com verificação de posse). Eventos: `posicao` (estafeta→servidor), `seguir`
+  (cliente), `entrega.posicao` e `entrega.estado` (servidor→salas; o cliente nunca recebe o id do estafeta). A posição só é aceite com uma entrega `EM_ROTA` e é validada no servidor
+  (dentro de Moçambique, precisão ≤ 100 m, ≥ 10 s entre pontos, ≤ 150 km/h); guarda-se **só a última** (`Estafeta.ultima*`), apagada quando o estafeta deixa de ter entregas em rota.
+  `GET /commerce/pedidos/:id/entrega` dá ao cliente o estado, a linha do tempo e, com menos de 2 min, a posição. **Limite:** as salas estão em memória — com mais de uma máquina Fly seria
+  preciso o adaptador Redis do socket.io. Sem variável de ambiente nova.
 - **Variáveis `VITE_*`:** substituídas no build, não lidas em runtime — alterá-las
   exige novo deploy.
 - **Portas fixas:** `3100` (backend) e `5273` (frontend), por causa da lista
