@@ -1892,6 +1892,24 @@ esse merge trouxe.
   > ler metadados da cloud). Os webhooks só têm utilidade depois de um ADMIN criar uma subscrição; sem nenhuma, a caixa de saída não grava nada. O `rawBody: true` em `main.ts` é transversal (guarda o *buffer* de cada pedido
   > JSON), sem efeito nas outras rotas.
 
+### Fase 46 — Correcção: a «Saúde do stock» parava a API inteira (11 Out 2026)
+
+- **2026-10-11 · [BE] · Antonio Mambo** — `fix/saude-stock-cache-congelamento` (sem migração; o frontend só leva a cópia dos documentos)
+  - **O sintoma (relato do utilizador):** em PC e em telemóvel, o site «congelava» ao entrar na secção de Stock — sobretudo ao abrir «Saúde do stock» e «Produtos» — e depois de alguns cliques deixava de responder.
+  - **A causa:** cada chamada a `GET /stock/saude` e `/stock/saude/produtos` (`GetSaudeStockUseCase.carregar`) lia o **catálogo inteiro** com stocks, fazia um `GROUP BY` sobre **todo o histórico** de linhas de venda e de
+    recepções da empresa, e lia os lotes — tudo em memória, para depois paginar. O ecrã faz as duas chamadas **ao mesmo tempo** ao abrir, e **repetia a carga toda** a cada página, filtro ou cartão carregado. O servidor tem uma
+    CPU partilhada e um conjunto pequeno de ligações à base de dados: poucos cliques enchiam a fila e **todos** os pedidos da aplicação (não só os do stock) ficavam à espera — a aplicação inteira parecia parada.
+  - **A correcção:** o diagnóstico passa a ser **partilhado**: pedidos simultâneos esperam pela mesma carga (um só voo) e o resultado reaproveita-se durante **60 s**, por empresa e por conjunto de limiares. Paginar, filtrar por classe
+    e abrir o resumo já não tocam na base de dados. Uma falha **não** fica guardada. A chave leva a empresa (nunca cruza dados entre empresas); a cache tem teto de 50 entradas e limpeza oportunista.
+  - **Verificação.** `tsc` limpo; +8 testes (`get-saude-stock.cache.spec.ts`): resumo e lista em simultâneo fazem uma só carga, paginar e filtrar não voltam à base de dados, empresas diferentes não partilham, limiares diferentes
+    dão diagnósticos diferentes, expira ao fim de um minuto, uma falha não fica guardada e os pedidos que a partilham falham todos sem ficarem pendurados. Módulos de stock e da Mayra: 147 testes verdes. **Não medi o tempo
+    real em produção** (não tenho sessão iniciada nem dados da empresa do utilizador); o efeito esperado é a primeira abertura igual à de antes e tudo o resto instantâneo durante um minuto.
+  - **Por fazer / limites conhecidos.** (1) A **primeira** abertura de cada minuto continua a pagar a carga completa: o `GROUP BY` das vendas varre todo o histórico e `venda_itens` só tem índice por `empresaId`
+    (não por `vendaId`) — com histórico muito grande convém uma tabela de agregados ou um índice (migração, a decidir). (2) A cache é por máquina Fly; com uma só máquina (hoje) é exacta. (3) Os dados da saúde podem ter até 60 s
+    de atraso em relação a um movimento acabado de fazer; o ecrã já assumia 5 minutos (`staleTime`). (4) Não encontrei outra causa de bloqueio no frontend: uma sonda num Chrome real, com 30 cliques no site público, não
+    deu bloqueios nem erros; o ficheiro principal do frontend tem **3,7 MB** (4,7 s a abrir) e dividi-lo por rota é uma melhoria separada, ainda **não feita**.
+  - **Notas de deploy.** Backend apenas; sem variáveis nem migração.
+
 ---
 
 ## 3. Backlog — Por Fazer

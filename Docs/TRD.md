@@ -184,6 +184,12 @@ mesma análise) e a classificação de excepções de inventário
 (`AnalisarExcecaoMayraUseCase`). A voz chega por WebSocket, sem `Accept-Language` da
 aplicação — por isso lê sempre a preferência gravada na base de dados, nunca o cabeçalho.
 
+### 3.1 Saúde do stock — diagnóstico partilhado (Fase 46, 11/10/2026)
+
+`GET /stock/saude` e `/stock/saude/produtos` calculam o diagnóstico da empresa inteira em memória (catálogo com stocks, `GROUP BY` de todas as vendas e recepções, lotes). `GetSaudeStockUseCase` guarda esse diagnóstico
+**60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
+(hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
+
 ---
 
 ## 4. Base de dados
