@@ -19,6 +19,42 @@ describe('formatarLocal', () => {
     });
   });
 
+  it('🔴 sem `state` (caso da cidade de Maputo) a província vem do código ISO', () => {
+    const r = formatarLocal({
+      address: {
+        road: 'Av. Fernão de Magalhães',
+        neighbourhood: 'Central "C"',
+        city: 'Cidade de Maputo',
+        'ISO3166-2-lvl4': 'MZ-MPM',
+        country_code: 'mz',
+      },
+    });
+
+    // «Cidade de Maputo» já é a cidade: não se repete como província.
+    expect(r?.texto).toBe('Av. Fernão de Magalhães, Central "C", Cidade de Maputo');
+  });
+
+  it('a província do código acrescenta-se quando difere da cidade (Zimpeto → Maputo)', () => {
+    const r = formatarLocal({
+      address: { neighbourhood: 'Zimpeto', city: 'Cidade de Maputo', 'ISO3166-2-lvl4': 'MZ-L', country_code: 'mz' },
+    });
+
+    expect(r?.texto).toBe('Zimpeto, Cidade de Maputo, Maputo');
+  });
+
+  it('o que o serviço diz em `state` tem prioridade sobre a tabela', () => {
+    const r = formatarLocal({
+      address: { city: 'Beira', state: 'Sofala', 'ISO3166-2-lvl4': 'MZ-S', country_code: 'mz' },
+    });
+
+    expect(r?.texto).toBe('Beira, Sofala');
+  });
+
+  it('um código desconhecido ou de outro país não inventa província', () => {
+    expect(formatarLocal({ address: { city: 'X', 'ISO3166-2-lvl4': 'ZA-GP' } })?.texto).toBe('X');
+    expect(formatarLocal({ address: { city: 'X', 'ISO3166-2-lvl4': 'MZ-ZZ' } })?.texto).toBe('X');
+  });
+
   it('sem rua usa o que houver (bairro e cidade)', () => {
     const r = formatarLocal({ address: { neighbourhood: 'Sommerschield', city: 'Maputo', country_code: 'mz' } });
 

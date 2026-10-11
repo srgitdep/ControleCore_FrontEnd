@@ -1845,6 +1845,16 @@ esse merge trouxe.
   > **Notas de deploy.** Sem migração. **Backend primeiro** (5A+5C), frontend depois. Variáveis novas, ambas **opcionais**: `ORS_API_KEY` (sem ela não há tempo estimado, o resto funciona) e `ORS_BASE_URL`
   > (só para um servidor próprio). Para ligar o tempo estimado: criar a chave e `fly secrets set ORS_API_KEY=…`. As salas do canal estão em memória: serve com **uma** máquina Fly (ver Fase 42).
 
+### Fase 44 — Nome do local: a província que faltava (11 Out 2026)
+
+- **2026-10-11 · [FE] · Antonio Mambo** — `feat/nome-local-provincia` (sobre `feat/rastreio-fase5`; sem alterações ao backend)
+  - fix(mapa): o nome do local («Rua, Bairro, Cidade, Província») passa a obter a **província** do código ISO (`ISO3166-2-lvl4`, tabela das 11 províncias em `nomeDoLocal.ts`) quando o Nominatim não devolve
+    `state`. Só acrescenta; o que o serviço diz em `state` tem prioridade
+  - **Porquê.** Comparação de 10 pontos reais de Maputo (Nominatim, OpenRouteService e Google Geocoding): o **Nominatim acertou rua ou bairro em 10/10**, Google e OpenRouteService em 7/10; mas o Nominatim
+    trouxe a província em apenas 1 (na cidade de Maputo não devolve `state`, só o código). No Zimpeto — onde o Google do PiquetePro24 devolvia Plus Codes — o Nominatim dá o bairro. **Decisão: manter o Nominatim**
+    para nomes de local; Google não se adopta (pago, e mais fraco nestas zonas). A comparação foi um script pontual fora do repositório; o Google e o ORS **não** foram avaliados para rotas e tempo estimado.
+  - **Verificação.** `tsc -b` limpo; +4 testes em `nomeDoLocal.test.ts` (código ISO sem `state`, província diferente da cidade, `state` com prioridade, código desconhecido ou de outro país). Sem variável nova nem migração.
+
 ---
 
 ## 3. Backlog — Por Fazer

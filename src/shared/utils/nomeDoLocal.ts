@@ -28,6 +28,27 @@ interface RespostaNominatim {
 }
 
 /**
+ * As 11 províncias de Moçambique pelo código ISO 3166-2 que o Nominatim devolve em `ISO3166-2-lvl4`.
+ *
+ * Existe porque, na cidade de Maputo, o Nominatim traz o código mas **não** traz `state`: numa
+ * comparação com 10 pontos reais (11/10/2026) a província faltou em 9 deles. O código, esse,
+ * veio sempre. Sem esta tabela o texto ficava «Rua, Bairro, Cidade» sem província.
+ */
+const PROVINCIA_POR_CODIGO: Record<string, string> = {
+  'MZ-P': 'Cabo Delgado',
+  'MZ-A': 'Niassa',
+  'MZ-N': 'Nampula',
+  'MZ-Q': 'Zambézia',
+  'MZ-T': 'Tete',
+  'MZ-B': 'Manica',
+  'MZ-S': 'Sofala',
+  'MZ-I': 'Inhambane',
+  'MZ-G': 'Gaza',
+  'MZ-L': 'Maputo',
+  'MZ-MPM': 'Cidade de Maputo',
+};
+
+/**
  * Transforma a resposta do Nominatim em algo que se lê de relance: `Rua, Bairro, Cidade, Província`.
  * Devolve `null` quando o serviço não conhece o sítio (oceano, mato) — e não uma frase vazia.
  */
@@ -39,7 +60,8 @@ export function formatarLocal(resposta: RespostaNominatim): NomeDoLocal | null {
     a.road,
     a.suburb ?? a.neighbourhood ?? a.city_district,
     a.city ?? a.town ?? a.village ?? a.municipality,
-    a.state,
+    // O que o serviço diz tem prioridade (já vem na língua pedida); a tabela só cobre a falta.
+    a.state ?? PROVINCIA_POR_CODIGO[(a['ISO3166-2-lvl4'] ?? '').toUpperCase()],
   ].filter((p): p is string => !!p && p.trim() !== '');
 
   // Sem nenhum campo estruturado, os três primeiros pedaços do nome completo são o melhor que há.
