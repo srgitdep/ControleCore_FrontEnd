@@ -86,5 +86,18 @@
     "falhada": "Registado. Leve a mercadoria de volta à loja.",
     "erro_accao": "Não foi possível registar. Tente de novo.",
     "erro_estado": "Não foi possível mudar o estado."
+  },
+  "partilha": {
+    "consentimento_titulo": "Partilhar a sua posição",
+    "consentimento_texto": "Para o cliente e a loja verem onde vai, esta aplicação vai usar a localização do telemóvel.",
+    "consentimento_so_em_rota": "Só enquanto tiver uma entrega «a caminho». Fora disso, nada é lido.",
+    "consentimento_quem_ve": "Quem vê: a loja e o cliente da entrega em curso. O cliente só vê o seu primeiro nome.",
+    "consentimento_sem_historico": "Guardamos apenas a última posição, e apagamo-la quando a entrega acaba. Não há histórico de trajectos.",
+    "consentimento_aceitar": "Compreendo, partilhar a posição",
+    "sem_suporte": "Este telemóvel ou esta ligação não permite usar a localização. Abra a aplicação por HTTPS num navegador com localização.",
+    "negada": "A localização está bloqueada. Permita-a nas definições do navegador para esta aplicação — sem ela, o cliente não vê onde está.",
+    "a_partilhar": "A partilhar a sua posição com o cliente e a loja",
+    "sem_canal": "A tentar ligar para partilhar a posição…",
+    "manter_aberta": "Mantenha esta aplicação aberta e o ecrã ligado. Com o telemóvel bloqueado ou outra aplicação à frente, a posição deixa de ser enviada."
   }
 }

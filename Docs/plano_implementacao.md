@@ -40,7 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-Nenhuma fase em curso.
+**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). A **Fase 6 (webhooks)** também está feita (Fase 45). Tudo o que é entrega está num só ramo (`feat/rastreio-fase5`, nos dois repositórios), à espera do merge único; **não há mais código por escrever na entrega** — só a 5D e as decisões abaixo. Quando a 5D estiver feita, este bloco apaga-se.
 
 ---
 
@@ -1781,6 +1781,117 @@ esse merge trouxe.
   > de um estafeta é por `/login` com o código do e-mail; quem já tinha o código recebeu um e-mail **sem** a ligação — usa «Repor senha» para o receber de novo, ou abre
   > `/estafeta` directamente.
 
+### Fase 42 — Entrega ao domicílio, Fase 5A: o servidor do rastreio ao vivo (11 Out 2026)
+
+- **2026-10-11 · [BE] · Antonio Mambo** — `feat/rastreio-fase5` (plano §4.6, subfase 5A; **sem migração**)
+  - feat(entrega): **canal `/entregas`** (`EntregasGateway`, namespace próprio — a raiz `EventsGateway` não se toca). Três tipos de ligação, cada um na sua sala: **funcionário** → `empresa_<id>`;
+    **estafeta** → `estafeta_<id>` (confirma-se na base que continua activo); **cliente** → **nenhuma** à entrada, só entra em `pedido_<id>` com `seguir`, e o servidor confirma que o pedido é da sua conta (máximo 20 seguidos)
+  - feat(entrega): **três tokens de socket** de 15 min, pedidos por REST (a Vercel não encaminha o cookie para o WebSocket): `GET /entregas/socket-token` (`VER_ENTREGAS`),
+    `GET /commerce/conta/socket-token` (conta de cliente), `GET /estafeta/socket-token` (estafeta). São assinados com um segredo **derivado** (`HMAC(segredo do tipo, 'entregas-socket:<tipo>')`) e
+    audience própria: um token de socket nunca serve de token do REST, nem o contrário. O cookie **não** é lido no WebSocket. Sem o segredo do tipo, não se emite
+  - feat(entrega): **posição do estafeta** (`posicao`): só é aceite com uma entrega `EM_ROTA`; o servidor valida (coordenadas dentro de Moçambique, precisão ≤ 100 m, ≥ 2 s desde a anterior (era 10 s; ver a nota da Fase 43), velocidade ≤ 150 km/h;
+    a anterior esquece-se após 10 min). Guarda **só a última** posição (`Estafeta.ultima*`, sem rasto). A loja recebe-a com o estafeta; o cliente **sem** o identificador dele
+  - feat(entrega): **`OperarEntregaService`** emite `entrega.estado_mudou` depois de gravar (o gateway difunde `entrega.estado` à loja, ao pedido e ao estafeta) e **apaga a última posição** quando o estafeta
+    deixa de ter entregas em rota. Falhas do socket ou da limpeza registam-se e nunca desfazem a entrega
+  - feat(commerce): `GET /commerce/pedidos/:id/entrega` — o que o cliente vê: estado, linha do tempo, destino, loja, **só o primeiro nome** do estafeta e, em rota e com menos de 2 min, a posição; senão `posicaoDesactualizada`
+  - i18n: `entrega.socket.token_invalido` e `entrega.socket.sem_empresa` (pt/en)
+
+  > **Não se faz nada ao Redis nem ao `fly.toml`.** As salas vivem na memória do processo, o que serve enquanto o Fly corre **uma** máquina. Com duas, um evento emitido numa máquina não chega aos sockets da
+  > outra: seria preciso o adaptador Redis do socket.io. Fica registado no TRD.
+  >
+  > **Verificação.** `tsc` limpo, `nest build` limpo, **2916 testes (206 suites)** (+75 face aos 2841 da Fase 41: a validação da posição, os tokens — incluindo forjar o tipo e trocar entre REST e socket —, o isolamento das salas,
+  > a posse do pedido, o que o cliente nunca recebe, a emissão do evento e a limpeza da posição). **Não liguei um cliente socket.io real**: o gateway testa-se com sockets simulados; a ligação ponta a ponta só
+  > se confirma com a 5B e o teste real (5D).
+  >
+  > **Notas de deploy.** Sem migração e **sem variável nova** (reutiliza `JWT_ACCESS_SECRET`, `JWT_CLIENTE_SECRET` e `JWT_ESTAFETA_SECRET`). Backend primeiro; nada muda para o utilizador até a 5B sair.
+
+### Fase 43 — Entrega ao domicílio, Fases 5B e 5C: os ecrãs do rastreio e o tempo estimado (11 Out 2026)
+
+- **2026-10-11 · [BE+FE] · Antonio Mambo** — `feat/rastreio-fase5` nos dois repositórios (plano §4.6, subfases 5B e 5C; **sem migração**)
+  - feat(estafeta-app): **partilha da posição.** Com uma entrega «a caminho», a aplicação lê o GPS (`watchPosition`) e envia a posição pelo canal `/entregas` quando passaram 2,5 s **e** o estafeta se
+    moveu 5 m (parado, dá sinal de vida ao fim de 10 s; ver a nota abaixo). **Aviso permanente** no topo de todos os ecrãs («A partilhar a sua posição com o cliente e a loja») e **consentimento na primeira
+    vez**, com o que se lê, quem vê e o que se guarda. Pede ao navegador para não apagar o ecrã (*Wake Lock*, pedido de novo ao voltar à página) e **diz com todas as letras** que, com o telemóvel
+    bloqueado ou outra aplicação à frente, a posição deixa de ser enviada. Estados honestos: sem permissão, sem suporte (fora de HTTPS), sem canal. Fora de rota não se lê nada
+  - feat(compra-facil): **o cliente segue o pedido** (`PedidoDetalhePage`): mapa com o estafeta, o **rasto** (em memória), o destino e a loja, «{nome} está a caminho», a distância em linha recta, o
+    indicador **«Ao vivo» / «A actualizar a cada 2,5 s»** e, sem posição recente (> 2 min), o aviso «sem posição recente» **em vez de um pino parado**. O canal pede `seguir` a cada (re)ligação; sem canal a
+    entrega refaz-se de 2,5 em 2,5 s
+  - feat(entrega-gestao): **mapa dos estafetas em rota** no painel de entregas (só aparece com entregas `EM_ROTA`), com o nome de cada um; pontos com mais de 2 min ficam esbatidos. Uma mudança de estado
+    **refaz as colunas na hora** (antes esperava pela consulta de 30 s)
+  - feat(shared): `useCanalDeEntregas` (a ligação a `/entregas`, com o token pedido por REST **a cada reconexão** e nova tentativa se o servidor fechar), `shared/utils/rastreio.ts` (regras puras: quando
+    enviar, posição recente, rasto limitado a 300 pontos, distância) e `MapaEntrega` estendido (estafeta, rasto, rota prevista, vários estafetas) — **continua a ser o único ficheiro que conhece o Leaflet**
+  - feat(entrega) **[5C, BE]**: `ServicoRotas` (interface; devolve `null` quando não sabe) com o adaptador `OpenRouteServiceRotas`, e o `EstimativaEntregaService` que guarda o resultado em Redis **por entrega e
+    por célula de ~110 m, um minuto**. `GET /commerce/pedidos/:id/entrega` passa a devolver `previsao` (minutos, distância por estrada, caminho aligeirado a ≤ 120 pontos) — só com a posição fresca; o ecrã
+    mostra «Faltam cerca de N minutos» e o caminho tracejado em vez da linha recta
+  - **Sem serviço, sem número.** Sem `ORS_API_KEY`, com a cota esgotada, a rede em baixo ou uma resposta estranha, `previsao` é nulo e o cliente vê só a posição e a linha recta. A chave nunca vai para o browser
+  - i18n: namespaces `loja`, `estafeta` e `entrega` (pt/en) com a chave `rastreio` / `partilha`
+
+  > **Alteração a pedido do utilizador (11 Out 2026): de 30 s / 15 s para 2,5 s.** A actualização que o cliente via era de 15 s (o estafeta enviava de 15 em 15 s, o servidor recusava abaixo de 10 s) e, sem canal, de 30 s.
+  > Passou a: o estafeta envia a cada **2,5 s** se se moveu ≥ **5 m** (parado, sinal de vida a cada 10 s; antes 25 m e 1 min); o servidor aceita a partir de **2 s** (`INTERVALO_MINIMO_MS`), abaixo dos 2,5 s para
+  > não recusar por folga de relógios; o GPS pede leituras com `maximumAge` de 1 s; **sem canal, o cliente consulta a entrega a cada 2,5 s**. Custo assumido: ~24 envios/min por estafeta em rota (eram 4) e, sem
+  > canal, um pedido à base de dados a cada 2,5 s por cliente a olhar — aceitável para o volume actual, a rever se houver centenas de entregas em simultâneo. A rota por estrada continua a renovar-se de minuto a
+  > minuto (a cache da 5C) e o painel da loja continua a consultar as colunas de 30 s (a posição dos estafetas no mapa da loja só vem pelo canal; sem ele o mapa diz «sem tempo real»).
+  > Com 2,5 s, a recusa por velocidade impossível fica mais sensível a saltos do GPS (100 m em 2,5 s = 144 km/h): a posição saltada é ignorada e a seguinte, comparada com a última aceite, passa.
+  >
+  > **Desvios ao plano.** (1) O mapa da loja não pede a última posição por REST: mostra as que chegam pelo canal desde que o painel abriu (uma por estafeta, em ≤ 1 min) e diz «a aguardar posição» até lá —
+  > evita um endpoint novo só para o primeiro desenho. (2) O tempo estimado só é mostrado ao **cliente**; a loja vê posições, não estimativas (um só pedido ao fornecedor, partilhado, quando a loja o quiser). (3) A 5C
+  > ficou escrita para o OpenRouteService, a recomendação do plano, **e desligada**: a escolha do fornecedor continua a ser decisão do utilizador. A interface permite trocar sem tocar no resto.
+  >
+  > **Verificação.** Backend: `tsc` e `nest build` limpos, **2943 testes (209 suites)**. Frontend: `tsc -b` limpo, **215 testes** (+16 face aos 199 da Fase 41: as regras de envio, posição recente, rasto, distância), lint sem avisos novos,
+  > `vite build` limpo. **Ponta a ponta do canal:** num teste pontual (não commitado, porque depende do caminho do outro repositório) liguei o cliente `socket.io-client` **real** do frontend ao `EntregasGateway`
+  > **real** sobre um servidor Nest: a loja recebeu a posição **com** o estafeta, o cliente do pedido **sem** ele, o cliente de outro pedido e a loja de outra empresa **nada**, e um token inválido foi recusado.
+  > **Não** testei: os ecrãs num telemóvel, o GPS real, o *Wake Lock*, nem o OpenRouteService com uma chave verdadeira — o adaptador está testado contra respostas simuladas (formato `geojson` conforme a documentação
+  > pública do serviço, **não verificado contra o serviço**). A cota e os termos do plano gratuito **não foram confirmados**: confirmar antes de ligar em produção.
+  >
+  > **Notas de deploy.** Sem migração. **Backend primeiro** (5A+5C), frontend depois. Variáveis novas, ambas **opcionais**: `ORS_API_KEY` (sem ela não há tempo estimado, o resto funciona) e `ORS_BASE_URL`
+  > (só para um servidor próprio). Para ligar o tempo estimado: criar a chave e `fly secrets set ORS_API_KEY=…`. As salas do canal estão em memória: serve com **uma** máquina Fly (ver Fase 42).
+
+### Fase 44 — Nome do local: a província que faltava (11 Out 2026)
+
+- **2026-10-11 · [FE] · Antonio Mambo** — `feat/nome-local-provincia` (sobre `feat/rastreio-fase5`; sem alterações ao backend)
+  - fix(mapa): o nome do local («Rua, Bairro, Cidade, Província») passa a obter a **província** do código ISO (`ISO3166-2-lvl4`, tabela das 11 províncias em `nomeDoLocal.ts`) quando o Nominatim não devolve
+    `state`. Só acrescenta; o que o serviço diz em `state` tem prioridade
+  - **Porquê.** Comparação de 10 pontos reais de Maputo (Nominatim, OpenRouteService e Google Geocoding): o **Nominatim acertou rua ou bairro em 10/10**, Google e OpenRouteService em 7/10; mas o Nominatim
+    trouxe a província em apenas 1 (na cidade de Maputo não devolve `state`, só o código). No Zimpeto — onde o Google do PiquetePro24 devolvia Plus Codes — o Nominatim dá o bairro. **Decisão: manter o Nominatim**
+    para nomes de local; Google não se adopta (pago, e mais fraco nestas zonas). A comparação foi um script pontual fora do repositório; o Google e o ORS **não** foram avaliados para rotas e tempo estimado.
+  - **Verificação.** `tsc -b` limpo; +4 testes em `nomeDoLocal.test.ts` (código ISO sem `state`, província diferente da cidade, `state` com prioridade, código desconhecido ou de outro país). Sem variável nova nem migração.
+
+### Fase 45 — Entrega ao domicílio, Fase 6: webhooks de saída e de entrada (11 Out 2026)
+
+- **2026-10-11 · [BE+FE] · Antonio Mambo** — `feat/rastreio-fase5` nos dois repositórios (plano da Fase 6, aprovado em 2026-10-11; **sem migração**: as tabelas existem desde a Fase 22)
+  - feat(entrega): **webhooks de saída com caixa de saída (*outbox*).** Cada mudança de estado de uma entrega (`entrega.atribuida`, `.recolhida`, `.em_rota`, `.entregue`, `.falhada`, `.devolvida`) e a criação e o despacho
+    do pedido (`pedido.criado`, `pedido.expedido`) gravam uma linha por subscrição activa **na mesma transacção** da mudança: se esta desfaz, o aviso desfaz-se; se confirma, o aviso fica garantido. O payload leva
+    ids, número do pedido, estado, morada de entrega e valor a cobrar — **nunca** telefone, e-mail, posição ou senhas
+  - feat(entrega): **envio** (`EnviarWebhooksTask`, a cada minuto): reserva cada linha por update condicional atómico (duas máquinas não enviam o mesmo), `POST` assinado — `X-ControlCore-Evento`, `X-ControlCore-Id`,
+    `X-ControlCore-Assinatura: t=<s>,v1=HMAC-SHA256(segredo, "<t>.<corpo cru>")` —, tempo-limite 10 s, **sem seguir redirecções**; recuo 1 min · 5 · 15 · 60 · 6 h · 24 h e `DESISTIDO` à 7.ª falha (fica visível);
+    limpeza diária (enviados 30 dias, desistidos 90)
+  - feat(segurança): **defesa contra SSRF** em três camadas: (1) ao criar/editar, o URL tem de ser https, sem credenciais, e o nome não pode resolver para rede privada; (2) antes de cada envio o URL volta a validar-se; (3) o
+    `lookup` do socket valida o IP **no momento de ligar** (contra *DNS rebinding*), e um IP literal privado — incluindo IPv6 e `::ffff:` — é recusado antes de qualquer pedido. Um teste do enviador apanhou
+    que o Node **não chama o `lookup` para IP literal**; a verificação do literal foi acrescentada
+  - feat(entrega): **gestão** (`/webhooks/subscricoes`, `GERIR_WEBHOOKS`, só ADMIN): criar (segredo completo **uma só vez**), listar (mascarado), editar, activar, **rodar o segredo**, apagar, **«Enviar teste»** (envia já e devolve o
+    resultado), histórico de envios paginado e **reenviar**. Limite de 20 subscrições por empresa
+  - feat(entrega): **delegar a um operador externo** (`PATCH /entregas/:id/delegar`): é uma atribuição como outra (mesma transição, auditoria e evento), grava `operadorId` e tira o estafeta próprio; atribuir a um estafeta
+    tira a entrega ao operador. `GET /entregas/operadores` dá só id e nome a quem delega (que não é quem gere webhooks)
+  - feat(entrega): **webhook de entrada** (`POST /webhooks/entrega/:operadorId`, `@Public()` **deliberado**): assinatura sobre o **corpo cru** (`rawBody: true` em `main.ts`), `timingSafeEqual`, janela de ±5 min,
+    `202` antes de processar, idempotente por `eventoExternoId`. O operador só pode `recolhida`, `em_rota`, `entregue`, `falhada` — pelo **mesmo** `OperarEntregaService` (autor `OPERADOR`, mesmas regras, auditoria,
+    stock e rastreio) e só nas entregas que lhe foram delegadas; a empresa vem da subscrição, nunca do corpo. Operador desconhecido, desactivado ou assinatura errada dão o **mesmo 401**
+  - feat(frontend): ecrã **Webhooks** (`/entregas/webhooks`, só ADMIN): lista, criar/editar com os eventos em caixas, **segredo mostrado uma vez** (só o botão o fecha, não o clique fora nem o Esc), rodar segredo, testar com
+    o resultado na página, histórico de envios com estado/erro/«reenviar»; e **«Delegar»** no painel de entregas (só com operadores activos), com o operador no cartão. pt/en
+  - i18n (erros): 10 códigos novos pt/en
+
+  > **Desvios ao plano da Fase 6.** (1) `entrega.cancelada` sai da lista de eventos: uma entrega não se cancela (falha-se e devolve-se, `entrega.devolvida`) — não havia quem a emitisse. (2) O `pedido.criado` e o
+  > `pedido.expedido` também entram na mesma transacção do pedido, em `CriarPedidoUseCase` e `ExpedirPedidoUseCase`, o que exigiu um argumento novo nos seus construtores (e nos testes). (3) `EnviadorHttp` usa
+  > `http(s).request` com `lookup` próprio e **não** o `fetch`: o `fetch` não deixa validar o IP a que liga. (4) Acrescentei `GET /entregas/operadores`, que o plano não previa, para o painel poder delegar sem dar a quem
+  > delega acesso aos URLs e segredos.
+  >
+  > **Verificação.** Backend: `tsc` e `nest build` limpos, **3117 testes (217 suites)**, incluindo a compilação do `AppModule` completo. Os testes que pesam: assinatura (valores, adulteração, janela, tamanho errado),
+  > IPs privados (IPv4, IPv6, mapeado, metadados da cloud), o enviador contra um **servidor HTTP real** (recusa localhost por omissão, não segue 302, corta a resposta), o envio **ponta a ponta com um receptor que verifica a
+  > assinatura só a partir do que a documentação diz**, o endpoint de entrada **por HTTP a sério com `rawBody`** (sem assinatura, segredo errado e corpo adulterado dão 401; repetido dá 200) e a protecção dos controladores (só a
+  > rota de entrada é pública). Frontend: `tsc -b` limpo, **219 testes**, lint sem avisos novos, *build* limpo. **Não testei:** o ecrã num browser, nem um receptor de terceiros real — o ensaio foi com um receptor local.
+  >
+  > **Notas de deploy.** Sem migração. **Backend primeiro**, frontend depois. Variável nova **só para desenvolvimento**: `WEBHOOKS_PERMITIR_REDE_PRIVADA` — **nunca pôr a `true` em produção** (deixava um administrador fazer o servidor
+  > ler metadados da cloud). Os webhooks só têm utilidade depois de um ADMIN criar uma subscrição; sem nenhuma, a caixa de saída não grava nada. O `rawBody: true` em `main.ts` é transversal (guarda o *buffer* de cada pedido
+  > JSON), sem efeito nas outras rotas.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1878,11 +1989,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       `20261005100000_entrega_domicilio` (não destrutiva, ensaiada num branch do Neon),
       permissões ligadas a perfis na migração e no seed, `.env.example`. **Desvio:** os
       três estados novos de `EstadoPedido` ficam para a migração da Fase 2.
-- [ ] Coordenadas (`latitude`/`longitude`) das lojas piloto — as colunas existem desde a
-      Fase 22, mas nenhuma loja as tem preenchidas. **Bloqueia a activação**: sem elas (e sem
+- [x] Coordenadas (`latitude`/`longitude`) das lojas piloto — **feito para a SHOPRITE Central** (2026-10-09); as outras lojas preenchem-se à medida que aderem. As colunas existem desde a
+      Fase 22, mas nenhuma loja as tinha preenchidas. **Bloqueia a activação**: sem elas (e sem
       uma zona activa) a loja não oferece entrega no checkout.
-- [ ] `JWT_ESTAFETA_SECRET` nos `fly secrets` — só antes do deploy que o passe a ler
-      (Fase 4); já está no `.env.example`.
+- [x] `JWT_ESTAFETA_SECRET` nos `fly secrets` — **feito** (confirmado pelo utilizador em 2026-10-10, antes do deploy das Fases 40 e 41); já está no `.env.example`.
 - [x] **Fase 1 — O cliente escolhe entrega.** Concluída em 2026-10-06 (Fase 23): moradas
       do cliente, zonas por loja com taxa e prazo, cotação, e escolha entrega/levantamento no
       checkout com a taxa como linha própria. **Desvio:** corrigido o total do pedido na
@@ -1917,24 +2027,24 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [ ] **E-mails do sistema vão para o spam.** O envio é por uma conta Gmail normal ("ControlCore Support", `SMTP_USER`),
       sem domínio próprio. Afecta todos os e-mails (fornecedor, recuperação de senha, estafeta). Solução: domínio da
       empresa com **SPF e DKIM** ou um serviço de e-mail transaccional. Por decidir e planear.
-- [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (rascunho, a aguardar aprovação). Aplicação web (PWA): entrar com o
+- [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (aprovado em 2026-10-10; **4A e 4B feitas**, falta a 4C — o teste num telemóvel real). Aplicação web (PWA): entrar com o
       código `E####`, ver as suas entregas, recolher, iniciar rota, entregar (com a cobrança) e falhar. **Desvios ao plano 4.1:** sem o passo
       «aceitar» e o login passa a ser o ecrã único (e não `/estafeta/entrar`). Atribuição automática e foto de prova ficam fora.
   - [x] **4A — Servidor.** Concluída em 2026-10-10 (Fase 40): `estafeta-token.ts`, guarda, 3.º ramo do login único, `/estafeta/…`, posse da entrega, e-mail com a ligação,
         testes (incluindo o arranque da `AppModule`). **Por enviar junto com a 4B.**
   - [x] **4B — A aplicação.** Concluída em 2026-10-10 (Fase 41): PWA só do estafeta (manifest, *service worker* de âmbito `/estafeta/`, ícones), ecrãs, ligação ao login.
         **Por enviar com a 4A, e por confirmar num telemóvel (4C).**
-  - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
-- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (rascunho, a aguardar aprovação). Namespace WebSocket `/entregas` que aceita
+  - [ ] **4C — Fecho.** Documentação **feita** (Fase 41). **Por fazer, e é do utilizador:** o teste num telemóvel real (instalar no ecrã inicial, entrar com o código, percorrer os passos). O e-mail com a ligação à aplicação não saiu: o código chega por e-mail e a aplicação abre-se em `/estafeta`.
+- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (aprovado em 2026-10-11; 5A, 5B e 5C feitas — falta a 5D, o teste real). Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; o estafeta emite a posição **só em rota**; mapa para o cliente (no pedido) e para a loja (no painel),
       com recurso a consulta de 30 s quando não há WebSocket. A rota prevista e o tempo estimado ficam na **5C**, que depende de um fornecedor de rotas por decidir.
-  - [ ] **5A — Servidor.** `/entregas` (3 tokens de socket, salas), posição do estafeta validada, eventos de estado, endpoint do cliente, testes.
-  - [ ] **5B — Os ecrãs.** O estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
-  - [ ] **5C — Rota prevista e tempo estimado.** `ServicoRotas` + fornecedor + cache. **Bloqueada pela escolha do fornecedor.**
+  - [x] **5A — Servidor.** Concluída em 2026-10-11 (Fase 42): `/entregas` (3 tokens de socket, salas), posição do estafeta validada, eventos de estado, endpoint do cliente, testes.
+  - [x] **5B — Os ecrãs.** Concluída em 2026-10-11 (Fase 43): o estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
+  - [x] **5C — Rota prevista e tempo estimado.** Escrita em 2026-10-11 (Fase 43) para o OpenRouteService e **desligada sem `ORS_API_KEY`**. Falta confirmar a cota/termos do plano gratuito e criar a chave.
   - [ ] **5D — Fecho.** Teste real, num telemóvel, de uma entrega seguida do outro lado; documentação.
-- [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
-      exponencial) e entrada assinada e idempotente, para um operador de entregas
-      externo poder substituir a frota própria.
+- [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
+      exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
+      externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
 - [x] Ligar as permissões novas da entrega aos perfis de sistema `Gestor` e
       `Funcionário / Caixa` — feito em 2026-10-06 (Fase 22), na migração e no seed;
       `zonas_entrega` e `webhooks` só ADMIN. Texto original: **na migração e no `seed.ts`** — o seed apaga e recria
@@ -1944,8 +2054,8 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [x] Defeito pré-existente: `TransitarEstadoPedidoUseCase.transitar` lia o pedido e só
       depois o actualizava, sem update condicional atómico. Corrigido em 2026-10-07
       (Fase 27), com `updateMany` condicional ao estado e testes.
-- [ ] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
-      Fase 4 — **não existe hoje** e não está estimada no plano da entrega.
+- [x] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
+      Fase 4 — feita em 2026-10-10 (Fase 41; só a aplicação do estafeta é PWA). Texto original: **não existe hoje** e não está estimada no plano da entrega.
       Encontrado no planeamento multilíngue (2026-09-28).
 
 ### Multilínguas (internacionalização)
@@ -2087,12 +2197,12 @@ implementação vem **antes** de retomar o ensaio da entrega.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28), 2B (Fase 29) e 3 (Fase 30) concluídas; a seguir a Fase 4 (o estafeta na rua) | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | **Código completo** — Fases 0 a 6 feitas (Fases 22, 23, 28, 29, 30, 40, 41, 42, 43, 45); faltam só os testes em dispositivos reais (4C, 5D) e o ensaio na loja piloto | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
-| 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 4 |
-| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 5 |
+| 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Aprovado** — 4A e 4B feitas (Fases 40 e 41); falta o teste num telemóvel (4C) | Secção 3 → «Entrega ao domicílio» → Fase 4 |
+| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -2354,7 +2464,7 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       `EstadoEntregaPedido { AGUARDA_RECOLHA, ATRIBUIDA, RECOLHIDA, EM_ROTA, ENTREGUE,
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
-- [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**. **Adiado para a migração da Fase 2** (decisão de 2026-10-05): sem escritor antes disso seriam estados mortos.
+- [x] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**. **Adiado para a migração da Fase 2** (decisão de 2026-10-05): sem escritor antes disso seriam estados mortos. — **feito: Fase 28, na migração dos estados**
 - [x] **[já feito, fora desta migração]** `AGUARDA_CONFIRMACAO` e
       `AGUARDA_LEVANTAMENTO` — removidos em 2026-10-03 (Fase 21), antes desta
       funcionalidade ter código. Migração
@@ -2386,7 +2496,7 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       `acertos_estafeta` nas listas de `permissoesGestor`; `pedidos_commerce` e
       `entregas` na de `permissoesCaixa`. Sem isto, o seed desfaz a migração (R14).
 - [ ] **[opcional]** Seed de zonas de Maputo num script de desenvolvimento, não numa
-      migração.
+      migração. — **não feito**: as zonas criam-se no ecrã «Zonas de entrega».
 
 ##### 4.2 Backend
 
@@ -2398,11 +2508,11 @@ gestão, estafeta, moradas e zonas; `domain/` com funções puras; `application/
 
 ###### 4.2.1 Domínio — [obrigatório]
 
-- [ ] `distancia-haversine.ts` e `calcular-taxa.ts` — funções puras, testadas antes de
+- [x] `distancia-haversine.ts` e `calcular-taxa.ts` — funções puras, testadas antes de — **feito: Fase 23**
       existir controller (casos: sem coordenadas, sobreposição, fora de área, inactiva,
       abaixo do mínimo).
-- [ ] `entrega-estado.ts` — transições da `EntregaPedido`, escritas por extenso.
-- [ ] **`pedido-estado.ts`** (D12):
+- [x] `entrega-estado.ts` — transições da `EntregaPedido`, escritas por extenso. — **feito: Fase 29 (`TRANSICOES`)**
+- [x] **`pedido-estado.ts`** (D12): — **feito: Fase 28, em `commerce/domain/pedido-estado.ts`**
   - `ESTADOS_CANCELAVEIS_PELA_LOJA` / `lojaPodeCancelar`: `CRIADO`, `CONFIRMADO`,
     `EM_PREPARACAO`, `PRONTO`.
   - `ESTADOS_EM_ENTREGA`: `EXPEDIDO`, `EM_ROTA`.
@@ -2437,59 +2547,59 @@ CRIADO ─confirmar─→ CONFIRMADO ─iniciarPreparacao─→ EM_PREPARACAO �
 Cancelável: cliente até CONFIRMADO · loja até PRONTO · a partir de EXPEDIDO, só FALHADA → devolver.
 ```
 
-- [ ] **Extrair de `ConfirmarLevantamentoUseCase`** para um serviço partilhado:
+- [x] **Extrair de `ConfirmarLevantamentoUseCase`** para um serviço partilhado: — **feito: Fase 28, em `commerce/application/services/fecho-pedido.ts`**
       `itensFinais` (quantidades da conferência e substituições) e
       `recusarLojaDiferenteDaDoCaixa`. **Extrair, não copiar** — a regra da loja do
       caixa foi corrigida há dois dias e duas cópias voltariam a divergir.
-- [ ] `ExpedirPedidoUseCase` — por ordem: (1) loja do caixa = loja do pedido;
+- [x] `ExpedirPedidoUseCase` — por ordem: (1) loja do caixa = loja do pedido; — **feito: Fase 28**
       (2) `updateMany` condicional `PRONTO → EXPEDIDO`, `count === 1`; (3) reservas →
       `CONSUMIDA`; (4) `EntregaPedido` em `AGUARDA_RECOLHA` (R6); (5)
       `ProcessarVendaUseCase(..., 'ECOMMERCE')` com `taxaEntrega` e pagamento
       `A_COBRAR_NA_ENTREGA` (ou o método pré-pago, quando o gateway existir);
       (6) `RegistroFinanceiro` `RECEITA`/`PENDING`, `vendaId`, `clienteId` nulo;
       (7) `WebhookEnvio`; (8) notificação.
-- [ ] `AtribuirEstafetaUseCase`, `RegistarRecolhaUseCase`, `RegistarPosicaoUseCase`
+- [x] `AtribuirEstafetaUseCase`, `RegistarRecolhaUseCase`, `RegistarPosicaoUseCase` — **feito: as operações vivem em `OperarEntregaService` (Fase 29) e `RegistarPosicaoUseCase` (Fase 42); a `ExpirarAtribuicoesTask` **não** foi feita — a atribuição automática ficou fora do âmbito (§4.5)**
       (não grava evento — D6), `ExpirarAtribuicoesTask`.
-- [ ] `ConfirmarEntregaUseCase` — entrega `EM_ROTA → ENTREGUE`, pedido
+- [x] `ConfirmarEntregaUseCase` — entrega `EM_ROTA → ENTREGUE`, pedido — **feito: `OperarEntregaService.entregar` (Fase 29)**
       `EM_ROTA → CONCLUIDO`; regista `valorCobrado`, `metodoCobrado` e, se não for
       numerário, `referenciaPagamento`.
-- [ ] `RegistarFalhaEntregaUseCase` — `EM_ROTA → FALHADA`, motivo obrigatório.
-- [ ] `DevolverEntregaUseCase` (D11) — exige `MANAGER`+ (herdado da anulação). Por ordem:
+- [x] `RegistarFalhaEntregaUseCase` — `EM_ROTA → FALHADA`, motivo obrigatório. — **feito: `OperarEntregaService.falhar` (Fase 29)**
+- [x] `DevolverEntregaUseCase` (D11) — exige `MANAGER`+ (herdado da anulação). Por ordem: — **feito: Fase 29**
       (1) `AnularVendaUseCase` — a parte irreversível, com a sua própria guarda de
       concorrência (`updateMany … estado: CONCLUIDA`); (2) numa transacção:
       `EntregaPedido FALHADA → DEVOLVIDA` e `RegistroFinanceiro → CANCELLED`, ambos
       condicionais e por isso seguros de repetir se (2) falhar depois de (1).
-- [ ] `AcertarContasEstafetaUseCase` — só soma entregas com `metodoCobrado = NUMERARIO`
+- [x] `AcertarContasEstafetaUseCase` — só soma entregas com `metodoCobrado = NUMERARIO` — **feito: Fase 30**
       (M-Pesa/e-Mola não passam pelo bolso do estafeta); `AcertoEstafeta` +
       `MovimentoCaixa(REFORCO)` na sessão de quem recebe + `RegistroFinanceiro → PAID`.
       Diferença regista-se, não bloqueia.
 
 ###### 4.2.3 Alterações a código existente — [obrigatório]
 
-- [ ] **`CancelarPedidoGestaoUseCase`**: trocar `estaConcluido` por `lojaPodeCancelar`;
+- [x] **`CancelarPedidoGestaoUseCase`**: trocar `estaConcluido` por `lojaPodeCancelar`; — **feito: Fase 28**
       mensagem para `EXPEDIDO`/`EM_ROTA`/`FALHADA` a dizer o caminho certo (R12).
-- [ ] **`AnularVendaUseCase`**: recusar com `409` se o pedido associado estiver em
+- [x] **`AnularVendaUseCase`**: recusar com `409` se o pedido associado estiver em — **feito: Fase 28**
       `ESTADOS_EM_ENTREGA` (R11); aceitar sessão fechada quando o pedido associado é
       `tipoEntrega = ENTREGA` **e** `numerarioADevolver === 0` (R13). Os dois ajustes
       só disparam quando há pedido de entrega — o POS não muda.
-- [ ] **`anularVendaTransacional`**: a reversão do pedido passa de
+- [x] **`anularVendaTransacional`**: a reversão do pedido passa de — **feito: Fase 28**
       `estado: CONCLUIDO` para `estado: { in: [CONCLUIDO, FALHADA] }`.
-- [ ] **`ProcessarVendaUseCase` + `processar-venda.dto.ts`**: `A_COBRAR_NA_ENTREGA` em
+- [x] **`ProcessarVendaUseCase` + `processar-venda.dto.ts`**: `A_COBRAR_NA_ENTREGA` em — **feito: Fase 28**
       `MetodoPagamento`, aceite só com `canal = 'ECOMMERCE'` (R15), sem troco (tratar
       como o `CREDITO` já é tratado no cálculo do troco); `taxaEntrega?` fora de COGS.
       `PagamentoVenda.metodo` é texto — **não há migração** para o método.
-- [ ] **`CriarPedidoUseCase` + DTO**: `tipoEntrega`, `enderecoId`, taxa no `totalFinal`.
-- [ ] **`main.ts`**: `{ rawBody: true }` (R5).
+- [x] **`CriarPedidoUseCase` + DTO**: `tipoEntrega`, `enderecoId`, taxa no `totalFinal`. — **feito: Fase 23**
+- [x] **`main.ts`**: `{ rawBody: true }` (R5). — **feito: Fase 45 (webhook de entrada)**
 
 ###### 4.2.4 Autenticação do estafeta, webhooks e tempo real
 
 Sem alterações de fundo face à versão anterior:
 
-- [ ] **[obrigatório]** `estafeta-token.ts` — cópia estrutural de `cliente-token.ts`:
+- [x] **[obrigatório]** `estafeta-token.ts` — cópia estrutural de `cliente-token.ts`: — **feito: Fase 40**
       cookie `tokenEstafeta`, audience `controlcore-estafeta`, `segredoEstafeta()` que
       **lança** sem `JWT_ESTAFETA_SECRET`, validade 12 h. `EstafetaGuard` +
       `@Estafeta()`, com verificação em BD a cada pedido.
-- [ ] **[obrigatório na Fase 6]** **Webhooks de saída** — *outbox* na mesma transacção;
+- [x] **[obrigatório na Fase 6]** (feito na Fase 45) **Webhooks de saída** — *outbox* na mesma transacção;
       `EnviarWebhooksTask` a cada minuto; `POST` com `X-ControlCore-Evento`,
       `X-ControlCore-Id` (idempotência do lado de lá) e
       `X-ControlCore-Assinatura: t=<ts>,v1=HMAC-SHA256(segredo, "<ts>.<corpo cru>")`;
@@ -2497,12 +2607,12 @@ Sem alterações de fundo face à versão anterior:
       Eventos: `pedido.criado`, `pedido.expedido`, `entrega.atribuida`,
       `entrega.recolhida`, `entrega.em_rota`, `entrega.entregue`, `entrega.falhada`,
       `entrega.cancelada`.
-- [ ] **[obrigatório na Fase 6]** **Webhook de entrada** —
+- [x] **[obrigatório na Fase 6]** (feito na Fase 45) **Webhook de entrada** —
       `POST /webhooks/entrega/:operadorId`, `@Public()`; assinatura sobre o corpo cru
       com `crypto.timingSafeEqual`; desfasamento >5 min recusado; duplicado → `200`;
       responde `202` antes de processar; evento de outra empresa ou transição inválida é
       registado em `erro` e ignorado.
-- [ ] **[obrigatório]** `entrega.gateway.ts` — namespace `/entregas`, três segredos,
+- [x] **[obrigatório]** (feito na Fase 42, em `infrastructure/socket/entregas.gateway.ts`) `entrega.gateway.ts` — namespace `/entregas`, três segredos,
       três salas; nunca um cliente em `empresa_<id>` (R2).
 
 ###### Endpoints
@@ -2529,42 +2639,42 @@ Sem alterações de fundo face à versão anterior:
 
 ##### 4.3 Frontend
 
-- [ ] **[obrigatório]** **Checkout** — selector levantar/entregar, `SelectorMorada`,
+- [x] **[obrigatório]** **Checkout** — selector levantar/entregar, `SelectorMorada`, — **feito: Fase 23**
       cotação a cada mudança; taxa como linha própria antes do botão; fora de área →
       frase concreta e volta a levantamento. Estados: skeleton na linha da taxa, erro
       via `mensagemDeErro()`, sem morada, fora de área.
-- [ ] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no
+- [x] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no — **feito: Fase 23**
       mapa; geolocalização **escondida** fora de contexto seguro.
-- [ ] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`;
+- [x] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`; — **feito: Fases 42 e 43; sem WebSocket a consulta é de **2,5 s** (alterado a pedido, 11/10/2026)**
       namespace `/entregas`; sem WebSocket, consulta a cada 30 s. O mapa desenha o rasto
       das posições recebidas (só em memória) e o marcador da morada; mais a rota
       prevista até à morada e o tempo estimado (US-19b, ver Sprint 5), vindos do
       backend — o ecrã não fala com o fornecedor de rotas.
-- [ ] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e
+- [x] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e — **feito: Fase 23**
       `ETIQUETA_ESTADO_PEDIDO` com `EXPEDIDO` ("A caminho"), `EM_ROTA` ("O estafeta está a
       caminho"), `FALHADA` ("Não foi possível entregar"); sem os `AGUARDA_*` se a
       pergunta 4 decidir remover. `ETIQUETA_METODO_PAGAMENTO` hoje diz "no
       levantamento" — passa a depender de `tipoEntrega`.
-- [ ] **[obrigatório]** **PWA do estafeta** — `/estafeta/*` fora do `ProtectedRoute`
+- [x] **[obrigatório]** **PWA do estafeta** — `/estafeta/*` fora do `ProtectedRoute` — **feito: Fase 41; o envio da posição é de **2,5 s / 5 m** (alterado a pedido, 11/10/2026)**
       (como `/loja` e `/fornecedor`); telemóvel primeiro, uma mão, alvos grandes;
       `useEmitirPosicao` com *throttle* 15 s / 25 m. Fila offline **[opcional]**, mas o
       único que não cortaria.
-- [ ] **[obrigatório]** **Gestão** — `EntregasPage` (mapa + colunas por estado, socket);
+- [x] **[obrigatório]** **Gestão** — `EntregasPage` (mapa + colunas por estado, socket); — **feito: Fases 28, 29 e 30; o mapa dos estafetas é da Fase 43**
       "Despachar" em `PedidosCommercePage` para pedidos de entrega em `PRONTO`;
       `ZonasEntregaPage`, `EstafetasPage`, `AcertoEstafetaPage`. O botão "Cancelar" some
       a partir de `EXPEDIDO`; o de devolver só aparece em `FALHADA` e só a gestor.
-- [ ] **[obrigatório]** **`permissions.config.ts`** — `AVAILABLE_RESOURCES` +=
+- [x] **[obrigatório]** **`permissions.config.ts`** — `AVAILABLE_RESOURCES` += — **feito: Fase 22**
       `entregas`, `estafetas`, `acertos_estafeta`, `zonas_entrega`, `webhooks`;
       `IGNORED_PERMISSIONS` += `write:`/`delete:` de cada um (só existem `read`/`manage`,
       como em `pedidos_commerce`). Sem isto, perfis personalizados não conseguem receber
       as permissões novas — o editor de perfis não as mostra.
-- [ ] **[obrigatório]** **`useSocket.ts`** aceita namespace (hoje fixo na raiz).
-- [ ] **[obrigatório]** `MapaEntrega.tsx` único — a biblioteca de mapas (pergunta 1) não
+- [x] **[obrigatório]** **`useSocket.ts`** aceita namespace (hoje fixo na raiz). — **feito: feito num hook novo, `useCanalDeEntregas` (Fase 43); o `useSocket` da raiz ficou como estava**
+- [x] **[obrigatório]** `MapaEntrega.tsx` único — a biblioteca de mapas (pergunta 1) não — **feito: Fase 23; continua a ser o único ficheiro que conhece o Leaflet**
       se espalha por seis ficheiros.
 
 ##### 4.4 Transversal
 
-- [ ] **[obrigatório]** Testes backend, além dos da versão anterior
+- [x] **[obrigatório]** Testes backend, além dos da versão anterior — **feito: cada caso de uso e regra tem o seu `*.spec.ts`**
       (taxa, haversine, estados, expedição concorrente, confirmar entrega, acerto,
       assinatura de webhook):
   - `pedido-estado.spec.ts` — `lojaPodeCancelar` recusa `EXPEDIDO`/`EM_ROTA`/`FALHADA`;
@@ -2577,24 +2687,24 @@ Sem alterações de fundo face à versão anterior:
     não gera troco.
   - `expedir-pedido.use-case.spec.ts` — caixa de outra loja dá `400`; a gaveta não sobe.
   - `devolver-entrega.use-case.spec.ts` — repetir depois de falha parcial não duplica.
-- [ ] **[obrigatório]** Frontend: etiqueta para todo o `EstadoPedido` (falha se faltar).
-- [ ] **[obrigatório]** Auditoria em expedição, atribuição, entrega, falha, devolução e
+- [x] **[obrigatório]** Frontend: etiqueta para todo o `EstadoPedido` (falha se faltar). — **feito: garantido pelo compilador: `Record<EstadoPedido, …>` no `PedidoDetalhePage`**
+- [x] **[obrigatório]** Auditoria em expedição, atribuição, entrega, falha, devolução e — **feito: `AuditoriaEntregaService`**
       acerto (dinheiro e stock).
-- [ ] **[obrigatório]** `.env.example`: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`,
+- [x] **[obrigatório]** `.env.example`: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`, — **feito: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`, `ORS_API_KEY`, `ORS_BASE_URL` e `WEBHOOKS_PERMITIR_REDE_PRIVADA`. **Desvio:** `WEBHOOK_TIMEOUT_MS` e `WEBHOOK_MAX_TENTATIVAS` não existem — o tempo-limite (10 s) e as 7 tentativas são constantes no código, para não haver um valor que alguém afrouxe por engano**
       `WEBHOOK_TIMEOUT_MS`, `WEBHOOK_MAX_TENTATIVAS`, e do lado do frontend a variável do
       mapa — cada uma com o que acontece se faltar.
-- [ ] **[opcional]** Métricas no dashboard; ferramenta MAYRA `consultar_entregas_em_curso`.
+- [ ] **[opcional]** Métricas no dashboard; ferramenta MAYRA `consultar_entregas_em_curso`. — **não feito**.
 
 ##### 4.5 Documentação — [obrigatório]
 
 Pela regra do projecto: código → autorização do merge → documentação → merge.
 
-- [ ] `Docs/plano_implementacao.md` (duas cópias idênticas): Secção 2 por fase fechada;
+- [x] `Docs/plano_implementacao.md` (duas cópias idênticas): Secção 2 por fase fechada; — **feito: a cada fase**
       fechar na Secção 3 o item das permissões do commerce (resolvido aqui) e, conforme a
       pergunta 4, o dos `AGUARDA_*`.
-- [ ] `Docs/TRD.md` (duas cópias): fornecedor de mapas, variáveis novas, namespace
+- [x] `Docs/TRD.md` (duas cópias): fornecedor de mapas, variáveis novas, namespace — **feito: a cada fase**
       `/entregas`.
-- [ ] Esta secção (plano e backlog da equipa) actualizada a cada desvio, no commit
+- [x] Esta secção (plano e backlog da equipa) actualizada a cada desvio, no commit — **feito: a cada desvio**
       que o introduz.
 
 ---
@@ -3990,7 +4100,7 @@ só as lojas da empresa; o dashboard do sistema mostra todas; (f) `npm run build
 
 ### 4.5 Entrega ao domicílio — Fase 4: a aplicação do estafeta
 
-- **Data:** 2026-10-10 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Data:** 2026-10-10 · **Estado:** **aprovado em 2026-10-10** — 4A e 4B feitas (Fases 40 e 41); falta a 4C (teste num telemóvel real)
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o §4.1:** detalha e **corrige** a Fase 4 desse plano com o que o código é hoje (a §4.1 foi escrita antes das Fases 22 a 30).
 
@@ -4137,7 +4247,7 @@ O estafeta **não tem perfil nem permissões** do ControlCore: é uma identidade
 ##### 4C — Fecho **[obrigatório]**
 
 - [ ] **Teste num telemóvel real**, com um estafeta real: instalar no ecrã inicial, entrar com o código do e-mail, percorrer recolher → rota → entregar com numerário e com M-Pesa, e uma falhada.
-- [ ] Documentação: entrada na Secção 2, Fase 4 marcada na Secção 3, TRD (a dependência nova, o segredo, as rotas, o cookie), nos dois repositórios.
+- [x] Documentação: entrada na Secção 2, Fase 4 marcada na Secção 3, TRD (a dependência nova, o segredo, as rotas, o cookie), nos dois repositórios. — **feito** (Fase 41)
 
 #### 6. Ficheiros afectados
 
@@ -4187,7 +4297,7 @@ Os estafetas já criados mantêm o código e a senha; os que ainda não recebera
 
 ### 4.6 Entrega ao domicílio — Fase 5: o rastreio ao vivo
 
-- **Data:** 2026-10-11 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Data:** 2026-10-11 · **Estado:** **aprovado em 2026-10-11** — 5A, 5B e 5C feitas (Fases 42 e 43); falta a 5D (teste real)
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o §4.1:** detalha e **corrige** a Fase 5 desse plano (US-17, US-18, US-19 e US-19b) com o que o código é hoje.
 
@@ -4212,7 +4322,7 @@ Isto reduz as chamadas de «onde está o meu pedido?» e dá ao gestor a imagem 
 
 #### 3. Requisito interpretado
 
-O estafeta, **enquanto uma entrega sua está em rota**, envia a posição do telemóvel de 15 em 15 segundos (e só se andou mais de ~25 m). O servidor valida-a, guarda só a **última** (sobrescreve) e
+O estafeta, **enquanto uma entrega sua está em rota**, envia a posição do telemóvel de 2,5 em 2,5 segundos (e só se andou mais de ~5 m; parado, a cada 10 s) — ritmo alterado a pedido do utilizador em 11/10/2026, antes 15 s / 25 m. O servidor valida-a, guarda só a **última** (sobrescreve) e
 difunde-a por um namespace `/entregas` para **duas** audiências: a loja (todos os estafetas em rota da empresa) e o cliente (só o estafeta do **seu** pedido). Cada mudança de estado de uma entrega também
 se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada para consulta de 30 s. A rota prevista e o tempo estimado são uma subfase à parte (5C), porque dependem de um fornecedor externo por escolher.
 
@@ -4260,7 +4370,7 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 | **D1** | Namespace novo **`/entregas`**, com **três** tokens de socket pedidos por REST (funcionário: `GET /entregas/socket-token` com `VER_ENTREGAS`; cliente: `GET /commerce/conta/socket-token`; estafeta: `GET /estafeta/socket-token`), cada um assinado com o **seu** segredo e audience, 15 min | Alargar o namespace raiz; ou um token único | O raiz configura o Engine.IO para todos e é só do funcionário; um token único misturaria segredos que existem separados de propósito |
 | **D2** | A posição só existe em **`EM_ROTA`** | «Entre recolher e entregar» (§4.1, US-18) | É o que diz o enum; antes de sair da loja a posição não interessa ao cliente e é o estafeta ainda a recolher; e partilha-se menos do que o necessário (privacidade) |
 | **D3** | Guarda-se só a **última** posição (sobrescreve); **nada** de rasto na base de dados | Gravar o rasto (~2.900 linhas/dia/estafeta) | O valor de auditoria está nos eventos; um rasto gravado é dado pessoal sem uso. O rasto que o ecrã desenha vive só na memória do browser |
-| **D4** | O servidor **valida** cada posição: ≥ 10 s desde a anterior; latitude -27,5…-10 e longitude 30…41 (Moçambique, com folga); precisão ≤ 100 m; velocidade implícita ≤ 150 km/h; senão ignora | Confiar no telemóvel | Um telemóvel com GPS ruim (ou um cliente malicioso) não pode pôr o estafeta noutra província nem inundar o servidor |
+| **D4** | O servidor **valida** cada posição: ≥ 2 s desde a anterior (era 10 s, até ao envio de 2,5 em 2,5 s); latitude -27,5…-10 e longitude 30…41 (Moçambique, com folga); precisão ≤ 100 m; velocidade implícita ≤ 150 km/h; senão ignora | Confiar no telemóvel | Um telemóvel com GPS ruim (ou um cliente malicioso) não pode pôr o estafeta noutra província nem inundar o servidor |
 | **D5** | O evento de estado sai do `OperarEntregaService` como evento interno (`EventEmitter2`) e o gateway **ouve-o** | O gateway ser chamado pelo serviço | Mesmo princípio dos ouvintes de procura e de CRM: o serviço não depende do transporte, e uma falha do socket nunca desfaz uma entrega |
 | **D6** | **Rota prevista e tempo estimado** (5C) por um `ServicoRotas` atrás de uma interface, chamado **só pelo backend**, com cache e **sem número inventado** quando falha | Chamar o fornecedor do browser; mostrar uma estimativa a olho | A chave não vai para o cliente; cliente e loja partilham um só pedido ao fornecedor; sem serviço o ecrã diz que não sabe, em vez de mentir |
 | **D7** | A PWA mantém o ecrã **acordado** durante a rota (**Wake Lock**) e **avisa** que a posição só se envia com a aplicação aberta | Prometer rastreio em segundo plano | Os navegadores param a geolocalização com o ecrã apagado ou a aplicação em segundo plano; prometer o contrário seria falso. É a limitação honesta de uma PWA |
@@ -4284,14 +4394,16 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 
 ##### 5A — Servidor **[obrigatório]**
 
-- [ ] `entrega/domain/validar-posicao.ts` (puro, testado): coordenadas plausíveis, precisão, intervalo e velocidade implícita (Haversine, já existente em `distancia-haversine.ts`).
-- [ ] `entrega/infrastructure/socket/entregas-socket-token.ts`: os três tokens de socket (segredo do respectivo tipo, audience `…-socket`, 15 min) e a sua verificação; `EntregasGateway` (`@WebSocketGateway({ namespace: '/entregas' })`, **sem** tocar na raiz): no `handleConnection` extrai o token (`extrairTokenDoHandshake`, já existente), identifica o tipo,
+- [x] `entrega/domain/validar-posicao.ts` (puro, testado): coordenadas plausíveis, precisão, intervalo e velocidade implícita (Haversine, já existente em `distancia-haversine.ts`).
+- [x] `entrega/infrastructure/socket/entregas-socket-token.ts`: os três tokens de socket (segredo do respectivo tipo, audience `…-socket`, 15 min) e a sua verificação; `EntregasGateway` (`@WebSocketGateway({ namespace: '/entregas' })`, **sem** tocar na raiz): no `handleConnection` extrai o token (`extrairTokenDoHandshake`, já existente), identifica o tipo,
       e junta **só** à sala certa — funcionário → `empresa_<id>`; estafeta → `estafeta_<id>`; cliente → nenhuma até pedir `seguir` com um `pedidoId` cuja posse o servidor confirma → `pedido_<id>`.
-- [ ] `RegistarPosicaoUseCase`: (evento `posicao` do estafeta) confirma que o estafeta existe/está activo e tem uma entrega `EM_ROTA`; valida (D4); sobrescreve `ultimaLatitude/Longitude/PosicaoEm`; difunde `entrega.posicao` para `empresa_<id>` e para o `pedido_<id>` de cada entrega em rota desse estafeta.
-- [ ] `OperarEntregaService`: depois da transacção, emite o evento interno `entrega.estado_mudou` (`{ empresaId, entregaId, pedidoId, estado, estafetaId }`); o gateway ouve-o e difunde `entrega.estado` às mesmas salas; quando o estafeta fica sem entregas em rota, **apaga** a última posição (D9). Falhas engolidas e registadas — nunca desfazem a entrega.
-- [ ] Endpoints de token: `GET /entregas/socket-token` (`VER_ENTREGAS`), `GET /commerce/conta/socket-token` (`@ContaCliente()`), `GET /estafeta/socket-token` (`@Estafeta()`).
-- [ ] `GET /commerce/pedidos/:id/entrega` (`@ContaCliente()`, **só do próprio pedido**): estado em linguagem de cliente, linha do tempo (hora de cada passo), destino, loja, primeiro nome do estafeta, e — só se `EM_ROTA` e a posição for recente — a posição. Nunca o telefone, o código nem a lista de estafetas.
-- [ ] `erros.json` pt/en para os códigos novos; testes (secção 5.4). **Sem migração.**
+- [x] `RegistarPosicaoUseCase`: (evento `posicao` do estafeta) confirma que o estafeta existe/está activo e tem uma entrega `EM_ROTA`; valida (D4); sobrescreve `ultimaLatitude/Longitude/PosicaoEm`; difunde `entrega.posicao` para `empresa_<id>` e para o `pedido_<id>` de cada entrega em rota desse estafeta.
+- [x] `OperarEntregaService`: depois da transacção, emite o evento interno `entrega.estado_mudou` (`{ empresaId, entregaId, pedidoId, estado, estafetaId }`); o gateway ouve-o e difunde `entrega.estado` às mesmas salas; quando o estafeta fica sem entregas em rota, **apaga** a última posição (D9). Falhas engolidas e registadas — nunca desfazem a entrega.
+- [x] Endpoints de token: `GET /entregas/socket-token` (`VER_ENTREGAS`), `GET /commerce/conta/socket-token` (`@ContaCliente()`), `GET /estafeta/socket-token` (`@Estafeta()`).
+- [x] `GET /commerce/pedidos/:id/entrega` (`@ContaCliente()`, **só do próprio pedido**): estado em linguagem de cliente, linha do tempo (hora de cada passo), destino, loja, primeiro nome do estafeta, e — só se `EM_ROTA` e a posição for recente — a posição. Nunca o telefone, o código nem a lista de estafetas.
+- [x] `erros.json` pt/en para os códigos novos; testes (secção 5.4). **Sem migração.**
+
+> **Desvio.** O evento interno `entrega.estado_mudou` leva também `lojaId`, `estadoAnterior` (o gateway precisa dele para o painel da loja e a limpeza da posição precisa de saber se o estafeta saiu de `EM_ROTA`).
 
 ###### Eventos do socket
 
@@ -4302,25 +4414,25 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 | `entrega.posicao` | servidor → salas | loja, cliente | `{ entregaId, pedidoId, estafetaId, latitude, longitude, em }` (o cliente não recebe `estafetaId`) |
 | `entrega.estado` | servidor → salas | loja, cliente, estafeta | `{ entregaId, pedidoId, estado }` |
 
-##### 5B — Os ecrãs **[obrigatório]**
+##### 5B — Os ecrãs **[obrigatório]** — ✅ feita em 2026-10-11 (Fase 43), por confirmar num telemóvel
 
-- [ ] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 30 s** se o socket falhar, e indicador de «ao vivo» / «actualiza a cada 30 s».
-- [ ] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 15 s / 25 m, **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
-- [ ] **Cliente:** no `PedidoDetalhePage`, o mapa da entrega em rota (estafeta, destino, loja, **rasto desenhado na memória**) e a linha do tempo em linguagem de cliente («O estafeta está a caminho»); «sem posição recente» quando for o caso.
-- [ ] **Loja:** no painel de entregas, o mapa com os estafetas em rota, a actualizar pelo socket.
-- [ ] `MapaEntrega.tsx` estende-se (rasto, marcador do estafeta, destino, linha recta e distância) — **continua a ser o único ficheiro que conhece o Leaflet**.
-- [ ] Textos pt/en; estados de carregamento, erro, vazio e sem-posição em cada ecrã.
+- [x] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 2,5 s** se o socket falhar (era 30 s), e indicador de «ao vivo» / «actualiza a cada 30 s».
+- [x] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 2,5 s / 5 m (era 15 s / 25 m), **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
+- [x] **Cliente:** no `PedidoDetalhePage`, o mapa da entrega em rota (estafeta, destino, loja, **rasto desenhado na memória**) e a linha do tempo em linguagem de cliente («O estafeta está a caminho»); «sem posição recente» quando for o caso.
+- [x] **Loja:** no painel de entregas, o mapa com os estafetas em rota, a actualizar pelo socket.
+- [x] `MapaEntrega.tsx` estende-se (rasto, marcador do estafeta, destino, linha recta e distância) — **continua a ser o único ficheiro que conhece o Leaflet**.
+- [x] Textos pt/en; estados de carregamento, erro, vazio e sem-posição em cada ecrã.
 
-##### 5C — Rota prevista e tempo estimado **[obrigatório; bloqueada pela pergunta 1]**
+##### 5C — Rota prevista e tempo estimado **[obrigatório]** — ✅ escrita em 2026-10-11 (Fase 43), desligada sem chave
 
-- [ ] `ServicoRotas` (interface) + implementação do fornecedor escolhido; chamado só pelo backend; cache em Redis por entrega; recálculo só se o estafeta se desviou ~100 m ou passou ~1 min.
-- [ ] **Sem serviço, sem número:** se o fornecedor falhar ou a cota acabar, o ecrã mantém o rasto e a linha recta e **não mostra tempo estimado**.
-- [ ] `.env.example`: chave e endereço do fornecedor, cada uma com o que acontece se faltar (só desliga a rota prevista; não impede o arranque nem o rastreio).
+- [x] `ServicoRotas` (interface) + implementação do fornecedor escolhido; chamado só pelo backend; cache em Redis por entrega; recálculo só se o estafeta se desviou ~100 m ou passou ~1 min.
+- [x] **Sem serviço, sem número:** se o fornecedor falhar ou a cota acabar, o ecrã mantém o rasto e a linha recta e **não mostra tempo estimado**.
+- [x] `.env.example`: chave e endereço do fornecedor, cada uma com o que acontece se faltar (só desliga a rota prevista; não impede o arranque nem o rastreio).
 
 ##### 5D — Fecho **[obrigatório]**
 
 - [ ] Teste real: um telemóvel de estafeta em rota, e o do cliente e o do gestor a verem; ecrã apagado (para confirmar a limitação); sem rede; entrega que fecha (a posição apaga-se).
-- [ ] Documentação (Secção 2, Fase 5 na Secção 3, TRD — namespace, tokens, variáveis, a limitação do segundo plano), nos dois repositórios.
+- [x] Documentação (Secção 2, Fase 5 na Secção 3, TRD — namespace, tokens, variáveis, a limitação do segundo plano), nos dois repositórios. — **feito** (Fases 42 e 43)
 
 #### 6. Ficheiros afectados
 

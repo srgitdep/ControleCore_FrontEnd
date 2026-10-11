@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { Circle, MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import iconeMarcador from 'leaflet/dist/images/marker-icon.png';
 import iconeMarcador2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -38,6 +38,26 @@ const ICONE = L.icon({
   iconAnchor: [12, 41],
 });
 
+/** Um estafeta em rota, para o mapa da loja. */
+export interface EstafetaNoMapa extends PontoNoMapa {
+  id: string;
+  nome: string;
+  /** Posição velha (> 2 min): desenha-se esbatida, para ninguém a tomar por ao vivo. */
+  desactualizada?: boolean;
+}
+
+/**
+ * O estafeta: um disco azul com um anel, e não o alfinete dos destinos — numa vista com a loja, o
+ * destino e o estafeta, o que se move tem de se distinguir do que está parado.
+ */
+const iconeEstafeta = (desactualizada: boolean) =>
+  L.divIcon({
+    className: '',
+    html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:${desactualizada ? '#94a3b8' : '#2563eb'};border:3px solid #fff;box-shadow:0 0 0 2px ${desactualizada ? '#94a3b8' : '#2563eb'},0 1px 4px rgba(0,0,0,.4)"></span>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  });
+
 interface MapaEntregaProps {
   /** O pino escolhido (a morada). */
   marcador: PontoNoMapa | null;
@@ -47,6 +67,14 @@ interface MapaEntregaProps {
   precisaoMetros?: number | null;
   /** A loja, só para contexto visual (modo leitura). */
   loja?: PontoNoMapa | null;
+  /** Rastreio (plano §4.6): onde está o estafeta agora, ou `null` quando não há posição recente. */
+  estafeta?: (PontoNoMapa & { desactualizada?: boolean }) | null;
+  /** O caminho já percorrido, em memória; desenha-se como linha. */
+  rasto?: readonly PontoNoMapa[];
+  /** O caminho previsto por estrada (5C), do estafeta ao destino; quando existe, substitui a linha recta. */
+  rotaPrevista?: readonly PontoNoMapa[] | null;
+  /** O mapa da loja: vários estafetas em rota, sem pino de destino. */
+  estafetas?: readonly EstafetaNoMapa[];
   className?: string;
 }
 
@@ -96,8 +124,70 @@ function RemedirAoMudarDeTamanho() {
   return null;
 }
 
-export default function MapaEntrega({ marcador, aoEscolher, precisaoMetros, loja, className }: MapaEntregaProps) {
-  const centro = marcador ?? loja ?? CENTRO_OMISSAO;
+/**
+ * Enquadra de uma vez tudo o que há para ver (estafeta, destino, loja) e depois só acompanha: se o
+ * estafeta sai da vista, centra-o; se continua dentro, não mexe — mover o mapa debaixo do dedo a cada
+ * posição nova tornava impossível arrastá-lo.
+ */
+function EnquadrarRastreio({ pontos, estafeta }: { pontos: readonly PontoNoMapa[]; estafeta: PontoNoMapa | null }) {
+  const mapa = useMap();
+  const enquadrado = useRef(false);
+  const total = pontos.length;
+
+  useEffect(() => {
+    if (total === 0) return;
+    if (!enquadrado.current && estafeta) {
+      mapa.fitBounds(L.latLngBounds(pontos.map((p) => [p.latitude, p.longitude] as [number, number])), {
+        padding: [40, 40],
+        maxZoom: 17,
+        animate: false,
+      });
+      enquadrado.current = true;
+      return;
+    }
+    if (estafeta && enquadrado.current) {
+      const ponto = L.latLng(estafeta.latitude, estafeta.longitude);
+      if (!mapa.getBounds().contains(ponto)) mapa.panTo(ponto);
+    }
+    // Só reage ao estafeta e ao número de pontos: a lista é nova a cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapa, estafeta?.latitude, estafeta?.longitude, total]);
+
+  return null;
+}
+
+/** O mapa da loja enquadra todos os estafetas quando entra ou sai alguém (e não a cada posição). */
+function EnquadrarEstafetas({ estafetas }: { estafetas: readonly EstafetaNoMapa[] }) {
+  const mapa = useMap();
+  const assinatura = estafetas.map((e) => e.id).sort().join('|');
+
+  useEffect(() => {
+    if (estafetas.length === 0) return;
+    mapa.fitBounds(L.latLngBounds(estafetas.map((e) => [e.latitude, e.longitude] as [number, number])), {
+      padding: [50, 50],
+      maxZoom: 16,
+      animate: false,
+    });
+    // Só quando muda quem está no mapa.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapa, assinatura]);
+
+  return null;
+}
+
+export default function MapaEntrega({
+  marcador,
+  aoEscolher,
+  precisaoMetros,
+  loja,
+  estafeta,
+  rasto,
+  rotaPrevista,
+  estafetas,
+  className,
+}: MapaEntregaProps) {
+  const centro = marcador ?? estafetas?.[0] ?? loja ?? CENTRO_OMISSAO;
+  const rastreio = !!estafeta;
 
   return (
     <MapContainer
@@ -109,7 +199,51 @@ export default function MapaEntrega({ marcador, aoEscolher, precisaoMetros, loja
       <TileLayer url={URL_TILES} attribution={ATRIBUICAO} />
       {aoEscolher && <CliqueNoMapa aoEscolher={aoEscolher} />}
       <RemedirAoMudarDeTamanho />
-      <SeguirMarcador ponto={marcador} precisaoMetros={precisaoMetros} />
+      {/* No rastreio quem enquadra é `EnquadrarRastreio`; `SeguirMarcador` puxaria a vista para o destino. */}
+      {!rastreio && <SeguirMarcador ponto={marcador} precisaoMetros={precisaoMetros} />}
+      {rastreio && (
+        <EnquadrarRastreio
+          pontos={[estafeta, marcador, loja].filter((p): p is PontoNoMapa => !!p)}
+          estafeta={estafeta}
+        />
+      )}
+      {estafetas && <EnquadrarEstafetas estafetas={estafetas} />}
+      {rasto && rasto.length > 1 && (
+        <Polyline
+          positions={rasto.map((p) => [p.latitude, p.longitude] as [number, number])}
+          pathOptions={{ color: '#2563eb', weight: 4, opacity: 0.7 }}
+        />
+      )}
+      {rotaPrevista && rotaPrevista.length > 1 && (
+        <Polyline
+          positions={rotaPrevista.map((p) => [p.latitude, p.longitude] as [number, number])}
+          pathOptions={{ color: '#059669', weight: 4, opacity: 0.6, dashArray: '2 8' }}
+        />
+      )}
+      {estafeta && marcador && !(rotaPrevista && rotaPrevista.length > 1) && (
+        // Linha recta até ao destino: não é a rota (essa é a 5C), é a direcção. Tracejada para não a confundir.
+        <Polyline
+          positions={[
+            [estafeta.latitude, estafeta.longitude],
+            [marcador.latitude, marcador.longitude],
+          ]}
+          pathOptions={{ color: '#64748b', weight: 2, dashArray: '6 8' }}
+        />
+      )}
+      {estafeta && (
+        <Marker
+          position={[estafeta.latitude, estafeta.longitude]}
+          icon={iconeEstafeta(!!estafeta.desactualizada)}
+          zIndexOffset={1000}
+        />
+      )}
+      {estafetas?.map((e) => (
+        <Marker key={e.id} position={[e.latitude, e.longitude]} icon={iconeEstafeta(!!e.desactualizada)} zIndexOffset={1000}>
+          <Tooltip permanent direction="top" offset={[0, -10]}>
+            {e.nome}
+          </Tooltip>
+        </Marker>
+      ))}
       {marcador && precisaoMetros ? (
         <Circle
           center={[marcador.latitude, marcador.longitude]}

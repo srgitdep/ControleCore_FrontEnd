@@ -45,6 +45,9 @@ export const operacaoApi = {
   },
 
   // ── Entregas ──────────────────────────────────────────────────────────────
+  /** O token de 15 min para o canal de entregas em tempo real (`VER_ENTREGAS`). */
+  tokenDeSocket: async () => (await api.get<{ token: string }>('/entregas/socket-token')).data.token,
+
   listarEntregas: async (filtros: FiltrosEntregas = {}) => {
     const { data } = await api.get<{ data: EntregaPainel[]; total: number }>('/entregas', { params: filtros });
     return data;

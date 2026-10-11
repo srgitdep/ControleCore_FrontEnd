@@ -4,7 +4,7 @@ import { Can } from '@/features/auth';
 import { formatMoeda } from '@/shared/utils';
 import type { EntregaPainel } from '../types/operacao';
 
-export type AccaoEntrega = 'atribuir' | 'recolher' | 'iniciar_rota' | 'entregar' | 'falhar' | 'devolver';
+export type AccaoEntrega = 'atribuir' | 'delegar' | 'recolher' | 'iniciar_rota' | 'entregar' | 'falhar' | 'devolver';
 
 /**
  * As acções que cada estado permite — espelha `TRANSICOES` do backend
@@ -12,15 +12,16 @@ export type AccaoEntrega = 'atribuir' | 'recolher' | 'iniciar_rota' | 'entregar'
  * recusado, para o painel não oferecer botões que dão erro.
  */
 const ACCOES: Partial<Record<EntregaPainel['estado'], AccaoEntrega[]>> = {
-  AGUARDA_RECOLHA: ['atribuir', 'falhar'],
-  ATRIBUIDA: ['recolher', 'atribuir', 'falhar'],
+  AGUARDA_RECOLHA: ['atribuir', 'delegar', 'falhar'],
+  ATRIBUIDA: ['recolher', 'atribuir', 'delegar', 'falhar'],
   RECOLHIDA: ['iniciar_rota', 'entregar', 'falhar'],
   EM_ROTA: ['entregar', 'falhar'],
   FALHADA: ['devolver'],
 };
 
-const ROTULO: Record<AccaoEntrega, 'accao.atribuir' | 'accao.reatribuir' | 'accao.recolhida' | 'accao.iniciar_rota' | 'accao.entregue' | 'accao.falhada' | 'accao.devolver'> = {
+const ROTULO: Record<AccaoEntrega, 'accao.delegar' | 'accao.atribuir' | 'accao.reatribuir' | 'accao.recolhida' | 'accao.iniciar_rota' | 'accao.entregue' | 'accao.falhada' | 'accao.devolver'> = {
   atribuir: 'accao.atribuir',
+  delegar: 'accao.delegar',
   recolher: 'accao.recolhida',
   iniciar_rota: 'accao.iniciar_rota',
   entregar: 'accao.entregue',
@@ -30,6 +31,7 @@ const ROTULO: Record<AccaoEntrega, 'accao.atribuir' | 'accao.reatribuir' | 'acca
 
 const ESTILO: Record<AccaoEntrega, string> = {
   atribuir: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+  delegar: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
   recolher: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
   iniciar_rota: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
   entregar: 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700',
@@ -40,12 +42,15 @@ const ESTILO: Record<AccaoEntrega, string> = {
 export function CartaoEntrega({
   entrega,
   aoEscolher,
+  podeDelegar = false,
 }: {
   entrega: EntregaPainel;
   aoEscolher: (accao: AccaoEntrega, entrega: EntregaPainel) => void;
+  /** Há operadores externos activos? Sem eles, «Delegar» não se oferece. */
+  podeDelegar?: boolean;
 }) {
   const { t } = useTranslation('entrega');
-  const accoes = ACCOES[entrega.estado] ?? [];
+  const accoes = (ACCOES[entrega.estado] ?? []).filter((a) => a !== 'delegar' || podeDelegar);
 
   return (
     <li className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -68,7 +73,11 @@ export function CartaoEntrega({
 
       <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
         <User size={12} className="shrink-0 text-slate-400" />
-        {entrega.estafeta ? `${entrega.estafeta.nome} (${entrega.estafeta.codigo})` : t('painel.sem_estafeta')}
+        {entrega.estafeta
+          ? `${entrega.estafeta.nome} (${entrega.estafeta.codigo})`
+          : entrega.operador
+            ? t('painel.operador', { nome: entrega.operador.descricao })
+            : t('painel.sem_estafeta')}
       </p>
 
       <p className="mt-2 flex items-baseline justify-between text-xs text-slate-500">

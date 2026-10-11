@@ -54,6 +54,23 @@ export interface Pedido {
   itens: PedidoItem[];
 }
 
+/** `GET /commerce/pedidos/:id/entrega` — o que o cliente vê da entrega do seu pedido (plano §4.6). */
+export interface EntregaDoPedido {
+  id: string;
+  estado: 'AGUARDA_RECOLHA' | 'ATRIBUIDA' | 'RECOLHIDA' | 'EM_ROTA' | 'ENTREGUE' | 'FALHADA' | 'DEVOLVIDA' | 'CANCELADA';
+  eventos: { tipo: string; em: string }[];
+  destino: { morada: string; latitude: number; longitude: number };
+  loja: { nome: string; latitude: number | null; longitude: number | null };
+  /** Só o primeiro nome: o telefone, o código e o identificador nunca saem do servidor. */
+  estafeta: { primeiroNome: string } | null;
+  /** Só em rota e com menos de 2 minutos; fora disso, nulo. */
+  posicao: { latitude: number; longitude: number; em: string } | null;
+  /** Em rota mas sem posição recente: o ecrã diz «sem posição recente» em vez de um pino parado. */
+  posicaoDesactualizada: boolean;
+  /** Tempo estimado e caminho por estrada (5C). Nulo sem serviço de rotas ou sem posição fresca — nunca um número adivinhado. */
+  previsao: { minutos: number; distanciaMetros: number; caminho: { latitude: number; longitude: number }[] } | null;
+}
+
 const BASE = '/commerce/pedidos';
 
 export const pedidos = {
@@ -78,6 +95,12 @@ export const pedidos = {
   obter: async (id: string) => {
     const { data } = await contaApi.get<Pedido>(`${BASE}/${id}`);
     return data;
+  },
+
+  /** `entrega: null` = o pedido de entrega ainda não foi despachado. */
+  entrega: async (id: string) => {
+    const { data } = await contaApi.get<{ entrega: EntregaDoPedido | null }>(`${BASE}/${id}/entrega`);
+    return data.entrega;
   },
 
   cancelar: async (id: string) => {

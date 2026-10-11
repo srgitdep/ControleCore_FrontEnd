@@ -84,6 +84,12 @@ export const conta = {
     return data;
   },
 
+  /** O token de 15 min para o canal de entregas em tempo real (o cookie não chega ao WebSocket). */
+  tokenDeSocket: async () => {
+    const { data } = await contaApi.get<{ token: string }>(`${BASE}/socket-token`);
+    return data.token;
+  },
+
   sair: async () => {
     await contaApi.post(`${BASE}/sair`);
   },

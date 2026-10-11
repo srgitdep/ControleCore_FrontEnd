@@ -405,7 +405,8 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 | **Zavu** (`@zavudev/sdk`) | SMS, WhatsApp e (antigo) e-mail de campanhas do CRM | Pago | `ZAVU_API_KEY`, `ZAVU_SENDER_ID`. Se faltar, o backend arranca e os envios ficam registados como não enviados — não bloqueia o POS |
 | **SMTP** (ex. Gmail) | E-mail transaccional e, desde a Fase 11 do CRM, e-mail de campanhas (via `MailerService`) | Gratuito com Gmail pessoal (limites de envio); pago se SMTP dedicado | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` |
 | **OpenStreetMap (tiles)** | Mapa das moradas e da localização da loja (Leaflet) | Gratuito, com política de uso (uso moderado, atribuição «© OpenStreetMap contributors» visível); tráfego sério pede servidor de tiles próprio ou pago | Sem chave. URL num só sítio: `URL_TILES` em `MapaEntrega.tsx`. Se falhar, o mapa fica cinzento e a morada não se consegue marcar |
-| **OpenStreetMap — Nominatim (geocodificação inversa e pesquisa)** | O nome do local a partir das coordenadas (rua, bairro, cidade) e a pesquisa de um local por nome (`/search`, só `countrycodes=mz`), para conferir e escolher a localização da loja e das moradas | Gratuito, com política de uso: **no máximo 1 pedido por segundo**, uso moderado; tráfego sério pede servidor próprio ou pago | Sem chave. URL em `shared/utils/nomeDoLocal.ts`. As coordenadas marcadas são enviadas ao servidor do OSM. Debounce de 800 ms e cache por ponto; se falhar, o ecrã diz que não obteve o nome e não bloqueia nada |
+| **OpenStreetMap — Nominatim (geocodificação inversa e pesquisa)** | O nome do local a partir das coordenadas (rua, bairro, cidade) e a pesquisa de um local por nome (`/search`, só `countrycodes=mz`), para conferir e escolher a localização da loja e das moradas | Gratuito, com política de uso: **no máximo 1 pedido por segundo**, uso moderado; tráfego sério pede servidor próprio ou pago | Sem chave. URL em `shared/utils/nomeDoLocal.ts`. As coordenadas marcadas são enviadas ao servidor do OSM. Debounce de 800 ms e cache por ponto; se falhar, o ecrã diz que não obteve o nome e não bloqueia nada. Na cidade de Maputo o serviço não devolve `state`: a província deduz-se do código `ISO3166-2-lvl4` (tabela em `nomeDoLocal.ts`). Comparado com Google Geocoding e OpenRouteService em 10 pontos de Maputo (11/10/2026): melhor cobertura de rua/bairro |
+| **OpenRouteService** (Fase 43, 5C) | Rota por estrada e tempo estimado da entrega em rota, só para o cliente (`POST /v2/directions/driving-car/geojson`, chamado **só pelo backend**, com tempo-limite de 4 s). O resultado fica em Redis um minuto, por entrega e por célula de ~110 m. As coordenadas do estafeta e da morada são enviadas ao serviço | Plano gratuito com chave; **cota e termos por confirmar antes de produção** | `ORS_API_KEY` (**opcional**: sem ela não há tempo estimado, o rastreio funciona na mesma), `ORS_BASE_URL` (opcional, servidor próprio). Interface `ServicoRotas` — trocável |
 | **GitHub Actions** | CI/CD do backend | Gratuito nos limites do plano da organização | `.github/workflows/deploy.yml` |
 
 > Nenhuma chave paga fica no repositório — todas em `fly secrets` (runtime) ou
@@ -431,6 +432,18 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **WebSockets:** exigem endereço absoluto (`VITE_SOCKET_URL`) — os *rewrites* do
   Vercel não encaminham WebSockets. Deliberadamente diferente do REST, que sai
   por caminho relativo.
+- **Canal `/entregas` (rastreio ao vivo, Fase 42, 11/10/2026):** namespace socket.io próprio (`EntregasGateway`; a raiz `EventsGateway` fica intacta). A ligação usa um token de socket de
+  15 min pedido por REST (`GET /entregas/socket-token`, `GET /commerce/conta/socket-token`, `GET /estafeta/socket-token`), assinado com um segredo **derivado** de
+  `JWT_ACCESS_SECRET` / `JWT_CLIENTE_SECRET` / `JWT_ESTAFETA_SECRET` (`HMAC(segredo, 'entregas-socket:<tipo>')`) e audience `controlcore-entregas-socket`; o cookie não é lido. Salas:
+  `empresa_<id>` (funcionário), `estafeta_<id>`, `pedido_<id>` (cliente, só após `seguir` com verificação de posse). Eventos: `posicao` (estafeta→servidor), `seguir`
+  (cliente), `entrega.posicao` e `entrega.estado` (servidor→salas; o cliente nunca recebe o id do estafeta). A posição só é aceite com uma entrega `EM_ROTA` e é validada no servidor
+  (dentro de Moçambique, precisão ≤ 100 m, ≥ 2 s entre pontos, ≤ 150 km/h); guarda-se **só a última** (`Estafeta.ultima*`), apagada quando o estafeta deixa de ter entregas em rota.
+  `GET /commerce/pedidos/:id/entrega` dá ao cliente o estado, a linha do tempo e, com menos de 2 min, a posição. **Limite:** as salas estão em memória — com mais de uma máquina Fly seria
+  preciso o adaptador Redis do socket.io. Sem variável de ambiente nova na 5A.
+  **Ecrãs (Fase 43):** `useCanalDeEntregas` (`shared/hooks`) liga a `<VITE_SOCKET_URL>/entregas` com o token pedido por REST **a cada reconexão** (o token vale 15 min); sem canal os ecrãs
+  caem para a consulta da entrega de 2,5 em 2,5 s (o cliente) e dizem-no. O estafeta partilha a posição com `navigator.geolocation.watchPosition` (só com uma entrega `EM_ROTA` e depois de consentir; envio a cada ≥ 2,5 s **e** ≥ 5 m, ou
+  10 s parado) e *Wake Lock*; **limitação de uma PWA:** com o ecrã bloqueado ou a aplicação em segundo plano o navegador pára o GPS. A geolocalização exige HTTPS ou `localhost`. O rasto do cliente vive
+  só em memória (≤ 300 pontos). Regras puras em `shared/utils/rastreio.ts`.
 - **Variáveis `VITE_*`:** substituídas no build, não lidas em runtime — alterá-las
   exige novo deploy.
 - **Portas fixas:** `3100` (backend) e `5273` (frontend), por causa da lista
@@ -508,6 +521,24 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   segundos).
 - Segregação de funções (`src/shared/segregacao-funcoes.ts`) e auditoria
   (`AuditLog`) nos fluxos de dinheiro e stock.
+
+### 8.1 Webhooks da entrega (Fase 45, 11/10/2026)
+
+- **Saída (*outbox*).** `EmitirWebhookService.registar(tx, …)` grava uma linha de `webhook_envios` por subscrição **activa** da empresa que escute o evento, **na transacção** de quem muda o estado
+  (`OperarEntregaService`, `DevolverEntregaUseCase`, `CriarPedidoUseCase`, `ExpedirPedidoUseCase`). Eventos: `pedido.criado`, `pedido.expedido`, `entrega.atribuida`, `.recolhida`, `.em_rota`, `.entregue`,
+  `.falhada`, `.devolvida`. Corpo: `{ id, evento, versao: 1, criadoEm, empresaId, dados }`, sem dados pessoais.
+- **Envio.** `EnviarWebhooksTask` (`@Cron` a cada minuto) reserva cada linha por `updateMany` condicional (reserva de 2 min) e faz `POST` com `X-ControlCore-Evento`, `X-ControlCore-Id` (idempotência do receptor) e
+  `X-ControlCore-Assinatura: t=<segundos>,v1=HMAC-SHA256(segredo, "<t>.<corpo cru>")`. Tempo-limite 10 s; **sem redirecções**; resposta guardada só até 500 caracteres. Recuo 1 min · 5 · 15 · 60 · 6 h · 24 h;
+  à 7.ª falha `DESISTIDO`. Limpeza às 4 h: enviados > 30 dias, desistidos > 90.
+- **SSRF.** URL https, sem credenciais, nome que não resolva para loopback/rede privada/*link-local*/CGNAT/multicast (incluindo `169.254.169.254` e IPv6 mapeado); verificado ao gravar, antes de enviar e **no `lookup` do
+  socket** (contra *DNS rebinding*); IP literal privado recusado antes de ligar. `WEBHOOKS_PERMITIR_REDE_PRIVADA=true` (**só desenvolvimento**) levanta estas restrições.
+- **Entrada.** `POST /webhooks/entrega/:operadorId` (`@Public()`, `@Throttle` 120/min): exige `rawBody` (ligado em `main.ts`), assinatura com `timingSafeEqual`, janela de ±5 min, idempotência por
+  `WebhookEventoRecebido(operadorId, eventoExternoId)` único; `202` antes de aplicar. Eventos aceites: `entrega.recolhida`, `.em_rota`, `.entregue`, `.falhada`, aplicados por `OperarEntregaService` com autor
+  `OPERADOR` (só entregas com `operadorId` igual ao dele). A empresa vem da subscrição. Desconhecido/desactivado/assinatura errada → o mesmo 401.
+- **Gestão.** `/webhooks/subscricoes` e `/webhooks/envios` (`GERIR_WEBHOOKS`, só ADMIN); segredo (`whsec_` + 32 bytes) em claro na BD porque é preciso para assinar, devolvido **uma só vez**; máximo 20 por
+  empresa. `PATCH /entregas/:id/delegar` e `GET /entregas/operadores` (`GERIR_ENTREGAS`).
+- **Frontend.** `/entregas/webhooks` (só ADMIN) e «Delegar» no painel; instância `api` do funcionário.
+- **Limites conhecidos.** O limitador e a reserva são por máquina/BD (a reserva é atómica na BD, por isso duas máquinas são seguras); um receptor lento ocupa até 10 s de um dos 5 envios em simultâneo de um ciclo.
 
 ---
 

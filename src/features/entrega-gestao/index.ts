@@ -8,3 +8,7 @@ export * from './hooks/useOperacao';
 export * from './pages/EntregasPage';
 export * from './pages/EstafetasPage';
 export * from './pages/AcertosPage';
+export * from './types/webhook';
+export * from './api/webhook.api';
+export * from './hooks/useWebhooks';
+export * from './pages/WebhooksPage';

@@ -49,6 +49,8 @@ export const estafetaApi = {
   mudarEstado: async (estado: EstadoEscolhido) =>
     (await estafetaApiInstancia.patch<{ estado: EstadoEscolhido }>(`${BASE}/eu/estado`, { estado })).data,
 
+  tokenDeSocket: async () => (await estafetaApiInstancia.get<{ token: string }>(`${BASE}/socket-token`)).data.token,
+
   sair: async () => {
     await estafetaApiInstancia.post(`${BASE}/sair`);
   },

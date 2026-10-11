@@ -13,8 +13,10 @@ import {
   useIniciarRotaEntrega,
   useRecolherEntrega,
 } from '../hooks/useOperacao';
-import { AtribuirDialog, DevolverDialog, EntregarDialog, FalharDialog } from '../components/DialogosEntrega';
+import { AtribuirDialog, DelegarDialog, DevolverDialog, EntregarDialog, FalharDialog } from '../components/DialogosEntrega';
+import { useDelegarEntrega, useOperadoresExternos } from '../hooks/useWebhooks';
 import { CartaoEntrega } from '../components/CartaoEntrega';
+import { MapaDosEstafetas } from '../components/MapaDosEstafetas';
 import type { AccaoEntrega } from '../components/CartaoEntrega';
 import type { EntregaPainel, EstadoEntrega } from '../types/operacao';
 
@@ -53,6 +55,9 @@ export function EntregasPage() {
   });
 
   const atribuir = useAtribuirEntrega();
+  const delegar = useDelegarEntrega();
+  // Sem operadores activos (ou sem permissão para os listar) a lista vem vazia e «Delegar» não aparece.
+  const operadores = useOperadoresExternos();
   const recolher = useRecolherEntrega();
   const iniciarRota = useIniciarRotaEntrega();
   const entregar = useEntregarEntrega();
@@ -132,6 +137,9 @@ export function EntregasPage() {
         </div>
       </header>
 
+      {/* O mapa decide sozinho se aparece: só com estafetas em rota. */}
+      {!entregas.isLoading && !entregas.isError && <MapaDosEstafetas entregas={lista} />}
+
       {entregas.isLoading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
           <Loader2 size={22} className="animate-spin text-slate-400" />
@@ -164,7 +172,7 @@ export function EntregasPage() {
                 ) : (
                   <ul className="space-y-2.5">
                     {cartoes.map((entrega) => (
-                      <CartaoEntrega key={entrega.id} entrega={entrega} aoEscolher={escolher} />
+                      <CartaoEntrega key={entrega.id} entrega={entrega} aoEscolher={escolher} podeDelegar={(operadores.data ?? []).length > 0} />
                     ))}
                   </ul>
                 )}
@@ -181,6 +189,15 @@ export function EntregasPage() {
           aProcessar={atribuir.isPending}
           aoFechar={fechar}
           aoConfirmar={(estafetaId) => atribuir.mutate({ id: dialogo.entrega.id, estafetaId }, { onSuccess: fechar })}
+        />
+      )}
+      {dialogo?.accao === 'delegar' && (
+        <DelegarDialog
+          entrega={dialogo.entrega}
+          operadores={operadores.data ?? []}
+          aProcessar={delegar.isPending}
+          aoFechar={fechar}
+          aoConfirmar={(operadorId) => delegar.mutate({ id: dialogo.entrega.id, operadorId }, { onSuccess: fechar })}
         />
       )}
       {dialogo?.accao === 'entregar' && (

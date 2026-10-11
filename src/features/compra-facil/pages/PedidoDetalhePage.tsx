@@ -5,6 +5,7 @@ import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCancelarPedido, usePedido } from '../hooks/usePedidosCommerce';
 import { LojaTopo } from '../components/LojaTopo';
+import { RastreioDaEntrega } from '../components/RastreioDaEntrega';
 import { VoltarLink } from '../components/VoltarLink';
 import type { EstadoPedido, MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
 
@@ -86,6 +87,8 @@ export function PedidoDetalhePage() {
               {pedido.estado !== 'CANCELADO' && pedido.estado !== 'FALHADA' && (
                 <LinhaDoTempoPedido estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />
               )}
+
+              <RastreioDaEntrega pedidoId={pedido.id} estado={pedido.estado} eEntrega={pedido.tipoEntrega === 'ENTREGA'} />
 
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm text-slate-600">
                 {pedido.itens.map((item) => (

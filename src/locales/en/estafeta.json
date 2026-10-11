@@ -86,5 +86,18 @@
     "falhada": "Recorded. Take the goods back to the store.",
     "erro_accao": "Could not record it. Try again.",
     "erro_estado": "Could not change the status."
+  },
+  "partilha": {
+    "consentimento_titulo": "Sharing your location",
+    "consentimento_texto": "So the customer and the store can see where you are, this app will use your phone’s location.",
+    "consentimento_so_em_rota": "Only while you have a delivery “on the way”. Otherwise nothing is read.",
+    "consentimento_quem_ve": "Who sees it: the store and the customer of the delivery in progress. The customer only sees your first name.",
+    "consentimento_sem_historico": "We only keep the last position, and delete it when the delivery ends. There is no route history.",
+    "consentimento_aceitar": "I understand, share my location",
+    "sem_suporte": "This phone or connection cannot use location. Open the app over HTTPS in a browser that supports location.",
+    "negada": "Location is blocked. Allow it in the browser settings for this app — without it, the customer cannot see where you are.",
+    "a_partilhar": "Sharing your location with the customer and the store",
+    "sem_canal": "Trying to connect to share your location…",
+    "manter_aberta": "Keep this app open and the screen on. With the phone locked or another app in front, your location stops being sent."
   }
 }
