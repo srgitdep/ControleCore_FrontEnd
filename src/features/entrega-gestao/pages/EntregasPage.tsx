@@ -15,6 +15,7 @@ import {
 } from '../hooks/useOperacao';
 import { AtribuirDialog, DevolverDialog, EntregarDialog, FalharDialog } from '../components/DialogosEntrega';
 import { CartaoEntrega } from '../components/CartaoEntrega';
+import { MapaDosEstafetas } from '../components/MapaDosEstafetas';
 import type { AccaoEntrega } from '../components/CartaoEntrega';
 import type { EntregaPainel, EstadoEntrega } from '../types/operacao';
 
@@ -131,6 +132,9 @@ export function EntregasPage() {
           </button>
         </div>
       </header>
+
+      {/* O mapa decide sozinho se aparece: só com estafetas em rota. */}
+      {!entregas.isLoading && !entregas.isError && <MapaDosEstafetas entregas={lista} />}
 
       {entregas.isLoading ? (
         <div className="flex min-h-[30vh] items-center justify-center">

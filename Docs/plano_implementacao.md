@@ -40,7 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). A **5A (servidor)** está feita no backend (Fase 42); falta a **5B (ecrãs)** e a **5D (teste real)**. A **5C** (rota prevista e tempo estimado) aguarda a escolha do fornecedor. Quando a 5B e a 5D acabarem, este bloco apaga-se.
+**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). Quando a 5D estiver feita, este bloco apaga-se.
 
 ---
 
@@ -1805,6 +1805,39 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Sem migração e **sem variável nova** (reutiliza `JWT_ACCESS_SECRET`, `JWT_CLIENTE_SECRET` e `JWT_ESTAFETA_SECRET`). Backend primeiro; nada muda para o utilizador até a 5B sair.
 
+### Fase 43 — Entrega ao domicílio, Fases 5B e 5C: os ecrãs do rastreio e o tempo estimado (11 Out 2026)
+
+- **2026-10-11 · [BE+FE] · Antonio Mambo** — `feat/rastreio-fase5` nos dois repositórios (plano §4.6, subfases 5B e 5C; **sem migração**)
+  - feat(estafeta-app): **partilha da posição.** Com uma entrega «a caminho», a aplicação lê o GPS (`watchPosition`) e envia a posição pelo canal `/entregas` quando passaram 15 s **e** o estafeta se
+    moveu 25 m (parado, dá sinal de vida ao fim de um minuto). **Aviso permanente** no topo de todos os ecrãs («A partilhar a sua posição com o cliente e a loja») e **consentimento na primeira
+    vez**, com o que se lê, quem vê e o que se guarda. Pede ao navegador para não apagar o ecrã (*Wake Lock*, pedido de novo ao voltar à página) e **diz com todas as letras** que, com o telemóvel
+    bloqueado ou outra aplicação à frente, a posição deixa de ser enviada. Estados honestos: sem permissão, sem suporte (fora de HTTPS), sem canal. Fora de rota não se lê nada
+  - feat(compra-facil): **o cliente segue o pedido** (`PedidoDetalhePage`): mapa com o estafeta, o **rasto** (em memória), o destino e a loja, «{nome} está a caminho», a distância em linha recta, o
+    indicador **«Ao vivo» / «Actualiza a cada 30 s»** e, sem posição recente (> 2 min), o aviso «sem posição recente» **em vez de um pino parado**. O canal pede `seguir` a cada (re)ligação; sem canal a
+    entrega refaz-se de 30 em 30 s
+  - feat(entrega-gestao): **mapa dos estafetas em rota** no painel de entregas (só aparece com entregas `EM_ROTA`), com o nome de cada um; pontos com mais de 2 min ficam esbatidos. Uma mudança de estado
+    **refaz as colunas na hora** (antes esperava pela consulta de 30 s)
+  - feat(shared): `useCanalDeEntregas` (a ligação a `/entregas`, com o token pedido por REST **a cada reconexão** e nova tentativa se o servidor fechar), `shared/utils/rastreio.ts` (regras puras: quando
+    enviar, posição recente, rasto limitado a 300 pontos, distância) e `MapaEntrega` estendido (estafeta, rasto, rota prevista, vários estafetas) — **continua a ser o único ficheiro que conhece o Leaflet**
+  - feat(entrega) **[5C, BE]**: `ServicoRotas` (interface; devolve `null` quando não sabe) com o adaptador `OpenRouteServiceRotas`, e o `EstimativaEntregaService` que guarda o resultado em Redis **por entrega e
+    por célula de ~110 m, um minuto**. `GET /commerce/pedidos/:id/entrega` passa a devolver `previsao` (minutos, distância por estrada, caminho aligeirado a ≤ 120 pontos) — só com a posição fresca; o ecrã
+    mostra «Faltam cerca de N minutos» e o caminho tracejado em vez da linha recta
+  - **Sem serviço, sem número.** Sem `ORS_API_KEY`, com a cota esgotada, a rede em baixo ou uma resposta estranha, `previsao` é nulo e o cliente vê só a posição e a linha recta. A chave nunca vai para o browser
+  - i18n: namespaces `loja`, `estafeta` e `entrega` (pt/en) com a chave `rastreio` / `partilha`
+
+  > **Desvios ao plano.** (1) O mapa da loja não pede a última posição por REST: mostra as que chegam pelo canal desde que o painel abriu (uma por estafeta, em ≤ 1 min) e diz «a aguardar posição» até lá —
+  > evita um endpoint novo só para o primeiro desenho. (2) O tempo estimado só é mostrado ao **cliente**; a loja vê posições, não estimativas (um só pedido ao fornecedor, partilhado, quando a loja o quiser). (3) A 5C
+  > ficou escrita para o OpenRouteService, a recomendação do plano, **e desligada**: a escolha do fornecedor continua a ser decisão do utilizador. A interface permite trocar sem tocar no resto.
+  >
+  > **Verificação.** Backend: `tsc` e `nest build` limpos, **2943 testes (209 suites)**. Frontend: `tsc -b` limpo, **215 testes** (+16 face aos 199 da Fase 41: as regras de envio, posição recente, rasto, distância), lint sem avisos novos,
+  > `vite build` limpo. **Ponta a ponta do canal:** num teste pontual (não commitado, porque depende do caminho do outro repositório) liguei o cliente `socket.io-client` **real** do frontend ao `EntregasGateway`
+  > **real** sobre um servidor Nest: a loja recebeu a posição **com** o estafeta, o cliente do pedido **sem** ele, o cliente de outro pedido e a loja de outra empresa **nada**, e um token inválido foi recusado.
+  > **Não** testei: os ecrãs num telemóvel, o GPS real, o *Wake Lock*, nem o OpenRouteService com uma chave verdadeira — o adaptador está testado contra respostas simuladas (formato `geojson` conforme a documentação
+  > pública do serviço, **não verificado contra o serviço**). A cota e os termos do plano gratuito **não foram confirmados**: confirmar antes de ligar em produção.
+  >
+  > **Notas de deploy.** Sem migração. **Backend primeiro** (5A+5C), frontend depois. Variáveis novas, ambas **opcionais**: `ORS_API_KEY` (sem ela não há tempo estimado, o resto funciona) e `ORS_BASE_URL`
+  > (só para um servidor próprio). Para ligar o tempo estimado: criar a chave e `fly secrets set ORS_API_KEY=…`. As salas do canal estão em memória: serve com **uma** máquina Fly (ver Fase 42).
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1949,12 +1982,12 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [x] **4B — A aplicação.** Concluída em 2026-10-10 (Fase 41): PWA só do estafeta (manifest, *service worker* de âmbito `/estafeta/`, ícones), ecrãs, ligação ao login.
         **Por enviar com a 4A, e por confirmar num telemóvel (4C).**
   - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
-- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (aprovado em 2026-10-11; 5A feita). Namespace WebSocket `/entregas` que aceita
+- [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (aprovado em 2026-10-11; 5A, 5B e 5C feitas — falta a 5D, o teste real). Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; o estafeta emite a posição **só em rota**; mapa para o cliente (no pedido) e para a loja (no painel),
       com recurso a consulta de 30 s quando não há WebSocket. A rota prevista e o tempo estimado ficam na **5C**, que depende de um fornecedor de rotas por decidir.
   - [x] **5A — Servidor.** Concluída em 2026-10-11 (Fase 42): `/entregas` (3 tokens de socket, salas), posição do estafeta validada, eventos de estado, endpoint do cliente, testes.
-  - [ ] **5B — Os ecrãs.** O estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
-  - [ ] **5C — Rota prevista e tempo estimado.** `ServicoRotas` + fornecedor + cache. **Bloqueada pela escolha do fornecedor.**
+  - [x] **5B — Os ecrãs.** Concluída em 2026-10-11 (Fase 43): o estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
+  - [x] **5C — Rota prevista e tempo estimado.** Escrita em 2026-10-11 (Fase 43) para o OpenRouteService e **desligada sem `ORS_API_KEY`**. Falta confirmar a cota/termos do plano gratuito e criar a chave.
   - [ ] **5D — Fecho.** Teste real, num telemóvel, de uma entrega seguida do outro lado; documentação.
 - [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial) e entrada assinada e idempotente, para um operador de entregas
@@ -2116,7 +2149,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
 | 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 4 |
-| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A feita, 5B em curso | Secção 3 → «Entrega ao domicílio» → Fase 5 |
+| 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4211,7 +4244,7 @@ Os estafetas já criados mantêm o código e a senha; os que ainda não recebera
 
 ### 4.6 Entrega ao domicílio — Fase 5: o rastreio ao vivo
 
-- **Data:** 2026-10-11 · **Estado:** **aprovado em 2026-10-11** — 5A feita (Fase 42); 5B em curso; 5C aguarda fornecedor
+- **Data:** 2026-10-11 · **Estado:** **aprovado em 2026-10-11** — 5A, 5B e 5C feitas (Fases 42 e 43); falta a 5D (teste real)
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o §4.1:** detalha e **corrige** a Fase 5 desse plano (US-17, US-18, US-19 e US-19b) com o que o código é hoje.
 
@@ -4328,20 +4361,20 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 | `entrega.posicao` | servidor → salas | loja, cliente | `{ entregaId, pedidoId, estafetaId, latitude, longitude, em }` (o cliente não recebe `estafetaId`) |
 | `entrega.estado` | servidor → salas | loja, cliente, estafeta | `{ entregaId, pedidoId, estado }` |
 
-##### 5B — Os ecrãs **[obrigatório]**
+##### 5B — Os ecrãs **[obrigatório]** — ✅ feita em 2026-10-11 (Fase 43), por confirmar num telemóvel
 
-- [ ] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 30 s** se o socket falhar, e indicador de «ao vivo» / «actualiza a cada 30 s».
-- [ ] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 15 s / 25 m, **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
-- [ ] **Cliente:** no `PedidoDetalhePage`, o mapa da entrega em rota (estafeta, destino, loja, **rasto desenhado na memória**) e a linha do tempo em linguagem de cliente («O estafeta está a caminho»); «sem posição recente» quando for o caso.
-- [ ] **Loja:** no painel de entregas, o mapa com os estafetas em rota, a actualizar pelo socket.
-- [ ] `MapaEntrega.tsx` estende-se (rasto, marcador do estafeta, destino, linha recta e distância) — **continua a ser o único ficheiro que conhece o Leaflet**.
-- [ ] Textos pt/en; estados de carregamento, erro, vazio e sem-posição em cada ecrã.
+- [x] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 30 s** se o socket falhar, e indicador de «ao vivo» / «actualiza a cada 30 s».
+- [x] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 15 s / 25 m, **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
+- [x] **Cliente:** no `PedidoDetalhePage`, o mapa da entrega em rota (estafeta, destino, loja, **rasto desenhado na memória**) e a linha do tempo em linguagem de cliente («O estafeta está a caminho»); «sem posição recente» quando for o caso.
+- [x] **Loja:** no painel de entregas, o mapa com os estafetas em rota, a actualizar pelo socket.
+- [x] `MapaEntrega.tsx` estende-se (rasto, marcador do estafeta, destino, linha recta e distância) — **continua a ser o único ficheiro que conhece o Leaflet**.
+- [x] Textos pt/en; estados de carregamento, erro, vazio e sem-posição em cada ecrã.
 
-##### 5C — Rota prevista e tempo estimado **[obrigatório; bloqueada pela pergunta 1]**
+##### 5C — Rota prevista e tempo estimado **[obrigatório]** — ✅ escrita em 2026-10-11 (Fase 43), desligada sem chave
 
-- [ ] `ServicoRotas` (interface) + implementação do fornecedor escolhido; chamado só pelo backend; cache em Redis por entrega; recálculo só se o estafeta se desviou ~100 m ou passou ~1 min.
-- [ ] **Sem serviço, sem número:** se o fornecedor falhar ou a cota acabar, o ecrã mantém o rasto e a linha recta e **não mostra tempo estimado**.
-- [ ] `.env.example`: chave e endereço do fornecedor, cada uma com o que acontece se faltar (só desliga a rota prevista; não impede o arranque nem o rastreio).
+- [x] `ServicoRotas` (interface) + implementação do fornecedor escolhido; chamado só pelo backend; cache em Redis por entrega; recálculo só se o estafeta se desviou ~100 m ou passou ~1 min.
+- [x] **Sem serviço, sem número:** se o fornecedor falhar ou a cota acabar, o ecrã mantém o rasto e a linha recta e **não mostra tempo estimado**.
+- [x] `.env.example`: chave e endereço do fornecedor, cada uma com o que acontece se faltar (só desliga a rota prevista; não impede o arranque nem o rastreio).
 
 ##### 5D — Fecho **[obrigatório]**
 

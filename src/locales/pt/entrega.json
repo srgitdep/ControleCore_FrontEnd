@@ -209,5 +209,17 @@
       "caixa_aviso": "O dinheiro entra na sua sessão de caixa aberta. Sem caixa aberto, o acerto é recusado.",
       "confirmar": "Fechar o acerto"
     }
+  },
+  "rastreio": {
+    "titulo_one": "{{count}} estafeta em rota",
+    "titulo_other": "{{count}} estafetas em rota",
+    "ao_vivo": "Ao vivo",
+    "a_cada_30s": "Actualiza a cada 30 s",
+    "mostrar": "Mostrar o mapa",
+    "esconder": "Esconder o mapa",
+    "a_aguardar": "A aguardar a posição dos estafetas em rota. A primeira leitura chega em menos de um minuto.",
+    "sem_canal": "Sem ligação em tempo real. As posições não estão a chegar; o painel continua a actualizar-se a cada 30 s.",
+    "sem_posicao_de": "A aguardar posição de: {{nomes}}.",
+    "esbatido": "Os pontos esbatidos têm mais de 2 minutos: o estafeta pode estar sem rede ou com o ecrã bloqueado."
   }
 }

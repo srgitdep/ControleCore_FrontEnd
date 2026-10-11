@@ -214,5 +214,20 @@
     "gps_precisao": "Accuracy: about {{metros}} m",
     "gps_precisao_baixa": "Poor accuracy (about {{metros}} m) — check the point on the map"
   },
-  "iva_incluido": "VAT included"
+  "iva_incluido": "VAT included",
+  "rastreio": {
+    "erro": "Could not load the delivery tracking.",
+    "repetir": "Try again",
+    "a_caminho": "Your order is on its way",
+    "a_caminho_nome": "{{nome}} is on the way with your order",
+    "preparar": "Your order is about to leave the store",
+    "distancia": "About {{distancia}} from your address, in a straight line.",
+    "ao_vivo": "Live",
+    "a_cada_30s": "Updates every 30 s",
+    "sem_posicao_recente": "No recent position from the courier. It will show here as soon as they send one.",
+    "actualizar": "Refresh now",
+    "faltam_minutos_one": "About {{count}} minute to go",
+    "faltam_minutos_other": "About {{count}} minutes to go",
+    "distancia_estrada": "About {{distancia}} by road."
+  }
 }

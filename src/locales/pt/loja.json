@@ -214,5 +214,20 @@
     "gps_precisao": "Precisão: cerca de {{metros}} m",
     "gps_precisao_baixa": "Precisão fraca (cerca de {{metros}} m) — confirme o ponto no mapa"
   },
-  "iva_incluido": "IVA incluído"
+  "iva_incluido": "IVA incluído",
+  "rastreio": {
+    "erro": "Não foi possível carregar o acompanhamento da entrega.",
+    "repetir": "Tentar de novo",
+    "a_caminho": "A sua encomenda está a caminho",
+    "a_caminho_nome": "{{nome}} está a caminho com a sua encomenda",
+    "preparar": "A sua encomenda vai sair da loja",
+    "distancia": "A cerca de {{distancia}} da sua morada, em linha recta.",
+    "ao_vivo": "Ao vivo",
+    "a_cada_30s": "Actualiza a cada 30 s",
+    "sem_posicao_recente": "Sem posição recente do estafeta. Assim que ele a enviar, aparece aqui.",
+    "actualizar": "Actualizar agora",
+    "faltam_minutos_one": "Faltam cerca de {{count}} minuto",
+    "faltam_minutos_other": "Faltam cerca de {{count}} minutos",
+    "distancia_estrada": "A cerca de {{distancia}} por estrada."
+  }
 }

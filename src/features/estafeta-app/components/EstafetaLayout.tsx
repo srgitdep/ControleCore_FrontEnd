@@ -3,7 +3,8 @@ import { Link, Navigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bike, Loader2, LogOut, WifiOff } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { useMeuPerfil, useMudarEstado, useOnline } from '../hooks/useEstafeta';
+import { useMeuPerfil, useMinhasEntregas, useMudarEstado, useOnline } from '../hooks/useEstafeta';
+import { PartilhaDePosicao } from './PartilhaDePosicao';
 import { ligarPwaDoEstafeta } from '../pwa';
 import { useEstafetaStore } from '../store/useEstafetaStore';
 
@@ -21,6 +22,9 @@ export function EstafetaLayout() {
   const online = useOnline();
   const perfil = useMeuPerfil();
   const mudarEstado = useMudarEstado();
+  // A mesma consulta da lista (mesma chave): não gera pedido novo. É ela que diz se há uma entrega em rota.
+  const entregas = useMinhasEntregas(false);
+  const emRota = (entregas.data ?? []).some((e) => e.estado === 'EM_ROTA');
 
   useEffect(() => {
     void carregar();
@@ -100,6 +104,8 @@ export function EstafetaLayout() {
           {t('sem_ligacao')}
         </p>
       )}
+
+      <PartilhaDePosicao emRota={emRota} />
 
       <main className="flex-1 p-4">
         <Outlet />
