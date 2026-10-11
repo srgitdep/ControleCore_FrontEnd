@@ -40,52 +40,7 @@
 > dura: ao terminar, apaga-se daqui no mesmo commit que regista a entrega na
 > Secção 2 e marca o item na Secção 3.
 
-**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). Quando a 5D estiver feita, este bloco apaga-se.
-
-### Fase 6 — Webhooks (entrega ao domicílio) · plano da fase — **a aguardar aprovação**
-
-- **Origem:** §4.1 (D5, D8; itens «Webhooks de saída» e «Webhook de entrada»), aprovado em 2026-09-29. Este bloco **detalha e actualiza** esse plano com o que o código é hoje.
-- **Para quê:** (1) o lojista liga o ERP, o BI ou um bot de WhatsApp ao que acontece nas entregas **sem consultar a API de minuto a minuto**; (2) um **operador de entregas externo** pode fazer a entrega em vez da frota própria, avisando-nos por webhook. Não substitui o estafeta próprio: convive com ele.
-- **Branch:** a mesma `feat/rastreio-fase5` nos dois repositórios (decisão do utilizador, 2026-10-11: tudo o que é entrega num só merge, no fim).
-- **Sem migração.** As tabelas `webhook_subscricoes`, `webhook_envios` e `webhook_eventos_recebidos` (com `@@unique([operadorId, eventoExternoId])`), `EntregaPedido.operadorId` e a permissão `GERIR_WEBHOOKS` (só ADMIN) já existem desde a Fase 22.
-
-#### 6A — Webhooks de saída (backend) **[obrigatório]**
-
-- [ ] **Outbox na mesma transacção** (D8): `EmitirWebhookService.registar(tx, empresaId, evento, payload)` cria uma linha `WebhookEnvio` por subscrição **activa** que escuta esse evento. Chamado de dentro da transacção do `OperarEntregaService` (`entrega.atribuida`, `.recolhida`, `.em_rota`, `.entregue`, `.falhada`, `.cancelada`), do despacho (`pedido.expedido`) e da criação de pedido (`pedido.criado`). Se a transacção desfaz, o aviso desfaz-se com ela; se o envio falhar depois, a entrega não.
-- [ ] **Payload** estável e versionado: `{ id, evento, versao: 1, criadoEm, empresaId, dados: { pedido, entrega } }`. **Nunca** vai o telefone do cliente, o e-mail, o `password` do estafeta nem a posição; vai o necessário para correlacionar (ids, número do pedido, estado, morada de entrega, valor a cobrar).
-- [ ] **`EnviarWebhooksTask`** (`@Cron` a cada minuto): reclama linhas com `estado IN (PENDENTE, FALHADO)` e `proximaTentativaEm <= agora` por **update condicional atómico** (empurra `proximaTentativaEm` +2 min como «lease»), para duas máquinas Fly não enviarem o mesmo. `POST` com `X-ControlCore-Evento`, `X-ControlCore-Id` (idempotência do lado de lá) e `X-ControlCore-Assinatura: t=<ts>,v1=HMAC-SHA256(segredo, "<ts>.<corpo cru>")`; tempo-limite 10 s; **sem seguir redirecções**. `2xx` → `ENVIADO`; o resto → `FALHADO` com recuo **1 min · 5 · 15 · 60 · 6 h · 24 h**; à 7.ª falha `DESISTIDO` (fica visível). Registo de cada tentativa em `ultimoErro` (sem corpo da resposta além de 500 caracteres).
-- [ ] **Protecção contra SSRF** (o risco principal desta fase): o URL da subscrição tem de ser `https`; ao criar **e a cada envio** resolve-se o nome e recusa-se tudo o que resolva para loopback, rede privada, *link-local* ou o endereço de metadados da cloud (`169.254.169.254`). Variável `WEBHOOKS_PERMITIR_REDE_PRIVADA` (omissão: falso; só para desenvolvimento) no `.env.example`.
-- [ ] **CRUD** `/webhooks/subscricoes` (`GERIR_WEBHOOKS`): criar (devolve o **segredo uma única vez**), listar (segredo mascarado), editar eventos/URL/descrição, activar/desactivar, **rodar o segredo**, apagar. `POST /webhooks/subscricoes/:id/testar` envia um `webhook.teste` e devolve o resultado na hora. `GET /webhooks/subscricoes/:id/envios` (histórico paginado, com o estado e o último erro) e `POST /webhooks/envios/:id/reenviar` (volta a `PENDENTE`).
-- [ ] **Limpeza:** os envios `ENVIADO` com mais de 30 dias apagam-se por tarefa diária (tabela cresce com cada mudança de estado de cada entrega); `DESISTIDO` guarda-se 90 dias.
-- [ ] Testes: assinatura (valor conhecido), recuo, `DESISTIDO`, *lease* (dois ciclos não repetem), outbox só com subscrição activa e evento subscrito, **SSRF** (URLs privadas, DNS que resolve para privado, redirecção), que um envio falhado **não** afecta o estado da entrega, e isolamento por `empresaId`.
-
-#### 6B — Webhook de entrada e operador externo (backend) **[obrigatório]**
-
-- [ ] **Delegar a um operador:** `PATCH /entregas/:id/delegar { operadorId }` (`GERIR_ENTREGAS`; o operador é uma `WebhookSubscricao` da mesma empresa) — só enquanto `AGUARDA_RECOLHA` ou `ATRIBUIDA`, por update condicional; grava `operadorId` e emite `entrega.atribuida` com o operador como destino. Sem estafeta próprio ao mesmo tempo (regra: `estafetaId` **ou** `operadorId`).
-- [ ] **`POST /webhooks/entrega/:operadorId`** (`@Public()`, **deliberado**): exige o **corpo cru** (`rawBody: true` em `main.ts` — hoje não está ligado), verifica `X-ControlCore-Assinatura` com `crypto.timingSafeEqual`, recusa `t` com mais de 5 min de desfasamento (`401`), responde `202` **antes** de processar, e é **idempotente** por `eventoExternoId` (`@@unique`; repetido → `200` sem reaplicar).
-- [ ] **O que o operador pode fazer:** `entrega.recolhida`, `entrega.em_rota`, `entrega.entregue` (com método e valor cobrados, como o estafeta), `entrega.falhada` (motivo da lista fechada). Passa **pelo mesmo `OperarEntregaService`** (autor `OPERADOR`), logo as mesmas transições, a mesma auditoria, a mesma baixa de stock e o mesmo evento de rastreio. Uma entrega de **outra empresa**, que não é dele, ou uma transição inválida → registada em `WebhookEventoRecebido.resultado` (`rejeitado: …`) e ignorada, nunca `500`.
-- [ ] Testes: assinatura errada / sem assinatura / desfasamento / corpo adulterado, duplicado, operador de outra empresa, entrega não delegada a ele, transição inválida, e que o resultado fica registado.
-
-#### 6C — Ecrã de gestão (frontend) **[obrigatório]**
-
-- [ ] «Webhooks» no módulo de entregas (só quem tem `GERIR_WEBHOOKS`): lista de subscrições com estado, criar/editar (eventos por caixas de selecção, URL), **mostrar o segredo uma vez** com aviso «guarde-o agora», rodar o segredo, activar/desactivar, botão **«Enviar teste»**, e o **histórico de envios** (estado, tentativas, último erro, «reenviar»). Os quatro estados (a carregar, erro, vazio, sucesso) em todos os ecrãs. pt/en.
-- [ ] No painel de entregas, «Delegar a operador» ao lado de «Atribuir» (só quando existe alguma subscrição de operador activa), e o cartão mostra o operador no lugar do estafeta.
-
-#### 6D — Fecho
-
-- [ ] `.env.example` (`WEBHOOKS_PERMITIR_REDE_PRIVADA`, com o que acontece se faltar), TRD (segurança dos webhooks, SSRF, formato da assinatura, política de recuo), `plano_implementacao.md` (Fase 45), nos dois repositórios; `tsc`, testes e *build* dos dois lados.
-- [ ] **Ensaio com um receptor real** (ex.: um pedido de teste a um endereço público que o utilizador indique): confirma-se a assinatura do outro lado. Sem isto, a 6A fica «testada por simulação».
-
-#### Decisões que assumo (diz se discordas)
-
-1. **Fazer 6A, 6B e 6C** — a 6B é a que permite um operador externo, mas é a de maior superfície de ataque (endpoint público). Se não há operador externo à vista, **a 6B pode ficar para quando houver** sem prejudicar a 6A.
-2. **Formato de assinatura e recuo** como no §4.1 (Stripe-like), para quem integrar encontrar um padrão que já conhece.
-3. **O segredo guarda-se em claro** (é preciso para assinar), como o schema já diz; nunca se devolve depois de criado.
-4. **Sem *dead-letter* para fora**: os `DESISTIDO` ficam na tabela e no ecrã; não há e-mail de alerta nesta fase.
-
-**Riscos:** SSRF (mitigação acima); um receptor lento a atrasar o ciclo (envios em paralelo limitado, 10 s de tempo-limite cada); crescimento da tabela de envios (limpeza diária); o endpoint público da 6B (assinatura, janela de tempo, idempotência, limite de pedidos por operador).
-
-**Como verificar:** `npx tsc --noEmit`, `npx jest` (incl. `app.module.spec.ts`) e `npm run build` no backend; `tsc -b`, `vitest` e `npm run build` no frontend; e o ensaio da 6D.
+**Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). A **Fase 6 (webhooks)** também está feita (Fase 45). Tudo o que é entrega está num só ramo (`feat/rastreio-fase5`, nos dois repositórios), à espera do merge único; **não há mais código por escrever na entrega** — só a 5D e as decisões abaixo. Quando a 5D estiver feita, este bloco apaga-se.
 
 ---
 
@@ -1900,6 +1855,43 @@ esse merge trouxe.
     para nomes de local; Google não se adopta (pago, e mais fraco nestas zonas). A comparação foi um script pontual fora do repositório; o Google e o ORS **não** foram avaliados para rotas e tempo estimado.
   - **Verificação.** `tsc -b` limpo; +4 testes em `nomeDoLocal.test.ts` (código ISO sem `state`, província diferente da cidade, `state` com prioridade, código desconhecido ou de outro país). Sem variável nova nem migração.
 
+### Fase 45 — Entrega ao domicílio, Fase 6: webhooks de saída e de entrada (11 Out 2026)
+
+- **2026-10-11 · [BE+FE] · Antonio Mambo** — `feat/rastreio-fase5` nos dois repositórios (plano da Fase 6, aprovado em 2026-10-11; **sem migração**: as tabelas existem desde a Fase 22)
+  - feat(entrega): **webhooks de saída com caixa de saída (*outbox*).** Cada mudança de estado de uma entrega (`entrega.atribuida`, `.recolhida`, `.em_rota`, `.entregue`, `.falhada`, `.devolvida`) e a criação e o despacho
+    do pedido (`pedido.criado`, `pedido.expedido`) gravam uma linha por subscrição activa **na mesma transacção** da mudança: se esta desfaz, o aviso desfaz-se; se confirma, o aviso fica garantido. O payload leva
+    ids, número do pedido, estado, morada de entrega e valor a cobrar — **nunca** telefone, e-mail, posição ou senhas
+  - feat(entrega): **envio** (`EnviarWebhooksTask`, a cada minuto): reserva cada linha por update condicional atómico (duas máquinas não enviam o mesmo), `POST` assinado — `X-ControlCore-Evento`, `X-ControlCore-Id`,
+    `X-ControlCore-Assinatura: t=<s>,v1=HMAC-SHA256(segredo, "<t>.<corpo cru>")` —, tempo-limite 10 s, **sem seguir redirecções**; recuo 1 min · 5 · 15 · 60 · 6 h · 24 h e `DESISTIDO` à 7.ª falha (fica visível);
+    limpeza diária (enviados 30 dias, desistidos 90)
+  - feat(segurança): **defesa contra SSRF** em três camadas: (1) ao criar/editar, o URL tem de ser https, sem credenciais, e o nome não pode resolver para rede privada; (2) antes de cada envio o URL volta a validar-se; (3) o
+    `lookup` do socket valida o IP **no momento de ligar** (contra *DNS rebinding*), e um IP literal privado — incluindo IPv6 e `::ffff:` — é recusado antes de qualquer pedido. Um teste do enviador apanhou
+    que o Node **não chama o `lookup` para IP literal**; a verificação do literal foi acrescentada
+  - feat(entrega): **gestão** (`/webhooks/subscricoes`, `GERIR_WEBHOOKS`, só ADMIN): criar (segredo completo **uma só vez**), listar (mascarado), editar, activar, **rodar o segredo**, apagar, **«Enviar teste»** (envia já e devolve o
+    resultado), histórico de envios paginado e **reenviar**. Limite de 20 subscrições por empresa
+  - feat(entrega): **delegar a um operador externo** (`PATCH /entregas/:id/delegar`): é uma atribuição como outra (mesma transição, auditoria e evento), grava `operadorId` e tira o estafeta próprio; atribuir a um estafeta
+    tira a entrega ao operador. `GET /entregas/operadores` dá só id e nome a quem delega (que não é quem gere webhooks)
+  - feat(entrega): **webhook de entrada** (`POST /webhooks/entrega/:operadorId`, `@Public()` **deliberado**): assinatura sobre o **corpo cru** (`rawBody: true` em `main.ts`), `timingSafeEqual`, janela de ±5 min,
+    `202` antes de processar, idempotente por `eventoExternoId`. O operador só pode `recolhida`, `em_rota`, `entregue`, `falhada` — pelo **mesmo** `OperarEntregaService` (autor `OPERADOR`, mesmas regras, auditoria,
+    stock e rastreio) e só nas entregas que lhe foram delegadas; a empresa vem da subscrição, nunca do corpo. Operador desconhecido, desactivado ou assinatura errada dão o **mesmo 401**
+  - feat(frontend): ecrã **Webhooks** (`/entregas/webhooks`, só ADMIN): lista, criar/editar com os eventos em caixas, **segredo mostrado uma vez** (só o botão o fecha, não o clique fora nem o Esc), rodar segredo, testar com
+    o resultado na página, histórico de envios com estado/erro/«reenviar»; e **«Delegar»** no painel de entregas (só com operadores activos), com o operador no cartão. pt/en
+  - i18n (erros): 10 códigos novos pt/en
+
+  > **Desvios ao plano da Fase 6.** (1) `entrega.cancelada` sai da lista de eventos: uma entrega não se cancela (falha-se e devolve-se, `entrega.devolvida`) — não havia quem a emitisse. (2) O `pedido.criado` e o
+  > `pedido.expedido` também entram na mesma transacção do pedido, em `CriarPedidoUseCase` e `ExpedirPedidoUseCase`, o que exigiu um argumento novo nos seus construtores (e nos testes). (3) `EnviadorHttp` usa
+  > `http(s).request` com `lookup` próprio e **não** o `fetch`: o `fetch` não deixa validar o IP a que liga. (4) Acrescentei `GET /entregas/operadores`, que o plano não previa, para o painel poder delegar sem dar a quem
+  > delega acesso aos URLs e segredos.
+  >
+  > **Verificação.** Backend: `tsc` e `nest build` limpos, **3117 testes (217 suites)**, incluindo a compilação do `AppModule` completo. Os testes que pesam: assinatura (valores, adulteração, janela, tamanho errado),
+  > IPs privados (IPv4, IPv6, mapeado, metadados da cloud), o enviador contra um **servidor HTTP real** (recusa localhost por omissão, não segue 302, corta a resposta), o envio **ponta a ponta com um receptor que verifica a
+  > assinatura só a partir do que a documentação diz**, o endpoint de entrada **por HTTP a sério com `rawBody`** (sem assinatura, segredo errado e corpo adulterado dão 401; repetido dá 200) e a protecção dos controladores (só a
+  > rota de entrada é pública). Frontend: `tsc -b` limpo, **219 testes**, lint sem avisos novos, *build* limpo. **Não testei:** o ecrã num browser, nem um receptor de terceiros real — o ensaio foi com um receptor local.
+  >
+  > **Notas de deploy.** Sem migração. **Backend primeiro**, frontend depois. Variável nova **só para desenvolvimento**: `WEBHOOKS_PERMITIR_REDE_PRIVADA` — **nunca pôr a `true` em produção** (deixava um administrador fazer o servidor
+  > ler metadados da cloud). Os webhooks só têm utilidade depois de um ADMIN criar uma subscrição; sem nenhuma, a caixa de saída não grava nada. O `rawBody: true` em `main.ts` é transversal (guarda o *buffer* de cada pedido
+  > JSON), sem efeito nas outras rotas.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2051,9 +2043,9 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [x] **5B — Os ecrãs.** Concluída em 2026-10-11 (Fase 43): o estafeta emite (e vê o aviso), o cliente segue o pedido no mapa, o painel da loja mostra os estafetas em rota.
   - [x] **5C — Rota prevista e tempo estimado.** Escrita em 2026-10-11 (Fase 43) para o OpenRouteService e **desligada sem `ORS_API_KEY`**. Falta confirmar a cota/termos do plano gratuito e criar a chave.
   - [ ] **5D — Fecho.** Teste real, num telemóvel, de uma entrega seguida do outro lado; documentação.
-- [ ] **Fase 6 — Webhooks.** Saída pelo padrão *outbox* (assinatura HMAC, recuo
-      exponencial) e entrada assinada e idempotente, para um operador de entregas
-      externo poder substituir a frota própria.
+- [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
+      exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
+      externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
 - [x] Ligar as permissões novas da entrega aos perfis de sistema `Gestor` e
       `Funcionário / Caixa` — feito em 2026-10-06 (Fase 22), na migração e no seed;
       `zonas_entrega` e `webhooks` só ADMIN. Texto original: **na migração e no `seed.ts`** — o seed apaga e recria
@@ -2063,8 +2055,8 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [x] Defeito pré-existente: `TransitarEstadoPedidoUseCase.transitar` lia o pedido e só
       depois o actualizava, sem update condicional atómico. Corrigido em 2026-10-07
       (Fase 27), com `updateMany` condicional ao estado e testes.
-- [ ] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
-      Fase 4 — **não existe hoje** e não está estimada no plano da entrega.
+- [x] Base de PWA no frontend (`vite-plugin-pwa`, manifest, service worker) para a
+      Fase 4 — feita em 2026-10-10 (Fase 41; só a aplicação do estafeta é PWA). Texto original: **não existe hoje** e não está estimada no plano da entrega.
       Encontrado no planeamento multilíngue (2026-09-28).
 
 ### Multilínguas (internacionalização)
@@ -2608,7 +2600,7 @@ Sem alterações de fundo face à versão anterior:
       cookie `tokenEstafeta`, audience `controlcore-estafeta`, `segredoEstafeta()` que
       **lança** sem `JWT_ESTAFETA_SECRET`, validade 12 h. `EstafetaGuard` +
       `@Estafeta()`, com verificação em BD a cada pedido.
-- [ ] **[obrigatório na Fase 6]** **Webhooks de saída** — *outbox* na mesma transacção;
+- [x] **[obrigatório na Fase 6]** (feito na Fase 45) **Webhooks de saída** — *outbox* na mesma transacção;
       `EnviarWebhooksTask` a cada minuto; `POST` com `X-ControlCore-Evento`,
       `X-ControlCore-Id` (idempotência do lado de lá) e
       `X-ControlCore-Assinatura: t=<ts>,v1=HMAC-SHA256(segredo, "<ts>.<corpo cru>")`;
@@ -2616,12 +2608,12 @@ Sem alterações de fundo face à versão anterior:
       Eventos: `pedido.criado`, `pedido.expedido`, `entrega.atribuida`,
       `entrega.recolhida`, `entrega.em_rota`, `entrega.entregue`, `entrega.falhada`,
       `entrega.cancelada`.
-- [ ] **[obrigatório na Fase 6]** **Webhook de entrada** —
+- [x] **[obrigatório na Fase 6]** (feito na Fase 45) **Webhook de entrada** —
       `POST /webhooks/entrega/:operadorId`, `@Public()`; assinatura sobre o corpo cru
       com `crypto.timingSafeEqual`; desfasamento >5 min recusado; duplicado → `200`;
       responde `202` antes de processar; evento de outra empresa ou transição inválida é
       registado em `erro` e ignorado.
-- [ ] **[obrigatório]** `entrega.gateway.ts` — namespace `/entregas`, três segredos,
+- [x] **[obrigatório]** (feito na Fase 42, em `infrastructure/socket/entregas.gateway.ts`) `entrega.gateway.ts` — namespace `/entregas`, três segredos,
       três salas; nunca um cliente em `empresa_<id>` (R2).
 
 ###### Endpoints

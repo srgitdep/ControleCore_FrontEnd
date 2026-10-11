@@ -32,7 +32,8 @@
       "rh": "Recursos Humanos",
       "historico": "Histórico no Sistema",
       "procura": "Procura online",
-      "procura_sistema": "Procura (plataforma)"
+      "procura_sistema": "Procura (plataforma)",
+      "webhooks": "Webhooks"
     },
     "fechar": "Fechar menu",
     "expandir": "Expandir sidebar",

@@ -5,6 +5,7 @@ import { Loader2, X } from 'lucide-react';
 import { formatMoeda } from '@/shared/utils';
 import { METODOS_COBRANCA, MOTIVOS_FALHA } from '../types/operacao';
 import type { EntregaPainel, Estafeta, MetodoCobranca, MotivoFalha } from '../types/operacao';
+import type { OperadorExterno } from '../types/webhook';
 
 const classeCampo =
   'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
@@ -126,6 +127,54 @@ export function AtribuirDialog({
           desactivado={!estafetaId || elegiveis.length === 0}
           aProcessar={aProcessar}
         />
+      </form>
+    </Casca>
+  );
+}
+
+/**
+ * Delegar a entrega a um operador externo (Fase 6). Só se oferece com operadores activos; o servidor
+ * volta a verificar que o operador é desta empresa e que a mercadoria ainda está na loja.
+ */
+export function DelegarDialog({
+  entrega,
+  operadores,
+  aProcessar,
+  aoConfirmar,
+  aoFechar,
+}: {
+  entrega: EntregaPainel;
+  operadores: OperadorExterno[];
+  aProcessar: boolean;
+  aoConfirmar: (operadorId: string) => void;
+  aoFechar: () => void;
+}) {
+  const { t } = useTranslation('entrega');
+  const [operadorId, setOperadorId] = useState(entrega.operador?.id ?? '');
+
+  return (
+    <Casca titulo={t('dialogo.delegar.titulo', { pedido: entrega.pedido.numeroPedido })} aoFechar={aoFechar}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (operadorId) aoConfirmar(operadorId);
+        }}
+      >
+        <p className="text-sm text-slate-600">{t('dialogo.delegar.explicacao')}</p>
+        <div>
+          <label className="block text-xs font-medium text-slate-700">{t('dialogo.delegar.operador')}</label>
+          <select value={operadorId} onChange={(e) => setOperadorId(e.target.value)} className={classeCampo} autoFocus>
+            <option value="">{t('dialogo.delegar.escolher')}</option>
+            {operadores.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.descricao}
+              </option>
+            ))}
+          </select>
+        </div>
+        {entrega.estafeta && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{t('dialogo.delegar.tira_estafeta', { nome: entrega.estafeta.nome })}</p>}
+        <Rodape aoFechar={aoFechar} confirmar={t('dialogo.delegar.confirmar')} desactivado={!operadorId} aProcessar={aProcessar} />
       </form>
     </Casca>
   );

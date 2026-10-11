@@ -522,6 +522,24 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - Segregação de funções (`src/shared/segregacao-funcoes.ts`) e auditoria
   (`AuditLog`) nos fluxos de dinheiro e stock.
 
+### 8.1 Webhooks da entrega (Fase 45, 11/10/2026)
+
+- **Saída (*outbox*).** `EmitirWebhookService.registar(tx, …)` grava uma linha de `webhook_envios` por subscrição **activa** da empresa que escute o evento, **na transacção** de quem muda o estado
+  (`OperarEntregaService`, `DevolverEntregaUseCase`, `CriarPedidoUseCase`, `ExpedirPedidoUseCase`). Eventos: `pedido.criado`, `pedido.expedido`, `entrega.atribuida`, `.recolhida`, `.em_rota`, `.entregue`,
+  `.falhada`, `.devolvida`. Corpo: `{ id, evento, versao: 1, criadoEm, empresaId, dados }`, sem dados pessoais.
+- **Envio.** `EnviarWebhooksTask` (`@Cron` a cada minuto) reserva cada linha por `updateMany` condicional (reserva de 2 min) e faz `POST` com `X-ControlCore-Evento`, `X-ControlCore-Id` (idempotência do receptor) e
+  `X-ControlCore-Assinatura: t=<segundos>,v1=HMAC-SHA256(segredo, "<t>.<corpo cru>")`. Tempo-limite 10 s; **sem redirecções**; resposta guardada só até 500 caracteres. Recuo 1 min · 5 · 15 · 60 · 6 h · 24 h;
+  à 7.ª falha `DESISTIDO`. Limpeza às 4 h: enviados > 30 dias, desistidos > 90.
+- **SSRF.** URL https, sem credenciais, nome que não resolva para loopback/rede privada/*link-local*/CGNAT/multicast (incluindo `169.254.169.254` e IPv6 mapeado); verificado ao gravar, antes de enviar e **no `lookup` do
+  socket** (contra *DNS rebinding*); IP literal privado recusado antes de ligar. `WEBHOOKS_PERMITIR_REDE_PRIVADA=true` (**só desenvolvimento**) levanta estas restrições.
+- **Entrada.** `POST /webhooks/entrega/:operadorId` (`@Public()`, `@Throttle` 120/min): exige `rawBody` (ligado em `main.ts`), assinatura com `timingSafeEqual`, janela de ±5 min, idempotência por
+  `WebhookEventoRecebido(operadorId, eventoExternoId)` único; `202` antes de aplicar. Eventos aceites: `entrega.recolhida`, `.em_rota`, `.entregue`, `.falhada`, aplicados por `OperarEntregaService` com autor
+  `OPERADOR` (só entregas com `operadorId` igual ao dele). A empresa vem da subscrição. Desconhecido/desactivado/assinatura errada → o mesmo 401.
+- **Gestão.** `/webhooks/subscricoes` e `/webhooks/envios` (`GERIR_WEBHOOKS`, só ADMIN); segredo (`whsec_` + 32 bytes) em claro na BD porque é preciso para assinar, devolvido **uma só vez**; máximo 20 por
+  empresa. `PATCH /entregas/:id/delegar` e `GET /entregas/operadores` (`GERIR_ENTREGAS`).
+- **Frontend.** `/entregas/webhooks` (só ADMIN) e «Delegar» no painel; instância `api` do funcionário.
+- **Limites conhecidos.** O limitador e a reserva são por máquina/BD (a reserva é atómica na BD, por isso duas máquinas são seguras); um receptor lento ocupa até 10 s de um dos 5 envios em simultâneo de um ciclo.
+
 ---
 
 ## 9. Ferramentas de desenvolvimento

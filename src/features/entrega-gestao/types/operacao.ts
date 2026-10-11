@@ -77,6 +77,8 @@ export interface EntregaPainel {
   createdAt: string;
   loja: { id: string; nome: string };
   estafeta: { id: string; nome: string; codigo: string; telefone: string } | null;
+  /** O operador externo a quem foi delegada (Fase 6); `null` = a frota própria. */
+  operador: { id: string; descricao: string } | null;
   pedido: { id: string; numeroPedido: string; totalFinal: number; estado: string };
 }
 
