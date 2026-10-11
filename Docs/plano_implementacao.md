@@ -1989,11 +1989,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       `20261005100000_entrega_domicilio` (não destrutiva, ensaiada num branch do Neon),
       permissões ligadas a perfis na migração e no seed, `.env.example`. **Desvio:** os
       três estados novos de `EstadoPedido` ficam para a migração da Fase 2.
-- [ ] Coordenadas (`latitude`/`longitude`) das lojas piloto — as colunas existem desde a
-      Fase 22, mas nenhuma loja as tem preenchidas. **Bloqueia a activação**: sem elas (e sem
+- [x] Coordenadas (`latitude`/`longitude`) das lojas piloto — **feito para a SHOPRITE Central** (2026-10-09); as outras lojas preenchem-se à medida que aderem. As colunas existem desde a
+      Fase 22, mas nenhuma loja as tinha preenchidas. **Bloqueia a activação**: sem elas (e sem
       uma zona activa) a loja não oferece entrega no checkout.
-- [ ] `JWT_ESTAFETA_SECRET` nos `fly secrets` — só antes do deploy que o passe a ler
-      (Fase 4); já está no `.env.example`.
+- [x] `JWT_ESTAFETA_SECRET` nos `fly secrets` — **feito** (confirmado pelo utilizador em 2026-10-10, antes do deploy das Fases 40 e 41); já está no `.env.example`.
 - [x] **Fase 1 — O cliente escolhe entrega.** Concluída em 2026-10-06 (Fase 23): moradas
       do cliente, zonas por loja com taxa e prazo, cotação, e escolha entrega/levantamento no
       checkout com a taxa como linha própria. **Desvio:** corrigido o total do pedido na
@@ -2028,14 +2027,14 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [ ] **E-mails do sistema vão para o spam.** O envio é por uma conta Gmail normal ("ControlCore Support", `SMTP_USER`),
       sem domínio próprio. Afecta todos os e-mails (fornecedor, recuperação de senha, estafeta). Solução: domínio da
       empresa com **SPF e DKIM** ou um serviço de e-mail transaccional. Por decidir e planear.
-- [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (rascunho, a aguardar aprovação). Aplicação web (PWA): entrar com o
+- [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (aprovado em 2026-10-10; **4A e 4B feitas**, falta a 4C — o teste num telemóvel real). Aplicação web (PWA): entrar com o
       código `E####`, ver as suas entregas, recolher, iniciar rota, entregar (com a cobrança) e falhar. **Desvios ao plano 4.1:** sem o passo
       «aceitar» e o login passa a ser o ecrã único (e não `/estafeta/entrar`). Atribuição automática e foto de prova ficam fora.
   - [x] **4A — Servidor.** Concluída em 2026-10-10 (Fase 40): `estafeta-token.ts`, guarda, 3.º ramo do login único, `/estafeta/…`, posse da entrega, e-mail com a ligação,
         testes (incluindo o arranque da `AppModule`). **Por enviar junto com a 4B.**
   - [x] **4B — A aplicação.** Concluída em 2026-10-10 (Fase 41): PWA só do estafeta (manifest, *service worker* de âmbito `/estafeta/`, ícones), ecrãs, ligação ao login.
         **Por enviar com a 4A, e por confirmar num telemóvel (4C).**
-  - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
+  - [ ] **4C — Fecho.** Documentação **feita** (Fase 41). **Por fazer, e é do utilizador:** o teste num telemóvel real (instalar no ecrã inicial, entrar com o código, percorrer os passos). O e-mail com a ligação à aplicação não saiu: o código chega por e-mail e a aplicação abre-se em `/estafeta`.
 - [ ] **Fase 5 — Rastreio ao vivo.** Plano detalhado em **§4.6** (aprovado em 2026-10-11; 5A, 5B e 5C feitas — falta a 5D, o teste real). Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; o estafeta emite a posição **só em rota**; mapa para o cliente (no pedido) e para a loja (no painel),
       com recurso a consulta de 30 s quando não há WebSocket. A rota prevista e o tempo estimado ficam na **5C**, que depende de um fornecedor de rotas por decidir.
@@ -2198,11 +2197,11 @@ implementação vem **antes** de retomar o ensaio da entrega.
 
 | # | Funcionalidade | Estado | Checklist |
 | --- | --- | --- | --- |
-| 4.1 | Entrega ao domicílio (Compra Fácil) | Em curso — Fases 0 (Fase 22), 1 (Fase 23), 2A (Fase 28), 2B (Fase 29) e 3 (Fase 30) concluídas; a seguir a Fase 4 (o estafeta na rua) | Secção 3 → «Entrega ao domicílio» |
+| 4.1 | Entrega ao domicílio (Compra Fácil) | **Código completo** — Fases 0 a 6 feitas (Fases 22, 23, 28, 29, 30, 40, 41, 42, 43, 45); faltam só os testes em dispositivos reais (4C, 5D) e o ensaio na loja piloto | Secção 3 → «Entrega ao domicílio» |
 | 4.2 | Multilínguas (internacionalização) | Concluído em inglês — Fases 0 a 4 (Fases 18 a 20); falta a revisão humana das traduções | Secção 3 → «Multilínguas» |
 | 4.3 | Promoções com risco de stock (Compra Fácil) | Implementado — 2026-10-03 (Fase 21) | Secção 3 → «Compra Fácil» |
 | 4.4 | Conta de cliente única e registo da procura online (Compra Fácil) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Conta de cliente única e registo da procura online» |
-| 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Fase 4 |
+| 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Aprovado** — 4A e 4B feitas (Fases 40 e 41); falta o teste num telemóvel (4C) | Secção 3 → «Entrega ao domicílio» → Fase 4 |
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
@@ -2465,7 +2464,7 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       `EstadoEntregaPedido { AGUARDA_RECOLHA, ATRIBUIDA, RECOLHIDA, EM_ROTA, ENTREGUE,
       FALHADA, DEVOLVIDA, CANCELADA }` · `EstadoEstafeta` · `EstadoAcerto` ·
       `EstadoWebhookEnvio`.
-- [ ] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**. **Adiado para a migração da Fase 2** (decisão de 2026-10-05): sem escritor antes disso seriam estados mortos.
+- [x] **[obrigatório]** `EstadoPedido` ganha **`EXPEDIDO`, `EM_ROTA`, `FALHADA`**. **Adiado para a migração da Fase 2** (decisão de 2026-10-05): sem escritor antes disso seriam estados mortos. — **feito: Fase 28, na migração dos estados**
 - [x] **[já feito, fora desta migração]** `AGUARDA_CONFIRMACAO` e
       `AGUARDA_LEVANTAMENTO` — removidos em 2026-10-03 (Fase 21), antes desta
       funcionalidade ter código. Migração
@@ -2497,7 +2496,7 @@ Migração `prisma/migrations/<timestamp>_entrega_domicilio/migration.sql`.
       `acertos_estafeta` nas listas de `permissoesGestor`; `pedidos_commerce` e
       `entregas` na de `permissoesCaixa`. Sem isto, o seed desfaz a migração (R14).
 - [ ] **[opcional]** Seed de zonas de Maputo num script de desenvolvimento, não numa
-      migração.
+      migração. — **não feito**: as zonas criam-se no ecrã «Zonas de entrega».
 
 ##### 4.2 Backend
 
@@ -2509,11 +2508,11 @@ gestão, estafeta, moradas e zonas; `domain/` com funções puras; `application/
 
 ###### 4.2.1 Domínio — [obrigatório]
 
-- [ ] `distancia-haversine.ts` e `calcular-taxa.ts` — funções puras, testadas antes de
+- [x] `distancia-haversine.ts` e `calcular-taxa.ts` — funções puras, testadas antes de — **feito: Fase 23**
       existir controller (casos: sem coordenadas, sobreposição, fora de área, inactiva,
       abaixo do mínimo).
-- [ ] `entrega-estado.ts` — transições da `EntregaPedido`, escritas por extenso.
-- [ ] **`pedido-estado.ts`** (D12):
+- [x] `entrega-estado.ts` — transições da `EntregaPedido`, escritas por extenso. — **feito: Fase 29 (`TRANSICOES`)**
+- [x] **`pedido-estado.ts`** (D12): — **feito: Fase 28, em `commerce/domain/pedido-estado.ts`**
   - `ESTADOS_CANCELAVEIS_PELA_LOJA` / `lojaPodeCancelar`: `CRIADO`, `CONFIRMADO`,
     `EM_PREPARACAO`, `PRONTO`.
   - `ESTADOS_EM_ENTREGA`: `EXPEDIDO`, `EM_ROTA`.
@@ -2548,55 +2547,55 @@ CRIADO ─confirmar─→ CONFIRMADO ─iniciarPreparacao─→ EM_PREPARACAO �
 Cancelável: cliente até CONFIRMADO · loja até PRONTO · a partir de EXPEDIDO, só FALHADA → devolver.
 ```
 
-- [ ] **Extrair de `ConfirmarLevantamentoUseCase`** para um serviço partilhado:
+- [x] **Extrair de `ConfirmarLevantamentoUseCase`** para um serviço partilhado: — **feito: Fase 28, em `commerce/application/services/fecho-pedido.ts`**
       `itensFinais` (quantidades da conferência e substituições) e
       `recusarLojaDiferenteDaDoCaixa`. **Extrair, não copiar** — a regra da loja do
       caixa foi corrigida há dois dias e duas cópias voltariam a divergir.
-- [ ] `ExpedirPedidoUseCase` — por ordem: (1) loja do caixa = loja do pedido;
+- [x] `ExpedirPedidoUseCase` — por ordem: (1) loja do caixa = loja do pedido; — **feito: Fase 28**
       (2) `updateMany` condicional `PRONTO → EXPEDIDO`, `count === 1`; (3) reservas →
       `CONSUMIDA`; (4) `EntregaPedido` em `AGUARDA_RECOLHA` (R6); (5)
       `ProcessarVendaUseCase(..., 'ECOMMERCE')` com `taxaEntrega` e pagamento
       `A_COBRAR_NA_ENTREGA` (ou o método pré-pago, quando o gateway existir);
       (6) `RegistroFinanceiro` `RECEITA`/`PENDING`, `vendaId`, `clienteId` nulo;
       (7) `WebhookEnvio`; (8) notificação.
-- [ ] `AtribuirEstafetaUseCase`, `RegistarRecolhaUseCase`, `RegistarPosicaoUseCase`
+- [x] `AtribuirEstafetaUseCase`, `RegistarRecolhaUseCase`, `RegistarPosicaoUseCase` — **feito: as operações vivem em `OperarEntregaService` (Fase 29) e `RegistarPosicaoUseCase` (Fase 42); a `ExpirarAtribuicoesTask` **não** foi feita — a atribuição automática ficou fora do âmbito (§4.5)**
       (não grava evento — D6), `ExpirarAtribuicoesTask`.
-- [ ] `ConfirmarEntregaUseCase` — entrega `EM_ROTA → ENTREGUE`, pedido
+- [x] `ConfirmarEntregaUseCase` — entrega `EM_ROTA → ENTREGUE`, pedido — **feito: `OperarEntregaService.entregar` (Fase 29)**
       `EM_ROTA → CONCLUIDO`; regista `valorCobrado`, `metodoCobrado` e, se não for
       numerário, `referenciaPagamento`.
-- [ ] `RegistarFalhaEntregaUseCase` — `EM_ROTA → FALHADA`, motivo obrigatório.
-- [ ] `DevolverEntregaUseCase` (D11) — exige `MANAGER`+ (herdado da anulação). Por ordem:
+- [x] `RegistarFalhaEntregaUseCase` — `EM_ROTA → FALHADA`, motivo obrigatório. — **feito: `OperarEntregaService.falhar` (Fase 29)**
+- [x] `DevolverEntregaUseCase` (D11) — exige `MANAGER`+ (herdado da anulação). Por ordem: — **feito: Fase 29**
       (1) `AnularVendaUseCase` — a parte irreversível, com a sua própria guarda de
       concorrência (`updateMany … estado: CONCLUIDA`); (2) numa transacção:
       `EntregaPedido FALHADA → DEVOLVIDA` e `RegistroFinanceiro → CANCELLED`, ambos
       condicionais e por isso seguros de repetir se (2) falhar depois de (1).
-- [ ] `AcertarContasEstafetaUseCase` — só soma entregas com `metodoCobrado = NUMERARIO`
+- [x] `AcertarContasEstafetaUseCase` — só soma entregas com `metodoCobrado = NUMERARIO` — **feito: Fase 30**
       (M-Pesa/e-Mola não passam pelo bolso do estafeta); `AcertoEstafeta` +
       `MovimentoCaixa(REFORCO)` na sessão de quem recebe + `RegistroFinanceiro → PAID`.
       Diferença regista-se, não bloqueia.
 
 ###### 4.2.3 Alterações a código existente — [obrigatório]
 
-- [ ] **`CancelarPedidoGestaoUseCase`**: trocar `estaConcluido` por `lojaPodeCancelar`;
+- [x] **`CancelarPedidoGestaoUseCase`**: trocar `estaConcluido` por `lojaPodeCancelar`; — **feito: Fase 28**
       mensagem para `EXPEDIDO`/`EM_ROTA`/`FALHADA` a dizer o caminho certo (R12).
-- [ ] **`AnularVendaUseCase`**: recusar com `409` se o pedido associado estiver em
+- [x] **`AnularVendaUseCase`**: recusar com `409` se o pedido associado estiver em — **feito: Fase 28**
       `ESTADOS_EM_ENTREGA` (R11); aceitar sessão fechada quando o pedido associado é
       `tipoEntrega = ENTREGA` **e** `numerarioADevolver === 0` (R13). Os dois ajustes
       só disparam quando há pedido de entrega — o POS não muda.
-- [ ] **`anularVendaTransacional`**: a reversão do pedido passa de
+- [x] **`anularVendaTransacional`**: a reversão do pedido passa de — **feito: Fase 28**
       `estado: CONCLUIDO` para `estado: { in: [CONCLUIDO, FALHADA] }`.
-- [ ] **`ProcessarVendaUseCase` + `processar-venda.dto.ts`**: `A_COBRAR_NA_ENTREGA` em
+- [x] **`ProcessarVendaUseCase` + `processar-venda.dto.ts`**: `A_COBRAR_NA_ENTREGA` em — **feito: Fase 28**
       `MetodoPagamento`, aceite só com `canal = 'ECOMMERCE'` (R15), sem troco (tratar
       como o `CREDITO` já é tratado no cálculo do troco); `taxaEntrega?` fora de COGS.
       `PagamentoVenda.metodo` é texto — **não há migração** para o método.
-- [ ] **`CriarPedidoUseCase` + DTO**: `tipoEntrega`, `enderecoId`, taxa no `totalFinal`.
-- [ ] **`main.ts`**: `{ rawBody: true }` (R5).
+- [x] **`CriarPedidoUseCase` + DTO**: `tipoEntrega`, `enderecoId`, taxa no `totalFinal`. — **feito: Fase 23**
+- [x] **`main.ts`**: `{ rawBody: true }` (R5). — **feito: Fase 45 (webhook de entrada)**
 
 ###### 4.2.4 Autenticação do estafeta, webhooks e tempo real
 
 Sem alterações de fundo face à versão anterior:
 
-- [ ] **[obrigatório]** `estafeta-token.ts` — cópia estrutural de `cliente-token.ts`:
+- [x] **[obrigatório]** `estafeta-token.ts` — cópia estrutural de `cliente-token.ts`: — **feito: Fase 40**
       cookie `tokenEstafeta`, audience `controlcore-estafeta`, `segredoEstafeta()` que
       **lança** sem `JWT_ESTAFETA_SECRET`, validade 12 h. `EstafetaGuard` +
       `@Estafeta()`, com verificação em BD a cada pedido.
@@ -2640,42 +2639,42 @@ Sem alterações de fundo face à versão anterior:
 
 ##### 4.3 Frontend
 
-- [ ] **[obrigatório]** **Checkout** — selector levantar/entregar, `SelectorMorada`,
+- [x] **[obrigatório]** **Checkout** — selector levantar/entregar, `SelectorMorada`, — **feito: Fase 23**
       cotação a cada mudança; taxa como linha própria antes do botão; fora de área →
       frase concreta e volta a levantamento. Estados: skeleton na linha da taxa, erro
       via `mensagemDeErro()`, sem morada, fora de área.
-- [ ] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no
+- [x] **[obrigatório]** **Moradas** — `MoradasPage` com react-hook-form + Zod; pino no — **feito: Fase 23**
       mapa; geolocalização **escondida** fora de contexto seguro.
-- [ ] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`;
+- [x] **[obrigatório]** **Rastreio** — linha do tempo + `MapaEntrega` quando `EM_ROTA`; — **feito: Fases 42 e 43; sem WebSocket a consulta é de **2,5 s** (alterado a pedido, 11/10/2026)**
       namespace `/entregas`; sem WebSocket, consulta a cada 30 s. O mapa desenha o rasto
       das posições recebidas (só em memória) e o marcador da morada; mais a rota
       prevista até à morada e o tempo estimado (US-19b, ver Sprint 5), vindos do
       backend — o ecrã não fala com o fornecedor de rotas.
-- [ ] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e
+- [x] **[obrigatório]** **`pedidos.api.ts`** — `EstadoPedido` e — **feito: Fase 23**
       `ETIQUETA_ESTADO_PEDIDO` com `EXPEDIDO` ("A caminho"), `EM_ROTA` ("O estafeta está a
       caminho"), `FALHADA` ("Não foi possível entregar"); sem os `AGUARDA_*` se a
       pergunta 4 decidir remover. `ETIQUETA_METODO_PAGAMENTO` hoje diz "no
       levantamento" — passa a depender de `tipoEntrega`.
-- [ ] **[obrigatório]** **PWA do estafeta** — `/estafeta/*` fora do `ProtectedRoute`
+- [x] **[obrigatório]** **PWA do estafeta** — `/estafeta/*` fora do `ProtectedRoute` — **feito: Fase 41; o envio da posição é de **2,5 s / 5 m** (alterado a pedido, 11/10/2026)**
       (como `/loja` e `/fornecedor`); telemóvel primeiro, uma mão, alvos grandes;
       `useEmitirPosicao` com *throttle* 15 s / 25 m. Fila offline **[opcional]**, mas o
       único que não cortaria.
-- [ ] **[obrigatório]** **Gestão** — `EntregasPage` (mapa + colunas por estado, socket);
+- [x] **[obrigatório]** **Gestão** — `EntregasPage` (mapa + colunas por estado, socket); — **feito: Fases 28, 29 e 30; o mapa dos estafetas é da Fase 43**
       "Despachar" em `PedidosCommercePage` para pedidos de entrega em `PRONTO`;
       `ZonasEntregaPage`, `EstafetasPage`, `AcertoEstafetaPage`. O botão "Cancelar" some
       a partir de `EXPEDIDO`; o de devolver só aparece em `FALHADA` e só a gestor.
-- [ ] **[obrigatório]** **`permissions.config.ts`** — `AVAILABLE_RESOURCES` +=
+- [x] **[obrigatório]** **`permissions.config.ts`** — `AVAILABLE_RESOURCES` += — **feito: Fase 22**
       `entregas`, `estafetas`, `acertos_estafeta`, `zonas_entrega`, `webhooks`;
       `IGNORED_PERMISSIONS` += `write:`/`delete:` de cada um (só existem `read`/`manage`,
       como em `pedidos_commerce`). Sem isto, perfis personalizados não conseguem receber
       as permissões novas — o editor de perfis não as mostra.
-- [ ] **[obrigatório]** **`useSocket.ts`** aceita namespace (hoje fixo na raiz).
-- [ ] **[obrigatório]** `MapaEntrega.tsx` único — a biblioteca de mapas (pergunta 1) não
+- [x] **[obrigatório]** **`useSocket.ts`** aceita namespace (hoje fixo na raiz). — **feito: feito num hook novo, `useCanalDeEntregas` (Fase 43); o `useSocket` da raiz ficou como estava**
+- [x] **[obrigatório]** `MapaEntrega.tsx` único — a biblioteca de mapas (pergunta 1) não — **feito: Fase 23; continua a ser o único ficheiro que conhece o Leaflet**
       se espalha por seis ficheiros.
 
 ##### 4.4 Transversal
 
-- [ ] **[obrigatório]** Testes backend, além dos da versão anterior
+- [x] **[obrigatório]** Testes backend, além dos da versão anterior — **feito: cada caso de uso e regra tem o seu `*.spec.ts`**
       (taxa, haversine, estados, expedição concorrente, confirmar entrega, acerto,
       assinatura de webhook):
   - `pedido-estado.spec.ts` — `lojaPodeCancelar` recusa `EXPEDIDO`/`EM_ROTA`/`FALHADA`;
@@ -2688,24 +2687,24 @@ Sem alterações de fundo face à versão anterior:
     não gera troco.
   - `expedir-pedido.use-case.spec.ts` — caixa de outra loja dá `400`; a gaveta não sobe.
   - `devolver-entrega.use-case.spec.ts` — repetir depois de falha parcial não duplica.
-- [ ] **[obrigatório]** Frontend: etiqueta para todo o `EstadoPedido` (falha se faltar).
-- [ ] **[obrigatório]** Auditoria em expedição, atribuição, entrega, falha, devolução e
+- [x] **[obrigatório]** Frontend: etiqueta para todo o `EstadoPedido` (falha se faltar). — **feito: garantido pelo compilador: `Record<EstadoPedido, …>` no `PedidoDetalhePage`**
+- [x] **[obrigatório]** Auditoria em expedição, atribuição, entrega, falha, devolução e — **feito: `AuditoriaEntregaService`**
       acerto (dinheiro e stock).
-- [ ] **[obrigatório]** `.env.example`: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`,
+- [x] **[obrigatório]** `.env.example`: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`, — **feito: `JWT_ESTAFETA_SECRET`, `JWT_ESTAFETA_EXPIRES_IN`, `ORS_API_KEY`, `ORS_BASE_URL` e `WEBHOOKS_PERMITIR_REDE_PRIVADA`. **Desvio:** `WEBHOOK_TIMEOUT_MS` e `WEBHOOK_MAX_TENTATIVAS` não existem — o tempo-limite (10 s) e as 7 tentativas são constantes no código, para não haver um valor que alguém afrouxe por engano**
       `WEBHOOK_TIMEOUT_MS`, `WEBHOOK_MAX_TENTATIVAS`, e do lado do frontend a variável do
       mapa — cada uma com o que acontece se faltar.
-- [ ] **[opcional]** Métricas no dashboard; ferramenta MAYRA `consultar_entregas_em_curso`.
+- [ ] **[opcional]** Métricas no dashboard; ferramenta MAYRA `consultar_entregas_em_curso`. — **não feito**.
 
 ##### 4.5 Documentação — [obrigatório]
 
 Pela regra do projecto: código → autorização do merge → documentação → merge.
 
-- [ ] `Docs/plano_implementacao.md` (duas cópias idênticas): Secção 2 por fase fechada;
+- [x] `Docs/plano_implementacao.md` (duas cópias idênticas): Secção 2 por fase fechada; — **feito: a cada fase**
       fechar na Secção 3 o item das permissões do commerce (resolvido aqui) e, conforme a
       pergunta 4, o dos `AGUARDA_*`.
-- [ ] `Docs/TRD.md` (duas cópias): fornecedor de mapas, variáveis novas, namespace
+- [x] `Docs/TRD.md` (duas cópias): fornecedor de mapas, variáveis novas, namespace — **feito: a cada fase**
       `/entregas`.
-- [ ] Esta secção (plano e backlog da equipa) actualizada a cada desvio, no commit
+- [x] Esta secção (plano e backlog da equipa) actualizada a cada desvio, no commit — **feito: a cada desvio**
       que o introduz.
 
 ---
@@ -4101,7 +4100,7 @@ só as lojas da empresa; o dashboard do sistema mostra todas; (f) `npm run build
 
 ### 4.5 Entrega ao domicílio — Fase 4: a aplicação do estafeta
 
-- **Data:** 2026-10-10 · **Estado:** rascunho — **não implementar antes da aprovação do utilizador**
+- **Data:** 2026-10-10 · **Estado:** **aprovado em 2026-10-10** — 4A e 4B feitas (Fases 40 e 41); falta a 4C (teste num telemóvel real)
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o §4.1:** detalha e **corrige** a Fase 4 desse plano com o que o código é hoje (a §4.1 foi escrita antes das Fases 22 a 30).
 
@@ -4248,7 +4247,7 @@ O estafeta **não tem perfil nem permissões** do ControlCore: é uma identidade
 ##### 4C — Fecho **[obrigatório]**
 
 - [ ] **Teste num telemóvel real**, com um estafeta real: instalar no ecrã inicial, entrar com o código do e-mail, percorrer recolher → rota → entregar com numerário e com M-Pesa, e uma falhada.
-- [ ] Documentação: entrada na Secção 2, Fase 4 marcada na Secção 3, TRD (a dependência nova, o segredo, as rotas, o cookie), nos dois repositórios.
+- [x] Documentação: entrada na Secção 2, Fase 4 marcada na Secção 3, TRD (a dependência nova, o segredo, as rotas, o cookie), nos dois repositórios. — **feito** (Fase 41)
 
 #### 6. Ficheiros afectados
 
@@ -4433,7 +4432,7 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 ##### 5D — Fecho **[obrigatório]**
 
 - [ ] Teste real: um telemóvel de estafeta em rota, e o do cliente e o do gestor a verem; ecrã apagado (para confirmar a limitação); sem rede; entrega que fecha (a posição apaga-se).
-- [ ] Documentação (Secção 2, Fase 5 na Secção 3, TRD — namespace, tokens, variáveis, a limitação do segundo plano), nos dois repositórios.
+- [x] Documentação (Secção 2, Fase 5 na Secção 3, TRD — namespace, tokens, variáveis, a limitação do segundo plano), nos dois repositórios. — **feito** (Fases 42 e 43)
 
 #### 6. Ficheiros afectados
 
