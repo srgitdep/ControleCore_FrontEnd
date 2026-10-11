@@ -1,0 +1,17 @@
+{
+  "name": "ControlCore — Estafeta",
+  "short_name": "Estafeta",
+  "description": "As suas entregas: recolher, entregar e registar a cobrança.",
+  "lang": "pt",
+  "start_url": "/estafeta/",
+  "scope": "/estafeta/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "/icons/estafeta-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/estafeta-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/estafeta-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

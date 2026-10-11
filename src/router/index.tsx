@@ -24,6 +24,7 @@ import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
 import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
 import { ProcuraPage, ProcuraSistemaPage } from '@/features/procura-online';
+import { EntregaPage, EstafetaLayout, MinhasEntregasPage } from '@/features/estafeta-app';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -116,6 +117,21 @@ export const router = createBrowserRouter([
   // repositório partilhado.
   { path: '/mercado',                          element: <MercadoPage /> },
   { path: '/mercado/fornecedores/:organizacaoId', element: <FichaFornecedorPage /> },
+
+  // ── Aplicação do estafeta ─────────────────────────────
+  //
+  // Fora do `ProtectedRoute` de propósito, como `/loja` e `/fornecedor`: esse guarda exige um `User` do lado
+  // funcionário, e um estafeta não o é — a sua sessão é o cookie `tokenEstafeta`, com guarda próprio no
+  // backend. O `EstafetaLayout` confirma essa sessão contra o servidor e manda entrar em `/login` (o ecrã
+  // único, onde o código `E####` entra). É a única parte do sistema instalável como PWA.
+  {
+    path: '/estafeta',
+    element: <EstafetaLayout />,
+    children: [
+      { index: true, element: <MinhasEntregasPage /> },
+      { path: 'entregas/:id', element: <EntregaPage /> },
+    ],
+  },
 
   // ── Compra Fácil ──────────────────────────────────────────────────────────
   //

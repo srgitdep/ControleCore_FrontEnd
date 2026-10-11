@@ -1,0 +1,90 @@
+{
+  "sair": "Sair",
+  "voltar": "Voltar às entregas",
+  "actualizar": "Actualizar",
+  "a_cobrar": "a cobrar",
+  "sem_ligacao": "Sem ligação. As acções só funcionam com rede — nada foi enviado.",
+  "sem_ligacao_accao": "Sem ligação: ligue-se à rede para continuar.",
+  "abas": {
+    "por_fazer": "Por fazer",
+    "historico": "Histórico"
+  },
+  "estado": {
+    "disponivel": "Disponível para entregas",
+    "indisponivel": "Indisponível",
+    "em_entrega": "Em entrega",
+    "alternar": "Alternar entre disponível e indisponível"
+  },
+  "estados": {
+    "AGUARDA_RECOLHA": "À espera",
+    "ATRIBUIDA": "Por recolher",
+    "RECOLHIDA": "Recolhida",
+    "EM_ROTA": "A caminho",
+    "ENTREGUE": "Entregue",
+    "FALHADA": "Não entregue",
+    "DEVOLVIDA": "Devolvida",
+    "CANCELADA": "Cancelada"
+  },
+  "vazio_por_fazer": "Sem entregas atribuídas. Quando a loja lhe atribuir uma, aparece aqui.",
+  "vazio_historico": "Ainda não há entregas fechadas.",
+  "erro_carregar": "Não foi possível carregar as entregas.",
+  "tentar_de_novo": "Tentar de novo",
+  "entrega_nao_encontrada": "Entrega não encontrada. Pode ter sido atribuída a outro estafeta.",
+  "detalhe": {
+    "morada": "Para onde",
+    "abrir_mapa": "Abrir no mapa",
+    "cliente": "Cliente",
+    "ligar": "Ligar {{telefone}}",
+    "a_cobrar": "A cobrar à porta",
+    "ja_pago": "Já pago",
+    "taxa": "Taxa de entrega",
+    "prazo": "Prazo previsto",
+    "cobrado": "Cobrado",
+    "motivo": "Motivo",
+    "falhada_ajuda": "Traga a mercadoria de volta à loja. É a loja que depois a devolve."
+  },
+  "accoes": {
+    "recolher": "Recolhi na loja",
+    "iniciar_rota": "Saí para a entrega",
+    "entregar": "Entreguei",
+    "falhar": "Não consegui entregar"
+  },
+  "entregar": {
+    "titulo": "Entreguei — como pagou?",
+    "metodo": "Como o cliente pagou",
+    "referencia": "Referência da transacção",
+    "referencia_ajuda": "Obrigatória no M-Pesa e no e-Mola: é o código da mensagem de confirmação.",
+    "valor_cobrado": "Valor que cobrou",
+    "previsto": "Previsto: {{valor}}",
+    "diferenca_mais": "Cobrou {{valor}} a mais do que o previsto. Fica registado.",
+    "diferenca_menos": "Cobrou {{valor}} a menos do que o previsto. Fica registado.",
+    "confirmar": "Confirmar entrega"
+  },
+  "metodo": {
+    "NUMERARIO": "Dinheiro",
+    "MPESA": "M-Pesa",
+    "EMOLA": "e-Mola"
+  },
+  "falhar": {
+    "titulo": "Porque não entregou?",
+    "aviso": "A mercadoria volta à loja. Não é cobrado nada ao cliente.",
+    "motivo": "Motivo",
+    "nota": "Explique em poucas palavras",
+    "confirmar": "Confirmar que não foi entregue"
+  },
+  "motivo": {
+    "CLIENTE_AUSENTE": "O cliente não estava",
+    "MORADA_ERRADA": "A morada está errada",
+    "RECUSOU": "O cliente recusou",
+    "INACESSIVEL": "Não consegui chegar lá",
+    "OUTRO": "Outro motivo"
+  },
+  "mensagens": {
+    "recolhida": "Recolhida. Boa viagem!",
+    "em_rota": "A caminho.",
+    "entregue": "Entrega registada.",
+    "falhada": "Registado. Leve a mercadoria de volta à loja.",
+    "erro_accao": "Não foi possível registar. Tente de novo.",
+    "erro_estado": "Não foi possível mudar o estado."
+  }
+}

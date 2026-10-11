@@ -1719,6 +1719,68 @@ esse merge trouxe.
   > **Notas de deploy.** Sem migração e sem variáveis novas. A permissão `VER_PROCURA_ONLINE` já existe (Fase 35); **invalidar `permissions:*` no Redis**
   > para o Gestor a ter. Backend primeiro.
 
+### Fase 40 — Entrega ao domicílio, Fase 4A: o servidor da aplicação do estafeta (10 Out 2026)
+
+- **2026-10-10 · [BE] · Antonio Mambo** — `feat/estafeta-app-fase4a` (plano §4.5)
+  - feat(auth): **o estafeta entra no ecrã único** com o código `E####` e a senha que recebeu por e-mail (3.º ramo do `ResolverEntradaUseCase`,
+    `tipo: 'ESTAFETA'`) — acaba o «utilizador não existe». Cookie próprio `tokenEstafeta`, 12 h, sem renovação. Código inexistente, senha errada e conta
+    desactivada dão a **mesma** resposta, em tempo constante
+  - feat(entrega): `estafeta-token.ts` (segredo `JWT_ESTAFETA_SECRET`, audience `controlcore-estafeta`; **lança** sem o segredo, não cai para outro) e
+    `EstafetaGuard` + `@Estafeta()`/`GetEstafeta`: confirma na base de dados **a cada pedido** que o estafeta existe e está activo, e a empresa vem da BD, não do token
+  - feat(entrega): `/estafeta/…` — `eu`, `eu/estado` (disponível/indisponível), `sair`, `entregas` (por fazer, ou `?historico=true`), `entregas/:id` e
+    `recolher`, `iniciar-rota`, `entregar`, `falhar`. O estafeta vê o telefone do cliente e o valor a cobrar, **nunca** o e-mail nem o total do pedido
+  - fix(entrega): **a posse da entrega** — `OperarEntregaService` passa a levar `estafetaId` à leitura **e** ao `updateMany` quando o autor é `ESTAFETA`: a
+    entrega de outro responde 404, e uma reatribuída a meio dá 409 `entrega.ja_nao_e_sua`. O estafeta não atribui nem devolve (403)
+  - feat(email): o e-mail do estafeta leva agora a **ligação** para a aplicação (`/estafeta`) e deixa de dizer que ela «ainda não existe»
+
+  > **Desvios ao plano §4.5.** (1) **Sem `GET /auth/eu` para o estafeta:** a identidade é `GET /estafeta/eu` (o `/auth/eu` é do utilizador do ERP). (2) O
+  > `/auth/entrar` **não** põe o estafeta em `TipoDeConta` (comprador/fornecedor): é uma identidade própria da entrega, e esse tipo é «de que lado do mercado».
+  >
+  > **Pontos sensíveis, cobertos por testes.** A recusa **cruzada** de tokens: um token de cliente, ou de funcionário, ou com a audience errada, ou expirado, não passa
+  > o guarda do estafeta; e o guarda só lê o **seu** cookie. A posse está **na escrita**, não numa verificação antes dela. Um estafeta desactivado perde a sessão no pedido
+  > seguinte. Sem `JWT_ESTAFETA_SECRET` (ou com menos de 16 caracteres), entrar falha — e só isso.
+  >
+  > **Verificação.** `tsc` limpo, `nest build`, 2841 testes (+66: a autenticação, o guarda e a recusa cruzada de tokens, a posse, as minhas entregas e o seu isolamento, o 3.º ramo
+  > do login, o e-mail). Um teste novo **compila a `AppModule` inteira** (com Prisma e Redis substituídos): o `tsc` não vê um fornecedor em falta nem um ciclo entre módulos
+  > (`AuthModule` passou a importar `EntregaModule`), e um erro aí deitaria o sistema todo abaixo no arranque, não só esta funcionalidade. Demora ~75 s (o custo de arrancar
+  > o grafo todo). **Não corri nada contra a base real:** esta fase não tem migração nem consultas novas além do que os testes simulam.
+  >
+  > **Notas de deploy.** **Sem migração.** **Segredo novo obrigatório no Fly:** `fly secrets set JWT_ESTAFETA_SECRET=…` (≥ 16 caracteres) — sem ele o estafeta não consegue entrar
+  > (o resto funciona). `JWT_ESTAFETA_EXPIRES_IN` é opcional (omissão 12 h). **Não enviar a 4A sozinha:** o ecrã de entrada antigo, quando um estafeta entra com sucesso, não sabe
+  > tratar `tipo: 'ESTAFETA'` e mostra a mensagem antiga de «ainda sem aplicação»; a 4B corrige isso. Enviar **4A e 4B juntas**, backend primeiro.
+
+### Fase 41 — Entrega ao domicílio, Fase 4B: a aplicação do estafeta (10 Out 2026)
+
+- **2026-10-10 · [FE] · Antonio Mambo** — `feat/estafeta-app-fase4a` (plano §4.5; as duas subfases saem juntas)
+  - feat(estafeta-app): a **aplicação do estafeta**, em `/estafeta`, pensada para o telemóvel (uma mão, alvos de toque de 44–56 px, sem tabelas):
+    **as minhas entregas** (por fazer / histórico, com consulta de 30 s e botão de actualizar), o **detalhe** (morada com «abrir no mapa», telefone do cliente com
+    «ligar», o que cobrar, o prazo) e os passos, **um botão grande de cada vez**: «Recolhi na loja», «Saí para a entrega», «Entreguei» e «Não consegui entregar»
+  - feat(estafeta-app): **«Entreguei»** abre uma folha com o método (dinheiro, M-Pesa, e-Mola), a referência (obrigatória nos dois últimos) e o valor cobrado, já preenchido
+    com o previsto; uma diferença **diz-se em palavras** («cobrou 50 MT a mais») e não bloqueia — regista-se para o acerto. **«Não consegui»** pede o motivo da lista fechada
+  - feat(estafeta-app): o estafeta alterna **disponível / indisponível** no cabeçalho; «em entrega» deriva-se das entregas em curso
+  - feat(auth): o ecrã de entrada único passa a reconhecer `tipo: 'ESTAFETA'` e leva para `/estafeta`; **sai** a mensagem «os estafetas ainda não têm aplicação» (e a sua chave)
+  - feat(pwa): **instalável no ecrã inicial**, só a aplicação do estafeta: manifest (`public/estafeta.webmanifest`, âmbito `/estafeta/`), ícones PNG (192, 512, *maskable* e
+    *apple-touch*) e *service worker* (`vite-plugin-pwa`, **dependência nova**) com âmbito `/estafeta/`
+  - **Sem ligação** há um aviso fixo e os botões ficam desactivados: nada finge ter sido enviado. Se a rede cair a meio, mantém-se a sessão boa em vez de a deitar fora
+
+  > **A PWA é só do estafeta, de propósito.** O ControlCore, a loja e o portal do fornecedor **não** são PWA. Por isso o plugin corre com `manifest: false` e `injectRegister: false`: o
+  > manifest liga-se (e o *service worker* regista-se, com âmbito `/estafeta/`) só quando a aplicação do estafeta monta, e o `index.html` **não tem** manifest — confirmado no `dist`. Um
+  > *worker* de âmbito `/` serviria páginas guardadas ao ERP inteiro. Também **sem precache**: a aplicação é uma só e grande, e só uma parte é do estafeta; guarda-se o que se usa
+  > (`runtimeCaching`: ficheiros com *hash* em `/assets/` por `CacheFirst`; páginas `/estafeta` por `NetworkFirst`). **O *service worker* nunca guarda a API** (confirmado no `dist/sw.js`):
+  > dados de entregas velhos seriam pior do que um aviso «sem ligação».
+  >
+  > **Desvios ao plano §4.5.** (1) `fetch`/axios próprio: a instância é `estafetaApi` (cookie `tokenEstafeta`), nunca a do funcionário, que num 401 mandava para `/login`. (2) O
+  > estafeta não vê um mapa dentro da aplicação — **«abrir no mapa»** abre o destino na aplicação de mapas do telemóvel (ligação Google Maps com as coordenadas): é o que um
+  > estafeta realmente usa para navegar, e evita trazer o Leaflet para um ecrã de telemóvel. O rastreio em mapa é a Fase 5.
+  >
+  > **Verificação.** Frontend: `tsc -b` limpo, **199 testes** (+10: os passos permitidos em cada estado — espelham as transições do servidor —, a cobrança, as ligações de mapa e telefone,
+  > e a paridade pt/en do namespace novo), lint sem avisos novos, **build** (gera `sw.js` e o `workbox`). Backend (4A): 2841 testes. **Não abri a aplicação num telemóvel nem num browser**: os ecrãs
+  > e a instalação como PWA só se confirmam à mão (plano §4.5, 4C). Os ecrãs não têm teste automático de renderização.
+  >
+  > **Notas de deploy.** **4A e 4B juntas, backend primeiro.** Antes: `fly secrets set JWT_ESTAFETA_SECRET=…` (≥ 16 caracteres). Dependência nova no frontend (`vite-plugin-pwa`). O primeiro acesso
+  > de um estafeta é por `/login` com o código do e-mail; quem já tinha o código recebeu um e-mail **sem** a ligação — usa «Repor senha» para o receber de novo, ou abre
+  > `/estafeta` directamente.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -1858,8 +1920,10 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 - [ ] **Fase 4 — O estafeta na rua.** Plano detalhado em **§4.5** (rascunho, a aguardar aprovação). Aplicação web (PWA): entrar com o
       código `E####`, ver as suas entregas, recolher, iniciar rota, entregar (com a cobrança) e falhar. **Desvios ao plano 4.1:** sem o passo
       «aceitar» e o login passa a ser o ecrã único (e não `/estafeta/entrar`). Atribuição automática e foto de prova ficam fora.
-  - [ ] **4A — Servidor.** `estafeta-token.ts`, guarda, 3.º ramo do login único, `GET/PATCH /estafeta/…`, posse da entrega, testes.
-  - [ ] **4B — A aplicação.** PWA (manifest, service worker, ícones), ecrãs do estafeta, ligação ao login.
+  - [x] **4A — Servidor.** Concluída em 2026-10-10 (Fase 40): `estafeta-token.ts`, guarda, 3.º ramo do login único, `/estafeta/…`, posse da entrega, e-mail com a ligação,
+        testes (incluindo o arranque da `AppModule`). **Por enviar junto com a 4B.**
+  - [x] **4B — A aplicação.** Concluída em 2026-10-10 (Fase 41): PWA só do estafeta (manifest, *service worker* de âmbito `/estafeta/`, ícones), ecrãs, ligação ao login.
+        **Por enviar com a 4A, e por confirmar num telemóvel (4C).**
   - [ ] **4C — Fecho.** E-mail com a ligação à aplicação, teste num telemóvel real, documentação.
 - [ ] **Fase 5 — Rastreio ao vivo.** Namespace WebSocket `/entregas` que aceita
       funcionário, cliente e estafeta, cada um na sua sala; mapa no detalhe do
@@ -4023,21 +4087,21 @@ O estafeta **não tem perfil nem permissões** do ControlCore: é uma identidade
 
 #### 5. Plano de implementação
 
-##### 4A — Servidor **[obrigatório]**
+##### 4A — Servidor **[obrigatório]** — ✅ feita em 2026-10-10 (Fase 40), por enviar com a 4B
 
-- [ ] `entrega/infrastructure/auth/estafeta-token.ts` (cópia estrutural de `commerce/infrastructure/auth/cliente-token.ts`: `COOKIE_ESTAFETA`, `AUDIENCE_ESTAFETA`,
+- [x] `entrega/infrastructure/auth/estafeta-token.ts` (cópia estrutural de `commerce/infrastructure/auth/cliente-token.ts`: `COOKIE_ESTAFETA`, `AUDIENCE_ESTAFETA`,
       `segredoEstafeta()` que lança, `validadeEstafeta()` = `JWT_ESTAFETA_EXPIRES_IN` ou 12 h) e `estafeta.guard.ts` (`EstafetaGuard`, `@Estafeta()`,
       `@GetEstafeta()` → `{ estafetaId, empresaId, nome, codigo }`; confirma na BD que existe e está activo).
-- [ ] `AutenticarEstafetaUseCase`: procura por `codigo` (normalizado a maiúsculas), compara `bcrypt` em **tempo constante** (hash de referência quando
+- [x] `AutenticarEstafetaUseCase`: procura por `codigo` (normalizado a maiúsculas), compara `bcrypt` em **tempo constante** (hash de referência quando
       não existe), recusa inactivo com a **mesma** mensagem de credenciais inválidas, actualiza `ultimoLoginEm`, devolve o token e `{ nome, codigo, idioma }`.
-- [ ] `ResolverEntradaUseCase`: 3.º ramo — se o identificador existe em `estafetas` → `{ tipo: 'ESTAFETA', sessao }`; ambiguidade com `User`/fornecedor → a
+- [x] `ResolverEntradaUseCase`: 3.º ramo — se o identificador existe em `estafetas` → `{ tipo: 'ESTAFETA', sessao }`; ambiguidade com `User`/fornecedor → a
       resposta que já existe. `auth.controller.ts`: `entrar` põe o cookie `tokenEstafeta` (12 h, `httpOnly`, `sameSite: 'lax'`, `secure` em produção); `eu` e
       `sair` cobrem o estafeta.
-- [ ] `OperarEntregaService`: quando o autor é `ESTAFETA`, a condição do `findFirst` **e** a do `updateMany` levam `estafetaId = autor.id`; sem isso, 404/409.
-- [ ] `estafeta-app.controller.ts` (`@Controller('estafeta')`, tudo `@Estafeta()`): rotas abaixo; casos de uso `ListarMinhasEntregasUseCase`,
+- [x] `OperarEntregaService`: quando o autor é `ESTAFETA`, a condição do `findFirst` **e** a do `updateMany` levam `estafetaId = autor.id`; sem isso, 404/409.
+- [x] `estafeta-app.controller.ts` (`@Controller('estafeta')`, tudo `@Estafeta()`): rotas abaixo; casos de uso `ListarMinhasEntregasUseCase`,
       `ObterMinhaEntregaUseCase` (só as do estafeta; o telefone do cliente e o valor a cobrar, nunca o e-mail), `DefinirEstadoEstafetaUseCase`.
-- [ ] `email.templates.ts`: o e-mail do estafeta ganha a ligação para `/estafeta` e deixa de dizer que «a aplicação ainda não existe» (pt/en).
-- [ ] `erros.json` pt/en para os códigos novos (paridade); `.env.example`: `JWT_ESTAFETA_SECRET` (obrigatório, o que acontece se faltar) e `JWT_ESTAFETA_EXPIRES_IN`.
+- [x] `email.templates.ts`: o e-mail do estafeta ganha a ligação para `/estafeta` e deixa de dizer que «a aplicação ainda não existe» (pt/en).
+- [x] `erros.json` pt/en para os códigos novos (paridade); `.env.example`: `JWT_ESTAFETA_SECRET` (obrigatório, o que acontece se faltar) e `JWT_ESTAFETA_EXPIRES_IN`.
 
 ###### Endpoints
 
@@ -4054,18 +4118,18 @@ O estafeta **não tem perfil nem permissões** do ControlCore: é uma identidade
 | PATCH | `/estafeta/entregas/:id/entregar` | `EntregarDto` (existente) | idem | 400, 404, 409 | `@Estafeta()` |
 | PATCH | `/estafeta/entregas/:id/falhar` | `FalharEntregaDto` (existente) | idem | 400, 404, 409 | `@Estafeta()` |
 
-##### 4B — A aplicação **[obrigatório]**
+##### 4B — A aplicação **[obrigatório]** — ✅ feita em 2026-10-10 (Fase 41), por confirmar num telemóvel
 
-- [ ] `vite-plugin-pwa` (`registerType: 'autoUpdate'`, `navigateFallbackDenylist: [/^\/api/]`, **sem** cache de `/api`), `manifest` (nome, `display: 'standalone'`,
+- [x] `vite-plugin-pwa` (`registerType: 'autoUpdate'`, `navigateFallbackDenylist: [/^\/api/]`, **sem** cache de `/api`), `manifest` (nome, `display: 'standalone'`,
       `start_url: '/estafeta'`, cor, ícones 192/512 e *maskable*), `<meta name="theme-color">` e `apple-touch-icon` em `index.html`.
-- [ ] `features/estafeta-app/`: `api/estafeta.api.ts` (instância **própria** de axios, como `contaApi` — nunca `api` do funcionário, que mandava para `/login` num 401),
+- [x] `features/estafeta-app/`: `api/estafeta.api.ts` (instância **própria** de axios, como `contaApi` — nunca `api` do funcionário, que mandava para `/login` num 401),
       `store/useEstafetaStore.ts` (sessão), `hooks/useMinhasEntregas.ts` (`refetchInterval: 30_000`), `components/EstafetaLayout.tsx` (guarda a sessão contra o servidor e
       redirecciona para `/login`), `pages/MinhasEntregasPage.tsx`, `pages/EntregaPage.tsx`, `components/{AccaoEntrega,EntregarFolha,FalharFolha,EstadoDoEstafeta}.tsx`.
-- [ ] Telemóvel primeiro: uma mão, alvos de toque grandes, contraste alto, sem tabelas; **«Abrir no mapa»** (ligação `geo:`/Google Maps com as coordenadas do destino) e **«Ligar»** (`tel:`).
-- [ ] Os quatro estados em cada chamada: carregamento (esqueleto), erro (com «tentar de novo»), vazio («Sem entregas atribuídas») e sucesso; **sem ligação** tem aviso próprio e nunca finge que enviou.
-- [ ] `LoginPage.tsx`: o ramo `ESTAFETA` navega para `/estafeta`; sai a mensagem do `E####` (e a chave `login.estafeta_sem_aplicacao` de `auth.json`).
-- [ ] `router/index.tsx`: `/estafeta/*` **fora** do `ProtectedRoute` (como `/loja` e `/fornecedor`), com o `EstafetaLayout`.
-- [ ] Textos pt/en no namespace novo `estafeta` (língua do `Estafeta.idioma` ou do browser), tipados em `i18n/tipos.d.ts`, com paridade.
+- [x] Telemóvel primeiro: uma mão, alvos de toque grandes, contraste alto, sem tabelas; **«Abrir no mapa»** (ligação `geo:`/Google Maps com as coordenadas do destino) e **«Ligar»** (`tel:`).
+- [x] Os quatro estados em cada chamada: carregamento (esqueleto), erro (com «tentar de novo»), vazio («Sem entregas atribuídas») e sucesso; **sem ligação** tem aviso próprio e nunca finge que enviou.
+- [x] `LoginPage.tsx`: o ramo `ESTAFETA` navega para `/estafeta`; sai a mensagem do `E####` (e a chave `login.estafeta_sem_aplicacao` de `auth.json`).
+- [x] `router/index.tsx`: `/estafeta/*` **fora** do `ProtectedRoute` (como `/loja` e `/fornecedor`), com o `EstafetaLayout`.
+- [x] Textos pt/en no namespace novo `estafeta` (língua do `Estafeta.idioma` ou do browser), tipados em `i18n/tipos.d.ts`, com paridade.
 
 ##### 4C — Fecho **[obrigatório]**
 

@@ -1,0 +1,90 @@
+{
+  "sair": "Sign out",
+  "voltar": "Back to deliveries",
+  "actualizar": "Refresh",
+  "a_cobrar": "to collect",
+  "sem_ligacao": "No connection. Actions need a network — nothing was sent.",
+  "sem_ligacao_accao": "No connection: get online to continue.",
+  "abas": {
+    "por_fazer": "To do",
+    "historico": "History"
+  },
+  "estado": {
+    "disponivel": "Available for deliveries",
+    "indisponivel": "Unavailable",
+    "em_entrega": "On a delivery",
+    "alternar": "Switch between available and unavailable"
+  },
+  "estados": {
+    "AGUARDA_RECOLHA": "Waiting",
+    "ATRIBUIDA": "To pick up",
+    "RECOLHIDA": "Picked up",
+    "EM_ROTA": "On the way",
+    "ENTREGUE": "Delivered",
+    "FALHADA": "Not delivered",
+    "DEVOLVIDA": "Returned",
+    "CANCELADA": "Cancelled"
+  },
+  "vazio_por_fazer": "No deliveries assigned. When the store assigns you one, it shows up here.",
+  "vazio_historico": "No closed deliveries yet.",
+  "erro_carregar": "Could not load the deliveries.",
+  "tentar_de_novo": "Try again",
+  "entrega_nao_encontrada": "Delivery not found. It may have been assigned to another courier.",
+  "detalhe": {
+    "morada": "Where to",
+    "abrir_mapa": "Open in maps",
+    "cliente": "Customer",
+    "ligar": "Call {{telefone}}",
+    "a_cobrar": "To collect at the door",
+    "ja_pago": "Already paid",
+    "taxa": "Delivery fee",
+    "prazo": "Expected by",
+    "cobrado": "Collected",
+    "motivo": "Reason",
+    "falhada_ajuda": "Bring the goods back to the store. The store then returns them."
+  },
+  "accoes": {
+    "recolher": "I picked it up at the store",
+    "iniciar_rota": "I’m on my way",
+    "entregar": "Delivered",
+    "falhar": "I couldn’t deliver"
+  },
+  "entregar": {
+    "titulo": "Delivered — how did they pay?",
+    "metodo": "How the customer paid",
+    "referencia": "Transaction reference",
+    "referencia_ajuda": "Required for M-Pesa and e-Mola: it is the code in the confirmation message.",
+    "valor_cobrado": "Amount you collected",
+    "previsto": "Expected: {{valor}}",
+    "diferenca_mais": "You collected {{valor}} more than expected. It is recorded.",
+    "diferenca_menos": "You collected {{valor}} less than expected. It is recorded.",
+    "confirmar": "Confirm delivery"
+  },
+  "metodo": {
+    "NUMERARIO": "Cash",
+    "MPESA": "M-Pesa",
+    "EMOLA": "e-Mola"
+  },
+  "falhar": {
+    "titulo": "Why wasn’t it delivered?",
+    "aviso": "The goods go back to the store. The customer is not charged.",
+    "motivo": "Reason",
+    "nota": "Explain in a few words",
+    "confirmar": "Confirm not delivered"
+  },
+  "motivo": {
+    "CLIENTE_AUSENTE": "The customer wasn’t there",
+    "MORADA_ERRADA": "The address is wrong",
+    "RECUSOU": "The customer refused",
+    "INACESSIVEL": "I couldn’t get there",
+    "OUTRO": "Other reason"
+  },
+  "mensagens": {
+    "recolhida": "Picked up. Safe trip!",
+    "em_rota": "On the way.",
+    "entregue": "Delivery recorded.",
+    "falhada": "Recorded. Take the goods back to the store.",
+    "erro_accao": "Could not record it. Try again.",
+    "erro_estado": "Could not change the status."
+  }
+}

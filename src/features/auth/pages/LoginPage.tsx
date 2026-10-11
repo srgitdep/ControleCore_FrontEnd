@@ -10,6 +10,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../index';
 import { entrarApi } from '../api/auth.api';
 import { usePortal } from '@/features/portal-fornecedor/store/usePortalStore';
+import { useEstafetaStore } from '@/features/estafeta-app/store/useEstafetaStore';
 import { cn } from '@/shared/utils';
 import { useBreakpoint } from '@/shared/hooks';
 import { SelectorIdioma } from '@/shared/ui';
@@ -57,6 +58,7 @@ export function LoginPage() {
   const COPY = useCopy();
   const { entrarComSessao } = useAuth();
   const { entrarComSessao: entrarNoPortal } = usePortal();
+  const entrarComoEstafeta = useEstafetaStore((s) => s.entrarComSessao);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation('auth');
@@ -69,13 +71,20 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
-  // Um ecrã só: o código ou e-mail escrito aqui pode ser de um comprador ou de um
-  // fornecedor — `POST /auth/entrar` descobre qual (ver `ResolverEntradaUseCase` no
+  // Um ecrã só: o código ou e-mail escrito aqui pode ser de um comprador, de um
+  // fornecedor ou de um estafeta (`E####`) — `POST /auth/entrar` descobre qual (ver `ResolverEntradaUseCase` no
   // backend) e diz `tipo`, que é o que decide para onde navegar a seguir. O utilizador
   // nunca escolhe o portal: o próprio identificador já o diz.
   const onSubmit = async (data: LoginForm) => {
     try {
       const resposta = await entrarApi({ identificador: data.code, password: data.password });
+
+      if (resposta.tipo === 'ESTAFETA') {
+        entrarComoEstafeta(resposta.utilizador);
+        toast.success(t('login.sucesso'), { duration: 2000 });
+        navigate('/estafeta', { replace: true });
+        return;
+      }
 
       if (resposta.tipo === 'FORNECEDOR') {
         await entrarNoPortal(resposta.utilizador);
@@ -88,12 +97,6 @@ export function LoginPage() {
       toast.success(t('login.sucesso'), { duration: 2000 });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
-      // Um código E#### é de estafeta, que ainda não tem aplicação (Fase 4 do plano): o servidor responde
-      // «utilizador não existe», o que faria crer que a conta não foi criada. Diz-se a verdade.
-      if (/^E\d{4}$/i.test(data.code.trim())) {
-        toast.error(t('login.estafeta_sem_aplicacao'), { duration: 8000 });
-        return;
-      }
       let message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       if (Array.isArray(message)) message = message[0];
       toast.error(message || t('login.erro_generico'));

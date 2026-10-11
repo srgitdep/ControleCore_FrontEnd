@@ -51,6 +51,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | HTTP client | axios | ^1.18.1 | endereço da API deduzido do anfitrião em dev |
 | WebSocket client | socket.io-client | ^4.8.3 | eventos em tempo real + voz da Mayra |
 | Gráficos | recharts | ^3.9.2 | |
+| PWA | vite-plugin-pwa | ^2.0.0 | **só a aplicação do estafeta** (`/estafeta`, desde a Fase 4B, 10/10/2026): *service worker* de âmbito `/estafeta/` sem *precache* e **sem guardar a API**; manifest em `public/estafeta.webmanifest`, ligado só nessas rotas (`features/estafeta-app/pwa.ts`) |
 | PDF | jspdf + jspdf-autotable | ^4.2.1 / ^5.0.8 | geração de documentos no browser |
 | Leitura de código de barras | @zxing/browser + @zxing/library | ^0.2.1 / 0.23.0 | usa a câmara do telemóvel (exige contexto seguro: `localhost` ou HTTPS) |
 | Markdown | react-markdown + remark-gfm | ^10.1.0 / ^4.0.1 | respostas da Mayra |
@@ -463,9 +464,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `ClienteDaEmpresaService`. Entrar procura o e-mail/telefone em **todas** as empresas (contas repetidas: vale a usada mais
     recentemente); registar recusa um e-mail com conta em qualquer empresa. Moradas, «os meus pedidos» e cancelar filtram pela
     **conta**; favoritos ficam no `Cliente` de origem e `GET /commerce/favoritos?lojaId=` filtra pela empresa da loja (a página de favoritos de uma loja mostra o que se compra nela). `ContaCliente.empresaId/clienteId` são a empresa e o `Cliente` **de origem**.
-  - `JWT_ESTAFETA_SECRET` — estafeta (entrega ao domicílio). Declarado no
-    `.env.example` desde a Fase 22, mas **nada o lê ainda**: o `estafeta-token.ts` chega na
-    Fase 4. Pôr nos `fly secrets` antes do deploy que o passe a ler.
+  - `JWT_ESTAFETA_SECRET` — estafeta (entrega ao domicílio, **lido desde a Fase 4A, 10/10/2026**): `estafeta-token.ts`, audience
+    `controlcore-estafeta`, cookie `tokenEstafeta`, **12 h** (`JWT_ESTAFETA_EXPIRES_IN`, sem renovação). O `EstafetaGuard` confirma na base de dados, a cada pedido,
+    que o estafeta existe e está activo; a empresa vem da BD. Entra-se no ecrã único (`POST /auth/entrar`, 3.º ramo) com o código `E####`. Sem o segredo (ou com
+    menos de 16 caracteres) **entrar como estafeta falha** — o resto do sistema não. Pôr nos `fly secrets` antes do deploy.
   Se um destes segredos faltar, a autenticação correspondente **falha** — não há
   fallback para outro segredo.
 - Guards por rota: `JwtAuthGuard`, `PermissoesGuard` (`@Permissao(...)`),
