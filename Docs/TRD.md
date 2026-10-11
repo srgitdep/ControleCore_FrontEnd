@@ -437,12 +437,12 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   `JWT_ACCESS_SECRET` / `JWT_CLIENTE_SECRET` / `JWT_ESTAFETA_SECRET` (`HMAC(segredo, 'entregas-socket:<tipo>')`) e audience `controlcore-entregas-socket`; o cookie não é lido. Salas:
   `empresa_<id>` (funcionário), `estafeta_<id>`, `pedido_<id>` (cliente, só após `seguir` com verificação de posse). Eventos: `posicao` (estafeta→servidor), `seguir`
   (cliente), `entrega.posicao` e `entrega.estado` (servidor→salas; o cliente nunca recebe o id do estafeta). A posição só é aceite com uma entrega `EM_ROTA` e é validada no servidor
-  (dentro de Moçambique, precisão ≤ 100 m, ≥ 10 s entre pontos, ≤ 150 km/h); guarda-se **só a última** (`Estafeta.ultima*`), apagada quando o estafeta deixa de ter entregas em rota.
+  (dentro de Moçambique, precisão ≤ 100 m, ≥ 2 s entre pontos, ≤ 150 km/h); guarda-se **só a última** (`Estafeta.ultima*`), apagada quando o estafeta deixa de ter entregas em rota.
   `GET /commerce/pedidos/:id/entrega` dá ao cliente o estado, a linha do tempo e, com menos de 2 min, a posição. **Limite:** as salas estão em memória — com mais de uma máquina Fly seria
   preciso o adaptador Redis do socket.io. Sem variável de ambiente nova na 5A.
   **Ecrãs (Fase 43):** `useCanalDeEntregas` (`shared/hooks`) liga a `<VITE_SOCKET_URL>/entregas` com o token pedido por REST **a cada reconexão** (o token vale 15 min); sem canal os ecrãs
-  caem para a consulta de 30 s e dizem-no. O estafeta partilha a posição com `navigator.geolocation.watchPosition` (só com uma entrega `EM_ROTA` e depois de consentir; envio a cada ≥ 15 s **e** ≥ 25 m, ou
-  1 min parado) e *Wake Lock*; **limitação de uma PWA:** com o ecrã bloqueado ou a aplicação em segundo plano o navegador pára o GPS. A geolocalização exige HTTPS ou `localhost`. O rasto do cliente vive
+  caem para a consulta da entrega de 2,5 em 2,5 s (o cliente) e dizem-no. O estafeta partilha a posição com `navigator.geolocation.watchPosition` (só com uma entrega `EM_ROTA` e depois de consentir; envio a cada ≥ 2,5 s **e** ≥ 5 m, ou
+  10 s parado) e *Wake Lock*; **limitação de uma PWA:** com o ecrã bloqueado ou a aplicação em segundo plano o navegador pára o GPS. A geolocalização exige HTTPS ou `localhost`. O rasto do cliente vive
   só em memória (≤ 300 pontos). Regras puras em `shared/utils/rastreio.ts`.
 - **Variáveis `VITE_*`:** substituídas no build, não lidas em runtime — alterá-las
   exige novo deploy.

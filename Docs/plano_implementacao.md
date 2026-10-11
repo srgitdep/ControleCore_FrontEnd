@@ -1789,7 +1789,7 @@ esse merge trouxe.
   - feat(entrega): **três tokens de socket** de 15 min, pedidos por REST (a Vercel não encaminha o cookie para o WebSocket): `GET /entregas/socket-token` (`VER_ENTREGAS`),
     `GET /commerce/conta/socket-token` (conta de cliente), `GET /estafeta/socket-token` (estafeta). São assinados com um segredo **derivado** (`HMAC(segredo do tipo, 'entregas-socket:<tipo>')`) e
     audience própria: um token de socket nunca serve de token do REST, nem o contrário. O cookie **não** é lido no WebSocket. Sem o segredo do tipo, não se emite
-  - feat(entrega): **posição do estafeta** (`posicao`): só é aceite com uma entrega `EM_ROTA`; o servidor valida (coordenadas dentro de Moçambique, precisão ≤ 100 m, ≥ 10 s desde a anterior, velocidade ≤ 150 km/h;
+  - feat(entrega): **posição do estafeta** (`posicao`): só é aceite com uma entrega `EM_ROTA`; o servidor valida (coordenadas dentro de Moçambique, precisão ≤ 100 m, ≥ 2 s desde a anterior (era 10 s; ver a nota da Fase 43), velocidade ≤ 150 km/h;
     a anterior esquece-se após 10 min). Guarda **só a última** posição (`Estafeta.ultima*`, sem rasto). A loja recebe-a com o estafeta; o cliente **sem** o identificador dele
   - feat(entrega): **`OperarEntregaService`** emite `entrega.estado_mudou` depois de gravar (o gateway difunde `entrega.estado` à loja, ao pedido e ao estafeta) e **apaga a última posição** quando o estafeta
     deixa de ter entregas em rota. Falhas do socket ou da limpeza registam-se e nunca desfazem a entrega
@@ -1808,13 +1808,13 @@ esse merge trouxe.
 ### Fase 43 — Entrega ao domicílio, Fases 5B e 5C: os ecrãs do rastreio e o tempo estimado (11 Out 2026)
 
 - **2026-10-11 · [BE+FE] · Antonio Mambo** — `feat/rastreio-fase5` nos dois repositórios (plano §4.6, subfases 5B e 5C; **sem migração**)
-  - feat(estafeta-app): **partilha da posição.** Com uma entrega «a caminho», a aplicação lê o GPS (`watchPosition`) e envia a posição pelo canal `/entregas` quando passaram 15 s **e** o estafeta se
-    moveu 25 m (parado, dá sinal de vida ao fim de um minuto). **Aviso permanente** no topo de todos os ecrãs («A partilhar a sua posição com o cliente e a loja») e **consentimento na primeira
+  - feat(estafeta-app): **partilha da posição.** Com uma entrega «a caminho», a aplicação lê o GPS (`watchPosition`) e envia a posição pelo canal `/entregas` quando passaram 2,5 s **e** o estafeta se
+    moveu 5 m (parado, dá sinal de vida ao fim de 10 s; ver a nota abaixo). **Aviso permanente** no topo de todos os ecrãs («A partilhar a sua posição com o cliente e a loja») e **consentimento na primeira
     vez**, com o que se lê, quem vê e o que se guarda. Pede ao navegador para não apagar o ecrã (*Wake Lock*, pedido de novo ao voltar à página) e **diz com todas as letras** que, com o telemóvel
     bloqueado ou outra aplicação à frente, a posição deixa de ser enviada. Estados honestos: sem permissão, sem suporte (fora de HTTPS), sem canal. Fora de rota não se lê nada
   - feat(compra-facil): **o cliente segue o pedido** (`PedidoDetalhePage`): mapa com o estafeta, o **rasto** (em memória), o destino e a loja, «{nome} está a caminho», a distância em linha recta, o
-    indicador **«Ao vivo» / «Actualiza a cada 30 s»** e, sem posição recente (> 2 min), o aviso «sem posição recente» **em vez de um pino parado**. O canal pede `seguir` a cada (re)ligação; sem canal a
-    entrega refaz-se de 30 em 30 s
+    indicador **«Ao vivo» / «A actualizar a cada 2,5 s»** e, sem posição recente (> 2 min), o aviso «sem posição recente» **em vez de um pino parado**. O canal pede `seguir` a cada (re)ligação; sem canal a
+    entrega refaz-se de 2,5 em 2,5 s
   - feat(entrega-gestao): **mapa dos estafetas em rota** no painel de entregas (só aparece com entregas `EM_ROTA`), com o nome de cada um; pontos com mais de 2 min ficam esbatidos. Uma mudança de estado
     **refaz as colunas na hora** (antes esperava pela consulta de 30 s)
   - feat(shared): `useCanalDeEntregas` (a ligação a `/entregas`, com o token pedido por REST **a cada reconexão** e nova tentativa se o servidor fechar), `shared/utils/rastreio.ts` (regras puras: quando
@@ -1825,6 +1825,13 @@ esse merge trouxe.
   - **Sem serviço, sem número.** Sem `ORS_API_KEY`, com a cota esgotada, a rede em baixo ou uma resposta estranha, `previsao` é nulo e o cliente vê só a posição e a linha recta. A chave nunca vai para o browser
   - i18n: namespaces `loja`, `estafeta` e `entrega` (pt/en) com a chave `rastreio` / `partilha`
 
+  > **Alteração a pedido do utilizador (11 Out 2026): de 30 s / 15 s para 2,5 s.** A actualização que o cliente via era de 15 s (o estafeta enviava de 15 em 15 s, o servidor recusava abaixo de 10 s) e, sem canal, de 30 s.
+  > Passou a: o estafeta envia a cada **2,5 s** se se moveu ≥ **5 m** (parado, sinal de vida a cada 10 s; antes 25 m e 1 min); o servidor aceita a partir de **2 s** (`INTERVALO_MINIMO_MS`), abaixo dos 2,5 s para
+  > não recusar por folga de relógios; o GPS pede leituras com `maximumAge` de 1 s; **sem canal, o cliente consulta a entrega a cada 2,5 s**. Custo assumido: ~24 envios/min por estafeta em rota (eram 4) e, sem
+  > canal, um pedido à base de dados a cada 2,5 s por cliente a olhar — aceitável para o volume actual, a rever se houver centenas de entregas em simultâneo. A rota por estrada continua a renovar-se de minuto a
+  > minuto (a cache da 5C) e o painel da loja continua a consultar as colunas de 30 s (a posição dos estafetas no mapa da loja só vem pelo canal; sem ele o mapa diz «sem tempo real»).
+  > Com 2,5 s, a recusa por velocidade impossível fica mais sensível a saltos do GPS (100 m em 2,5 s = 144 km/h): a posição saltada é ignorada e a seguinte, comparada com a última aceite, passa.
+  >
   > **Desvios ao plano.** (1) O mapa da loja não pede a última posição por REST: mostra as que chegam pelo canal desde que o painel abriu (uma por estafeta, em ≤ 1 min) e diz «a aguardar posição» até lá —
   > evita um endpoint novo só para o primeiro desenho. (2) O tempo estimado só é mostrado ao **cliente**; a loja vê posições, não estimativas (um só pedido ao fornecedor, partilhado, quando a loja o quiser). (3) A 5C
   > ficou escrita para o OpenRouteService, a recomendação do plano, **e desligada**: a escolha do fornecedor continua a ser decisão do utilizador. A interface permite trocar sem tocar no resto.
@@ -4269,7 +4276,7 @@ Isto reduz as chamadas de «onde está o meu pedido?» e dá ao gestor a imagem 
 
 #### 3. Requisito interpretado
 
-O estafeta, **enquanto uma entrega sua está em rota**, envia a posição do telemóvel de 15 em 15 segundos (e só se andou mais de ~25 m). O servidor valida-a, guarda só a **última** (sobrescreve) e
+O estafeta, **enquanto uma entrega sua está em rota**, envia a posição do telemóvel de 2,5 em 2,5 segundos (e só se andou mais de ~5 m; parado, a cada 10 s) — ritmo alterado a pedido do utilizador em 11/10/2026, antes 15 s / 25 m. O servidor valida-a, guarda só a **última** (sobrescreve) e
 difunde-a por um namespace `/entregas` para **duas** audiências: a loja (todos os estafetas em rota da empresa) e o cliente (só o estafeta do **seu** pedido). Cada mudança de estado de uma entrega também
 se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada para consulta de 30 s. A rota prevista e o tempo estimado são uma subfase à parte (5C), porque dependem de um fornecedor externo por escolher.
 
@@ -4317,7 +4324,7 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 | **D1** | Namespace novo **`/entregas`**, com **três** tokens de socket pedidos por REST (funcionário: `GET /entregas/socket-token` com `VER_ENTREGAS`; cliente: `GET /commerce/conta/socket-token`; estafeta: `GET /estafeta/socket-token`), cada um assinado com o **seu** segredo e audience, 15 min | Alargar o namespace raiz; ou um token único | O raiz configura o Engine.IO para todos e é só do funcionário; um token único misturaria segredos que existem separados de propósito |
 | **D2** | A posição só existe em **`EM_ROTA`** | «Entre recolher e entregar» (§4.1, US-18) | É o que diz o enum; antes de sair da loja a posição não interessa ao cliente e é o estafeta ainda a recolher; e partilha-se menos do que o necessário (privacidade) |
 | **D3** | Guarda-se só a **última** posição (sobrescreve); **nada** de rasto na base de dados | Gravar o rasto (~2.900 linhas/dia/estafeta) | O valor de auditoria está nos eventos; um rasto gravado é dado pessoal sem uso. O rasto que o ecrã desenha vive só na memória do browser |
-| **D4** | O servidor **valida** cada posição: ≥ 10 s desde a anterior; latitude -27,5…-10 e longitude 30…41 (Moçambique, com folga); precisão ≤ 100 m; velocidade implícita ≤ 150 km/h; senão ignora | Confiar no telemóvel | Um telemóvel com GPS ruim (ou um cliente malicioso) não pode pôr o estafeta noutra província nem inundar o servidor |
+| **D4** | O servidor **valida** cada posição: ≥ 2 s desde a anterior (era 10 s, até ao envio de 2,5 em 2,5 s); latitude -27,5…-10 e longitude 30…41 (Moçambique, com folga); precisão ≤ 100 m; velocidade implícita ≤ 150 km/h; senão ignora | Confiar no telemóvel | Um telemóvel com GPS ruim (ou um cliente malicioso) não pode pôr o estafeta noutra província nem inundar o servidor |
 | **D5** | O evento de estado sai do `OperarEntregaService` como evento interno (`EventEmitter2`) e o gateway **ouve-o** | O gateway ser chamado pelo serviço | Mesmo princípio dos ouvintes de procura e de CRM: o serviço não depende do transporte, e uma falha do socket nunca desfaz uma entrega |
 | **D6** | **Rota prevista e tempo estimado** (5C) por um `ServicoRotas` atrás de uma interface, chamado **só pelo backend**, com cache e **sem número inventado** quando falha | Chamar o fornecedor do browser; mostrar uma estimativa a olho | A chave não vai para o cliente; cliente e loja partilham um só pedido ao fornecedor; sem serviço o ecrã diz que não sabe, em vez de mentir |
 | **D7** | A PWA mantém o ecrã **acordado** durante a rota (**Wake Lock**) e **avisa** que a posição só se envia com a aplicação aberta | Prometer rastreio em segundo plano | Os navegadores param a geolocalização com o ecrã apagado ou a aplicação em segundo plano; prometer o contrário seria falso. É a limitação honesta de uma PWA |
@@ -4363,8 +4370,8 @@ se difunde, para os ecrãs deixarem de esperar 30 s. Sem WebSocket, tudo degrada
 
 ##### 5B — Os ecrãs **[obrigatório]** — ✅ feita em 2026-10-11 (Fase 43), por confirmar num telemóvel
 
-- [x] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 30 s** se o socket falhar, e indicador de «ao vivo» / «actualiza a cada 30 s».
-- [x] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 15 s / 25 m, **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
+- [x] `useSocket` passa a aceitar **namespace** e **de onde vem o token** (hoje fixo na raiz e no `/auth/socket-token`); `useEntregasSocket` (três variantes) com **recurso à consulta de 2,5 s** se o socket falhar (era 30 s), e indicador de «ao vivo» / «actualiza a cada 30 s».
+- [x] **Estafeta:** `useEmitirPosicao` (`watchPosition`, `throttle` 2,5 s / 5 m (era 15 s / 25 m), **só** com uma entrega em rota, pára quando fecha); **Wake Lock**; aviso permanente «A sua posição está a ser partilhada com o cliente e com a loja» e o consentimento na primeira vez; pedido de permissão de localização com explicação.
 - [x] **Cliente:** no `PedidoDetalhePage`, o mapa da entrega em rota (estafeta, destino, loja, **rasto desenhado na memória**) e a linha do tempo em linguagem de cliente («O estafeta está a caminho»); «sem posição recente» quando for o caso.
 - [x] **Loja:** no painel de entregas, o mapa com os estafetas em rota, a actualizar pelo socket.
 - [x] `MapaEntrega.tsx` estende-se (rasto, marcador do estafeta, destino, linha recta e distância) — **continua a ser o único ficheiro que conhece o Leaflet**.

@@ -223,7 +223,7 @@
     "preparar": "A sua encomenda vai sair da loja",
     "distancia": "A cerca de {{distancia}} da sua morada, em linha recta.",
     "ao_vivo": "Ao vivo",
-    "a_cada_30s": "Actualiza a cada 30 s",
+    "a_cada_2_5s": "A actualizar a cada 2,5 s",
     "sem_posicao_recente": "Sem posição recente do estafeta. Assim que ele a enviar, aparece aqui.",
     "actualizar": "Actualizar agora",
     "faltam_minutos_one": "Faltam cerca de {{count}} minuto",

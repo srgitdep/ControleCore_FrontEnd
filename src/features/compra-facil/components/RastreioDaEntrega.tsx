@@ -108,7 +108,7 @@ export function RastreioDaEntrega({ pedidoId, estado, eEntrega }: Props) {
             )}
           >
             <Radio size={11} className={cn(aoVivo && 'animate-pulse')} />
-            {aoVivo ? t('rastreio.ao_vivo') : t('rastreio.a_cada_30s')}
+            {aoVivo ? t('rastreio.ao_vivo') : t('rastreio.a_cada_2_5s')}
           </span>
         )}
       </div>

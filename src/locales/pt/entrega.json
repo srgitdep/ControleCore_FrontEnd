@@ -214,7 +214,7 @@
     "titulo_one": "{{count}} estafeta em rota",
     "titulo_other": "{{count}} estafetas em rota",
     "ao_vivo": "Ao vivo",
-    "a_cada_30s": "Actualiza a cada 30 s",
+    "sem_tempo_real": "Sem tempo real",
     "mostrar": "Mostrar o mapa",
     "esconder": "Esconder o mapa",
     "a_aguardar": "A aguardar a posição dos estafetas em rota. A primeira leitura chega em menos de um minuto.",

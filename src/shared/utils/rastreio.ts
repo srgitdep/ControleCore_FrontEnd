@@ -16,12 +16,12 @@ export interface PontoComHora extends Ponto {
   em: number;
 }
 
-/** Entre dois envios passam, no mínimo, 15 s: o servidor recusa menos de 10 s, e um envio por segundo gasta bateria e dados sem melhorar nada. */
-export const INTERVALO_MINIMO_ENVIO_MS = 15_000;
-/** Parado, não se envia nada novo — mas mesmo assim há um sinal de vida a cada minuto, para o cliente não ver «sem posição recente» num semáforo. */
-export const SINAL_DE_VIDA_MS = 60_000;
-/** Só conta como movimento acima disto: o GPS «treme» uns metros mesmo com o telemóvel numa mesa. */
-export const DESLOCACAO_MINIMA_METROS = 25;
+/** Entre dois envios passam, no mínimo, 2,5 s: o mapa do cliente mexe-se a esse ritmo. O servidor só recusa abaixo de 2 s, e um envio por segundo gasta bateria e dados sem se notar a diferença. */
+export const INTERVALO_MINIMO_ENVIO_MS = 2_500;
+/** Parado, não se envia nada novo — mas mesmo assim há um sinal de vida a cada 10 s, para o cliente não ver «sem posição recente» num semáforo. */
+export const SINAL_DE_VIDA_MS = 10_000;
+/** Só conta como movimento acima disto: o GPS «treme» uns metros mesmo com o telemóvel numa mesa. A 2,5 s, 5 m são ~7 km/h — um passo de peão. */
+export const DESLOCACAO_MINIMA_METROS = 5;
 /** Espelha `POSICAO_RECENTE_MS` do servidor: depois disto o cliente vê «sem posição recente» e não um pino parado. */
 export const POSICAO_RECENTE_MS = 2 * 60 * 1000;
 /** Quantos pontos do rasto se guardam na memória: chega para uma rota inteira e não cresce sem fim. */
@@ -42,8 +42,8 @@ export function distanciaMetros(a: Ponto, b: Ponto): number {
 /**
  * Esta leitura do GPS deve ser enviada ao servidor?
  *
- * Sim se ainda não se enviou nada; senão, só passados 15 s **e** com deslocação de 25 m — ou, parado,
- * passado um minuto (sinal de vida).
+ * Sim se ainda não se enviou nada; senão, só passados 2,5 s **e** com deslocação de 5 m — ou, parado,
+ * passados 10 s (sinal de vida).
  */
 export function devePartilhar(ultimoEnvio: PontoComHora | null, nova: PontoComHora): boolean {
   if (!ultimoEnvio) return true;

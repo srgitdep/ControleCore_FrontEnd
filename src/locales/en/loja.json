@@ -223,7 +223,7 @@
     "preparar": "Your order is about to leave the store",
     "distancia": "About {{distancia}} from your address, in a straight line.",
     "ao_vivo": "Live",
-    "a_cada_30s": "Updates every 30 s",
+    "a_cada_2_5s": "Updating every 2.5 s",
     "sem_posicao_recente": "No recent position from the courier. It will show here as soon as they send one.",
     "actualizar": "Refresh now",
     "faltam_minutos_one": "About {{count}} minute to go",

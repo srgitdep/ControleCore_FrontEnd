@@ -38,7 +38,7 @@ function geolocalizacaoDisponivel(): boolean {
  * Partilha a posição do estafeta **enquanto houver uma entrega em rota** (plano §4.6, D2/D7).
  *
  * - Só liga o GPS e o canal com `emRota` e depois do consentimento: antes disso não se lê a localização.
- * - Envia a posição quando passaram 15 s **e** o estafeta se moveu 25 m (ou, parado, ao fim de um minuto).
+ * - Envia a posição quando passaram 2,5 s **e** o estafeta se moveu 5 m (ou, parado, ao fim de 10 s).
  * - Pede ao navegador para **não apagar o ecrã** (Wake Lock). Não é um truque para contornar nada: sem
  *   isto, o ecrã apaga e o navegador pára o GPS — e esta é uma limitação honesta de uma PWA: com a
  *   aplicação em segundo plano ou o telemóvel bloqueado, **a posição pára de ser enviada**. O ecrã avisa.
@@ -99,7 +99,8 @@ export function useEmitirPosicao(emRota: boolean) {
         // 1 = PERMISSION_DENIED. Os outros (sinal fraco, tempo esgotado) passam sozinhos.
         if (erro.code === 1) setPermissao('negada');
       },
-      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 20_000 },
+      // `maximumAge` curto: com envios a cada 2,5 s, reaproveitar uma leitura de 5 s repetia o mesmo ponto.
+      { enableHighAccuracy: true, maximumAge: 1_000, timeout: 20_000 },
     );
 
     return () => {

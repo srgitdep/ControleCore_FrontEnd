@@ -7,7 +7,8 @@ import { pedidos } from '../api/pedidos.api';
 import type { EntregaDoPedido, EstadoPedido } from '../api/pedidos.api';
 
 const CHAVE = 'loja';
-const TRINTA_SEGUNDOS = 30_000;
+/** Sem canal em tempo real a posição vem por consulta, ao mesmo ritmo a que o estafeta a envia (2,5 s): o cliente não nota a diferença entre «ao vivo» e o recurso. */
+const RECURSO_SEM_CANAL_MS = 2_500;
 /** Ao vivo, a posição vem pelo canal; refaz-se a entrega de minuto a minuto só para renovar o tempo estimado (o servidor guarda-o um minuto). */
 const UM_MINUTO = 60_000;
 
@@ -87,8 +88,8 @@ export function useRastreioDoPedido(pedidoId: string | undefined, estado: Estado
     queryKey: chave,
     queryFn: () => pedidos.entrega(pedidoId!),
     enabled: !!pedidoId && temEntrega,
-    // Sem canal: 30 s. Com canal: 1 min, só para o tempo estimado; a posição chega pelo socket.
-    refetchInterval: aoVivoPossivel ? (ligado ? UM_MINUTO : TRINTA_SEGUNDOS) : false,
+    // Sem canal: 2,5 s. Com canal: 1 min, só para o tempo estimado; a posição chega pelo socket.
+    refetchInterval: aoVivoPossivel ? (ligado ? UM_MINUTO : RECURSO_SEM_CANAL_MS) : false,
   });
 
   // A posição que veio por REST (ao abrir a página, ou no recurso de 30 s) também entra no rasto.

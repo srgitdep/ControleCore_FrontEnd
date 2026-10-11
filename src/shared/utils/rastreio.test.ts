@@ -14,8 +14,8 @@ import {
 const BASE = { latitude: -25.9692, longitude: 32.5732 };
 /** ~0,0005° de latitude ≈ 55 m. */
 const A_55_METROS = { latitude: BASE.latitude + 0.0005, longitude: BASE.longitude };
-/** ~0,0001° ≈ 11 m: ruído do GPS. */
-const A_11_METROS = { latitude: BASE.latitude + 0.0001, longitude: BASE.longitude };
+/** ~0,00003° ≈ 3 m: ruído do GPS. */
+const A_3_METROS = { latitude: BASE.latitude + 0.00003, longitude: BASE.longitude };
 const T0 = 1_000_000;
 
 describe('distanciaMetros', () => {
@@ -36,20 +36,20 @@ describe('devePartilhar — a poupança de bateria e de dados', () => {
     expect(devePartilhar(null, { ...BASE, em: T0 })).toBe(true);
   });
 
-  it('🔴 menos de 15 s depois não envia, mesmo que se tenha mexido muito', () => {
+  it('🔴 menos de 2,5 s depois não envia, mesmo que se tenha mexido muito', () => {
     const ultimo = { ...BASE, em: T0 };
     expect(devePartilhar(ultimo, { ...A_55_METROS, em: T0 + INTERVALO_MINIMO_ENVIO_MS - 1 })).toBe(false);
   });
 
-  it('passados 15 s com 55 m de deslocação, envia', () => {
+  it('passados 2,5 s com 55 m de deslocação, envia', () => {
     expect(devePartilhar({ ...BASE, em: T0 }, { ...A_55_METROS, em: T0 + INTERVALO_MINIMO_ENVIO_MS })).toBe(true);
   });
 
-  it('o tremor do GPS (11 m) não conta como movimento', () => {
-    expect(devePartilhar({ ...BASE, em: T0 }, { ...A_11_METROS, em: T0 + INTERVALO_MINIMO_ENVIO_MS + 1000 })).toBe(false);
+  it('o tremor do GPS (3 m) não conta como movimento', () => {
+    expect(devePartilhar({ ...BASE, em: T0 }, { ...A_3_METROS, em: T0 + INTERVALO_MINIMO_ENVIO_MS + 1000 })).toBe(false);
   });
 
-  it('parado, dá sinal de vida ao fim de um minuto', () => {
+  it('parado, dá sinal de vida ao fim de 10 s', () => {
     expect(devePartilhar({ ...BASE, em: T0 }, { ...BASE, em: T0 + SINAL_DE_VIDA_MS })).toBe(true);
     expect(devePartilhar({ ...BASE, em: T0 }, { ...BASE, em: T0 + SINAL_DE_VIDA_MS - 1 })).toBe(false);
   });

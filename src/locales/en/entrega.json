@@ -214,7 +214,7 @@
     "titulo_one": "{{count}} courier on the road",
     "titulo_other": "{{count}} couriers on the road",
     "ao_vivo": "Live",
-    "a_cada_30s": "Updates every 30 s",
+    "sem_tempo_real": "No real time",
     "mostrar": "Show the map",
     "esconder": "Hide the map",
     "a_aguardar": "Waiting for the position of the couriers on the road. The first reading arrives within a minute.",

@@ -71,7 +71,7 @@ export function MapaDosEstafetas({ entregas }: { entregas: EntregaPainel[] }) {
             )}
           >
             <Radio size={11} className={cn(aoVivo && 'animate-pulse')} />
-            {aoVivo ? t('rastreio.ao_vivo') : t('rastreio.a_cada_30s')}
+            {aoVivo ? t('rastreio.ao_vivo') : t('rastreio.sem_tempo_real')}
           </span>
           <button
             type="button"
