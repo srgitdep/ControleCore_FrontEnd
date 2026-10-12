@@ -53,7 +53,7 @@ export function PedidosCommercePage() {
   );
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-6">
       <BarraDaPagina resumo={pedidos ? t('pagina.resumo', { count: pedidos.length }) : undefined} />
 
       <div className="flex flex-wrap items-center gap-2">

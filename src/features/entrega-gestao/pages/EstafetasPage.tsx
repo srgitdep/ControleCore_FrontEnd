@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Bike, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
+import { AlertTriangle, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
+import { BarraDaPagina } from '@/shared/ui';
 import { Can } from '@/features/auth';
 import { useConfiguracaoEntrega } from '../hooks/useEntregaGestao';
 import {
@@ -168,34 +169,27 @@ export function EstafetasPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-            <Bike size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{t('estafetas.titulo')}</h1>
-            <p className="text-sm text-slate-500">{t('estafetas.subtitulo')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={inactivos} onChange={(e) => setInactivos(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            {t('estafetas.mostrar_inactivos')}
-          </label>
-          <Can action="manage" resource="estafetas">
-            <button
-              type="button"
-              onClick={() => setAEditar(null)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              <Plus size={14} />
-              {t('estafetas.novo')}
-            </button>
-          </Can>
-        </div>
-      </header>
+    <div className="space-y-5">
+      <BarraDaPagina
+        acoes={
+          <>
+            <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={inactivos} onChange={(e) => setInactivos(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+              {t('estafetas.mostrar_inactivos')}
+            </label>
+            <Can action="manage" resource="estafetas">
+              <button
+                type="button"
+                onClick={() => setAEditar(null)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                <Plus size={14} />
+                {t('estafetas.novo')}
+              </button>
+            </Can>
+          </>
+        }
+      />
 
       {estafetas.isLoading ? (
         <div className="space-y-2">

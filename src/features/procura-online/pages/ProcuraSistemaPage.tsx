@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Globe2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { BarraDaPagina } from '@/shared/ui';
 import { PainelDaProcura } from '../components/PainelDaProcura';
 import { useProcuraSistema } from '../hooks/useProcura';
 
@@ -17,31 +18,23 @@ export function ProcuraSistemaPage() {
   const procura = useProcuraSistema(dias);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white">
-            <Globe2 size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{t('sistema.titulo')}</h1>
-            <p className="text-sm text-slate-500">{t('sistema.subtitulo')}</p>
-          </div>
-        </div>
-
-        <select
-          value={dias}
-          onChange={(e) => setDias(Number(e.target.value))}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-          aria-label={t('filtro.periodo')}
-        >
-          {PERIODOS.map((d) => (
-            <option key={d} value={d}>
-              {t('filtro.ultimos', { dias: d })}
-            </option>
-          ))}
-        </select>
-      </header>
+    <div className="space-y-5">
+      <BarraDaPagina
+        acoes={
+          <select
+            value={dias}
+            onChange={(e) => setDias(Number(e.target.value))}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
+            aria-label={t('filtro.periodo')}
+          >
+            {PERIODOS.map((d) => (
+              <option key={d} value={d}>
+                {t('filtro.ultimos', { dias: d })}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       {procura.isLoading ? (
         <div className="h-64 animate-pulse rounded-2xl bg-slate-100" />

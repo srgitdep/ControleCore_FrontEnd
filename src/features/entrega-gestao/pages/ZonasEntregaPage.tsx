@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, Loader2, MapPinOff, Pencil, Plus, Truck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, MapPinOff, Pencil, Plus } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
 import {
   useActualizarConfiguracaoEntrega,
@@ -361,17 +361,7 @@ export function ZonasEntregaPage() {
   const configuracao = useConfiguracaoEntrega();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-      <header className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-          <Truck size={20} />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">{t('titulo')}</h1>
-          <p className="text-sm text-slate-500">{t('subtitulo')}</p>
-        </div>
-      </header>
-
+    <div className="space-y-6">
       {configuracao.isLoading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
           <Loader2 size={22} className="animate-spin text-slate-400" />

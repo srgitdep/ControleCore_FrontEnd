@@ -34,6 +34,7 @@ const PAGE_TITLES = {
   '/crm':           'crm',
   '/financeiro':    'financeiro',
   '/rh':            'rh',
+  '/e-commerce':    'ecommerce',
   '/empresas':      'empresas',
   '/utilizadores':  'utilizadores',
   '/permissoes':    'permissoes',

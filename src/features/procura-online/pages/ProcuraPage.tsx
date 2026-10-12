@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, TrendingUp } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import { BarraDaPagina } from '@/shared/ui';
 import { PainelDaProcura } from '../components/PainelDaProcura';
 import { useProcura } from '../hooks/useProcura';
 
@@ -27,38 +28,30 @@ export function ProcuraPage() {
   }, [lojaId, procura.data]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-            <TrendingUp size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{t('titulo')}</h1>
-            <p className="text-sm text-slate-500">{t('subtitulo')}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {lojas.length > 1 && (
-            <select value={lojaId} onChange={(e) => setLojaId(e.target.value)} className={classeSelect} aria-label={t('filtro.loja')}>
-              <option value="">{t('filtro.todas_lojas')}</option>
-              {lojas.map((l) => (
-                <option key={l.lojaId} value={l.lojaId}>
-                  {l.nome}
+    <div className="space-y-5">
+      <BarraDaPagina
+        acoes={
+          <>
+            {lojas.length > 1 && (
+              <select value={lojaId} onChange={(e) => setLojaId(e.target.value)} className={classeSelect} aria-label={t('filtro.loja')}>
+                <option value="">{t('filtro.todas_lojas')}</option>
+                {lojas.map((l) => (
+                  <option key={l.lojaId} value={l.lojaId}>
+                    {l.nome}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select value={dias} onChange={(e) => setDias(Number(e.target.value))} className={classeSelect} aria-label={t('filtro.periodo')}>
+              {PERIODOS.map((d) => (
+                <option key={d} value={d}>
+                  {t('filtro.ultimos', { dias: d })}
                 </option>
               ))}
             </select>
-          )}
-          <select value={dias} onChange={(e) => setDias(Number(e.target.value))} className={classeSelect} aria-label={t('filtro.periodo')}>
-            {PERIODOS.map((d) => (
-              <option key={d} value={d}>
-                {t('filtro.ultimos', { dias: d })}
-              </option>
-            ))}
-          </select>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {procura.isLoading ? (
         <div className="space-y-3">

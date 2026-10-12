@@ -18,11 +18,7 @@
       "stock": "Products & Stock",
       "armazens": "Warehouses",
       "transferencias": "Transfers",
-      "pedidos_commerce": "Compra Fácil Orders",
-      "entregas": "Deliveries",
-      "estafetas": "Couriers",
-      "acertos_estafeta": "Courier settlements",
-      "entregas_zonas": "Delivery zones",
+      "ecommerce": "E-Commerce",
       "promocao": "Promotions",
       "necessidades": "Needs",
       "requisicoes": "Requisitions",
@@ -30,9 +26,7 @@
       "conferencia": "Reconciliation",
       "lojas": "Stores & Tills",
       "rh": "Human Resources",
-      "historico": "System History",
-      "procura": "Online demand",
-      "procura_sistema": "Demand (platform)"
+      "historico": "System History"
     },
     "fechar": "Close menu",
     "expandir": "Expand sidebar",
@@ -57,6 +51,7 @@
       "crm": "CRM",
       "financeiro": "Finance",
       "rh": "Human Resources",
+      "ecommerce": "E-Commerce",
       "empresas": "Companies",
       "utilizadores": "Users",
       "permissoes": "Permissions",
@@ -74,6 +69,18 @@
     "ha_dias_zero": "{{count}} days ago",
     "ha_dias_one": "{{count}} day ago",
     "ha_dias_other": "{{count}} days ago"
+  },
+  "ecommerce": {
+    "abas": {
+      "etiqueta": "E-Commerce sections",
+      "pedidos": "Compra Fácil Orders",
+      "entregas": "Deliveries",
+      "estafetas": "Couriers",
+      "acertos": "Courier settlements",
+      "zonas": "Delivery zones",
+      "procura": "Online demand",
+      "procura_sistema": "Demand (platform)"
+    }
   },
   "rota": {
     "a_carregar": "Loading...",

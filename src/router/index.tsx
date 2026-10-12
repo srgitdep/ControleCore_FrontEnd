@@ -20,10 +20,8 @@ import { FinanceiroDashboardPage } from '@/features/financeiro';
 import { PurchasesPage } from '@/features/compras';
 import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/features/necessidades';
 import { TransferenciasPage } from '@/features/transferencias';
-import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
-import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
-import { ProcuraPage, ProcuraSistemaPage } from '@/features/procura-online';
+import { ECommercePage } from '@/features/ecommerce';
 import { EntregaPage, EstafetaLayout, MinhasEntregasPage } from '@/features/estafeta-app';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
@@ -252,49 +250,26 @@ export const router = createBrowserRouter([
           { path: '/compras/necessidades/historico', element: <HistoricoNecessidadesPage /> },
           { path: '/compras/necessidades/alertas', element: <AlertasPage /> },
           { path: '/transferencias', element: <TransferenciasPage /> },
-          // A fila de pedidos do Compra Fácil (Fase 12) — protecção fina é do backend
-          // (@ModuloNecessario('commerce') + @Permissao) e do <Can> dentro da página;
-          // aqui só a rota, como as restantes desta secção.
-          { path: '/commerce/pedidos', element: <PedidosCommercePage /> },
           { path: '/promocoes', element: <PromocoesPage /> },
-          // As zonas e taxas da entrega ao domicílio — só ADMIN (a permissão fina é do backend:
-          // GERIR_ZONAS_ENTREGA + módulo commerce).
-          // O painel de entregas e os estafetas: quem despacha e quem gere a frota. A permissão
-          // fina (VER_ENTREGAS / GERIR_ENTREGAS / GERIR_ESTAFETAS) é do backend e do <Can>.
+          // E-Commerce: pedidos do Compra Fácil, entregas, estafetas, acertos, zonas e procura
+          // online num só ecrã com separadores (`?tab=`). Eram sete rotas planas e sete entradas
+          // de menu. A protecção fina é do backend (@ModuloNecessario('commerce') + @Permissao) e
+          // do <Can> dentro de cada separador; a página filtra os separadores por papel e esta
+          // rota aceita quem vê pelo menos um.
           {
-            path: '/entregas',
+            path: '/e-commerce',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER']} />,
-            children: [{ index: true, element: <EntregasPage /> }]
+            children: [{ index: true, element: <ECommercePage /> }]
           },
-          {
-            path: '/entregas/estafetas',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
-            children: [{ index: true, element: <EstafetasPage /> }]
-          },
-          // A procura online: a das lojas da empresa (gestão) e a da plataforma (só Super Admin). A
-          // protecção que conta é a do servidor (VER_PROCURA_ONLINE / SUPER_ADMIN_ONLY).
-          {
-            path: '/procura',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
-            children: [{ index: true, element: <ProcuraPage /> }]
-          },
-          {
-            path: '/procura/sistema',
-            element: <ProtectedRoute roles={['SUPER_ADMIN']} />,
-            children: [{ index: true, element: <ProcuraSistemaPage /> }]
-          },
-          // O acerto de contas dos estafetas: o numerário cobrado à porta chega ao caixa.
-          // Sem CASHIER nem STOCK_KEEPER: quem mexe em dinheiro do caixa de outros é gestão.
-          {
-            path: '/entregas/acertos',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
-            children: [{ index: true, element: <AcertosPage /> }]
-          },
-          {
-            path: '/entregas/zonas',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,
-            children: [{ index: true, element: <ZonasEntregaPage /> }]
-          },
+          // As rotas antigas redireccionam: há notificações (`destinoDaNotificacao`), o painel e
+          // ligações gravadas que ainda apontam para elas.
+          { path: '/commerce/pedidos', element: <Navigate to="/e-commerce?tab=pedidos" replace /> },
+          { path: '/entregas', element: <Navigate to="/e-commerce?tab=entregas" replace /> },
+          { path: '/entregas/estafetas', element: <Navigate to="/e-commerce?tab=estafetas" replace /> },
+          { path: '/entregas/acertos', element: <Navigate to="/e-commerce?tab=acertos" replace /> },
+          { path: '/entregas/zonas', element: <Navigate to="/e-commerce?tab=zonas" replace /> },
+          { path: '/procura', element: <Navigate to="/e-commerce?tab=procura" replace /> },
+          { path: '/procura/sistema', element: <Navigate to="/e-commerce?tab=procura_sistema" replace /> },
           { path: '/compras',       element: <PurchasesPage /> },
           // As requisições vivem em rota própria e não como separador de Compras.
           //
