@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
+import { AlertTriangle, FileText, KeyRound, Loader2, Pencil, Plus, Power, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '@/shared/utils';
 import { BarraDaPagina } from '@/shared/ui';
@@ -12,6 +12,8 @@ import {
   useEstafetas,
   useReporSenhaEstafeta,
 } from '../hooks/useOperacao';
+import { ConviteEstafetas } from '../components/ConviteEstafetas';
+import { DocumentosDoEstafeta } from '../components/DocumentosDoEstafeta';
 import type { Estafeta } from '../types/operacao';
 
 const classeCampo =
@@ -138,6 +140,7 @@ export function EstafetasPage() {
 
   // `undefined` = fechado; `null` = novo; objecto = a editar.
   const [aEditar, setAEditar] = useState<Estafeta | null | undefined>(undefined);
+  const [aVerDocumentos, setAVerDocumentos] = useState<string | null>(null);
   const lojas = configuracao.data?.lojas ?? [];
 
   const guardar: FormularioProps['aoGuardar'] = (dados) => {
@@ -191,6 +194,10 @@ export function EstafetasPage() {
         }
       />
 
+      <Can action="manage" resource="estafetas">
+        <ConviteEstafetas />
+      </Can>
+
       {estafetas.isLoading ? (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
@@ -217,6 +224,15 @@ export function EstafetasPage() {
                         {t('estafetas.em_entrega', { count: e._count.entregas })}
                       </span>
                     )}
+                    {e.isActive && !e.onboardingCompletoEm && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">{t('documentos.onboarding_incompleto')}</span>
+                    )}
+                    {e.onboardingCompletoEm && !e.documentosConferidosEm && (
+                      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-700">{t('documentos.por_conferir_badge')}</span>
+                    )}
+                    {e.documentosConferidosEm && (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">{t('documentos.conferido_badge')}</span>
+                    )}
                     {e.isActive && e._count.entregas === 0 && e.estado === 'INDISPONIVEL' && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">{t('estafetas.indisponivel')}</span>
                     )}
@@ -231,6 +247,15 @@ export function EstafetasPage() {
 
                 <Can action="manage" resource="estafetas">
                   <div className="flex shrink-0 flex-wrap gap-1.5">
+                    {/* Os estafetas anteriores ao onboarding não têm documentos: sem nada para ver, o botão não aparece. */}
+                    {e.onboardingCompletoEm && (
+                      <Can action="read" resource="documentos_estafeta">
+                        <button type="button" onClick={() => setAVerDocumentos(e.id)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                          <FileText size={12} />
+                          {t('documentos.ver')}
+                        </button>
+                      </Can>
+                    )}
                     <button type="button" onClick={() => setAEditar(e)} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
                       <Pencil size={12} />
                       {t('estafetas.editar_curto')}
@@ -279,6 +304,8 @@ export function EstafetasPage() {
       ) : (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('estafetas.vazio')}</p>
       )}
+
+      {aVerDocumentos && <DocumentosDoEstafeta estafetaId={aVerDocumentos} ambito="EMPRESA" podeConferir aoFechar={() => setAVerDocumentos(null)} />}
 
       {aEditar !== undefined && (
         <FormularioEstafeta

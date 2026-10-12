@@ -79,7 +79,8 @@
       "acertos": "Courier settlements",
       "zonas": "Delivery zones",
       "procura": "Online demand",
-      "procura_sistema": "Demand (platform)"
+      "procura_sistema": "Demand (platform)",
+      "estafetas_plataforma": "Platform couriers"
     }
   },
   "rota": {
@@ -165,7 +166,8 @@
       "acertos_estafeta": "Courier cash settlements",
       "procura_online": "Online demand",
       "zonas_entrega": "Delivery zones and fees",
-      "webhooks": "Delivery webhooks"
+      "webhooks": "Delivery webhooks",
+      "documentos_estafeta": "Courier documents"
     },
     "accao": {
       "read": "View",

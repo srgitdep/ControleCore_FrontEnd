@@ -79,7 +79,8 @@
       "acertos": "Acerto dos estafetas",
       "zonas": "Zonas de entrega",
       "procura": "Procura online",
-      "procura_sistema": "Procura (plataforma)"
+      "procura_sistema": "Procura (plataforma)",
+      "estafetas_plataforma": "Plataforma (estafetas)"
     }
   },
   "rota": {
@@ -165,7 +166,8 @@
       "acertos_estafeta": "Acertos de contas dos estafetas",
       "procura_online": "Procura online",
       "zonas_entrega": "Zonas e taxas de entrega",
-      "webhooks": "Webhooks de entrega"
+      "webhooks": "Webhooks de entrega",
+      "documentos_estafeta": "Documentos dos estafetas"
     },
     "accao": {
       "read": "Visualizar",

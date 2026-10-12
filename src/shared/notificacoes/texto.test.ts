@@ -62,6 +62,21 @@ describe('textoDaNotificacao — a frase na língua de quem lê', () => {
     expect(textoDaNotificacao(n, criarT(pt))).toBe('Nova entrega: PED-7 — Rua X, Maputo.');
   });
 
+  it('a oferta diz a loja e a distância, e nunca a morada do cliente (plano §4.9)', () => {
+    const n = N({ destinatarioTipo: 'ESTAFETA', tipo: 'oferta.nova', parametros: { loja: 'Loja Centro', distanciaMetros: 1500 } });
+
+    const texto = textoDaNotificacao(n, criarT(pt));
+    expect(texto).toContain('Loja Centro');
+    expect(texto).not.toContain('novidades');
+    expect(textoDaNotificacao(n, criarT(en))).not.toContain('There is news');
+  });
+
+  it('a gestão é avisada quando a procura passa o limiar sem estafeta', () => {
+    const n = N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'entrega.sem_estafeta', parametros: { numeroPedido: 'PED-9', minutos: 10 } });
+
+    expect(textoDaNotificacao(n, criarT(pt))).toBe('PED-9: ainda sem estafeta ao fim de 10 minutos. A procura continua.');
+  });
+
   it('🔴 um tipo que o catálogo não conhece NUNCA mostra a chave crua: cai numa frase genérica', () => {
     const texto = textoDaNotificacao(N({ tipo: 'entrega.xpto' }), criarT(pt));
 
@@ -97,6 +112,8 @@ describe('destinoDaNotificacao — para onde leva', () => {
   it('o estafeta vai à entrega; a gestão, ao pedido novo ou ao painel de entregas', () => {
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'ESTAFETA' }))).toBe('/estafeta/entregas/ent-1');
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'ESTAFETA', entregaId: null }))).toBe('/estafeta');
+    // Uma oferta ainda não é do estafeta: a entrega responderia 404 até aceitar.
+    expect(destinoDaNotificacao(N({ destinatarioTipo: 'ESTAFETA', tipo: 'oferta.nova' }))).toBe('/estafeta');
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'pedido.novo' }))).toBe('/commerce/pedidos');
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'entrega.em_rota' }))).toBe('/entregas');
   });
@@ -107,6 +124,8 @@ describe('eUrgente — o que merece um aviso passageiro', () => {
     ['CLIENTE', 'entrega.chegou', true],
     ['ESTAFETA', 'entrega.nova', true],
     ['ESTAFETA', 'entrega.retirada', true],
+    ['ESTAFETA', 'oferta.nova', true],
+    ['FUNCIONARIO', 'entrega.sem_estafeta', true],
     ['FUNCIONARIO', 'entrega.falhada', true],
     ['FUNCIONARIO', 'pedido.novo', true],
     ['CLIENTE', 'pedido.confirmado', false],

@@ -19,6 +19,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'entregas' },
   { id: 'estafetas' },
   { id: 'acertos_estafeta' },
+  { id: 'documentos_estafeta' },
   { id: 'procura_online' },
   { id: 'zonas_entrega' },
   { id: 'webhooks' },
@@ -56,6 +57,10 @@ export const IGNORED_PERMISSIONS = [
   'write:procura_online',
   'delete:procura_online',
   'manage:procura_online',
+  // Documentos dos estafetas (migração estafetas_da_plataforma): só `read`.
+  'write:documentos_estafeta',
+  'delete:documentos_estafeta',
+  'manage:documentos_estafeta',
   'write:acertos_estafeta',
   'delete:acertos_estafeta',
   'read:acertos_estafeta',

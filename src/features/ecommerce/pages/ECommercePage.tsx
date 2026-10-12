@@ -1,17 +1,18 @@
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Banknote, Bike, Globe2, MapPin, PackageCheck, TrendingUp, Truck } from 'lucide-react';
+import { Banknote, Bike, Globe2, MapPin, PackageCheck, TrendingUp, Truck, Users } from 'lucide-react';
 import { Tabs, type TabDefinition } from '@/shared/ui';
 import { useAuth } from '@/features/auth';
 import type { Role } from '@/features/auth';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
-import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
+import { AcertosPage, EntregasPage, EstafetasDaPlataformaPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
 import { ProcuraPage, ProcuraSistemaPage } from '@/features/procura-online';
 
 type AbaECommerce =
   | 'pedidos'
   | 'entregas'
   | 'estafetas'
+  | 'estafetas_plataforma'
   | 'acertos'
   | 'zonas'
   | 'procura'
@@ -34,6 +35,8 @@ const ABAS: DefinicaoDaAba[] = [
   { id: 'pedidos', icon: PackageCheck, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
   { id: 'entregas', icon: Truck, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
   { id: 'estafetas', icon: Bike, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  // Os estafetas que não são de nenhuma empresa (plano §4.9): só o Super Admin os vê, e o servidor também o exige.
+  { id: 'estafetas_plataforma', icon: Users, roles: ['SUPER_ADMIN'] },
   // Sem CASHIER nem STOCK_KEEPER: quem mexe no dinheiro do caixa de outros é gestão.
   { id: 'acertos', icon: Banknote, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   { id: 'zonas', icon: MapPin, roles: ['SUPER_ADMIN', 'ADMIN'] },
@@ -88,6 +91,7 @@ export function ECommercePage() {
           {aba === 'pedidos' && <PedidosCommercePage />}
           {aba === 'entregas' && <EntregasPage />}
           {aba === 'estafetas' && <EstafetasPage />}
+          {aba === 'estafetas_plataforma' && <EstafetasDaPlataformaPage />}
           {aba === 'acertos' && <AcertosPage />}
           {aba === 'zonas' && <ZonasEntregaPage />}
           {aba === 'procura' && <ProcuraPage />}

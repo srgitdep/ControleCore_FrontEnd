@@ -22,7 +22,13 @@ import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/feat
 import { TransferenciasPage } from '@/features/transferencias';
 import { PromocoesPage } from '@/features/promocoes';
 import { ECommercePage } from '@/features/ecommerce';
-import { EntregaPage, EstafetaLayout, MinhasEntregasPage } from '@/features/estafeta-app';
+import {
+  EntregaPage,
+  EstafetaLayout,
+  MinhasEntregasPage,
+  OnboardingPage,
+  RegistoEstafetaPage,
+} from '@/features/estafeta-app';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
 import {
   PortalLayout,
@@ -129,8 +135,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <MinhasEntregasPage /> },
       { path: 'entregas/:id', element: <EntregaPage /> },
+      // O assistente de documentos (plano §4.9): a única rota que quem ainda não completou o registo alcança.
+      { path: 'onboarding', element: <OnboardingPage /> },
     ],
   },
+  // O registo de quem quer trabalhar como estafeta (plano §4.9). **Público e fora do `EstafetaLayout`** — o layout manda
+  // para `/login` quem não tem sessão, e quem se está a registar ainda não tem. Abre a sessão no servidor ao concluir.
+  { path: '/estafeta/registo', element: <RegistoEstafetaPage /> },
 
   // ── Compra Fácil ──────────────────────────────────────────────────────────
   //

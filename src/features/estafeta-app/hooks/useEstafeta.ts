@@ -37,11 +37,13 @@ export function useOnline() {
  */
 export function useMinhasEntregas(historico = false) {
   const autenticado = useEstafetaStore((s) => s.autenticado);
+  const operacional = useOnboardingCompleto();
 
   return useQuery({
     queryKey: [CHAVE, 'entregas', historico],
     queryFn: () => estafetaApi.entregas(historico),
-    enabled: autenticado,
+    // Em onboarding o servidor recusa as entregas (403): não se pergunta, em vez de um erro a cada 30 s.
+    enabled: autenticado && operacional,
     refetchInterval: TRINTA_SEGUNDOS,
     placeholderData: (anterior) => anterior,
   });
@@ -49,13 +51,22 @@ export function useMinhasEntregas(historico = false) {
 
 export function useMinhaEntrega(id: string | undefined) {
   const autenticado = useEstafetaStore((s) => s.autenticado);
+  const operacional = useOnboardingCompleto();
 
   return useQuery({
     queryKey: [CHAVE, 'entrega', id],
     queryFn: () => estafetaApi.entrega(id!),
-    enabled: autenticado && !!id,
+    enabled: autenticado && operacional && !!id,
     refetchInterval: TRINTA_SEGUNDOS,
   });
+}
+
+/**
+ * O estafeta já completou o onboarding? Só depois disso o servidor deixa ver entregas e ofertas (plano §4.9, D15); até
+ * o perfil chegar assume-se que não, para nenhuma consulta operacional sair com um 403 certo.
+ */
+export function useOnboardingCompleto(): boolean {
+  return useMeuPerfil().data?.onboardingCompleto === true;
 }
 
 export function useMeuPerfil() {

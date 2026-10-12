@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ChevronRight, Loader2, PackageCheck, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileWarning, Loader2, PackageCheck, Radio, RefreshCw } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
 import { AjudaDeInstalacao } from '../components/AjudaDeInstalacao';
 import { EstadoDaEntrega } from '../components/EstadoDaEntrega';
-import { useMinhasEntregas } from '../hooks/useEstafeta';
+import { useMeuPerfil, useMinhasEntregas } from '../hooks/useEstafeta';
 import type { EntregaEstafeta } from '../types/estafeta';
 
 function Cartao({ entrega }: { entrega: EntregaEstafeta }) {
@@ -37,10 +37,36 @@ export function MinhasEntregasPage() {
   const { t } = useTranslation('estafeta');
   const [historico, setHistorico] = useState(false);
   const entregas = useMinhasEntregas(historico);
+  const perfil = useMeuPerfil().data;
 
   return (
     <div className="space-y-4">
       <AjudaDeInstalacao />
+
+      {/* Um estafeta anterior ao onboarding não fica bloqueado (a frota não pára por uma regra nova), mas vê isto até
+          completar os documentos (plano §4.9, D9). */}
+      {perfil && perfil.onboardingCompleto && !perfil.documentosCompletos && (
+        <Link
+          to="/estafeta/onboarding"
+          className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 active:bg-amber-100"
+        >
+          <FileWarning size={20} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-amber-900">{t('onboarding.aviso_antigo.titulo')}</span>
+            <span className="mt-0.5 block text-sm text-amber-900">{t('onboarding.aviso_antigo.texto')}</span>
+            <span className="mt-2 block text-sm font-bold text-amber-800">{t('onboarding.aviso_antigo.accao')}</span>
+          </span>
+        </Link>
+      )}
+
+      {/* Online na plataforma e sem nada em curso: está à espera de uma oferta. Dizê-lo evita a dúvida «está a funcionar?». */}
+      {perfil?.frota === 'PLATAFORMA' && perfil.online && !historico && (entregas.data?.length ?? 0) === 0 && (
+        <p className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3 text-sm font-medium text-emerald-900" role="status">
+          <Radio size={16} className="shrink-0" aria-hidden />
+          {t('online.a_espera')}
+        </p>
+      )}
+
       <div className="flex items-center gap-2">
         <div className="flex flex-1 rounded-xl bg-slate-200/70 p-1" role="tablist">
           {[false, true].map((h) => (

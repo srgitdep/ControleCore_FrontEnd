@@ -47,13 +47,17 @@
       "chegou": "{{numeroPedido}}: o estafeta chegou à morada.",
       "entregue": "{{numeroPedido}}: entregue.",
       "falhada": "{{numeroPedido}}: não foi possível entregar.",
-      "devolvida": "{{numeroPedido}}: devolvida à loja."
+      "devolvida": "{{numeroPedido}}: devolvida à loja.",
+      "sem_estafeta": "{{numeroPedido}}: ainda sem estafeta ao fim de {{minutos}} minutos. A procura continua."
     }
   },
   "ESTAFETA": {
     "entrega": {
       "nova": "Nova entrega: {{numeroPedido}} — {{morada}}.",
       "retirada": "A entrega {{numeroPedido}} já não é sua."
+    },
+    "oferta": {
+      "nova": "Entrega para {{loja}}, a {{distancia}} de si."
     }
   }
 }

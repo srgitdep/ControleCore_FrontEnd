@@ -8,6 +8,18 @@ import type {
   EstadoEscolhido,
   PerfilEstafeta,
 } from '../types/estafeta';
+import type {
+  ContactoDeEmergencia,
+  DadosDoDocumento,
+  DadosDoRegisto,
+  EstadoDoOnboarding,
+  LadoDaImagem,
+  LeituraDeDocumento,
+  OfertaDeEntrega,
+  PosicaoParaOnline,
+  RespostaDoRegisto,
+  TipoDeDocumento,
+} from '../types/onboarding';
 
 /**
  * A aplicação do estafeta: instância própria, com cookie próprio (`tokenEstafeta`).
@@ -46,6 +58,64 @@ const BASE = '/estafeta';
 
 export const estafetaApi = {
   eu: async () => (await estafetaApiInstancia.get<PerfilEstafeta>(`${BASE}/eu`)).data,
+
+  // ── O registo (público) e o assistente de documentos (plano §4.9) ──
+  /** Público. Com `convite` regista na frota própria da empresa; sem ele, na da plataforma. Abre a sessão. */
+  registar: async (dados: DadosDoRegisto) =>
+    (await estafetaApiInstancia.post<RespostaDoRegisto>(`${BASE}/registo`, dados)).data,
+
+  /** Público. O nome da empresa a que o convite pertence, ou 404 se não existir ou tiver sido substituído. */
+  verificarConvite: async (codigo: string) =>
+    (await estafetaApiInstancia.get<{ empresaNome: string }>(`${BASE}/registo/convite`, { params: { codigo } })).data,
+
+  estadoDoOnboarding: async () =>
+    (await estafetaApiInstancia.get<EstadoDoOnboarding>(`${BASE}/onboarding/estado`)).data,
+
+  contactoDeEmergencia: async (contacto: ContactoDeEmergencia) =>
+    (await estafetaApiInstancia.put<{ ok: true }>(`${BASE}/onboarding/contacto-emergencia`, contacto)).data,
+
+  /** Envia **uma** fotografia (já comprimida). Substituir não apaga a anterior; reenviar invalida os dados confirmados. */
+  enviarImagem: async (tipo: TipoDeDocumento, lado: LadoDaImagem, imagem: File) => {
+    const corpo = new FormData();
+    corpo.append('lado', lado);
+    corpo.append('imagem', imagem);
+    // Sem `Content-Type` à mão: o navegador acrescenta o limite (`boundary`) do multipart.
+    return (
+      await estafetaApiInstancia.post<{ id: string; lado: LadoDaImagem; url: string }>(
+        `${BASE}/onboarding/documentos/${tipo}/imagens`,
+        corpo,
+        { headers: { 'Content-Type': undefined } },
+      )
+    ).data;
+  },
+
+  /** Lê o documento a partir das fotografias já enviadas. Uma **sugestão**: não grava nada. */
+  lerDocumento: async (tipo: TipoDeDocumento) =>
+    (await estafetaApiInstancia.post<LeituraDeDocumento>(`${BASE}/onboarding/documentos/${tipo}/ler`)).data,
+
+  confirmarDocumento: async (tipo: TipoDeDocumento, dados: DadosDoDocumento) =>
+    (await estafetaApiInstancia.put<{ tipo: TipoDeDocumento; dados: DadosDoDocumento }>(`${BASE}/onboarding/documentos/${tipo}`, dados)).data,
+
+  concluirOnboarding: async () =>
+    (await estafetaApiInstancia.post<{ completo: true; onboardingCompletoEm: string }>(`${BASE}/onboarding/concluir`)).data,
+
+  // ── Online/offline e ofertas (plano §4.9) ──
+  /** A posição é obrigatória para o estafeta da plataforma. */
+  ficarOnline: async (posicao?: PosicaoParaOnline) =>
+    (await estafetaApiInstancia.post<{ estado: 'DISPONIVEL'; online: true }>(`${BASE}/online`, posicao ?? {})).data,
+
+  ficarOffline: async () =>
+    (await estafetaApiInstancia.post<{ estado: 'INDISPONIVEL'; online: false }>(`${BASE}/offline`)).data,
+
+  ofertaActual: async () =>
+    (await estafetaApiInstancia.get<{ oferta: OfertaDeEntrega | null }>(`${BASE}/ofertas/actual`)).data.oferta,
+
+  /** Devolve o id da entrega: a morada e o contacto do cliente lêem-se agora, com `entrega(id)`. */
+  aceitarOferta: async (id: string) =>
+    (await estafetaApiInstancia.post<{ entregaId: string }>(`${BASE}/ofertas/${id}/aceitar`)).data,
+
+  recusarOferta: async (id: string) =>
+    (await estafetaApiInstancia.post<{ recusada: true }>(`${BASE}/ofertas/${id}/recusar`)).data,
 
   mudarEstado: async (estado: EstadoEscolhido) =>
     (await estafetaApiInstancia.patch<{ estado: EstadoEscolhido }>(`${BASE}/eu/estado`, { estado })).data,

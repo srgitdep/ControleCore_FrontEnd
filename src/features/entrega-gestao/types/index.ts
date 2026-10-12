@@ -46,6 +46,10 @@ export interface ConfiguracaoEntrega {
   tempoPreparacaoMinutos: number;
   raioMaximoKm: number | null;
   permiteAgendamento: boolean;
+  /** De onde vêm os estafetas desta empresa (plano §4.9, D4). */
+  frotaEntrega: 'PROPRIA' | 'PLATAFORMA';
+  /** A frota da plataforma está aberta? Só então o ecrã oferece a opção (o servidor recusa-a na mesma). */
+  frotaPlataformaDisponivel: boolean;
   lojas: LojaDaConfiguracao[];
 }
 
@@ -53,4 +57,5 @@ export interface ActualizarConfiguracaoPayload {
   entregaActiva?: boolean;
   tempoPreparacaoMinutos?: number;
   raioMaximoKm?: number | null;
+  frotaEntrega?: 'PROPRIA' | 'PLATAFORMA';
 }

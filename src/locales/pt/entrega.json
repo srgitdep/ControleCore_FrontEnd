@@ -89,7 +89,8 @@
     "iniciar_rota": "Em rota",
     "entregue": "Entregue",
     "falhada": "Falhou",
-    "devolver": "Devolver"
+    "devolver": "Devolver",
+    "procurar": "Procurar estafeta"
   },
   "painel": {
     "titulo": "Entregas",
@@ -221,5 +222,79 @@
     "sem_canal": "Sem ligação em tempo real. As posições não estão a chegar; o painel continua a actualizar-se a cada 30 s.",
     "sem_posicao_de": "A aguardar posição de: {{nomes}}.",
     "esbatido": "Os pontos esbatidos têm mais de 2 minutos: o estafeta pode estar sem rede ou com o ecrã bloqueado."
+  },
+  "documentos": {
+    "titulo": "Documentos do estafeta",
+    "tipo": {
+      "BI": "Bilhete de identidade",
+      "CARTA_CONDUCAO": "Carta de condução",
+      "DOCUMENTO_VEICULO": "Documentos do veículo",
+      "FOTO_VEICULO": "Fotografia do veículo",
+      "FOTO_ROSTO": "Fotografia do rosto"
+    },
+    "lado": {
+      "FRENTE": "Frente",
+      "VERSO": "Verso",
+      "UNICA": "Fotografia"
+    },
+    "substituidas_one": "{{count}} fotografia anterior guardada",
+    "substituidas_other": "{{count}} fotografias anteriores guardadas",
+    "sem_imagem": "Sem fotografia.",
+    "corrigido": "corrigido",
+    "nao_confirmado": "O estafeta ainda não confirmou estes dados.",
+    "erro": "Não foi possível carregar os documentos.",
+    "aviso_auditoria": "Cada abertura fica registada (quem viu e quando). As ligações das fotografias expiram em 5 minutos.",
+    "emergencia": "Contacto de emergência",
+    "vazio": "Este estafeta ainda não entregou documentos.",
+    "conferido_em": "Conferido em {{data}}",
+    "por_conferir": "Ainda por conferir. É informativo: não bloqueia o estafeta.",
+    "conferir": "Marcar como conferido",
+    "conferido": "Documentos marcados como conferidos.",
+    "erro_conferir": "Não foi possível marcar os documentos como conferidos.",
+    "onboarding_incompleto": "Onboarding incompleto",
+    "por_conferir_badge": "Por conferir",
+    "conferido_badge": "Conferido",
+    "ver": "Documentos"
+  },
+  "convite": {
+    "titulo": "Convite para a frota própria",
+    "ajuda": "Quem se registar por esta ligação fica na frota desta empresa. Sem ela, o registo é da plataforma.",
+    "copiar": "Copiar ligação",
+    "copiado": "Ligação copiada.",
+    "copiar_falhou": "Não foi possível copiar. Seleccione a ligação e copie à mão.",
+    "gerar": "Gerar convite",
+    "gerar_novo": "Gerar novo",
+    "sem_convite": "Ainda não há convite. Gere um para poder registar estafetas próprios.",
+    "rodar_confirmar": "Gerar um convite novo? A ligação actual deixa de funcionar.",
+    "rodado": "Convite novo gerado.",
+    "erro": "Não foi possível gerar o convite."
+  },
+  "frota": {
+    "titulo": "Frota de entrega",
+    "ajuda": "De onde vêm os estafetas que entregam os pedidos desta empresa.",
+    "PROPRIA": {
+      "nome": "Frota própria",
+      "descricao": "Os estafetas que a empresa regista. A gestão atribui cada entrega."
+    },
+    "PLATAFORMA": {
+      "nome": "Estafetas da plataforma",
+      "descricao": "O estafeta mais próximo da loja recebe a oferta e aceita ou recusa."
+    }
+  },
+  "plataforma": {
+    "ajuda": "Estafetas registados sem convite, que não pertencem a nenhuma empresa. Activam-se ao submeter o registo.",
+    "online": "Online",
+    "entregas_em_curso_one": "{{count}} entrega em curso",
+    "entregas_em_curso_other": "{{count}} entregas em curso",
+    "suspender": "Suspender",
+    "suspender_confirmar": "Suspender {{nome}}? Deixa de receber ofertas e de entrar na aplicação.",
+    "suspenso": "Estafeta suspenso.",
+    "reactivado": "Estafeta reactivado.",
+    "erro_actividade": "Não foi possível alterar o estado do estafeta.",
+    "vazio": "Ainda não há estafetas da plataforma."
+  },
+  "procura": {
+    "lancada": "Procura lançada. O raio cresce de 7 em 7 segundos até alguém aceitar.",
+    "erro": "Não foi possível lançar a procura."
   }
 }

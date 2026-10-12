@@ -28,6 +28,12 @@ export interface Estafeta {
   matricula: string | null;
   estado: 'DISPONIVEL' | 'EM_ENTREGA' | 'INDISPONIVEL';
   isActive: boolean;
+  /** Quando completou o registo (documentos). `null` = em onboarding: ainda não pode receber entregas (plano §4.9). */
+  onboardingCompletoEm: string | null;
+  /** Alguém da gestão viu os documentos e conferiu-os. Informativo: não bloqueia nada. */
+  documentosConferidosEm: string | null;
+  /** Quando ficou online. `null` = offline. */
+  onlineDesde: string | null;
   ultimoLoginEm: string | null;
   createdAt: string;
   lojas: { id: string; nome: string }[];
@@ -127,4 +133,58 @@ export interface ResultadoAcerto {
   totalDevido: number;
   totalEntregue: number;
   diferenca: number;
+}
+
+// ── Documentos dos estafetas (plano §4.9) ────────────────────────────────
+
+/** Os campos de um documento confirmados pelo estafeta (datas em AAAA-MM-DD). */
+export type DadosDoDocumento = Record<string, string | number>;
+
+export interface DocumentoParaGestao {
+  tipo: 'BI' | 'CARTA_CONDUCAO' | 'DOCUMENTO_VEICULO' | 'FOTO_VEICULO' | 'FOTO_ROSTO';
+  /** O que o estafeta confirmou. */
+  dados: DadosDoDocumento | null;
+  /** O que a IA leu: a diferença para `dados` mostra onde o estafeta a corrigiu. */
+  dadosLidos: DadosDoDocumento | null;
+  confirmadoEm: string | null;
+  /** As fotografias vigentes, com um URL de **5 minutos** (nunca se guarda nem se partilha). */
+  imagens: { id: string; lado: 'FRENTE' | 'VERSO' | 'UNICA'; url: string }[];
+  /** Quantas fotografias anteriores ficaram guardadas (nada se apaga). */
+  imagensSubstituidas: number;
+}
+
+/** `GET /entregas/estafetas/:id/documentos` e `GET /plataforma/estafetas/:id/documentos`. */
+export interface DocumentosDoEstafeta {
+  estafeta: {
+    id: string;
+    codigo: string;
+    nome: string;
+    telefone: string;
+    email: string | null;
+    contactoEmergenciaNome: string | null;
+    contactoEmergenciaTelefone: string | null;
+    veiculo: string | null;
+    matricula: string | null;
+    onboardingCompletoEm: string | null;
+    documentosConferidosEm: string | null;
+  };
+  documentos: DocumentoParaGestao[];
+}
+
+/** `GET /plataforma/estafetas`: os estafetas que não são de nenhuma empresa. Só o Super Admin os vê. */
+export interface EstafetaDaPlataforma {
+  id: string;
+  codigo: string;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  veiculo: string | null;
+  matricula: string | null;
+  estado: 'DISPONIVEL' | 'EM_ENTREGA' | 'INDISPONIVEL';
+  isActive: boolean;
+  onboardingCompletoEm: string | null;
+  documentosConferidosEm: string | null;
+  onlineDesde: string | null;
+  createdAt: string;
+  _count: { entregas: number };
 }

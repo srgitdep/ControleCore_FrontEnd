@@ -1,4 +1,5 @@
 import { formatMoeda } from '@/shared/utils/formatMoeda';
+import { formatarDistancia } from '@/shared/utils/imagem';
 import type { Notificacao } from './tipos';
 
 /** O que o texto precisa da internacionalização: só a função `t`. Assim este ficheiro testa-se sem browser. */
@@ -32,6 +33,9 @@ export function textoDaNotificacao(n: Notificacao, t: Traduzir): string {
     estafeta: p.estafeta ?? t('ui.um_estafeta', { ns: 'notificacoes' }),
     morada: p.morada ?? '',
     valor: p.valorACobrar !== undefined ? formatMoeda(p.valorACobrar) : '',
+    loja: p.loja ?? '',
+    distancia: p.distanciaMetros !== undefined ? formatarDistancia(p.distanciaMetros) : '',
+    minutos: p.minutos ?? '',
     defaultValue: '',
   });
 
@@ -49,7 +53,8 @@ export function destinoDaNotificacao(n: Notificacao): string | null {
     case 'CLIENTE':
       return n.lojaId && n.pedidoId ? `/loja/${n.lojaId}/pedidos/${n.pedidoId}` : null;
     case 'ESTAFETA':
-      return n.entregaId ? `/estafeta/entregas/${n.entregaId}` : '/estafeta';
+      // Uma oferta ainda não é do estafeta: a entrega só se abre depois de aceitar (404 antes), por isso leva ao início.
+      return n.entregaId && n.tipo !== 'oferta.nova' ? `/estafeta/entregas/${n.entregaId}` : '/estafeta';
     case 'FUNCIONARIO':
       return n.tipo === 'pedido.novo' ? '/commerce/pedidos' : '/entregas';
   }
@@ -59,7 +64,7 @@ export function destinoDaNotificacao(n: Notificacao): string | null {
 export function eUrgente(n: Pick<Notificacao, 'destinatarioTipo' | 'tipo'>): boolean {
   return (
     (n.destinatarioTipo === 'CLIENTE' && n.tipo === 'entrega.chegou') ||
-    (n.destinatarioTipo === 'ESTAFETA' && (n.tipo === 'entrega.nova' || n.tipo === 'entrega.retirada')) ||
-    (n.destinatarioTipo === 'FUNCIONARIO' && (n.tipo === 'entrega.falhada' || n.tipo === 'pedido.novo'))
+    (n.destinatarioTipo === 'ESTAFETA' && (n.tipo === 'entrega.nova' || n.tipo === 'entrega.retirada' || n.tipo === 'oferta.nova')) ||
+    (n.destinatarioTipo === 'FUNCIONARIO' && (n.tipo === 'entrega.falhada' || n.tipo === 'pedido.novo' || n.tipo === 'entrega.sem_estafeta'))
   );
 }

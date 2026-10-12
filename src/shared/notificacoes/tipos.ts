@@ -11,6 +11,11 @@ export interface ParametrosDaNotificacao {
   valorACobrar?: number;
   paraEntrega?: boolean;
   comAjustes?: boolean;
+  /** A loja de uma oferta de entrega e a que distância fica do estafeta (plano §4.9). */
+  loja?: string;
+  distanciaMetros?: number;
+  /** Há quantos minutos a entrega espera por um estafeta. */
+  minutos?: number;
 }
 
 export interface Notificacao {
