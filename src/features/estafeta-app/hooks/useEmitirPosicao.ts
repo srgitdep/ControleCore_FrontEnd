@@ -20,10 +20,17 @@ export type EstadoDaPartilha =
   | 'sem_canal';
 
 const CHAVE_CONSENTIMENTO = 'estafeta.partilha.consentimento';
+/**
+ * O consentimento de ficar **online** é outro, de propósito: o de «partilhar em rota» diz que a posição só se partilha
+ * durante uma entrega, e ficar online (para receber ofertas) alarga isso — a loja e o cliente continuam a não ver
+ * nada fora da rota, mas o servidor passa a saber onde o estafeta está enquanto espera. Quem aceitou o primeiro não
+ * aceitou o segundo.
+ */
+const CHAVE_CONSENTIMENTO_ONLINE = 'estafeta.partilha.consentimento.online';
 
-function lerConsentimento(): boolean {
+function lerConsentimento(chave: string): boolean {
   try {
-    return localStorage.getItem(CHAVE_CONSENTIMENTO) === '1';
+    return localStorage.getItem(chave) === '1';
   } catch {
     // Armazenamento bloqueado (modo privado): pergunta-se de cada vez, mas nunca se assume que sim.
     return false;
@@ -35,17 +42,27 @@ function geolocalizacaoDisponivel(): boolean {
 }
 
 /**
- * Partilha a posição do estafeta **enquanto houver uma entrega em rota** (plano §4.6, D2/D7).
+ * Partilha a posição do estafeta **enquanto houver uma entrega em rota** (plano §4.6, D2/D7) **ou enquanto estiver
+ * online** à espera de ofertas (plano §4.9, D5).
  *
- * - Só liga o GPS e o canal com `emRota` e depois do consentimento: antes disso não se lê a localização.
+ * - Só liga o GPS e o canal com `emRota` ou `online` e depois do consentimento: antes disso não se lê a localização.
+ * - O canal é também por onde chegam as ofertas (`oferta.nova`): devolve-se o `socket` para quem as escuta.
  * - Envia a posição quando passaram 2,5 s **e** o estafeta se moveu 5 m (ou, parado, ao fim de 10 s).
  * - Pede ao navegador para **não apagar o ecrã** (Wake Lock). Não é um truque para contornar nada: sem
  *   isto, o ecrã apaga e o navegador pára o GPS — e esta é uma limitação honesta de uma PWA: com a
  *   aplicação em segundo plano ou o telemóvel bloqueado, **a posição pára de ser enviada**. O ecrã avisa.
  * - Ao deixar de haver entrega em rota (ou ao sair da aplicação) pára tudo: GPS, canal e Wake Lock.
  */
-export function useEmitirPosicao(emRota: boolean) {
-  const [consentido, setConsentido] = useState(lerConsentimento);
+export function useEmitirPosicao({ emRota, online = false }: { emRota: boolean; online?: boolean }) {
+  // Em rota manda o consentimento da rota; só online, o do modo online.
+  const modo: 'rota' | 'online' = emRota ? 'rota' : 'online';
+  const chave = modo === 'rota' ? CHAVE_CONSENTIMENTO : CHAVE_CONSENTIMENTO_ONLINE;
+  const [consentimentos, setConsentimentos] = useState(() => ({
+    [CHAVE_CONSENTIMENTO]: lerConsentimento(CHAVE_CONSENTIMENTO),
+    [CHAVE_CONSENTIMENTO_ONLINE]: lerConsentimento(CHAVE_CONSENTIMENTO_ONLINE),
+  }));
+  const consentido = consentimentos[chave];
+  const aPartilhar = emRota || online;
   const [permissao, setPermissao] = useState<'pendente' | 'concedida' | 'negada'>('pendente');
   const ultimoEnvio = useRef<PontoComHora | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -54,7 +71,7 @@ export function useEmitirPosicao(emRota: boolean) {
   const [retoma, setRetoma] = useState(0);
 
   const suportado = geolocalizacaoDisponivel();
-  const activo = emRota && consentido && suportado;
+  const activo = aPartilhar && consentido && suportado;
 
   const { socket, ligado } = useCanalDeEntregas({
     activo,
@@ -67,12 +84,12 @@ export function useEmitirPosicao(emRota: boolean) {
 
   const consentir = useCallback(() => {
     try {
-      localStorage.setItem(CHAVE_CONSENTIMENTO, '1');
+      localStorage.setItem(chave, '1');
     } catch {
       // Sem armazenamento: vale só nesta sessão.
     }
-    setConsentido(true);
-  }, []);
+    setConsentimentos((c) => ({ ...c, [chave]: true }));
+  }, [chave]);
 
   // O GPS. Corre enquanto `activo`; ao parar, limpa o último envio para a próxima rota começar de novo.
   useEffect(() => {
@@ -151,12 +168,12 @@ export function useEmitirPosicao(emRota: boolean) {
   }, [activo]);
 
   let estado: EstadoDaPartilha;
-  if (!emRota) estado = 'inactiva';
+  if (!aPartilhar) estado = 'inactiva';
   else if (!suportado) estado = 'sem_suporte';
   else if (!consentido) estado = 'precisa_consentimento';
   else if (permissao === 'negada') estado = 'negada';
   else if (!ligado) estado = 'sem_canal';
   else estado = 'a_partilhar';
 
-  return { estado, consentir };
+  return { estado, consentir, socket, modo };
 }

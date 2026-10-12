@@ -52,6 +52,91 @@ export function useActualizarEstafeta() {
   });
 }
 
+/** O convite da frota própria. Sem permissão responde 403 e o painel não o mostra. */
+export function useConvite(activo = true) {
+  return useQuery({
+    queryKey: [CHAVE, 'convite'],
+    queryFn: () => operacaoApi.obterConvite(),
+    enabled: activo,
+    staleTime: 60_000,
+  });
+}
+
+/** Gerar um convite novo **invalida o anterior** no servidor: quem o usa pede confirmação antes. */
+export function useRodarConvite() {
+  const { t } = useTranslation('entrega');
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => operacaoApi.rodarConvite(),
+    onSuccess: (r) => {
+      queryClient.setQueryData([CHAVE, 'convite'], r);
+      toast.success(t('convite.rodado'));
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('convite.erro'))),
+  });
+}
+
+/**
+ * Os documentos de um estafeta. `ambito` decide a rota: a frota própria vê os seus pela rota da empresa, e o Super Admin
+ * os da plataforma pela sua — o servidor não deixa uma alcançar a outra. Os URLs das fotografias valem 5 minutos, pelo
+ * que não se guardam em cache além disso.
+ */
+export function useDocumentosDoEstafeta(id: string | null, ambito: 'EMPRESA' | 'PLATAFORMA') {
+  return useQuery({
+    queryKey: [CHAVE, 'documentos', ambito, id],
+    queryFn: () => (ambito === 'EMPRESA' ? operacaoApi.documentosDoEstafeta(id!) : operacaoApi.documentosDaPlataforma(id!)),
+    enabled: !!id,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function useConferirDocumentos(ambito: 'EMPRESA' | 'PLATAFORMA') {
+  const { t } = useTranslation('entrega');
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => (ambito === 'EMPRESA' ? operacaoApi.conferirDocumentos(id) : operacaoApi.conferirDaPlataforma(id)),
+    onSuccess: () => {
+      toast.success(t('documentos.conferido'));
+      void queryClient.invalidateQueries({ queryKey: [CHAVE] });
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('documentos.erro_conferir'))),
+  });
+}
+
+export function useEstafetasDaPlataforma(inactivos = false) {
+  return useQuery({
+    queryKey: [CHAVE, 'plataforma', inactivos],
+    queryFn: () => operacaoApi.listarEstafetasDaPlataforma(inactivos),
+  });
+}
+
+export function useActividadeDaPlataforma() {
+  const { t } = useTranslation('entrega');
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => operacaoApi.actividadeDaPlataforma(id, isActive),
+    onSuccess: (_r, { isActive }) => {
+      toast.success(isActive ? t('plataforma.reactivado') : t('plataforma.suspenso'));
+      void queryClient.invalidateQueries({ queryKey: [CHAVE, 'plataforma'] });
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('plataforma.erro_actividade'))),
+  });
+}
+
+export function useProcurarEstafeta() {
+  const { t } = useTranslation('entrega');
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => operacaoApi.procurarEstafeta(id),
+    onSuccess: () => {
+      toast.success(t('procura.lancada'));
+      void queryClient.invalidateQueries({ queryKey: [CHAVE, 'entregas'] });
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('procura.erro'))),
+  });
+}
+
 export function useReporSenhaEstafeta() {
   const { t } = useTranslation('entrega');
   return useMutation({

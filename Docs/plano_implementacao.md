@@ -1967,6 +1967,24 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Só frontend; sem migração nem variáveis.
 
+### Fase 50 — Estafetas da plataforma: onboarding com documentos e atribuição por proximidade (12 Out 2026)
+
+- **2026-10-12 · [BE+FE] · Antonio Mambo** — `feat/estafetas-plataforma` (backend `64a22aa`, `50e973f`; frontend `a1491b8`) — plano em **§4.9**
+  - **Pedido do utilizador:** o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**: regista-se sozinho, entrega BI, carta, veículo + documentos e rosto (lidos por IA, confirmados por ele, fotografias guardadas para sempre) e recebe as entregas por **proximidade à loja**. As empresas podem manter frota própria.
+  - feat(dados): migração `20261012180000_estafetas_da_plataforma` — `Estafeta.empresaId` opcional (+ contacto de emergência, `onboardingCompletoEm`, `documentosConferidosEm`, `onlineDesde`, contador de leituras IA), `EstafetaDocumento`/`EstafetaDocumentoImagem` (imagem substituída fica com `substituidaEm`), `OfertaEntrega`, `EntregaPedido.procuraIniciadaEm`, `Empresa.codigoConviteEstafetas`, `ComercioConfiguracao.frotaEntrega`, permissão `commerce.documento_estafeta.ler`. Índices únicos parciais (telefone/e-mail da plataforma, uma oferta pendente por entrega e por estafeta, uma imagem vigente por documento/lado). Estafetas anteriores ficam com o onboarding «completo» (`createdAt`).
+  - feat(backend): registo público (`@Throttle` 5/h, convite opcional), onboarding (`/estafeta/onboarding`: imagens → WebP, leitura por Gemini, confirmação estrita, conclusão), online/offline com posição, motor de proximidade (Haversine; raio 2 km +1 km de 7 em 7 s até 25 km; desempate por menos recusas recentes), ofertas sequenciais de 30 s com aceitação atómica, tarefa de 7 s, procura que não desiste e aviso à gestão aos 10 min; gestão (`/entregas/estafetas/convite[/rodar]`, `:id/documentos[/conferir]`, `POST /entregas/:id/procurar-estafeta`) e `/plataforma/estafetas` (Super Admin). `EstafetaOnboardingCompletoGuard` (403 `entrega.estafeta.onboarding_incompleto`). Auditoria de cada visualização de documentos (sem o conteúdo); URLs assinados de 5 min.
+  - feat(frontend): registo público, assistente de documentos com captura e compressão no cliente, interruptor online, folha de oferta (30 s), gestão (convite, emblemas, documentos, selector de frota, «Procurar estafeta») e separador «Plataforma (estafetas)» do Super Admin; notificações `oferta.nova` e `entrega.sem_estafeta`; pt/en.
+
+  > **Desvios.** (1) **B13 fora** (retenção da taxa e carteira): depende do pagamento online (§4.10), adiado — não há chave de API. Consequência: a frota da plataforma **não abre a empresas** (`FROTA_PLATAFORMA_ACTIVA=false`). (2) Não há notificação «novo estafeta registado»: a notificação exige `empresaId` e o estafeta da plataforma não tem. (3) Os dados que o cliente precisa de uma excepção (`erros`, `imagensEmFalta`…) vão no **topo** do corpo, porque o filtro retira `parametros`.
+  >
+  > **Assunções.** P1 convite por empresa; P5 basta o livrete; P6 todos os campos obrigatórios; raio inicial 2 km, passo 1 km, tecto 25 km. **P3b — o texto de consentimento é provisório e precisa de validação legal antes de abrir o registo a estafetas reais.**
+  >
+  > **Verificação.** Backend: **240 suites / 3653 testes**, `nest build` limpo. Frontend: **301 testes**, `tsc -b` e `vite build` limpos. **Não verificado:** a migração nunca correu numa base de dados real; a leitura por Gemini com fotografias reais; câmara e ofertas num telemóvel. Pendente: `tsc --noEmit` acusa tipos em `avisos-da-aplicacao.service.spec.ts` (Jest e build passam).
+  >
+  > **Riscos.** Retenção permanente de identificação (P3b); as ofertas só chegam com a aplicação aberta (§4.8, *push*, por fazer); a tarefa de 7 s mantém o Neon acordado com a flag ligada; `onDelete: Restrict` nos documentos bloqueia apagar uma empresa com estafetas documentados; **pré-existente:** rotas `@Permissao('SUPER_ADMIN_ONLY')` (`/relatorios/*/sistema`) são alcançáveis por um ADMIN de empresa (o `PermissoesGuard` dá bypass ao ADMIN).
+  >
+  > **Notas de deploy.** **Backend primeiro**, depois frontend. A migração corre no arranque do contentor: **testar antes numa branch do Neon.** Variável nova `FROTA_PLATAFORMA_ACTIVA` (por omissão falso; sem ela a frota da plataforma fica fechada). Sem outras variáveis; usa a `GEMINI_API_KEY` e o armazenamento S3 existentes.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2031,12 +2049,12 @@ esse merge trouxe.
 - [ ] O menu mostra «Pedidos Compra Fácil» a Armazenistas, que recebem 403 — o
       perfil «Armazenista» não tem `pedidos_commerce` (assunção 10 da §4.1). Ou se
       tira o item do menu a esse cargo, ou se dá a permissão se o picking for dele.
-- [ ] Cobrança no checkout com gateway M-Pesa/e-Mola. Hoje o método de pagamento
-      do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é
-      cobrado fisicamente no levantamento. Passar a cobrar no checkout torna o
-      pedido um facto financeiro imediato, mas traz reembolsos, conciliação de
-      pagamentos e tratamento de pagamento falhado — é projecto próprio, não
-      correcção.
+- [ ] **Cobrança no checkout com carteira móvel (M-Pesa/e-Mola), reembolsos e liquidação.** Hoje o método de pagamento do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é cobrado fisicamente no levantamento ou à porta. Passar a cobrar no checkout torna o pedido um facto financeiro imediato (reembolsos, conciliação, pagamento falhado, prestação de contas às empresas) — **projecto próprio**, planeado em **§4.10** (rascunho). **ADIADO pelo utilizador em 2026-10-12: ainda não há chave de API de um operador de pagamentos.** **É o pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout).
+  - [ ] **PG1 — Dados, porta e simulado.** Migração (pagamentos, eventos, reembolsos, `AGUARDA_PAGAMENTO`), interface `GatewayPagamento` e gateway simulado, com os testes de toda a máquina de estados **sem rede**.
+  - [ ] **PG2 — O cliente paga.** Iniciar, confirmar (aviso do operador e consulta de estado, idempotentes), expirar; checkout com ecrã de espera e retomar «Os meus pedidos» — de ponta a ponta com o simulado.
+  - [ ] **PG3 — Reembolsos e a ligação ao resto.** Cancelamento, diferença da conferência e entrega falhada; a venda da expedição sem conta a receber e o acerto de numerário a ignorar pedidos pagos.
+  - [ ] **PG4 — Liquidação às empresas e conciliação.** Extrato por empresa, liquidação (à mão no início), conciliação diária, ecrãs do operador.
+  - [ ] **PG5 — O operador real.** Adaptador M-Pesa, ensaio no *sandbox*, **um pagamento real de valor mínimo e o seu reembolso**; piloto com uma empresa. **Depende das perguntas P1 (licença) e P2 (operador e contrato) do §4.10.**
 
 ### Entrega ao domicílio (Compra Fácil)
 
@@ -2131,6 +2149,15 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [ ] **P2 — O aparelho.** *Handler* de *push* no *service worker*, pedido de permissão e activação por aparelho (estafeta, cliente e gestão), «abrir» a partir do aviso.
   - [ ] **P3 — O iPhone.** Instruções de instalação no ecrã inicial (o iOS só entrega *push* a PWA instalada) e, se aprovado, a loja instalável.
   - [ ] **P4 — Fecho.** Testes, documentação, teste real com o telemóvel **bloqueado** (Android e iPhone).
+- [ ] **Estafetas da plataforma: onboarding com documentos e atribuição por proximidade.** Pedido do utilizador em 2026-10-12: o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**. Regista-se sozinho e entrega, obrigatoriamente, **BI, carta de condução, veículo e documentos do veículo (frente e verso) e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, ligadas ao estafeta. Quando uma compra pede entrega, o servidor oferece-a ao estafeta **online mais perto da loja** (só a loja conta), com aceitar/recusar e tempo limite; recusa ou silêncio passa ao seguinte. O numerário é acertado **por empresa**, e a **frota própria** de cada empresa continua a existir (a empresa escolhe). Decidido pelo utilizador: **auto-registo público**, **activação ao submeter sem aprovação**, **cliente a pagar o estafeta pela taxa**, **dados guardados para sempre** e **procura forçada com raio crescente de 7 em 7 s** (divergências e compensações em §4.9, secção 3). Plano detalhado em **§4.9** (**aprovado em 2026-10-12**; Fase 50 em curso, sem o B13). **Depende do §4.8 (*push*) e de um pagamento online no checkout (§4.10, rascunho: o sistema ainda só cobra à entrega).**
+  - [x] **O1 — Dados e leitura.** Migração (`empresaId` do estafeta opcional, documentos, imagens, ofertas, `frotaEntrega`), `ExtrairDocumentoEstafetaService` e validação pura com testes.
+  - [x] **O2 — Registo e documentos.** Registo público, envio/leitura/confirmação/conclusão dos documentos, convite da frota própria.
+  - [x] **O3 — Gestão dos documentos.** Ver e conferir (permissão nova, URLs de 5 min, auditoria), suspender; **nada se apaga** (retenção permanente); operador da plataforma (`SUPER_ADMIN`).
+  - [x] **D1 — Online e posição.** Ficar online/offline, posição de quem está online (só a última, apagada ao sair), sem alterar o que o cliente vê.
+  - [x] **D2 — O algoritmo e as ofertas.** Ordenar por distância à loja, oferta sequencial com tempo limite, aceitar atómico, raio que cresce de 7 em 7 s, **procura que não desiste**, aviso ao gestor aos 10 min, atribuição manual só à frota própria.
+  - [ ] **D3 — Acertos e carteira.** Garantir que o acerto de numerário só abrange a frota própria; **retenção da taxa no pagamento** e **libertação para a carteira do estafeta no instante da entrega**. **Depende do pagamento online (§4.10) e das perguntas P9 a P11.**
+  - [x] **O4/D4 — Os ecrãs.** Registo, assistente de documentos com captura e compressão, interruptor online, ecrã de oferta, gestão (convite, documentos, frota própria/plataforma) e o ecrã da plataforma.
+  - [ ] **O5 — Fecho.** *(testes, documentação e TRD feitos na Fase 50; falta o teste real e a validação legal P3b.)* Testes, documentação e TRD; **teste real** com dois telemóveis e um BI verdadeiro. Perguntas **P1, P3b, P5, P6 e P9 a P11** do §4.9 respondidas **antes** de começar (a P11, o enquadramento legal de a plataforma guardar dinheiro de terceiros, decide se o B13 se pode fazer).
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
@@ -2294,6 +2321,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 | 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Aprovado** — N1 a N3 feitas (Fase 47); falta o teste real (N4) | Secção 3 → «Notificações dentro da aplicação» |
 | 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
+| 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Implementado** (Fase 50, 2026-10-12) — sem o B13; falta teste real e validação legal | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
+| 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho — adiado** (sem chave de API do operador); pré-requisito do B13 do §4.9 | Secção 3 → «Compra Fácil» → Cobrança no checkout |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4760,6 +4789,361 @@ Quando se grava uma notificação **urgente**, o servidor envia também um *Web 
 - **Frontend:** `public/push-handlers.js` e o *worker* só de *push*; `vite.config.ts` (`importScripts`); `shared/notificacoes/usePush.ts` e o botão/ecrã de activação; `EstafetaLayout`, a página do pedido do cliente e o painel do sino; textos pt/en.
 
 ---
+
+### 4.9 Estafetas da plataforma: onboarding com documentos e atribuição por proximidade
+
+- **Data:** 2026-10-12 · **Estado:** **aprovado em 2026-10-12, implementado na Fase 50 (sem o B13)** — falta o teste real num telemóvel com um BI verdadeiro, a validação legal do consentimento (P3b) e a migração numa BD real — que depende do pagamento online (§4.10), adiado (reescrito no mesmo dia: o estafeta deixa de ser de uma empresa)
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o resto:** altera o §4.1 (Fase 2B: hoje o gestor cria o estafeta e atribui-o à mão), o §4.5 (aplicação do estafeta) e o §4.6 (a posição só se emite «em rota»). **Depende do §4.8** (avisos *push*): sem eles, a oferta de uma entrega só chega ao estafeta com a aplicação aberta (ver secção 8).
+
+#### 1. Objectivo
+
+O estafeta deixa de ser «da loja» ou «da empresa». Passa a ser **um profissional de entregas da plataforma**: regista-se sozinho, entrega os seus documentos, fica **online**, e o sistema oferece-lhe as entregas que estão **perto dele** — da loja onde se fez a compra, seja de que empresa for. A empresa continua a poder ter a sua frota própria (como hoje); a decisão é dela.
+
+Duas metades, que se constroem em conjunto porque uma não faz sentido sem a outra:
+
+- **Onboarding.** Quem quer trabalhar como estafeta entrega **BI, carta de condução, veículo e documentos do veículo, fotografia do rosto**, e contactos; tudo obrigatório. As fotografias vão para o armazenamento de imagens, ligadas ao estafeta; os dados lidos delas vão para a base de dados.
+- **Atribuição.** Quando uma entrega está pronta a recolher, o servidor procura o estafeta **disponível mais perto da loja**, faz-lhe uma **oferta com tempo limite**, e se ele recusar ou não responder passa ao seguinte mais perto.
+
+#### 2. O que existe hoje (verificado no código, 2026-10-12)
+
+| Coisa | Estado |
+| --- | --- |
+| `Estafeta` | `empresaId` **obrigatório**; `telefone` único **por empresa**; `lojas` (muitos-para-muitos, vazio = serve todas); `estado` `DISPONIVEL`/`EM_ENTREGA`/`INDISPONIVEL`; **sem documentos, sem fotografia**; só a última posição (`ultimaLatitude/Longitude/PosicaoEm`) |
+| `EntregaPedido`, `AcertoEstafeta` | Ambos com `empresaId`; o acerto é «numerário por acertar de um estafeta numa empresa» |
+| Atribuição | **Manual**: o gestor chama `OperarEntregaService.atribuir` (transição `AGUARDA_RECOLHA` → atribuída); não há algoritmo |
+| Posição | `RegistarPosicaoUseCase` só aceita se o estafeta tem uma entrega `EM_ROTA` (§4.6 D2) e apaga-a quando a rota acaba (D9) |
+| Token | `EstafetaJwtPayload` leva `empresaId`; cookie `tokenEstafeta`, segredo e *audience* próprios |
+| Distância | `domain/distancia-haversine.ts` (linha recta, com testes); `servico-rotas.ts` (OpenRouteService, desligado sem `ORS_API_KEY`) |
+| Lojas | `Loja.latitude/longitude` já existem (`DisponibilidadeEntregaService` exige-as para oferecer entrega) |
+| Armazenamento / IA | `S3StorageService` (Neon Object Storage) e Gemini com visão (`ExtrairProdutoDeFotoService`: uma chamada por imagem, «omite o que não leres», validação pura, **não grava**) |
+| Documentos com estado | `DocumentoFornecedor` (B2B) é o modelo de referência |
+| Rotas públicas com defesa | `@Throttle` já usado em `adesao.controller.ts` |
+| Pagamento online | **Não existe.** `MetodoPagamentoCommerce` (`MPESA`/`EMOLA`/`NUMERARIO`) é só **intenção** registada no pedido: o valor «só é cobrado fisicamente no levantamento/entrega» e o M-Pesa/e-Mola é registado à mão pelo estafeta (referência). Não há integração com operador nem agregador de pagamentos |
+| Onde a entrega nasce | `ExpedirPedidoUseCase` cria o `EntregaPedido` em `AGUARDA_RECOLHA` quando a loja despacha o pedido — o ponto de partida natural da procura |
+
+#### 3. Requisito interpretado
+
+**Decidido pelo utilizador em 2026-10-12:**
+
+1. **Auto-registo público** e **activação ao submeter, sem aprovação**.
+2. **Estafeta da plataforma**, não da empresa: é atribuído pela **proximidade à loja** (só a loja conta — o destino do cliente não entra na escolha).
+3. **Oferta com aceitar/recusar**, com tempo limite; recusa ou silêncio passa ao seguinte.
+4. **Numerário acertado por empresa**: o estafeta deve a cada empresa o que cobrou nas entregas dela, e cada empresa fecha as contas com ele (o acerto de hoje, um por empresa).
+5. **Os dois modelos coexistem:** frota própria (como hoje) e frota da plataforma. A empresa escolhe. Os estafetas actuais **continuam a ser da empresa que os criou**.
+6. **Tudo obrigatório** no onboarding (secção 5, «Campos obrigatórios»).
+7. **O fluxo, nas palavras do utilizador (2026-10-12):** o cliente faz o pedido, **paga no checkout por carteira móvel**, a encomenda é preparada e passa a **«pronta para entrega»** — **é aí que se activa a procura de estafeta** (D7). O estafeta é **pago pelo cliente**, através da taxa de entrega incluída no pedido, **no instante em que entrega a encomenda** (D16): nada de saldos nem dívidas entre empresa, plataforma e estafeta. **Consequência: exige um pagamento online real no checkout, que o sistema ainda não tem** (secção 2) — é o pré-requisito do plano, ver secção 11.
+8. **Dados e fotografias guardados para sempre** (D13): não há verificação humana por agora, e o utilizador quer o histórico disponível para uso futuro. Nada se apaga — nem ao desactivar o estafeta, nem ao substituir uma fotografia.
+9. **Sem limite de numerário:** o pagamento ao estafeta em dinheiro vai ser raro, porque há pagamento online por carteira móvel. O numerário continua suportado como hoje (acerto por empresa).
+10. **Procura forçada:** o servidor **nunca desiste** de procurar estafeta para uma entrega. **O raio de procura cresce sozinho a cada 7 segundos** (D6/D7). O checkout continua a oferecer entrega mesmo sem estafetas online.
+
+**Divergência técnica, em duas linhas.** (a) Activar sem ninguém conferir era arriscado com um estafeta de uma só empresa; com um da plataforma a cobrar **numerário de qualquer empresa** a exposição é maior — mantive o pedido, e o risco fica contido por o numerário ser raro (ponto 9), pela suspensão imediata pela plataforma e pela marca «por conferir». (b) **Guardar BI, carta e rosto para sempre sem finalidade e prazo escritos** é o ponto onde a legislação de protecção de dados costuma exigir mais: mantive o pedido e deixei a mitigação possível em D13 (cifra, acesso mínimo, consentimento que **nomeia o uso futuro**) e a pergunta P3 sobre quem valida o texto.
+
+#### 4. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **`Estafeta.empresaId` passa a ser opcional:** `NULL` = estafeta da plataforma; preenchido = frota própria da empresa (o que existe hoje). Os existentes **não mudam**. `telefone` e `e-mail` únicos entre os da plataforma por **índice parcial** (`WHERE "empresaId" IS NULL`), porque o `@@unique([empresaId, telefone])` não protege linhas com `empresaId` nulo (no PostgreSQL `NULL` nunca é igual a `NULL`) | Duas tabelas (`Estafeta`, `EstafetaPlataforma`); mudar tudo para plataforma | Duas tabelas duplicariam as entregas, os acertos e o token. E mudar todos obrigava a migrar a frota em produção de uma vez |
+| **D2** | **A regra «toda a consulta filtra por `empresaId`» ganha uma excepção explícita e estreita:** o estafeta da plataforma vê **apenas** as entregas em que é o `estafetaId` (nunca por empresa) e, **antes de aceitar**, só vê a loja e a distância — o nome, o telefone e a morada do cliente aparecem **depois de aceitar**. Cada consulta da aplicação do estafeta filtra por `estafetaId` do token | Dar-lhe o `empresaId` de cada empresa | Não há `empresaId` único a dar-lhe, e tinha de ser a regra de «quem vê dados de cliente» a decidir. Um estafeta que recusa uma oferta não fica com a morada de uma pessoa |
+| **D3** | **Quem manda nos estafetas da plataforma é a plataforma** (`SUPER_ADMIN`): conferir documentos, suspender, ver as fotografias de BI/carta. Uma empresa **não** vê os documentos de um estafeta da plataforma — só o nome, a fotografia do rosto, o telefone e o veículo **dos que lhe estão atribuídos**. Os da frota própria continuam a ser da empresa (`VER_DOCUMENTOS_ESTAFETA`) | Dar às empresas acesso a todos | Identificação pessoal de terceiros não se distribui por empresas que não têm relação com eles |
+| **D4** | **A empresa escolhe a frota:** `ComercioConfiguracao.frotaEntrega` = `PROPRIA` (por omissão, mantém tudo como está) ou `PLATAFORMA`. **Com `PLATAFORMA` o checkout só aceita pagamento online** (carteira móvel): sem dinheiro à porta, o estafeta da plataforma nunca transporta numerário de empresas. Com `PLATAFORMA` o servidor oferece as entregas pelo algoritmo; com `PROPRIA` o gestor atribui à mão, como hoje | Uma entrega tentar a própria e depois a plataforma | Comportamento previsível: cada empresa sabe de onde vem o estafeta. Misto é uma melhoria, não é preciso para arrancar |
+| **D5** | **O estafeta fica «online» / «offline»**, e só então emite posição e recebe ofertas. Online = `estado DISPONIVEL` com **posição recente (≤ 2 min)**. A posição é a **última** (sobrescrita), nunca um rasto, e **apaga-se ao ficar offline**. A posição de um estafeta online **sem entrega** nunca vai para nenhum cliente (só `EM_ROTA` continua a ser mostrado, §4.6) | Emitir sempre; guardar rasto | Mantém o espírito do §4.6 D2/D3/D9, estendendo-o só ao que a atribuição exige: saber quem está perto. Quem está offline não é localizado |
+| **D6** | **A distância é em linha recta (Haversine) estafeta → loja, e o raio de procura cresce com o tempo** (decidido pelo utilizador): `raio(t) = min(tecto, inicial + passo × ⌊t / 7 s⌋)`, com `t` = tempo desde que a procura começou (`EntregaPedido.procuraIniciadaEm`). Valores iniciais (A1): **inicial 2 km, passo 1 km, tecto 25 km**; o intervalo de **7 s** é do utilizador. Calculado **a partir do relógio**, não guardado: qualquer máquina chega ao mesmo raio. Dentro do raio: o mais perto; desempate pelo que tem menos recusas recentes | Raio fixo; distância por estrada (ORS) para cada candidato | Um raio fixo pequeno deixa a entrega sem ninguém numa zona calma, e um grande oferece-a a quem está longe antes de quem está ao lado. Crescer dá sempre ao mais perto a primeira vez. A rota por estrada para cada candidato multiplica as chamadas a um serviço externo limitado, e para **ordenar** a linha recta chega |
+| **D7** | **Procura forçada, oferta sequencial.** Tabela `ofertas_entrega` (`entregaId`, `estafetaId`, `estado` `PENDENTE`/`ACEITE`/`RECUSADA`/`EXPIRADA`, `distanciaMetros`, `expiraEm`). Uma entrega tem **no máximo uma oferta pendente**. A cada passo de 7 s, se não há oferta pendente, oferece-se ao mais perto, dentro do raio actual, **que ainda não recusou esta entrega**. **A procura nunca termina** enquanto o pedido existir (decidido pelo utilizador, P7): no tecto do raio continua a esperar quem fique online. Quem deixou **expirar** (silêncio) pode voltar a ser oferecido ao fim de 60 s (A8); quem **recusou** não volta a esta entrega. Passado um limiar (A9, **10 min**) o gestor é **avisado** (§4.7), sem a procura parar, e pode cancelar o pedido ou atribuir à mão a um estafeta da frota própria | Desistir após N tentativas; oferecer a todos de uma vez | Desistir deixa um cliente que já pagou sem entrega e sem resposta. Em simultâneo, dez telemóveis vibram por uma entrega e nove ficam com «já foi atribuída» — treina os estafetas a ignorar avisos. Em sequência, quem recebe sabe que é a sua vez |
+| **D8** | **Aceitar é um *update* condicional atómico** (`WHERE estafetaId IS NULL AND estado = 'AGUARDA_RECOLHA'` e oferta ainda `PENDENTE`, na mesma transacção); linhas afectadas = 0 → «já não está disponível». O estafeta passa a `EM_ENTREGA` na mesma transacção | Ler e depois escrever | Dois estafetas a tocar em «aceitar» no mesmo segundo (ou o gestor a atribuir à mão) não podem ficar os dois com a entrega — é a corrida que as regras do projecto mandam fechar |
+| **D9** | **A procura avança por uma varredura periódica a cada 7 s** (`@nestjs/schedule`): marca como `EXPIRADA` as ofertas `PENDENTE` com `expiraEm` passado e, para cada entrega **sem oferta pendente**, calcula o raio (D6) e cria a oferta seguinte. Idempotente e segura com **mais de uma máquina**: cada transição é condicional (`WHERE estado = 'PENDENTE'`) e a oferta nova só se cria se a entrega não tiver uma pendente | Temporizador em memória por entrega | Em memória perde-se num *restart* do Fly e duplica-se com duas máquinas. A varredura sobrevive a ambos, e o raio calculado do relógio não precisa de estado |
+| **D10** | **Guardar primeiro, ler depois, confirmar no fim** (onboarding): cada fotografia sobe **uma vez** (`POST …/imagens`), a leitura corre **sobre a imagem já guardada** (`POST …/ler`), o estafeta corrige e confirma (`PUT …/:tipo`). Compressão no telemóvel (lado maior ≤ 1600 px, JPEG ~0.8) | Enviar para ler e voltar a enviar para guardar | Dados móveis custam dinheiro e a ligação cai: uma subida por fotografia, e retoma-se onde ficou |
+| **D11** | **A leitura é uma sugestão** (nunca um facto): guarda-se o que a IA leu (`dadosLidos`, JSON) **e** o que o estafeta confirmou (colunas) | Gravar directamente o que a IA leu | Um dígito trocado no BI, nunca corrigido, é um documento falso na base de dados |
+| **D12** | **Uma linha por documento** em `estafeta_documentos` (`tipo`: `BI`, `CARTA_CONDUCAO`, `DOCUMENTO_VEICULO`, `FOTO_VEICULO`, `FOTO_ROSTO`; colunas tipadas para o que se consulta; `@@unique([estafetaId, tipo])`) e **uma linha por imagem** em `estafeta_documento_imagens` (`FRENTE`/`VERSO`/`UNICA`, `chaveArmazenamento`) | Uma coluna JSON; colunas no `Estafeta` | JSON não se filtra nem se valida à expiração («cartas a expirar este mês»); no `Estafeta` engordaria uma tabela quente com dados sensíveis |
+| **D13** | **Chave `estafetas/<estafetaId>/<tipo>/<uuid>.webp`** (sem `empresaId`: o estafeta da plataforma não tem); **URL assinado de 5 min**, calculado na leitura, nunca guardado. BI e carta **nunca** vêm nas listagens; cada visualização fica na **auditoria**. **Retenção permanente** (decidido pelo utilizador): **nenhum objecto nem linha de documento se apaga** — desactivar ou «remover» um estafeta só desliga a conta; substituir uma fotografia **não apaga a anterior**, marca-a `substituidaEm` e a nova passa a ser a vigente (histórico completo). Mitigação do risco de reter identificação para sempre: o *bucket* é privado, **sem** URL público nem política de expiração; o acesso é por permissão e **auditado**; o consentimento do registo **diz que os dados se guardam e para quê** (P3) | URL de 1 h; apagar com o estafeta | Um BI não é uma foto de produto: se o URL vazar, tem de morrer em minutos. E guardar tudo sem rasto de quem viu é o pior dos mundos — por isso a retenção permanente vem com auditoria |
+| **D16** | **A taxa é paga pelo cliente no checkout, retida pela plataforma, e libertada ao estafeta no instante da entrega** (decidido pelo utilizador). **(1)** No checkout o cliente paga, por carteira móvel, o total do pedido, **que inclui a taxa de entrega**; a parte da taxa fica **retida** pela plataforma (`MovimentoTaxa`, estado `RETIDA`) desde o pagamento. **(2)** Na transacção que marca a entrega `ENTREGUE`, a taxa **passa a `LIBERTADA` e entra na carteira do estafeta** (`carteiras_estafeta` + `movimentos_carteira_estafeta`, um movimento por entrega, `entregaId` único): o estafeta vê o saldo e o extrato no mesmo instante. **(3)** O dinheiro **já está na plataforma** desde o checkout, por isso **ninguém fica a dever a ninguém** e **não há saldo pré-pago da empresa**. **(4)** Cancelado o pedido antes da entrega, a taxa retida **volta ao cliente**; entrega falhada: P10. **(5)** Só pagamento **online**: a frota da plataforma não aceita numerário (D4). **Levantar** da carteira para o M-Pesa/e-Mola real é um passo à parte (P9) | Conta corrente com fecho semanal; saldo pré-pago por empresa (descartado: o utilizador quer que o pagamento venha do cliente) | A taxa já foi paga pelo cliente: retê-la e libertá-la na entrega é o que dá ao estafeta o lucro logo e certo, sem a plataforma antecipar dinheiro nem cobrar depois a ninguém. **O custo é ter um pagamento online e uma retenção de fundos** — o pré-requisito da secção 11 |
+| **D14** | **Serviço novo `ExtrairDocumentoEstafetaService`** (uma instrução por tipo; validação pura em `domain/`). Sem biblioteca de OCR nova | Tesseract; reutilizar o serviço de produto | O Gemini já está integrado e lê fotografias tortas; o serviço de produto tem campos de produto |
+| **D15** | **Conta no passo 1, documentos um a um.** Até estarem os quatro blocos, `onboardingCompletoEm` é nulo: o estafeta entra mas só vê o assistente e **não pode ficar online**. Estafetas existentes ficam com o campo preenchido e um aviso | Um formulário único no fim | Oito fotografias num único envio falham a meio e perdem tudo |
+
+#### 5. Plano de implementação
+
+##### Campos obrigatórios (decidido pelo utilizador, 2026-10-12)
+
+**Nada é opcional no onboarding.** Sem tudo isto, `POST /concluir` recusa e o estafeta não pode ficar online. A regra vale **no servidor** (DTOs e `concluir`); o ecrã só a espelha (Zod).
+
+| Bloco | Imagens obrigatórias | Campos obrigatórios (lidos por IA, **confirmados** pelo estafeta) |
+| --- | --- | --- |
+| **Conta e contactos** | — | nome, telefone, e-mail, senha, contacto de emergência (nome **e** telefone) |
+| **BI** | frente **e** verso | número, nome completo, data de nascimento, data de emissão, validade, naturalidade, filiação, NUIT |
+| **Carta de condução** | frente **e** verso | número, nome, categorias, data de emissão, validade |
+| **Documentos do veículo** | frente **e** verso (ou face única, se só a tiver) | matrícula, marca, modelo, cor, ano, proprietário |
+| **Fotografia do veículo** | uma | — |
+| **Fotografia do rosto** | uma | — |
+
+- Um campo que a IA **não conseguiu ler** não passa em branco: o estafeta escreve-o à mão e só então confirma. Não existe «confirmar com campo vazio».
+- Validação de formato no servidor (nº do BI, NUIT de 9 dígitos, datas coerentes, documento **não expirado**) além de «preenchido». Excepção para um campo que o documento fisicamente não tem: P6.
+
+##### B — Backend
+
+**Onboarding e modelo**
+
+- **B1 — Dados (obrigatório).** Migração **aditiva**:
+  - `estafeta_documentos`, `estafeta_documento_imagens` (D12; a imagem tem `substituidaEm`, D13); enums `TipoDocumentoEstafeta`, `LadoDocumento`; `ganhos_estafeta` (D16).
+  - `Estafeta`: `empresaId` → **opcional** (D1) com índices parciais únicos de telefone e e-mail para `empresaId IS NULL`; `contactoEmergenciaNome/Telefone`; `onboardingCompletoEm`; `documentosConferidosEm/PorId`; `onlineDesde DateTime?`.
+  - `ofertas_entrega` (D7), enum `EstadoOferta`; `EntregaPedido.procuraIniciadaEm DateTime?` (D6).
+  - `ComercioConfiguracao.frotaEntrega` (D4), por omissão `PROPRIA`.
+  - Parâmetros do algoritmo (raio inicial, passo, tecto, intervalo de 7 s, duração da oferta, repetição após silêncio, limiar do aviso): **constantes em `domain/`**, com testes (A1); passam a configuração da plataforma só se vier a ser preciso.
+  - Na migração: `UPDATE estafetas SET "onboardingCompletoEm" = "createdAt"`. O `tsc` tem de ficar limpo: `empresaId` opcional afecta **todos** os sítios que o lêem (token, guarda, listagens, acertos) — o compilador aponta cada um.
+- **B2 — Registo público (obrigatório).** `POST /estafeta/registo` (`@Public()` **deliberado**, `@Throttle` 5/hora por IP): `{ nome, telefone, email, senha, contactoEmergencia{nome,telefone}, idioma }`; sem convite → estafeta **da plataforma**. Com `convite` válido da empresa → frota própria dessa empresa (D1; `Empresa.codigoConviteEstafetas`, rodável, `GET/POST /estafetas/convite[/rodar]`, `GERIR_ESTAFETAS`). Gera `E####`, envia por e-mail **e** devolve-o, abre a sessão (`tokenEstafeta`).
+- **B3 — Documentos, do lado do estafeta (obrigatório).** Sob `EstafetaGuard`, `/estafeta/onboarding`: `GET /estado`; `POST /documentos/:tipo/imagens` (multipart, valida o tipo **pelo conteúdo**, converte para WebP sem reduzir abaixo de 1600 px, a imagem anterior fica `substituidaEm` e **nunca se apaga** (D13)); `POST /documentos/:tipo/ler` (sobre a imagem guardada, **não grava**, limite por estafeta porque cada leitura é paga); `PUT /documentos/:tipo` (campos confirmados, DTO por tipo, recusa expirados); `POST /concluir` (verifica tudo, idempotente). Tudo filtrado pelo `estafetaId` do **token**.
+- **B4 — Leitura por IA (obrigatório).** `ExtrairDocumentoEstafetaService` + `domain/extracao-documento-estafeta.ts` (validação pura, com testes): BI, carta e documento do veículo, com os campos da tabela acima; o que falha a validação vai para `recusados`, como na leitura de produto.
+- **B5 — Gestão dos documentos (obrigatório).** `GET /estafetas/:id/documentos` (permissão **nova** `VER_DOCUMENTOS_ESTAFETA`; para estafetas da plataforma, só `SUPER_ADMIN`, D3): dados + URLs de 5 min, **auditados**. `PATCH …/documentos/conferir`. **Nada se apaga** (D13): desactivar um estafeta só desliga a conta; os documentos e as fotografias ficam. As listagens devolvem `onboardingCompleto`, `documentosConferidos`, nunca números de documento.
+
+**Atribuição por proximidade**
+
+- **B6 — Online e posição (obrigatório).** `POST /estafeta/online` e `/offline`: online exige `onboardingCompletoEm`, `isActive` e uma posição válida no pedido; offline limpa a posição. `RegistarPosicaoUseCase` passa a aceitar a posição de um estafeta **online** além de «em rota» (D5); **a difusão ao cliente continua só `EM_ROTA`**. Um estafeta online sem sinal há > 2 min deixa de ser candidato (não é «offline» por isso: só deixa de ser elegível até voltar a emitir).
+- **B7 — Motor de atribuição (obrigatório).** `AtribuirEntregaPorProximidadeService` (lógica pura em `domain/`, com testes): quando uma entrega de uma empresa com `frotaEntrega = PLATAFORMA` fica **pronta para entrega** (a loja despacha o pedido e `ExpedirPedidoUseCase` cria o `EntregaPedido` em `AGUARDA_RECOLHA` — o ponto onde hoje o gestor a atribui), calcula os candidatos — plataforma (`empresaId IS NULL`), `DISPONIVEL`, online com posição recente, `onboardingCompletoEm`, `isActive`, **sem entrega em curso** e **sem oferta pendente** —, ordena por Haversine à loja (D6), aplica o **raio crescente** (D6) e cria a oferta ao primeiro; ao entrar em «pronta a recolher» fixa `procuraIniciadaEm`. **Uma entrega de cada vez por estafeta** (sem agrupar pedidos — fora de âmbito).
+- **B8 — Ofertas (obrigatório).** `GET /estafeta/ofertas/actual` (o que o estafeta vê: loja, distância, taxa, **sem dados do cliente**, D2); `POST /estafeta/ofertas/:id/aceitar` (atómico, D8; devolve a entrega com o destino) e `…/recusar`. Aceitar usa o `OperarEntregaService.atribuir` **na mesma transacção** para não haver dois caminhos de atribuição. Recusa/expiração → próxima (D7). A varredura de expiração (D9) corre num serviço agendado.
+- **B9 — Procura forçada (obrigatório).** A procura **não termina** (D7): sem candidato no raio actual, o raio cresce no passo seguinte de 7 s e, no tecto, espera quem fique online. Passados 10 min (A9) o gestor da empresa é notificado (§4.7) — a procura continua — e pode cancelar o pedido ou atribuir à mão a um estafeta **da própria frota**. O cliente vê «à procura de estafeta».
+- **B10 — Acertos (obrigatório).** O **acerto de numerário continua a existir só para a frota própria** (por `(empresaId, estafetaId)`, como hoje). O estafeta da plataforma **não transporta numerário** (D4/D16), pelo que não gera acertos; **verificar e testar** que o acerto da frota própria não muda e que nenhuma entrega da plataforma entra nele.
+- **B11 — Atribuição manual e `onboarding_incompleto` (obrigatório).** `OperarEntregaService.atribuir` recusa estafeta sem onboarding completo (`entrega.estafeta.onboarding_incompleto`); a atribuição manual só aceita estafetas **da própria empresa** (um gestor não atribui à mão um da plataforma: essa escolha é do algoritmo, D4).
+- **B12 — Transversal.** Mensagens `mensagemTraduzida` (pt/en); eventos de auditoria (`estafeta.registado`, `estafeta.documento_enviado`, `estafeta.documentos_vistos`, `estafeta.documentos_conferidos`, `entrega.oferta_criada/aceite/recusada/expirada`); notificações (§4.7): oferta nova (**urgente** → *push*, §4.8), «ainda sem estafeta ao fim de 10 min» ao gestor, «novo estafeta registado» ao `SUPER_ADMIN`; testes (secção 7).
+- **B13 — Retenção da taxa e carteira do estafeta (obrigatório).** Depende do **pagamento online** (secção 11, passo 1). `MovimentoTaxa` criado quando o pagamento do pedido é confirmado (`RETIDA`, **um por pedido**, valor = `EntregaPedido.taxa` congelada); **na mesma transacção que marca a entrega `ENTREGUE`** passa a `LIBERTADA` e credita a carteira do estafeta (um movimento por entrega, `entregaId` único, idempotente — se falhar um, falham os dois); cancelamento antes da entrega devolve a taxa ao cliente. `GET /estafeta/carteira` (saldo e extrato, por empresa e total). Movimentos **imutáveis** (correcção = movimento novo), saldo sempre calculado dos movimentos, cada um auditado. **Levantar** não está neste plano — P9.
+
+##### F — Frontend
+
+- **F1 — Registo público (obrigatório).** `/estafeta/registo` (e `?convite=…` para a frota própria): `react-hook-form` + Zod; convite inválido → ecrã de erro claro.
+- **F2 — Assistente de documentos (obrigatório).** `OnboardingPage` com 5 passos (BI · Carta · Veículo · Rosto · Revisão), TanStack Query, e **`CapturaDeDocumento`** genérico (`capture="environment"`; `capture="user"` no rosto; frente/verso com pré-visualização e «repetir»; compressão por canvas). Os campos lidos entram num formulário **editável**. Quatro estados, `mensagemDeErro()`, ecrã pequeno, retoma onde ficou.
+- **F3 — Online / offline e oferta (obrigatório).** Em `EstafetaLayout`: interruptor **Online/Offline** (pede a permissão de localização; explica porquê); ecrã de **oferta** (loja, distância, taxa, contagem decrescente, Aceitar/Recusar); `useEmitirPosicao` também enquanto online. Sem estar completo o onboarding, tudo redirecciona para o assistente.
+- **F4 — Gestão (obrigatório).** Separador **Estafetas** do E-Commerce: ligação de convite (frota própria), emblemas «Onboarding incompleto» / «Por conferir», painel de documentos (`<Can>`), «Marcar como conferido». Nas **configurações de entrega**, o seletor **Frota: própria / plataforma**. No painel de **Entregas**: estado «sem estafeta» com a acção de voltar a procurar.
+- **F5 — Plataforma (obrigatório).** Um ecrã do `SUPER_ADMIN` para os estafetas da plataforma: lista, documentos, conferir, **suspender**. (Entra como separador do E-Commerce ou secção própria — a decidir na implementação, no mesmo padrão dos separadores.)
+- **F6 — i18n e permissões na UI (obrigatório).** `locales/pt|en/estafeta.json`; a UI esconde, o servidor autoriza.
+
+##### Opcional (cortar sob pressão)
+
+- Reconhecimento facial do rosto contra a fotografia do BI e prova de vida — **fora de âmbito** (serviço de biometria à parte).
+- Avisos de expiração da carta/BI (cron + notificação).
+- Distância por estrada no ranking; agrupar pedidos; zonas de actuação por estafeta; **frota mista** (tentar a própria e depois a plataforma).
+- Recorte do documento no ecrã.
+
+#### 6. Ficheiros afectados
+
+- **Backend, criar:** migração `…_estafetas_da_plataforma`; em `entrega/`: `application/use-cases/onboarding-estafeta.use-cases.ts`, `ofertas-entrega.use-cases.ts`, `ganhos-estafeta.use-cases.ts`, `application/services/extrair-documento-estafeta.service.ts`, `atribuir-entrega-por-proximidade.service.ts`, `procura-de-estafeta.task.ts`, `domain/extracao-documento-estafeta.ts`, `domain/ordenar-candidatos.ts`, `dto/onboarding-estafeta.dto.ts`, `estafeta-onboarding.controller.ts`, `estafeta-registo.controller.ts`, `estafeta-ofertas.controller.ts` — cada regra com o seu `.spec`.
+- **Backend, alterar:** `prisma/schema.prisma`; `entrega.module.ts`; `estafeta-token.ts` e `estafeta.guard.ts` (`empresaId` opcional); `estafetas.use-cases.ts`; `operar-entrega.service.ts`; `registar-posicao.use-case.ts`; `acertos-estafeta.use-cases.ts` (verificar o isolamento por empresa); `minhas-entregas.use-cases.ts` (filtro por `estafetaId`, D2); `configuracao-entrega.use-cases.ts` (`frotaEntrega`); `seed.ts` + `permissoes.guard.spec.ts` (`VER_DOCUMENTOS_ESTAFETA`); catálogos i18n do servidor. **Variáveis de ambiente novas: nenhuma** (o Gemini e o armazenamento já estão configurados).
+- **Frontend, criar:** em `features/estafeta-app`: `pages/OnboardingPage.tsx`, `RegistoEstafetaPage.tsx`, `components/CapturaDeDocumento.tsx`, `FormularioDocumento.tsx`, `OfertaDeEntrega.tsx`, `InterruptorOnline.tsx`, `hooks/useOnboarding.ts`, `useOfertas.ts`, `api/onboarding.api.ts`, `types/onboarding.ts`; `shared/utils/comprimir-imagem.ts` (+ teste); em `entrega-gestao`: `components/DocumentosDoEstafeta.tsx`, `ConviteEstafetas.tsx`, `SeletorDeFrota.tsx`, `EstafetasDaPlataforma.tsx`.
+- **Frontend, alterar:** `router/index.tsx`; `EstafetaLayout.tsx`; `useEmitirPosicao.ts`; `ECommercePage.tsx`; `EstafetasPage.tsx`; `EntregasPage.tsx`; `shared/config/permissions.config.ts`; `locales/pt|en/estafeta.json` e `entrega.json`.
+- **Docs, nos dois repositórios:** `plano_implementacao.md` e `TRD.md` (armazenamento, Gemini, modelo de estafeta da plataforma, atribuição, permissão).
+
+#### 7. Verificação
+
+- **Backend, onboarding:** validação pura (nº do BI, NUIT, datas, expirado); registo (convite inválido ou rodado, telefone/e-mail repetidos entre os da plataforma, limite de pedidos); **isolamento** — um estafeta não lê nem escreve documentos de outro; `concluir` recusa com um bloco em falta e é idempotente; substituir uma imagem **não** apaga a anterior (fica `substituidaEm`) e desactivar o estafeta **não apaga nada**; listagens nunca devolvem números nem chaves; cada visualização gera auditoria; uma empresa **não** vê documentos de estafeta da plataforma.
+- **Backend, atribuição:** ordenação por distância e desempates; **o raio corta**; ignora offline, sem sinal, sem onboarding, em entrega ou com oferta pendente; **uma oferta pendente por entrega**; recusa e expiração passam ao seguinte; **o raio cresce de 7 em 7 s** (valores exactos nos limites do intervalo) e **para no tecto**; **a procura não desiste**; quem recusou não volta, quem deixou expirar volta ao fim de 60 s; aviso ao gestor aos 10 min; taxa **retida** ao confirmar o pagamento e **libertada uma só vez** ao entregar, **na mesma transacção** que credita a carteira; cancelamento antes da entrega devolve-a ao cliente; entrega que não é `ENTREGUE` não credita; com `frotaEntrega = PLATAFORMA` o checkout recusa numerário (D16); **dois aceites em simultâneo → só um fica** (D8); a varredura é idempotente; um estafeta nunca vê dados do cliente antes de aceitar; o estafeta da plataforma só vê as suas entregas; dois acertos independentes para duas empresas.
+- **Frontend:** compressão de imagem; o assistente retoma o passo certo; campo recusado pela leitura; a oferta expira no ecrã sem aceitar; ficar offline para a emissão de posição.
+- **Manual:** registar-se num telemóvel real; fotografar um BI torto e com pouca luz; cortar a ligação a meio e retomar; pôr dois telemóveis online a distâncias diferentes de uma loja e ver a oferta ir primeiro ao mais perto; recusar e ver passar ao outro; deixar expirar; com a aplicação **em segundo plano** e **bloqueada** (depende do §4.8).
+- Comandos: `npm run build` e `npm test` nos dois repositórios.
+
+#### 8. Riscos
+
+| Risco | Tratamento |
+| --- | --- |
+| **A oferta não chega com o telemóvel bloqueado** (o WebSocket morre e o GPS pára — limite já registado no §4.8) | **Dependência dura do §4.8:** a oferta é um aviso urgente por *push*. Sem *push*, o estafeta tem de manter a aplicação aberta e o ecrã ligado para ficar online. Dizê-lo no ecrã de «Ficar online» |
+| **Posição desactualizada** → oferta ao estafeta errado | Só conta posição de ≤ 2 min; sem sinal deixa de ser candidato |
+| **Dados pessoais sensíveis** (BI com filiação e naturalidade, carta, rosto) | D3/D13: acesso por permissão, URL de 5 min, auditoria, **retenção permanente** (D13) com *bucket* privado e sem expiração, nunca em listagens nem em logs. **O texto de consentimento nomeia a retenção e o uso futuro** e precisa de validação legal — P3 |
+| **Activação sem aprovação** com numerário de várias empresas | Suspensão imediata pela plataforma, marca «por conferir». O numerário é raro (carteiras móveis), o que contém a exposição; **não há limite de numerário** (decidido pelo utilizador) |
+| **Pagamento online inexistente** | É o **pré-requisito**: sem cobrança real no checkout não há dinheiro para reter nem para libertar. Planear e construir primeiro (secção 11), com operador ou agregador de pagamentos, conta comercial e testes em ambiente de ensaio |
+| **A plataforma passa a reter dinheiro de clientes** (a taxa, entre o checkout e a entrega) | Menos do que guardar saldos, mas **continua a poder exigir enquadramento legal** (P11, antes de avançar). Tecnicamente: movimentos imutáveis, saldo calculado, auditoria; e a taxa retida **nunca** se mistura com o dinheiro da empresa |
+| **Ninguém online perto da loja** | D7: a procura **não desiste** e o raio cresce; o checkout **continua a oferecer entrega** (decidido pelo utilizador). O cliente pode esperar muito numa zona sem estafetas: o aviso ao gestor aos 10 min e o «à procura de estafeta» no ecrã do cliente são o que há |
+| **Linha recta engana** (um rio, uma estrada cortada) | Aceite para ordenar (D6); o estafeta pode recusar |
+| **Custo do Gemini** | Limite por estafeta; só os três tipos que se lêem; sem releitura automática |
+| **`empresaId` opcional** num modelo que o assume em 30 módulos | O compilador aponta todos os usos; D2 limita o que o estafeta da plataforma consulta a `estafetaId`; testes de isolamento |
+
+#### 9. Assunções (não bloqueantes, declaradas)
+
+- **A1.** Parâmetros iniciais (ajustáveis, como constantes): raio **inicial 2 km**, **+1 km a cada 7 s** (o intervalo é do utilizador), **tecto 25 km**; oferta de **30 s**.
+- **A2.** Um estafeta faz **uma entrega de cada vez**.
+- **A3.** O veículo é «mota por omissão» mas livre; **não** se verifica a categoria da carta contra o veículo — só se grava.
+- **A4.** «Documentos do veículo» = livrete e/ou título de registo.
+- **A5.** Um documento **expirado** não se aceita.
+- **A6.** O estafeta da plataforma recebe a **taxa inteira** que o cliente pagou, **no instante da entrega** (D16); sem comissão até decisão (P9c).
+- **A7.** Os estafetas actuais ficam como frota própria da empresa, sem passar por documentos (têm um aviso).
+- **A8.** Quem deixa uma oferta **expirar** (silêncio) pode ser oferecido outra vez ao fim de **60 s**; quem a **recusa** não volta a essa entrega.
+- **A9.** O gestor é avisado de que uma entrega continua sem estafeta aos **10 minutos**; a procura **não pára**.
+
+#### 10. Perguntas
+
+**Respondidas pelo utilizador em 2026-10-12** (já reflectidas acima):
+
+- **P2 — Quem paga ao estafeta:** o cliente, pela taxa de entrega incluída no pedido que paga **no checkout**, retida pela plataforma e **creditada na carteira do estafeta no instante da entrega** (D16, A6).
+- **P3 — Retenção:** dados e fotografias guardados **permanentemente**, sem verificação humana por agora (D13). O texto de consentimento continua por escrever e validar.
+- **P4 — Limite de numerário:** não há; o numerário será raro por haver carteiras móveis.
+- **P7 — Checkout sem estafetas:** continua a oferecer entrega, e a procura é **forçada** (D7).
+- **P8 — Raio e tempo:** o raio **cresce automaticamente a cada 7 s** (D6); os restantes parâmetros ficam como constantes (A1).
+
+**Ainda em aberto** (não bloqueiam o rascunho; bloqueiam a implementação):
+
+- **P1 — Convite da frota própria.** Por **empresa** (um código) ou por loja? Recomendo por empresa.
+- **P3b — Texto de consentimento.** Quem o redige e quem o valida legalmente, dado que BI, carta e rosto se guardam **para sempre**? Tem de nomear a retenção e o uso futuro.
+- **P5 — Documentos do veículo.** Basta o livrete, ou também o seguro obrigatório e a inspecção?
+- **P6 — Campo que o documento não tem.** Aceita-se uma excepção marcada («não consta do documento») ou o campo é sempre exigido?
+- **P9 — Levantar o dinheiro da carteira.** O ganho aparece logo na carteira, mas passar para o M-Pesa/e-Mola real exige um meio de pagamento a terceiros. **A plataforma tem acesso a uma API de pagamentos (M-Pesa, e-Mola ou um agregador) que permita pagar ao estafeta?** Se sim, o levantamento é automático e imediato; se não, é um pedido que o operador paga à mão («no mesmo dia»). **Valor mínimo** e **taxas do operador:** quem as paga?
+- **P9b — O pagamento online no checkout (pré-requisito).** Qual operador ou agregador de pagamentos, e **o dinheiro do pedido vai para onde**: **(a)** para a plataforma, que depois **repassa a parte da mercadoria a cada empresa**; ou **(b)** dividido logo à cabeça (mercadoria à empresa, taxa à plataforma), se o operador o permitir? A escolha decide quem responde por reembolsos e quando a empresa recebe. **Está planeado em §4.10** (rascunho), e é a condição para o B13.
+- **P9c — Comissão.** A plataforma fica com uma percentagem da taxa, ou o estafeta recebe tudo? Por omissão, **tudo**.
+- **P10 — Entrega falhada.** Se o estafeta chega e a entrega falha, a taxa **volta ao cliente** ou **fica com o estafeta** (fez a viagem)? Recomendo: **falha por culpa do cliente** (ausente, morada errada) → fica com o estafeta; **falha por culpa da loja ou do estafeta** → volta ao cliente. Quem decide o caso duvidoso?
+- **P11 — Enquadramento legal de reter dinheiro de clientes.** Reter a taxa entre o checkout e a entrega, e guardar a carteira do estafeta, pode exigir licença ou parceria com uma instituição autorizada. **Quem o confirma antes de se implementar o B13?** Alternativa: a retenção fica no parceiro de pagamentos, e a plataforma só dá a ordem de libertar.
+
+#### 11. Ordem de execução
+
+0. **Pré-requisito: o pagamento online no checkout** (P9b), planeado em **§4.10** (rascunho) e construído **antes** do B13. Sem ele, as partes da atribuição por proximidade e o onboarding podem avançar (não dependem de dinheiro), mas **o estafeta da plataforma não pode receber**, e portanto a frota da plataforma não deve abrir a empresas.
+1. **§4.8 (*push*) primeiro**, ou em simultâneo, porque a oferta depende dele para chegar com o telemóvel bloqueado.
+2. **Backend:** B1 (migração) → B4 (leitura, com testes) → B2/B3 → B5 → **B6 → B7 → B8 → B9** → B10/B11. Backend primeiro, como em toda a mudança de contrato.
+3. **Frontend:** F1–F2 (onboarding) → F3 (online e oferta) → F4–F5 (gestão e plataforma).
+4. Documentação e TRD nos dois repositórios, no mesmo ciclo.
+5. **Teste real** com dois telemóveis e um BI verdadeiro, antes de abrir o registo a estafetas reais.
+
+### 4.10 Pagamento online no checkout (carteira móvel), reembolsos e liquidação
+
+- **Data:** 2026-10-12 · **Estado:** **rascunho — adiado pelo utilizador em 2026-10-12: ainda não há chave de API de um operador de pagamentos.** Não implementar antes da aprovação e de haver acesso ao operador
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o resto:** é o **pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout). É também o item «Cobrança no checkout com gateway M-Pesa/e-Mola» que o backlog e o §4.1 deixaram como «projecto próprio». O §4.1 já deixou o encaixe: *«quando o gateway entrar, a venda da expedição passa a levar o método pré-pago em vez de `A_COBRAR_NA_ENTREGA`, não se cria `RegistroFinanceiro` a receber, e o acerto ignora esses pedidos»* (assunção 4).
+
+#### 1. Objectivo
+
+O cliente do Compra Fácil **paga no checkout**, pelo telemóvel (M-Pesa ou e-Mola), e só depois o pedido chega à loja. O sistema passa a **saber** se um pedido está pago — hoje não sabe: `Pedido.metodoPagamento` é uma intenção, e o dinheiro é cobrado à porta ou no balcão, com o M-Pesa registado à mão. Isto é uma mudança de natureza: o pedido torna-se um **facto financeiro imediato**, com reembolsos, conciliação e prestação de contas às empresas.
+
+#### 2. O que existe hoje (verificado no código, 2026-10-12)
+
+| Coisa | Estado |
+| --- | --- |
+| Pagamento online | **Não existe.** Nenhuma integração com operador ou agregador; `MetodoPagamentoCommerce` (`NUMERARIO`/`MPESA`/`EMOLA`) é só intenção |
+| `Pedido` | Estados `CRIADO → CONFIRMADO → EM_PREPARACAO → PRONTO → EXPEDIDO → EM_ROTA → CONCLUIDO` (+ `FALHADA`, `CANCELADO`); `totalFinal`, `taxaEntrega`; **sem estado nem campos de pagamento** |
+| Reserva de stock | `ReservaStock` com `estado` e **`expiraEm`** (já há expiração agendada): o encaixe natural para «pedido à espera de pagamento» |
+| Conferência | `ConferirPedidoUseCase` **refaz o total** com o que foi de facto separado (rupturas, substituições): o valor pago no checkout pode **diferir** do final → reembolso parcial |
+| Expedição | `ExpedirPedidoUseCase` cria a venda com pagamento `A_COBRAR_NA_ENTREGA` |
+| Webhooks de entrada | Padrão já escrito e testado (`ReceberWebhookEntregaUseCase`): assinatura sobre o corpo cru, janela de tempo, idempotência por `@@unique`, `202` e processamento depois — **a reutilizar** |
+| Tarefas agendadas / Redis | `@nestjs/schedule` e Redis existem |
+| Segredos | `fly secrets`; variável nova entra no `.env.example` com o que acontece se faltar |
+
+#### 3. O que se sabe do mercado (pesquisa de 2026-10-12 — **a confirmar com cada operador**)
+
+| Via | O que apurei | Fonte |
+| --- | --- | --- |
+| **M-Pesa (Vodacom) — API directa** | Há um portal de desenvolvedor com chaves, ambiente de ensaio (*sandbox*) e produção, e operações de **cobrança (C2B)**, **pagamento (B2C)** e **reversão** (a reversão devolve uma transacção já concluída). Os detalhes vêm de bibliotecas de terceiros; a documentação oficial exige conta no portal | SDKs públicos (`emagombe/mpesa-api`, `tekmpesa` — Moçambique) — **não oficial** |
+| **e-Mola (Movitel)** | **Não encontrei documentação pública de API.** O caminho é contactar a Movitel (apoio a empresas) e pedir documentação, ensaio e contrato | Resultado de pesquisa — **sem confirmação** |
+| **PawaPay** | Obteve **licença de PSP do Banco de Moçambique** (filial Quidexplus Mozambique) e diz que passa a integrar comerciantes directamente; segundo outra fonte, o e-Mola só aparece para **pagamentos de saída**, e há conversações para alargar as cobranças. Declarações da própria empresa, **sem verificação independente** | techtrendske.co.ke, 2026-10-09 |
+| **Regulação** | Desde 2019 o Banco de Moçambique distingue entidades de moeda electrónica, empresas de transferência e **agregadores de pagamentos** (quem cobra em nome de comerciantes). Não há registo público | Pesquisa — **confirmar legalmente (P11 do §4.9)** |
+| **Interligação** | M-Pesa, e-Mola e mKesh estão interligados desde 2022 (transferências entre carteiras) | Banco de Moçambique |
+
+**Conclusão honesta:** a via mais directa e mais documentada é a **API do M-Pesa**; o e-Mola precisa de contacto comercial e não se deve prometer antes de existir documentação. Por isso o desenho é **por adaptadores** (D2) e a primeira entrega é **só M-Pesa**.
+
+#### 4. Requisito interpretado
+
+1. Checkout com **M-Pesa** (e **e-Mola** quando houver acesso): o cliente indica o número da carteira, recebe o pedido de confirmação **no telemóvel** (PIN), e o ecrã mostra «a aguardar confirmação».
+2. **Só depois de pago** o pedido chega à loja. Não pago em N minutos → cancela-se e libertam-se as reservas.
+3. A **taxa de entrega** vem dentro do que o cliente paga (§4.9 D16). **Com frota da plataforma, o pagamento online é obrigatório**; com frota própria ou levantamento, é uma escolha (mantém-se o pagamento à porta/balcão).
+4. **Reembolsos:** cancelamento antes da entrega, diferença da conferência (ruptura/substituição) e entrega falhada (regra do §4.9 P10).
+5. **Prestação de contas à empresa:** o dinheiro entra na conta da plataforma; a mercadoria é **liquidada à empresa** (D4).
+6. **Conciliação:** o que o sistema diz que recebeu tem de bater com o que o operador diz que enviou.
+
+#### 5. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Um pagamento é uma entidade com máquina de estados própria** (`pagamentos`), separada do `Pedido`: `INICIADO → PENDENTE → CONFIRMADO` ou `FALHADO`/`EXPIRADO`/`INCERTO`, e depois `REEMBOLSADO_PARCIAL`/`REEMBOLSADO`. O `Pedido` ganha só o **resumo** (`estadoPagamento`, `totalPago`, `pagoEm`) | Campos soltos no `Pedido` | Um pedido pode ter **várias tentativas** (o cliente falha o PIN e repete) e vários reembolsos; cada um é uma linha com a sua referência e o seu histórico |
+| **D2** | **Porta e adaptadores:** interface `GatewayPagamento` (`iniciarCobranca`, `consultarEstado`, `reembolsar`, `pagar`) em `domain/`, e **um adaptador por operador** (`MpesaGateway`, depois `EmolaGateway`/`PawaPayGateway`). Há também um **`GatewaySimulado`** para desenvolvimento e testes | Chamar a API do M-Pesa directamente dos casos de uso | Os operadores vão ser trocados ou somados (o e-Mola ainda não tem API conhecida); a regra de negócio não pode saber de URLs. O simulado deixa testar o fluxo inteiro sem dinheiro |
+| **D3** | **Idempotência em todos os pontos:** cada tentativa tem uma `referenciaInterna` única (a chave que o operador recebe); um `webhook`/consulta repetido não confirma duas vezes (`@@unique([fornecedor, eventoExternoId])`); confirmar é um *update* condicional (`WHERE estado = 'PENDENTE'`) | Confiar em que o operador não repete | Os operadores repetem avisos, e o cliente carrega duas vezes. Um pagamento confirmado duas vezes é uma receita duplicada |
+| **D4** | **A plataforma é o comerciante** (recebe tudo numa conta sua) e **liquida às empresas** a parte da mercadoria, **depois da entrega concluída** (D+1 ou semanal, P3). A taxa de entrega fica retida para o estafeta (§4.9 D16) | **Pagamento dividido** (mercadoria à empresa, taxa à plataforma) logo à cabeça; uma conta de comerciante por empresa | Não conto que os operadores ofereçam divisão; e uma conta por empresa obrigaria o cliente a **duas** confirmações (mercadoria e taxa). **Custo assumido:** a plataforma passa a **dever dinheiro às empresas** entre o pagamento e a liquidação, e a ser, para efeitos legais, quem cobra em nome de terceiros — **P1 (licença) é a primeira pergunta** |
+| **D5** | **O resultado incerto é um estado, não um erro:** um tempo-limite do operador **não** dá `FALHADO`; passa a `INCERTO` e o servidor **consulta o estado** (a cada ~10 s durante 2 min, depois de forma espaçada até 24 h) até haver resposta. **Nunca** se cancela um pedido nem se deixa o cliente repetir o pagamento enquanto um anterior está `INCERTO` | Dar erro e deixar tentar de novo | O cliente pode ter sido **debitado** e o ecrã dizer «falhou»: ao repetir, paga duas vezes |
+| **D6** | **O pedido nasce em `AGUARDA_PAGAMENTO`** (estado novo, antes de `CRIADO`): com a reserva de stock a expirar (`ReservaStock.expiraEm`, ~10 min). Pago → `CRIADO` e a loja vê-o; não pago → `CANCELADO` e reservas libertadas, pela mesma varredura que já expira reservas | Reservar sem estado; só criar o pedido depois de pago | Sem estado, um pedido pago «desaparece» se o ecrã fechar; e criar só depois de pago deixa o stock livre para outro durante o PIN |
+| **D7** | **Valor verificado contra a nossa base de dados, nunca contra o que chega:** o valor, a moeda (`MZN`) e a empresa vêm do `Pedido`; um aviso do operador com valor diferente **não confirma** — fica para revisão do operador da plataforma | Aceitar o valor do aviso | Um aviso forjado ou mal formado não pode dar um pedido por pago |
+| **D8** | **O número de telemóvel não se guarda em claro nos registos nem nos *logs*** (mascarado, `84•••••12`) e **o servidor limita os pedidos de confirmação** (por conta, por número e por IP) | Deixar enviar quantos pedidos se quiser | Sem limite, o checkout é uma forma de **enviar pedidos de PIN a qualquer número** — assédio e fraude |
+| **D9** | **Reembolso por operação própria** (`reembolsos`, uma linha cada): total ou parcial, com motivo (`CANCELAMENTO`, `DIFERENCA_CONFERENCIA`, `ENTREGA_FALHADA`), executado pelo adaptador (reversão ou pagamento ao cliente) e **repetido com recuo** se falhar; falhando sempre, fica **«reembolso por fazer à mão»** num ecrã do operador | Reembolsar dentro da transacção do cancelamento | Uma chamada externa não pode estar dentro de uma transacção da base de dados, e um reembolso que falha não pode impedir o cancelamento |
+| **D10** | **A diferença da conferência** (a loja separa menos do que foi pago) gera um **reembolso parcial automático** quando o pedido passa a `PRONTO`; se a conferência **aumentar** o total (substituição mais cara), **não se cobra mais**: a empresa absorve ou recusa a substituição | Pedir ao cliente que pague a diferença | Uma segunda cobrança a meio de um pedido é fricção e risco; o caso comum é faltar mercadoria, não sobrar |
+
+#### 6. Plano de implementação
+
+##### B — Backend
+
+- **B1 — Dados (obrigatório).** Migração **aditiva**: `pagamentos` (`pedidoId`, `empresaId`, `fornecedor`, `metodo`, `msisdnMascarado`, `valor`, `moeda`, `estado`, `referenciaInterna` único, `referenciaExterna`, `expiraEm`, `confirmadoEm`, `respostaResumo` JSON **sem dados sensíveis**), `eventos_pagamento` (único por `fornecedor`+`eventoExternoId`, corpo cru para auditoria), `reembolsos`; `Pedido.estadoPagamento`, `totalPago`, `pagoEm`; valor novo `AGUARDA_PAGAMENTO` em `EstadoPedido`. **Os pedidos existentes ficam `NAO_APLICAVEL`** e todo o comportamento actual mantém-se. (`ALTER TYPE … ADD VALUE` não corre na mesma transacção que o usa: a migração separa-o.)
+- **B2 — A porta e o simulado (obrigatório).** `domain/gateway-pagamento.ts` e `GatewaySimulado` (resultados escolhidos pelo número de teste: aprovado, recusado, sem saldo, *timeout*, **confirmação tardia**); testes de toda a máquina de estados **sem rede**.
+- **B3 — Adaptador M-Pesa (obrigatório).** `MpesaGateway`: cobrança, consulta de estado e reversão/pagamento, com cifra da chave pública exigida pelo operador, *timeouts* explícitos e **sem repetir uma cobrança** (só consultas se repetem). Ensaio no *sandbox* do operador **antes** de produção. **Depende de conta no portal e de contrato — P2.**
+- **B4 — Iniciar o pagamento (obrigatório).** `POST /commerce/pedidos/:id/pagamento` (conta do cliente; **o pedido tem de ser dele**): valida o pedido (`AGUARDA_PAGAMENTO`, não expirado, sem pagamento `PENDENTE`/`INCERTO`), o número e o limite de pedidos (D8), cria o `Pagamento` e chama o gateway. `GET /commerce/pedidos/:id/pagamento` devolve o estado (o ecrã consulta-o a cada 3 s).
+- **B5 — Confirmar (obrigatório).** Dois caminhos para o mesmo resultado, ambos idempotentes (D3): o **aviso do operador** (`POST /pagamentos/webhook/:fornecedor`, `@Public()` **deliberado**, assinatura sobre o corpo cru e janela de tempo, `202` e processamento depois — o padrão de `ReceberWebhookEntregaUseCase`) e a **consulta de estado** (D5). Confirmar = *update* condicional `PENDENTE → CONFIRMADO` + valor/moeda verificados (D7) + `Pedido` `AGUARDA_PAGAMENTO → CRIADO`, **na mesma transacção**; notifica a loja (§4.7).
+- **B6 — Expirar (obrigatório).** Tarefa agendada: pedidos `AGUARDA_PAGAMENTO` vencidos **sem pagamento `PENDENTE`/`INCERTO`** → `CANCELADO` e reservas libertadas; os `INCERTO` não se tocam (D5).
+- **B7 — Reembolsos (obrigatório).** `ReembolsarPagamentoUseCase` (D9) e as três origens: cancelamento (cliente ou gestão), diferença da conferência (D10), entrega falhada (regra do §4.9 P10). Tarefa de repetição com recuo; ecrã do operador para os que falharam.
+- **B8 — Liga ao resto (obrigatório).** `ExpedirPedidoUseCase` passa a criar a venda com pagamento **já cobrado** (método e referência do `Pagamento`), **sem** `RegistroFinanceiro` a receber, e a entrega com `metodoCobrado` preenchido — por isso o **acerto de numerário ignora estes pedidos** (assunção 4 do §4.1). Com `frotaEntrega = PLATAFORMA` (§4.9), o checkout **recusa `NUMERARIO`**.
+- **B9 — Liquidação às empresas (obrigatório para abrir a empresas).** Tabela `liquidacoes_empresa`: o que a plataforma deve a cada empresa = mercadoria (e IVA) dos pedidos **concluídos** e pagos online, **menos** reembolsos, **menos** a taxa (que não é da empresa). Extrato por empresa; **a liquidação faz-se à mão pelo operador no início** (transferência bancária ou carteira), registada no sistema; automatizar (pagamento pelo adaptador) é melhoria. **A empresa só vê as suas.**
+- **B10 — Conciliação (obrigatório).** Tarefa diária: pagamentos `CONFIRMADO`/`PENDENTE`/`INCERTO` do dia contra a consulta ao operador (e o extracto, se houver); **divergência = alerta** ao operador da plataforma, nunca correcção silenciosa. Relatório de totais por dia/método/empresa.
+- **B11 — Transversal.** Variáveis de ambiente (secção 7), `.env.example` com o que acontece se faltarem (**sem as chaves, o pagamento online fica desligado e o checkout mantém o pagamento à porta**, nunca impede o arranque); auditoria de cada mudança de estado de dinheiro; permissões novas (`pagamentos.ver`, `pagamentos.reembolsar`, `liquidacoes.gerir`); mensagens pt/en; testes (secção 8).
+
+##### F — Frontend
+
+- **F1 — Checkout (obrigatório).** Escolha do método e do número (validação do prefixo por operador: o número pré-preenche-se com o da conta, mas pode ser outro), botão «Pagar», **ecrã de espera** («Confirme no seu telemóvel», contagem decrescente, consulta a cada 3 s) com resultados claros: pago, recusado, sem saldo, expirado, **incerto** («estamos a confirmar — não pague outra vez»). Quatro estados e `mensagemDeErro()`. Funciona em telemóvel e com a ligação a falhar.
+- **F2 — Retomar (obrigatório).** O pedido `AGUARDA_PAGAMENTO` aparece em «Os meus pedidos» com «Pagar agora» e o tempo que resta; fechar o separador a meio não perde o pagamento.
+- **F3 — Gestão (obrigatório).** O pedido mostra o pagamento (método, referência, estado, reembolsos); a **fila de pedidos** só inclui os pagos; ecrã do operador da plataforma para **reembolsos por fazer**, **divergências da conciliação** e **liquidações às empresas**; a empresa vê o seu extrato.
+- **F4 — Configuração (obrigatório).** Na empresa, a escolha de **aceitar pagamento online** e (com a §4.9) a frota.
+- **F5 — i18n e permissões na UI (obrigatório).** pt/en; a UI esconde, o servidor autoriza.
+
+##### Opcional (cortar sob pressão)
+
+- Segundo operador (**e-Mola**) e um agregador (PawaPay) como alternativa ao M-Pesa directo.
+- Liquidação às empresas **automática**.
+- Cartão bancário e QR.
+- Pagamento por **referência** (o cliente paga fora do ecrã) e pagamento em **prestações**.
+
+#### 7. Ficheiros e configuração
+
+- **Backend, criar:** migração `…_pagamento_online`; `modules/pagamento/` (`domain/gateway-pagamento.ts`, `domain/estado-pagamento.ts`, `infrastructure/gateways/{simulado,mpesa}.gateway.ts`, `application/use-cases/{iniciar-pagamento,confirmar-pagamento,reembolsar-pagamento,liquidar-empresa,conciliar}.use-case.ts`, `application/tasks/{expirar-pagamentos,repetir-reembolsos,conciliar-diario}.task.ts`, `dto/`, `pagamento.controller.ts`, `pagamento-webhook.controller.ts`, `pagamento-gestao.controller.ts`, `pagamento.module.ts`) — cada regra com o seu `.spec`.
+- **Backend, alterar:** `schema.prisma`; `criar-pedido.use-case.ts` (nasce `AGUARDA_PAGAMENTO` quando o método é online); `conferir-pedido.use-case.ts` (reembolso da diferença, D10); `cancelar-pedido*.use-case.ts` (reembolso); `expedir-pedido.use-case.ts` (venda já paga, B8); `transitar-estado-pedido.use-case.ts` (novo estado); `acertos-estafeta.use-cases.ts` (ignora pré-pagos); `app.module.ts`; `seed.ts` e `permissoes.guard.spec.ts`; `.env.example`.
+- **Variáveis de ambiente (novas):** `PAGAMENTOS_GATEWAY` (`simulado` | `mpesa`; **por omissão `simulado` fora de produção e desligado em produção**), `MPESA_BASE_URL`, `MPESA_API_KEY`, `MPESA_PUBLIC_KEY`, `MPESA_SERVICE_PROVIDER_CODE`, `PAGAMENTOS_WEBHOOK_SEGREDO`; os nomes exactos fixam-se depois de ler a documentação oficial do operador. **Sem elas, o pagamento online fica desligado** (o checkout só mostra o pagamento à porta) — e o §4.9 não pode abrir a frota da plataforma.
+- **Frontend, criar:** em `features/compra-facil`: `components/PagamentoMovel.tsx`, `EsperaDeConfirmacao.tsx`, `hooks/usePagamento.ts`, `api/pagamento.api.ts`; em `features/compra-facil-gestao`/`financeiro`: o painel de reembolsos, conciliação e liquidações; `locales/pt|en`.
+- **Frontend, alterar:** `CheckoutPage.tsx`, `MeusPedidosPage`, o detalhe do pedido da gestão, o separador de pedidos (só pagos), `router/index.tsx`.
+- **Docs, nos dois repositórios:** `plano_implementacao.md` e `TRD.md` (serviço novo e **pago** — taxas do operador —, variáveis, estados, endpoints).
+
+#### 8. Verificação
+
+- **Backend:** máquina de estados completa com o simulado (aprovado, recusado, sem saldo, expirado, **tempo-limite → incerto → confirmado depois**); **confirmar duas vezes não duplica** (aviso repetido, aviso + consulta); valor diferente **não confirma**; `AGUARDA_PAGAMENTO` expira e liberta reservas, mas **não** com um pagamento `INCERTO`; limite de pedidos de PIN por conta, número e IP; o cliente só paga o **seu** pedido; reembolso total e parcial, repetição com recuo e «por fazer à mão»; **diferença da conferência reembolsa**; a venda da expedição sai **sem conta a receber** e o acerto de numerário **ignora** pedidos pagos; liquidação só soma pedidos **concluídos**; a empresa só vê o seu extrato; um pagamento que falhou **não** cria o pedido na fila da loja; sem chaves, pagamento online desligado e arranque normal.
+- **Frontend:** o ecrã de espera cobre pago, recusado, expirado e incerto; retomar um pedido a pagar; botão «Pagar» desactivado durante o pedido.
+- **Manual (antes de produção):** ciclo completo no ambiente de ensaio do operador; **um pagamento real de valor mínimo**, e o seu reembolso; fechar o separador a meio; recusar o PIN; não responder ao PIN; conciliar o dia contra o operador.
+- Comandos: `npm run build` e `npm test` nos dois repositórios.
+
+#### 9. Riscos
+
+| Risco | Tratamento |
+| --- | --- |
+| **A plataforma cobra em nome de terceiros** (pode ser «agregador de pagamentos» para o Banco de Moçambique) | **P1, antes de qualquer código de produção.** Alternativas: parceiro com licença (ex.: um PSP) que cobra e liquida, com a plataforma só a dar as ordens |
+| **Cliente debitado e pedido não criado** (tempo-limite, aviso perdido) | D5 (`INCERTO` + consulta contínua) e a conciliação diária; reembolso à mão como última rede |
+| **Pagamento duplicado** | D3 (referência única, confirmação condicional, bloqueio de nova tentativa durante `INCERTO`) |
+| **Aviso forjado** | Assinatura + janela de tempo + valor verificado contra a nossa base (D7); o corpo nunca decide a empresa |
+| **Abuso do pedido de PIN** | D8 (limites, número mascarado) |
+| **Diferença entre o pago e o conferido** | D10 (reembolso parcial automático; nunca se cobra mais) |
+| **Plataforma deve dinheiro às empresas** | Liquidação só de pedidos **concluídos**, extrato visível à empresa, conciliação diária, prazo curto (P3) |
+| **Dependência de um operador** | D2 (adaptadores) e o simulado; sem chaves, o sistema continua a funcionar com pagamento à porta |
+| **O operador muda a API** (bibliotecas de terceiros avisam que a API ainda se estabiliza) | Adaptador isolado, versão fixada, ensaio antes de cada mudança; ler a **documentação oficial**, não as bibliotecas |
+| **e-Mola sem API conhecida** | Fora da primeira entrega; contacto comercial com a Movitel (P2) |
+
+#### 10. Assunções (não bloqueantes, declaradas)
+
+- **A1.** A primeira entrega é **só M-Pesa**; o e-Mola entra se e quando houver documentação.
+- **A2.** O pedido espera **10 minutos** pelo pagamento antes de expirar (a reserva de stock segue esse prazo).
+- **A3.** Pagamento online **opcional** no levantamento e na frota própria; **obrigatório** com frota da plataforma.
+- **A4.** Só **MZN**.
+- **A5.** A **taxa de entrega não se reembolsa** em cancelamento depois de o estafeta ter recolhido (regra a confirmar com a P10 do §4.9).
+- **A6.** O **IVA** continua a ser da empresa (a venda é dela); a plataforma não factura a mercadoria.
+- **A7.** Reembolsos vão **para o mesmo número** que pagou.
+
+#### 11. Perguntas em aberto (bloqueiam a implementação)
+
+- **P1 — Licença.** Cobrar em nome das empresas e reter a taxa exige licença de agregador/instituição de pagamento, ou parceria com quem a tenha? **Quem o confirma, e a quem se pergunta?** Sem esta resposta não há produção.
+- **P2 — Operador e contrato.** **A SRG já tem (ou pode abrir) conta comercial M-Pesa e acesso ao portal de desenvolvedor da Vodacom?** E o e-Mola (Movitel)? Em alternativa, **um PSP/agregador** (ex.: PawaPay, que tem licença do Banco de Moçambique) — aceitas ir por aí? Taxas e prazos de cada um decidem a escolha.
+- **P3 — Liquidação às empresas.** Prazo (D+1, semanal) e **meio** (transferência bancária ou carteira). Quem é o operador da plataforma que a executa?
+- **P4 — Taxas do operador.** Cobradas sobre cada pagamento: **quem as paga** — a empresa (descontadas na liquidação), a plataforma (da margem) ou o cliente (acréscimo no checkout)?
+- **P5 — Reembolso da taxa.** Depois de o estafeta recolher a mercadoria, um cancelamento devolve a taxa ao cliente? (liga ao §4.9 P10)
+- **P6 — Substituição mais cara.** Confirmas a regra de **nunca cobrar mais** a meio do pedido (D10)?
+- **P7 — Quando se abre.** O pagamento online abre a **todas** as empresas ou a um **piloto** (uma empresa, poucos clientes)? Recomendo piloto.
+
+#### 12. Ordem de execução
+
+1. **Respostas a P1 e P2** (licença e operador) — sem elas, só o que não toca em dinheiro real avança.
+2. **B1 → B2** (dados, porta e simulado, **com testes de toda a máquina de estados**) → **B4 → B5 → B6** → **F1 → F2** (o cliente paga com o simulado, de ponta a ponta).
+3. **B7 → B8** (reembolsos e a ligação à venda e ao acerto) → **B9 → B10 → F3** (liquidação e conciliação).
+4. **B3** (adaptador M-Pesa) assim que houver acesso ao portal: ensaio completo; **depois um pagamento real de valor mínimo e o seu reembolso**.
+5. **Piloto** com uma empresa (P7), e só depois o §4.9 abre a frota da plataforma.
+6. Documentação e TRD nos dois repositórios, no mesmo ciclo.
 
 ## 5. Convenção para novas entradas
 

@@ -89,7 +89,8 @@
     "iniciar_rota": "On the way",
     "entregue": "Delivered",
     "falhada": "Failed",
-    "devolver": "Return"
+    "devolver": "Return",
+    "procurar": "Find a courier"
   },
   "painel": {
     "titulo": "Deliveries",
@@ -221,5 +222,79 @@
     "sem_canal": "No real-time connection. Positions are not arriving; the board keeps refreshing every 30 s.",
     "sem_posicao_de": "Waiting for the position of: {{nomes}}.",
     "esbatido": "Faded points are over 2 minutes old: the courier may have no network or a locked screen."
+  },
+  "documentos": {
+    "titulo": "Courier documents",
+    "tipo": {
+      "BI": "Identity card",
+      "CARTA_CONDUCAO": "Driving licence",
+      "DOCUMENTO_VEICULO": "Vehicle documents",
+      "FOTO_VEICULO": "Vehicle photo",
+      "FOTO_ROSTO": "Face photo"
+    },
+    "lado": {
+      "FRENTE": "Front",
+      "VERSO": "Back",
+      "UNICA": "Photo"
+    },
+    "substituidas_one": "{{count}} earlier photo kept",
+    "substituidas_other": "{{count}} earlier photos kept",
+    "sem_imagem": "No photo.",
+    "corrigido": "corrected",
+    "nao_confirmado": "The courier has not confirmed these details yet.",
+    "erro": "The documents could not be loaded.",
+    "aviso_auditoria": "Every opening is logged (who viewed and when). Photo links expire after 5 minutes.",
+    "emergencia": "Emergency contact",
+    "vazio": "This courier has not submitted documents yet.",
+    "conferido_em": "Checked on {{data}}",
+    "por_conferir": "Not checked yet. Informative only: it does not block the courier.",
+    "conferir": "Mark as checked",
+    "conferido": "Documents marked as checked.",
+    "erro_conferir": "The documents could not be marked as checked.",
+    "onboarding_incompleto": "Onboarding incomplete",
+    "por_conferir_badge": "To check",
+    "conferido_badge": "Checked",
+    "ver": "Documents"
+  },
+  "convite": {
+    "titulo": "Invitation for your own fleet",
+    "ajuda": "Whoever signs up through this link joins this company’s fleet. Without it, the sign-up belongs to the platform.",
+    "copiar": "Copy link",
+    "copiado": "Link copied.",
+    "copiar_falhou": "Could not copy. Select the link and copy it by hand.",
+    "gerar": "Create invitation",
+    "gerar_novo": "Create new",
+    "sem_convite": "No invitation yet. Create one to sign up your own couriers.",
+    "rodar_confirmar": "Create a new invitation? The current link stops working.",
+    "rodado": "New invitation created.",
+    "erro": "The invitation could not be created."
+  },
+  "frota": {
+    "titulo": "Delivery fleet",
+    "ajuda": "Where the couriers who deliver this company’s orders come from.",
+    "PROPRIA": {
+      "nome": "Own fleet",
+      "descricao": "Couriers the company registers. Management assigns each delivery."
+    },
+    "PLATAFORMA": {
+      "nome": "Platform couriers",
+      "descricao": "The courier closest to the store receives the offer and accepts or declines it."
+    }
+  },
+  "plataforma": {
+    "ajuda": "Couriers who signed up without an invitation and belong to no company. They are activated on submitting the sign-up.",
+    "online": "Online",
+    "entregas_em_curso_one": "{{count}} delivery in progress",
+    "entregas_em_curso_other": "{{count}} deliveries in progress",
+    "suspender": "Suspend",
+    "suspender_confirmar": "Suspend {{nome}}? They stop receiving offers and can no longer sign in.",
+    "suspenso": "Courier suspended.",
+    "reactivado": "Courier reactivated.",
+    "erro_actividade": "The courier’s status could not be changed.",
+    "vazio": "There are no platform couriers yet."
+  },
+  "procura": {
+    "lancada": "Search started. The radius grows every 7 seconds until someone accepts.",
+    "erro": "The search could not be started."
   }
 }

@@ -54,6 +54,13 @@ export interface PerfilEstafeta {
   idioma: string | null;
   lojas: { id: string; nome: string }[];
   entregasEmCurso: number;
+  /** `false` = só vê o assistente de documentos (plano §4.9): não fica online nem recebe entregas. */
+  onboardingCompleto: boolean;
+  /** Falso = ainda faltam documentos ou dados. Um estafeta antigo pode ter o onboarding «completo» sem documentos: vê um aviso. */
+  documentosCompletos: boolean;
+  /** `PLATAFORMA` = não é de nenhuma empresa: recebe ofertas por proximidade. */
+  frota: 'PROPRIA' | 'PLATAFORMA';
+  online: boolean;
 }
 
 /** O que `POST /auth/entrar` devolve para um estafeta. */

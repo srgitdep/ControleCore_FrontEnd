@@ -1,18 +1,36 @@
 import { useEffect } from 'react';
-import { Link, Navigate, Outlet } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bike, Loader2, LogOut, WifiOff } from 'lucide-react';
-import { cn } from '@/shared/utils';
-import { useMeuPerfil, useMinhasEntregas, useMudarEstado, useOnline } from '../hooks/useEstafeta';
+import { useMeuPerfil, useMinhasEntregas, useOnline } from '../hooks/useEstafeta';
+import { useEmitirPosicao } from '../hooks/useEmitirPosicao';
+import { useOfertas } from '../hooks/useOfertas';
+import { InterruptorOnline } from './InterruptorOnline';
+import { OfertaDeEntrega } from './OfertaDeEntrega';
 import { PartilhaDePosicao } from './PartilhaDePosicao';
 import { SinoDeNotificacoes } from '@/shared/ui';
 import { useFonteDoEstafeta } from '../hooks/useFonteDoEstafeta';
 import { ligarPwaDoEstafeta } from '../pwa';
 import { useEstafetaStore } from '../store/useEstafetaStore';
 
+/** A rota do assistente de documentos: é a única que alguém em onboarding alcança. */
+const ROTA_DO_ONBOARDING = '/estafeta/onboarding';
+
 /**
  * O invólucro da aplicação do estafeta: confirma a sessão no servidor, liga a PWA (só nestas rotas),
- * mostra quem é, o seu estado (disponível / indisponível) e avisa quando não há ligação.
+ * mostra quem é, o seu estado (online / disponível) e avisa quando não há ligação.
+ *
+ * ## O onboarding fecha as outras rotas (plano §4.9, D15)
+ *
+ * Quem ainda não completou o registo só vê o assistente de documentos: qualquer outra rota redirecciona para ele. É
+ * cortesia — o servidor recusa na mesma (403) tudo o que não seja do assistente. Um estafeta **anterior** ao
+ * onboarding tem-no «completo» e não é redireccionado: a sua frota não pára por uma regra nova.
+ *
+ * ## Um só canal para a posição e as ofertas
+ *
+ * `useEmitirPosicao` abre o canal de tempo real e devolve-o; as ofertas (`oferta.nova`) escutam-se nesse mesmo
+ * canal. Um estafeta online da plataforma partilha a posição para ser escolhido por proximidade — e é por aí que a
+ * oferta lhe chega.
  *
  * Fora do `ProtectedRoute` de propósito, como `/loja` e `/fornecedor`: esse guarda exige um `User` do
  * lado funcionário, e um estafeta não o é. Sem sessão manda para `/login` — o ecrã único, onde o
@@ -20,14 +38,27 @@ import { useEstafetaStore } from '../store/useEstafetaStore';
  */
 export function EstafetaLayout() {
   const { t } = useTranslation('estafeta');
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { utilizador, autenticado, aCarregar, carregar, sair } = useEstafetaStore();
-  const online = useOnline();
+  const rede = useOnline();
   const perfil = useMeuPerfil();
-  const mudarEstado = useMudarEstado();
   // A mesma consulta da lista (mesma chave): não gera pedido novo. É ela que diz se há uma entrega em rota.
   const entregas = useMinhasEntregas(false);
   const emRota = (entregas.data ?? []).some((e) => e.estado === 'EM_ROTA');
   const fonteDeNotificacoes = useFonteDoEstafeta();
+
+  const dados = perfil.data;
+  const daPlataforma = dados?.frota === 'PLATAFORMA';
+  // Só o estafeta da plataforma partilha a posição por estar online: a frota própria não precisa dela para nada.
+  const onlineComPosicao = daPlataforma && !!dados?.online && dados.onboardingCompleto;
+
+  const partilha = useEmitirPosicao({ emRota, online: onlineComPosicao });
+  const ofertas = useOfertas({
+    activo: onlineComPosicao,
+    socket: partilha.socket,
+    aoAceitar: (entregaId) => navigate(`/estafeta/entregas/${entregaId}`),
+  });
 
   useEffect(() => {
     void carregar();
@@ -45,8 +76,11 @@ export function EstafetaLayout() {
 
   if (!autenticado) return <Navigate to="/login" replace />;
 
-  const estado = perfil.data?.estado;
-  const disponivel = estado === 'DISPONIVEL' || estado === 'EM_ENTREGA';
+  // Em onboarding só há o assistente. Espera-se pelo perfil: redireccionar com ele por carregar mandava quem já
+  // completou o registo para o assistente por um instante.
+  if (dados && !dados.onboardingCompleto && pathname !== ROTA_DO_ONBOARDING) {
+    return <Navigate to={ROTA_DO_ONBOARDING} replace />;
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-slate-50">
@@ -75,47 +109,34 @@ export function EstafetaLayout() {
           </button>
         </div>
 
-        {/* Disponível ou indisponível: o gestor só atribui a quem está disponível. «Em entrega» deriva-se. */}
-        {estado && (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2">
-            <span className="text-sm text-slate-600">
-              {estado === 'EM_ENTREGA' ? t('estado.em_entrega') : disponivel ? t('estado.disponivel') : t('estado.indisponivel')}
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={disponivel}
-              aria-label={t('estado.alternar')}
-              disabled={mudarEstado.isPending || !online}
-              onClick={() => mudarEstado.mutate(disponivel ? 'INDISPONIVEL' : 'DISPONIVEL')}
-              className={cn(
-                'relative h-8 w-14 shrink-0 rounded-full transition-colors disabled:opacity-50',
-                disponivel ? 'bg-emerald-500' : 'bg-slate-300',
-              )}
-            >
-              <span
-                className={cn(
-                  'absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all',
-                  disponivel ? 'left-7' : 'left-1',
-                )}
-              />
-            </button>
-          </div>
-        )}
+        {/* Online (plataforma) ou disponível (frota própria). Só com o onboarding completo: antes disso o servidor
+            não deixa ficar online, e o botão seria uma promessa que não se cumpre. */}
+        {dados && dados.onboardingCompleto && <InterruptorOnline perfil={dados} semRede={!rede} />}
       </header>
 
-      {!online && (
+      {!rede && (
         <p className="flex items-center gap-2 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-800" role="alert">
           <WifiOff size={16} className="shrink-0" />
           {t('sem_ligacao')}
         </p>
       )}
 
-      <PartilhaDePosicao emRota={emRota} />
+      <PartilhaDePosicao estado={partilha.estado} consentir={partilha.consentir} modo={partilha.modo} />
 
       <main className="flex-1 p-4">
         <Outlet />
       </main>
+
+      {ofertas.oferta && (
+        <OfertaDeEntrega
+          oferta={ofertas.oferta}
+          segundosRestantes={ofertas.segundosRestantes}
+          aceitar={() => ofertas.aceitar.mutate(ofertas.oferta!.id)}
+          recusar={() => ofertas.recusar.mutate(ofertas.oferta!.id)}
+          aAceitar={ofertas.aceitar.isPending}
+          aRecusar={ofertas.recusar.isPending}
+        />
+      )}
     </div>
   );
 }

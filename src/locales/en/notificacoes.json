@@ -47,13 +47,17 @@
       "chegou": "{{numeroPedido}}: the courier has arrived at the address.",
       "entregue": "{{numeroPedido}}: delivered.",
       "falhada": "{{numeroPedido}}: could not be delivered.",
-      "devolvida": "{{numeroPedido}}: returned to the store."
+      "devolvida": "{{numeroPedido}}: returned to the store.",
+      "sem_estafeta": "{{numeroPedido}}: still no courier after {{minutos}} minutes. The search continues."
     }
   },
   "ESTAFETA": {
     "entrega": {
       "nova": "New delivery: {{numeroPedido}} — {{morada}}.",
       "retirada": "Delivery {{numeroPedido}} is no longer yours."
+    },
+    "oferta": {
+      "nova": "Delivery from {{loja}}, {{distancia}} from you."
     }
   }
 }

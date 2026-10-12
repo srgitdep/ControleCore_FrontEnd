@@ -7,6 +7,7 @@ import { useConfiguracaoEntrega } from '../hooks/useEntregaGestao';
 import {
   useAtribuirEntrega,
   useDevolverEntrega,
+  useProcurarEstafeta,
   useEntregarEntrega,
   useEntregas,
   useEstafetas,
@@ -60,6 +61,7 @@ export function EntregasPage() {
   const entregar = useEntregarEntrega();
   const falhar = useFalharEntrega();
   const devolver = useDevolverEntrega();
+  const procurar = useProcurarEstafeta();
 
   // O diálogo aberto: qual a acção e sobre que entrega.
   const [dialogo, setDialogo] = useState<{ accao: AccaoEntrega; entrega: EntregaPainel } | null>(null);
@@ -69,6 +71,7 @@ export function EntregasPage() {
     // Recolher e iniciar rota não precisam de dados: fazem-se logo, sem diálogo.
     if (accao === 'recolher') return recolher.mutate(entrega.id);
     if (accao === 'iniciar_rota') return iniciarRota.mutate(entrega.id);
+    if (accao === 'procurar') return procurar.mutate(entrega.id);
     setDialogo({ accao, entrega });
   };
 
@@ -161,7 +164,12 @@ export function EntregasPage() {
                 ) : (
                   <ul className="space-y-2.5">
                     {cartoes.map((entrega) => (
-                      <CartaoEntrega key={entrega.id} entrega={entrega} aoEscolher={escolher} />
+                      <CartaoEntrega
+                        key={entrega.id}
+                        entrega={entrega}
+                        aoEscolher={escolher}
+                        frotaPlataforma={configuracao.data?.frotaEntrega === 'PLATAFORMA'}
+                      />
                     ))}
                   </ul>
                 )}

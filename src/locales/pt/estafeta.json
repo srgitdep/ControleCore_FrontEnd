@@ -110,5 +110,198 @@
     "android": "Abre em ecrã inteiro, mais depressa, e fica no ecrã principal.",
     "botao": "Instalar",
     "dispensar": "Dispensar"
+  },
+  "online": {
+    "ligado": "Online — a receber ofertas de entrega",
+    "desligado": "Offline",
+    "alternar": "Alternar entre online e offline",
+    "ajuda": "Fique online para receber as entregas que estão perto de si. Vamos pedir a sua localização.",
+    "a_espera": "Está online. Quando houver uma entrega perto de si, aparece aqui uma oferta — tem 30 segundos para aceitar.",
+    "falha": {
+      "sem_suporte": "Este telemóvel ou esta ligação não permite usar a localização. Abra a aplicação por HTTPS num navegador com localização.",
+      "negada": "A localização está bloqueada. Permita-a nas definições do navegador: sem ela não é possível escolher quem está perto da loja.",
+      "indisponivel": "Não foi possível obter a sua localização. Verifique o GPS, vá para um sítio aberto e tente outra vez.",
+      "generica": "Não foi possível mudar o estado."
+    }
+  },
+  "oferta": {
+    "titulo": "Nova entrega perto de si",
+    "segundos_one": "{{count}} segundo",
+    "segundos_other": "{{count}} segundos",
+    "loja": "Recolher na loja",
+    "distancia_etiqueta": "Distância até à loja",
+    "recebe": "Recebe por esta entrega",
+    "aviso_cliente": "O nome, o telefone e a morada do cliente só aparecem depois de aceitar.",
+    "aceitar": "Aceitar",
+    "recusar": "Recusar",
+    "aceite": "Entrega aceite.",
+    "erro_aceitar": "Não foi possível aceitar a entrega.",
+    "erro_recusar": "Não foi possível recusar a oferta."
+  },
+  "partilha_online": {
+    "consentimento_titulo": "Partilhar a sua posição para receber entregas",
+    "consentimento_texto": "Para lhe oferecermos as entregas mais perto de si, esta aplicação vai usar a localização do telemóvel enquanto estiver online.",
+    "consentimento_so_em_rota": "Só enquanto estiver online. Quando ficar offline, a posição é apagada e deixa de ser lida.",
+    "consentimento_quem_ve": "Quem vê: só o sistema, para escolher quem está mais perto da loja. A loja e o cliente só vêem a sua posição durante uma entrega «a caminho».",
+    "consentimento_sem_historico": "Guardamos apenas a última posição. Não há histórico de trajectos.",
+    "consentimento_aceitar": "Compreendo, ficar online",
+    "negada": "A localização está bloqueada. Permita-a nas definições do navegador para esta aplicação — sem ela não recebe ofertas.",
+    "a_partilhar": "Online: o sistema sabe onde está para lhe oferecer entregas perto de si. A loja e o cliente não a vêem.",
+    "sem_canal": "A tentar ligar para receber ofertas…"
+  },
+  "onboarding": {
+    "titulo": "Complete o seu registo",
+    "subtitulo": "Para trabalhar como estafeta precisamos de confirmar quem é, o seu veículo e a sua carta de condução. Tudo é obrigatório.",
+    "progresso": "{{feitos}} de {{total}} passos feitos",
+    "passos_etiqueta": "Passos do registo",
+    "passos": {
+      "BI": {
+        "titulo": "Bilhete de identidade",
+        "ajuda": "Fotografe a frente e o verso. Ponha o documento numa superfície plana, com boa luz e sem reflexos — o texto tem de se ler."
+      },
+      "CARTA_CONDUCAO": {
+        "titulo": "Carta de condução",
+        "ajuda": "Fotografe a frente e o verso da carta, com boa luz. Tem de estar dentro da validade."
+      },
+      "DOCUMENTO_VEICULO": {
+        "titulo": "Documentos do veículo",
+        "ajuda": "Fotografe o livrete ou o título de registo. Se o documento tiver verso, fotografe-o também."
+      },
+      "FOTO_VEICULO": {
+        "titulo": "Fotografia do veículo",
+        "ajuda": "Fotografe o veículo que vai usar (por exemplo, a mota), de modo a ver-se a matrícula."
+      },
+      "FOTO_ROSTO": {
+        "titulo": "Fotografia do rosto",
+        "ajuda": "Uma fotografia do seu rosto, de frente, com boa luz e sem óculos escuros nem boné."
+      }
+    },
+    "lado": {
+      "FRENTE": "Frente",
+      "VERSO": "Verso",
+      "UNICA": "Fotografia"
+    },
+    "opcional": "se existir",
+    "fotografar": "Tirar fotografia",
+    "repetir": "Repetir fotografia",
+    "da_galeria": "Escolher da galeria",
+    "a_enviar": "A enviar…",
+    "imagem_enviada": "Fotografia enviada: {{lado}}",
+    "estado": {
+      "POR_FAZER": "Por fazer",
+      "IMAGENS_ENVIADAS": "Fotografias enviadas",
+      "COMPLETO": "Completo",
+      "falta_confirmar": "Falta confirmar os dados"
+    },
+    "ler": {
+      "botao": "Ler os dados da fotografia",
+      "a_ler": "A ler…",
+      "sugestao": "Estes dados foram lidos da fotografia. Confira cada um e corrija o que estiver mal — só ficam quando os confirmar.",
+      "sem_resultado": "Não foi possível ler esta fotografia. Escreva os dados à mão, ou tire-a outra vez com mais luz.",
+      "indisponivel": "A leitura automática não está disponível agora. Escreva os dados à mão."
+    },
+    "campos": {
+      "numero": "Número do documento",
+      "nomeNoDocumento": "Nome completo",
+      "dataNascimento": "Data de nascimento",
+      "emitidoEm": "Data de emissão",
+      "validoAte": "Válido até",
+      "naturalidade": "Naturalidade",
+      "filiacao": "Filiação",
+      "nuit": "NUIT",
+      "categorias": "Categorias (por exemplo A, B)",
+      "matricula": "Matrícula",
+      "marca": "Marca",
+      "modelo": "Modelo",
+      "cor": "Cor",
+      "anoVeiculo": "Ano do veículo",
+      "proprietario": "Proprietário"
+    },
+    "erros": {
+      "obrigatorio": "Obrigatório.",
+      "formato_invalido": "Formato inválido. Confira o que está no documento.",
+      "data_invalida": "Data inválida.",
+      "data_no_futuro": "Esta data não pode ser no futuro.",
+      "validade_antes_da_emissao": "A validade não pode ser anterior à emissão.",
+      "expirado": "O documento está fora da validade. Só se aceitam documentos válidos."
+    },
+    "confirmar": "Confirmar dados",
+    "reconfirmar": "Confirmar dados outra vez",
+    "contacto": {
+      "titulo": "Contacto de emergência",
+      "ajuda": "Uma pessoa a quem possamos ligar se acontecer alguma coisa durante o trabalho.",
+      "nome": "Nome",
+      "telefone": "Telemóvel",
+      "guardar": "Guardar contacto"
+    },
+    "concluir": {
+      "botao": "Concluir registo",
+      "pronto": "Está tudo feito. Conclua o registo para poder receber entregas."
+    },
+    "concluido": {
+      "titulo": "Registo concluído",
+      "texto": "Já pode ficar online e receber entregas.",
+      "ir": "Ir para as entregas"
+    },
+    "aviso_antigo": {
+      "titulo": "Falta completar o seu registo",
+      "texto": "Pedimos agora os documentos a todos os estafetas. Pode continuar a trabalhar, mas complete o registo o quanto antes.",
+      "accao": "Completar agora"
+    },
+    "erro_carregar": "Não foi possível carregar o seu registo.",
+    "mensagens": {
+      "erro_imagem": "Não foi possível enviar a fotografia.",
+      "erro_leitura": "Não foi possível ler o documento.",
+      "erro_contacto": "Não foi possível guardar o contacto.",
+      "erro_confirmar": "Não foi possível confirmar os dados.",
+      "confirmado": "Dados confirmados.",
+      "concluido": "Registo concluído.",
+      "erro_concluir": "Não foi possível concluir o registo."
+    }
+  },
+  "registo": {
+    "titulo": "Registo de estafeta",
+    "a_verificar_convite": "A verificar o convite…",
+    "na_frota_de": "Vai registar-se como estafeta de {{empresa}}.",
+    "na_plataforma": "Registe-se para fazer entregas para as lojas ControlCore perto de si.",
+    "convite_invalido_titulo": "Convite inválido",
+    "convite_invalido": "Este convite não é válido ou já foi substituído. Peça um novo à loja.",
+    "campos": {
+      "nome": "Nome completo",
+      "telefone": "Telemóvel",
+      "email": "E-mail",
+      "senha": "Senha (pelo menos 8 caracteres)",
+      "confirmar_senha": "Repita a senha",
+      "emergencia_nome": "Nome do contacto de emergência",
+      "emergencia_telefone": "Telemóvel do contacto de emergência"
+    },
+    "emergencia_titulo": "Contacto de emergência",
+    "emergencia_ajuda": "Uma pessoa a quem possamos ligar se acontecer alguma coisa durante o trabalho.",
+    "consentimento_titulo": "Os seus dados e fotografias",
+    "consentimento_texto": "Para trabalhar como estafeta guardamos os seus dados e as fotografias do bilhete de identidade, da carta de condução, do veículo e do rosto. Ficam guardados em segurança, sem prazo de fim, e só pessoas autorizadas os podem ver — cada consulta fica registada. Servem para confirmar quem é e para proteger os estafetas e as lojas, e podem ser usados em verificações de segurança no futuro.",
+    "consentimento_aceito": "Li e aceito que os meus dados e fotografias sejam guardados e usados para estes fins.",
+    "erros": {
+      "nome": "Indique o nome completo.",
+      "telefone": "Indique um telemóvel moçambicano válido (por exemplo 84 123 4567).",
+      "email": "Indique um e-mail válido.",
+      "senha_curta": "A senha deve ter pelo menos 8 caracteres.",
+      "senha_longa": "A senha pode ter no máximo 72 caracteres.",
+      "emergencia_nome": "Indique o nome do contacto de emergência.",
+      "senhas_diferentes": "As senhas não são iguais.",
+      "consentimento": "Tem de aceitar para se registar."
+    },
+    "erro_generico": "Não foi possível concluir o registo. Tente outra vez.",
+    "botao": "Registar-me",
+    "a_registar": "A registar…",
+    "ja_tenho_conta": "Já tem conta?",
+    "entrar": "Entrar",
+    "sucesso": {
+      "titulo": "Registo criado",
+      "codigo_texto": "Este é o seu código de acesso. Vai usá-lo, com a sua senha, sempre que entrar.",
+      "codigo_etiqueta": "O seu código de acesso",
+      "guarde": "Guarde-o. Enviámo-lo também por e-mail.",
+      "email_nao_enviado": "Não conseguimos enviar o e-mail com o código. Anote-o agora — é este que usa para entrar.",
+      "continuar": "Continuar para os documentos"
+    }
   }
 }

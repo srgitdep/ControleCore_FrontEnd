@@ -4,7 +4,7 @@ import { Can } from '@/features/auth';
 import { formatMoeda } from '@/shared/utils';
 import type { EntregaPainel } from '../types/operacao';
 
-export type AccaoEntrega = 'atribuir' | 'recolher' | 'iniciar_rota' | 'entregar' | 'falhar' | 'devolver';
+export type AccaoEntrega = 'procurar' | 'atribuir' | 'recolher' | 'iniciar_rota' | 'entregar' | 'falhar' | 'devolver';
 
 /**
  * As acções que cada estado permite — espelha `TRANSICOES` do backend
@@ -19,7 +19,8 @@ const ACCOES: Partial<Record<EntregaPainel['estado'], AccaoEntrega[]>> = {
   FALHADA: ['devolver'],
 };
 
-const ROTULO: Record<AccaoEntrega, 'accao.atribuir' | 'accao.reatribuir' | 'accao.recolhida' | 'accao.iniciar_rota' | 'accao.entregue' | 'accao.falhada' | 'accao.devolver'> = {
+const ROTULO: Record<AccaoEntrega, 'accao.procurar' | 'accao.atribuir' | 'accao.reatribuir' | 'accao.recolhida' | 'accao.iniciar_rota' | 'accao.entregue' | 'accao.falhada' | 'accao.devolver'> = {
+  procurar: 'accao.procurar',
   atribuir: 'accao.atribuir',
   recolher: 'accao.recolhida',
   iniciar_rota: 'accao.iniciar_rota',
@@ -29,6 +30,7 @@ const ROTULO: Record<AccaoEntrega, 'accao.atribuir' | 'accao.reatribuir' | 'acca
 };
 
 const ESTILO: Record<AccaoEntrega, string> = {
+  procurar: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
   atribuir: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
   recolher: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
   iniciar_rota: 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700',
@@ -40,12 +42,17 @@ const ESTILO: Record<AccaoEntrega, string> = {
 export function CartaoEntrega({
   entrega,
   aoEscolher,
+  frotaPlataforma = false,
 }: {
   entrega: EntregaPainel;
   aoEscolher: (accao: AccaoEntrega, entrega: EntregaPainel) => void;
+  /** A empresa usa a frota da plataforma: uma entrega por atribuir pode lançar a procura (plano §4.9). */
+  frotaPlataforma?: boolean;
 }) {
   const { t } = useTranslation('entrega');
-  const accoes = ACCOES[entrega.estado] ?? [];
+  const base = ACCOES[entrega.estado] ?? [];
+  // A procura arranca sozinha ao expedir; o botão serve para a lançar de novo (raio volta ao inicial) ou se não arrancou.
+  const accoes: AccaoEntrega[] = frotaPlataforma && entrega.estado === 'AGUARDA_RECOLHA' ? ['procurar', ...base] : base;
 
   return (
     <li className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">

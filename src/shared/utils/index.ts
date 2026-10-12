@@ -4,3 +4,4 @@ export * from './formatMoeda';
 export * from './mensagemDeErro';
 export * from './nuit';
 export * from './pcm-player';
+export * from './imagem';

@@ -110,5 +110,198 @@
     "android": "Opens full screen, faster, and stays on your home screen.",
     "botao": "Install",
     "dispensar": "Dismiss"
+  },
+  "online": {
+    "ligado": "Online — receiving delivery offers",
+    "desligado": "Offline",
+    "alternar": "Toggle between online and offline",
+    "ajuda": "Go online to receive the deliveries that are close to you. We will ask for your location.",
+    "a_espera": "You are online. When there is a delivery near you, an offer appears here — you have 30 seconds to accept it.",
+    "falha": {
+      "sem_suporte": "This phone or connection cannot use location. Open the app over HTTPS in a browser with location support.",
+      "negada": "Location is blocked. Allow it in the browser settings: without it we cannot choose who is closest to the store.",
+      "indisponivel": "Could not get your location. Check your GPS, move to an open area and try again.",
+      "generica": "Could not change your status."
+    }
+  },
+  "oferta": {
+    "titulo": "New delivery near you",
+    "segundos_one": "{{count}} second",
+    "segundos_other": "{{count}} seconds",
+    "loja": "Pick up at the store",
+    "distancia_etiqueta": "Distance to the store",
+    "recebe": "You earn for this delivery",
+    "aviso_cliente": "The customer’s name, phone and address only appear after you accept.",
+    "aceitar": "Accept",
+    "recusar": "Decline",
+    "aceite": "Delivery accepted.",
+    "erro_aceitar": "Could not accept the delivery.",
+    "erro_recusar": "Could not decline the offer."
+  },
+  "partilha_online": {
+    "consentimento_titulo": "Share your position to receive deliveries",
+    "consentimento_texto": "To offer you the deliveries closest to you, this app will use your phone’s location while you are online.",
+    "consentimento_so_em_rota": "Only while you are online. When you go offline the position is deleted and no longer read.",
+    "consentimento_quem_ve": "Who sees it: only the system, to choose who is closest to the store. The store and the customer only see your position during a delivery that is “on its way”.",
+    "consentimento_sem_historico": "We only keep the last position. There is no trip history.",
+    "consentimento_aceitar": "I understand, go online",
+    "negada": "Location is blocked. Allow it in the browser settings for this app — without it you will not receive offers.",
+    "a_partilhar": "Online: the system knows where you are to offer you deliveries near you. The store and the customer do not see it.",
+    "sem_canal": "Trying to connect to receive offers…"
+  },
+  "onboarding": {
+    "titulo": "Complete your registration",
+    "subtitulo": "To work as a courier we need to confirm who you are, your vehicle and your driving licence. Everything is required.",
+    "progresso": "{{feitos}} of {{total}} steps done",
+    "passos_etiqueta": "Registration steps",
+    "passos": {
+      "BI": {
+        "titulo": "Identity card",
+        "ajuda": "Photograph the front and the back. Put the document on a flat surface, with good light and no glare — the text must be readable."
+      },
+      "CARTA_CONDUCAO": {
+        "titulo": "Driving licence",
+        "ajuda": "Photograph the front and the back of the licence, with good light. It must be valid."
+      },
+      "DOCUMENTO_VEICULO": {
+        "titulo": "Vehicle documents",
+        "ajuda": "Photograph the registration book or the title. If the document has a back, photograph it too."
+      },
+      "FOTO_VEICULO": {
+        "titulo": "Vehicle photo",
+        "ajuda": "Photograph the vehicle you will use (for example, the motorbike) so that the number plate is visible."
+      },
+      "FOTO_ROSTO": {
+        "titulo": "Face photo",
+        "ajuda": "A photo of your face, looking straight ahead, with good light and no sunglasses or cap."
+      }
+    },
+    "lado": {
+      "FRENTE": "Front",
+      "VERSO": "Back",
+      "UNICA": "Photo"
+    },
+    "opcional": "if any",
+    "fotografar": "Take a photo",
+    "repetir": "Retake photo",
+    "da_galeria": "Choose from gallery",
+    "a_enviar": "Sending…",
+    "imagem_enviada": "Photo sent: {{lado}}",
+    "estado": {
+      "POR_FAZER": "To do",
+      "IMAGENS_ENVIADAS": "Photos sent",
+      "COMPLETO": "Complete",
+      "falta_confirmar": "Details to confirm"
+    },
+    "ler": {
+      "botao": "Read the details from the photo",
+      "a_ler": "Reading…",
+      "sugestao": "These details were read from the photo. Check each one and fix anything that is wrong — they are only saved when you confirm them.",
+      "sem_resultado": "This photo could not be read. Type the details by hand, or retake it with more light.",
+      "indisponivel": "Automatic reading is not available right now. Type the details by hand."
+    },
+    "campos": {
+      "numero": "Document number",
+      "nomeNoDocumento": "Full name",
+      "dataNascimento": "Date of birth",
+      "emitidoEm": "Issue date",
+      "validoAte": "Valid until",
+      "naturalidade": "Place of birth",
+      "filiacao": "Parents",
+      "nuit": "NUIT (tax number)",
+      "categorias": "Categories (for example A, B)",
+      "matricula": "Number plate",
+      "marca": "Make",
+      "modelo": "Model",
+      "cor": "Colour",
+      "anoVeiculo": "Vehicle year",
+      "proprietario": "Owner"
+    },
+    "erros": {
+      "obrigatorio": "Required.",
+      "formato_invalido": "Invalid format. Check what is on the document.",
+      "data_invalida": "Invalid date.",
+      "data_no_futuro": "This date cannot be in the future.",
+      "validade_antes_da_emissao": "The expiry cannot be before the issue date.",
+      "expirado": "The document has expired. Only valid documents are accepted."
+    },
+    "confirmar": "Confirm details",
+    "reconfirmar": "Confirm details again",
+    "contacto": {
+      "titulo": "Emergency contact",
+      "ajuda": "Someone we can call if anything happens while you work.",
+      "nome": "Name",
+      "telefone": "Mobile number",
+      "guardar": "Save contact"
+    },
+    "concluir": {
+      "botao": "Complete registration",
+      "pronto": "Everything is done. Complete your registration to start receiving deliveries."
+    },
+    "concluido": {
+      "titulo": "Registration complete",
+      "texto": "You can now go online and receive deliveries.",
+      "ir": "Go to deliveries"
+    },
+    "aviso_antigo": {
+      "titulo": "Your registration is incomplete",
+      "texto": "We now ask every courier for documents. You can keep working, but please complete your registration as soon as you can.",
+      "accao": "Complete now"
+    },
+    "erro_carregar": "Could not load your registration.",
+    "mensagens": {
+      "erro_imagem": "Could not send the photo.",
+      "erro_leitura": "Could not read the document.",
+      "erro_contacto": "Could not save the contact.",
+      "erro_confirmar": "Could not confirm the details.",
+      "confirmado": "Details confirmed.",
+      "concluido": "Registration complete.",
+      "erro_concluir": "Could not complete the registration."
+    }
+  },
+  "registo": {
+    "titulo": "Courier registration",
+    "a_verificar_convite": "Checking the invitation…",
+    "na_frota_de": "You are about to register as a courier for {{empresa}}.",
+    "na_plataforma": "Register to make deliveries for ControlCore stores near you.",
+    "convite_invalido_titulo": "Invalid invitation",
+    "convite_invalido": "This invitation is not valid or has been replaced. Ask the store for a new one.",
+    "campos": {
+      "nome": "Full name",
+      "telefone": "Mobile number",
+      "email": "E-mail",
+      "senha": "Password (at least 8 characters)",
+      "confirmar_senha": "Repeat the password",
+      "emergencia_nome": "Emergency contact name",
+      "emergencia_telefone": "Emergency contact mobile number"
+    },
+    "emergencia_titulo": "Emergency contact",
+    "emergencia_ajuda": "Someone we can call if anything happens while you work.",
+    "consentimento_titulo": "Your data and photos",
+    "consentimento_texto": "To work as a courier we keep your details and the photos of your identity card, driving licence, vehicle and face. They are stored securely, with no end date, and only authorised people can see them — every access is logged. They are used to confirm who you are and to protect couriers and stores, and may be used for security checks in the future.",
+    "consentimento_aceito": "I have read and agree that my details and photos are kept and used for these purposes.",
+    "erros": {
+      "nome": "Enter your full name.",
+      "telefone": "Enter a valid Mozambican mobile number (for example 84 123 4567).",
+      "email": "Enter a valid e-mail.",
+      "senha_curta": "The password must have at least 8 characters.",
+      "senha_longa": "The password can have at most 72 characters.",
+      "emergencia_nome": "Enter the emergency contact name.",
+      "senhas_diferentes": "The passwords do not match.",
+      "consentimento": "You must accept to register."
+    },
+    "erro_generico": "Could not complete the registration. Try again.",
+    "botao": "Register",
+    "a_registar": "Registering…",
+    "ja_tenho_conta": "Already have an account?",
+    "entrar": "Sign in",
+    "sucesso": {
+      "titulo": "Registration created",
+      "codigo_texto": "This is your access code. You will use it, with your password, every time you sign in.",
+      "codigo_etiqueta": "Your access code",
+      "guarde": "Keep it. We also sent it by e-mail.",
+      "email_nao_enviado": "We could not send the e-mail with the code. Write it down now — it is what you use to sign in.",
+      "continuar": "Continue to documents"
+    }
   }
 }

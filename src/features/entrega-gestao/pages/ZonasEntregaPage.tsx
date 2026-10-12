@@ -9,6 +9,7 @@ import {
   useCriarZona,
   useZonasEntrega,
 } from '../hooks/useEntregaGestao';
+import { SeletorDeFrota } from '../components/SeletorDeFrota';
 import type { ConfiguracaoEntrega, ZonaEntrega } from '../types';
 
 const classeCampo =
@@ -374,6 +375,7 @@ export function ZonasEntregaPage() {
       ) : (
         <>
           <CartaoConfiguracao configuracao={configuracao.data} />
+          <SeletorDeFrota configuracao={configuracao.data} />
           <SeccaoZonas configuracao={configuracao.data} />
         </>
       )}
