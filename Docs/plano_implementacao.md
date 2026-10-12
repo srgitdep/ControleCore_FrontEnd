@@ -2031,12 +2031,12 @@ esse merge trouxe.
 - [ ] O menu mostra «Pedidos Compra Fácil» a Armazenistas, que recebem 403 — o
       perfil «Armazenista» não tem `pedidos_commerce` (assunção 10 da §4.1). Ou se
       tira o item do menu a esse cargo, ou se dá a permissão se o picking for dele.
-- [ ] Cobrança no checkout com gateway M-Pesa/e-Mola. Hoje o método de pagamento
-      do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é
-      cobrado fisicamente no levantamento. Passar a cobrar no checkout torna o
-      pedido um facto financeiro imediato, mas traz reembolsos, conciliação de
-      pagamentos e tratamento de pagamento falhado — é projecto próprio, não
-      correcção.
+- [ ] **Cobrança no checkout com carteira móvel (M-Pesa/e-Mola), reembolsos e liquidação.** Hoje o método de pagamento do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é cobrado fisicamente no levantamento ou à porta. Passar a cobrar no checkout torna o pedido um facto financeiro imediato (reembolsos, conciliação, pagamento falhado, prestação de contas às empresas) — **projecto próprio**, planeado em **§4.10** (rascunho, a aguardar aprovação). **É o pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout).
+  - [ ] **PG1 — Dados, porta e simulado.** Migração (pagamentos, eventos, reembolsos, `AGUARDA_PAGAMENTO`), interface `GatewayPagamento` e gateway simulado, com os testes de toda a máquina de estados **sem rede**.
+  - [ ] **PG2 — O cliente paga.** Iniciar, confirmar (aviso do operador e consulta de estado, idempotentes), expirar; checkout com ecrã de espera e retomar «Os meus pedidos» — de ponta a ponta com o simulado.
+  - [ ] **PG3 — Reembolsos e a ligação ao resto.** Cancelamento, diferença da conferência e entrega falhada; a venda da expedição sem conta a receber e o acerto de numerário a ignorar pedidos pagos.
+  - [ ] **PG4 — Liquidação às empresas e conciliação.** Extrato por empresa, liquidação (à mão no início), conciliação diária, ecrãs do operador.
+  - [ ] **PG5 — O operador real.** Adaptador M-Pesa, ensaio no *sandbox*, **um pagamento real de valor mínimo e o seu reembolso**; piloto com uma empresa. **Depende das perguntas P1 (licença) e P2 (operador e contrato) do §4.10.**
 
 ### Entrega ao domicílio (Compra Fácil)
 
@@ -2131,13 +2131,13 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [ ] **P2 — O aparelho.** *Handler* de *push* no *service worker*, pedido de permissão e activação por aparelho (estafeta, cliente e gestão), «abrir» a partir do aviso.
   - [ ] **P3 — O iPhone.** Instruções de instalação no ecrã inicial (o iOS só entrega *push* a PWA instalada) e, se aprovado, a loja instalável.
   - [ ] **P4 — Fecho.** Testes, documentação, teste real com o telemóvel **bloqueado** (Android e iPhone).
-- [ ] **Estafetas da plataforma: onboarding com documentos e atribuição por proximidade.** Pedido do utilizador em 2026-10-12: o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**. Regista-se sozinho e entrega, obrigatoriamente, **BI, carta de condução, veículo e documentos do veículo (frente e verso) e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, ligadas ao estafeta. Quando uma compra pede entrega, o servidor oferece-a ao estafeta **online mais perto da loja** (só a loja conta), com aceitar/recusar e tempo limite; recusa ou silêncio passa ao seguinte. O numerário é acertado **por empresa**, e a **frota própria** de cada empresa continua a existir (a empresa escolhe). Decidido pelo utilizador: **auto-registo público**, **activação ao submeter sem aprovação**, **cliente a pagar o estafeta pela taxa**, **dados guardados para sempre** e **procura forçada com raio crescente de 7 em 7 s** (divergências e compensações em §4.9, secção 3). Plano detalhado em **§4.9** (rascunho, a aguardar aprovação). **Depende do §4.8 (*push*) e de um pagamento online no checkout (§4.10, a planear: o sistema ainda só cobra à entrega).**
+- [ ] **Estafetas da plataforma: onboarding com documentos e atribuição por proximidade.** Pedido do utilizador em 2026-10-12: o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**. Regista-se sozinho e entrega, obrigatoriamente, **BI, carta de condução, veículo e documentos do veículo (frente e verso) e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, ligadas ao estafeta. Quando uma compra pede entrega, o servidor oferece-a ao estafeta **online mais perto da loja** (só a loja conta), com aceitar/recusar e tempo limite; recusa ou silêncio passa ao seguinte. O numerário é acertado **por empresa**, e a **frota própria** de cada empresa continua a existir (a empresa escolhe). Decidido pelo utilizador: **auto-registo público**, **activação ao submeter sem aprovação**, **cliente a pagar o estafeta pela taxa**, **dados guardados para sempre** e **procura forçada com raio crescente de 7 em 7 s** (divergências e compensações em §4.9, secção 3). Plano detalhado em **§4.9** (rascunho, a aguardar aprovação). **Depende do §4.8 (*push*) e de um pagamento online no checkout (§4.10, rascunho: o sistema ainda só cobra à entrega).**
   - [ ] **O1 — Dados e leitura.** Migração (`empresaId` do estafeta opcional, documentos, imagens, ofertas, `frotaEntrega`), `ExtrairDocumentoEstafetaService` e validação pura com testes.
   - [ ] **O2 — Registo e documentos.** Registo público, envio/leitura/confirmação/conclusão dos documentos, convite da frota própria.
   - [ ] **O3 — Gestão dos documentos.** Ver e conferir (permissão nova, URLs de 5 min, auditoria), suspender; **nada se apaga** (retenção permanente); operador da plataforma (`SUPER_ADMIN`).
   - [ ] **D1 — Online e posição.** Ficar online/offline, posição de quem está online (só a última, apagada ao sair), sem alterar o que o cliente vê.
   - [ ] **D2 — O algoritmo e as ofertas.** Ordenar por distância à loja, oferta sequencial com tempo limite, aceitar atómico, raio que cresce de 7 em 7 s, **procura que não desiste**, aviso ao gestor aos 10 min, atribuição manual só à frota própria.
-  - [ ] **D3 — Acertos e carteira.** Garantir que o acerto de numerário só abrange a frota própria; **retenção da taxa no pagamento** e **libertação para a carteira do estafeta no instante da entrega**. **Depende do pagamento online (§4.10, a planear) e das perguntas P9 a P11.**
+  - [ ] **D3 — Acertos e carteira.** Garantir que o acerto de numerário só abrange a frota própria; **retenção da taxa no pagamento** e **libertação para a carteira do estafeta no instante da entrega**. **Depende do pagamento online (§4.10) e das perguntas P9 a P11.**
   - [ ] **O4/D4 — Os ecrãs.** Registo, assistente de documentos com captura e compressão, interruptor online, ecrã de oferta, gestão (convite, documentos, frota própria/plataforma) e o ecrã da plataforma.
   - [ ] **O5 — Fecho.** Testes, documentação e TRD; **teste real** com dois telemóveis e um BI verdadeiro. Perguntas **P1, P3b, P5, P6 e P9 a P11** do §4.9 respondidas **antes** de começar (a P11, o enquadramento legal de a plataforma guardar dinheiro de terceiros, decide se o B13 se pode fazer).
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
@@ -2304,6 +2304,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Aprovado** — N1 a N3 feitas (Fase 47); falta o teste real (N4) | Secção 3 → «Notificações dentro da aplicação» |
 | 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
 | 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
+| 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho** — a aguardar aprovação do utilizador; **pré-requisito do §4.9** | Secção 3 → «Compra Fácil» → Cobrança no checkout |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4962,19 +4963,169 @@ Duas metades, que se constroem em conjunto porque uma não faz sentido sem a out
 - **P5 — Documentos do veículo.** Basta o livrete, ou também o seguro obrigatório e a inspecção?
 - **P6 — Campo que o documento não tem.** Aceita-se uma excepção marcada («não consta do documento») ou o campo é sempre exigido?
 - **P9 — Levantar o dinheiro da carteira.** O ganho aparece logo na carteira, mas passar para o M-Pesa/e-Mola real exige um meio de pagamento a terceiros. **A plataforma tem acesso a uma API de pagamentos (M-Pesa, e-Mola ou um agregador) que permita pagar ao estafeta?** Se sim, o levantamento é automático e imediato; se não, é um pedido que o operador paga à mão («no mesmo dia»). **Valor mínimo** e **taxas do operador:** quem as paga?
-- **P9b — O pagamento online no checkout (pré-requisito).** Qual operador ou agregador de pagamentos, e **o dinheiro do pedido vai para onde**: **(a)** para a plataforma, que depois **repassa a parte da mercadoria a cada empresa**; ou **(b)** dividido logo à cabeça (mercadoria à empresa, taxa à plataforma), se o operador o permitir? A escolha decide quem responde por reembolsos e quando a empresa recebe. **Isto é um plano à parte** (a criar como §4.10) e é a condição para o B13.
+- **P9b — O pagamento online no checkout (pré-requisito).** Qual operador ou agregador de pagamentos, e **o dinheiro do pedido vai para onde**: **(a)** para a plataforma, que depois **repassa a parte da mercadoria a cada empresa**; ou **(b)** dividido logo à cabeça (mercadoria à empresa, taxa à plataforma), se o operador o permitir? A escolha decide quem responde por reembolsos e quando a empresa recebe. **Está planeado em §4.10** (rascunho), e é a condição para o B13.
 - **P9c — Comissão.** A plataforma fica com uma percentagem da taxa, ou o estafeta recebe tudo? Por omissão, **tudo**.
 - **P10 — Entrega falhada.** Se o estafeta chega e a entrega falha, a taxa **volta ao cliente** ou **fica com o estafeta** (fez a viagem)? Recomendo: **falha por culpa do cliente** (ausente, morada errada) → fica com o estafeta; **falha por culpa da loja ou do estafeta** → volta ao cliente. Quem decide o caso duvidoso?
 - **P11 — Enquadramento legal de reter dinheiro de clientes.** Reter a taxa entre o checkout e a entrega, e guardar a carteira do estafeta, pode exigir licença ou parceria com uma instituição autorizada. **Quem o confirma antes de se implementar o B13?** Alternativa: a retenção fica no parceiro de pagamentos, e a plataforma só dá a ordem de libertar.
 
 #### 11. Ordem de execução
 
-0. **Pré-requisito: o pagamento online no checkout** (P9b), planeado como **§4.10** e construído **antes** do B13. Sem ele, as partes da atribuição por proximidade e o onboarding podem avançar (não dependem de dinheiro), mas **o estafeta da plataforma não pode receber**, e portanto a frota da plataforma não deve abrir a empresas.
+0. **Pré-requisito: o pagamento online no checkout** (P9b), planeado em **§4.10** (rascunho) e construído **antes** do B13. Sem ele, as partes da atribuição por proximidade e o onboarding podem avançar (não dependem de dinheiro), mas **o estafeta da plataforma não pode receber**, e portanto a frota da plataforma não deve abrir a empresas.
 1. **§4.8 (*push*) primeiro**, ou em simultâneo, porque a oferta depende dele para chegar com o telemóvel bloqueado.
 2. **Backend:** B1 (migração) → B4 (leitura, com testes) → B2/B3 → B5 → **B6 → B7 → B8 → B9** → B10/B11. Backend primeiro, como em toda a mudança de contrato.
 3. **Frontend:** F1–F2 (onboarding) → F3 (online e oferta) → F4–F5 (gestão e plataforma).
 4. Documentação e TRD nos dois repositórios, no mesmo ciclo.
 5. **Teste real** com dois telemóveis e um BI verdadeiro, antes de abrir o registo a estafetas reais.
+
+### 4.10 Pagamento online no checkout (carteira móvel), reembolsos e liquidação
+
+- **Data:** 2026-10-12 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o resto:** é o **pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout). É também o item «Cobrança no checkout com gateway M-Pesa/e-Mola» que o backlog e o §4.1 deixaram como «projecto próprio». O §4.1 já deixou o encaixe: *«quando o gateway entrar, a venda da expedição passa a levar o método pré-pago em vez de `A_COBRAR_NA_ENTREGA`, não se cria `RegistroFinanceiro` a receber, e o acerto ignora esses pedidos»* (assunção 4).
+
+#### 1. Objectivo
+
+O cliente do Compra Fácil **paga no checkout**, pelo telemóvel (M-Pesa ou e-Mola), e só depois o pedido chega à loja. O sistema passa a **saber** se um pedido está pago — hoje não sabe: `Pedido.metodoPagamento` é uma intenção, e o dinheiro é cobrado à porta ou no balcão, com o M-Pesa registado à mão. Isto é uma mudança de natureza: o pedido torna-se um **facto financeiro imediato**, com reembolsos, conciliação e prestação de contas às empresas.
+
+#### 2. O que existe hoje (verificado no código, 2026-10-12)
+
+| Coisa | Estado |
+| --- | --- |
+| Pagamento online | **Não existe.** Nenhuma integração com operador ou agregador; `MetodoPagamentoCommerce` (`NUMERARIO`/`MPESA`/`EMOLA`) é só intenção |
+| `Pedido` | Estados `CRIADO → CONFIRMADO → EM_PREPARACAO → PRONTO → EXPEDIDO → EM_ROTA → CONCLUIDO` (+ `FALHADA`, `CANCELADO`); `totalFinal`, `taxaEntrega`; **sem estado nem campos de pagamento** |
+| Reserva de stock | `ReservaStock` com `estado` e **`expiraEm`** (já há expiração agendada): o encaixe natural para «pedido à espera de pagamento» |
+| Conferência | `ConferirPedidoUseCase` **refaz o total** com o que foi de facto separado (rupturas, substituições): o valor pago no checkout pode **diferir** do final → reembolso parcial |
+| Expedição | `ExpedirPedidoUseCase` cria a venda com pagamento `A_COBRAR_NA_ENTREGA` |
+| Webhooks de entrada | Padrão já escrito e testado (`ReceberWebhookEntregaUseCase`): assinatura sobre o corpo cru, janela de tempo, idempotência por `@@unique`, `202` e processamento depois — **a reutilizar** |
+| Tarefas agendadas / Redis | `@nestjs/schedule` e Redis existem |
+| Segredos | `fly secrets`; variável nova entra no `.env.example` com o que acontece se faltar |
+
+#### 3. O que se sabe do mercado (pesquisa de 2026-10-12 — **a confirmar com cada operador**)
+
+| Via | O que apurei | Fonte |
+| --- | --- | --- |
+| **M-Pesa (Vodacom) — API directa** | Há um portal de desenvolvedor com chaves, ambiente de ensaio (*sandbox*) e produção, e operações de **cobrança (C2B)**, **pagamento (B2C)** e **reversão** (a reversão devolve uma transacção já concluída). Os detalhes vêm de bibliotecas de terceiros; a documentação oficial exige conta no portal | SDKs públicos (`emagombe/mpesa-api`, `tekmpesa` — Moçambique) — **não oficial** |
+| **e-Mola (Movitel)** | **Não encontrei documentação pública de API.** O caminho é contactar a Movitel (apoio a empresas) e pedir documentação, ensaio e contrato | Resultado de pesquisa — **sem confirmação** |
+| **PawaPay** | Obteve **licença de PSP do Banco de Moçambique** (filial Quidexplus Mozambique) e diz que passa a integrar comerciantes directamente; segundo outra fonte, o e-Mola só aparece para **pagamentos de saída**, e há conversações para alargar as cobranças. Declarações da própria empresa, **sem verificação independente** | techtrendske.co.ke, 2026-10-09 |
+| **Regulação** | Desde 2019 o Banco de Moçambique distingue entidades de moeda electrónica, empresas de transferência e **agregadores de pagamentos** (quem cobra em nome de comerciantes). Não há registo público | Pesquisa — **confirmar legalmente (P11 do §4.9)** |
+| **Interligação** | M-Pesa, e-Mola e mKesh estão interligados desde 2022 (transferências entre carteiras) | Banco de Moçambique |
+
+**Conclusão honesta:** a via mais directa e mais documentada é a **API do M-Pesa**; o e-Mola precisa de contacto comercial e não se deve prometer antes de existir documentação. Por isso o desenho é **por adaptadores** (D2) e a primeira entrega é **só M-Pesa**.
+
+#### 4. Requisito interpretado
+
+1. Checkout com **M-Pesa** (e **e-Mola** quando houver acesso): o cliente indica o número da carteira, recebe o pedido de confirmação **no telemóvel** (PIN), e o ecrã mostra «a aguardar confirmação».
+2. **Só depois de pago** o pedido chega à loja. Não pago em N minutos → cancela-se e libertam-se as reservas.
+3. A **taxa de entrega** vem dentro do que o cliente paga (§4.9 D16). **Com frota da plataforma, o pagamento online é obrigatório**; com frota própria ou levantamento, é uma escolha (mantém-se o pagamento à porta/balcão).
+4. **Reembolsos:** cancelamento antes da entrega, diferença da conferência (ruptura/substituição) e entrega falhada (regra do §4.9 P10).
+5. **Prestação de contas à empresa:** o dinheiro entra na conta da plataforma; a mercadoria é **liquidada à empresa** (D4).
+6. **Conciliação:** o que o sistema diz que recebeu tem de bater com o que o operador diz que enviou.
+
+#### 5. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Um pagamento é uma entidade com máquina de estados própria** (`pagamentos`), separada do `Pedido`: `INICIADO → PENDENTE → CONFIRMADO` ou `FALHADO`/`EXPIRADO`/`INCERTO`, e depois `REEMBOLSADO_PARCIAL`/`REEMBOLSADO`. O `Pedido` ganha só o **resumo** (`estadoPagamento`, `totalPago`, `pagoEm`) | Campos soltos no `Pedido` | Um pedido pode ter **várias tentativas** (o cliente falha o PIN e repete) e vários reembolsos; cada um é uma linha com a sua referência e o seu histórico |
+| **D2** | **Porta e adaptadores:** interface `GatewayPagamento` (`iniciarCobranca`, `consultarEstado`, `reembolsar`, `pagar`) em `domain/`, e **um adaptador por operador** (`MpesaGateway`, depois `EmolaGateway`/`PawaPayGateway`). Há também um **`GatewaySimulado`** para desenvolvimento e testes | Chamar a API do M-Pesa directamente dos casos de uso | Os operadores vão ser trocados ou somados (o e-Mola ainda não tem API conhecida); a regra de negócio não pode saber de URLs. O simulado deixa testar o fluxo inteiro sem dinheiro |
+| **D3** | **Idempotência em todos os pontos:** cada tentativa tem uma `referenciaInterna` única (a chave que o operador recebe); um `webhook`/consulta repetido não confirma duas vezes (`@@unique([fornecedor, eventoExternoId])`); confirmar é um *update* condicional (`WHERE estado = 'PENDENTE'`) | Confiar em que o operador não repete | Os operadores repetem avisos, e o cliente carrega duas vezes. Um pagamento confirmado duas vezes é uma receita duplicada |
+| **D4** | **A plataforma é o comerciante** (recebe tudo numa conta sua) e **liquida às empresas** a parte da mercadoria, **depois da entrega concluída** (D+1 ou semanal, P3). A taxa de entrega fica retida para o estafeta (§4.9 D16) | **Pagamento dividido** (mercadoria à empresa, taxa à plataforma) logo à cabeça; uma conta de comerciante por empresa | Não conto que os operadores ofereçam divisão; e uma conta por empresa obrigaria o cliente a **duas** confirmações (mercadoria e taxa). **Custo assumido:** a plataforma passa a **dever dinheiro às empresas** entre o pagamento e a liquidação, e a ser, para efeitos legais, quem cobra em nome de terceiros — **P1 (licença) é a primeira pergunta** |
+| **D5** | **O resultado incerto é um estado, não um erro:** um tempo-limite do operador **não** dá `FALHADO`; passa a `INCERTO` e o servidor **consulta o estado** (a cada ~10 s durante 2 min, depois de forma espaçada até 24 h) até haver resposta. **Nunca** se cancela um pedido nem se deixa o cliente repetir o pagamento enquanto um anterior está `INCERTO` | Dar erro e deixar tentar de novo | O cliente pode ter sido **debitado** e o ecrã dizer «falhou»: ao repetir, paga duas vezes |
+| **D6** | **O pedido nasce em `AGUARDA_PAGAMENTO`** (estado novo, antes de `CRIADO`): com a reserva de stock a expirar (`ReservaStock.expiraEm`, ~10 min). Pago → `CRIADO` e a loja vê-o; não pago → `CANCELADO` e reservas libertadas, pela mesma varredura que já expira reservas | Reservar sem estado; só criar o pedido depois de pago | Sem estado, um pedido pago «desaparece» se o ecrã fechar; e criar só depois de pago deixa o stock livre para outro durante o PIN |
+| **D7** | **Valor verificado contra a nossa base de dados, nunca contra o que chega:** o valor, a moeda (`MZN`) e a empresa vêm do `Pedido`; um aviso do operador com valor diferente **não confirma** — fica para revisão do operador da plataforma | Aceitar o valor do aviso | Um aviso forjado ou mal formado não pode dar um pedido por pago |
+| **D8** | **O número de telemóvel não se guarda em claro nos registos nem nos *logs*** (mascarado, `84•••••12`) e **o servidor limita os pedidos de confirmação** (por conta, por número e por IP) | Deixar enviar quantos pedidos se quiser | Sem limite, o checkout é uma forma de **enviar pedidos de PIN a qualquer número** — assédio e fraude |
+| **D9** | **Reembolso por operação própria** (`reembolsos`, uma linha cada): total ou parcial, com motivo (`CANCELAMENTO`, `DIFERENCA_CONFERENCIA`, `ENTREGA_FALHADA`), executado pelo adaptador (reversão ou pagamento ao cliente) e **repetido com recuo** se falhar; falhando sempre, fica **«reembolso por fazer à mão»** num ecrã do operador | Reembolsar dentro da transacção do cancelamento | Uma chamada externa não pode estar dentro de uma transacção da base de dados, e um reembolso que falha não pode impedir o cancelamento |
+| **D10** | **A diferença da conferência** (a loja separa menos do que foi pago) gera um **reembolso parcial automático** quando o pedido passa a `PRONTO`; se a conferência **aumentar** o total (substituição mais cara), **não se cobra mais**: a empresa absorve ou recusa a substituição | Pedir ao cliente que pague a diferença | Uma segunda cobrança a meio de um pedido é fricção e risco; o caso comum é faltar mercadoria, não sobrar |
+
+#### 6. Plano de implementação
+
+##### B — Backend
+
+- **B1 — Dados (obrigatório).** Migração **aditiva**: `pagamentos` (`pedidoId`, `empresaId`, `fornecedor`, `metodo`, `msisdnMascarado`, `valor`, `moeda`, `estado`, `referenciaInterna` único, `referenciaExterna`, `expiraEm`, `confirmadoEm`, `respostaResumo` JSON **sem dados sensíveis**), `eventos_pagamento` (único por `fornecedor`+`eventoExternoId`, corpo cru para auditoria), `reembolsos`; `Pedido.estadoPagamento`, `totalPago`, `pagoEm`; valor novo `AGUARDA_PAGAMENTO` em `EstadoPedido`. **Os pedidos existentes ficam `NAO_APLICAVEL`** e todo o comportamento actual mantém-se. (`ALTER TYPE … ADD VALUE` não corre na mesma transacção que o usa: a migração separa-o.)
+- **B2 — A porta e o simulado (obrigatório).** `domain/gateway-pagamento.ts` e `GatewaySimulado` (resultados escolhidos pelo número de teste: aprovado, recusado, sem saldo, *timeout*, **confirmação tardia**); testes de toda a máquina de estados **sem rede**.
+- **B3 — Adaptador M-Pesa (obrigatório).** `MpesaGateway`: cobrança, consulta de estado e reversão/pagamento, com cifra da chave pública exigida pelo operador, *timeouts* explícitos e **sem repetir uma cobrança** (só consultas se repetem). Ensaio no *sandbox* do operador **antes** de produção. **Depende de conta no portal e de contrato — P2.**
+- **B4 — Iniciar o pagamento (obrigatório).** `POST /commerce/pedidos/:id/pagamento` (conta do cliente; **o pedido tem de ser dele**): valida o pedido (`AGUARDA_PAGAMENTO`, não expirado, sem pagamento `PENDENTE`/`INCERTO`), o número e o limite de pedidos (D8), cria o `Pagamento` e chama o gateway. `GET /commerce/pedidos/:id/pagamento` devolve o estado (o ecrã consulta-o a cada 3 s).
+- **B5 — Confirmar (obrigatório).** Dois caminhos para o mesmo resultado, ambos idempotentes (D3): o **aviso do operador** (`POST /pagamentos/webhook/:fornecedor`, `@Public()` **deliberado**, assinatura sobre o corpo cru e janela de tempo, `202` e processamento depois — o padrão de `ReceberWebhookEntregaUseCase`) e a **consulta de estado** (D5). Confirmar = *update* condicional `PENDENTE → CONFIRMADO` + valor/moeda verificados (D7) + `Pedido` `AGUARDA_PAGAMENTO → CRIADO`, **na mesma transacção**; notifica a loja (§4.7).
+- **B6 — Expirar (obrigatório).** Tarefa agendada: pedidos `AGUARDA_PAGAMENTO` vencidos **sem pagamento `PENDENTE`/`INCERTO`** → `CANCELADO` e reservas libertadas; os `INCERTO` não se tocam (D5).
+- **B7 — Reembolsos (obrigatório).** `ReembolsarPagamentoUseCase` (D9) e as três origens: cancelamento (cliente ou gestão), diferença da conferência (D10), entrega falhada (regra do §4.9 P10). Tarefa de repetição com recuo; ecrã do operador para os que falharam.
+- **B8 — Liga ao resto (obrigatório).** `ExpedirPedidoUseCase` passa a criar a venda com pagamento **já cobrado** (método e referência do `Pagamento`), **sem** `RegistroFinanceiro` a receber, e a entrega com `metodoCobrado` preenchido — por isso o **acerto de numerário ignora estes pedidos** (assunção 4 do §4.1). Com `frotaEntrega = PLATAFORMA` (§4.9), o checkout **recusa `NUMERARIO`**.
+- **B9 — Liquidação às empresas (obrigatório para abrir a empresas).** Tabela `liquidacoes_empresa`: o que a plataforma deve a cada empresa = mercadoria (e IVA) dos pedidos **concluídos** e pagos online, **menos** reembolsos, **menos** a taxa (que não é da empresa). Extrato por empresa; **a liquidação faz-se à mão pelo operador no início** (transferência bancária ou carteira), registada no sistema; automatizar (pagamento pelo adaptador) é melhoria. **A empresa só vê as suas.**
+- **B10 — Conciliação (obrigatório).** Tarefa diária: pagamentos `CONFIRMADO`/`PENDENTE`/`INCERTO` do dia contra a consulta ao operador (e o extracto, se houver); **divergência = alerta** ao operador da plataforma, nunca correcção silenciosa. Relatório de totais por dia/método/empresa.
+- **B11 — Transversal.** Variáveis de ambiente (secção 7), `.env.example` com o que acontece se faltarem (**sem as chaves, o pagamento online fica desligado e o checkout mantém o pagamento à porta**, nunca impede o arranque); auditoria de cada mudança de estado de dinheiro; permissões novas (`pagamentos.ver`, `pagamentos.reembolsar`, `liquidacoes.gerir`); mensagens pt/en; testes (secção 8).
+
+##### F — Frontend
+
+- **F1 — Checkout (obrigatório).** Escolha do método e do número (validação do prefixo por operador: o número pré-preenche-se com o da conta, mas pode ser outro), botão «Pagar», **ecrã de espera** («Confirme no seu telemóvel», contagem decrescente, consulta a cada 3 s) com resultados claros: pago, recusado, sem saldo, expirado, **incerto** («estamos a confirmar — não pague outra vez»). Quatro estados e `mensagemDeErro()`. Funciona em telemóvel e com a ligação a falhar.
+- **F2 — Retomar (obrigatório).** O pedido `AGUARDA_PAGAMENTO` aparece em «Os meus pedidos» com «Pagar agora» e o tempo que resta; fechar o separador a meio não perde o pagamento.
+- **F3 — Gestão (obrigatório).** O pedido mostra o pagamento (método, referência, estado, reembolsos); a **fila de pedidos** só inclui os pagos; ecrã do operador da plataforma para **reembolsos por fazer**, **divergências da conciliação** e **liquidações às empresas**; a empresa vê o seu extrato.
+- **F4 — Configuração (obrigatório).** Na empresa, a escolha de **aceitar pagamento online** e (com a §4.9) a frota.
+- **F5 — i18n e permissões na UI (obrigatório).** pt/en; a UI esconde, o servidor autoriza.
+
+##### Opcional (cortar sob pressão)
+
+- Segundo operador (**e-Mola**) e um agregador (PawaPay) como alternativa ao M-Pesa directo.
+- Liquidação às empresas **automática**.
+- Cartão bancário e QR.
+- Pagamento por **referência** (o cliente paga fora do ecrã) e pagamento em **prestações**.
+
+#### 7. Ficheiros e configuração
+
+- **Backend, criar:** migração `…_pagamento_online`; `modules/pagamento/` (`domain/gateway-pagamento.ts`, `domain/estado-pagamento.ts`, `infrastructure/gateways/{simulado,mpesa}.gateway.ts`, `application/use-cases/{iniciar-pagamento,confirmar-pagamento,reembolsar-pagamento,liquidar-empresa,conciliar}.use-case.ts`, `application/tasks/{expirar-pagamentos,repetir-reembolsos,conciliar-diario}.task.ts`, `dto/`, `pagamento.controller.ts`, `pagamento-webhook.controller.ts`, `pagamento-gestao.controller.ts`, `pagamento.module.ts`) — cada regra com o seu `.spec`.
+- **Backend, alterar:** `schema.prisma`; `criar-pedido.use-case.ts` (nasce `AGUARDA_PAGAMENTO` quando o método é online); `conferir-pedido.use-case.ts` (reembolso da diferença, D10); `cancelar-pedido*.use-case.ts` (reembolso); `expedir-pedido.use-case.ts` (venda já paga, B8); `transitar-estado-pedido.use-case.ts` (novo estado); `acertos-estafeta.use-cases.ts` (ignora pré-pagos); `app.module.ts`; `seed.ts` e `permissoes.guard.spec.ts`; `.env.example`.
+- **Variáveis de ambiente (novas):** `PAGAMENTOS_GATEWAY` (`simulado` | `mpesa`; **por omissão `simulado` fora de produção e desligado em produção**), `MPESA_BASE_URL`, `MPESA_API_KEY`, `MPESA_PUBLIC_KEY`, `MPESA_SERVICE_PROVIDER_CODE`, `PAGAMENTOS_WEBHOOK_SEGREDO`; os nomes exactos fixam-se depois de ler a documentação oficial do operador. **Sem elas, o pagamento online fica desligado** (o checkout só mostra o pagamento à porta) — e o §4.9 não pode abrir a frota da plataforma.
+- **Frontend, criar:** em `features/compra-facil`: `components/PagamentoMovel.tsx`, `EsperaDeConfirmacao.tsx`, `hooks/usePagamento.ts`, `api/pagamento.api.ts`; em `features/compra-facil-gestao`/`financeiro`: o painel de reembolsos, conciliação e liquidações; `locales/pt|en`.
+- **Frontend, alterar:** `CheckoutPage.tsx`, `MeusPedidosPage`, o detalhe do pedido da gestão, o separador de pedidos (só pagos), `router/index.tsx`.
+- **Docs, nos dois repositórios:** `plano_implementacao.md` e `TRD.md` (serviço novo e **pago** — taxas do operador —, variáveis, estados, endpoints).
+
+#### 8. Verificação
+
+- **Backend:** máquina de estados completa com o simulado (aprovado, recusado, sem saldo, expirado, **tempo-limite → incerto → confirmado depois**); **confirmar duas vezes não duplica** (aviso repetido, aviso + consulta); valor diferente **não confirma**; `AGUARDA_PAGAMENTO` expira e liberta reservas, mas **não** com um pagamento `INCERTO`; limite de pedidos de PIN por conta, número e IP; o cliente só paga o **seu** pedido; reembolso total e parcial, repetição com recuo e «por fazer à mão»; **diferença da conferência reembolsa**; a venda da expedição sai **sem conta a receber** e o acerto de numerário **ignora** pedidos pagos; liquidação só soma pedidos **concluídos**; a empresa só vê o seu extrato; um pagamento que falhou **não** cria o pedido na fila da loja; sem chaves, pagamento online desligado e arranque normal.
+- **Frontend:** o ecrã de espera cobre pago, recusado, expirado e incerto; retomar um pedido a pagar; botão «Pagar» desactivado durante o pedido.
+- **Manual (antes de produção):** ciclo completo no ambiente de ensaio do operador; **um pagamento real de valor mínimo**, e o seu reembolso; fechar o separador a meio; recusar o PIN; não responder ao PIN; conciliar o dia contra o operador.
+- Comandos: `npm run build` e `npm test` nos dois repositórios.
+
+#### 9. Riscos
+
+| Risco | Tratamento |
+| --- | --- |
+| **A plataforma cobra em nome de terceiros** (pode ser «agregador de pagamentos» para o Banco de Moçambique) | **P1, antes de qualquer código de produção.** Alternativas: parceiro com licença (ex.: um PSP) que cobra e liquida, com a plataforma só a dar as ordens |
+| **Cliente debitado e pedido não criado** (tempo-limite, aviso perdido) | D5 (`INCERTO` + consulta contínua) e a conciliação diária; reembolso à mão como última rede |
+| **Pagamento duplicado** | D3 (referência única, confirmação condicional, bloqueio de nova tentativa durante `INCERTO`) |
+| **Aviso forjado** | Assinatura + janela de tempo + valor verificado contra a nossa base (D7); o corpo nunca decide a empresa |
+| **Abuso do pedido de PIN** | D8 (limites, número mascarado) |
+| **Diferença entre o pago e o conferido** | D10 (reembolso parcial automático; nunca se cobra mais) |
+| **Plataforma deve dinheiro às empresas** | Liquidação só de pedidos **concluídos**, extrato visível à empresa, conciliação diária, prazo curto (P3) |
+| **Dependência de um operador** | D2 (adaptadores) e o simulado; sem chaves, o sistema continua a funcionar com pagamento à porta |
+| **O operador muda a API** (bibliotecas de terceiros avisam que a API ainda se estabiliza) | Adaptador isolado, versão fixada, ensaio antes de cada mudança; ler a **documentação oficial**, não as bibliotecas |
+| **e-Mola sem API conhecida** | Fora da primeira entrega; contacto comercial com a Movitel (P2) |
+
+#### 10. Assunções (não bloqueantes, declaradas)
+
+- **A1.** A primeira entrega é **só M-Pesa**; o e-Mola entra se e quando houver documentação.
+- **A2.** O pedido espera **10 minutos** pelo pagamento antes de expirar (a reserva de stock segue esse prazo).
+- **A3.** Pagamento online **opcional** no levantamento e na frota própria; **obrigatório** com frota da plataforma.
+- **A4.** Só **MZN**.
+- **A5.** A **taxa de entrega não se reembolsa** em cancelamento depois de o estafeta ter recolhido (regra a confirmar com a P10 do §4.9).
+- **A6.** O **IVA** continua a ser da empresa (a venda é dela); a plataforma não factura a mercadoria.
+- **A7.** Reembolsos vão **para o mesmo número** que pagou.
+
+#### 11. Perguntas em aberto (bloqueiam a implementação)
+
+- **P1 — Licença.** Cobrar em nome das empresas e reter a taxa exige licença de agregador/instituição de pagamento, ou parceria com quem a tenha? **Quem o confirma, e a quem se pergunta?** Sem esta resposta não há produção.
+- **P2 — Operador e contrato.** **A SRG já tem (ou pode abrir) conta comercial M-Pesa e acesso ao portal de desenvolvedor da Vodacom?** E o e-Mola (Movitel)? Em alternativa, **um PSP/agregador** (ex.: PawaPay, que tem licença do Banco de Moçambique) — aceitas ir por aí? Taxas e prazos de cada um decidem a escolha.
+- **P3 — Liquidação às empresas.** Prazo (D+1, semanal) e **meio** (transferência bancária ou carteira). Quem é o operador da plataforma que a executa?
+- **P4 — Taxas do operador.** Cobradas sobre cada pagamento: **quem as paga** — a empresa (descontadas na liquidação), a plataforma (da margem) ou o cliente (acréscimo no checkout)?
+- **P5 — Reembolso da taxa.** Depois de o estafeta recolher a mercadoria, um cancelamento devolve a taxa ao cliente? (liga ao §4.9 P10)
+- **P6 — Substituição mais cara.** Confirmas a regra de **nunca cobrar mais** a meio do pedido (D10)?
+- **P7 — Quando se abre.** O pagamento online abre a **todas** as empresas ou a um **piloto** (uma empresa, poucos clientes)? Recomendo piloto.
+
+#### 12. Ordem de execução
+
+1. **Respostas a P1 e P2** (licença e operador) — sem elas, só o que não toca em dinheiro real avança.
+2. **B1 → B2** (dados, porta e simulado, **com testes de toda a máquina de estados**) → **B4 → B5 → B6** → **F1 → F2** (o cliente paga com o simulado, de ponta a ponta).
+3. **B7 → B8** (reembolsos e a ligação à venda e ao acerto) → **B9 → B10 → F3** (liquidação e conciliação).
+4. **B3** (adaptador M-Pesa) assim que houver acesso ao portal: ensaio completo; **depois um pagamento real de valor mínimo e o seu reembolso**.
+5. **Piloto** com uma empresa (P7), e só depois o §4.9 abre a frota da plataforma.
+6. Documentação e TRD nos dois repositórios, no mesmo ciclo.
 
 ## 5. Convenção para novas entradas
 
