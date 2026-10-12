@@ -30,6 +30,15 @@ export function ligarPwaDoEstafeta(): () => void {
     elementos.push(el);
   };
 
+  // O iPhone com «ilha»/barra de gestos só deixa a página desenhar até à zona segura; sem `viewport-fit=cover` o
+  // `env(safe-area-inset-*)` vale 0 e a barra fixa do fundo fica colada ao indicador de início. Só aqui: o resto
+  // do ERP não foi desenhado para ir até à borda.
+  const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+  const viewportOriginal = viewport?.content;
+  if (viewport && !viewport.content.includes('viewport-fit')) viewport.content += ', viewport-fit=cover';
+  // O «puxar para recarregar» do Android recarregava a página a meio de uma entrega ao arrastar a lista.
+  document.documentElement.style.overscrollBehaviorY = 'none';
+
   acrescentar('link', { rel: 'manifest', href: MANIFEST });
   acrescentar('link', { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' });
   acrescentar('meta', { name: 'theme-color', content: COR });
@@ -42,5 +51,9 @@ export function ligarPwaDoEstafeta(): () => void {
     navigator.serviceWorker.register('/sw.js', { scope: '/estafeta/' }).catch(() => undefined);
   }
 
-  return () => elementos.forEach((el) => el.remove());
+  return () => {
+    elementos.forEach((el) => el.remove());
+    if (viewport && viewportOriginal !== undefined) viewport.content = viewportOriginal;
+    document.documentElement.style.overscrollBehaviorY = '';
+  };
 }

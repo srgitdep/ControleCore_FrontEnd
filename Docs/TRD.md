@@ -106,6 +106,15 @@ ao submeter.
 
 ---
 
+### 2.x Compatibilidade entre browsers (Fase 48, 12/10/2026)
+
+- **Alvo.** Safari iOS ≥ 16.4 sem ressalvas; iOS mais antigo abre a aplicação, mas a Mayra não formata respostas. Chrome/Android actual.
+- **Regra de ouro:** nenhuma dependência pode pôr no *bundle* principal sintaxe que o Safari antigo não leia (o caso real: regex com *lookbehind* do `react-markdown`). O `MessageBubble` é `React.lazy`. Verificar depois de actualizar dependências: `grep -lF '(?<=' dist/assets/index-*.js` não deve devolver nada.
+- **CSS só-iOS** em `src/app/index.css` sob `@supports (-webkit-touch-callout: none)` (campos a 16 px para evitar o zoom); `100dvh` sobre `min-h-screen`/`h-screen`.
+- **PWA do estafeta** (`features/estafeta-app/pwa.ts`): `viewport-fit=cover` e `overscroll-behavior-y` só nas rotas `/estafeta`; instalação por `beforeinstallprompt` (Android) ou instruções (iOS, que não tem o evento).
+- **Segundo plano.** O iOS suspende a página: `useCanalDeEntregas` religa o socket e `useEmitirPosicao` reinicia o `watchPosition` ao `visibilitychange`. Sem aplicação nativa, a posição pára com o ecrã bloqueado.
+- **Fontes:** firt.dev (iOS PWA Compatibility), webkit.org (ITP: armazenamento limitado a 7 dias fora da PWA instalada), caniuse.com.
+
 ## 3. Backend — `ControleCore_BackEnd`
 
 | Categoria | Tecnologia | Versão (package.json) | Notas |

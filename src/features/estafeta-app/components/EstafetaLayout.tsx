@@ -50,7 +50,7 @@ export function EstafetaLayout() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-slate-50">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between gap-3">
           <Link to="/estafeta" className="flex min-w-0 items-center gap-2.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">

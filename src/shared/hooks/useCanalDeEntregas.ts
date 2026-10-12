@@ -88,10 +88,19 @@ export function useCanalDeEntregas({ activo, obterToken, aoLigar, eventos }: Opc
       });
     }
 
+    // O iOS (e o Android, com o separador esquecido) suspende a página em segundo plano e mata o WebSocket sem avisar;
+    // o socket.io só o descobre ao fim do ping, e se o servidor tiver fechado a ligação nem tenta de novo. Ao voltar
+    // ao ecrã, se não está ligado, liga-se já — em vez de o utilizador ver «ao vivo» parado até recarregar.
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible' && !instancia.connected) instancia.connect();
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+
     setSocket(instancia);
 
     return () => {
       if (espera) clearTimeout(espera);
+      document.removeEventListener('visibilitychange', aoVoltar);
       instancia.disconnect();
       setSocket(null);
       setLigado(false);

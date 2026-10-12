@@ -49,6 +49,9 @@ export function useEmitirPosicao(emRota: boolean) {
   const [permissao, setPermissao] = useState<'pendente' | 'concedida' | 'negada'>('pendente');
   const ultimoEnvio = useRef<PontoComHora | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  // Sobe quando a página volta a ficar visível: o Safari do iOS deixa o `watchPosition` calado depois de a página
+  // ter estado em segundo plano (sem erro, sem leituras); recomeçá-lo é o que o põe a andar de novo.
+  const [retoma, setRetoma] = useState(0);
 
   const suportado = geolocalizacaoDisponivel();
   const activo = emRota && consentido && suportado;
@@ -107,6 +110,15 @@ export function useEmitirPosicao(emRota: boolean) {
       navigator.geolocation.clearWatch(id);
       ultimoEnvio.current = null;
     };
+  }, [activo, retoma]);
+
+  useEffect(() => {
+    if (!activo) return;
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible') setRetoma((n) => n + 1);
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => document.removeEventListener('visibilitychange', aoVoltar);
   }, [activo]);
 
   // O ecrã ligado. O navegador liberta o bloqueio ao esconder a página; pede-se de novo ao voltar.

@@ -103,5 +103,12 @@
     "a_partilhar": "Sharing your location with the customer and the store",
     "sem_canal": "Trying to connect to share your location…",
     "manter_aberta": "Keep this app open and the screen on. With the phone locked or another app in front, your location stops being sent."
+  },
+  "instalar": {
+    "titulo": "Install the app",
+    "ios": "On iPhone: tap Share (□↑) then «Add to Home Screen». Only then does it open full screen and keep you signed in.",
+    "android": "Opens full screen, faster, and stays on your home screen.",
+    "botao": "Install",
+    "dispensar": "Dismiss"
   }
 }
