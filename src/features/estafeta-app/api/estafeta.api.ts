@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { api, enviarLinguaActiva } from '@/shared/config';
+import type { PaginaDeNotificacoes } from '@/shared/notificacoes/tipos';
 import type {
   DadosDeEntrega,
   DadosDeFalha,
@@ -48,6 +49,18 @@ export const estafetaApi = {
 
   mudarEstado: async (estado: EstadoEscolhido) =>
     (await estafetaApiInstancia.patch<{ estado: EstadoEscolhido }>(`${BASE}/eu/estado`, { estado })).data,
+
+  // ── As minhas notificações. O estafeta do cookie, nunca um parâmetro. ──
+  notificacoes: async (pagina: number) =>
+    (await estafetaApiInstancia.get<PaginaDeNotificacoes>(`${BASE}/notificacoes`, { params: { pagina, limite: 20 } })).data,
+  contagemDeNotificacoes: async () =>
+    (await estafetaApiInstancia.get<{ naoLidas: number }>(`${BASE}/notificacoes/contagem`)).data.naoLidas,
+  marcarNotificacaoLida: async (id: string) => (await estafetaApiInstancia.patch(`${BASE}/notificacoes/${id}/lida`)).data,
+  marcarNotificacoesLidas: async () => (await estafetaApiInstancia.patch(`${BASE}/notificacoes/lidas`)).data,
+
+  /** «Cheguei»: avisa o cliente e a gestão. Não muda o estado (continua a caminho até «entreguei»). */
+  cheguei: async (id: string) =>
+    (await estafetaApiInstancia.patch<{ id: string; chegouEm: string; repetido: boolean }>(`${BASE}/entregas/${id}/cheguei`)).data,
 
   tokenDeSocket: async () => (await estafetaApiInstancia.get<{ token: string }>(`${BASE}/socket-token`)).data.token,
 

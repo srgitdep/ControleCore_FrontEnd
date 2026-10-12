@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, LogOut, Search, ShoppingCart, UserCircle2 } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
-import { SelectorIdioma } from '@/shared/ui';
+import { SelectorIdioma, SinoDeNotificacoes } from '@/shared/ui';
+import { useFonteDoCliente } from '../hooks/useFonteDoCliente';
 import { conta } from '../api/conta.api';
 import { useContaClienteStore } from '../store/useContaClienteStore';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
@@ -26,6 +27,7 @@ interface LojaTopoProps {
 export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoProps) {
   const navegar = useNavigate();
   const { cliente, autenticado, sair } = useContaClienteStore();
+  const fonteDeNotificacoes = useFonteDoCliente();
   const { t } = useTranslation('loja');
   const totalItens = useCarrinhoStore((s) => s.itens.reduce((acc, i) => acc + i.quantidade, 0));
 
@@ -82,6 +84,10 @@ export function LojaTopo({ lojaId, lojaNome, busca, onBuscaChange }: LojaTopoPro
               >
                 {t('pedidos.os_meus')}
               </Link>
+              <SinoDeNotificacoes
+                fonte={fonteDeNotificacoes}
+                verTodasHref={`/loja/${lojaId}/notificacoes`}
+              />
               <Link
                 to={`/loja/${lojaId}/favoritos`}
                 title={t('favoritos.titulo')}

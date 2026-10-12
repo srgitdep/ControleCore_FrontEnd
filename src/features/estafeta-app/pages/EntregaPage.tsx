@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ArrowLeft, Loader2, MapPin, Navigation, Phone } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, DoorOpen, Loader2, MapPin, Navigation, Phone } from 'lucide-react';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { EntregarFolha } from '../components/EntregarFolha';
 import { EstadoDaEntrega } from '../components/EstadoDaEntrega';
 import { FalharFolha } from '../components/FalharFolha';
-import { accaoPrincipal, accoesPossiveis, ligacaoMapa, ligacaoTelefone } from '../domain/passos';
+import { accaoPrincipal, accoesPossiveis, ligacaoMapa, ligacaoTelefone, podeMarcarChegada } from '../domain/passos';
 import { useAccoesDaEntrega, useMinhaEntrega, useOnline } from '../hooks/useEstafeta';
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
@@ -65,7 +65,11 @@ export function EntregaPage() {
   const possiveis = accoesPossiveis(e.estado);
   const principal = accaoPrincipal(e.estado);
   const aProcessar =
-    accoes.recolher.isPending || accoes.iniciarRota.isPending || accoes.entregar.isPending || accoes.falhar.isPending;
+    accoes.recolher.isPending ||
+    accoes.iniciarRota.isPending ||
+    accoes.entregar.isPending ||
+    accoes.falhar.isPending ||
+    accoes.cheguei.isPending;
 
   const fecharFolha = () => setFolha(null);
 
@@ -130,6 +134,25 @@ export function EntregaPage() {
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 backdrop-blur">
           <div className="mx-auto max-w-lg space-y-2">
             {!online && <p className="text-center text-xs font-medium text-amber-700">{t('sem_ligacao_accao')}</p>}
+
+            {/* «Cheguei»: o cliente é avisado de que o estafeta está à porta. O estado não muda — continua
+                a caminho até «Entreguei». Esconde-se depois de marcado, e o ecrã diz a que horas foi. */}
+            {podeMarcarChegada(e.estado, e.chegouEm) && (
+              <button
+                type="button"
+                disabled={aProcessar || !online}
+                onClick={() => accoes.cheguei.mutate()}
+                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 text-base font-bold text-white disabled:opacity-50"
+              >
+                {accoes.cheguei.isPending ? <Loader2 size={18} className="animate-spin" /> : <DoorOpen size={18} />}
+                {t('accoes.cheguei')}
+              </button>
+            )}
+            {e.estado === 'EM_ROTA' && e.chegouEm && (
+              <p className="text-center text-xs font-medium text-emerald-700">
+                {t('detalhe.chegou_em', { hora: new Date(e.chegouEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
+              </p>
+            )}
 
             {principal === 'recolher' && (
               <button

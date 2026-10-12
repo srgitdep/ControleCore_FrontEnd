@@ -5,6 +5,8 @@ import { Bike, Loader2, LogOut, WifiOff } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { useMeuPerfil, useMinhasEntregas, useMudarEstado, useOnline } from '../hooks/useEstafeta';
 import { PartilhaDePosicao } from './PartilhaDePosicao';
+import { SinoDeNotificacoes } from '@/shared/ui';
+import { useFonteDoEstafeta } from '../hooks/useFonteDoEstafeta';
 import { ligarPwaDoEstafeta } from '../pwa';
 import { useEstafetaStore } from '../store/useEstafetaStore';
 
@@ -25,6 +27,7 @@ export function EstafetaLayout() {
   // A mesma consulta da lista (mesma chave): não gera pedido novo. É ela que diz se há uma entrega em rota.
   const entregas = useMinhasEntregas(false);
   const emRota = (entregas.data ?? []).some((e) => e.estado === 'EM_ROTA');
+  const fonteDeNotificacoes = useFonteDoEstafeta();
 
   useEffect(() => {
     void carregar();
@@ -58,6 +61,9 @@ export function EstafetaLayout() {
               <span className="block font-mono text-xs text-slate-400">{utilizador?.codigo}</span>
             </span>
           </Link>
+
+          {/* O sino das notificações: entrega nova, ou «já não é sua». Com a aplicação aberta; fechada, não há aviso. */}
+          <SinoDeNotificacoes fonte={fonteDeNotificacoes} className="ml-auto" />
 
           <button
             type="button"

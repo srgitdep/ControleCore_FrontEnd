@@ -41,13 +41,15 @@
     "prazo": "Prazo previsto",
     "cobrado": "Cobrado",
     "motivo": "Motivo",
-    "falhada_ajuda": "Traga a mercadoria de volta à loja. É a loja que depois a devolve."
+    "falhada_ajuda": "Traga a mercadoria de volta à loja. É a loja que depois a devolve.",
+    "chegou_em": "Chegou às {{hora}}"
   },
   "accoes": {
     "recolher": "Recolhi na loja",
     "iniciar_rota": "Saí para a entrega",
     "entregar": "Entreguei",
-    "falhar": "Não consegui entregar"
+    "falhar": "Não consegui entregar",
+    "cheguei": "Cheguei"
   },
   "entregar": {
     "titulo": "Entreguei — como pagou?",
@@ -85,7 +87,9 @@
     "entregue": "Entrega registada.",
     "falhada": "Registado. Leve a mercadoria de volta à loja.",
     "erro_accao": "Não foi possível registar. Tente de novo.",
-    "erro_estado": "Não foi possível mudar o estado."
+    "erro_estado": "Não foi possível mudar o estado.",
+    "cheguei": "O cliente foi avisado de que chegou.",
+    "erro_cheguei": "Não foi possível avisar que chegou."
   },
   "partilha": {
     "consentimento_titulo": "Partilhar a sua posição",

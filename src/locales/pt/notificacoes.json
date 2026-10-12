@@ -1,0 +1,59 @@
+{
+  "ui": {
+    "titulo": "Notificações",
+    "abrir": "Abrir notificações",
+    "fechar": "Fechar",
+    "vazio": "Ainda não há notificações. Aqui aparece tudo o que acontece com os seus pedidos e entregas.",
+    "marcar_todas": "Marcar todas como lidas",
+    "erro": "Não foi possível carregar as notificações.",
+    "repetir": "Tentar de novo",
+    "ver_todas": "Ver todas",
+    "por_ler_one": "{{count}} por ler",
+    "por_ler_other": "{{count}} por ler",
+    "um_estafeta": "O estafeta",
+    "com_ajustes": " Houve ajustes ao pedido — veja os detalhes.",
+    "motivo": " Motivo: {{motivo}}.",
+    "ao_vivo": "Ao vivo",
+    "mais": "Ver mais",
+    "generica": "Há novidades no pedido {{numeroPedido}}."
+  },
+  "CLIENTE": {
+    "pedido": {
+      "recebido": "Recebemos o seu pedido {{numeroPedido}}.",
+      "confirmado": "O pedido {{numeroPedido}} foi confirmado.",
+      "em_preparacao": "O pedido {{numeroPedido}} está a ser preparado.",
+      "pronto_entrega": "O pedido {{numeroPedido}} está embalado e pronto para sair.",
+      "pronto_levantar": "O pedido {{numeroPedido}} está pronto para levantar.",
+      "expedido": "O pedido {{numeroPedido}} saiu da loja.",
+      "cancelado": "O pedido {{numeroPedido}} foi cancelado.",
+      "entregue": "O pedido {{numeroPedido}} foi entregue. Obrigado!"
+    },
+    "entrega": {
+      "estafeta_atribuido": "{{estafeta}} vai entregar o seu pedido {{numeroPedido}}.",
+      "recolhida": "{{estafeta}} recolheu o seu pedido {{numeroPedido}} na loja.",
+      "em_rota": "{{estafeta}} está a caminho com o seu pedido {{numeroPedido}}.",
+      "chegou": "{{estafeta}} chegou! O pedido {{numeroPedido}} está à sua porta.",
+      "falhada": "Não foi possível entregar o pedido {{numeroPedido}}."
+    }
+  },
+  "FUNCIONARIO": {
+    "pedido": {
+      "novo": "Pedido novo: {{numeroPedido}}."
+    },
+    "entrega": {
+      "atribuida": "A entrega {{numeroPedido}} foi atribuída a {{estafeta}}.",
+      "recolhida": "{{numeroPedido}}: recolhida na loja.",
+      "em_rota": "{{numeroPedido}}: a caminho do cliente.",
+      "chegou": "{{numeroPedido}}: o estafeta chegou à morada.",
+      "entregue": "{{numeroPedido}}: entregue.",
+      "falhada": "{{numeroPedido}}: não foi possível entregar.",
+      "devolvida": "{{numeroPedido}}: devolvida à loja."
+    }
+  },
+  "ESTAFETA": {
+    "entrega": {
+      "nova": "Nova entrega: {{numeroPedido}} — {{morada}}.",
+      "retirada": "A entrega {{numeroPedido}} já não é sua."
+    }
+  }
+}

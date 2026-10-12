@@ -26,6 +26,14 @@ export function accaoPrincipal(estado: EstadoEntrega): Accao | null {
   return accoesPossiveis(estado).find((a) => a !== 'falhar') ?? null;
 }
 
+/**
+ * «Cheguei» só se oferece com a entrega a caminho do cliente **e** ainda sem chegada marcada. O servidor
+ * é quem decide (409 fora de rota, e repetir não volta a avisar); isto só esconde o botão que não serve.
+ */
+export function podeMarcarChegada(estado: EstadoEntrega, chegouEm: string | null | undefined): boolean {
+  return estado === 'EM_ROTA' && !chegouEm;
+}
+
 /** Está por fazer (o estafeta ainda tem de agir) ou já terminou? */
 export function estaPorFazer(estado: EstadoEntrega): boolean {
   return accoesPossiveis(estado).length > 0;

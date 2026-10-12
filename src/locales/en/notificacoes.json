@@ -1,0 +1,59 @@
+{
+  "ui": {
+    "titulo": "Notifications",
+    "abrir": "Open notifications",
+    "fechar": "Close",
+    "vazio": "No notifications yet. Everything that happens with your orders and deliveries shows up here.",
+    "marcar_todas": "Mark all as read",
+    "erro": "Could not load the notifications.",
+    "repetir": "Try again",
+    "ver_todas": "See all",
+    "por_ler_one": "{{count}} unread",
+    "por_ler_other": "{{count}} unread",
+    "um_estafeta": "The courier",
+    "com_ajustes": " The order was adjusted — see the details.",
+    "motivo": " Reason: {{motivo}}.",
+    "ao_vivo": "Live",
+    "mais": "Show more",
+    "generica": "There is news about order {{numeroPedido}}."
+  },
+  "CLIENTE": {
+    "pedido": {
+      "recebido": "We received your order {{numeroPedido}}.",
+      "confirmado": "Order {{numeroPedido}} was confirmed.",
+      "em_preparacao": "Order {{numeroPedido}} is being prepared.",
+      "pronto_entrega": "Order {{numeroPedido}} is packed and ready to go out.",
+      "pronto_levantar": "Order {{numeroPedido}} is ready for pickup.",
+      "expedido": "Order {{numeroPedido}} has left the store.",
+      "cancelado": "Order {{numeroPedido}} was cancelled.",
+      "entregue": "Order {{numeroPedido}} was delivered. Thank you!"
+    },
+    "entrega": {
+      "estafeta_atribuido": "{{estafeta}} will deliver your order {{numeroPedido}}.",
+      "recolhida": "{{estafeta}} picked up your order {{numeroPedido}} at the store.",
+      "em_rota": "{{estafeta}} is on the way with your order {{numeroPedido}}.",
+      "chegou": "{{estafeta}} has arrived! Order {{numeroPedido}} is at your door.",
+      "falhada": "Order {{numeroPedido}} could not be delivered."
+    }
+  },
+  "FUNCIONARIO": {
+    "pedido": {
+      "novo": "New order: {{numeroPedido}}."
+    },
+    "entrega": {
+      "atribuida": "Delivery {{numeroPedido}} was assigned to {{estafeta}}.",
+      "recolhida": "{{numeroPedido}}: picked up at the store.",
+      "em_rota": "{{numeroPedido}}: on the way to the customer.",
+      "chegou": "{{numeroPedido}}: the courier has arrived at the address.",
+      "entregue": "{{numeroPedido}}: delivered.",
+      "falhada": "{{numeroPedido}}: could not be delivered.",
+      "devolvida": "{{numeroPedido}}: returned to the store."
+    }
+  },
+  "ESTAFETA": {
+    "entrega": {
+      "nova": "New delivery: {{numeroPedido}} — {{morada}}.",
+      "retirada": "Delivery {{numeroPedido}} is no longer yours."
+    }
+  }
+}

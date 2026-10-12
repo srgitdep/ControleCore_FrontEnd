@@ -89,8 +89,7 @@
     "iniciar_rota": "Em rota",
     "entregue": "Entregue",
     "falhada": "Falhou",
-    "devolver": "Devolver",
-    "delegar": "Delegar"
+    "devolver": "Devolver"
   },
   "painel": {
     "titulo": "Entregas",
@@ -107,8 +106,7 @@
     "repetir": "Tentar outra vez",
     "sem_estafeta": "Sem estafeta",
     "a_cobrar": "A cobrar",
-    "cobrado_diferente": "Cobrado: {{valor}} (diferente do previsto)",
-    "operador": "Operador: {{nome}}"
+    "cobrado_diferente": "Cobrado: {{valor}} (diferente do previsto)"
   },
   "dialogo": {
     "cancelar": "Cancelar",
@@ -142,14 +140,6 @@
       "aviso": "Só depois de a mercadoria ter regressado à loja. O stock volta ao armazém, a venda é anulada e o pedido fica cancelado. Isto não se desfaz.",
       "motivo": "Motivo (fica na venda anulada)",
       "confirmar": "Devolver e anular venda"
-    },
-    "delegar": {
-      "titulo": "Delegar {{pedido}}",
-      "explicacao": "Entrega este pedido a um operador de entregas externo. Ele avisa-nos de cada passo; o estafeta próprio, se havia, deixa de ter a entrega.",
-      "operador": "Operador",
-      "escolher": "Escolha o operador",
-      "tira_estafeta": "{{nome}} deixa de ter esta entrega.",
-      "confirmar": "Delegar"
     }
   },
   "estafetas": {
@@ -231,76 +221,5 @@
     "sem_canal": "Sem ligação em tempo real. As posições não estão a chegar; o painel continua a actualizar-se a cada 30 s.",
     "sem_posicao_de": "A aguardar posição de: {{nomes}}.",
     "esbatido": "Os pontos esbatidos têm mais de 2 minutos: o estafeta pode estar sem rede ou com o ecrã bloqueado."
-  },
-  "webhooks": {
-    "titulo": "Webhooks",
-    "subtitulo": "Avisos automáticos de cada pedido e entrega, enviados para os sistemas que indicar (ERP, bot de WhatsApp, operador de entregas).",
-    "novo": "Novo webhook",
-    "erro": "Não foi possível carregar os webhooks.",
-    "vazio": "Ainda não há webhooks. Crie um para receber um aviso assinado sempre que um pedido ou uma entrega mudar.",
-    "activo": "Activo",
-    "inactivo": "Desactivado",
-    "segredo_rotulo": "Segredo",
-    "testar": "Enviar teste",
-    "testar_inactivo": "Active o webhook para o testar.",
-    "activar": "Activar",
-    "desactivar": "Desactivar",
-    "editar": "Editar",
-    "rodar_segredo": "Rodar segredo",
-    "apagar": "Apagar",
-    "sem_eventos": "Sem eventos: não recebe nada.",
-    "teste_ok": "Teste enviado e recebido com sucesso.",
-    "teste_falhou": "O teste falhou: {{erro}}",
-    "ver_envios": "Ver envios",
-    "esconder_envios": "Esconder envios",
-    "apagar_titulo": "Apagar «{{nome}}»?",
-    "apagar_texto": "O webhook e o seu histórico de envios apagam-se. Entregas que lhe estavam delegadas ficam sem operador.",
-    "rodar_titulo": "Rodar o segredo?",
-    "rodar_texto": "Cria-se um segredo novo e o antigo deixa de valer já. Quem recebe os avisos tem de actualizar o segredo do seu lado, senão deixa de conseguir verificar a assinatura.",
-    "dialogo": {
-      "novo": "Novo webhook",
-      "editar": "Editar webhook",
-      "descricao": "Nome",
-      "descricao_exemplo": "ERP da loja — entregas",
-      "url": "Endereço que recebe os avisos",
-      "url_ajuda": "Tem de ser https e público. Endereços locais ou de redes internas não são aceites.",
-      "eventos": "Avisar quando…",
-      "sem_eventos": "Escolha pelo menos um evento.",
-      "guardar": "Guardar"
-    },
-    "segredo": {
-      "titulo": "O segredo deste webhook",
-      "aviso": "Guarde este segredo agora. Por segurança não volta a ser mostrado; se o perder, terá de o rodar.",
-      "copiar": "Copiar",
-      "copiado": "Copiado",
-      "como_usar": "Cada aviso leva o cabeçalho X-ControlCore-Assinatura: t=<segundos>,v1=<HMAC-SHA256 do texto \"<t>.<corpo>\" com este segredo>. Confirme-o do seu lado e recuse avisos com mais de 5 minutos.",
-      "guardei": "Já guardei o segredo"
-    },
-    "envios": {
-      "erro": "Não foi possível carregar os envios.",
-      "vazio": "Ainda não houve envios.",
-      "estado": {
-        "PENDENTE": "À espera",
-        "ENVIADO": "Enviado",
-        "FALHADO": "A repetir",
-        "DESISTIDO": "Desistiu"
-      },
-      "tentativas_one": "{{count}} tentativa",
-      "tentativas_other": "{{count}} tentativas",
-      "proxima": "Próxima tentativa: {{quando}}",
-      "reenviar": "Reenviar",
-      "anterior": "Página anterior",
-      "seguinte": "Página seguinte"
-    },
-    "mensagens": {
-      "guardado": "Webhook guardado.",
-      "apagado": "Webhook apagado.",
-      "reenviado": "Voltou à fila de envio.",
-      "erro_guardar": "Não foi possível guardar o webhook.",
-      "erro_apagar": "Não foi possível apagar o webhook.",
-      "erro_rodar": "Não foi possível rodar o segredo.",
-      "erro_testar": "Não foi possível enviar o teste.",
-      "erro_reenviar": "Não foi possível reenviar."
-    }
   }
 }

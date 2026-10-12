@@ -22,7 +22,7 @@ import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/feat
 import { TransferenciasPage } from '@/features/transferencias';
 import { PedidosCommercePage } from '@/features/compra-facil-gestao';
 import { PromocoesPage } from '@/features/promocoes';
-import { AcertosPage, EntregasPage, EstafetasPage, WebhooksPage, ZonasEntregaPage } from '@/features/entrega-gestao';
+import { AcertosPage, EntregasPage, EstafetasPage, ZonasEntregaPage } from '@/features/entrega-gestao';
 import { ProcuraPage, ProcuraSistemaPage } from '@/features/procura-online';
 import { EntregaPage, EstafetaLayout, MinhasEntregasPage } from '@/features/estafeta-app';
 import { RequisicoesPage, PesosSourcingPage } from '@/features/b2b';
@@ -48,6 +48,7 @@ import {
   EntrarContaPage,
   CriarContaPage,
   MeusPedidosPage,
+  NotificacoesPage,
   PedidoDetalhePage,
   FavoritosPage,
   MoradasPage,
@@ -156,6 +157,7 @@ export const router = createBrowserRouter([
           { path: ':lojaId/entrar', element: <EntrarContaPage /> },
           { path: ':lojaId/criar-conta', element: <CriarContaPage /> },
           { path: ':lojaId/pedidos', element: <MeusPedidosPage /> },
+          { path: ':lojaId/notificacoes', element: <NotificacoesPage /> },
           { path: ':lojaId/pedidos/:pedidoId', element: <PedidoDetalhePage /> },
           { path: ':lojaId/favoritos', element: <FavoritosPage /> },
           { path: ':lojaId/moradas', element: <MoradasPage /> },
@@ -287,12 +289,6 @@ export const router = createBrowserRouter([
             path: '/entregas/acertos',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
             children: [{ index: true, element: <AcertosPage /> }]
-          },
-          // Os webhooks: para onde se avisa de cada pedido e entrega. Só ADMIN (GERIR_WEBHOOKS no servidor).
-          {
-            path: '/entregas/webhooks',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,
-            children: [{ index: true, element: <WebhooksPage /> }]
           },
           {
             path: '/entregas/zonas',

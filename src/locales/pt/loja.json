@@ -228,6 +228,11 @@
     "actualizar": "Actualizar agora",
     "faltam_minutos_one": "Faltam cerca de {{count}} minuto",
     "faltam_minutos_other": "Faltam cerca de {{count}} minutos",
-    "distancia_estrada": "A cerca de {{distancia}} por estrada."
+    "distancia_estrada": "A cerca de {{distancia}} por estrada.",
+    "chegou": "O estafeta chegou! O seu pedido está à porta."
+  },
+  "notificacoes": {
+    "titulo": "As minhas notificações",
+    "voltar": "Voltar"
   }
 }

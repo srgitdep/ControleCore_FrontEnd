@@ -67,6 +67,8 @@ export interface EntregaDoPedido {
   posicao: { latitude: number; longitude: number; em: string } | null;
   /** Em rota mas sem posição recente: o ecrã diz «sem posição recente» em vez de um pino parado. */
   posicaoDesactualizada: boolean;
+  /** O estafeta marcou «cheguei» (plano §4.7): o ecrã destaca-o. */
+  chegouEm: string | null;
   /** Tempo estimado e caminho por estrada (5C). Nulo sem serviço de rotas ou sem posição fresca — nunca um número adivinhado. */
   previsao: { minutos: number; distanciaMetros: number; caminho: { latitude: number; longitude: number }[] } | null;
 }

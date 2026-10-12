@@ -41,13 +41,15 @@
     "prazo": "Expected by",
     "cobrado": "Collected",
     "motivo": "Reason",
-    "falhada_ajuda": "Bring the goods back to the store. The store then returns them."
+    "falhada_ajuda": "Bring the goods back to the store. The store then returns them.",
+    "chegou_em": "Arrived at {{hora}}"
   },
   "accoes": {
     "recolher": "I picked it up at the store",
     "iniciar_rota": "I’m on my way",
     "entregar": "Delivered",
-    "falhar": "I couldn’t deliver"
+    "falhar": "I couldn’t deliver",
+    "cheguei": "I have arrived"
   },
   "entregar": {
     "titulo": "Delivered — how did they pay?",
@@ -85,7 +87,9 @@
     "entregue": "Delivery recorded.",
     "falhada": "Recorded. Take the goods back to the store.",
     "erro_accao": "Could not record it. Try again.",
-    "erro_estado": "Could not change the status."
+    "erro_estado": "Could not change the status.",
+    "cheguei": "The customer was told you have arrived.",
+    "erro_cheguei": "Could not tell the customer you have arrived."
   },
   "partilha": {
     "consentimento_titulo": "Sharing your location",

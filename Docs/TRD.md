@@ -543,8 +543,18 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   `OPERADOR` (só entregas com `operadorId` igual ao dele). A empresa vem da subscrição. Desconhecido/desactivado/assinatura errada → o mesmo 401.
 - **Gestão.** `/webhooks/subscricoes` e `/webhooks/envios` (`GERIR_WEBHOOKS`, só ADMIN); segredo (`whsec_` + 32 bytes) em claro na BD porque é preciso para assinar, devolvido **uma só vez**; máximo 20 por
   empresa. `PATCH /entregas/:id/delegar` e `GET /entregas/operadores` (`GERIR_ENTREGAS`).
-- **Frontend.** `/entregas/webhooks` (só ADMIN) e «Delegar» no painel; instância `api` do funcionário.
+- **Frontend.** O ecrã `/entregas/webhooks` e o «Delegar» do painel foram **retirados** (Fase 47): o servidor dos webhooks está **adormecido** — sem subscrições não grava nem envia nada, e as rotas `/webhooks/*` continuam protegidas (`GERIR_WEBHOOKS`, só ADMIN; a de entrada, por assinatura). Reactivá-lo é voltar a pôr um ecrã.
 - **Limites conhecidos.** O limitador e a reserva são por máquina/BD (a reserva é atómica na BD, por isso duas máquinas são seguras); um receptor lento ocupa até 10 s de um dos 5 envios em simultâneo de um ciclo.
+
+### 8.2 Notificações dentro da aplicação (Fase 47, 12/10/2026)
+
+- **Dados.** Tabela `notificacoes` (`destinatarioTipo` `FUNCIONARIO`|`ESTAFETA`|`CLIENTE`, `destinatarioId`, `tipo`, `parametros` JSON, `pedidoId?`, `entregaId?`, `lojaId?`, `lidaEm?`); índice por `(destinatarioTipo, destinatarioId, lidaEm, createdAt)`; `entregas_pedido.chegouEm`. O destinatário **cliente** é a `ContaCliente` (a conta vale em qualquer empresa). Guarda o **tipo e os parâmetros, nunca a frase**: o frontend traduz (`locales/<língua>/notificacoes.json`, por destinatário).
+- **Quem lê.** `GET /notificacoes` (funcionário), `GET /commerce/conta/notificacoes` (cliente), `GET /estafeta/notificacoes` (estafeta), cada um com `/contagem`, `PATCH /lidas` e `PATCH /:id/lida`. O destinatário sai **sempre** do token e está na condição de cada consulta (`updateMany` com destinatário): ninguém lê nem marca as de outro. Sem `@Permissao` no funcionário: cada pessoa lê as suas.
+- **Quem cria.** `AvisosDaAplicacaoService` (a tabela «quem é avisado de quê»): o `NotificarClientePedidoService` (cliente, o mesmo caminho do e-mail, mais «em preparação»), um ouvinte do evento interno `entrega.estado_mudou` (passos da rota, gestão, estafeta), `entrega.chegou` e `procura.pedido_criado`. A gestão escolhe-se **por permissão** com `satisfazPermissao` + `carregarPermissoesDoUtilizador`. Melhor esforço: uma falha regista-se e **nunca** desfaz a transição.
+- **Tempo real.** `NotificacaoService` anuncia `notificacao.criada`; o `EntregasGateway` empurra `notificacao.nova` para a sala pessoal do destinatário — `conta_<id>`, `utilizador_<id>`, `estafeta_<id>` — **deduzida do token**. O token de socket do funcionário tem a marca `entregas` só quando vem de `GET /entregas/socket-token` (`VER_ENTREGAS`); o pessoal (`GET /notificacoes/socket-token`) não a tem e só liga à sala pessoal.
+- **«Cheguei».** `PATCH /estafeta/entregas/:id/cheguei` → `OperarEntregaService.chegar`: condicional (`EM_ROTA`, `chegouEm IS NULL`, posse do estafeta), idempotente, sem mudar o estado.
+- **Retenção.** `LimparNotificacoesTask` às 5 h: lidas > 30 dias, não lidas > 90.
+- **Limites.** Só com a aplicação aberta (PWA fechada não recebe): *push* do navegador fica para uma fase própria. A `Notificacao` está fora da auditoria automática (ruído).
 
 ---
 

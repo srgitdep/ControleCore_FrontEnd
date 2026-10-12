@@ -138,5 +138,19 @@ export function useAccoesDaEntrega(id: string) {
     },
   });
 
-  return { recolher, iniciarRota, entregar, falhar };
+  /** «Cheguei»: avisa o cliente e a gestão sem mudar o estado da entrega. */
+  const cheguei = useMutation({
+    mutationFn: () => estafetaApi.cheguei(id),
+    ...comum,
+    onSuccess: () => {
+      toast.success(t('mensagens.cheguei'));
+      void invalidar();
+    },
+    onError: (erro: unknown) => {
+      toast.error(mensagemDeErro(erro, t('mensagens.erro_cheguei')));
+      void invalidar();
+    },
+  });
+
+  return { recolher, iniciarRota, entregar, falhar, cheguei };
 }
