@@ -2131,6 +2131,12 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [ ] **P2 — O aparelho.** *Handler* de *push* no *service worker*, pedido de permissão e activação por aparelho (estafeta, cliente e gestão), «abrir» a partir do aviso.
   - [ ] **P3 — O iPhone.** Instruções de instalação no ecrã inicial (o iOS só entrega *push* a PWA instalada) e, se aprovado, a loja instalável.
   - [ ] **P4 — Fecho.** Testes, documentação, teste real com o telemóvel **bloqueado** (Android e iPhone).
+- [ ] **Onboarding de estafetas (documentos, fotografias e leitura por IA).** Pedido do utilizador em 2026-10-12: todo o estafeta que queira trabalhar como *delivery* regista-se sozinho (por convite da empresa) e entrega, obrigatoriamente, **BI (frente e verso), carta de condução (frente e verso), veículo e documentos do veículo, e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, associadas ao estafeta. Decidido pelo utilizador: **auto-registo público** e **activação ao submeter, sem aprovação** (a divergência e as compensações estão em §4.9, secção 3). Plano detalhado em **§4.9** (rascunho, a aguardar aprovação).
+  - [ ] **O1 — Servidor: dados e leitura.** Migração (documentos, imagens, convite, contactos, `onboardingCompletoEm`), `ExtrairDocumentoEstafetaService` e validação pura com testes.
+  - [ ] **O2 — Servidor: registo e documentos.** Registo público com convite, envio/leitura/confirmação/conclusão dos documentos, recusa de atribuição a quem não completou, ligação de convite.
+  - [ ] **O3 — Servidor: gestão.** Ver e conferir documentos (permissão nova, URLs de 5 min, auditoria de cada visualização), limpeza dos objectos ao apagar.
+  - [ ] **O4 — Os ecrãs.** Registo, assistente de documentos com captura e compressão no telemóvel, guarda do estafeta, ligação de convite e painel de documentos na gestão.
+  - [ ] **O5 — Fecho.** Testes, documentação e TRD; **teste real** com um BI verdadeiro e um telemóvel de gama baixa. Perguntas P1–P5 do §4.9 respondidas **antes** de começar.
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
@@ -2294,6 +2300,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 | 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Aprovado** — N1 a N3 feitas (Fase 47); falta o teste real (N4) | Secção 3 → «Notificações dentro da aplicação» |
 | 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
+| 4.9 | Onboarding de estafetas: documentos, fotografias e leitura por IA | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Onboarding de estafetas |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4760,6 +4767,143 @@ Quando se grava uma notificação **urgente**, o servidor envia também um *Web 
 - **Frontend:** `public/push-handlers.js` e o *worker* só de *push*; `vite.config.ts` (`importScripts`); `shared/notificacoes/usePush.ts` e o botão/ecrã de activação; `EstafetaLayout`, a página do pedido do cliente e o painel do sino; textos pt/en.
 
 ---
+
+### 4.9 Onboarding de estafetas: documentos, fotografias e leitura por IA
+
+- **Data:** 2026-10-12 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o resto:** altera o §4.1 (Fase 2B — hoje o gestor cria o estafeta e o servidor envia o código `E####` e a senha por e-mail) e usa a aplicação do estafeta do §4.5.
+
+#### 1. Objectivo
+
+Hoje um estafeta é uma linha com nome, telefone, e-mail e um texto livre de veículo: ninguém sabe quem é, se tem carta, ou se a mota é dele. Quem quiser trabalhar como estafeta no ControlCore passa a **registar-se sozinho** e a entregar, no próprio telemóvel, quatro blocos de documentos — **BI, carta de condução, veículo (e os respectivos documentos) e fotografia do rosto** — que ficam guardados com o estafeta: as fotografias no armazenamento de imagens, e os dados lidos delas na base de dados. Tudo é obrigatório.
+
+#### 2. O que existe hoje (verificado no código, 2026-10-12)
+
+| Coisa | Estado |
+| --- | --- |
+| Modelo `Estafeta` (`schema.prisma`) | `nome`, `telefone` (único por empresa), `email?`, `password` (hash), `veiculo?`, `matricula?` (texto livre, «não decide nenhuma regra»), `estado`, `isActive`, lojas. **Sem documentos, sem BI, sem fotografia** |
+| Criação | `CriarEstafetaUseCase`: só o gestor (`GERIR_ESTAFETAS`); código `E####` e senha gerados pelo servidor, enviados por e-mail |
+| Armazenamento de imagens | `S3StorageService` (Neon Object Storage, S3-compatível): `carregar`, `obterUrlAssinado` (**nunca persistir**), `apagar`. Já usado pelas imagens de produto, com conversão para WebP a 1600 px (`sharp`) |
+| Leitura por IA | Gemini com visão (`@google/genai`, `modeloGeminiPadrao`): `ExtrairProdutoDeFotoService` (uma chamada por imagem, instrução «omite o que não leres», resultado validado em `domain/extracao-de-foto.ts`, **não grava nada**) |
+| Captura no telemóvel | `CapturaPorFoto` (`shared/ui`): `<input capture>`, pré-visualização, limite de tamanho — mas é específico de produto (devolve `RespostaExtracaoPorFoto`) |
+| Documentos com estado | `DocumentoFornecedor` (B2B): `numero`, `validoAte`, `estado`, `verificadoPorId` — o modelo de referência para documentos que alguém confere |
+| Rotas públicas com defesa | `@Throttle` já usado em `adesao.controller.ts` (5 pedidos/hora) |
+
+#### 3. Requisito interpretado
+
+1. **Auto-registo** (decidido pelo utilizador, 2026-10-12): o estafeta cria a própria conta numa página pública, por **ligação de convite da empresa**; escolhe a senha; o servidor gera o código `E####`.
+2. **Quatro blocos obrigatórios**, cada um com a sua captura:
+   - **BI** — fotografia da frente **e** do verso → leitura dos dados → gravados.
+   - **Carta de condução** — frente e verso → mesma lógica.
+   - **Veículo** — fotografia do veículo (por omissão, uma mota) **e** dos documentos do veículo (livrete/título) → mesma lógica; a matrícula, marca e modelo lidos preenchem `veiculo`/`matricula`.
+   - **Rosto** — uma fotografia.
+3. **Contactos e dados pessoais também obrigatórios**: nome, telefone, e-mail, contacto de emergência.
+4. **Todas as fotografias** vão para o armazenamento de imagens, **associadas ao estafeta**; os **dados lidos** vão para a base de dados.
+5. **Activação ao submeter** (decidido pelo utilizador): completos os quatro blocos, o estafeta fica operacional **sem aprovação do gestor**.
+
+**Divergência técnica, em duas linhas.** Activar sem ninguém conferir significa que qualquer pessoa com a ligação de convite pode ficar a receber mercadoria e a cobrar numerário da empresa com um BI que ninguém viu. Mantive o que foi pedido e **compensei com três coisas baratas**: o convite é da empresa e revogável (D2); o gestor vê os documentos e pode **suspender** a qualquer momento (B5, B7); e cada estafeta novo aparece ao gestor como «novo — documentos por conferir» até alguém o marcar como conferido (campo informativo, **não** bloqueia).
+
+#### 4. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Guardar primeiro, ler depois, confirmar no fim.** O telemóvel envia cada fotografia **uma vez** (`POST …/imagens`); a leitura (`POST …/ler`) corre **sobre a imagem já guardada**; o estafeta vê os campos lidos, corrige, e confirma (`PUT …/:tipo`) | Enviar para ler e voltar a enviar para guardar | Dados móveis em Moçambique custam dinheiro: cada fotografia a subir duas vezes é o dobro do custo e o dobro das ocasiões em que a ligação cai a meio. Também permite **retomar**: a conta fica com o que já foi enviado |
+| **D2** | **Ligação de convite por empresa:** `Empresa.codigoConviteEstafetas` (aleatório, longo, **rodável** pelo gestor). O registo público exige-o; é ele que dá o `empresaId` | Registo aberto à plataforma; escolher a empresa numa lista | Um estafeta pertence a **uma empresa** (`empresaId`, `@@unique([empresaId, telefone])`, entregas, acertos, caixa). Sem convite não há como saber a que empresa pertence — e uma lista pública de empresas expõe clientes. Rodar o código revoga convites vazados |
+| **D3** | **A leitura é uma sugestão**, nunca um facto: o estafeta vê e corrige cada campo antes de confirmar; guarda-se **o que foi lido** (`dadosLidos`, JSON) **e o que foi confirmado** (colunas) | Gravar directamente o que a IA leu | Um BI mal lido (um dígito trocado) e nunca corrigido é um documento falso na base de dados. Guardar os dois permite ao gestor ver onde a pessoa corrigiu a máquina |
+| **D4** | **Uma linha por documento** em `estafeta_documentos` (`tipo`: `BI`, `CARTA_CONDUCAO`, `DOCUMENTO_VEICULO`, `FOTO_VEICULO`, `FOTO_ROSTO`), com **colunas tipadas** para o que se consulta (`numero`, `nomeNoDocumento`, `dataNascimento`, `emitidoEm`, `validoAte`, `categoria`, `matricula`, `marca`, `modelo`) e **uma linha por imagem** em `estafeta_documento_imagens` (`lado`: `FRENTE`/`VERSO`/`UNICA`, `chaveArmazenamento`). `@@unique([estafetaId, tipo])` | Uma coluna JSON só; colunas no `Estafeta` | JSON não se filtra nem se valida à expiração («cartas a expirar este mês»); no `Estafeta` engordaria uma tabela quente com dados sensíveis que quase ninguém precisa de ler |
+| **D5** | **Chave de armazenamento `estafetas/<empresaId>/<estafetaId>/<tipo>/<uuid>.webp`; URL assinado curto (5 min), calculado na leitura e nunca guardado** (regra do `S3StorageService`). As fotografias de BI/carta **nunca** vêm nas listagens — só no detalhe de um estafeta, com permissão própria e **registo de auditoria de cada visualização** | Reutilizar o URL de 1 h das imagens de produto | Um BI não é uma foto de produto: se o URL vazar, tem de morrer em minutos. O registo de quem viu os documentos de quem é o que se exige a quem guarda identificação |
+| **D6** | **Um serviço novo `ExtrairDocumentoEstafetaService`**, com **uma instrução por tipo de documento** e **validação pura em `domain/`** (formato do nº do BI, do NUIT, datas, validade). Sem biblioteca de OCR nova | Tesseract/OCR local; reutilizar o serviço de produto | O Gemini já está integrado, pago e configurado, e lê fotografias tortas e manuscrito, o que um OCR local não faz. O serviço de produto tem instruções e campos de produto: reutilizá-lo era torcê-lo |
+| **D7** | **A conta cria-se no passo 1 (dados + senha) e os documentos entram um a um.** Até os quatro blocos estarem completos, `Estafeta.onboardingCompletoEm` é nulo: o estafeta **entra** na aplicação mas só vê o assistente, e a atribuição de entregas recusa-o. Completar o último bloco preenche-o | Um único formulário final com tudo | Quatro documentos com duas fotografias cada num único envio falham a meio e perdem tudo. Em passos, retoma-se onde ficou |
+| **D8** | **Compressão no cliente antes de enviar** (lado maior ≤ 1600 px, JPEG ~0.8, via canvas) e conversão para WebP no servidor (`sharp`, **sem reduzir abaixo de 1600 px** — um BI tem de se ler) | Enviar o ficheiro bruto (4–8 MB por fotografia de telemóvel) | Doze fotografias a 6 MB são 70 MB por onboarding em dados móveis |
+| **D9** | **Estafetas existentes ficam como estão** (`onboardingCompletoEm` preenchido com `createdAt` na migração) e vêem um aviso a pedir os documentos; **não ficam bloqueados** | Bloquear todos de uma vez | Uma frota em produção que de manhã deixa de poder receber entregas é pior do que um aviso. A decisão é reversível — ver Pergunta P2 |
+
+#### 5. Plano de implementação
+
+##### B — Backend
+
+- **B1 — Dados (obrigatório).** Migração **aditiva**, sem tocar em dados existentes:
+  - `estafeta_documentos` e `estafeta_documento_imagens` (D4); enums `TipoDocumentoEstafeta` e `LadoDocumento`.
+  - `Estafeta`: `contactoEmergenciaNome`, `contactoEmergenciaTelefone`, `onboardingCompletoEm DateTime?`, `documentosConferidosEm DateTime?`, `documentosConferidosPorId String?`. `Estafeta.veiculo`/`matricula` **mantêm-se** e passam a ser **preenchidos** a partir do documento do veículo.
+  - `Empresa`: `codigoConviteEstafetas String? @unique`.
+  - Na migração: `UPDATE estafetas SET "onboardingCompletoEm" = "createdAt"` (D9). `prisma migrate dev --name onboarding_estafetas_documentos`. Apagar um estafeta tem de apagar também os objectos do armazenamento (B5): a cascata da base de dados sozinha deixava as fotografias órfãs.
+- **B2 — Registo público (obrigatório).** `POST /estafeta/registo` (`@Public()` **deliberado**, `@Throttle` apertado — 5/hora por IP, como a adesão): `{ convite, nome, telefone, email, senha, contactoEmergencia{nome,telefone}, idioma }` → valida o convite, a unicidade do telefone na empresa e **do e-mail em todo o sistema**; cria o `Estafeta` com `estado INDISPONIVEL`, `onboardingCompletoEm = null`; gera `E####`; envia o código por e-mail (`MailerService`, o mesmo fluxo de `enviarCredenciais`) e **devolve-o também** (a conta é do próprio, e o e-mail pode não chegar). Cria a sessão do estafeta (cookie `tokenEstafeta`) para o assistente continuar.
+- **B3 — Convite (obrigatório).** `GET /estafetas/convite` e `POST /estafetas/convite/rodar` (`GERIR_ESTAFETAS`): devolve/gera o código e a ligação. Rodar invalida o anterior de imediato.
+- **B4 — Documentos, do lado do estafeta (obrigatório).** Sob `EstafetaGuard`, `/estafeta/onboarding`:
+  - `GET /estado` → o que falta, o que está feito, os dados já confirmados.
+  - `POST /documentos/:tipo/imagens` (multipart, `lado`, 1 imagem, ≤ 8 MB antes de comprimir): valida o tipo **pelo conteúdo** (`sharp`), converte para WebP, grava no armazenamento, regista a imagem; substitui e **apaga o objecto anterior** do mesmo `tipo`+`lado`.
+  - `POST /documentos/:tipo/ler`: lê as imagens **já guardadas** (D1) e devolve `{ dados, recusados[], semResultado }` — **não grava**. Só para `BI`, `CARTA_CONDUCAO`, `DOCUMENTO_VEICULO`. Limite por estafeta (ex.: 10 leituras/hora) porque cada leitura é uma chamada paga ao Gemini.
+  - `PUT /documentos/:tipo` com os campos **confirmados** (DTO por tipo, `class-validator`): grava as colunas e `dadosLidos`; recusa documentos **expirados** (`validoAte` no passado) e exige as duas faces onde se aplica.
+  - `POST /concluir`: verifica os quatro blocos e os contactos; preenche `onboardingCompletoEm`; idempotente.
+  - Tudo **filtrado pelo `estafetaId` do token**: o estafeta nunca indica de quem são os documentos.
+- **B5 — Documentos, do lado da gestão (obrigatório).** `GET /estafetas/:id/documentos` (permissão **nova** `VER_DOCUMENTOS_ESTAFETA`, só ADMIN por omissão): dados + URLs assinados de 5 min; **audita** a visualização. `PATCH /estafetas/:id/documentos/conferir` marca `documentosConferidosEm/Por`. Remover um documento ou o estafeta **apaga os objectos** do armazenamento. A listagem de estafetas ganha `onboardingCompleto` e `documentosConferidos` (booleanos), **nunca** números de documento.
+- **B6 — Leitura por IA (obrigatório).** `ExtrairDocumentoEstafetaService` + `domain/extracao-documento-estafeta.ts` (validação pura): instrução por tipo («omite o que não leres»); BI → `numero`, `nomeCompleto`, `dataNascimento`, `naturalidade`, `filiacao`, `emitidoEm`, `validoAte`, `nuit`; carta → `numero`, `nome`, `categorias`, `emitidoEm`, `validoAte`; veículo → `matricula`, `marca`, `modelo`, `cor`, `ano`, `proprietario`. Cada campo é validado (formato do nº do BI, NUIT de 9 dígitos, datas plausíveis) e o que falha vai para `recusados`, **como já faz a leitura de produto**.
+- **B7 — Atribuição e suspensão (obrigatório).** `OperarEntregaService.atribuir` (e a delegação) recusa estafeta com `onboardingCompletoEm` nulo (`entrega.estafeta.onboarding_incompleto`); a lista de estafetas elegíveis do painel filtra-os. O gestor **suspende** com o `isActive:false` que já existe.
+- **B8 — Transversal.** Mensagens `mensagemTraduzida` (pt/en); eventos de auditoria (`estafeta.registado`, `estafeta.documento_enviado`, `estafeta.documentos_vistos`, `estafeta.documentos_conferidos`); notificação ao gestor «novo estafeta completou o registo» (reutiliza o §4.7); testes (secção 7).
+
+##### F — Frontend
+
+- **F1 — Registo público (obrigatório).** Rota pública `/estafeta/registo?convite=…` (fora do `AppLayout`, no estilo de `/estafeta`): formulário `react-hook-form` + Zod; sem convite ou convite inválido → ecrã de erro claro.
+- **F2 — Assistente de documentos (obrigatório).** Em `features/estafeta-app`, página `OnboardingPage` com 5 passos (BI · Carta · Veículo · Rosto · Revisão), estado do servidor via TanStack Query (`useEstadoOnboarding`), e **um componente genérico `CapturaDeDocumento`** (`<input capture="environment">`; `capture="user"` no rosto; frente/verso com pré-visualização e «repetir»; compressão por canvas, D8). Os campos lidos entram num formulário **editável**; o botão confirma. Quatro estados em tudo (carregar/erro/vazio/sucesso), `mensagemDeErro()`. Funciona em ecrã pequeno e com a ligação a falhar (retoma onde ficou).
+- **F3 — Guarda do estafeta (obrigatório).** `EstafetaLayout`: com `onboardingCompletoEm` nulo, qualquer rota redirecciona para o assistente; estafetas antigos vêem só um cartão de aviso (D9).
+- **F4 — Gestão (obrigatório).** No separador **Estafetas** do E-Commerce: botão «Ligação de convite» (copiar/rodar), emblema «Onboarding incompleto» / «Novo — por conferir», e um painel de documentos (dados + fotografias, com `<Can>` para `VER_DOCUMENTOS_ESTAFETA`) com «Marcar como conferido». O formulário «Novo estafeta» **mantém-se** como atalho do gestor, e o estafeta criado assim também completa o assistente no primeiro acesso.
+- **F5 — i18n e permissões na UI (obrigatório).** Textos em `locales/pt|en/estafeta.json`; a UI esconde, o servidor autoriza.
+
+##### Opcional (cortar sob pressão)
+
+- Reconhecimento facial do rosto contra a fotografia do BI e prova de vida — **fora de âmbito**; exige um serviço de biometria à parte (decisão separada).
+- Avisos de expiração da carta/BI (cron + notificação).
+- Recorte do documento no ecrã (ajuda o enquadramento).
+
+#### 6. Ficheiros afectados
+
+- **Backend, criar:** migração `…_onboarding_estafetas_documentos`; `entrega/application/use-cases/onboarding-estafeta.use-cases.ts` (+ `.spec`); `entrega/application/services/extrair-documento-estafeta.service.ts`; `entrega/domain/extracao-documento-estafeta.ts` (+ `.spec`); `entrega/dto/onboarding-estafeta.dto.ts`; `entrega/estafeta-onboarding.controller.ts`; `entrega/estafeta-registo.controller.ts`.
+- **Backend, alterar:** `prisma/schema.prisma`; `entrega.module.ts`; `estafeta.controller.ts` (convite, documentos, conferir); `estafetas.use-cases.ts` (listagem com os booleanos; limpeza de objectos ao desactivar/apagar); `operar-entrega.service.ts` (recusa `onboarding_incompleto`); `seed.ts` + migração (permissão `VER_DOCUMENTOS_ESTAFETA`, `permissoes.guard.spec.ts`); catálogos i18n do servidor. Sem variáveis de ambiente novas (o Gemini e o armazenamento já estão configurados).
+- **Frontend, criar:** `features/estafeta-app/pages/OnboardingPage.tsx`, `RegistoEstafetaPage.tsx`; `components/CapturaDeDocumento.tsx`, `FormularioDocumento.tsx`; `hooks/useOnboarding.ts`; `api/onboarding.api.ts`; `types/onboarding.ts`; `shared/utils/comprimir-imagem.ts` (+ teste); em `entrega-gestao`: `components/DocumentosDoEstafeta.tsx`, `ConviteEstafetas.tsx`.
+- **Frontend, alterar:** `router/index.tsx`; `EstafetaLayout.tsx`; `EstafetasPage.tsx` (emblemas, convite); `shared/config/permissions.config.ts`; `locales/pt|en/estafeta.json` e `entrega.json`.
+- **Docs, nos dois repositórios:** `plano_implementacao.md` e `TRD.md` (armazenamento, Gemini, permissão).
+
+#### 7. Verificação
+
+- **Testes (backend):** validação pura da leitura (nº do BI, NUIT, datas, expirado); registo (convite inválido ou rodado, telefone repetido, e-mail repetido, limite de pedidos); isolamento — um estafeta **não** lê nem escreve documentos de outro; `concluir` recusa com um bloco em falta e é idempotente; `atribuir` recusa onboarding incompleto; substituir uma imagem apaga o objecto antigo; a listagem **nunca** devolve números nem chaves; cada visualização de documentos gera auditoria.
+- **Testes (frontend):** compressão de imagem; o assistente retoma o passo certo; formulário com campo recusado pela leitura.
+- **Manual:** registar-se com o convite num telemóvel real; fotografar um BI torto e com pouca luz; cortar a ligação a meio e retomar; completar e receber uma entrega; ver os documentos como gestor e confirmar a linha de auditoria; rodar o convite e ver o anterior falhar.
+- Comandos: backend `npm run build` e `npm test`; frontend `npm run build` e `npm test`.
+
+#### 8. Riscos
+
+| Risco | Tratamento |
+| --- | --- |
+| **Dados pessoais sensíveis** (BI com filiação e naturalidade, carta, rosto) | Acesso por permissão própria, URL de 5 min, auditoria de cada visualização, objectos apagados com o estafeta, **nunca** nas listagens nem em logs. **Falta o texto de consentimento** no registo e a validação com a legislação de protecção de dados de Moçambique — ver P3 |
+| **Activação sem aprovação** (pedido do utilizador) | Convite rodável, suspensão pelo gestor, marca «por conferir» (secção 3) |
+| **Leitura errada** | D3: o estafeta confirma; guarda-se também o que foi lido |
+| **Custo do Gemini** (uma chamada por imagem lida) | Limite por estafeta; só os três tipos que se lêem; sem releitura automática |
+| **Fotografia ilegível** | Mensagem específica («pouca luz», «cortada»), repetir sem perder as outras |
+| **Conta sem verificação de e-mail** | O código vai por e-mail **e** aparece no ecrã; um e-mail de outra pessoa só lhe envia um código inútil sem a senha. Verificar o e-mail fica fora de âmbito |
+| **Estafeta novo serve todas as lojas** (lojas vazias = todas, hoje) | Assunção A4: tratado em P4 |
+
+#### 9. Assunções (não bloqueantes, declaradas)
+
+- **A1.** O auto-registo é por convite da empresa (D2).
+- **A2.** O veículo é uma mota «por omissão» mas o tipo é livre (`veiculo`), e **não** se verifica a categoria da carta contra o veículo — só se **grava**.
+- **A3.** «Documentos do veículo» = livrete e/ou título de registo, numa ou duas fotografias (`FRENTE`/`VERSO`/`UNICA`).
+- **A4.** Um estafeta recém-registado não tem lojas atribuídas, e como «vazio = serve todas» é o comportamento actual, a atribuição vê-o logo — ver P4.
+- **A5.** Um documento **expirado** não se aceita.
+
+#### 10. Perguntas em aberto (não bloqueiam o rascunho; bloqueiam a implementação)
+
+- **P1 — Convite.** O convite é **por empresa** (um código para todas as lojas) ou **por loja**? Recomendo por empresa; a loja atribui-se depois.
+- **P2 — Estafetas existentes.** Ficam a trabalhar com aviso (D9) ou passam a ficar **bloqueados** até completarem o onboarding?
+- **P3 — Consentimento e retenção.** Quem redige o texto de consentimento para o tratamento do BI e do rosto, e por quanto tempo se guardam depois de o estafeta deixar a empresa? Sugiro apagar com o estafeta, mas **é uma decisão legal, não técnica**.
+- **P4 — Lojas por omissão.** Um estafeta recém-registado deve ficar **sem lojas** (não recebe nada até o gestor atribuir) em vez de «serve todas»?
+- **P5 — Documentos do veículo.** Basta o livrete, ou também o seguro obrigatório e a inspecção?
+
+#### 11. Ordem de execução
+
+1. **B1** (migração) → **B6** (leitura + validação pura, com testes) → **B4/B2/B3** → **B5/B7**. Backend primeiro, como em toda a mudança de contrato.
+2. **F1–F3** (o que o estafeta usa) → **F4** (o que o gestor vê).
+3. Documentação e TRD nos dois repositórios, no mesmo ciclo.
+4. **Teste real** com um BI verdadeiro e um telemóvel de gama baixa, antes de abrir o convite a estafetas reais.
 
 ## 5. Convenção para novas entradas
 
