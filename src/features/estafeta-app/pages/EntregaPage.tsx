@@ -131,7 +131,7 @@ export function EntregaPage() {
       {e.estado === 'FALHADA' && <p className="mt-3 rounded-2xl bg-slate-100 p-4 text-sm text-slate-600">{t('detalhe.falhada_ajuda')}</p>}
 
       {possiveis.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto max-w-lg space-y-2">
             {!online && <p className="text-center text-xs font-medium text-amber-700">{t('sem_ligacao_accao')}</p>}
 

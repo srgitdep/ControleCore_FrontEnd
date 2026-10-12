@@ -103,5 +103,12 @@
     "a_partilhar": "A partilhar a sua posição com o cliente e a loja",
     "sem_canal": "A tentar ligar para partilhar a posição…",
     "manter_aberta": "Mantenha esta aplicação aberta e o ecrã ligado. Com o telemóvel bloqueado ou outra aplicação à frente, a posição deixa de ser enviada."
+  },
+  "instalar": {
+    "titulo": "Instale a aplicação",
+    "ios": "No iPhone: toque em Partilhar (□↑) e depois em «Adicionar ao ecrã principal». Só assim abre em ecrã inteiro e não perde a sessão.",
+    "android": "Abre em ecrã inteiro, mais depressa, e fica no ecrã principal.",
+    "botao": "Instalar",
+    "dispensar": "Dispensar"
   }
 }

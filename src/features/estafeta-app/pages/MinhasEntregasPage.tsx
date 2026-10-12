@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ChevronRight, Loader2, PackageCheck, RefreshCw } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
+import { AjudaDeInstalacao } from '../components/AjudaDeInstalacao';
 import { EstadoDaEntrega } from '../components/EstadoDaEntrega';
 import { useMinhasEntregas } from '../hooks/useEstafeta';
 import type { EntregaEstafeta } from '../types/estafeta';
@@ -39,6 +40,7 @@ export function MinhasEntregasPage() {
 
   return (
     <div className="space-y-4">
+      <AjudaDeInstalacao />
       <div className="flex items-center gap-2">
         <div className="flex flex-1 rounded-xl bg-slate-200/70 p-1" role="tablist">
           {[false, true].map((h) => (

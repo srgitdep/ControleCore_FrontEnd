@@ -1935,6 +1935,24 @@ esse merge trouxe.
   >
   > **Notas de deploy.** **Há uma migração** (aditiva, corre no arranque do contentor). **Backend primeiro**, frontend depois — o sino chama endpoints novos. Sem variáveis novas. `POST`/`GET` novos: `/notificacoes`, `/commerce/conta/notificacoes`, `/estafeta/notificacoes` (cada um com `/contagem`, `PATCH /lidas`, `PATCH /:id/lida`), `/notificacoes/socket-token` e `PATCH /estafeta/entregas/:id/cheguei`.
 
+### Fase 48 — Compatibilidade com o Safari do iPhone e o Chrome do Android (12 Out 2026)
+
+- **2026-10-12 · [FE] · Antonio Mambo** — `fix/compatibilidade-ios-android` (só frontend; sem migração nem variáveis novas)
+  - **Pedido do utilizador:** os browsers do Android e do iPhone (Safari) comportam-se de maneira diferente; procurar a lista pública dessas diferenças, varrer o sistema e corrigir o que se aplica.
+  - **Fontes usadas** (listas públicas e mantidas): *iOS PWA Compatibility* (firt.dev — Web Push só em PWA instalada com iOS ≥ 16.4, sem `beforeinstallprompt`, sem *background sync*, sem vibração), *Full Third-Party Cookie Blocking and More* / ITP (webkit.org — limite de 7 dias ao armazenamento da página no Safari, isenta a PWA instalada) e *caniuse* (`BarcodeDetector`, `dvh`, lookbehind em regex).
+  - fix(frontend): **ecrã branco em iPhones com iOS ≤ 16.3.** O `react-markdown`/`remark-gfm` traz um regex literal com *lookbehind* (`(?<=…)`); o Safari antigo não o consegue **ler**, e um erro de leitura derruba o *bundle* inteiro, não só a Mayra. O `MessageBubble` passou a carregar sob pedido (`React.lazy`), por isso o regex já não está no ficheiro principal (verificado: `grep '(?<='` só acerta no pedaço `MessageBubble-*.js`). O pior que acontece agora é a Mayra não mostrar respostas formatadas nesses aparelhos.
+  - fix(frontend): **zoom involuntário no iPhone** ao tocar num campo com letra < 16 px (o iOS não volta atrás sozinho): regra global `font-size: max(16px, 1em)` em `input/select/textarea`, **só** dentro de `@supports (-webkit-touch-callout: none)` (WebKit do iOS) — Android e desktop ficam iguais.
+  - fix(frontend): **`100vh` no iOS** conta a altura sem as barras do Safari — o fundo do ecrã ficava escondido. `.min-h-screen`/`.h-screen` usam `100dvh` onde existe (`@supports (height: 100dvh)`).
+  - feat(estafeta): **zona segura do iPhone** — `viewport-fit=cover` acrescentado **só** nas rotas `/estafeta` (e retirado à saída) e o cabeçalho e a barra fixa de acções respeitam `env(safe-area-inset-*)`; `overscroll-behavior-y: none` para o «puxar para recarregar» do Android não recarregar a página a meio de uma entrega.
+  - feat(estafeta): **cartão «Instale a aplicação»** (`AjudaDeInstalacao`): no Android/Chrome, botão que usa o `beforeinstallprompt`; no iPhone, as instruções «Partilhar → Adicionar ao ecrã principal» (o iOS não tem o evento). Some se já estiver instalada (`standalone`) ou se for dispensado.
+  - fix(tempo real): **recuperação ao voltar ao ecrã.** O iOS suspende a página em segundo plano: o WebSocket morre sem aviso e o `watchPosition` fica calado sem erro. Ao `visibilitychange` para visível, o canal religa-se se estiver desligado (`useCanalDeEntregas`) e o GPS recomeça (`useEmitirPosicao`).
+  - **Varrido e já correcto (nada a fazer):** AudioContext/som só após gesto; datas sempre ISO (o Safari recusa formatos soltos); leitor de códigos com alternativa ao `BarcodeDetector` (ausente no Safari); armazenamento sempre dentro de `try/catch`; `localStorage` só para conveniências (a sessão é por cookie HttpOnly *first-party*, via `vercel.json`).
+  - **Não se resolve com código (limites honestos):** sem aplicação nativa, a posição do estafeta **pára com o telemóvel bloqueado** em qualquer sistema; no iPhone, *push* só com a PWA instalada (§4.8, P3 — o cartão acima já ajuda a instalar).
+
+  > **Verificação.** `tsc -b` limpo, **245 testes**, `vite build` limpo. **Não testei em aparelhos reais** (iPhone nem Android): o que é CSS/viewport/*visibility* só se confirma no telemóvel — ver zoom ao tocar num campo, a barra do fundo no iPhone e o GPS depois de bloquear e desbloquear o ecrã.
+  >
+  > **Notas de deploy.** Só frontend; sem migração nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer

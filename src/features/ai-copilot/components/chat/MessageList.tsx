@@ -1,8 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { lazy, Suspense, useRef, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useCopilotStore } from '../../store/copilotStore';
-import { MessageBubble } from './MessageBubble';
 import { WelcomeScreen } from './WelcomeScreen';
+
+// Carregada sob pedido: o react-markdown traz um regex com lookbehind (`(?<=`) que o Safari < 16.4 não consegue
+// sequer ler — e um regex literal inválido derruba o bundle INTEIRO (ecrã branco no iPhone antigo), não só a Mayra.
+// Fora do bundle principal, o pior que lhe acontece é a Mayra não abrir nesses aparelhos.
+const MessageBubble = lazy(() => import('./MessageBubble').then((m) => ({ default: m.MessageBubble })));
 
 export function MessageList() {
   const { messages, isLoading } = useCopilotStore();
@@ -21,7 +25,9 @@ export function MessageList() {
         <WelcomeScreen />
       ) : (
         messages.map((msg, idx) => (
-          <MessageBubble key={idx} msg={msg} idx={idx} />
+          <Suspense key={idx} fallback={null}>
+            <MessageBubble msg={msg} idx={idx} />
+          </Suspense>
         ))
       )}
       

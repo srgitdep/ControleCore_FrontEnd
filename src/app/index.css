@@ -2,6 +2,30 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ---- Compatibilidade com o Safari do iOS (plano, Fase 48) ----
+ * Só dentro de @supports (-webkit-touch-callout: none), que só o WebKit do iOS cumpre: no Android e no
+ * desktop estas regras não existem, e o aspecto deles não muda.
+ *
+ * 1) O iOS faz zoom ao tocar num campo com letra < 16 px e não volta atrás sozinho — o POS e os formulários
+ *    ficavam "saltados" e cortados ao lado. Os campos usam text-sm (14 px) em toda a aplicação.
+ * 2) 100vh no iOS conta a altura SEM as barras do Safari: um ecrã "min-h-screen" passava por baixo da barra
+ *    de endereço e o botão do fundo ficava escondido. 100dvh segue a barra a aparecer e a esconder-se. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  .h-screen {
+    height: 100dvh;
+  }
+}
+
 @theme {
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
