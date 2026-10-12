@@ -42,6 +42,29 @@
 
 **Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). A **Fase 6 (webhooks)** também está feita (Fase 45). Tudo o que é entrega está num só ramo (`feat/rastreio-fase5`, nos dois repositórios), à espera do merge único; **não há mais código por escrever na entrega** — só a 5D e as decisões abaixo. Quando a 5D estiver feita, este bloco apaga-se.
 
+**Fase 50 — Estafetas da plataforma: onboarding e atribuição por proximidade** (plano completo em **§4.9**, **aprovado em 2026-10-12**; branch `feat/estafetas-plataforma`, nos dois repositórios). **Fora desta fase, por decisão do utilizador:** o pagamento online (§4.10, **adiado: ainda não há chave de API de um operador**) e, por depender dele, o **B13** (retenção da taxa e carteira do estafeta). Consequência assumida: **a frota da plataforma não abre a empresas** — `ComercioConfiguracao.frotaEntrega = PLATAFORMA` só pode ser escolhida com `FROTA_PLATAFORMA_ACTIVA=true` (por omissão, falso), que só se liga quando o pagamento online existir. Os avisos *push* (§4.8) também não estão feitos: **a oferta só chega com a aplicação aberta**. Perguntas ainda em aberto, com o que se assume até haver resposta: **P1** convite por empresa; **P5** basta o livrete; **P6** todos os campos obrigatórios, sem excepção; **P3b** o texto de consentimento é provisório e **precisa de validação legal antes de abrir o registo a estafetas reais**.
+
+Backend
+- [ ] **B1** — Migração e `schema.prisma` (documentos, imagens, ofertas, `empresaId` do estafeta opcional, convite, `frotaEntrega`, `procuraIniciadaEm`).
+- [ ] **B4** — Leitura por IA: validação pura (`domain/`) com testes e `ExtrairDocumentoEstafetaService`.
+- [ ] **B2** — Registo público com convite e `GET/POST /estafetas/convite[/rodar]`.
+- [ ] **B3** — Documentos do lado do estafeta (`/estafeta/onboarding`: imagens, ler, confirmar, concluir).
+- [ ] **B5** — Gestão dos documentos (`VER_DOCUMENTOS_ESTAFETA`, URLs de 5 min, auditoria, conferir; nada se apaga).
+- [ ] **B6** — Online/offline e posição do estafeta online.
+- [ ] **B7/B8/B9** — Motor de proximidade (raio crescente de 7 em 7 s), ofertas (aceitar atómico), tarefa agendada, procura que não desiste e aviso ao gestor aos 10 min.
+- [ ] **B10/B11** — Acerto de numerário só da frota própria; `atribuir` recusa quem não completou o onboarding; atribuição manual só à frota própria.
+- [ ] **B12** — Auditoria, notificações, i18n (pt/en), `.env.example` e testes.
+
+Frontend
+- [ ] **F1** — Registo público.
+- [ ] **F2** — Assistente de documentos com captura e compressão.
+- [ ] **F3** — Interruptor online/offline e ecrã de oferta; guarda do estafeta.
+- [ ] **F4/F5** — Gestão: convite, emblemas, documentos, frota própria/plataforma; ecrã do operador da plataforma.
+- [ ] **F6** — i18n e permissões na UI.
+
+Fecho
+- [ ] Testes e builds dos dois repositórios; `plano_implementacao.md` e `TRD.md` actualizados e idênticos nos dois; teste real (BI verdadeiro, dois telemóveis) — **do utilizador**.
+
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2031,7 +2054,7 @@ esse merge trouxe.
 - [ ] O menu mostra «Pedidos Compra Fácil» a Armazenistas, que recebem 403 — o
       perfil «Armazenista» não tem `pedidos_commerce` (assunção 10 da §4.1). Ou se
       tira o item do menu a esse cargo, ou se dá a permissão se o picking for dele.
-- [ ] **Cobrança no checkout com carteira móvel (M-Pesa/e-Mola), reembolsos e liquidação.** Hoje o método de pagamento do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é cobrado fisicamente no levantamento ou à porta. Passar a cobrar no checkout torna o pedido um facto financeiro imediato (reembolsos, conciliação, pagamento falhado, prestação de contas às empresas) — **projecto próprio**, planeado em **§4.10** (rascunho, a aguardar aprovação). **É o pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout).
+- [ ] **Cobrança no checkout com carteira móvel (M-Pesa/e-Mola), reembolsos e liquidação.** Hoje o método de pagamento do pedido é só uma intenção (`schema.prisma`, modelo `Pedido`) e o valor é cobrado fisicamente no levantamento ou à porta. Passar a cobrar no checkout torna o pedido um facto financeiro imediato (reembolsos, conciliação, pagamento falhado, prestação de contas às empresas) — **projecto próprio**, planeado em **§4.10** (rascunho). **ADIADO pelo utilizador em 2026-10-12: ainda não há chave de API de um operador de pagamentos.** **É o pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout).
   - [ ] **PG1 — Dados, porta e simulado.** Migração (pagamentos, eventos, reembolsos, `AGUARDA_PAGAMENTO`), interface `GatewayPagamento` e gateway simulado, com os testes de toda a máquina de estados **sem rede**.
   - [ ] **PG2 — O cliente paga.** Iniciar, confirmar (aviso do operador e consulta de estado, idempotentes), expirar; checkout com ecrã de espera e retomar «Os meus pedidos» — de ponta a ponta com o simulado.
   - [ ] **PG3 — Reembolsos e a ligação ao resto.** Cancelamento, diferença da conferência e entrega falhada; a venda da expedição sem conta a receber e o acerto de numerário a ignorar pedidos pagos.
@@ -2131,7 +2154,7 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [ ] **P2 — O aparelho.** *Handler* de *push* no *service worker*, pedido de permissão e activação por aparelho (estafeta, cliente e gestão), «abrir» a partir do aviso.
   - [ ] **P3 — O iPhone.** Instruções de instalação no ecrã inicial (o iOS só entrega *push* a PWA instalada) e, se aprovado, a loja instalável.
   - [ ] **P4 — Fecho.** Testes, documentação, teste real com o telemóvel **bloqueado** (Android e iPhone).
-- [ ] **Estafetas da plataforma: onboarding com documentos e atribuição por proximidade.** Pedido do utilizador em 2026-10-12: o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**. Regista-se sozinho e entrega, obrigatoriamente, **BI, carta de condução, veículo e documentos do veículo (frente e verso) e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, ligadas ao estafeta. Quando uma compra pede entrega, o servidor oferece-a ao estafeta **online mais perto da loja** (só a loja conta), com aceitar/recusar e tempo limite; recusa ou silêncio passa ao seguinte. O numerário é acertado **por empresa**, e a **frota própria** de cada empresa continua a existir (a empresa escolhe). Decidido pelo utilizador: **auto-registo público**, **activação ao submeter sem aprovação**, **cliente a pagar o estafeta pela taxa**, **dados guardados para sempre** e **procura forçada com raio crescente de 7 em 7 s** (divergências e compensações em §4.9, secção 3). Plano detalhado em **§4.9** (rascunho, a aguardar aprovação). **Depende do §4.8 (*push*) e de um pagamento online no checkout (§4.10, rascunho: o sistema ainda só cobra à entrega).**
+- [ ] **Estafetas da plataforma: onboarding com documentos e atribuição por proximidade.** Pedido do utilizador em 2026-10-12: o estafeta deixa de ser de uma loja ou empresa e passa a ser **da plataforma**. Regista-se sozinho e entrega, obrigatoriamente, **BI, carta de condução, veículo e documentos do veículo (frente e verso) e fotografia do rosto**, mais os contactos; os dados são **lidos das fotografias por IA** e gravados na base de dados, e as fotografias vão para o armazenamento de imagens, ligadas ao estafeta. Quando uma compra pede entrega, o servidor oferece-a ao estafeta **online mais perto da loja** (só a loja conta), com aceitar/recusar e tempo limite; recusa ou silêncio passa ao seguinte. O numerário é acertado **por empresa**, e a **frota própria** de cada empresa continua a existir (a empresa escolhe). Decidido pelo utilizador: **auto-registo público**, **activação ao submeter sem aprovação**, **cliente a pagar o estafeta pela taxa**, **dados guardados para sempre** e **procura forçada com raio crescente de 7 em 7 s** (divergências e compensações em §4.9, secção 3). Plano detalhado em **§4.9** (**aprovado em 2026-10-12**; Fase 50 em curso, sem o B13). **Depende do §4.8 (*push*) e de um pagamento online no checkout (§4.10, rascunho: o sistema ainda só cobra à entrega).**
   - [ ] **O1 — Dados e leitura.** Migração (`empresaId` do estafeta opcional, documentos, imagens, ofertas, `frotaEntrega`), `ExtrairDocumentoEstafetaService` e validação pura com testes.
   - [ ] **O2 — Registo e documentos.** Registo público, envio/leitura/confirmação/conclusão dos documentos, convite da frota própria.
   - [ ] **O3 — Gestão dos documentos.** Ver e conferir (permissão nova, URLs de 5 min, auditoria), suspender; **nada se apaga** (retenção permanente); operador da plataforma (`SUPER_ADMIN`).
@@ -2303,8 +2326,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 | 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Aprovado** — N1 a N3 feitas (Fase 47); falta o teste real (N4) | Secção 3 → «Notificações dentro da aplicação» |
 | 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
-| 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
-| 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho** — a aguardar aprovação do utilizador; **pré-requisito do §4.9** | Secção 3 → «Compra Fácil» → Cobrança no checkout |
+| 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Aprovado** (2026-10-12) — Fase 50 em curso, sem o B13 | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
+| 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho — adiado** (sem chave de API do operador); pré-requisito do B13 do §4.9 | Secção 3 → «Compra Fácil» → Cobrança no checkout |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4774,7 +4797,7 @@ Quando se grava uma notificação **urgente**, o servidor envia também um *Web 
 
 ### 4.9 Estafetas da plataforma: onboarding com documentos e atribuição por proximidade
 
-- **Data:** 2026-10-12 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador** (reescrito no mesmo dia: o estafeta deixa de ser de uma empresa)
+- **Data:** 2026-10-12 · **Estado:** **aprovado em 2026-10-12, em implementação (Fase 50), sem o B13** — que depende do pagamento online (§4.10), adiado (reescrito no mesmo dia: o estafeta deixa de ser de uma empresa)
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o resto:** altera o §4.1 (Fase 2B: hoje o gestor cria o estafeta e atribui-o à mão), o §4.5 (aplicação do estafeta) e o §4.6 (a posição só se emite «em rota»). **Depende do §4.8** (avisos *push*): sem eles, a oferta de uma entrega só chega ao estafeta com a aplicação aberta (ver secção 8).
 
@@ -4979,7 +5002,7 @@ Duas metades, que se constroem em conjunto porque uma não faz sentido sem a out
 
 ### 4.10 Pagamento online no checkout (carteira móvel), reembolsos e liquidação
 
-- **Data:** 2026-10-12 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador**
+- **Data:** 2026-10-12 · **Estado:** **rascunho — adiado pelo utilizador em 2026-10-12: ainda não há chave de API de um operador de pagamentos.** Não implementar antes da aprovação e de haver acesso ao operador
 - **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
 - **Relação com o resto:** é o **pré-requisito do §4.9** (a taxa só se retém e liberta ao estafeta se o cliente a pagou no checkout). É também o item «Cobrança no checkout com gateway M-Pesa/e-Mola» que o backlog e o §4.1 deixaram como «projecto próprio». O §4.1 já deixou o encaixe: *«quando o gateway entrar, a venda da expedição passa a levar o método pré-pago em vez de `A_COBRAR_NA_ENTREGA`, não se cria `RegistroFinanceiro` a receber, e o acerto ignora esses pedidos»* (assunção 4).
 
