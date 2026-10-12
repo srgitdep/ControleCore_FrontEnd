@@ -2136,7 +2136,7 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [ ] **O2 — Servidor: registo e documentos.** Registo público com convite, envio/leitura/confirmação/conclusão dos documentos, recusa de atribuição a quem não completou, ligação de convite.
   - [ ] **O3 — Servidor: gestão.** Ver e conferir documentos (permissão nova, URLs de 5 min, auditoria de cada visualização), limpeza dos objectos ao apagar.
   - [ ] **O4 — Os ecrãs.** Registo, assistente de documentos com captura e compressão no telemóvel, guarda do estafeta, ligação de convite e painel de documentos na gestão.
-  - [ ] **O5 — Fecho.** Testes, documentação e TRD; **teste real** com um BI verdadeiro e um telemóvel de gama baixa. Perguntas P1–P5 do §4.9 respondidas **antes** de começar.
+  - [ ] **O5 — Fecho.** Testes, documentação e TRD; **teste real** com um BI verdadeiro e um telemóvel de gama baixa. Perguntas P1–P6 do §4.9 respondidas **antes** de começar.
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
@@ -4820,6 +4820,23 @@ Hoje um estafeta é uma linha com nome, telefone, e-mail e um texto livre de ve�
 
 #### 5. Plano de implementação
 
+##### Campos obrigatórios (decidido pelo utilizador, 2026-10-12)
+
+**Nada é opcional no onboarding.** Sem tudo o que está abaixo, `POST /concluir` recusa e o estafeta não fica operacional. A regra vale **no servidor** (DTOs e `concluir`) e o ecrã só a espelha (Zod): um cliente alterado não a contorna.
+
+| Bloco | Imagens obrigatórias | Campos obrigatórios (lidos por IA, **confirmados** pelo estafeta) |
+| --- | --- | --- |
+| **Conta e contactos** | — | nome, telefone, e-mail, senha, contacto de emergência (nome **e** telefone) |
+| **BI** | frente **e** verso | número, nome completo, data de nascimento, data de emissão, validade, naturalidade, filiação, NUIT |
+| **Carta de condução** | frente **e** verso | número, nome, categorias, data de emissão, validade |
+| **Documentos do veículo** | frente **e** verso (ou face única, se o documento só a tiver) | matrícula, marca, modelo, cor, ano, proprietário |
+| **Fotografia do veículo** | uma | — |
+| **Fotografia do rosto** | uma | — |
+
+- Um campo que a IA **não conseguiu ler** não passa em branco: o estafeta **escreve-o à mão** a partir do documento, e só então confirma. Não existe «confirmar com campo vazio».
+- Se o documento **fisicamente não tem** um campo (um BI antigo sem NUIT, por exemplo), é uma excepção a decidir caso a caso — ver P6, **antes** de implementar; por omissão, o campo continua obrigatório.
+- Validação de formato no servidor (nº do BI, NUIT de 9 dígitos, datas coerentes, documento **não expirado**) além de «preenchido».
+
 ##### B — Backend
 
 - **B1 — Dados (obrigatório).** Migração **aditiva**, sem tocar em dados existentes:
@@ -4897,6 +4914,7 @@ Hoje um estafeta é uma linha com nome, telefone, e-mail e um texto livre de ve�
 - **P3 — Consentimento e retenção.** Quem redige o texto de consentimento para o tratamento do BI e do rosto, e por quanto tempo se guardam depois de o estafeta deixar a empresa? Sugiro apagar com o estafeta, mas **é uma decisão legal, não técnica**.
 - **P4 — Lojas por omissão.** Um estafeta recém-registado deve ficar **sem lojas** (não recebe nada até o gestor atribuir) em vez de «serve todas»?
 - **P5 — Documentos do veículo.** Basta o livrete, ou também o seguro obrigatório e a inspecção?
+- **P6 — Campo que o documento não tem.** Com tudo obrigatório, um estafeta cujo BI não traz um dos campos (NUIT, filiação) fica impedido de concluir. Aceita-se uma excepção marcada («não consta do documento») ou o campo é mesmo sempre exigido?
 
 #### 11. Ordem de execução
 
