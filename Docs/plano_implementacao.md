@@ -1953,6 +1953,20 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Só frontend; sem migração nem variáveis.
 
+### Fase 49 — Menu lateral: E-Commerce com separadores (12 Out 2026)
+
+- **2026-10-12 · [FE] · Antonio Mambo** — `refactor/menu-lateral-ecommerce` (só frontend; sem migração nem variáveis novas)
+  - **Pedido do utilizador:** seis entradas do menu lateral tratavam do mesmo assunto (a loja online); passam a separadores de uma só entrada **E-Commerce**, no padrão dos outros separadores (como o RH).
+  - refactor(frontend): nova página `features/ecommerce/ECommercePage` (`Tabs` partilhado, `?tab=`, separador montado só quando activo): Pedidos Compra Fácil, Entregas, Estafetas, Acerto dos estafetas, Zonas de entrega, Procura online e, só para o Super Admin, Procura (plataforma). Cada papel vê só os separadores que já via no menu; a rota `/e-commerce` aceita quem vê pelo menos um. A autorização fina continua a ser do servidor e do `<Can>`.
+  - refactor(frontend): as páginas desses separadores perderam o `<h1>`/ícone repetido e o padding/`max-w` próprios; filtros e botões passam para a `BarraDaPagina`. O total «na rua» dos acertos passou a linha de resumo.
+  - refactor(frontend): `/commerce/pedidos`, `/entregas`, `/entregas/estafetas`, `/entregas/acertos`, `/entregas/zonas`, `/procura` e `/procura/sistema` **redireccionam** para o separador respectivo (notificações, dashboard e ligações gravadas apontam para elas). Sidebar, título do cabeçalho e `shell.json` (pt/en) actualizados.
+
+  > **Desvios.** (1) «Procura (plataforma)» entrou como separador, embora não estivesse na captura do pedido: é o mesmo assunto e ficaria órfã no menu. (2) Chaves de tradução antigas (`entrega.json`, `procura.json`: títulos/subtítulos das páginas) ficam por limpar — fora de âmbito.
+  >
+  > **Verificação.** `tsc -b` limpo, **245 testes**, `vite build` limpo. **Não testei no browser:** percorrer as tabs e abrir `/entregas` directamente (deve cair em `/e-commerce?tab=entregas`).
+  >
+  > **Notas de deploy.** Só frontend; sem migração nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer

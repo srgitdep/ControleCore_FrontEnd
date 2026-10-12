@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Banknote, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { Can } from '@/features/auth';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
+import { BarraDaPagina } from '@/shared/ui';
 import { useAcertarContas, useAcertos, useAcertosPendentes } from '../hooks/useOperacao';
 import { AcertarDialog } from '../components/AcertarDialog';
 import type { AcertoPendente } from '../types/operacao';
@@ -23,23 +24,16 @@ export function AcertosPage() {
   const totalNaRua = (pendentes.data ?? []).reduce((soma, p) => soma + p.valorEmAberto, 0);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-            <Banknote size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{t('acertos.titulo')}</h1>
-            <p className="text-sm text-slate-500">{t('acertos.subtitulo')}</p>
-          </div>
-        </div>
-        {(pendentes.data?.length ?? 0) > 0 && (
-          <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
-            {t('acertos.total_na_rua')}: <strong>{formatMoeda(totalNaRua)}</strong>
-          </p>
-        )}
-      </header>
+    <div className="space-y-6">
+      <BarraDaPagina
+        resumo={
+          (pendentes.data?.length ?? 0) > 0 ? (
+            <>
+              {t('acertos.total_na_rua')}: <strong className="text-amber-700">{formatMoeda(totalNaRua)}</strong>
+            </>
+          ) : undefined
+        }
+      />
 
       <section>
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">{t('acertos.por_acertar')}</h2>

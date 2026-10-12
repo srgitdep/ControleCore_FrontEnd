@@ -254,7 +254,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     **Painéis (Fase 4, 10/10/2026):** `GET /procura-online` (`VER_PROCURA_ONLINE` + módulo `commerce`, **sempre** por `empresaId` do token) e
     `GET /relatorios/procura-online/sistema` (`SUPER_ADMIN_ONLY`, entre empresas, com quebra por empresa) — `ConsultarProcuraUseCase` agrega com
     `GROUP BY` parametrizado sobre `procura_online_eventos` (horas e dias na hora de Maputo); mostram bairro/cidade e contagens, nunca coordenadas.
-    No frontend, `features/procura-online` (rotas `/procura` e `/procura/sistema`, gráficos `recharts`, namespace i18n `procura`).
+    No frontend, `features/procura-online` (separadores `procura` e `procura_sistema` do ecrã `/e-commerce`; as rotas `/procura` e `/procura/sistema` redireccionam; gráficos `recharts`, namespace i18n `procura`).
     **Variáveis:** `TELEMETRIA_PROCURA_ACTIVA` (backend) e `VITE_TELEMETRIA_PROCURA` (frontend, no build) — só o valor `true` liga; **ambas desligadas por
     omissão** até haver validação legal da recolha; os pedidos são sempre registados.
   - **Entrega ao domicílio** (modelo desde a Fase 22; **a Fase 23 passou a escrever em
@@ -326,8 +326,8 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     `AnularVendaUseCase` e, numa transacção, `FALHADA → DEVOLVIDA` + conta a receber `CANCELLED`;
     repetível. `AnularVendaUseCase` aceita sessão de caixa fechada só para venda de entrega **sem
     numerário**; `anularVendaTransacional` reverte o pedido também em `FALHADA`. Notificação
-    `pedido.entrega_falhada` (pt/en). Frontend: páginas `/entregas` (painel por colunas, consulta de 30 s) e
-    `/entregas/estafetas`.
+    `pedido.entrega_falhada` (pt/en). Frontend: separadores `entregas` (painel por colunas, consulta de 30 s) e
+    `estafetas` do ecrã `/e-commerce` (as rotas `/entregas` e `/entregas/estafetas` redireccionam; Fase 49).
   - **Entrega ao domicílio — Fase 3 (as contas batem).** `EntregaPedido.valorCobrado` (anulável;
     `NULL` = o previsto, `valorACobrar`). `entregar` aceita `valorCobrado` (≥ 0), regista a
     diferença no evento e **não bloqueia**; com M-Pesa/e-Mola a conta a receber da venda passa a
@@ -340,7 +340,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     caixa) e passa as contas a receber a `PAID`. Só entram entregas `ENTREGUE`, `NUMERARIO` e sem
     acerto (`entrega/domain/acerto.ts`). Sem sessão aberta: 409. A diferença regista-se
     (`COM_DIFERENCA`) e não bloqueia. Segregação `ENTREGA_MARCAR_ACERTAR` (`EXCEPCAO_AUTORIZADA`):
-    marca no evento de auditoria. Frontend: `/entregas/acertos`.
+    marca no evento de auditoria. Frontend: separador `acertos` do `/e-commerce`.
     **Audit Log:** `AuditoriaEntregaService` regista no Histórico, depois de a transacção confirmar,
     cada transição da entrega (`EntregaPedido`, com antes/depois), o despacho (`Pedido`), a devolução
     e as alterações à configuração (`ComercioConfiguracao`) — porque `updateMany` e `upsert` não passam

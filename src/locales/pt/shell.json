@@ -18,11 +18,7 @@
       "stock": "Produtos & Stock",
       "armazens": "Armazéns",
       "transferencias": "Transferências",
-      "pedidos_commerce": "Pedidos Compra Fácil",
-      "entregas": "Entregas",
-      "estafetas": "Estafetas",
-      "acertos_estafeta": "Acerto dos estafetas",
-      "entregas_zonas": "Zonas de entrega",
+      "ecommerce": "E-Commerce",
       "promocao": "Promoções",
       "necessidades": "Necessidades",
       "requisicoes": "Requisições",
@@ -30,9 +26,7 @@
       "conferencia": "Conferência",
       "lojas": "Lojas & Caixas",
       "rh": "Recursos Humanos",
-      "historico": "Histórico no Sistema",
-      "procura": "Procura online",
-      "procura_sistema": "Procura (plataforma)"
+      "historico": "Histórico no Sistema"
     },
     "fechar": "Fechar menu",
     "expandir": "Expandir sidebar",
@@ -57,6 +51,7 @@
       "crm": "CRM",
       "financeiro": "Financeiro",
       "rh": "Recursos Humanos",
+      "ecommerce": "E-Commerce",
       "empresas": "Empresas",
       "utilizadores": "Utilizadores",
       "permissoes": "Permissões",
@@ -74,6 +69,18 @@
     "ha_dias_zero": "há {{count}} dias",
     "ha_dias_one": "há {{count}} dia",
     "ha_dias_other": "há {{count}} dias"
+  },
+  "ecommerce": {
+    "abas": {
+      "etiqueta": "Secções do E-Commerce",
+      "pedidos": "Pedidos Compra Fácil",
+      "entregas": "Entregas",
+      "estafetas": "Estafetas",
+      "acertos": "Acerto dos estafetas",
+      "zonas": "Zonas de entrega",
+      "procura": "Procura online",
+      "procura_sistema": "Procura (plataforma)"
+    }
   },
   "rota": {
     "a_carregar": "A carregar...",

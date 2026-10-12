@@ -25,11 +25,6 @@ import {
   ArrowLeftRight,
   PackageCheck,
   Percent,
-  Truck,
-  Bike,
-  Banknote,
-  TrendingUp,
-  Globe2,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -47,7 +42,7 @@ import { SelectorIdioma } from '@/shared/ui';
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
-  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'acertos_estafeta' | 'entregas_zonas' | 'procura' | 'procura_sistema' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'ecommerce' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
@@ -104,20 +99,13 @@ const navGroups: NavGroup[] = [
       // O workflow real por trás das oportunidades que o painel de Necessidades
       // mostra (DT01 §12/§15.1): aprovar, expedir, receber.
       { chave: 'transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
-      // A fila de pedidos do Compra Fácil (Fase 12) — visível a quem também vê o POS,
-      // porque o levantamento fecha exactamente como uma venda de balcão.
-      { chave: 'pedidos_commerce', icon: PackageCheck, path: '/commerce/pedidos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
+      // A loja online (Compra Fácil) num só item: pedidos, entregas, estafetas, acertos, zonas e
+      // procura são separadores. Visível a quem vê pelo menos um (o POS vê a fila de pedidos,
+      // porque o levantamento fecha exactamente como uma venda de balcão).
+      { chave: 'ecommerce', icon: PackageCheck, path: '/e-commerce', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).
-      { chave: 'entregas', icon: Truck, path: '/entregas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
-      { chave: 'estafetas', icon: Bike, path: '/entregas/estafetas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { chave: 'acertos_estafeta', icon: Banknote, path: '/entregas/acertos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { chave: 'entregas_zonas', icon: Truck, path: '/entregas/zonas', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      // O que se pede online, de onde e a que horas. A permissão fina (VER_PROCURA_ONLINE) é do servidor.
-      { chave: 'procura', icon: TrendingUp, path: '/procura', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      // A visão entre empresas: só o Super Admin (o servidor também o exige).
-      { chave: 'procura_sistema', icon: Globe2, path: '/procura/sistema', roles: ['SUPER_ADMIN'] },
       { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a
       // quem comprar, depois emite-se a ordem. A ordem inversa no menu sugeriria que a

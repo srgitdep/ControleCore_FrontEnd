@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Loader2, PackageOpen, RefreshCw, Truck } from 'lucide-react';
+import { AlertTriangle, Loader2, PackageOpen, RefreshCw } from 'lucide-react';
 import { cn } from '@/shared/utils';
+import { BarraDaPagina } from '@/shared/ui';
 import { useConfiguracaoEntrega } from '../hooks/useEntregaGestao';
 import {
   useAtribuirEntrega,
@@ -78,60 +79,52 @@ export function EntregasPage() {
   const nadaEmCurso = !entregas.isLoading && !entregas.isError && lista.length === 0;
 
   return (
-    <div className="mx-auto max-w-[1400px] space-y-5 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-            <Truck size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{t('painel.titulo')}</h1>
-            <p className="text-sm text-slate-500">{t('painel.subtitulo')}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={lojaId}
-            onChange={(e) => setLojaId(e.target.value)}
-            aria-label={t('painel.filtro_loja')}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">{t('painel.todas_lojas')}</option>
-            {lojas.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nome}
-              </option>
-            ))}
-          </select>
-          <select
-            value={estafetaId}
-            onChange={(e) => setEstafetaId(e.target.value)}
-            aria-label={t('painel.filtro_estafeta')}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">{t('painel.todos_estafetas')}</option>
-            {(estafetas.data ?? []).map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nome}
-              </option>
-            ))}
-          </select>
-          <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={fechadas} onChange={(e) => setFechadas(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            {t('painel.mostrar_fechadas')}
-          </label>
-          <button
-            type="button"
-            onClick={() => void entregas.refetch()}
-            disabled={entregas.isFetching}
-            aria-label={t('painel.actualizar')}
-            className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-          >
-            <RefreshCw size={16} className={cn(entregas.isFetching && 'animate-spin')} />
-          </button>
-        </div>
-      </header>
+    <div className="space-y-5">
+      <BarraDaPagina
+        acoes={
+          <>
+            <select
+              value={lojaId}
+              onChange={(e) => setLojaId(e.target.value)}
+              aria-label={t('painel.filtro_loja')}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">{t('painel.todas_lojas')}</option>
+              {lojas.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nome}
+                </option>
+              ))}
+            </select>
+            <select
+              value={estafetaId}
+              onChange={(e) => setEstafetaId(e.target.value)}
+              aria-label={t('painel.filtro_estafeta')}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">{t('painel.todos_estafetas')}</option>
+              {(estafetas.data ?? []).map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nome}
+                </option>
+              ))}
+            </select>
+            <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={fechadas} onChange={(e) => setFechadas(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+              {t('painel.mostrar_fechadas')}
+            </label>
+            <button
+              type="button"
+              onClick={() => void entregas.refetch()}
+              disabled={entregas.isFetching}
+              aria-label={t('painel.actualizar')}
+              className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw size={16} className={cn(entregas.isFetching && 'animate-spin')} />
+            </button>
+          </>
+        }
+      />
 
       {/* O mapa decide sozinho se aparece: só com estafetas em rota. */}
       {!entregas.isLoading && !entregas.isError && <MapaDosEstafetas entregas={lista} />}
