@@ -79,7 +79,9 @@ export function useCanalDeEntregas({ activo, obterToken, aoLigar, eventos }: Opc
     });
     instancia.on('connect_error', () => setLigado(false));
 
-    for (const nome of ['entrega.posicao', 'entrega.estado']) {
+    // Escuta os eventos que quem chama pediu (`entrega.posicao`, `entrega.estado`, `notificacao.nova`…): o servidor
+    // decide a que sala cada um vai, e aqui só se regista o que este ecrã quer receber.
+    for (const nome of Object.keys(opcoes.current.eventos ?? {})) {
       instancia.on(nome, (dados: unknown) => {
         const manipulador = opcoes.current.eventos?.[nome] as ((d: unknown) => void) | undefined;
         manipulador?.(dados);

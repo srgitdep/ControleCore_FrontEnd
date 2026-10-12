@@ -7,6 +7,7 @@ import {
   exigeReferencia,
   ligacaoMapa,
   ligacaoTelefone,
+  podeMarcarChegada,
 } from './passos';
 
 describe('passos da entrega — espelham as transições do servidor', () => {
@@ -67,4 +68,22 @@ describe('ligações do telemóvel', () => {
     expect(ligacaoTelefone('84 123-4567')).toBe('tel:841234567');
     expect(ligacaoTelefone('+258 (84) 123 4567')).toBe('tel:+258841234567');
   });
+});
+
+describe('podeMarcarChegada («Cheguei»)', () => {
+  it('só com a entrega a caminho e ainda sem chegada marcada', () => {
+    expect(podeMarcarChegada('EM_ROTA', null)).toBe(true);
+    expect(podeMarcarChegada('EM_ROTA', undefined)).toBe(true);
+  });
+
+  it('depois de marcada, o botão desaparece (repetir não serve de nada)', () => {
+    expect(podeMarcarChegada('EM_ROTA', '2026-10-11T10:00:00Z')).toBe(false);
+  });
+
+  it.each(['AGUARDA_RECOLHA', 'ATRIBUIDA', 'RECOLHIDA', 'ENTREGUE', 'FALHADA', 'DEVOLVIDA'] as const)(
+    'em %s não se oferece',
+    (estado) => {
+      expect(podeMarcarChegada(estado, null)).toBe(false);
+    },
+  );
 });

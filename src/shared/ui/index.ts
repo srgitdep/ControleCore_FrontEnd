@@ -8,3 +8,4 @@ export * from './TableScroll';
 export * from './Tabs';
 export * from './CapturaPorFoto';
 export * from './SelectorIdioma';
+export * from './SinoDeNotificacoes';

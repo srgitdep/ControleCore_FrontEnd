@@ -14,6 +14,7 @@ export * from './pages/CheckoutPage';
 export * from './pages/EntrarContaPage';
 export * from './pages/CriarContaPage';
 export * from './pages/MeusPedidosPage';
+export * from './pages/NotificacoesPage';
 export * from './pages/PedidoDetalhePage';
 export * from './pages/FavoritosPage';
 export * from './pages/MoradasPage';

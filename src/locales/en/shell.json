@@ -32,8 +32,7 @@
       "rh": "Human Resources",
       "historico": "System History",
       "procura": "Online demand",
-      "procura_sistema": "Demand (platform)",
-      "webhooks": "Webhooks"
+      "procura_sistema": "Demand (platform)"
     },
     "fechar": "Close menu",
     "expandir": "Expand sidebar",

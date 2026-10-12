@@ -89,8 +89,7 @@
     "iniciar_rota": "On the way",
     "entregue": "Delivered",
     "falhada": "Failed",
-    "devolver": "Return",
-    "delegar": "Delegate"
+    "devolver": "Return"
   },
   "painel": {
     "titulo": "Deliveries",
@@ -107,8 +106,7 @@
     "repetir": "Try again",
     "sem_estafeta": "No courier",
     "a_cobrar": "To collect",
-    "cobrado_diferente": "Collected: {{valor}} (differs from expected)",
-    "operador": "Operator: {{nome}}"
+    "cobrado_diferente": "Collected: {{valor}} (differs from expected)"
   },
   "dialogo": {
     "cancelar": "Cancel",
@@ -142,14 +140,6 @@
       "aviso": "Only once the goods are back at the store. Stock returns to the warehouse, the sale is voided and the order is cancelled. This cannot be undone.",
       "motivo": "Reason (kept on the voided sale)",
       "confirmar": "Return and void sale"
-    },
-    "delegar": {
-      "titulo": "Delegate {{pedido}}",
-      "explicacao": "Hands this order to an external delivery operator. They tell us about each step; the in-house courier, if there was one, loses the delivery.",
-      "operador": "Operator",
-      "escolher": "Choose the operator",
-      "tira_estafeta": "{{nome}} will no longer have this delivery.",
-      "confirmar": "Delegate"
     }
   },
   "estafetas": {
@@ -231,76 +221,5 @@
     "sem_canal": "No real-time connection. Positions are not arriving; the board keeps refreshing every 30 s.",
     "sem_posicao_de": "Waiting for the position of: {{nomes}}.",
     "esbatido": "Faded points are over 2 minutes old: the courier may have no network or a locked screen."
-  },
-  "webhooks": {
-    "titulo": "Webhooks",
-    "subtitulo": "Automatic notices for every order and delivery, sent to the systems you choose (ERP, WhatsApp bot, delivery operator).",
-    "novo": "New webhook",
-    "erro": "Could not load the webhooks.",
-    "vazio": "No webhooks yet. Create one to receive a signed notice whenever an order or a delivery changes.",
-    "activo": "Active",
-    "inactivo": "Off",
-    "segredo_rotulo": "Secret",
-    "testar": "Send test",
-    "testar_inactivo": "Turn the webhook on to test it.",
-    "activar": "Turn on",
-    "desactivar": "Turn off",
-    "editar": "Edit",
-    "rodar_segredo": "Rotate secret",
-    "apagar": "Delete",
-    "sem_eventos": "No events: it receives nothing.",
-    "teste_ok": "Test sent and received successfully.",
-    "teste_falhou": "The test failed: {{erro}}",
-    "ver_envios": "Show deliveries",
-    "esconder_envios": "Hide deliveries",
-    "apagar_titulo": "Delete “{{nome}}”?",
-    "apagar_texto": "The webhook and its delivery history are deleted. Deliveries that were delegated to it are left without an operator.",
-    "rodar_titulo": "Rotate the secret?",
-    "rodar_texto": "A new secret is created and the old one stops working immediately. Whoever receives the notices must update the secret on their side, or they will no longer be able to verify the signature.",
-    "dialogo": {
-      "novo": "New webhook",
-      "editar": "Edit webhook",
-      "descricao": "Name",
-      "descricao_exemplo": "Store ERP — deliveries",
-      "url": "Address that receives the notices",
-      "url_ajuda": "Must be https and public. Local or internal network addresses are not accepted.",
-      "eventos": "Notify when…",
-      "sem_eventos": "Choose at least one event.",
-      "guardar": "Save"
-    },
-    "segredo": {
-      "titulo": "This webhook’s secret",
-      "aviso": "Save this secret now. For security it is not shown again; if you lose it you will have to rotate it.",
-      "copiar": "Copy",
-      "copiado": "Copied",
-      "como_usar": "Every notice carries the header X-ControlCore-Assinatura: t=<seconds>,v1=<HMAC-SHA256 of the text \"<t>.<body>\" with this secret>. Check it on your side and reject notices older than 5 minutes.",
-      "guardei": "I have saved the secret"
-    },
-    "envios": {
-      "erro": "Could not load the deliveries.",
-      "vazio": "Nothing has been sent yet.",
-      "estado": {
-        "PENDENTE": "Waiting",
-        "ENVIADO": "Sent",
-        "FALHADO": "Retrying",
-        "DESISTIDO": "Gave up"
-      },
-      "tentativas_one": "{{count}} attempt",
-      "tentativas_other": "{{count}} attempts",
-      "proxima": "Next attempt: {{quando}}",
-      "reenviar": "Resend",
-      "anterior": "Previous page",
-      "seguinte": "Next page"
-    },
-    "mensagens": {
-      "guardado": "Webhook saved.",
-      "apagado": "Webhook deleted.",
-      "reenviado": "Back in the sending queue.",
-      "erro_guardar": "Could not save the webhook.",
-      "erro_apagar": "Could not delete the webhook.",
-      "erro_rodar": "Could not rotate the secret.",
-      "erro_testar": "Could not send the test.",
-      "erro_reenviar": "Could not resend."
-    }
   }
 }

@@ -40,6 +40,8 @@ export interface EntregaEstafeta {
   recolhidaEm: string | null;
   entregueEm: string | null;
   falhadaEm: string | null;
+  /** O estafeta já marcou «cheguei» (a aplicação esconde o botão). */
+  chegouEm: string | null;
   createdAt: string;
   loja: { id: string; nome: string };
   pedido: { numeroPedido: string };

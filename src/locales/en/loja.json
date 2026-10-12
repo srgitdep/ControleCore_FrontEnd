@@ -228,6 +228,11 @@
     "actualizar": "Refresh now",
     "faltam_minutos_one": "About {{count}} minute to go",
     "faltam_minutos_other": "About {{count}} minutes to go",
-    "distancia_estrada": "About {{distancia}} by road."
+    "distancia_estrada": "About {{distancia}} by road.",
+    "chegou": "The courier has arrived! Your order is at the door."
+  },
+  "notificacoes": {
+    "titulo": "My notifications",
+    "voltar": "Back"
   }
 }

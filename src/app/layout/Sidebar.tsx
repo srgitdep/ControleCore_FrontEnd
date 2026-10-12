@@ -28,7 +28,6 @@ import {
   Truck,
   Bike,
   Banknote,
-  Webhook,
   TrendingUp,
   Globe2,
 } from 'lucide-react';
@@ -48,7 +47,7 @@ import { SelectorIdioma } from '@/shared/ui';
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
-  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'acertos_estafeta' | 'entregas_zonas' | 'webhooks' | 'procura' | 'procura_sistema' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'pedidos_commerce' | 'entregas' | 'estafetas' | 'acertos_estafeta' | 'entregas_zonas' | 'procura' | 'procura_sistema' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
@@ -115,7 +114,6 @@ const navGroups: NavGroup[] = [
       { chave: 'estafetas', icon: Bike, path: '/entregas/estafetas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'acertos_estafeta', icon: Banknote, path: '/entregas/acertos', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'entregas_zonas', icon: Truck, path: '/entregas/zonas', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { chave: 'webhooks', icon: Webhook, path: '/entregas/webhooks', roles: ['SUPER_ADMIN', 'ADMIN'] },
       // O que se pede online, de onde e a que horas. A permissão fina (VER_PROCURA_ONLINE) é do servidor.
       { chave: 'procura', icon: TrendingUp, path: '/procura', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       // A visão entre empresas: só o Super Admin (o servidor também o exige).

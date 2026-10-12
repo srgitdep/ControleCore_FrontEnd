@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Loader2, MapPinOff, Radio, RefreshCw } from 'lucide-react';
+import { AlertTriangle, DoorOpen, Loader2, MapPinOff, Radio, RefreshCw } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { distanciaMetros, posicaoRecente, textoDeDistancia } from '@/shared/utils/rastreio';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
@@ -112,6 +112,13 @@ export function RastreioDaEntrega({ pedidoId, estado, eEntrega }: Props) {
           </span>
         )}
       </div>
+
+      {aCaminho && entrega.chegouEm && (
+        <p className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800" role="status">
+          <DoorOpen size={16} className="shrink-0" />
+          {t('rastreio.chegou')}
+        </p>
+      )}
 
       {aCaminho && !estafeta && (
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-800">

@@ -9,7 +9,8 @@ import { PesquisaGlobal } from '@/features/pesquisa';
 import { useAlertas } from '@/features/necessidades';
 import { useTranslation } from 'react-i18next';
 import { definirIdiomaApi } from '@/features/auth/api/auth.api';
-import { SelectorIdioma } from '@/shared/ui';
+import { SelectorIdioma, SinoDeNotificacoes } from '@/shared/ui';
+import { useFonteDaGestao } from '@/shared/notificacoes/useFonteDaGestao';
 
 /**
  * Título por rota. A resolução tenta o caminho exacto e depois o primeiro segmento,
@@ -59,6 +60,9 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   // DT01 §15.4: "na página principal mostrar apenas contador e Ver todos". O sino é
   // essa síntese em qualquer página, não só no painel de necessidades.
   const { data: alertas } = useAlertas();
+  // As notificações de pedidos e entregas (plano §4.7): um sino à parte do dos alertas de reposição, que
+  // continuam a ser outra coisa (o que falta repor).
+  const fonteDeNotificacoes = useFonteDaGestao();
 
   useEffect(() => {
     if (!alertasAbertos) return;
@@ -119,6 +123,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
 
       {/* ── Lado direito: Centro de Alertas (DT01 §15.4) ─────────────────── */}
       <div ref={alertasRef} className="relative flex items-center gap-1">
+        <SinoDeNotificacoes fonte={fonteDeNotificacoes} />
         {/* Escondido no telemóvel: o cabeçalho do POS não tem espaço para ele. */}
         <SelectorIdioma aoMudar={definirIdiomaApi} className="hidden sm:inline-flex" />
         <button
