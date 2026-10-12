@@ -2092,6 +2092,13 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
   - [x] **N2 — Os ecrãs.** Feita em 2026-10-12 (Fase 47). Sino com contador e lista no cabeçalho do cliente, da gestão e do estafeta; avisos em tempo real; «Cheguei» na aplicação do estafeta.
   - [x] **N3 — Retirar o ecrã de Webhooks** — feita em 2026-10-12 (Fase 47): do menu e o «Delegar» do painel (o servidor dos webhooks fica adormecido).
   - [ ] **N4 — Fecho.** Testes e documentação **feitos** (Fase 47). **Por fazer, e é do utilizador:** o teste real em telemóvel — um pedido de ponta a ponta com o cliente, o gestor e o estafeta cada um no seu aparelho, a ver cada passo e o «Cheguei».
+- [ ] **Notificações *push* (avisar com a aplicação fechada e o telemóvel bloqueado).** Pedido do utilizador em 2026-10-12, depois de se ver que a PWA **não recebe nada com a aplicação fechada**
+      (limite da Fase 47): o estafeta tem de saber que há uma entrega nova e o cliente que o estafeta chegou **mesmo com o telemóvel no bolso**. Plano detalhado em **§4.8** (rascunho, a aguardar aprovação). **Só avisos** —
+      a localização com o telemóvel bloqueado **não** se resolve com *push* (ver §4.8, secção 1).
+  - [ ] **P1 — Servidor.** Chaves VAPID, tabela de subscrições (migração), `web-push`, envio a partir das notificações já existentes, limpeza das subscrições mortas.
+  - [ ] **P2 — O aparelho.** *Handler* de *push* no *service worker*, pedido de permissão e activação por aparelho (estafeta, cliente e gestão), «abrir» a partir do aviso.
+  - [ ] **P3 — O iPhone.** Instruções de instalação no ecrã inicial (o iOS só entrega *push* a PWA instalada) e, se aprovado, a loja instalável.
+  - [ ] **P4 — Fecho.** Testes, documentação, teste real com o telemóvel **bloqueado** (Android e iPhone).
 - [x] **Fase 6 — Webhooks.** Concluída em 2026-10-11 (Fase 45): saída pelo padrão *outbox* (assinatura HMAC, recuo
       exponencial, defesa contra SSRF) e entrada assinada e idempotente, para um operador de entregas
       externo poder substituir a frota própria; ecrã de gestão e «Delegar» no painel.
@@ -2254,6 +2261,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.5 | Entrega ao domicílio — Fase 4: a aplicação do estafeta | **Aprovado** — 4A e 4B feitas (Fases 40 e 41); falta o teste num telemóvel (4C) | Secção 3 → «Entrega ao domicílio» → Fase 4 |
 | 4.6 | Entrega ao domicílio — Fase 5: o rastreio ao vivo | **Aprovado** — 5A, 5B e 5C feitas; falta a 5D | Secção 3 → «Entrega ao domicílio» → Fase 5 |
 | 4.7 | Notificações dentro da aplicação (cliente, gestão e estafeta) | **Aprovado** — N1 a N3 feitas (Fase 47); falta o teste real (N4) | Secção 3 → «Notificações dentro da aplicação» |
+| 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -4626,6 +4634,98 @@ Um **centro de notificações** dentro do ControlCore, igual para os três tipos
 
 - **Backend:** `prisma/schema.prisma` + migração; `modules/notificacao/` (serviço, três controladores, tarefa, DTOs); `commerce/application/services/notificar-cliente-pedido.service.ts`; `entrega/application/services/operar-entrega.service.ts` (+ `chegar`); `entrega/infrastructure/socket/entregas.gateway.ts`; `entrega/estafeta-app.controller.ts`; `i18n/{pt,en}/{erros,notificacoes}.json`.
 - **Frontend:** `shared/ui/SinoDeNotificacoes.tsx`, `shared/hooks/useNotificacoes.ts`; `LojaTopo.tsx`, `Header.tsx`, `EstafetaLayout.tsx`, página de notificações do cliente; `estafeta-app` (botão «Cheguei»); retirada do ecrã de Webhooks (`Sidebar`, router, `entrega-gestao`); `locales/{pt,en}/notificacoes.json`.
+
+---
+
+### 4.8 Notificações *push*: avisar com a aplicação fechada
+
+- **Data:** 2026-10-12 · **Estado:** **rascunho — não implementar antes da aprovação do utilizador**
+- **Âmbito:** fullstack · **Repositórios:** `ControleCore_BackEnd`, `ControleCore_FrontEnd`
+- **Relação com o §4.7:** é a fase que o §4.7 deixou de fora. As notificações dentro da aplicação (Fase 47) só chegam com a aplicação aberta; o *push* leva o **mesmo aviso** ao ecrã bloqueado.
+
+#### 1. O que é possível e o que não é (verificado no código e no que os navegadores permitem)
+
+| Coisa | Com o telemóvel bloqueado | Esta fase |
+| --- | --- | --- |
+| **Receber um aviso** (entrega nova, «o estafeta chegou») | **Sim**, por *Web Push*: o navegador acorda o *service worker* e mostra o aviso, com a aplicação fechada | **Sim — é o objecto desta fase** |
+| **Enviar a localização** (GPS) | **Não.** O navegador pára o JavaScript e a geolocalização. Nenhum *push* muda isto | **Não.** Só uma aplicação nativa o resolve — decisão separada, depois do teste real (5D) |
+| **Manter o WebSocket** | Não é fiável (o sistema suspende-o) | Não é preciso: o *push* é o canal que fica |
+
+**O que existe hoje.** O *service worker* é gerado pelo `vite-plugin-pwa` (`generateSW`, `vite.config.ts`), com âmbito `/estafeta/`, **sem precache e sem *handler* de *push***; só a aplicação do estafeta é PWA (`public/estafeta.webmanifest`). `web-push` **não** está instalado. As notificações já existem (Fase 47: `NotificacaoService.criar`), com o tipo e os parâmetros — não a frase. O ControlCore, a loja e o portal **não** têm `manifest` nem *service worker* (decisão da §4.5, D6: um *worker* de âmbito `/` serviria páginas guardadas ao ERP).
+
+#### 2. Interpretação
+
+Quando se grava uma notificação **urgente**, o servidor envia também um *Web Push* às subscrições registadas dessa pessoa; o *service worker* mostra o aviso e, ao tocar, abre o pedido ou a entrega. A pessoa activa-o **por aparelho**, depois de dar a permissão. O texto sai do servidor **na língua de quem lê**, porque o *service worker* não tem o catálogo dos ecrãs.
+
+#### 3. Decisões de arquitectura
+
+| # | Decisão | Alternativa rejeitada | Porquê |
+| --- | --- | --- | --- |
+| **D1** | **Só os avisos que mudam o que a pessoa faz** vão por *push* (lista na secção 4). O resto fica no sino | *Push* para tudo | Um telemóvel que vibra a cada passo leva a desactivar tudo — e o aviso importante perde-se com o resto |
+| **D2** | Biblioteca `web-push` (assinatura VAPID e cifra do corpo). **Dependência nova**, para o TRD | Escrever a cifra à mão | É um protocolo (RFC 8291) em que um erro de cifra falha em silêncio |
+| **D3** | Tabela `subscricoes_push` (`destinatarioTipo`, `destinatarioId`, `endpoint` único, `p256dh`, `auth`, `idioma`, `agenteUtilizador`, `criadoEm`, `ultimoEnvioEm`). Uma pessoa tem **várias** (telemóvel e computador). O destinatário vem **sempre do token**, como nas notificações | Guardar a subscrição no `localStorage` | Sem ela no servidor, não há a quem enviar |
+| **D4** | **Chaves VAPID próprias**, geradas uma vez (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); a pública serve-se por endpoint (o frontend não leva variável nova). **Sem chaves, o *push* fica desligado e o resto funciona** — nunca impede o arranque | Variável `VITE_*` | As `VITE_*` entram no *build*; um endpoint evita novo *deploy* por trocar a chave |
+| **D5** | O texto vai em **catálogo do servidor** (`i18n/<língua>/push.json`), na língua da pessoa. **O corpo não leva a morada nem o telefone** — o ecrã bloqueado mostra-o a quem tiver o telemóvel na mão | Mandar só o tipo e traduzir no *worker* | O *worker* não tem o catálogo; e o aviso no ecrã bloqueado é público |
+| **D6** | **Uma subscrição que o serviço de *push* recusa com 404 ou 410 apaga-se** na hora; outras falhas contam e desistem à 5.ª | Repetir sempre | Uma subscrição morta (desinstalou, limpou os dados) ficava a gastar um pedido a cada aviso |
+| **D7** | O *handler* de *push* vive num ficheiro próprio (`public/push-handlers.js`, sem *cache* nem `fetch`) que o *worker* do estafeta **importa** (`workbox.importScripts`) e que um *worker* **só de *push*** (âmbito `/`, sem `fetch`) usa para a loja e a gestão | Aumentar o âmbito do *worker* do estafeta | Um *worker* só de *push* não guarda páginas nem toca na API: não reintroduz o risco que a §4.5 evitou |
+| **D8** | O pedido de permissão faz-se **num momento que o explica**, nunca ao carregar a página: o estafeta, no primeiro ecrã depois de entrar; o cliente, **depois de fazer um pedido**; a gestão, num botão no painel do sino. Recusado, não se volta a pedir — mostra-se como reactivar | Pedir à entrada | Um pedido de permissão sem contexto é recusado, e uma recusa só se desfaz nas definições do navegador |
+
+#### 4. Que avisos vão por *push* (proposta)
+
+| Para | Avisos | Texto (exemplo) |
+| --- | --- | --- |
+| **Estafeta** | `entrega.nova`, `entrega.retirada` | «Nova entrega: PED-42.» · «A entrega PED-42 já não é sua.» |
+| **Cliente** | `entrega.em_rota`, `entrega.chegou`, `pedido.pronto` (para levantar), `entrega.falhada`, `pedido.cancelado` | «O estafeta está a caminho.» · «O estafeta chegou!» |
+| **Gestão** | `pedido.novo`, `entrega.falhada` | «Pedido novo: PED-42.» · «PED-42: não foi possível entregar.» |
+
+#### 5. Plano de implementação
+
+##### P1 — Servidor **[obrigatório]**
+
+- [ ] **Migração aditiva** `subscricoes_push` (D3). Sem dados a migrar.
+- [ ] `SubscricaoPushService` (subscrever com *upsert* por `endpoint`, anular, listar as de um destinatário, apagar as mortas) e `EnviarPushService` (`web-push`, `TTL` curto — um «o estafeta chegou» com 6 horas já não serve —, `urgency` alta nos avisos do estafeta). **Nunca lança**: uma falha de *push* regista-se e **não** desfaz nada.
+- [ ] Gancho no `NotificacaoService.criar`: depois de gravar, se o tipo está na lista da secção 4, envia às subscrições do destinatário. Sem chaves VAPID, não faz nada.
+- [ ] Endpoints, por tipo de utilizador, com o destinatário sempre do token: `GET …/push/chave` (a pública), `POST …/push/subscrever`, `DELETE …/push/subscrever` — em `/notificacoes`, `/commerce/conta/notificacoes` e `/estafeta/notificacoes`.
+- [ ] `i18n/{pt,en}/push.json` (um texto por tipo da secção 4); `.env.example` com as três variáveis e o que acontece se faltarem; tarefa diária que apaga subscrições sem envio há 90 dias.
+- [ ] Testes: isolamento (só se subscreve e anula o seu), 404/410 apaga, falha não lança, sem chaves não envia, o corpo **não** leva morada nem telefone, língua da pessoa.
+
+##### P2 — O aparelho **[obrigatório]**
+
+- [ ] `public/push-handlers.js` (`push` → `showNotification`; `notificationclick` → focar a janela aberta ou abrir o destino) e o *worker* só de *push*; o do estafeta importa o mesmo ficheiro.
+- [ ] `usePush(tipo)`: estado (sem suporte, por pedir, activo, recusado), activar (permissão → `pushManager.subscribe` → `POST`), desactivar. Ecrã de explicação **antes** do pedido do navegador (D8).
+- [ ] Estafeta (depois de entrar), cliente (depois do primeiro pedido, na página do pedido) e gestão (botão no painel do sino). Os quatro estados e pt/en. Um aparelho sem suporte (`PushManager` em falta) nunca vê o botão.
+
+##### P3 — O iPhone **[obrigatório para quem usa iPhone]**
+
+- [ ] O iOS (a partir do 16.4) só entrega *push* a uma PWA **instalada no ecrã inicial**. O ecrã diz-o, com o passo a passo («Partilhar» → «Adicionar ao ecrã inicial»), e só oferece o botão quando a aplicação está instalada. O estafeta já é instalável.
+- [ ] **[opcional, decisão sua — pergunta 2]** Tornar a **loja** instalável (`manifest` de âmbito `/loja/`) para o cliente em iPhone receber avisos. Sem isto, o cliente em iPhone só os recebe com a loja aberta.
+
+##### P4 — Fecho **[obrigatório]**
+
+- [ ] `tsc`, `jest`, `vitest` e *builds*; TRD (dependência, variáveis, tabela, *worker*); Secção 2 e esta secção, nos dois repositórios.
+- [ ] **Teste real, com o telemóvel BLOQUEADO**: Android e iPhone, estafeta e cliente — o aviso chega, toca-se, abre o sítio certo; recusar a permissão; desactivar; um aparelho desinstalado deixa de receber.
+
+#### 6. Riscos e limites (ditos com franqueza)
+
+| Risco | Gravidade | O que fazer |
+| --- | --- | --- |
+| **Marcas Android com poupança de bateria agressiva** (Xiaomi, Huawei, Oppo…) matam o navegador em segundo plano e o *push* não chega até ele ser aberto | **Alta para a operação** | É um problema do telemóvel, não do código. O ecrã do estafeta explica como retirar a aplicação da poupança de bateria; o teste real diz se basta |
+| O iPhone só recebe com a PWA **instalada** (e iOS ≥ 16.4) | Média | P3; e é a razão da pergunta 2 |
+| Uma recusa de permissão só se desfaz nas definições do navegador | Média | D8: pedir no momento certo; mostrar como reactivar |
+| O aviso aparece num ecrã bloqueado | Média | D5: sem morada nem telefone |
+| Um aviso que chega tarde engana («o estafeta chegou» 3 horas depois) | Média | `TTL` curto: o serviço de *push* descarta o que não conseguir entregar a tempo |
+| **A localização continua a parar com o telemóvel bloqueado** | **Alta** | **Não é desta fase.** Ver a secção 1; decide-se depois do teste real (5D) |
+
+#### 7. Perguntas
+
+1. **As chaves VAPID:** gero-as eu (numa linha, com `web-push generate-vapid-keys`) e dou-te os valores para os pores nos `fly secrets`, ou preferes gerá-las tu? Em qualquer caso, a **chave privada nunca entra no repositório nem na conversa**.
+2. **A loja instalável (iPhone):** incluo-a nesta fase (P3 opcional) ou fica para depois? Sem ela, o cliente em iPhone só recebe avisos com a loja aberta; em Android recebe sempre.
+3. **A lista da secção 4:** confirmas os avisos que vão por *push*? É a decisão que mais pesa no incómodo do dia-a-dia.
+
+#### 8. Ficheiros afectados (previsão)
+
+- **Backend:** `prisma/schema.prisma` + migração; `modules/notificacao/` (subscrições, envio, endpoints, tarefa); os controladores do cliente e do estafeta; `i18n/{pt,en}/push.json`; `.env.example`; `package.json` (`web-push`).
+- **Frontend:** `public/push-handlers.js` e o *worker* só de *push*; `vite.config.ts` (`importScripts`); `shared/notificacoes/usePush.ts` e o botão/ecrã de activação; `EstafetaLayout`, a página do pedido do cliente e o painel do sino; textos pt/en.
 
 ---
 
