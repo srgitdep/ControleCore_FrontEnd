@@ -2001,6 +2001,20 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Backend primeiro (só DTO e controller de caixa), depois frontend. Sem migração nem variáveis.
 
+### Fase 52 — Correcção: criar loja com gestor dava «Internal server error» (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `fix/criar-loja-erro-500` (backend `dab879b`; frontend `ebaf21d`) — sem migração nem variáveis novas
+  - **Pedido do utilizador:** ao adicionar uma loja o ecrã mostrava «Internal server error».
+  - **Causa:** `CreateLojaUseCase` juntava `empresa: { connect }` com o `gestorId` solto no mesmo `create`; o Prisma recusa a mistura (relação + chave estrangeira). Só falhava com gestor escolhido.
+  - fix(backend): o gestor liga-se por `gestor: { connect: { id, empresaId } }` — o `empresaId` no `connect` impede ligar um utilizador de **outra** empresa (antes aceitava-se qualquer id). Com 3 testes.
+  - fix(frontend): `LojasPage` deixa de enviar campos vazios ao criar (`gestorId: ''` falhava como «não é UUID», um 400 à parte).
+
+  > **Desvios.** Nenhum. **Fora de âmbito, por decidir:** `UpdateLojaUseCase` aceita `gestorId` solto (o Prisma aceita-o no `update`) sem verificar que o utilizador é da mesma empresa.
+  >
+  > **Verificação.** Backend: testes de `loja` e `nest build` limpos. Frontend: `tsc -b` limpo, 306 testes. **Não verificado no browser.**
+  >
+  > **Notas de deploy.** Backend primeiro, depois frontend. Sem migração nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer
