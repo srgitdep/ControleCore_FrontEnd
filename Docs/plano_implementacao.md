@@ -2071,6 +2071,34 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Só backend. Sem migração nem variáveis.
 
+### Fase 57 — Transferências entre armazéns: pedido em massa, stock de origem à vista, movimentos ligados e histórico (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `feat/transferencias-e-clientes-online` — plano em **§4.12** (aprovado em 2026-10-13: «podes manter» — mantêm-se os dois mecanismos de transferência)
+  - **Pedido do utilizador:** o ecrã «Nova transferência» levava um só produto e não mostrava o que há na origem; devia listar os produtos em massa com as quantidades existentes, e cada transferência devia ficar nos movimentos de stock como saída (origem) e entrada (destino), com histórico.
+  - feat(dados): migração `20261013190000_transferencias_em_massa` — `transferencias_loja.grupoId` e `stock_movements.transferenciaId` (FK `SET NULL`, índice). Aditiva.
+  - feat(backend): `TransferenciaEmMassaUseCase` — `POST /transferencias-loja/em-massa` (**tudo ou nada**: devolve todas as linhas recusadas em `erros`, no topo do corpo), `GET /transferencias-loja/armazens/:id/disponivel` (físico, reservado, disponível, cedível e stock no destino; paginado, com pesquisa), `GET/POST …/grupos/:grupoId[/decidir|expedir|receber|cancelar]` (acções de grupo linha a linha, com as falhadas no resultado). `GerirTransferenciaLojaUseCase` passa a **respeitar** o armazém de origem e o de destino escolhidos e liga os movimentos de expedição (OUT) e de recepção (IN) à transferência (`RegisterMovementUseCase` recebe `{ transferenciaId }` fora do DTO público). Histórico: filtros por armazém, produto, grupo, datas e referência, referência `TRF-XXXXXXXX` e nomes dos armazéns; detalhe com os movimentos gerados. Permite mover entre armazéns da **mesma loja**.
+  - feat(frontend): `NovaTransferenciaEmMassa` (origem e destino, tabela com pesquisa, selecção em massa e quantidades, cesto que não se perde ao mudar de página, erros marcados nas linhas), `DetalheDoPedidoEmMassa`, histórico com filtros, movimentos no detalhe, e, no separador Movimentos do stock, «Transferência TRF-… → destino / ← origem» com ligação.
+
+  > **Desvios ao plano.** (1) A referência deriva-se do `grupoId` (8 caracteres), **sem** coluna `referencia` nem contador. (2) A **reserva** continua a fazer-se na aprovação, com revalidação — não no pedido. (3) **Transferência directa (D6) não feita** (era opcional). (4) Saiu o pedido de um só produto (modal, hook e `solicitar` da API): o pedido em massa cobre-o e era o único consumidor; o endpoint `POST /transferencias-loja` mantém-se (as necessidades usam-no). (5) Receber um grupo recebe o expedido; uma divergência por linha regista-se na lista, na linha.
+  >
+  > **Verificação.** Backend: `nest build` limpo, **253 suites / 3767 testes**. Frontend: `tsc -b` limpo, **344 testes**. **Não verificado no browser nem com dados reais.**
+  >
+  > **Notas de deploy.** Backend primeiro (migração aditiva no arranque), depois frontend. Sem variáveis.
+
+### Fase 58 — Clientes online no CRM e pedidos online com os dados completos de quem pede (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `feat/transferencias-e-clientes-online` — plano em **§4.13** (aprovado em 2026-10-13 com a resposta: **os pedidos mostram os dados actualizados do cliente**)
+  - **Pedido do utilizador:** o CRM deve listar toda a informação dos clientes e a lista completa de quem comprou na loja online; o ecrã de pedidos online deve mostrar o máximo de dados de quem pede, e essa informação deve ficar registada.
+  - feat(dados): migração `20261013170000_pedido_copia_do_cliente` — `pedidos.clienteNome/Telefone/Email/Nuit`, `enderecoSnapshot` (JSON) e `snapshotAproximado`; *backfill* dos pedidos existentes a partir do cliente e da morada **actuais**, marcados como aproximados.
+  - feat(backend): `CriarPedidoUseCase` grava a cópia do que o cliente deu e a morada de entrega (`copiaDoCliente`, `copiaDaMorada`); `GET /clientes` ganha `?origem=ONLINE|BALCAO|AMBOS`, a `origem` de cada cliente, a conta (sem `googleId`) e as compras online (consulta agrupada); `GET /clientes/:id/compras-online` (pedidos, conta e moradas); a fila de pedidos devolve o cliente completo (e-mail, NUIT, conta, historial) e a cópia do pedido.
+  - feat(frontend): CRM com filtros «Compraram online / Só balcão / Online e balcão», colunas de origem e compras online, e a secção «Compras na loja online» no detalhe; abre-se do pedido com `/crm?cliente=<id>`. A gaveta do pedido passa a ter o bloco «Quem pede» com os dados **actuais**, o que ficou registado quando difere, a morada completa com contacto e ligação ao mapa, e as compras anteriores; a tabela mostra telefone e morada resumida.
+
+  > **Desvios ao plano.** (1) D1 ajustada pela resposta do utilizador: o ecrã mostra os dados **actuais**, e a cópia do pedido serve de registo e só se destaca quando difere. (2) Não se auditam as visualizações dos dados do cliente (P3 por responder).
+  >
+  > **Verificação.** Backend: `nest build` limpo e a suite completa a passar (ver Fase 57); frontend: `tsc -b` limpo, **344 testes**. **Não verificado no browser.** O *backfill* **não foi corrido numa base real**.
+  >
+  > **Notas de deploy.** Backend primeiro; a migração faz *UPDATE*s com junção em `pedidos` (rápidos com o volume actual, mas convém ver a duração com muitos pedidos). Sem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2273,25 +2301,25 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
 
 ### Transferências entre armazéns
 
-> Plano completo em **§4.12** (proposto em 2026-10-13, **por aprovar**: não se implementa antes).
+> Plano completo em **§4.12** (aprovado em 2026-10-13; implementado na Fase 57).
 
 - [ ] **Transferências: várias linhas de uma vez, stock de origem à vista, movimentos ligados e histórico.** Pedido do utilizador em 2026-10-13: o ecrã «Nova transferência» só leva um produto e não mostra o que há na origem; deve listar os produtos em massa com as quantidades existentes, e cada transferência deve ficar nos movimentos de stock como **saída** na origem e **entrada** no destino, com histórico.
-  - [ ] **T1 — Pedido em massa.** Vários produtos num só pedido (grupo de transferências) e armazém de origem/destino escolhidos logo no pedido.
-  - [ ] **T2 — O ecrã.** Lista dos produtos do armazém de origem com físico, reservado, disponível e stock no destino; selecção em massa.
-  - [ ] **T3 — Movimentos ligados.** `StockMovement.transferenciaId` e a origem/destino à vista no separador Movimentos.
-  - [ ] **T4 — Histórico.** Lista com filtros e detalhe com a linha do tempo (quem e quando).
-  - [ ] **T5 — Fecho.** Testes, documentação e TRD.
+  - [x] **T1 — Pedido em massa.** Vários produtos num só pedido (grupo de transferências) e armazém de origem/destino escolhidos logo no pedido.
+  - [x] **T2 — O ecrã.** Lista dos produtos do armazém de origem com físico, reservado, disponível e stock no destino; selecção em massa.
+  - [x] **T3 — Movimentos ligados.** `StockMovement.transferenciaId` e a origem/destino à vista no separador Movimentos.
+  - [x] **T4 — Histórico.** Lista com filtros e detalhe com a linha do tempo (quem e quando).
+  - [x] **T5 — Fecho.** Testes, documentação e TRD (Fase 57). *Fica por testar no browser.*
 
 ### Clientes online e pedidos
 
-> Plano completo em **§4.13** (proposto em 2026-10-13, **por aprovar**: não se implementa antes).
+> Plano completo em **§4.13** (aprovado em 2026-10-13; implementado na Fase 58).
 
 - [ ] **CRM com os clientes da loja online, e pedidos online com os dados completos do cliente, registados no pedido.** Pedido do utilizador em 2026-10-13: o CRM deve listar toda a informação dos clientes e a lista **completa** de quem comprou na loja online; o ecrã de pedidos online deve mostrar o máximo de dados de quem pede, e essa informação deve ficar **registada**.
-  - [ ] **K1 — Registo.** Cópia dos dados do cliente e da morada no pedido, na criação (migração aditiva; pedidos antigos preenchidos a partir do cliente actual, marcados como aproximados).
-  - [ ] **K2 — O servidor.** Origem do cliente (online, balcão ou ambos) e indicadores de compras online na lista; detalhe com pedidos e moradas.
-  - [ ] **K3 — O CRM.** Coluna e filtro «Origem», separador/filtro «Loja online» e detalhe completo.
-  - [ ] **K4 — Os pedidos.** Bloco «Cliente» completo na gaveta do pedido, com a ligação ao CRM.
-  - [ ] **K5 — Fecho.** Testes, documentação e TRD.
+  - [x] **K1 — Registo.** Cópia dos dados do cliente e da morada no pedido, na criação (migração aditiva; pedidos antigos preenchidos a partir do cliente actual, marcados como aproximados).
+  - [x] **K2 — O servidor.** Origem do cliente (online, balcão ou ambos) e indicadores de compras online na lista; detalhe com pedidos e moradas.
+  - [x] **K3 — O CRM.** Coluna e filtro «Origem», separador/filtro «Loja online» e detalhe completo.
+  - [x] **K4 — Os pedidos.** Bloco «Cliente» completo na gaveta do pedido, com a ligação ao CRM.
+  - [x] **K5 — Fecho.** Testes, documentação e TRD (Fase 58). *Fica por testar no browser.*
 
 ### Multilínguas (internacionalização)
 
@@ -2443,8 +2471,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Implementado** (Fase 50, 2026-10-12) — sem o B13; falta teste real e validação legal | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
 | 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho — adiado** (sem chave de API do operador); pré-requisito do B13 do §4.9 | Secção 3 → «Compra Fácil» → Cobrança no checkout |
 | 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
-| 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Proposto** — a aguardar aprovação do utilizador | Secção 3 → «Transferências entre armazéns» |
-| 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Proposto** — a aguardar aprovação do utilizador | Secção 3 → «Clientes online e pedidos» |
+| 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Implementado** (Fase 57, 2026-10-13) — sem a transferência directa | Secção 3 → «Transferências entre armazéns» |
+| 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Implementado** (Fase 58, 2026-10-13) | Secção 3 → «Clientes online e pedidos» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -5359,7 +5387,7 @@ Domínio (puro): normalização, pesos, reponderação com dados em falta, um s�
 
 ### 4.12 Transferências entre armazéns: várias linhas, stock de origem à vista e histórico
 
-- **Data:** 2026-10-13 · **Estado:** **proposto — a aguardar aprovação do utilizador.** Nada disto está implementado.
+- **Data:** 2026-10-13 · **Estado:** **implementado na Fase 57** (aprovado em 2026-10-13; a transferência directa, D6, ficou de fora).
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
 
 #### 1. Pedido e interpretação
@@ -5434,7 +5462,7 @@ Disponibilidade (reservado, quarentena), atomicidade do pedido em massa (uma lin
 
 ### 4.13 Clientes online no CRM e pedidos online com os dados completos do cliente
 
-- **Data:** 2026-10-13 · **Estado:** **proposto — a aguardar aprovação do utilizador.** Nada disto está implementado.
+- **Data:** 2026-10-13 · **Estado:** **implementado na Fase 58** (aprovado em 2026-10-13; os pedidos mostram os dados **actualizados** do cliente, e a cópia do pedido é o registo).
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
 
 #### 1. Pedido e interpretação
