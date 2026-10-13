@@ -330,7 +330,8 @@
     "n_linhas_one": "{{count}} linha",
     "n_linhas_other": "{{count}} linhas",
     "cancelar": "Cancelar",
-    "criar": "Criar pedido"
+    "criar": "Criar pedido",
+    "preferencial": "preferencial"
   },
   "rec": {
     "erro_carregar": "Erro ao carregar recepções.",
@@ -409,5 +410,57 @@
     "versao": "Versão {{n}}",
     "por": "por {{nome}}",
     "material": "Alteração material — anulou a aprovação em vigor nessa altura."
+  },
+  "comparacao": {
+    "titulo": "Comparar fornecedores para este pedido",
+    "mostrar": "Mostrar",
+    "esconder": "Esconder",
+    "sem_linhas": "Acrescente produtos ao pedido para poder compará-los: o melhor fornecedor depende do que se compra e em que quantidade.",
+    "ajuda": "Compara os fornecedores da empresa para as linhas deste pedido. É uma ajuda: pode escolher qualquer fornecedor. Mexer nos pesos só muda a ordem.",
+    "criterio": {
+      "preco": "Preço",
+      "pontualidade": "Pontualidade",
+      "prazo": "Prazo",
+      "cumprimento": "Cumprimento",
+      "credito": "Crédito"
+    },
+    "pesos_invalidos": "Dê peso a pelo menos um critério.",
+    "repor_pesos": "Repor pesos da empresa",
+    "guardar_pesos": "Guardar como padrão",
+    "pesos_guardados": "Pesos guardados como padrão da empresa.",
+    "erro_guardar": "Não foi possível guardar os pesos.",
+    "erro": "Não foi possível comparar os fornecedores.",
+    "tentar_outra_vez": "Tentar outra vez",
+    "sem_fornecedores": "Ainda não há fornecedores cadastrados.",
+    "sem_com_quem_comparar": "Menos de dois fornecedores se podem comparar para este pedido (têm de se poder comprar, cobrir todas as linhas e cotar em MZN). Mostram-se os valores, sem classificação.",
+    "col": {
+      "fornecedor": "Fornecedor",
+      "total": "Total do pedido",
+      "prazo": "Prazo",
+      "pontualidade": "Pontualidade",
+      "cumprimento": "Cumprimento",
+      "credito": "Crédito",
+      "pontuacao": "Pontos"
+    },
+    "dias": "dias",
+    "preferencial": "Fornecedor preferencial",
+    "usar": "Usar este",
+    "escolhido": "Escolhido",
+    "ajuste": "quantidade ajustada de {{de}} para {{para}}",
+    "marca": {
+      "NAO_COMPRAVEL": "Não se pode comprar",
+      "LINHAS_EM_FALTA": "Cobre {{cobre}} de {{total}} linhas",
+      "MOEDA_NAO_COMPARAVEL": "Moeda não comparável",
+      "DADOS_INSUFICIENTES": "Dados insuficientes",
+      "QUANTIDADE_AJUSTADA": "Quantidade ajustada",
+      "PRECO_ANTIGO": "Preço com {{dias}} dias"
+    },
+    "estado": {
+      "EM_CADASTRO": "em cadastro",
+      "EM_ANALISE": "em análise",
+      "SUSPENSO": "suspenso",
+      "BLOQUEADO": "bloqueado",
+      "ENCERRADA": "encerrado"
+    }
   }
 }

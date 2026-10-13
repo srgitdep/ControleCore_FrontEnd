@@ -2030,6 +2030,34 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Backend primeiro, depois frontend. Sem migração nem variáveis.
 
+### Fase 54 — Correcção: o painel lateral de Necessidades era cortado (13 Out 2026)
+
+- **2026-10-13 · [FE] · Antonio Mambo** — `fix/necessidades-painel-lateral-cortado` (frontend `3fb901c`) — só frontend; sem migração nem variáveis
+  - **Pedido do utilizador:** a coluna da direita (cobertura da fila e Mayra) aparecia cortada.
+  - fix(frontend): a grelha de `NecessidadesPage` usava `lg:grid-cols-[1fr_320px]`; uma faixa `1fr` tem o conteúdo como mínimo, e a tabela larga empurrava a coluna lateral para fora do ecrã. Passou a `minmax(0,1fr)` com `min-w-0`: a tabela encolhe e desliza no seu espaço.
+
+  > **Desvios.** Nenhum. **Fora de âmbito:** `PainelContagem.tsx` (`lg:grid-cols-[1fr_360px]`) tem o mesmo padrão e pode cortar do mesmo modo; não se mexeu.
+  >
+  > **Verificação.** `tsc -b` limpo. **Não verificado no browser.**
+  >
+  > **Notas de deploy.** Só frontend.
+
+### Fase 55 — Compras: todos os fornecedores no pedido e comparação por critérios (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `feat/comparacao-fornecedores` — plano em **§4.11** (aprovado pelo utilizador em 2026-10-13 com os valores assumidos: perguntas P1–P5 sem resposta explícita)
+  - **Pedido do utilizador:** o seletor de fornecedor do «Novo pedido de compra» deve mostrar todos os fornecedores cadastrados, e deve haver forma de os comparar segundo critérios definidos.
+  - feat(dados): migração `20261013150000_compras_criterios_comparacao` — tabela `compras_criterios_comparacao` (um registo por empresa, cinco pesos inteiros). **Aditiva**; sem registo valem os pesos por omissão (40/20/15/15/10). Gerada pelo `prisma migrate diff`.
+  - feat(backend): domínio puro `compra/domain/comparar-fornecedores.ts` (normalização mínimo-máximo, média ponderada, dados em falta reponderados em vez de zero, só se classificam os que se podem comprar, cobrem todas as linhas e cotam em MZN, preço por unidade base, ajuste a MOQ/múltiplo, preferencial desempata); `CompararFornecedoresUseCase` (tudo escopado por `empresaId`; desempenho via `GetFornecedorAnaliseUseCase`, só para quem conta); `POST /compras/comparacao-fornecedores`, `GET/PUT /compras/comparacao-fornecedores/criterios` (`GERIR_COMPRAS`); códigos `compra.comparacao.*` em pt/en.
+  - feat(frontend): o seletor lista **todos** os fornecedores (preferenciais primeiro; os que não se podem comprar desactivados, com o motivo); painel «Comparar fornecedores para este pedido» (`ComparacaoFornecedores`) com cursores de pesos que recalculam sem gravar, tabela ordenada com as marcas, «Usar este» e «Guardar como padrão».
+
+  > **Desvios ao plano.** (1) **D9 (pedir o motivo da escolha) ficou de fora** — era a parte «pode cortar-se». (2) O aviso de preço antigo (> 90 dias) entrou como marca. (3) «Usar este» só escolhe o fornecedor: **não altera os custos das linhas** (ficam os do produto), para não mudar valores sem o utilizador ver. (4) Tecto de **50 linhas** por comparação.
+  >
+  > **Assunções (não confirmadas pelo utilizador).** P1: «todos» = todos os da empresa, sem fornecedores do portal B2B; P2: cinco critérios e pesos 40/20/15/15/10; P3: sem prazo prometido (usa-se o real); P5: pontualidade por fornecedor. **A validar com quem compra:** os pesos por omissão.
+  >
+  > **Verificação.** Backend: `nest build`/`tsc` limpos; domínio (17 testes) e caso de uso (9) novos. Frontend: `tsc -b` limpo, **318 testes**. **Não verificado no browser:** o painel com dados reais, nem o desempenho da consulta com muitos fornecedores.
+  >
+  > **Notas de deploy.** **Backend primeiro** — a migração (tabela nova) corre no arranque do contentor; depois o frontend. Sem variáveis novas. Sem a migração, só `GET/PUT …/criterios` falham; a comparação em si funciona com os pesos por omissão.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2219,6 +2247,17 @@ no caixa nesse momento — fica como conta a receber do estafeta até ao acerto.
       Fase 4 — feita em 2026-10-10 (Fase 41; só a aplicação do estafeta é PWA). Texto original: **não existe hoje** e não está estimada no plano da entrega.
       Encontrado no planeamento multilíngue (2026-09-28).
 
+### Compras: comparação de fornecedores
+
+> Plano completo em **§4.11** (aprovado em 2026-10-13; implementado na Fase 55).
+
+- [ ] **Compras: todos os fornecedores no «Novo pedido de compra» e comparação por critérios.** Pedido do utilizador em 2026-10-13: o seletor de fornecedor deve mostrar **todos** os fornecedores cadastrados e deve existir uma forma de os **comparar com base em critérios definidos**. O sistema já tem os dados (preço vigente por produto, MOQ/múltiplo, dias de crédito, prazo real, pontualidade, cumprimento, estado da relação); falta o cálculo e o ecrã.
+  - [x] **C1 — O cálculo.** Função pura `comparar-fornecedores` (normalização, pesos, dados em falta, exclusões) com testes.
+  - [x] **C2 — O servidor.** `POST /compras/comparacao-fornecedores` e a configuração de pesos por empresa (migração aditiva).
+  - [x] **C3 — O seletor.** Todos os fornecedores da empresa, com o estado e o motivo de não se poder comprar.
+  - [x] **C4 — A comparação no pedido.** Painel de comparação no modal, pesos ajustáveis, «Usar este fornecedor».
+  - [ ] **C5 — Fecho.** *(testes, documentação e TRD feitos na Fase 55; falta validar os pesos por omissão com quem compra e o teste no browser.)* Testes, documentação, TRD; pesos por omissão validados com quem compra.
+
 ### Multilínguas (internacionalização)
 
 Funcionalidade nova, planeada em 2026-09-28 — ainda **sem código**. Interface,
@@ -2368,6 +2407,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.8 | Notificações *push* (avisar com a aplicação fechada) | **Rascunho** — a aguardar aprovação do utilizador | Secção 3 → «Notificações *push*» |
 | 4.9 | Estafetas da plataforma: onboarding com documentos e atribuição por proximidade | **Implementado** (Fase 50, 2026-10-12) — sem o B13; falta teste real e validação legal | Secção 3 → «Entrega ao domicílio» → Estafetas da plataforma |
 | 4.10 | Pagamento online no checkout (carteira móvel), reembolsos e liquidação | **Rascunho — adiado** (sem chave de API do operador); pré-requisito do B13 do §4.9 | Secção 3 → «Compra Fácil» → Cobrança no checkout |
+| 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -5189,6 +5229,96 @@ O cliente do Compra Fácil **paga no checkout**, pelo telemóvel (M-Pesa ou e-Mo
 4. **B3** (adaptador M-Pesa) assim que houver acesso ao portal: ensaio completo; **depois um pagamento real de valor mínimo e o seu reembolso**.
 5. **Piloto** com uma empresa (P7), e só depois o §4.9 abre a frota da plataforma.
 6. Documentação e TRD nos dois repositórios, no mesmo ciclo.
+
+### 4.11 Compras: todos os fornecedores no pedido e comparação por critérios
+
+- **Data:** 2026-10-13 · **Estado:** **implementado na Fase 55** (aprovado em 2026-10-13 com os valores assumidos). Falta validar os pesos por omissão com quem compra e testar no browser.
+- **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
+
+#### 1. Pedido e interpretação
+
+Ao abrir «Novo pedido de compra», o utilizador quer (a) ver **todos** os fornecedores cadastrados no seletor e (b) poder **compará-los segundo critérios definidos**, para escolher bem a quem comprar.
+
+Leitura: a escolha do fornecedor é hoje às cegas (uma lista de nomes). A comparação é uma **ajuda à decisão**, não um bloqueio: o comprador pode escolher qualquer fornecedor comprável, e o sistema diz como se classificam. «Todos» entende-se como **todos os fornecedores da empresa** — o isolamento por empresa mantém-se (ver P1).
+
+#### 2. O que já existe (confirmado no código)
+
+| Dado | Onde | Para a comparação |
+|---|---|---|
+| Fornecedores da empresa e **estado da relação** (`EM_CADASTRO`, `EM_ANALISE`, `ACTIVO`, `PREFERENCIAL`, `SUSPENSO`, `BLOQUEADO`, `ENCERRADA`) | `Fornecedor.estadoRelacao` | quem se pode comprar; `PREFERENCIAL` desempata |
+| **Preço vigente** por produto e fornecedor, com moeda e vigência | `ProdutoFornecedor.custoCompra` / `PrecoFornecedor` | critério **preço** |
+| Unidade do fornecedor, **factor de conversão**, **MOQ**, **múltiplo** | `ProdutoFornecedor` | custo por unidade base; viabilidade da quantidade |
+| **Prazo real**, **pontualidade**, **cumprimento**, atraso médio | `calcularDesempenho` (`fornecedor/domain/desempenho-fornecedor.ts`, `GET /fornecedores/:id/desempenho`) | critérios prazo, pontualidade, cumprimento |
+| **Dias de crédito** e condição de pagamento | `Fornecedor.diasCredito`, `condicaoPagamento` | critério condições de pagamento |
+
+Hoje o seletor (`CriarPedidoModal`) usa `suppliersApi.getSuppliers()` e **esconde** os que não são `isActive`; não há nenhuma comparação.
+
+#### 3. Decisões
+
+- **D1 — O seletor mostra todos.** Todos os fornecedores da empresa, **preferenciais primeiro**; os que não se podem comprar (`EM_CADASTRO`, `EM_ANALISE`, `SUSPENSO`, `BLOQUEADO`, `ENCERRADA`) aparecem **desactivados com o motivo** em vez de desaparecerem — quem os procura percebe porque não pode, em vez de achar que «não existe». O servidor continua a recusar a emissão a quem não é comprável.
+- **D2 — Comparação sobre as linhas do pedido.** Compara-se **para os produtos e quantidades que estão no pedido**, não «em geral»: o melhor fornecedor depende do que se compra. Sem linhas, o botão explica que é preciso acrescentar produtos.
+- **D3 — Cinco critérios, com pesos.** **Preço total** do pedido, **pontualidade**, **prazo real**, **cumprimento** e **dias de crédito**. Pesos por omissão (a validar, P2): preço 40 · pontualidade 20 · prazo 15 · cumprimento 15 · crédito 10 (somam 100).
+- **D4 — Pesos ajustáveis a dois níveis.** Por **empresa** (padrão, guardado, só quem gere compras) e **ao vivo** no painel (cursores que recalculam sem guardar). Mudar um peso nunca altera dados, só a ordem.
+- **D5 — Normalização simples e explicável.** Cada critério vai a 0–100 **entre os candidatos desta comparação** (mínimo-máximo; no preço e no prazo, o menor é o melhor); a pontuação é a média ponderada. Um só candidato não tem com quem se comparar: mostra os valores sem classificação.
+- **D6 — Dados em falta não se escondem.** Um critério sem dado (fornecedor novo, sem histórico) **não conta como zero**: a pontuação recalcula-se sobre os critérios que existem, com os pesos reponderados, e o fornecedor leva a marca «dados insuficientes» (menos de 3 pedidos entregues, ou sem preço para alguma linha). Um fornecedor **sem preço** para algum produto aparece com «cobre X de Y linhas» e **não é classificado como o mais barato** só por faltar custo.
+- **D7 — Só o comparável.** Preços em **moeda diferente** de MZN não se comparam (não há câmbio no sistema): o fornecedor aparece, marcado «moeda não comparável», fora da classificação de preço. O custo compara-se **por unidade base** (`custoCompra` e `factorConversao`), para uma caixa de 6 e uma unidade não parecerem preços equivalentes. **Verificar na implementação** que `custoCompra` é por unidade do fornecedor e não por unidade base.
+- **D8 — Viabilidade da quantidade.** Se a quantidade pedida não cumpre o **MOQ** ou o **múltiplo** do fornecedor, mostra-se o aviso («mínimo 12 cx», «múltiplos de 6») e a quantidade ajustada que seria necessária; não se altera sozinho.
+- **D9 — Consultivo.** A escolha do fornecedor continua livre. Se o utilizador escolhe um fornecedor que **não** é o primeiro, o sistema pergunta **opcionalmente** o motivo (fica nas observações do pedido); nunca bloqueia (P4).
+- **D10 — Sem IA.** É aritmética sobre os dados da empresa, reproduzível e auditável. Nenhuma chamada a serviços externos.
+
+#### 4. Dados
+
+Migração **aditiva**: `ComprasCriteriosComparacao` (um por empresa: `empresaId` único, `pesoPreco`, `pesoPontualidade`, `pesoPrazo`, `pesoCumprimento`, `pesoCredito`, inteiros ≥ 0, soma > 0, `atualizadoPorId`, datas). Sem registo, valem os pesos por omissão (D3). Nada se altera nas tabelas existentes.
+
+#### 5. Backend
+
+- **Domínio** `compra/domain/comparar-fornecedores.ts` (puro, com testes): recebe candidatos (preços por linha, desempenho, crédito, estado) e pesos; devolve, por fornecedor, os valores por critério, a pontuação por critério, a total, a posição, as marcas (dados insuficientes, moeda, linhas não cobertas, MOQ/múltiplo) e o motivo de exclusão.
+- **Caso de uso** `CompararFornecedoresUseCase`: lê `ProdutoFornecedor` aprovados (`estadoMapeamento = APROVADO`) com o preço vigente, o desempenho (reutilizando `calcularDesempenho`, sem duplicar a definição de «entrega válida») e o crédito, **sempre com `empresaId` do contexto**.
+- **Endpoints** (permissão de compras já existente): `POST /compras/comparacao-fornecedores` (`{ linhas: [{ produtoId, quantidade }], pesos? }`, máximo 50 linhas, `pesos` opcionais para o cálculo ao vivo) e `GET/PUT /compras/comparacao-fornecedores/criterios` (padrão da empresa; o `PUT` exige gerir compras).
+- **Erros** novos nos catálogos pt/en (`compra.comparacao.*`): sem linhas, demasiadas linhas, produto de outra empresa, pesos inválidos.
+
+#### 6. Frontend
+
+- `CriarPedidoModal`: seletor com **todos** os fornecedores, estado e motivo (D1); botão **«Comparar fornecedores»** que abre um painel por baixo das linhas: tabela ordenada (fornecedor, total do pedido, prazo, pontualidade, cumprimento, crédito, pontuação, marcas), **cursores de pesos** que recalculam, **«Usar este fornecedor»** e «Guardar pesos como padrão» (só com permissão).
+- Quatro estados em tudo (carregar, erro, vazio, resultado); layout que funcione em ecrã pequeno; i18n pt/en com paridade.
+- Feature nova pequena em `features/compras` (`api`, `hooks`, `components/ComparacaoFornecedores.tsx`), sem tocar no resto.
+
+#### 7. Riscos
+
+- **Preço desactualizado:** a comparação é tão boa quanto o catálogo; mostra-se a **data de vigência** do preço e marca-se o que tem mais de 90 dias.
+- **Pouco histórico** dá percentagens enganadoras (1 entrega = 100 % de pontualidade): daí D6.
+- **Moeda e unidade** (D7): comparar o que não é comparável é o erro mais provável; fica explícito e testado.
+- **Desempenho por pedido, não por produto:** a pontualidade é do fornecedor, não do artigo. Assume-se que é suficiente (P5).
+- **Custo da consulta:** o desempenho percorre pedidos e recepções; com muitos fornecedores usa-se uma só consulta agregada e um tecto de pedidos por fornecedor (os mesmos 50 do histórico).
+
+#### 8. Testes
+
+Domínio (puro): normalização, pesos, reponderação com dados em falta, um só candidato, moeda diferente, MOQ/múltiplo, empate (preferencial desempata), pesos inválidos. Caso de uso: isolamento por empresa, fornecedor sem preço, produto de outra empresa. Frontend: a função de apresentação das marcas e o recálculo local dos pesos.
+
+#### 9. Assunções
+
+- **A1.** «Todos os fornecedores cadastrados no sistema» = **todos os da empresa** (nunca de outras empresas).
+- **A2.** Os cinco critérios e os pesos por omissão da D3.
+- **A3.** A comparação é **consultiva** (D9).
+- **A4.** Só se comparam fornecedores com **mapeamento aprovado** do produto e preço vigente.
+- **A5.** Moeda única, MZN (D7).
+
+#### 10. Perguntas
+
+- **P1 — «Todos»:** inclui também fornecedores do **portal B2B** (organizações globais) que a empresa ainda **não** tem cadastrados — para os convidar ou associar a partir do pedido? Assumido **não** nesta fase (é um fluxo de convite, projecto à parte).
+- **P2 — Critérios e pesos:** confirma os cinco critérios e os pesos por omissão (40/20/15/15/10)? Quer outros (por exemplo **qualidade/devoluções** ou **distância**), para os quais **hoje não há dados** no sistema?
+- **P3 — Prazo de entrega prometido:** o prazo que o fornecedor **promete** (não o histórico) não existe como dado por fornecedor; usa-se o real. Quer cadastrá-lo?
+- **P4 — Motivo da escolha:** pedir (opcional) o motivo quando não se escolhe o primeiro classificado — sim ou não?
+- **P5 — Pontualidade por fornecedor** (e não por produto): chega?
+
+#### 11. Fases e ficheiros
+
+**C1** domínio + testes → **C2** servidor + migração + catálogos de erro → **C3** seletor → **C4** painel de comparação → **C5** fecho (documentação, TRD, validação dos pesos).
+
+- **BE (criar):** `compra/domain/comparar-fornecedores.ts` (+ spec), `compra/application/use-cases/comparar-fornecedores.use-case.ts`, DTOs, migração `..._compras_criterios_comparacao`. **(alterar):** `schema.prisma`, controller de compras, `src/i18n/{pt,en}/erros.json`, `.env.example` (nada), documentação.
+- **FE (criar):** `features/compras/components/ComparacaoFornecedores.tsx`, `api` e `hooks` da comparação. **(alterar):** `CriarPedidoModal.tsx`, `locales/{pt,en}/compras.json`, documentação.
+
+**Obrigatório para funcionar:** C1, C2, C4 e a parte do seletor. **Pode cortar-se:** a configuração de pesos por empresa (C2 parcial), o aviso de preço antigo, o motivo da escolha (D9).
 
 ## 5. Convenção para novas entradas
 

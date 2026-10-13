@@ -330,7 +330,8 @@
     "n_linhas_one": "{{count}} line",
     "n_linhas_other": "{{count}} lines",
     "cancelar": "Cancel",
-    "criar": "Create order"
+    "criar": "Create order",
+    "preferencial": "preferred"
   },
   "rec": {
     "erro_carregar": "Error loading goods receipts.",
@@ -409,5 +410,57 @@
     "versao": "Version {{n}}",
     "por": "by {{nome}}",
     "material": "Material change — it voided the approval in force at the time."
+  },
+  "comparacao": {
+    "titulo": "Compare suppliers for this order",
+    "mostrar": "Show",
+    "esconder": "Hide",
+    "sem_linhas": "Add products to the order to compare them: the best supplier depends on what you buy and how much.",
+    "ajuda": "Compares the company’s suppliers for this order’s lines. It is a guide: you can pick any supplier. Moving the weights only changes the order.",
+    "criterio": {
+      "preco": "Price",
+      "pontualidade": "On-time",
+      "prazo": "Lead time",
+      "cumprimento": "Fulfilment",
+      "credito": "Credit"
+    },
+    "pesos_invalidos": "Give at least one criterion a weight.",
+    "repor_pesos": "Reset to company weights",
+    "guardar_pesos": "Save as default",
+    "pesos_guardados": "Weights saved as the company default.",
+    "erro_guardar": "The weights could not be saved.",
+    "erro": "The suppliers could not be compared.",
+    "tentar_outra_vez": "Try again",
+    "sem_fornecedores": "There are no suppliers yet.",
+    "sem_com_quem_comparar": "Fewer than two suppliers can be compared for this order (they must be purchasable, cover every line and quote in MZN). The values are shown, unranked.",
+    "col": {
+      "fornecedor": "Supplier",
+      "total": "Order total",
+      "prazo": "Lead time",
+      "pontualidade": "On-time",
+      "cumprimento": "Fulfilment",
+      "credito": "Credit",
+      "pontuacao": "Score"
+    },
+    "dias": "days",
+    "preferencial": "Preferred supplier",
+    "usar": "Use this one",
+    "escolhido": "Selected",
+    "ajuste": "quantity adjusted from {{de}} to {{para}}",
+    "marca": {
+      "NAO_COMPRAVEL": "Cannot be purchased from",
+      "LINHAS_EM_FALTA": "Covers {{cobre}} of {{total}} lines",
+      "MOEDA_NAO_COMPARAVEL": "Currency not comparable",
+      "DADOS_INSUFICIENTES": "Insufficient data",
+      "QUANTIDADE_AJUSTADA": "Quantity adjusted",
+      "PRECO_ANTIGO": "Price is {{dias}} days old"
+    },
+    "estado": {
+      "EM_CADASTRO": "being registered",
+      "EM_ANALISE": "under review",
+      "SUSPENSO": "suspended",
+      "BLOQUEADO": "blocked",
+      "ENCERRADA": "closed"
+    }
   }
 }
