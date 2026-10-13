@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, Menu } from 'lucide-react';
+import { AlertTriangle, Menu } from 'lucide-react';
 import { useUIStore } from '@/shared/hooks';
 import { cn } from '@/shared/utils';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
@@ -57,26 +56,13 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const { toggleMobileMenu } = useUIStore();
   // O POS põe o carrinho em coluna de altura total à direita (420 px, ver `POSPage`): o cabeçalho acaba onde ele começa.
   const carrinhoLateral = useUIStore((s) => s.carrinhoLateralActivo);
-  const [alertasAbertos, setAlertasAbertos] = useState(false);
-  const alertasRef = useRef<HTMLDivElement>(null);
 
   // DT01 §15.4: "na página principal mostrar apenas contador e Ver todos". O sino é
   // essa síntese em qualquer página, não só no painel de necessidades.
   const { data: alertas } = useAlertas();
-  // As notificações de pedidos e entregas (plano §4.7): um sino à parte do dos alertas de reposição, que
-  // continuam a ser outra coisa (o que falta repor).
+  // As notificações de pedidos e entregas (plano §4.7). Os alertas de reposição entram no mesmo sino, numa segunda
+  // secção do painel: dois sinos lado a lado confundiam (qual é qual?).
   const fonteDeNotificacoes = useFonteDaGestao();
-
-  useEffect(() => {
-    if (!alertasAbertos) return;
-    const fechar = (e: MouseEvent) => {
-      if (alertasRef.current && !alertasRef.current.contains(e.target as Node)) {
-        setAlertasAbertos(false);
-      }
-    };
-    document.addEventListener('mousedown', fechar);
-    return () => document.removeEventListener('mousedown', fechar);
-  }, [alertasAbertos]);
 
   // O cabeçalho é `fixed`, pelo que não herda a margem do contentor de conteúdo. Sem
   // isto passava por baixo do painel da Mayra, e o sino de notificações ficava
@@ -125,59 +111,51 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         <PesquisaGlobal />
       </div>
 
-      {/* ── Lado direito: Centro de Alertas (DT01 §15.4) ─────────────────── */}
-      <div ref={alertasRef} className="relative flex items-center gap-1">
-        <SinoDeNotificacoes fonte={fonteDeNotificacoes} />
+      {/* ── Lado direito: o sino (notificações + alertas de reposição, DT01 §15.4) e a língua ───────── */}
+      <div className="relative flex items-center gap-1">
+        <SinoDeNotificacoes
+          fonte={fonteDeNotificacoes}
+          secaoExtra={{
+            contagem: alertas?.total ?? 0,
+            render: (fechar) => (
+              <div>
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <p className="text-sm font-semibold text-slate-800">{t('cabecalho.alertas')}</p>
+                  <span className="text-xs text-slate-400">{alertas?.total ?? 0}</span>
+                </div>
+
+                {!alertas?.total ? (
+                  <p className="px-4 pb-4 text-center text-sm text-slate-400">{t('cabecalho.sem_alertas')}</p>
+                ) : (
+                  alertas.dados.slice(0, 8).map((alerta) => (
+                    <div key={`${alerta.tipo}-${alerta.entidadeId}`} className="flex items-start gap-2.5 border-t border-slate-50 px-4 py-2.5">
+                      <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-500" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-800">{alerta.titulo}</p>
+                        <p className="truncate text-xs text-slate-400">
+                          {t(`cabecalho.tipo.${alerta.tipo}`)} · {t('cabecalho.ha_dias', { count: alerta.diasEmAberto })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    fechar();
+                    navigate('/compras/necessidades/alertas');
+                  }}
+                  className="w-full border-t border-slate-100 py-2.5 text-center text-sm font-medium text-blue-600 hover:bg-slate-50"
+                >
+                  {t('cabecalho.ver_todos')}
+                </button>
+              </div>
+            ),
+          }}
+        />
         {/* Escondido no telemóvel: o cabeçalho do POS não tem espaço para ele. */}
         <SelectorIdioma aoMudar={definirIdiomaApi} className="hidden sm:inline-flex" />
-        <button
-          onClick={() => setAlertasAbertos((a) => !a)}
-          className="relative p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-          title={t('cabecalho.alertas')}
-        >
-          <Bell size={20} />
-          {!!alertas?.total && (
-            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
-              {alertas.total > 9 ? '9+' : alertas.total}
-            </span>
-          )}
-        </button>
-
-        {alertasAbertos && (
-          <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-              <p className="text-sm font-semibold text-slate-800">{t('cabecalho.alertas')}</p>
-              <span className="text-xs text-slate-400">{alertas?.total ?? 0}</span>
-            </div>
-
-            {!alertas?.total ? (
-              <p className="px-4 py-6 text-center text-sm text-slate-400">{t('cabecalho.sem_alertas')}</p>
-            ) : (
-              alertas.dados.slice(0, 8).map((alerta) => (
-                <div key={`${alerta.tipo}-${alerta.entidadeId}`} className="flex items-start gap-2.5 border-b border-slate-50 px-4 py-2.5 last:border-0">
-                  <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-500" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800">{alerta.titulo}</p>
-                    <p className="truncate text-xs text-slate-400">
-                      {t(`cabecalho.tipo.${alerta.tipo}`)} ·{' '}
-                      {t('cabecalho.ha_dias', { count: alerta.diasEmAberto })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-
-            <button
-              onClick={() => {
-                setAlertasAbertos(false);
-                navigate('/compras/necessidades/alertas');
-              }}
-              className="w-full border-t border-slate-100 py-2.5 text-center text-sm font-medium text-blue-600 hover:bg-slate-50"
-            >
-              {t('cabecalho.ver_todos')}
-            </button>
-          </div>
-        )}
       </div>
     </header>
   );

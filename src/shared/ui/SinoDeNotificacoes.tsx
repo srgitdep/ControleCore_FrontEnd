@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Bell, BellRing, CheckCheck, Loader2, Radio } from 'lucide-react';
@@ -16,6 +16,11 @@ interface Props {
   className?: string;
   /** O painel cola-se ao lado direito (cabeçalhos) ou ao esquerdo (o sino à direita do ecrã). */
   alinhamento?: 'direita' | 'esquerda';
+  /**
+   * Uma segunda secção no mesmo painel (a gestão junta aqui os alertas de reposição). Soma-se ao número do sino:
+   * dois sinos lado a lado, para duas listas de «coisas por ver», era o que confundia.
+   */
+  secaoExtra?: { contagem: number; render: (fechar: () => void) => ReactNode };
 }
 
 /**
@@ -25,7 +30,7 @@ interface Props {
  * Os quatro estados (a carregar, erro, vazio, com notificações) estão tratados; o número tem `aria-live` para
  * quem usa leitor de ecrã saber que chegou algo.
  */
-export function SinoDeNotificacoes({ fonte, destinoDe, verTodasHref, className, alinhamento = 'direita' }: Props) {
+export function SinoDeNotificacoes({ fonte, destinoDe, verTodasHref, className, alinhamento = 'direita', secaoExtra }: Props) {
   const { t } = useTranslation('notificacoes');
   const navegar = useNavigate();
   const [aberto, setAberto] = useState(false);
@@ -57,21 +62,22 @@ export function SinoDeNotificacoes({ fonte, destinoDe, verTodasHref, className, 
     if (destino) navegar(destino);
   };
   const itens = lista.data?.data ?? [];
+  const total = naoLidas + (secaoExtra?.contagem ?? 0);
 
   return (
     <div ref={raiz} className={cn('relative', className)}>
       <button
         type="button"
         onClick={() => setAberto((v) => !v)}
-        aria-label={`${t('ui.abrir')}${naoLidas > 0 ? ` — ${t('ui.por_ler', { count: naoLidas })}` : ''}`}
+        aria-label={`${t('ui.abrir')}${total > 0 ? ` — ${t('ui.por_ler', { count: total })}` : ''}`}
         aria-expanded={aberto}
         className="relative flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
       >
-        {naoLidas > 0 ? <BellRing size={20} className="text-blue-600" /> : <Bell size={20} />}
+        {total > 0 ? <BellRing size={20} className="text-blue-600" /> : <Bell size={20} />}
         <span aria-live="polite" className="contents">
-          {naoLidas > 0 && (
+          {total > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-              {naoLidas > 9 ? '9+' : naoLidas}
+              {total > 9 ? '9+' : total}
             </span>
           )}
         </span>
@@ -148,6 +154,8 @@ export function SinoDeNotificacoes({ fonte, destinoDe, verTodasHref, className, 
               </ul>
             )}
           </div>
+
+          {secaoExtra && <div className="border-t border-slate-100">{secaoExtra.render(() => setAberto(false))}</div>}
 
           {verTodasHref && itens.length > 0 && (
             <button

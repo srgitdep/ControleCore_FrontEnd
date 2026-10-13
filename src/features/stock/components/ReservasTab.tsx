@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
-import { AlarmClockOff, RotateCcw, Timer } from 'lucide-react';
-import { ResponsiveTable, Button, KpiCard } from '@/shared/ui';
+import { AlarmClockOff, AlertTriangle, Timer } from 'lucide-react';
+import { ResponsiveTable, KpiCard } from '@/shared/ui';
 import { formatData, formatDataHora } from '@/shared/utils';
-import { useReservaMutations, useReservas } from '../hooks/useReservas';
+import { useReservas } from '../hooks/useReservas';
 import type { EstadoReserva, ReservaStock } from '../types/stock.types';
 
 const helper = createColumnHelper<ReservaStock>();
@@ -18,6 +18,13 @@ const ESTADO_META: Record<EstadoReserva, { pastilha: string }> = {
 };
 
 const ESTADOS: EstadoReserva[] = ['ACTIVA', 'CONSUMIDA', 'LIBERTADA', 'EXPIRADA'];
+
+/**
+ * Uma referência **estável** para «ainda sem dados». `data: reservas ?? []` criava um array novo a cada render
+ * enquanto o pedido não chegava, e o TanStack Table trata uma `data` nova como mudança (repõe a página, o que volta a
+ * renderizar): um ciclo sem fim que congelava o separador.
+ */
+const SEM_RESERVAS: ReservaStock[] = [];
 
 /**
  * Reservas de stock: mercadoria comprometida sem ter saído (§14).
@@ -35,10 +42,9 @@ export function ReservasTab() {
   const { t } = useTranslation('stock');
   const [estado, setEstado] = useState<EstadoReserva | 'TODAS'>('ACTIVA');
 
-  const { data: reservas, isFetching } = useReservas(
+  const { data: reservas, isFetching, isError, refetch } = useReservas(
     estado === 'TODAS' ? undefined : { estado },
   );
-  const mutacoes = useReservaMutations();
 
   const activas = (reservas ?? []).filter((r) => r.estado === 'ACTIVA');
 
@@ -118,36 +124,14 @@ export function ReservasTab() {
         header: t('reservas_tab.reservada_por'),
         cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
       }),
-      helper.display({
-        id: 'acoes',
-        header: '',
-        cell: ({ row }) =>
-          row.original.estado === 'ACTIVA' ? (
-            <div className="flex justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={mutacoes.aDecorrer}
-                onClick={() =>
-                  mutacoes.libertar.mutate({
-                    reservaId: row.original.id,
-                    motivo: 'Libertada a partir da lista de reservas',
-                  })
-                }
-                className="gap-1.5"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                {t('reservas_tab.libertar')}
-              </Button>
-            </div>
-          ) : null,
-      }),
     ],
-    [mutacoes, t],
+    // Só `t`: as colunas não podem depender de objectos que mudam a cada render (antes, `mutacoes` — um objecto novo
+    // em cada render — refazia as colunas e realimentava o ciclo descrito em `SEM_RESERVAS`).
+    [t],
   );
 
   const table = useReactTable({
-    data: reservas ?? [],
+    data: reservas ?? SEM_RESERVAS,
     columns: colunas,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -211,24 +195,24 @@ export function ReservasTab() {
           </button>
         </div>
 
-        {/* O varrimento corre no servidor a cada dez minutos. Este botão antecipa-o, para
-            quem precisa da mercadoria de volta agora e não dentro de nove minutos. */}
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={mutacoes.aDecorrer}
-          onClick={() => mutacoes.expirarAgora.mutate()}
-          className="gap-1.5"
-        >
-          <AlarmClockOff className="h-4 w-4" />
-          {t('reservas_tab.caducar_agora')}
-        </Button>
       </div>
+
+      {isError && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            {t('reservas_tab.erro')}
+          </span>
+          <button type="button" onClick={() => void refetch()} className="font-medium underline">
+            {t('reservas_tab.tentar_outra_vez')}
+          </button>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
         <ResponsiveTable
           table={table}
-          isLoading={isFetching && !reservas}
+          isLoading={isFetching && !reservas && !isError}
           emptyMessage={
             estado === 'ACTIVA'
               ? t('reservas_tab.vazio_activa')
