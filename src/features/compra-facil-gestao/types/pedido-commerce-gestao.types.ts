@@ -57,8 +57,30 @@ export interface EnderecoDoPedido {
   bairro: string | null;
   cidade: string;
   provincia: string;
+  /** Para a ligação ao mapa. */
+  latitude?: number;
+  longitude?: number;
   contactoNome: string | null;
   contactoTelefone: string | null;
+}
+
+/** A conta online do cliente. Nunca traz identificadores: só *se* o e-mail está verificado e se é do Google. */
+export interface ContaDoCliente {
+  emailVerificado: boolean;
+  viaGoogle: boolean;
+  ultimoAcessoEm: string | null;
+  activa: boolean;
+}
+
+/** O cliente **actual** de um pedido (o que o cadastro diz hoje), com as suas compras online. */
+export interface ClienteDoPedido {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  nuit: string | null;
+  conta: ContaDoCliente | null;
+  comprasOnline: { pedidos: number; total: number; ultimoPedidoEm: string | null };
 }
 
 export interface PedidoCommerceGestao {
@@ -78,8 +100,19 @@ export interface PedidoCommerceGestao {
   motivoCancelamento: string | null;
   vendaId: string | null;
   itens: PedidoItemCommerce[];
-  cliente: { nome: string; telefone: string | null };
+  cliente: ClienteDoPedido;
   loja: { nome: string };
+  /**
+   * A cópia do que o cliente deu **neste** pedido (plano §4.13): não muda se ele editar o cadastro depois.
+   * Nulos quando não deu (ou não aceitou partilhar) o campo.
+   */
+  clienteNome: string | null;
+  clienteTelefone: string | null;
+  clienteEmail: string | null;
+  clienteNuit: string | null;
+  enderecoSnapshot: EnderecoDoPedido | null;
+  /** Pedidos anteriores à cópia: preenchida a partir do cliente de hoje, pelo que não é o registo original. */
+  snapshotAproximado: boolean;
 }
 
 export interface FiltrosPedidoCommerce {

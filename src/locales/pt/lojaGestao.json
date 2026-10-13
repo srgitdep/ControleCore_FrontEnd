@@ -74,7 +74,30 @@
     "aviso_despacho": "A mercadoria sai da loja: o stock baixa e nasce a venda (a cobrar na entrega). Exige caixa aberto nesta loja. Confirma?",
     "a_despachar": "A despachar...",
     "sim_despachar": "Sim, despachar",
-    "entrega_na_rua": "A mercadoria já saiu da loja. Não se cancela: se a entrega falhar, regista-se a falha e devolve-se. A atribuição ao estafeta e o fecho da entrega chegam numa fase seguinte."
+    "entrega_na_rua": "A mercadoria já saiu da loja. Não se cancela: se a entrega falhar, regista-se a falha e devolve-se. A atribuição ao estafeta e o fecho da entrega chegam numa fase seguinte.",
+    "cliente": {
+      "titulo": "Quem pede",
+      "ver_no_crm": "Ver no CRM",
+      "nome": "Nome",
+      "telefone": "Telefone",
+      "email": "E-mail",
+      "nuit": "NUIT",
+      "compras_online": "Compras online",
+      "sem_compras": "Primeiro pedido",
+      "resumo_compras_one": "{{count}} pedido · {{total}}",
+      "resumo_compras_other": "{{count}} pedidos · {{total}}",
+      "ultimo_pedido": "último em {{data}}",
+      "email_verificado": "E-mail verificado",
+      "google": "Conta Google",
+      "conta_inactiva": "Conta inactiva",
+      "ultimo_acesso": "último acesso {{data}}",
+      "registo_difere": "O que ficou registado neste pedido é diferente de hoje",
+      "apagado_depois": "entretanto apagado do cadastro",
+      "morada": "Morada de entrega",
+      "morada_registada": "Morada registada no pedido",
+      "abrir_mapa": "Abrir no mapa",
+      "registo_aproximado": "Pedido anterior ao registo dos dados: mostra o cliente de hoje."
+    }
   },
   "modal": {
     "titulo": "Registar substituição",

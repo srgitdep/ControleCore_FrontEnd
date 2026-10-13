@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listarClientes,
   obterCliente,
+  obterComprasOnline,
   criarCliente,
   atualizarCliente,
   apagarCliente,
@@ -38,6 +39,7 @@ import {
   ajustarPontos,
   sugerirMensagens,
   type CanalComunicacao,
+  type OrigemCliente,
   type DimensaoSegmento,
   type FinalidadeConsentimento,
   type TipoIdentidade,
@@ -47,11 +49,20 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatMoeda, mensagemDeErro } from '@/shared/utils';
 
-export function useClientes(params?: { page?: number; limit?: number; search?: string }) {
+export function useClientes(params?: { page?: number; limit?: number; search?: string; origem?: OrigemCliente }) {
   return useQuery({
     queryKey: ['clientes', params],
     queryFn: () => listarClientes(params || {}),
     placeholderData: (prev) => prev,
+  });
+}
+
+/** Os pedidos online, a conta e as moradas de um cliente (plano §4.13). */
+export function useComprasOnlineDoCliente(id: string) {
+  return useQuery({
+    queryKey: ['cliente', id, 'compras-online'],
+    queryFn: () => obterComprasOnline(id),
+    enabled: !!id,
   });
 }
 

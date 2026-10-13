@@ -38,7 +38,19 @@ export function TabelaPedidosCommerce({ pedidos, isLoading, onAbrir }: TabelaPed
       }),
       helper.accessor('cliente.nome', {
         header: t('tabela.col_cliente'),
-        cell: (info) => <span className="text-sm text-slate-600">{info.getValue()}</span>,
+        // O telefone e, nas entregas, a morada resumida: quem prepara o pedido vê logo a quem e para onde vai.
+        cell: (info) => {
+          const p = info.row.original;
+          return (
+            <div className="min-w-0 text-sm">
+              <p className="truncate text-slate-700">{info.getValue()}</p>
+              <p className="truncate text-xs text-slate-400">{p.cliente.telefone ?? t('drawer.sem_telefone')}</p>
+              {p.tipoEntrega === 'ENTREGA' && p.endereco && (
+                <p className="truncate text-xs text-slate-400">{[p.endereco.bairro, p.endereco.cidade].filter(Boolean).join(', ')}</p>
+              )}
+            </div>
+          );
+        },
       }),
       helper.accessor('loja.nome', {
         header: t('tabela.col_loja'),

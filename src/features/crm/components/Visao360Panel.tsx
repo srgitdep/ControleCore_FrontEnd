@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
   Award,
@@ -262,9 +262,12 @@ function IdentidadeModal({
 export function Visao360Panel({
   clienteId,
   onBack,
+  extra,
 }: {
   clienteId: string;
   onBack: () => void;
+  /** Uma secção a mais, a seguir ao comportamento (as compras online, no CRM). */
+  extra?: ReactNode;
 }) {
   const { t } = useTranslation('crm');
   const { data: visao, isLoading, isError } = useVisao360(clienteId);
@@ -306,6 +309,8 @@ export function Visao360Panel({
         <Recomendacao visao={visao} />
 
         <Comportamento visao={visao} />
+
+        {extra}
 
         {visao.segmentos.length > 0 && (
           <Seccao titulo={t('visao.seccao_segmentos')}>
