@@ -60,14 +60,18 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
                 <BadgeEstadoTransferencia estado={detalhe.estado} />
               </div>
 
+              <p className="font-mono text-xs font-semibold text-slate-500">{detalhe.referencia}</p>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
                   <p className="text-xs text-slate-400">{t('detalhe.origem')}</p>
-                  <p className="text-sm font-medium text-slate-800">{detalhe.origemLoja.nome}</p>
+                  <p className="text-sm font-medium text-slate-800">{detalhe.origemArmazem?.nome ?? detalhe.origemLoja.nome}</p>
+                  <p className="text-xs text-slate-400">{detalhe.origemLoja.nome}</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
                   <p className="text-xs text-slate-400">{t('detalhe.destino')}</p>
-                  <p className="text-sm font-medium text-slate-800">{detalhe.destinoLoja.nome}</p>
+                  <p className="text-sm font-medium text-slate-800">{detalhe.destinoArmazem?.nome ?? detalhe.destinoLoja.nome}</p>
+                  <p className="text-xs text-slate-400">{detalhe.destinoLoja.nome}</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 px-3 py-2">
                   <p className="text-xs text-slate-400">{t('detalhe.solicitada')}</p>
@@ -114,6 +118,31 @@ export function DetalheTransferenciaDrawer({ transferenciaId, onClose }: Detalhe
                     <Evento label={t('detalhe.cancelada_por')} nome={detalhe.canceladaPor.name} data={null} />
                   )}
                 </ol>
+              </div>
+
+              {/* O que ficou nos movimentos de stock: a saída na origem e a entrada no destino (plano §4.12, D4). */}
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('detalhe.movimentos')}</p>
+                {detalhe.movimentos.length === 0 ? (
+                  <p className="text-sm text-slate-400">{t('detalhe.sem_movimentos')}</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {detalhe.movimentos.map((m) => (
+                      <li key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-700">
+                            {m.type === 'OUT' ? t('detalhe.saida') : t('detalhe.entrada')}
+                            <span className="font-normal text-slate-500"> — {m.stock?.armazem?.nome ?? '—'}</span>
+                          </p>
+                          <p className="text-xs text-slate-400">{formatDataHora(m.createdAt)} · {t('detalhe.saldo_apos', { n: m.balanceAfter })}</p>
+                        </div>
+                        <span className={m.type === 'OUT' ? 'font-bold tabular-nums text-rose-600' : 'font-bold tabular-nums text-emerald-600'}>
+                          {m.type === 'OUT' ? '-' : '+'}{m.quantity}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}

@@ -1,8 +1,13 @@
 import { api } from '@/shared/config';
 import type {
+  DetalheDoGrupo,
   DetalheTransferencia,
+  DisponivelNoArmazem,
   FiltrosTransferencia,
   ListaTransferencias,
+  PedidoEmMassa,
+  ResultadoDaAccaoDoGrupo,
+  ResultadoDoPedido,
 } from '../types/transferencia.types';
 
 /**
@@ -25,15 +30,48 @@ export const transferenciasApi = {
     return data;
   },
 
-  solicitar: async (dados: {
-    produtoId: string;
-    origemLojaId: string;
-    destinoLojaId: string;
-    quantidade: number;
-    necessidadeId?: string;
-    motivo?: string;
-  }) => {
-    const { data } = await api.post('/transferencias-loja', dados);
+  /**
+   * Pede a transferência de **vários produtos** de um armazém para outro (plano §4.12). Tudo ou nada: se alguma linha
+   * não serve, o servidor não cria nenhuma e responde 400 com todos os erros em `erros`.
+   */
+  solicitarEmMassa: async (pedido: PedidoEmMassa) => {
+    const { data } = await api.post<ResultadoDoPedido>('/transferencias-loja/em-massa', pedido);
+    return data;
+  },
+
+  /** Os produtos com stock num armazém (físico, reservado, disponível, cedível e stock no destino), paginados. */
+  disponivelNoArmazem: async (
+    armazemId: string,
+    params: { destinoArmazemId?: string; pesquisa?: string; page?: number; limit?: number },
+  ) => {
+    const { data } = await api.get<DisponivelNoArmazem>(`/transferencias-loja/armazens/${armazemId}/disponivel`, { params });
+    return data;
+  },
+
+  getGrupo: async (grupoId: string) => {
+    const { data } = await api.get<DetalheDoGrupo>(`/transferencias-loja/grupos/${grupoId}`);
+    return data;
+  },
+
+  /** Aprovar ou recusar as linhas por decidir do pedido. */
+  decidirGrupo: async (grupoId: string, decisao: 'APROVAR' | 'RECUSAR', motivo?: string) => {
+    const { data } = await api.post<ResultadoDaAccaoDoGrupo>(`/transferencias-loja/grupos/${grupoId}/decidir`, { decisao, motivo });
+    return data;
+  },
+
+  expedirGrupo: async (grupoId: string) => {
+    const { data } = await api.post<ResultadoDaAccaoDoGrupo>(`/transferencias-loja/grupos/${grupoId}/expedir`);
+    return data;
+  },
+
+  /** Recebe o que foi expedido; `quantidades` (transferenciaId → recebido) só para as divergências. */
+  receberGrupo: async (grupoId: string, quantidades?: Record<string, number>) => {
+    const { data } = await api.post<ResultadoDaAccaoDoGrupo>(`/transferencias-loja/grupos/${grupoId}/receber`, { quantidades });
+    return data;
+  },
+
+  cancelarGrupo: async (grupoId: string, motivo: string) => {
+    const { data } = await api.post<ResultadoDaAccaoDoGrupo>(`/transferencias-loja/grupos/${grupoId}/cancelar`, { motivo });
     return data;
   },
 

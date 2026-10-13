@@ -17,6 +17,8 @@ interface TabelaTransferenciasProps {
   onReceber: (linha: LinhaTransferencia) => void;
   onCancelar: (linha: LinhaTransferencia) => void;
   onVerDetalhe: (id: string) => void;
+  /** Abre o pedido em massa a que a linha pertence. */
+  onVerPedido: (grupoId: string) => void;
 }
 
 /**
@@ -35,6 +37,7 @@ export function TabelaTransferencias({
   onReceber,
   onCancelar,
   onVerDetalhe,
+  onVerPedido,
 }: TabelaTransferenciasProps) {
   const { t } = useTranslation('transferencias');
   const colunas = useMemo(
@@ -67,10 +70,23 @@ export function TabelaTransferencias({
         cell: (info) => {
           const linha = info.row.original;
           return (
-            <div className="flex items-center gap-1.5 text-sm text-slate-600">
-              <span>{linha.origemLoja.nome}</span>
-              <ArrowRight size={14} className="text-slate-300" />
-              <span>{linha.destinoLoja.nome}</span>
+            <div className="text-sm text-slate-600">
+              {/* A referência identifica o pedido; nas linhas de um pedido em massa abre-o inteiro. */}
+              {linha.grupoId ? (
+                <button type="button" onClick={() => onVerPedido(linha.grupoId as string)} className="mb-0.5 font-mono text-[11px] font-semibold text-blue-700 hover:underline">
+                  {linha.referencia}
+                </button>
+              ) : (
+                <span className="mb-0.5 block font-mono text-[11px] text-slate-400">{linha.referencia}</span>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span>{linha.origemArmazem?.nome ?? linha.origemLoja.nome}</span>
+                <ArrowRight size={14} className="text-slate-300" />
+                <span>{linha.destinoArmazem?.nome ?? linha.destinoLoja.nome}</span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {linha.origemLoja.nome} → {linha.destinoLoja.nome}
+              </p>
             </div>
           );
         },
@@ -169,7 +185,7 @@ export function TabelaTransferencias({
         },
       }),
     ],
-    [t, onAprovar, onRecusar, onExpedir, onReceber, onCancelar, onVerDetalhe],
+    [t, onAprovar, onRecusar, onExpedir, onReceber, onCancelar, onVerDetalhe, onVerPedido],
   );
 
   const table = useReactTable({

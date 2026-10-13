@@ -87,7 +87,8 @@
     "sistema": "System",
     "motivo": "Reason",
     "historico_movimentos": "Movement History",
-    "nenhum_movimento": "No movements recorded."
+    "nenhum_movimento": "No movements recorded.",
+    "transferencia": "Transfer"
   },
   "movimento_tipo": {
     "IN": "In",

@@ -2,6 +2,17 @@ import { api } from '@/shared/config';
 
 // ──â”€ Types ────────────────────────────────────────────────────────────────────
 
+/** De onde vem o cliente (plano §4.13): da loja online, do balcão, ou dos dois. */
+export type OrigemCliente = 'ONLINE' | 'BALCAO' | 'AMBOS';
+
+/** A conta online. Nunca traz identificadores: só *se* o e-mail está verificado e se é do Google. */
+export interface ContaOnline {
+  emailVerificado: boolean;
+  viaGoogle: boolean;
+  ultimoAcessoEm: string | null;
+  activa: boolean;
+}
+
 export interface Cliente {
   id: string;
   empresaId: string;
@@ -15,6 +26,38 @@ export interface Cliente {
   dataUltimaCompra?: string;
   createdAt: string;
   updatedAt: string;
+  /** Só na lista (`GET /clientes`); ausentes nas respostas de criar e editar. */
+  origem?: OrigemCliente;
+  conta?: ContaOnline | null;
+  comprasOnline?: { pedidos: number; total: number; ultimoPedidoEm: string | null };
+}
+
+export interface ComprasOnlineDoCliente {
+  conta: ContaOnline | null;
+  resumo: { pedidos: number; total: number; primeiroPedidoEm: string | null; ultimoPedidoEm: string | null };
+  pedidos: Array<{
+    id: string;
+    numeroPedido: string;
+    estado: string;
+    totalFinal: number;
+    taxaEntrega: number;
+    tipoEntrega: 'LEVANTAMENTO' | 'ENTREGA';
+    metodoPagamento: string;
+    createdAt: string;
+    loja: { nome: string };
+  }>;
+  enderecos: Array<{
+    id: string;
+    rotulo: string | null;
+    linha1: string;
+    referencia: string | null;
+    bairro: string | null;
+    cidade: string;
+    provincia: string;
+    contactoNome: string | null;
+    contactoTelefone: string | null;
+    isPadrao: boolean;
+  }>;
 }
 
 export interface ClienteDetalhe extends Cliente {
@@ -300,8 +343,15 @@ export const listarClientes = async (params: {
   page?: number;
   limit?: number;
   search?: string;
+  /** `ONLINE` = quem comprou na loja online (inclui quem também compra ao balcão). */
+  origem?: OrigemCliente;
 }): Promise<PaginatedClientes> => {
   const { data } = await api.get('/clientes', { params });
+  return data;
+};
+
+export const obterComprasOnline = async (id: string): Promise<ComprasOnlineDoCliente> => {
+  const { data } = await api.get(`/clientes/${id}/compras-online`);
   return data;
 };
 

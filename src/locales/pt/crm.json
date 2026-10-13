@@ -79,7 +79,23 @@
     "paginacao": "Página {{page}} de {{lastPage}} · {{total}} clientes",
     "apagar_titulo": "Apagar cliente",
     "apagar_mensagem": "Apagar \"{{nome}}\"? Esta acção não pode ser desfeita.",
-    "apagar": "Apagar"
+    "apagar": "Apagar",
+    "origem": "Origem do cliente",
+    "filtro_origem": {
+      "todos": "Todos",
+      "ONLINE": "Compraram online",
+      "BALCAO": "Só balcão",
+      "AMBOS": "Online e balcão"
+    },
+    "origem_ONLINE": "Loja online",
+    "origem_BALCAO": "Balcão",
+    "origem_AMBOS": "Online + balcão",
+    "col_origem": "Origem",
+    "col_compras_online": "Compras online",
+    "pedidos_online_one": "{{count}} pedido",
+    "pedidos_online_other": "{{count}} pedidos",
+    "pedidos_online_resumo_one": "{{count}} pedido online · {{total}}",
+    "pedidos_online_resumo_other": "{{count}} pedidos online · {{total}}"
   },
   "analise": {
     "urgencia_urgente": "Agir agora",
@@ -468,5 +484,38 @@
     "col_itens": "Itens",
     "col_estado": "Estado",
     "sem_actividade": "Ainda sem actividade registada. As compras passam a aparecer aqui à medida que acontecem."
+  },
+  "compras_online": {
+    "titulo": "Compras na loja online",
+    "erro": "Não foi possível carregar as compras online.",
+    "tentar_outra_vez": "Tentar outra vez",
+    "pedidos": "Pedidos (sem cancelados)",
+    "total": "Total comprado",
+    "ultimo_pedido": "Último pedido",
+    "email_verificado": "E-mail verificado",
+    "google": "Conta Google",
+    "conta_inactiva": "Conta inactiva",
+    "ultimo_acesso": "último acesso {{data}}",
+    "sem_pedidos": "Este cliente ainda não fez pedidos online.",
+    "col_pedido": "Pedido",
+    "col_data": "Data",
+    "col_loja": "Loja",
+    "col_estado": "Estado",
+    "col_total": "Total",
+    "entrega": "entrega",
+    "moradas": "Moradas guardadas",
+    "morada": "Morada",
+    "padrao": "padrão",
+    "estado": {
+      "CRIADO": "Novo",
+      "CONFIRMADO": "Confirmado",
+      "EM_PREPARACAO": "Em preparação",
+      "PRONTO": "Pronto",
+      "EXPEDIDO": "Expedido",
+      "EM_ROTA": "Em rota",
+      "FALHADA": "Falhada",
+      "CONCLUIDO": "Concluído",
+      "CANCELADO": "Cancelado"
+    }
   }
 }

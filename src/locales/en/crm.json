@@ -79,7 +79,23 @@
     "paginacao": "Page {{page}} of {{lastPage}} · {{total}} customers",
     "apagar_titulo": "Delete customer",
     "apagar_mensagem": "Delete \"{{nome}}\"? This action cannot be undone.",
-    "apagar": "Delete"
+    "apagar": "Delete",
+    "origem": "Customer origin",
+    "filtro_origem": {
+      "todos": "All",
+      "ONLINE": "Bought online",
+      "BALCAO": "Counter only",
+      "AMBOS": "Online and counter"
+    },
+    "origem_ONLINE": "Online store",
+    "origem_BALCAO": "Counter",
+    "origem_AMBOS": "Online + counter",
+    "col_origem": "Origin",
+    "col_compras_online": "Online purchases",
+    "pedidos_online_one": "{{count}} order",
+    "pedidos_online_other": "{{count}} orders",
+    "pedidos_online_resumo_one": "{{count}} online order · {{total}}",
+    "pedidos_online_resumo_other": "{{count}} online orders · {{total}}"
   },
   "analise": {
     "urgencia_urgente": "Act now",
@@ -468,5 +484,38 @@
     "col_itens": "Items",
     "col_estado": "Status",
     "sem_actividade": "No activity recorded yet. Purchases will appear here as they happen."
+  },
+  "compras_online": {
+    "titulo": "Online store purchases",
+    "erro": "The online purchases could not be loaded.",
+    "tentar_outra_vez": "Try again",
+    "pedidos": "Orders (excl. cancelled)",
+    "total": "Total purchased",
+    "ultimo_pedido": "Latest order",
+    "email_verificado": "E-mail verified",
+    "google": "Google account",
+    "conta_inactiva": "Inactive account",
+    "ultimo_acesso": "last sign-in {{data}}",
+    "sem_pedidos": "This customer has not placed online orders yet.",
+    "col_pedido": "Order",
+    "col_data": "Date",
+    "col_loja": "Store",
+    "col_estado": "Status",
+    "col_total": "Total",
+    "entrega": "delivery",
+    "moradas": "Saved addresses",
+    "morada": "Address",
+    "padrao": "default",
+    "estado": {
+      "CRIADO": "New",
+      "CONFIRMADO": "Confirmed",
+      "EM_PREPARACAO": "Preparing",
+      "PRONTO": "Ready",
+      "EXPEDIDO": "Dispatched",
+      "EM_ROTA": "On the way",
+      "FALHADA": "Failed",
+      "CONCLUIDO": "Completed",
+      "CANCELADO": "Cancelled"
+    }
   }
 }

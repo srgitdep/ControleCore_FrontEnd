@@ -150,6 +150,15 @@ export interface StockMovement {
   };
   /** O produto e o armazém do movimento. O backend inclui-os na listagem geral. */
   stock?: Stock;
+  /** A transferência que gerou o movimento (plano §4.12): a saída na origem ou a entrada no destino. */
+  transferencia?: {
+    id: string;
+    referencia: string;
+    origemArmazem: { id: string; nome: string | null } | null;
+    destinoArmazem: { id: string; nome: string | null } | null;
+    origemLoja: { nome: string };
+    destinoLoja: { nome: string };
+  } | null;
 }
 
 // ──â”€ Interfaces para Mutações ────────────────────────────────────────────────

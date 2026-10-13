@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Users,
   Search,
@@ -21,7 +22,8 @@ import {
   useUpdateCliente,
   useDeleteCliente,
 } from '../hooks/useClientes';
-import type { Cliente } from '../api/clientes.api';
+import type { Cliente, OrigemCliente } from '../api/clientes.api';
+import { ComprasOnlinePanel } from '../components/ComprasOnlinePanel';
 import { Visao360Panel } from '../components/Visao360Panel';
 import { SegmentosPanel } from '../components/SegmentosPanel';
 import { CampanhasPanel } from '../components/CampanhasPanel';
@@ -46,6 +48,21 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // ──â”€ Tab Definition ──────────────────────────────────────────────────────────â”€
 type Tab = 'clientes' | 'analise' | 'segmentos' | 'campanhas' | 'duplicados' | 'definicoes' | 'detalhes';
+
+// ── A origem do cliente: online, balcão ou ambos ───────────────────────────────
+function BadgeOrigem({ origem }: { origem: OrigemCliente }) {
+  const { t } = useTranslation('crm');
+  const cor: Record<OrigemCliente, string> = {
+    ONLINE: 'bg-sky-50 text-sky-700 border-sky-200',
+    BALCAO: 'bg-slate-50 text-slate-600 border-slate-200',
+    AMBOS: 'bg-violet-50 text-violet-700 border-violet-200',
+  };
+  return (
+    <span className={cn('inline-block rounded border px-1.5 py-0.5 text-[11px] font-semibold', cor[origem])}>
+      {t(`clientes.origem_${origem}`)}
+    </span>
+  );
+}
 
 // ──â”€ Create/Edit Modal ────────────────────────────────────────────────────────
 interface ClienteModalProps {
@@ -126,9 +143,14 @@ export function ClientesPage() {
   const { t } = useTranslation('crm');
   const { hasPermission } = usePermissions();
   const podeFundir = hasPermission('manage', 'clientes');
-  const [activeTab, setActiveTab] = useState<Tab>('clientes');
-  const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null);
+  // `?cliente=<id>` abre direito o detalhe (é por onde se chega dos pedidos online).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const clienteDoUrl = searchParams.get('cliente');
+  const [activeTab, setActiveTab] = useState<Tab>(clienteDoUrl ? 'detalhes' : 'clientes');
+  const [selectedClienteId, setSelectedClienteId] = useState<string | null>(clienteDoUrl);
   const [search, setSearch] = useState('');
+  // Quem comprou online, ao balcão ou nos dois (plano §4.13, D2). Vazio = todos.
+  const [origem, setOrigem] = useState<OrigemCliente | ''>('');
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
@@ -139,9 +161,14 @@ export function ClientesPage() {
   const debouncedSearch = useDebounce(search, 500);
 
   // Reset page when search changes
-  useEffect(() => setPage(1), [debouncedSearch]);
+  useEffect(() => setPage(1), [debouncedSearch, origem]);
 
-  const { data, isLoading } = useClientes({ page, limit: 15, search: debouncedSearch || undefined });
+  const { data, isLoading } = useClientes({
+    page,
+    limit: 15,
+    search: debouncedSearch || undefined,
+    ...(origem ? { origem } : {}),
+  });
 
   const clientes = data?.data ?? [];
   const lastPage = data?.lastPage ?? 1;
@@ -177,6 +204,12 @@ export function ClientesPage() {
   const handleSelectCliente = (id: string) => {
     setSelectedClienteId(id);
     setActiveTab('detalhes');
+  };
+
+  // Sair do detalhe tira o `?cliente=` do endereço: senão um refresh voltava a abri-lo.
+  const voltarALista = () => {
+    setActiveTab('clientes');
+    if (searchParams.has('cliente')) setSearchParams({}, { replace: true });
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
@@ -249,6 +282,24 @@ export function ClientesPage() {
         {/* Tab: Clientes */}
         {activeTab === 'clientes' && (
           <div className="flex flex-col h-full">
+            {/* Origem: quem comprou na loja online, ao balcão, ou nos dois */}
+            <div className="flex flex-wrap gap-2 px-5 pt-5" role="group" aria-label={t('clientes.origem')}>
+              {(['', 'ONLINE', 'BALCAO', 'AMBOS'] as const).map((o) => (
+                <button
+                  key={o || 'todos'}
+                  type="button"
+                  onClick={() => setOrigem(o)}
+                  aria-pressed={origem === o}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                    origem === o ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50',
+                  )}
+                >
+                  {t(`clientes.filtro_origem.${o || 'todos'}`)}
+                </button>
+              ))}
+            </div>
+
             {/* Search bar */}
             <div className="p-5 pb-3">
               <div className="relative">
@@ -298,6 +349,16 @@ export function ClientesPage() {
                           {t('clientes.pontos_abrev', { n: c.pontos })}
                         </span>
                       </div>
+                      {c.origem && (
+                        <p className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                          <BadgeOrigem origem={c.origem} />
+                          {!!c.comprasOnline?.pedidos && (
+                            <span className="text-slate-500">
+                              {t('clientes.pedidos_online_resumo', { count: c.comprasOnline.pedidos, total: formatMoeda(c.comprasOnline.total) })}
+                            </span>
+                          )}
+                        </p>
+                      )}
 
                       <div className="mt-3 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
                         <div>
@@ -344,6 +405,8 @@ export function ClientesPage() {
                           t('clientes.col_nome'),
                           t('clientes.col_contacto'),
                           t('clientes.campo_nuit'),
+                          t('clientes.col_origem'),
+                          t('clientes.col_compras_online'),
                           t('clientes.col_pontos'),
                           t('clientes.col_total_gasto'),
                           t('clientes.col_ultima_compra'),
@@ -370,6 +433,17 @@ export function ClientesPage() {
                             {c.telefone || c.email || '—'}
                           </td>
                           <td className="px-4 py-3 text-slate-500">{c.nuit || '—'}</td>
+                          <td className="px-4 py-3">{c.origem ? <BadgeOrigem origem={c.origem} /> : '—'}</td>
+                          <td className="px-4 py-3 text-xs text-slate-500">
+                            {c.comprasOnline?.pedidos ? (
+                              <>
+                                <span className="font-semibold text-slate-700">{t('clientes.pedidos_online', { count: c.comprasOnline.pedidos })}</span>
+                                <span className="block">{formatMoeda(c.comprasOnline.total)}</span>
+                              </>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-xs font-semibold">
                               {t('clientes.pontos_abrev', { n: c.pontos })}
@@ -457,7 +531,8 @@ export function ClientesPage() {
         {activeTab === 'detalhes' && selectedClienteId && (
           <Visao360Panel
             clienteId={selectedClienteId}
-            onBack={() => setActiveTab('clientes')}
+            onBack={voltarALista}
+            extra={<ComprasOnlinePanel clienteId={selectedClienteId} />}
           />
         )}
       </div>

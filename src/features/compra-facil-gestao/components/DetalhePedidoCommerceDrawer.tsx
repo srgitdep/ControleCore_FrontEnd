@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Loader2, RefreshCw, Truck, X } from 'lucide-react';
+import { AlertTriangle, Loader2, RefreshCw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn, formatDataHora, formatMoeda } from '@/shared/utils';
 import { Can } from '@/features/auth';
 import { BadgeEstadoPedidoCommerce } from './BadgeEstadoPedidoCommerce';
 import { SubstituirItemModal } from './SubstituirItemModal';
+import { DadosDoClienteDoPedido } from './DadosDoClienteDoPedido';
 import {
   useCancelarPedidoCommerce,
   useConferirPedidoCommerce,
@@ -104,37 +105,13 @@ export function DetalhePedidoCommerceDrawer({ pedido, onClose }: DetalhePedidoCo
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-slate-800">{pedido.cliente.nome}</p>
-              <p className="text-xs text-slate-400">{pedido.cliente.telefone ?? t('drawer.sem_telefone')} · {pedido.loja.nome}</p>
-            </div>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-slate-500">{pedido.loja.nome}</p>
             <BadgeEstadoPedidoCommerce estado={pedido.estado} tipoEntrega={pedido.tipoEntrega} />
           </div>
 
-          {pedido.tipoEntrega === 'ENTREGA' && pedido.endereco && (
-            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 text-sm">
-              <p className="flex items-center gap-1.5 text-xs font-bold uppercase text-blue-700">
-                <Truck size={12} />
-                {t('drawer.entrega_titulo')}
-              </p>
-              <p className="mt-1.5 font-medium text-slate-800">
-                {pedido.endereco.linha1}
-                {pedido.endereco.bairro ? `, ${pedido.endereco.bairro}` : ''}
-              </p>
-              <p className="text-xs text-slate-500">
-                {pedido.endereco.cidade}, {pedido.endereco.provincia}
-              </p>
-              {pedido.endereco.referencia && (
-                <p className="mt-1 text-xs text-slate-500">{pedido.endereco.referencia}</p>
-              )}
-              {(pedido.endereco.contactoNome || pedido.endereco.contactoTelefone) && (
-                <p className="mt-1 text-xs text-slate-500">
-                  {[pedido.endereco.contactoNome, pedido.endereco.contactoTelefone].filter(Boolean).join(' · ')}
-                </p>
-              )}
-            </div>
-          )}
+          {/* Quem pede: os dados actuais do cliente, o que ficou registado neste pedido se difere, e a morada (plano §4.13). */}
+          <DadosDoClienteDoPedido pedido={pedido} />
 
           {pedido.estado === 'CANCELADO' && pedido.motivoCancelamento && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{pedido.motivoCancelamento}</p>

@@ -74,7 +74,30 @@
     "aviso_despacho": "The goods leave the store: stock goes down and the sale is created (to be collected on delivery). Requires an open till at this store. Confirm?",
     "a_despachar": "Dispatching...",
     "sim_despachar": "Yes, dispatch",
-    "entrega_na_rua": "The goods have already left the store. It cannot be cancelled: if the delivery fails, record the failure and return it. Assigning a courier and closing the delivery arrive in a later phase."
+    "entrega_na_rua": "The goods have already left the store. It cannot be cancelled: if the delivery fails, record the failure and return it. Assigning a courier and closing the delivery arrive in a later phase.",
+    "cliente": {
+      "titulo": "Customer",
+      "ver_no_crm": "View in CRM",
+      "nome": "Name",
+      "telefone": "Phone",
+      "email": "E-mail",
+      "nuit": "Tax ID (NUIT)",
+      "compras_online": "Online purchases",
+      "sem_compras": "First order",
+      "resumo_compras_one": "{{count}} order · {{total}}",
+      "resumo_compras_other": "{{count}} orders · {{total}}",
+      "ultimo_pedido": "latest on {{data}}",
+      "email_verificado": "E-mail verified",
+      "google": "Google account",
+      "conta_inactiva": "Inactive account",
+      "ultimo_acesso": "last sign-in {{data}}",
+      "registo_difere": "What was recorded on this order differs from today",
+      "apagado_depois": "since removed from the customer record",
+      "morada": "Delivery address",
+      "morada_registada": "Address recorded on the order",
+      "abrir_mapa": "Open in map",
+      "registo_aproximado": "Order from before the data was recorded: shows today’s customer."
+    }
   },
   "modal": {
     "titulo": "Record substitution",

@@ -87,7 +87,8 @@
     "sistema": "Sistema",
     "motivo": "Motivo",
     "historico_movimentos": "Histórico de Movimentos",
-    "nenhum_movimento": "Nenhum movimento registado."
+    "nenhum_movimento": "Nenhum movimento registado.",
+    "transferencia": "Transferência"
   },
   "movimento_tipo": {
     "IN": "Entrada",
