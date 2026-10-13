@@ -118,6 +118,7 @@ ao submeter.
 ### 2.y Layout do POS e do menu (Fase 51, 13/10/2026)
 
 - **POS:** em ≥ `lg` o carrinho é `fixed` de altura total à direita (420 px); `POSPage` regista-o em `useUIStore.carrinhoLateralActivo` e o `Header` (também `fixed`) encurta-se com `lg:right-[420px]`. O carrinho, sendo `fixed`, não herda a margem do conteúdo: aplica-se-lhe `classeMargemDaMayra` só quando `useBreakpoint('lg')`.
+- **Comparação de fornecedores (Fase 55):** `features/compras/components/ComparacaoFornecedores.tsx` dentro do `CriarPedidoModal`; os cursores de pesos recalculam (com *debounce*) sem gravar e `useQuery` usa a chave das linhas + pesos. O seletor do modal lista todos os fornecedores (desactiva os que `podeComprarAoEstado` recusa).
 - **Sino do cabeçalho (Fase 53):** um só `SinoDeNotificacoes`; os alertas de reposição entram pela prop `secaoExtra` e somam-se ao número. **Tabelas:** o `data` e as `columns` passados ao `useReactTable` têm de ter referência estável (nunca `data ?? []` nem dependências que mudem a cada render), senão o TanStack Table entra em ciclo de re-renders.
 - **Menu lateral:** `app/layout/caminhoActivo.ts` escolhe o prefixo mais comprido, por segmentos, para acender uma só entrada.
 
@@ -204,6 +205,13 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 `GET /stock/saude` e `/stock/saude/produtos` calculam o diagnóstico da empresa inteira em memória (catálogo com stocks, `GROUP BY` de todas as vendas e recepções, lotes). `GetSaudeStockUseCase` guarda esse diagnóstico
 **60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
 (hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
+
+### 3.2d Compras — comparação de fornecedores (Fase 55, 13/10/2026)
+
+- **Cálculo** (`compra/domain/comparar-fornecedores.ts`, puro): cinco critérios — preço total do pedido, pontualidade, prazo real, cumprimento, dias de crédito — normalizados 0–100 **entre os candidatos** e combinados por média ponderada (pesos por omissão 40/20/15/15/10). Só se **classificam** os fornecedores que se podem comprar (`permiteComprar`: `ACTIVO`/`PREFERENCIAL`), cobrem **todas** as linhas e cotam em **MZN**; os outros aparecem com a razão, sem posição. Critério sem dado **não vale zero**: sai da média do fornecedor e os pesos reponderam-se (marca `DADOS_INSUFICIENTES`). O preço compara-se por **unidade base** (`custoCompra` por unidade do fornecedor ÷ `factorConversao`), com a quantidade ajustada ao MOQ/múltiplo (`ajustarQuantidade`). Crédito nulo = zero dias. Empate: preferencial, depois o mais barato.
+- **Dados lidos:** `Fornecedor` (estado, `diasCredito`), `ProdutoFornecedor` com `estadoMapeamento = APROVADO` (preço vigente de `PrecoFornecedor`, senão a projecção `custoCompra`; MOQ, múltiplo) e o desempenho de `GetFornecedorAnaliseUseCase` (só para quem conta). Tudo escopado por `empresaId`; um produto de outra empresa dá 400.
+- **API** (`GERIR_COMPRAS`): `POST /compras/comparacao-fornecedores` (`{ linhas, pesos? }`, 1–50 linhas), `GET/PUT /compras/comparacao-fornecedores/criterios` (padrão da empresa na tabela `compras_criterios_comparacao`; sem registo valem os por omissão). Só leitura, excepto o `PUT`. Códigos `compra.comparacao.*`.
+- **Sem IA e sem serviço externo.** Sem variáveis novas. Limitação: sem câmbio, preços noutra moeda não se comparam.
 
 ### 3.2c Stock — reservas (Fase 53, 13/10/2026)
 

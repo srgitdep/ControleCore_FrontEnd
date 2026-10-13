@@ -9,6 +9,8 @@ import { catalogApi } from '@/features/produtos';
 import { useDebounce } from '@/shared/hooks';
 import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { TableScroll } from '@/shared/ui';
+import { ComparacaoFornecedores } from './ComparacaoFornecedores';
+import { podeComprarAoEstado } from '../domain/comparacao';
 
 /**
  * Quantos produtos a lista mostra de uma vez.
@@ -96,9 +98,15 @@ export function CriarPedidoModal({
   const totalNoCatalogo = produtosEncontrados?.total ?? 0;
   const escondidos = Math.max(0, totalNoCatalogo - produtos.length);
 
-  // Fornecedores suspensos ficam de fora: o backend recusa o pedido, e é melhor não os
-  // oferecer do que falhar depois de preencher as linhas.
-  const elegiveis = fornecedores.filter((f) => f.isActive);
+  // **Todos** os fornecedores da empresa, e não só os activos (plano §4.11, D1): quem não aparece parece não existir.
+  // Os que não se podem comprar (suspenso, bloqueado, em análise…) ficam desactivados e com o motivo — o backend
+  // recusa a emissão na mesma. Preferenciais primeiro, depois os compráveis, por nome.
+  const fornecedoresOrdenados = [...fornecedores].sort((a, b) => {
+    const rank = (f: typeof a) => (f.estadoRelacao === 'PREFERENCIAL' ? 0 : podeComprarAoEstado(f.estadoRelacao, f.isActive) ? 1 : 2);
+    return rank(a) - rank(b) || a.nome.localeCompare(b.nome);
+  });
+  const linhasParaComparar = linhas.map((l) => ({ produtoId: l.produtoId, quantidade: l.quantidade }));
+  const nomesDosProdutos = Object.fromEntries(linhas.map((l) => [l.produtoId, l.nome]));
 
   const total = linhas.reduce((soma, l) => soma + l.quantidade * l.custoUnitario, 0);
 
@@ -198,11 +206,16 @@ export function CriarPedidoModal({
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">{t('pedido.escolher')}</option>
-                {elegiveis.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.nome}
-                  </option>
-                ))}
+                {fornecedoresOrdenados.map((f) => {
+                  const compravel = podeComprarAoEstado(f.estadoRelacao, f.isActive);
+                  return (
+                    <option key={f.id} value={f.id} disabled={!compravel}>
+                      {f.nome}
+                      {f.estadoRelacao === 'PREFERENCIAL' ? ` ★ ${t('pedido.preferencial')}` : ''}
+                      {!compravel && f.estadoRelacao ? ` — ${t(`comparacao.estado.${f.estadoRelacao as 'SUSPENSO'}`)}` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -386,6 +399,14 @@ export function CriarPedidoModal({
               </div>
             )}
           </div>
+
+          {/* ── Comparar fornecedores para estas linhas (plano §4.11) ──────── */}
+          <ComparacaoFornecedores
+            linhas={linhasParaComparar}
+            nomes={nomesDosProdutos}
+            fornecedorId={fornecedorId}
+            aoUsar={setFornecedorId}
+          />
 
           {/* ── Observações ──────────────────────────────────────────────── */}
           <div>
