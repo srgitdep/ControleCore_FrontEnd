@@ -1,49 +1,67 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Plus, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
+import { useDebounce } from '@/shared/hooks';
 import { BarraDaPagina } from '@/shared/ui';
 import { TabelaTransferencias } from '../components/TabelaTransferencias';
 import { MotivoAccaoModal } from '../components/MotivoAccaoModal';
 import { ReceberTransferenciaModal } from '../components/ReceberTransferenciaModal';
 import { DetalheTransferenciaDrawer } from '../components/DetalheTransferenciaDrawer';
-import { SolicitarTransferenciaModal } from '../components/SolicitarTransferenciaModal';
+import { DetalheDoPedidoEmMassa } from '../components/DetalheDoPedidoEmMassa';
+import { NovaTransferenciaEmMassa } from '../components/NovaTransferenciaEmMassa';
 import {
+  useArmazensEscolhiveis,
   useCancelarTransferencia,
   useDecidirTransferencia,
   useExpedirTransferencia,
   useReceberTransferencia,
-  useSolicitarTransferencia,
   useTransferencias,
 } from '../hooks/useTransferencias';
 import type { EstadoTransferencia, LinhaTransferencia } from '../types/transferencia.types';
 
 const ESTADOS: EstadoTransferencia[] = ['SOLICITADA', 'APROVADA', 'EXPEDIDA', 'RECEBIDA', 'CANCELADA'];
 
+const classeCampo = 'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none';
+
 /**
- * Transferências entre lojas — DT01 §12 e §15.1.
+ * Transferências entre armazéns e lojas — DT01 §12 e §15.1, e o histórico (plano §4.12, D5).
  *
- * A materialização real da "oportunidade de transferência" que o painel de
- * Necessidades calcula: aqui é onde alguém aprova, expede e confirma a recepção.
+ * A materialização real da "oportunidade de transferência" que o painel de Necessidades calcula: aqui é onde alguém
+ * pede (vários produtos de uma vez), aprova, expede e confirma a recepção — e onde fica **o histórico** de tudo, com
+ * filtros por referência, armazém, estado e datas. `?pesquisa=TRF-…` abre já filtrada (é por onde se chega do
+ * histórico de movimentos de stock).
  */
 export function TransferenciasPage() {
   const { t } = useTranslation('transferencias');
+  const [searchParams] = useSearchParams();
   const [estados, setEstados] = useState<EstadoTransferencia[]>([]);
   const [page, setPage] = useState(1);
+  const [pesquisa, setPesquisa] = useState(searchParams.get('pesquisa') ?? '');
+  const pesquisaAdiada = useDebounce(pesquisa, 350);
+  const [armazemId, setArmazemId] = useState('');
+  const [desde, setDesde] = useState('');
+  const [ate, setAte] = useState('');
 
   const [aRecusar, setARecusar] = useState<LinhaTransferencia | null>(null);
   const [aCancelar, setACancelar] = useState<LinhaTransferencia | null>(null);
   const [aReceber, setAReceber] = useState<LinhaTransferencia | null>(null);
   const [detalheAberto, setDetalheAberto] = useState<string | null>(null);
+  const [pedidoAberto, setPedidoAberto] = useState<string | null>(null);
   const [aSolicitar, setASolicitar] = useState(false);
 
+  const armazens = useArmazensEscolhiveis();
   const { data: lista, isLoading } = useTransferencias({
     estado: estados.length ? estados : undefined,
+    ...(pesquisaAdiada.trim() ? { pesquisa: pesquisaAdiada.trim() } : {}),
+    ...(armazemId ? { armazemId } : {}),
+    ...(desde ? { desde } : {}),
+    ...(ate ? { ate } : {}),
     page,
     limit: 10,
   });
 
-  const solicitar = useSolicitarTransferencia();
   const decidir = useDecidirTransferencia();
   const expedir = useExpedirTransferencia();
   const receber = useReceberTransferencia();
@@ -51,6 +69,16 @@ export function TransferenciasPage() {
 
   const alternarEstado = (estado: EstadoTransferencia) => {
     setEstados((anterior) => (anterior.includes(estado) ? anterior.filter((e) => e !== estado) : [...anterior, estado]));
+    setPage(1);
+  };
+
+  const comFiltros = !!(pesquisa.trim() || armazemId || desde || ate || estados.length);
+  const limpar = () => {
+    setPesquisa('');
+    setArmazemId('');
+    setDesde('');
+    setAte('');
+    setEstados([]);
     setPage(1);
   };
 
@@ -70,6 +98,44 @@ export function TransferenciasPage() {
           </button>
         }
       />
+
+      {/* O histórico: referência, armazém e datas (plano §4.12, D5). */}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="relative block min-w-[200px] flex-1">
+          <span className="sr-only">{t('filtros.pesquisa')}</span>
+          <Search size={15} className="pointer-events-none absolute left-3 top-[calc(50%)] -translate-y-1/2 text-slate-400" />
+          <input
+            value={pesquisa}
+            onChange={(e) => { setPesquisa(e.target.value); setPage(1); }}
+            placeholder={t('filtros.pesquisa')}
+            className={cn(classeCampo, 'w-full pl-9')}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-slate-500">{t('filtros.armazem')}</span>
+          <select value={armazemId} onChange={(e) => { setArmazemId(e.target.value); setPage(1); }} className={classeCampo}>
+            <option value="">{t('filtros.todos_armazens')}</option>
+            {(armazens.data ?? []).map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.lojaNome} — {a.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-slate-500">{t('filtros.desde')}</span>
+          <input type="date" value={desde} max={ate || undefined} onChange={(e) => { setDesde(e.target.value); setPage(1); }} className={classeCampo} />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs text-slate-500">{t('filtros.ate')}</span>
+          <input type="date" value={ate} min={desde || undefined} onChange={(e) => { setAte(e.target.value); setPage(1); }} className={classeCampo} />
+        </label>
+        {comFiltros && (
+          <button type="button" onClick={limpar} className="pb-2 text-xs font-medium text-slate-500 underline">
+            {t('filtros.limpar')}
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -109,6 +175,7 @@ export function TransferenciasPage() {
           onReceber={setAReceber}
           onCancelar={setACancelar}
           onVerDetalhe={setDetalheAberto}
+          onVerPedido={setPedidoAberto}
         />
 
         {lista && lista.total > 0 && (
@@ -170,12 +237,9 @@ export function TransferenciasPage() {
         onClose={() => setDetalheAberto(null)}
       />
 
-      <SolicitarTransferenciaModal
-        isOpen={aSolicitar}
-        isSubmitting={solicitar.isPending}
-        onClose={() => setASolicitar(false)}
-        onConfirm={(dados) => solicitar.mutate(dados, { onSuccess: () => setASolicitar(false) })}
-      />
+      {pedidoAberto && <DetalheDoPedidoEmMassa grupoId={pedidoAberto} aoFechar={() => setPedidoAberto(null)} />}
+
+      {aSolicitar && <NovaTransferenciaEmMassa aoFechar={() => setASolicitar(false)} />}
     </div>
   );
 }

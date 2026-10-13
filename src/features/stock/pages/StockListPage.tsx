@@ -747,11 +747,31 @@ function MovementsTab() {
       }),
       movementColumnHelper.accessor('reason', {
         header: t('lista.motivo'),
-        cell: ({ getValue }) => (
-          <span className="text-xs text-slate-500 truncate max-w-[200px] block" title={getValue() ?? ''}>
-            {getValue() ?? '—'}
-          </span>
-        ),
+        cell: ({ getValue, row }) => {
+          const tr = row.original.transferencia;
+          // Uma transferência diz de onde veio e para onde foi (plano §4.12, D4): na saída, o destino; na entrada, a origem.
+          const sentido =
+            tr && row.original.type === 'OUT'
+              ? `→ ${tr.destinoArmazem?.nome ?? tr.destinoLoja.nome}`
+              : tr
+                ? `← ${tr.origemArmazem?.nome ?? tr.origemLoja.nome}`
+                : null;
+          return (
+            <div className="max-w-[220px]">
+              {tr && (
+                <Link
+                  to={`/transferencias?pesquisa=${encodeURIComponent(tr.referencia)}`}
+                  className="block text-xs font-semibold text-blue-700 hover:underline"
+                >
+                  {t('lista.transferencia')} {tr.referencia} {sentido}
+                </Link>
+              )}
+              <span className="text-xs text-slate-500 truncate block" title={getValue() ?? ''}>
+                {getValue() ?? '—'}
+              </span>
+            </div>
+          );
+        },
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
