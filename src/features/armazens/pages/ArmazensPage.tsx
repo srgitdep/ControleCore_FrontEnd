@@ -61,9 +61,11 @@ export function ArmazensPage() {
     carregar();
   }, []);
 
-  const abrirCriacao = (lojaId: string) => {
+  // `lojaId` vem do botão da própria loja; o botão geral não traz nenhuma e a pessoa escolhe no formulário (com uma só
+  // loja, vem já escolhida). Um armazém é sempre de uma loja: é por ela que o stock, as recepções e as vendas se somam.
+  const abrirCriacao = (lojaId?: string) => {
     setEditingId(null);
-    setForm({ lojaId, nome: '', tipo: 'Reserva' });
+    setForm({ lojaId: lojaId ?? (lojas.length === 1 ? lojas[0].id : ''), nome: '', tipo: 'Reserva' });
     setShowModal(true);
   };
 
@@ -76,6 +78,7 @@ export function ArmazensPage() {
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome.trim()) return toast.error(t('pagina.nome_obrigatorio'));
+    if (!editingId && !form.lojaId) return toast.error(t('pagina.loja_obrigatoria'));
 
     setIsSaving(true);
     try {
@@ -164,6 +167,16 @@ export function ArmazensPage() {
           armazens: t('resumo.armazens', { count: total }),
           lojas: t('resumo.lojas', { count: lojas.length }),
         })}
+        acoes={
+          <button
+            type="button"
+            onClick={() => abrirCriacao()}
+            disabled={isLoading || lojas.length === 0}
+            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Plus size={16} /> {t('lista.novo_armazem')}
+          </button>
+        }
       />
 
       {/* Aviso: loja sem ponto de venda não pode vender */}
@@ -359,6 +372,30 @@ export function ArmazensPage() {
 
             <form onSubmit={guardar} className="p-6 space-y-4">
               <div>
+                <label htmlFor="armazem-loja" className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('formulario.loja')} <span className="text-rose-500">*</span>
+                </label>
+                {/* Ao editar a loja não muda: o stock, as recepções e as vendas do armazém ficaram registados nela. */}
+                <select
+                  id="armazem-loja"
+                  value={form.lojaId}
+                  disabled={!!editingId}
+                  onChange={(e) => setForm({ ...form, lojaId: e.target.value, tipo: form.tipo })}
+                  className="w-full px-4 py-2.5 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="">{t('formulario.escolher_loja')}</option>
+                  {lojas.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nome}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1.5">
+                  {editingId ? t('formulario.loja_fixa_ajuda') : t('formulario.loja_ajuda')}
+                </p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {t('formulario.nome')} <span className="text-rose-500">*</span>
                 </label>
@@ -411,7 +448,7 @@ export function ArmazensPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!form.nome.trim() || isSaving}
+                  disabled={!form.nome.trim() || (!editingId && !form.lojaId) || isSaving}
                   className="px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSaving && <Loader2 size={16} className="animate-spin" />}

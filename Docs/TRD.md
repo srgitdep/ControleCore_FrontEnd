@@ -115,6 +115,11 @@ ao submeter.
 - **Segundo plano.** O iOS suspende a página: `useCanalDeEntregas` religa o socket e `useEmitirPosicao` reinicia o `watchPosition` ao `visibilitychange`. Sem aplicação nativa, a posição pára com o ecrã bloqueado.
 - **Fontes:** firt.dev (iOS PWA Compatibility), webkit.org (ITP: armazenamento limitado a 7 dias fora da PWA instalada), caniuse.com.
 
+### 2.y Layout do POS e do menu (Fase 51, 13/10/2026)
+
+- **POS:** em ≥ `lg` o carrinho é `fixed` de altura total à direita (420 px); `POSPage` regista-o em `useUIStore.carrinhoLateralActivo` e o `Header` (também `fixed`) encurta-se com `lg:right-[420px]`. O carrinho, sendo `fixed`, não herda a margem do conteúdo: aplica-se-lhe `classeMargemDaMayra` só quando `useBreakpoint('lg')`.
+- **Menu lateral:** `app/layout/caminhoActivo.ts` escolhe o prefixo mais comprido, por segmentos, para acender uma só entrada.
+
 ## 3. Backend — `ControleCore_BackEnd`
 
 | Categoria | Tecnologia | Versão (package.json) | Notas |
@@ -198,6 +203,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 `GET /stock/saude` e `/stock/saude/produtos` calculam o diagnóstico da empresa inteira em memória (catálogo com stocks, `GROUP BY` de todas as vendas e recepções, lotes). `GetSaudeStockUseCase` guarda esse diagnóstico
 **60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
 (hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
+
+### 3.2a Caixas — criação (Fase 51, 13/10/2026)
+
+`POST /caixas/gestao/:lojaId` recebe só `{ nome }`: a loja vem do caminho (validada como UUID e escopada por empresa no caso de uso). O `CreateCaixaDto` já não tem `lojaId`; como o `ValidationPipe` global usa `forbidNonWhitelisted`, um cliente que o envie no corpo passa a receber 400.
 
 ### 3.2 Estafetas da plataforma — onboarding e atribuição por proximidade (Fase 50, 12/10/2026)
 

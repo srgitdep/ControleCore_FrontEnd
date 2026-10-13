@@ -55,6 +55,8 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleMobileMenu } = useUIStore();
+  // O POS põe o carrinho em coluna de altura total à direita (420 px, ver `POSPage`): o cabeçalho acaba onde ele começa.
+  const carrinhoLateral = useUIStore((s) => s.carrinhoLateralActivo);
   const [alertasAbertos, setAlertasAbertos] = useState(false);
   const alertasRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +101,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
         // herda a margem do contentor de conteúdo — sem isto passava por baixo do
         // painel, e o sino de notificações ficava inalcançável.
         margemDaMayra,
+        carrinhoLateral && 'lg:right-[420px]',
       )}
     >
       {/* ── Lado esquerdo: hamburger (mobile) + título ──────────────────── */}

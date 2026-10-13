@@ -1,7 +1,7 @@
 {
   "pagina": {
     "aba_pedidos": "Purchase orders",
-    "aba_reposicao": "To replenish",
+    "aba_reposicao": "Low stock",
     "aba_expedicoes": "In transit",
     "aba_catalogo": "Catalogue",
     "aba_fornecedores": "Suppliers",

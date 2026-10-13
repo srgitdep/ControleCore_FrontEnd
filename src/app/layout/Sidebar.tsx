@@ -38,6 +38,7 @@ import { useCopilotStore } from '@/features/ai-copilot';
 import type { Role } from '@/features/auth';
 import { definirIdiomaApi } from '@/features/auth/api/auth.api';
 import { SelectorIdioma } from '@/shared/ui';
+import { caminhoActivo } from './caminhoActivo';
 
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
@@ -227,6 +228,11 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
       {/* Navegação ────────────────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-3 pb-6 custom-scrollbar">
         {navGroups.map((group, idx) => {
+          // Um só item aceso: o mais específico (ver `caminhoActivo`).
+          const itemAberto = caminhoActivo(
+            location.pathname,
+            navGroups.flatMap((g) => g.items.filter((i) => !i.roles || hasRole(i.roles)).map((i) => i.path)),
+          );
           const visibleItems = group.items.filter(
             (item) => !item.roles || hasRole(item.roles),
           );
@@ -247,7 +253,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
               )}
               <ul className="space-y-1">
                 {visibleItems.map((item) => {
-                  const isActive = location.pathname.startsWith(item.path);
+                  const isActive = item.path === itemAberto;
                   const Icon = item.icon;
                   const collapsed = isCollapsed && !isMobileDrawer;
 

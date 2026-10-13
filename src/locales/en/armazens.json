@@ -14,7 +14,8 @@
     "desactivado": "Warehouse deactivated.",
     "erro_desactivar": "Could not deactivate the warehouse.",
     "reactivado": "Warehouse reactivated.",
-    "erro_reactivar": "Could not reactivate the warehouse."
+    "erro_reactivar": "Could not reactivate the warehouse.",
+    "loja_obrigatoria": "Choose the warehouse’s store."
   },
   "resumo": {
     "armazens_zero": "{{count}} warehouses",
@@ -49,7 +50,8 @@
     "ver_produtos": "view products",
     "editar": "Edit",
     "reactivar": "Reactivate",
-    "desactivar": "Deactivate"
+    "desactivar": "Deactivate",
+    "novo_armazem": "New warehouse"
   },
   "nota": {
     "o": "The",
@@ -69,7 +71,11 @@
     "ajuda_quebras": "— damaged goods.",
     "cancelar": "Cancel",
     "guardar": "Save",
-    "criar": "Create"
+    "criar": "Create",
+    "loja": "Store",
+    "escolher_loja": "Choose the store",
+    "loja_ajuda": "A warehouse belongs to one store; a store can have several.",
+    "loja_fixa_ajuda": "The store cannot be changed once created: stock and movements stay with it."
   },
   "detalhe": {
     "fechar": "Close",
