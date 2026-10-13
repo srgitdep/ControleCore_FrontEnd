@@ -594,7 +594,9 @@
     "caducar_agora": "Expire overdue ones now",
     "vazio_activa": "No active reservations — all the stock in the warehouse is available.",
     "vazio_estado": "No reservations in this status.",
-    "nota": "Reserving is not selling: the goods stay in the warehouse and still count in the stock count, but leave available stock and cannot be sold at the POS. None of these operations generates a stock movement, because the physical stock never changes."
+    "nota": "Reserving is not selling: the goods stay in the warehouse and still count in the stock count, but leave available stock and cannot be sold at the POS. None of these operations generates a stock movement, because the physical stock never changes.",
+    "erro": "The reservations could not be loaded.",
+    "tentar_outra_vez": "Try again"
   },
   "validade": {
     "produto": "Product",

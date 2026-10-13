@@ -594,7 +594,9 @@
     "caducar_agora": "Caducar as vencidas agora",
     "vazio_activa": "Nenhuma reserva activa — todo o stock em armazém está disponível.",
     "vazio_estado": "Nenhuma reserva neste estado.",
-    "nota": "Reservar não é vender: a mercadoria continua no armazém e continua a valer no inventário, mas sai do stock disponível e não pode ser vendida no POS. Nenhuma destas operações gera movimento de stock, porque a existência física nunca muda."
+    "nota": "Reservar não é vender: a mercadoria continua no armazém e continua a valer no inventário, mas sai do stock disponível e não pode ser vendida no POS. Nenhuma destas operações gera movimento de stock, porque a existência física nunca muda.",
+    "erro": "Não foi possível carregar as reservas.",
+    "tentar_outra_vez": "Tentar outra vez"
   },
   "validade": {
     "produto": "Produto",
