@@ -3,7 +3,9 @@ import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, 
 import { useProducts, useCategories, catalogApi } from '@/features/produtos';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
-import { useSocket, useBreakpoint } from '@/shared/hooks';
+import { useSocket, useBreakpoint, useUIStore } from '@/shared/hooks';
+import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
+import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 import { useProcessarVenda } from '@/features/vendas';
 import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
@@ -93,6 +95,16 @@ export function POSPage() {
   
   // Abas do painel principal (Catálogo vs Histórico)
   const [activeTab, setActiveTab] = useState<'CATALOG' | 'HISTORY'>('CATALOG');
+
+  // O carrinho é uma coluna `fixed` de altura total (≥ lg), por cima da faixa do cabeçalho: com a lista de artigos
+  // a começar abaixo do cabeçalho e dos separadores, a venda com muitas linhas deixava pouco espaço para as ver.
+  // Sendo `fixed`, não herda a margem que a Mayra aberta dá ao conteúdo — aplica-se-lhe a mesma classe.
+  const margemDaMayra = classeMargemDaMayra(useCopilotStore());
+  const definirCarrinhoLateral = useUIStore((s) => s.definirCarrinhoLateral);
+  useEffect(() => {
+    definirCarrinhoLateral(activeTab === 'CATALOG');
+    return () => definirCarrinhoLateral(false);
+  }, [activeTab, definirCarrinhoLateral]);
 
   const [receiptData, setReceiptData] = useState<any>(null);
 
@@ -471,7 +483,7 @@ export function POSPage() {
       {/* No telemóvel o cabeçalho é comprimido: com o tamanho de computador sobravam
           menos de 200 px dos 667 para os produtos, e não cabia uma linha inteira. O
           subtítulo desaparece — a barra de navegação já diz «Ponto de Venda». */}
-      <div className="bg-white border-b border-slate-200 px-4 pt-3 pb-0 shrink-0 sm:px-6 sm:pt-5">
+      <div className={cn('bg-white border-b border-slate-200 px-4 pt-3 pb-0 shrink-0 sm:px-6 sm:pt-5', activeTab === 'CATALOG' && 'lg:mr-[420px]')}>
         {/* O «Vendas» saiu com o subtítulo, e pela mesma razão: a barra de navegação
             já diz «Ponto de Venda». Neste ecrã o espaço vale ainda mais — cada linha
             recuperada no topo é uma linha de produtos a mais no telemóvel. */}
@@ -535,7 +547,7 @@ export function POSPage() {
         {activeTab === 'CATALOG' && (
           // `relative` ancora o carrinho, que abaixo de `lg` é posicionado por cima.
           <div className="relative flex h-full w-full overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden relative">
+            <div className="flex-1 flex flex-col overflow-hidden relative lg:mr-[420px]">
               
               {/* Search Header */}
               <div className="bg-white p-4 shadow-sm z-10 border-b border-gray-100">
@@ -627,7 +639,9 @@ export function POSPage() {
             <div
               className={cn(
                 'bg-white shadow-2xl flex flex-col z-20 border-gray-200',
-                'lg:w-[420px] lg:border-l lg:shrink-0 lg:relative lg:translate-y-0',
+                'lg:w-[420px] lg:border-l lg:shrink-0 lg:fixed lg:inset-y-0 lg:left-auto lg:right-0 lg:z-30 lg:translate-y-0',
+                // Só em ecrã grande: abaixo de lg o painel está dentro do conteúdo, que já encolheu para a Mayra.
+                ecraGrande && margemDaMayra,
                 // Abaixo de lg: painel sobreposto, com transição para o gesto ser legível.
                 'absolute inset-x-0 bottom-0 top-0 transition-transform duration-300 lg:transition-none',
                 carrinhoAberto ? 'translate-y-0' : 'translate-y-full lg:translate-y-0',

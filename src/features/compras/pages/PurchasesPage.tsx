@@ -8,7 +8,7 @@ import {
   Sparkles,
   PackageCheck,
   Loader2,
-  PackageSearch,
+  PackageX,
   Send,
   Gavel,
   MessageSquare,
@@ -99,7 +99,7 @@ export function PurchasesPage() {
     // A seguir aos pedidos, e antes dos fornecedores: é o que se consulta para
     // decidir o que encomendar. Estava atrás de um botão que abria um diálogo — uma
     // lista de rupturas que é preciso saber procurar não é uma lista que alguém veja.
-    { id: 'reposicao', label: t('pagina.aba_reposicao'), icon: PackageSearch },
+    { id: 'reposicao', label: t('pagina.aba_reposicao'), icon: PackageX },
     // A seguir ao que se vai encomendar vem o que já vem a caminho. Responde a «o que
     // chega esta semana» — pergunta que antes só tinha resposta abrindo cada ordem uma
     // a uma e adivinhando pela data prevista.

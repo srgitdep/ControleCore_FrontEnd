@@ -14,7 +14,8 @@
     "desactivado": "Armazém desactivado.",
     "erro_desactivar": "Não foi possível desactivar o armazém.",
     "reactivado": "Armazém reactivado.",
-    "erro_reactivar": "Não foi possível reactivar o armazém."
+    "erro_reactivar": "Não foi possível reactivar o armazém.",
+    "loja_obrigatoria": "Escolha a loja do armazém."
   },
   "resumo": {
     "armazens_zero": "{{count}} armazéns",
@@ -49,7 +50,8 @@
     "ver_produtos": "ver produtos",
     "editar": "Editar",
     "reactivar": "Reactivar",
-    "desactivar": "Desactivar"
+    "desactivar": "Desactivar",
+    "novo_armazem": "Novo armazém"
   },
   "nota": {
     "o": "O",
@@ -69,7 +71,11 @@
     "ajuda_quebras": "— mercadoria danificada.",
     "cancelar": "Cancelar",
     "guardar": "Guardar",
-    "criar": "Criar"
+    "criar": "Criar",
+    "loja": "Loja",
+    "escolher_loja": "Escolha a loja",
+    "loja_ajuda": "O armazém pertence a uma só loja; uma loja pode ter vários.",
+    "loja_fixa_ajuda": "A loja não se altera depois de criado: o stock e os movimentos ficam nela."
   },
   "detalhe": {
     "fechar": "Fechar",
