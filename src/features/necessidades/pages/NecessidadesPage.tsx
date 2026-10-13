@@ -141,8 +141,10 @@ export function NecessidadesPage() {
         }}
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-4">
+      {/* `minmax(0,1fr)` e `min-w-0`, e não `1fr`: uma faixa `1fr` tem como mínimo o conteúdo, e a tabela larga empurrava a
+          coluna lateral (cobertura e Mayra) para fora do ecrã, cortada. Assim a tabela encolhe e passa a deslizar. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <ChipsRecomendacao
               contagens={
