@@ -2015,6 +2015,21 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Backend primeiro, depois frontend. Sem migração nem variáveis.
 
+### Fase 53 — Correcções: um só sino no cabeçalho e o separador «Reservas» do stock deixa de congelar (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `fix/sino-duplicado-e-reservas-congela` (backend `e84a6cc`; frontend `ad319e5`) — sem migração nem variáveis novas
+  - **Pedido do utilizador:** (1) o cabeçalho do POS tinha dois sinos; (2) o separador «Reservas» de Produtos & Stock congelava o sistema ao abrir.
+  - fix(frontend): **um só sino.** `SinoDeNotificacoes` ganha `secaoExtra`; o `Header` mete os alertas de reposição como segunda secção do mesmo painel e o número do sino soma as duas listas. Saiu o segundo botão e o seu efeito de clique-fora.
+  - fix(frontend): **congelamento.** `ReservasTab` passava `data: reservas ?? []` (array novo a cada render) ao TanStack Table e refazia as colunas a cada render (`mutacoes` é um objecto novo por render): um ciclo de re-renders sem fim. Agora `SEM_RESERVAS` é uma constante e as colunas dependem só de `t`. O separador passa a ter estado de erro com «Tentar outra vez».
+  - feat(backend): **`GET /stock/reservas`** (`VER_STOCK`, só leitura, por empresa, filtro `?estado=`, tecto de 200) lê `ReservaStock` — as reservas dos pedidos do Compra Fácil — e traduz para a forma do ecrã (`reservaParaListagem`; `CANCELADA` ↔ «libertada»). Antes o frontend chamava uma rota que não existia e caía em `GET /stock/:id`.
+  - fix(frontend): saíram do separador os botões «Libertar» e «Caducar agora» (o servidor não os tem; davam 404).
+
+  > **Desvios.** Só leitura, deliberadamente: o resto do sistema de retenção manual (criar reserva, libertar, caducar à mão, quarentena, bloqueio) **continua por implementar** — o item «Achado fora de âmbito (2026-10-03)» da Secção 3 fica aberto, agora só para esses. `resolvidoEm` vai sempre nulo (o esquema não o regista) e `stockId` é a chave composta produto:armazém.
+  >
+  > **Verificação.** Backend: `nest build` limpo, 115 testes de stock. Frontend: `tsc -b` limpo, 306 testes. **Sem teste automático do congelamento** (o projecto não tem testes de componentes) e **não verificado no browser**.
+  >
+  > **Notas de deploy.** Backend primeiro, depois frontend. Sem migração nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2292,7 +2307,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
       uma cópia da base. Não está claro quantas migrações têm este defeito — só a primeira a
       falhar aparece. Corrigir exige uma *baseline*: uma migração inicial com o esquema
       actual, marcada como já aplicada em produção (`migrate resolve`) — projecto à parte.
-- [ ] **Achado fora de âmbito, não corrigido (2026-10-03):** o frontend do stock
+- [ ] **Achado fora de âmbito, parcialmente resolvido (Fase 53, 13/10/2026): `GET /stock/reservas` existe agora (só leitura); faltam `POST /stock/reservas`, libertar, caducar, quarentena e bloqueio.** *(Original, 2026-10-03:)* o frontend do stock
       (`RetencaoModal`, `useReservas`, `reservas.api.ts`) chama
       `/stock/reservas`, `/stock/:id/quarentena`, `/stock/:id/bloqueio` e os
       endpoints de libertação — **nenhum existe no backend**

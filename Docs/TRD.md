@@ -118,6 +118,7 @@ ao submeter.
 ### 2.y Layout do POS e do menu (Fase 51, 13/10/2026)
 
 - **POS:** em ≥ `lg` o carrinho é `fixed` de altura total à direita (420 px); `POSPage` regista-o em `useUIStore.carrinhoLateralActivo` e o `Header` (também `fixed`) encurta-se com `lg:right-[420px]`. O carrinho, sendo `fixed`, não herda a margem do conteúdo: aplica-se-lhe `classeMargemDaMayra` só quando `useBreakpoint('lg')`.
+- **Sino do cabeçalho (Fase 53):** um só `SinoDeNotificacoes`; os alertas de reposição entram pela prop `secaoExtra` e somam-se ao número. **Tabelas:** o `data` e as `columns` passados ao `useReactTable` têm de ter referência estável (nunca `data ?? []` nem dependências que mudem a cada render), senão o TanStack Table entra em ciclo de re-renders.
 - **Menu lateral:** `app/layout/caminhoActivo.ts` escolhe o prefixo mais comprido, por segmentos, para acender uma só entrada.
 
 ## 3. Backend — `ControleCore_BackEnd`
@@ -203,6 +204,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 `GET /stock/saude` e `/stock/saude/produtos` calculam o diagnóstico da empresa inteira em memória (catálogo com stocks, `GROUP BY` de todas as vendas e recepções, lotes). `GetSaudeStockUseCase` guarda esse diagnóstico
 **60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
 (hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
+
+### 3.2c Stock — reservas (Fase 53, 13/10/2026)
+
+`GET /stock/reservas` (`VER_STOCK`): lista as `ReservaStock` da empresa (reservas dos pedidos do Compra Fácil), mais recentes primeiro, **tecto de 200**, com filtro `?estado=ACTIVA|CONSUMIDA|LIBERTADA|EXPIRADA` (400 `stock.reserva.estado_invalido` se outro). Só leitura. `LIBERTADA` é o nome do ecrã para `CANCELADA` no esquema (`domain/reservas-listagem.ts`). A rota está declarada **antes** de `@Get(':id')`, senão o Nest resolve-a como um id. Criar, libertar, caducar à mão, quarentena e bloqueio ainda não existem no servidor.
 
 ### 3.2b Lojas — criação (Fase 52, 13/10/2026)
 
