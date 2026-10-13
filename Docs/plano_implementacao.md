@@ -1985,6 +1985,22 @@ esse merge trouxe.
   >
   > **Notas de deploy.** **Backend primeiro**, depois frontend. A migração corre no arranque do contentor: **testar antes numa branch do Neon.** Variável nova `FROTA_PLATAFORMA_ACTIVA` (por omissão falso; sem ela a frota da plataforma fica fechada). Sem outras variáveis; usa a `GEMINI_API_KEY` e o armazenamento S3 existentes.
 
+### Fase 51 — Correcções: carrinho do POS, armazéns por loja, menu, «Produtos em falta» e criar caixa (13 Out 2026)
+
+- **2026-10-13 · [BE+FE] · Antonio Mambo** — `fix/correccoes-pos-armazens-compras-caixas` (backend `04ba91d`; frontend `e8e0c9d`) — sem migração nem variáveis novas
+  - **Pedido do utilizador:** cinco correcções de interface a partir de capturas de ecrã.
+  - fix(frontend): **carrinho do POS** é, em ecrã grande (≥ lg), uma coluna `fixed` de altura total à direita; o cabeçalho (`useUIStore.carrinhoLateralActivo`) e a faixa de separadores encurtam 420 px. Respeita a margem da Mayra aberta (`classeMargemDaMayra`, só em ≥ lg). Telemóvel inalterado.
+  - fix(frontend): **Armazéns** — o formulário passa a ter o campo **Loja** (obrigatório ao criar, fixo ao editar) e há um botão «Novo armazém» geral. O modelo já ligava armazém a loja (`Armazem.lojaId`; stock e recepções por `armazemId`).
+  - fix(frontend): **menu lateral** — `caminhoActivo` acende só a entrada mais específica por segmentos (antes `/compras/necessidades` acendia também «Compras»). Com testes.
+  - fix(frontend): separador **«A repor» → «Produtos em falta»** (en «Low stock»), ícone `PackageX`.
+  - fix(backend): **criar caixa** — `CreateCaixaDto` já não exige `lojaId` (vem do caminho `POST /caixas/gestao/:lojaId`, agora com `ParseUUIDPipe`). O `ValidationPipe` recusava com 400 «lojaId é obrigatório» um pedido que o frontend montava bem. Com teste.
+
+  > **Desvios.** Nenhum. **Por decidir (fora de âmbito):** hoje recepções e transferências aceitam qualquer armazém activo; restringi-las ao armazém da loja é regra de negócio por definir. Os separadores «A caminho» e «Fornecedores» de Compras partilham o ícone de camião.
+  >
+  > **Verificação.** Frontend: `tsc -b` limpo, **306 testes**; backend: `nest build` limpo, testes do módulo `caixa` a passar. **Não verificado no browser.**
+  >
+  > **Notas de deploy.** Backend primeiro (só DTO e controller de caixa), depois frontend. Sem migração nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer
