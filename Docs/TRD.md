@@ -206,6 +206,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 **60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
 (hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
 
+### 3.2e Utilizadores técnicos (Fase 56, 13/10/2026)
+
+`Role.SYSTEM_COMMERCE` é uma conta técnica (uma por empresa) que assina os movimentos de stock do Compra Fácil quando não há funcionário. Não é uma pessoa: `shared/utilizadores-tecnicos.ts` define `ROLES_TECNICOS` e o filtro `SO_PESSOAS` (`role: { notIn: ROLES_TECNICOS }`), aplicado à lista do RH e ao número de activos do *turnover* (`HrService`), à lista de utilizadores (`PrismaUserRepository.findAll`, Super Admin incluído) e à lista de colaboradores que a Mayra lê. **Regra:** qualquer consulta que liste ou conte *pessoas* deve usar `SO_PESSOAS`.
+
 ### 3.2d Compras — comparação de fornecedores (Fase 55, 13/10/2026)
 
 - **Cálculo** (`compra/domain/comparar-fornecedores.ts`, puro): cinco critérios — preço total do pedido, pontualidade, prazo real, cumprimento, dias de crédito — normalizados 0–100 **entre os candidatos** e combinados por média ponderada (pesos por omissão 40/20/15/15/10). Só se **classificam** os fornecedores que se podem comprar (`permiteComprar`: `ACTIVO`/`PREFERENCIAL`), cobrem **todas** as linhas e cotam em **MZN**; os outros aparecem com a razão, sem posição. Critério sem dado **não vale zero**: sai da média do fornecedor e os pesos reponderam-se (marca `DADOS_INSUFICIENTES`). O preço compara-se por **unidade base** (`custoCompra` por unidade do fornecedor ÷ `factorConversao`), com a quantidade ajustada ao MOQ/múltiplo (`ajustarQuantidade`). Crédito nulo = zero dias. Empate: preferencial, depois o mais barato.
