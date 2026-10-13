@@ -204,6 +204,10 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 **60 s** por empresa e por conjunto de limiares, e pedidos simultâneos partilham a mesma promessa (um só voo); uma falha não se guarda; teto de 50 entradas. A cache é **em memória do processo**: exacta com uma máquina Fly
 (hoje), e por máquina se houver mais. Os dados podem ter até 60 s de atraso. Limite conhecido: `venda_itens` só tem índice por `empresaId`; com histórico muito grande, considerar agregados ou um índice por `vendaId`.
 
+### 3.2b Lojas — criação (Fase 52, 13/10/2026)
+
+`POST /lojas`: o gestor (`gestorId`, opcional) liga-se pela relação `gestor: { connect: { id, empresaId } }` e não pelo campo solto — o Prisma não aceita, no mesmo `create`, `empresa: { connect }` e uma chave estrangeira escalar. O `empresaId` no `connect` garante que só se liga um utilizador da própria empresa.
+
 ### 3.2a Caixas — criação (Fase 51, 13/10/2026)
 
 `POST /caixas/gestao/:lojaId` recebe só `{ nome }`: a loja vem do caminho (validada como UUID e escopada por empresa no caso de uso). O `CreateCaixaDto` já não tem `lojaId`; como o `ValidationPipe` global usa `forbidNonWhitelisted`, um cliente que o envie no corpo passa a receber 400.

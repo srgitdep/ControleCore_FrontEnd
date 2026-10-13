@@ -58,7 +58,14 @@ export function LojasPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createLoja(newLoja);
+      // Campos vazios não se enviam: o servidor valida `gestorId` como UUID e recusava `''` (loja sem gestor).
+      const { gestorId, endereco, cidade, nome } = newLoja;
+      await createLoja({
+        nome: nome.trim(),
+        ...(endereco.trim() ? { endereco: endereco.trim() } : {}),
+        ...(cidade.trim() ? { cidade: cidade.trim() } : {}),
+        ...(gestorId ? { gestorId } : {}),
+      });
       toast.success(t('pagina.loja_criada'));
       setShowCreateModal(false);
       setNewLoja({ nome: '', endereco: '', cidade: '', gestorId: '' });
