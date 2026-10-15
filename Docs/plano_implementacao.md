@@ -2099,6 +2099,19 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Backend primeiro; a migração faz *UPDATE*s com junção em `pedidos` (rápidos com o volume actual, mas convém ver a duração com muitos pedidos). Sem variáveis.
 
+### Fase 59 — Vídeo de lançamento no painel esquerdo do login (15 Out 2026)
+
+- **2026-10-15 · [FE] · Antonio Mambo** — `feat/video-boas-vindas-login`
+  - **Pedido do utilizador:** converter o vídeo `ControlCore_lancamento_15s.mp4` para WebM, guardá-lo numa pasta dentro de `src/` e usá-lo no lado esquerdo do ecrã de login.
+  - feat(frontend): `src/assets/videos/controlcore-lancamento.webm` (VP9, 1280×720, 15 s, **sem áudio**, 1,15 MB; o MP4 original tinha 7,7 MB). `PainelDaMarca` (`features/auth/pages/LoginPage.tsx`) mostra-o inteiro (`object-fit: contain`, cantos redondos) entre a marca e os slides, em *loop*, mudo e `aria-hidden`.
+  - **Só monta o `<video>` acima de 960 px** (onde o painel é visível, ver `site.css`) e **não arranca sozinho com `prefers-reduced-motion`** — em telemóvel o ficheiro nem se descarrega.
+
+  > **Desvios.** A primeira versão pôs o vídeo como fundo do painel com `cover`: sendo 16:9 num painel quase quadrado, cortava-o a uma fatia e o texto do próprio vídeo chocava com os slides. Passou a elemento do painel, com `contain`.
+  >
+  > **Verificação.** `tsc -b` limpo; `oxlint` sem avisos novos; o Vite serve o `.webm` (200, `video/webm`). **Não verificado no browser pelo assistente** (o utilizador viu a primeira versão e pediu a correcção; a segunda foi aprovada para merge sem nova captura).
+  >
+  > **Notas de deploy.** Só frontend. Sem migrações nem variáveis. O `ffmpeg` (Gyan.FFmpeg) foi instalado na máquina de desenvolvimento só para a conversão e não entra no repositório. O ficheiro entra no *bundle* do Vite (asset com *hash*).
+
 ---
 
 ## 3. Backlog — Por Fazer
