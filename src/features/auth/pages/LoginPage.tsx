@@ -16,6 +16,7 @@ import { useBreakpoint } from '@/shared/hooks';
 import { SelectorIdioma } from '@/shared/ui';
 import { useCopy } from '@/shared/hooks/useCopy';
 import { Marca } from '@/features/landing';
+import videoLancamento from '@/assets/videos/controlcore-lancamento.webm';
 
 import '@/features/landing/site.css';
 
@@ -289,6 +290,15 @@ function PainelDaMarca() {
     descricao: t(`login.slides.${i}.descricao`),
   }));
   const [actual, setActual] = useState(0);
+  const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [painelVisivel, setPainelVisivel] = useState(() => window.matchMedia('(min-width: 961px)').matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 961px)');
+    const aoMudar = () => setPainelVisivel(mq.matches);
+    mq.addEventListener('change', aoMudar);
+    return () => mq.removeEventListener('change', aoMudar);
+  }, []);
 
   useEffect(() => {
     // `prefers-reduced-motion` desliga a rotação por completo: aqui o movimento não
@@ -361,6 +371,34 @@ function PainelDaMarca() {
           {COPY.MARCA.NOME}
         </span>
       </Link>
+
+      {/* O vídeo é 16:9 e este painel é quase quadrado: como fundo com `cover` cortava-o
+          a uma fatia e o texto do próprio vídeo chocava com os slides. Aqui mostra-se
+          inteiro (`contain`), entre a marca e os slides, a ocupar a altura que sobra.
+          Só é montado quando o painel é visível (acima de 960px, ver `site.css`) — em
+          telemóvel o painel está escondido e o ficheiro nem se descarrega. */}
+      <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center' }}>
+        {painelVisivel && (
+          <video
+            aria-hidden
+            autoPlay={!reduzirMovimento}
+            loop
+            muted
+            playsInline
+            preload="auto"
+            style={{
+              width: '100%',
+              maxHeight: '100%',
+              aspectRatio: '16 / 9',
+              objectFit: 'contain',
+              borderRadius: 16,
+              boxShadow: '0 24px 60px -20px rgb(0 0 0 / 0.6)',
+            }}
+          >
+            <source src={videoLancamento} type="video/webm" />
+          </video>
+        )}
+      </div>
 
       <div style={{ position: 'relative' }}>
         {/* Altura reservada para o slide mais alto. */}

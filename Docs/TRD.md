@@ -122,6 +122,12 @@ ao submeter.
 - **Sino do cabeçalho (Fase 53):** um só `SinoDeNotificacoes`; os alertas de reposição entram pela prop `secaoExtra` e somam-se ao número. **Tabelas:** o `data` e as `columns` passados ao `useReactTable` têm de ter referência estável (nunca `data ?? []` nem dependências que mudem a cada render), senão o TanStack Table entra em ciclo de re-renders.
 - **Menu lateral:** `app/layout/caminhoActivo.ts` escolhe o prefixo mais comprido, por segmentos, para acender uma só entrada.
 
+### 2.z Vídeo no painel do login (Fase 59, 15/10/2026)
+
+- **Asset:** `src/assets/videos/controlcore-lancamento.webm` — WebM/VP9, 1280×720, 15 s, sem áudio, 1,15 MB. Gerado do MP4 original com `ffmpeg -vf scale=1280:-2 -c:v libvpx-vp9 -b:v 0 -crf 32 -row-mt 1 -an`. Importado em `LoginPage.tsx` como URL pelo Vite (asset com *hash*; nenhuma dependência nova).
+- **Comportamento:** `PainelDaMarca` renderiza `<video autoPlay loop muted playsInline>` com `object-fit: contain` (o vídeo é 16:9, o painel quase quadrado — `cover` cortava-o). Só é montado com `(min-width: 961px)`, o mesmo limite a partir do qual `site.css` mostra o painel, para não descarregar o ficheiro onde o painel está escondido; com `prefers-reduced-motion: reduce` não arranca sozinho.
+- **Browsers:** WebM/VP9 corre em Chrome, Firefox, Edge e Safari 14.1+ (macOS) / iOS 17.4+. Em Safari/iOS mais antigos o `<video>` fica vazio sobre o gradiente do painel (degrada sem erro); não há *fallback* MP4.
+
 ## 3. Backend — `ControleCore_BackEnd`
 
 | Categoria | Tecnologia | Versão (package.json) | Notas |
