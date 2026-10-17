@@ -606,6 +606,10 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     // 3. Texto limpo para Web Speech API (TTS Fallback Secundário)
     socket.on('text_chunk', (payload: { text: string }) => {
+      // Só o modo de recurso fala por aqui. Na voz nativa a fala é o áudio; um texto que
+      // chegasse seria o raciocínio interno do modelo, e lê-lo em voz alta por cima do
+      // áudio era exactamente o defeito.
+      if (!fallbackModeRef.current) return;
       setPassos([]);
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();

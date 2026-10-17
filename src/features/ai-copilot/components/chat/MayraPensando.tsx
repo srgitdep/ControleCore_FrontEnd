@@ -12,10 +12,10 @@ const PASSOS_VISIVEIS = 3;
 interface MayraPensandoProps {
   passos: PassoProgresso[];
   /**
-   * `balao` (por omissão) é o que se vê no chat: avatar animado e cartão. `linha` são só os
-   * passos, sem moldura — para o ecrã de voz, que já tem a sua própria esfera.
+   * `balao` (por omissão) é o que se vê no chat: avatar animado e cartão. `cartao` é o
+   * mesmo cartão sem avatar — para o ecrã de voz, que já tem a sua própria esfera.
    */
-  variante?: 'balao' | 'linha';
+  variante?: 'balao' | 'cartao';
 }
 
 /**
@@ -91,7 +91,13 @@ export function MayraPensando({ passos, variante = 'balao' }: MayraPensandoProps
     </ul>
   );
 
-  if (variante === 'linha') return lista;
+  if (variante === 'cartao') {
+    return (
+      <div className="min-w-[220px] rounded-2xl border border-slate-100 bg-white p-3.5 text-left shadow-sm">
+        {lista}
+      </div>
+    );
+  }
 
   return (
     <div className="flex max-w-[85%] gap-3">

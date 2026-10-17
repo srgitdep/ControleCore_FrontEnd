@@ -143,7 +143,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
                     // O que ela está a fazer, passo a passo, em vez de uma frase parada.
                     <div className="mt-3 flex justify-center">
                       <MayraPensando
-                        variante="linha"
+                        variante="cartao"
                         passos={passos.length > 0 ? passos : [{ fase: 'entender' }]}
                       />
                     </div>
