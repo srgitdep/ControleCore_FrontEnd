@@ -1,13 +1,22 @@
 import { create } from 'zustand';
 import i18n from 'i18next';
-import { sendChatMessageApi, executeHitlActionApi, getCopilotSessionsApi, getCopilotSessionMessagesApi } from '../api/copilot.api';
-import type { ChatMessage, HitlActionPayload } from '../api/copilot.api';
+import {
+  sendChatMessageApi,
+  streamChatApi,
+  StreamIndisponivel,
+  executeHitlActionApi,
+  getCopilotSessionsApi,
+  getCopilotSessionMessagesApi,
+} from '../api/copilot.api';
+import type { ChatMessage, HitlActionPayload, PassoProgresso } from '../api/copilot.api';
 
 interface CopilotState {
   isOpen: boolean;
   isExpanded: boolean;
   messages: ChatMessage[];
   isLoading: boolean;
+  /** O que a Mayra está a fazer neste momento (só enquanto `isLoading`), por ordem. */
+  passos: PassoProgresso[];
   error: string | null;
   currentSessionId: string | null;
   sessions: any[];
@@ -40,6 +49,7 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
   isExpanded: false,
   messages: [WELCOME_MESSAGE],
   isLoading: false,
+  passos: [],
   error: null,
   currentSessionId: null,
   sessions: [],
@@ -83,17 +93,19 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
     if (!content.trim()) return;
 
     const userMessage: ChatMessage = { role: 'user', content: content.trim() };
-    
-    // Optimistic UI update
+
+    // Optimistic UI update. O primeiro passo aparece já, sem esperar pelo servidor: o
+    // utilizador vê a Mayra reagir no instante em que envia.
     set((state) => ({
       messages: [...state.messages, userMessage],
       isLoading: true,
+      passos: [{ fase: 'entender' }],
       error: null,
     }));
 
     try {
       const { messages } = get();
-      
+
       // Filtra o histórico para enviar à API (remove a mensagem de boas-vindas se for a única da IA e for o primeiro turno real)
       const historyToAPI = messages.filter((msg, idx) => {
          // Opcional: ignorar a mensagem hardcoded de boas-vindas para não poluir o contexto
@@ -109,7 +121,36 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       } else if (currentModule.includes('/rh') || currentModule.includes('/funcionarios')) {
         currentModule = 'hr';
       }
-      const response = await sendChatMessageApi(historyToAPI, get().currentSessionId || undefined, currentModule);
+      const sessionId = get().currentSessionId || undefined;
+
+      let response: { reply: string; sessionId?: string };
+      try {
+        response = await streamChatApi(historyToAPI, sessionId, currentModule, {
+          onProgresso: (passo) =>
+            set((state) => {
+              const ultimo = state.passos[state.passos.length - 1];
+              const repetido = ultimo?.fase === passo.fase && ultimo?.area === passo.area;
+              return repetido ? state : { passos: [...state.passos, passo] };
+            }),
+          // A resposta vai crescendo numa mensagem própria, que o resultado final substitui.
+          onTexto: (pedaco) =>
+            set((state) => {
+              const ultima = state.messages[state.messages.length - 1];
+              if (ultima?.aEmitir) {
+                const mensagens = state.messages.slice(0, -1);
+                return { messages: [...mensagens, { ...ultima, content: ultima.content + pedaco }] };
+              }
+              return { messages: [...state.messages, { role: 'model', content: pedaco, aEmitir: true }] };
+            }),
+          onTextoReiniciado: () =>
+            set((state) => ({ messages: state.messages.filter((m) => !m.aEmitir) })),
+        });
+      } catch (erro) {
+        // O stream pode não estar disponível (rede, proxy, token): a Mayra responde na mesma,
+        // pelo caminho de sempre, só sem os passos nem o texto a surgir aos poucos.
+        if (!(erro instanceof StreamIndisponivel)) throw erro;
+        response = await sendChatMessageApi(historyToAPI, sessionId, currentModule);
+      }
 
       if (response.sessionId && !get().currentSessionId) {
         set({ currentSessionId: response.sessionId });
@@ -135,14 +176,19 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
       };
 
       set((state) => ({
-        messages: [...state.messages, modelMessage],
+        // O texto que ia a chegar aos poucos dá lugar ao definitivo (o mesmo, ou o cartão HITL).
+        messages: [...state.messages.filter((m) => !m.aEmitir), modelMessage],
         isLoading: false,
+        passos: [],
       }));
     } catch (error: any) {
-      set({
+      set((state) => ({
+        // Uma resposta a meio não fica pendurada: sem o fim, não se sabe se está completa.
+        messages: state.messages.filter((m) => !m.aEmitir),
         error: error.response?.data?.message || i18n.t('erro.comunicacao', { ns: 'copiloto' }),
         isLoading: false,
-      });
+        passos: [],
+      }));
     }
   },
 
