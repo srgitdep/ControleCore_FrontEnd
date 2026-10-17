@@ -208,5 +208,23 @@
       "falha_ligar": "Failed to connect to the voice server: {{detalhe}}",
       "sessao_expirada": "Session expired. Please sign in again."
     }
+  },
+  "progresso": {
+    "entender": "Understanding your request",
+    "consultar": {
+      "stock": "Looking up stock data",
+      "vendas": "Looking up sales",
+      "financas": "Looking up finances",
+      "clientes": "Looking up customer data",
+      "equipa": "Looking up team data",
+      "compras": "Looking up purchasing",
+      "mercado": "Looking up the B2B market",
+      "auditoria": "Looking up audit records",
+      "empresa": "Looking up company data",
+      "dados": "Looking up the data"
+    },
+    "ler": "Reading the data",
+    "interpretar": "Interpreting the results",
+    "responder": "Writing the answer"
   }
 }

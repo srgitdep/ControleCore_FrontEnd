@@ -92,8 +92,14 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
               >
                 {texto}
               </ReactMarkdown>
+              {msg.aEmitir && (
+                <span
+                  aria-hidden
+                  className="ml-0.5 inline-block h-4 w-[3px] translate-y-0.5 animate-mayra-cursor rounded-full bg-indigo-500"
+                />
+              )}
             </div>
-            <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className={`absolute top-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${msg.aEmitir ? 'hidden' : ''}`}>
               <button
                 onClick={() => handleSpeak(texto)}
                 className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
