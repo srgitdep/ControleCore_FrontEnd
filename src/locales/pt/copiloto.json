@@ -208,5 +208,23 @@
       "falha_ligar": "Falha ao ligar ao servidor de voz: {{detalhe}}",
       "sessao_expirada": "Sessão expirada. Por favor, faça login novamente."
     }
+  },
+  "progresso": {
+    "entender": "A perceber o seu pedido",
+    "consultar": {
+      "stock": "A consultar dados de stock",
+      "vendas": "A consultar as vendas",
+      "financas": "A consultar as finanças",
+      "clientes": "A consultar dados de clientes",
+      "equipa": "A consultar dados da equipa",
+      "compras": "A consultar as compras",
+      "mercado": "A consultar o mercado B2B",
+      "auditoria": "A consultar registos de auditoria",
+      "empresa": "A consultar dados da empresa",
+      "dados": "A consultar os dados"
+    },
+    "ler": "A ler os dados",
+    "interpretar": "A interpretar os resultados",
+    "responder": "A escrever a resposta"
   }
 }

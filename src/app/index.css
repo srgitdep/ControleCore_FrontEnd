@@ -50,6 +50,8 @@
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-pulse-slow: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-mayra-brilho: mayra-brilho 1.8s linear infinite;
+  --animate-mayra-cursor: mayra-cursor 1s steps(2, start) infinite;
 
   @keyframes slide-in-right {
     from {
@@ -65,6 +67,21 @@
     }
     to {
       opacity: 1;
+    }
+  }
+  /* O texto do passo activo da Mayra: uma faixa de luz que o atravessa (ver MayraPensando). */
+  @keyframes mayra-brilho {
+    from {
+      background-position: 200% center;
+    }
+    to {
+      background-position: -200% center;
+    }
+  }
+  /* O cursor que pisca no fim da resposta enquanto ela está a ser escrita. */
+  @keyframes mayra-cursor {
+    to {
+      visibility: hidden;
     }
   }
   @keyframes pulse-slow {
