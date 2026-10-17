@@ -21,10 +21,10 @@
   },
   "dre": {
     "titulo": "Demonstração de resultados — {{periodo}}",
-    "faturacao_bruta": "Faturação bruta",
+    "faturacao_bruta": "Facturação bruta",
     "cmv": "Custo da mercadoria vendida",
     "margem_bruta": "Margem bruta",
-    "da_faturacao": "{{pct}}% da faturação",
+    "da_faturacao": "{{pct}}% da facturação",
     "despesas_pagas": "Despesas pagas no período",
     "lucro": "Lucro operacional estimado",
     "indicadores": "Indicadores do período",
@@ -36,14 +36,14 @@
   },
   "fluxo": {
     "etiqueta": "Fluxo de caixa",
-    "saldo_atual": "Saldo Atual (Caixa Real)",
+    "saldo_atual": "Saldo Actual (Caixa Real)",
     "receber_30": "Recebíveis nos Próx. 30d",
     "pagar_30": "Pagáveis nos Próx. 30d",
     "projecao": "Projeção de Fluxo de Caixa — Próximos 30 dias",
-    "legenda": "Barras: entradas (azul) e saídas (vermelho) diárias. Linha: saldo projetado acumulado.",
+    "legenda": "Barras: entradas (azul) e saídas (vermelho) diárias. Linha: saldo projectado acumulado.",
     "serie_receber": "A Receber",
     "serie_pagar": "A Pagar",
-    "serie_saldo": "Saldo Projetado"
+    "serie_saldo": "Saldo Projectado"
   },
   "estado": {
     "PENDING": "Pendente",
@@ -56,23 +56,23 @@
     "titulo_receber": "Contas a Receber",
     "titulo_pagar": "Contas a Pagar",
     "novo": "Novo",
-    "nenhum": "Nenhum registro encontrado",
+    "nenhum": "Nenhum registo encontrado",
     "col_descricao": "Descrição",
     "col_cliente": "Cliente",
     "col_fornecedor": "Fornecedor",
     "col_vencimento": "Vencimento",
     "col_valor": "Valor",
     "col_estado": "Estado",
-    "col_acoes": "Ações",
+    "col_acoes": "Acções",
     "criado_auto": "🤖 Criado automaticamente",
-    "fatura": "Fatura: {{numero}}",
+    "fatura": "Factura: {{numero}}",
     "pago_em": "Pago: {{data}}",
     "marcar_pago": "Marcar Pago",
     "pago": "Pago",
     "cancelado": "Cancelado",
-    "paginacao_zero": "Página {{page}} de {{last}} · {{count}} registros",
-    "paginacao_one": "Página {{page}} de {{last}} · {{count}} registro",
-    "paginacao_other": "Página {{page}} de {{last}} · {{count}} registros"
+    "paginacao_zero": "Página {{page}} de {{last}} · {{count}} registos",
+    "paginacao_one": "Página {{page}} de {{last}} · {{count}} registo",
+    "paginacao_other": "Página {{page}} de {{last}} · {{count}} registos"
   },
   "novo": {
     "titulo_receber": "Nova conta a receber",
@@ -96,7 +96,7 @@
   "mensagens": {
     "pagamento_ok": "Pagamento processado com sucesso!",
     "erro_pagamento": "Erro ao processar pagamento.",
-    "registo_criado": "Registro financeiro criado com sucesso!",
-    "erro_criar": "Erro ao criar registro."
+    "registo_criado": "Registo financeiro criado com sucesso!",
+    "erro_criar": "Erro ao criar registo."
   }
 }

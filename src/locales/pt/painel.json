@@ -2,8 +2,8 @@
   "gestao": {
     "indicadores": "Indicadores",
     "indicadores_mes": "Indicadores do mês",
-    "faturacao": "Faturação (mês atual)",
-    "numero_vendas": "Nº de vendas (mês atual)",
+    "faturacao": "Facturação (mês actual)",
+    "numero_vendas": "Nº de vendas (mês actual)",
     "stock_baixo": "Produtos com stock baixo",
     "abaixo_minimo": "Abaixo do mínimo definido",
     "todos_acima_minimo": "Todos acima do mínimo",
@@ -11,7 +11,7 @@
     "pedidos_pendentes": "Pedidos Compra Fácil por atender",
     "pedidos_em_espera": "À espera de preparação ou levantamento",
     "sem_pedidos": "Nenhum pedido em espera",
-    "grafico_titulo": "Atividade de vendas",
+    "grafico_titulo": "Actividade de vendas",
     "grafico_subtitulo": "Últimos 7 dias"
   },
   "grafico": {
