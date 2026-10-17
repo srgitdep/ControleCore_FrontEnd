@@ -431,7 +431,7 @@
     "erro_guardar": "Não foi possível guardar os pesos.",
     "erro": "Não foi possível comparar os fornecedores.",
     "tentar_outra_vez": "Tentar outra vez",
-    "sem_fornecedores": "Ainda não há fornecedores cadastrados.",
+    "sem_fornecedores": "Ainda não há fornecedores registados.",
     "sem_com_quem_comparar": "Menos de dois fornecedores se podem comparar para este pedido (têm de se poder comprar, cobrir todas as linhas e cotar em MZN). Mostram-se os valores, sem classificação.",
     "col": {
       "fornecedor": "Fornecedor",
@@ -456,7 +456,7 @@
       "PRECO_ANTIGO": "Preço com {{dias}} dias"
     },
     "estado": {
-      "EM_CADASTRO": "em cadastro",
+      "EM_CADASTRO": "em registo",
       "EM_ANALISE": "em análise",
       "SUSPENSO": "suspenso",
       "BLOQUEADO": "bloqueado",
