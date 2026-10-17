@@ -2112,6 +2112,38 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Só frontend. Sem migrações nem variáveis. O `ffmpeg` (Gyan.FFmpeg) foi instalado na máquina de desenvolvimento só para a conversão e não entra no repositório. O ficheiro entra no *bundle* do Vite (asset com *hash*).
 
+### Fase 60 — Mayra: passos de progresso animados, resposta em stream, menos espera e voz sem persona nem ferramentas (17 Out 2026)
+
+- **2026-10-17 · [BE+FE] · Antonio Mambo** — `feat/mayra-progresso-streaming` (backend `3c8bae3`, frontend `1ea6f0d`)
+  - **Pedido do utilizador:** quando se pergunta algo à Mayra (texto ou voz) deve aparecer uma animação moderna do que ela está a fazer — em termos gerais, sem passos técnicos («a consultar dados de stock», «a ler os dados», «a interpretar os resultados») — em vez dos três pontos parados; a Mayra demorava muito a responder; e na voz lia a persona e mostrava as ferramentas que usava.
+  - feat(backend): `domain/progresso.ts` — fases (`entender`, `consultar`, `ler`, `interpretar`, `responder`) e `areaDaFerramenta()` (60 ferramentas → `stock`, `vendas`, `financas`, `clientes`, `equipa`, `compras`, `mercado`, `auditoria`, `empresa`); o servidor só envia **códigos**, as frases vivem nas traduções do frontend. Um teste falha se aparecer uma ferramenta nova sem área.
+  - feat(backend): `AiCopilotService.chat` aceita `OpcoesChat` (`onProgresso`, `onTexto`, `onTextoDescartado`); com `onTexto` consulta o Gemini em stream (`generateContentStream`) e o texto chega à medida que é escrito; sem ele comporta-se como antes (voz de recurso e `/copilot/chat`).
+  - feat(backend): `POST /copilot/chat/stream` (SSE: `progresso`, `texto`, `texto_reiniciar`, `fim`; batimento de 15 s; `X-Accel-Buffering: no`). `JwtStrategy` passa a aceitar também `Authorization: Bearer` (depois do cookie): o stream vai directo ao Fly, onde o cookie da Vercel não segue — o cliente pede um token curto a `/copilot/voice-token`.
+  - perf(backend): as ferramentas pedidas na mesma volta correm em paralelo (`Promise.all`); o **título da conversa deixa de ser gerado antes da primeira resposta** (era uma chamada completa ao Gemini; corre agora em paralelo e é esperado só no fim); idioma e gravação da mensagem + histórico em paralelo; `MAYRA_THINKING_LEVEL` opcional (`MINIMAL|LOW|MEDIUM|HIGH`) para encurtar o raciocínio do modelo.
+  - fix(voz): no modo nativo (Gemini Live, `responseModalities: ['AUDIO']`) as partes de **texto** são o raciocínio interno do modelo — citam personas e nomes de ferramentas — e o gateway reencaminhava-as como `text_chunk`, que o browser lia em voz alta por cima do áudio. O texto do modo nativo deixa de ser reencaminhado (e o frontend só aceita `text_chunk` no modo de recurso); as tags `[PERSONA: X]` saem do prompt de voz; a persona de voz proíbe nomear personas, áreas internas e ferramentas. O gateway passa a emitir `progresso` (área, nunca o nome da ferramenta nem os argumentos) em vez de `tool_executing`/`tool_executed`.
+  - feat(frontend): `streamChatApi` (`copilot.api.ts`) lê o SSE com `lerEventosSse` (`shared/utils/sse.ts`); o `copilotStore` mantém `passos` e uma mensagem `aEmitir` que o texto final substitui, e **recorre ao `/copilot/chat` de sempre** se o stream não estiver disponível; `MayraPensando` (avatar com anel de luz + passos que entram um a um, cada um ≥ 0,9 s, brilho no passo activo, `prefers-reduced-motion` respeitado) substitui os três pontos no chat e, em formato de cartão, no ecrã de voz; cursor a piscar na resposta que está a chegar.
+
+  > **Desvios.** (1) O `JwtStrategy` aceitar `Bearer` alarga a autenticação de toda a API (mesma validação, mesmo segredo): foi o preço de o stream ir directo ao Fly sem cookie. (2) Na voz nativa só há passos quando a Mayra usa uma ferramenta; numa pergunta que responde sem consultar nada não há feedback (activar `inputAudioTranscription` do Gemini Live resolveria, mas altera a sessão de voz — **por decidir**). (3) A causa de o frontend não ser publicado pela Vercel foi o trailer `Co-Authored-By: Claude` dos commits (ver notas).
+  >
+  > **Verificação.** Backend: suite completa **3778 testes** a passar (`tsc --noEmit` só acusa erros antigos em `notificacao/*.spec.ts`); frontend: `tsc -b` limpo, `vite build` limpo, **354 testes** (inclui `sse.test.ts` e `copilotStore.test.ts`). **Não verificado com o Gemini real nem com o áudio da voz**, e o SSE **não foi confirmado atrás do proxy do Fly** — testar uma pergunta de texto e uma de voz (nativa e de recurso) depois do deploy.
+  >
+  > **Notas de deploy.** Backend primeiro (o frontend novo recorre ao `/chat` se o stream não existir). `MAYRA_THINKING_LEVEL` é opcional (`fly secrets set`; vazio = padrão do modelo; afinar observando a escolha de ferramentas). **`VITE_SOCKET_URL=https://srg-controlcore-api.fly.dev` tem de estar na Vercel** (entra no *bundle* no build: redeploy), o mesmo valor que a voz já exige. **No frontend, os commits não levam `Co-Authored-By`:** com o trailer a Vercel não criou deploy; um commit vazio sem ele (`9476370`) desbloqueou-o. O `origin` do frontend passou a SSH (`git@github.com-trabalho:srgitdep/ControleCore_FrontEnd.git`), igual ao backend — o HTTPS caía na credencial errada.
+
+### Fase 61 — Português europeu nas traduções (17 Out 2026)
+
+- **2026-10-17 · [FE] · Antonio Mambo** — `fix/portugues-europeu`
+  - **Pedido do utilizador:** percorrer as telas do sistema e substituir o português brasileiro por europeu.
+  - fix(i18n): 152 valores em 20 ficheiros de `src/locales/pt/` — vocabulário (`estoque`→`stock`, `cadastro/cadastrar`→`registo/registar`, `registro`→`registo`, `você` reescrito, «faça login»→«inicie sessão») e a grafia anterior ao Acordo que o resto do projecto já usava (`acção`, `activo`, `actualizar`, `projecto`, `seleccionar`, `excepção`, `factura/facturação`). **Só valores; as chaves e a formatação dos ficheiros não mudaram.**
+  - O texto visível passa todo por `t('chave')`: nos componentes só havia identificadores e chaves (`isActive`, `tab_estoque`), que não se tocam.
+
+  > **Deixado como está, de propósito.** `senha` (47 ocorrências; muito usada em Moçambique), `login` como nome, `frete`, `ticket médio` e a voz `pt-BR` de recurso da síntese de voz (`idioma.ts`).
+  >
+  > **Por fazer.** O **backend** (≈130 ocorrências de «usuário», «estoque», «cadastro»… em mensagens de erro, e-mails — `email.templates.ts` — e descrições das ferramentas da Mayra; estas últimas exigem cuidado porque mexem no que o modelo lê). **Não revisto no ecrã.**
+  >
+  > **Verificação.** JSON válido em todos os ficheiros; **354 testes** do frontend a passar.
+  >
+  > **Notas de deploy.** Só frontend; sem migrações nem variáveis.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2121,6 +2153,9 @@ esse merge trouxe.
 > commit/PR.
 
 ### Compra Fácil
+
+- [ ] **Português europeu no backend** — mensagens de erro, e-mails (`email.templates.ts`) e descrições das ferramentas da Mayra ainda têm ≈130 ocorrências de vocabulário brasileiro («usuário», «estoque», «cadastro»). O frontend fez-se na Fase 61.
+- [ ] **Voz nativa sem ferramenta: sem feedback de «a pensar»** — activar `inputAudioTranscription` no Gemini Live para detectar o fim da fala do utilizador e mostrar o primeiro passo (Fase 60, desvio 2).
 
 - [ ] **CRM, recomendação por regras** (Compra Fácil) — a MAYRA sugerir, por
       iniciativa própria, que produtos promover. Distinto do item de promoções
