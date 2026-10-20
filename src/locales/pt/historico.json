@@ -1,7 +1,7 @@
 {
   "acao": {
     "CREATE": "Criação",
-    "UPDATE": "Atualização",
+    "UPDATE": "Actualização",
     "DELETE": "Remoção",
     "LOGIN": "Login",
     "LOGOUT": "Logout",
@@ -13,7 +13,7 @@
     "pdf_titulo": "Histórico no Sistema",
     "pdf_gerado": "Gerado a: {{data}}",
     "col_utilizador": "Utilizador",
-    "col_acao": "Ação",
+    "col_acao": "Acção",
     "col_detalhes": "Detalhes",
     "col_data_hora": "Data & Hora",
     "col_perfil": "Perfil",

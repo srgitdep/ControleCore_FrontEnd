@@ -203,7 +203,7 @@
     "pino_obrigatorio": "Marque o sítio no mapa.",
     "usar_localizacao": "Usar a minha localização",
     "localizacao_negada": "Não foi possível obter a sua localização. Marque-a no mapa.",
-    "campo_contacto_nome": "Quem recebe (se não for você)",
+    "campo_contacto_nome": "Quem recebe (se não for o próprio)",
     "campo_contacto_telefone": "Telefone de contacto",
     "tornar_padrao": "Usar como morada padrão",
     "obrigatorio": "Campo obrigatório",

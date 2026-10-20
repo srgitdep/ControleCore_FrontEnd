@@ -18,6 +18,7 @@ import {
   idiomaDeVozDaInterface,
   type IdiomaDeVoz,
 } from '../utils/idioma';
+import type { PassoProgresso } from '../api/copilot.api';
 
 export type VoiceState =
   | 'DISCONNECTED'
@@ -31,7 +32,8 @@ export interface UseGeminiVoiceReturn {
   state: VoiceState;
   transcript: string;
   interimTranscript: string;
-  executingTool: string | null;
+  /** O que a Mayra está a fazer enquanto consulta o sistema, em passos gerais. */
+  passos: PassoProgresso[];
   errorMessage: string | null;
   isFallback: boolean;
   startVoiceSession: () => void;
@@ -43,7 +45,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const [state, setState] = useState<VoiceState>('DISCONNECTED');
   const [transcript, setTranscript] = useState<string>('');
   const [interimTranscript, setInterimTranscript] = useState<string>('');
-  const [executingTool, setExecutingTool] = useState<string | null>(null);
+  const [passos, setPassos] = useState<PassoProgresso[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isFallback, setIsFallback] = useState<boolean>(false);
 
@@ -316,7 +318,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
 
     setState('DISCONNECTED');
-    setExecutingTool(null);
+    setPassos([]);
     setInterimTranscript('');
     setIsFallback(false);
     fallbackModeRef.current = false;
@@ -559,6 +561,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       // cima dela não a cortava.
       turnoDoModeloTerminadoRef.current = false;
       mayraAFalarRef.current = true;
+      setPassos([]);
       setState('SPEAKING');
       if (pcmPlayerRef.current) {
         pcmPlayerRef.current.feed(payload.data);
@@ -567,6 +570,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     // 2. MP3 da ElevenLabs (TTS Fallback Primário)
     socket.on('system_audio_mp3', (payload: { data: string; text: string }) => {
+      setPassos([]);
       setState('SPEAKING');
       mayraAFalarRef.current = true;
       pararDeOuvir();
@@ -604,6 +608,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
     // 3. Texto limpo para Web Speech API (TTS Fallback Secundário)
     socket.on('text_chunk', (payload: { text: string }) => {
+      // Só o modo de recurso fala por aqui. Na voz nativa a fala é o áudio; um texto que
+      // chegasse seria o raciocínio interno do modelo, e lê-lo em voz alta por cima do
+      // áudio era exactamente o defeito.
+      if (!fallbackModeRef.current) return;
+      setPassos([]);
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const cleaned = cleanTextForSpeech(payload.text);
@@ -656,16 +665,19 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       }
     });
 
-    // 4. Status de Execução de Ferramentas (Tool Calling)
-    socket.on('tool_executing', (payload: { toolName: string }) => {
+    // 4. O que a Mayra está a fazer (consultar dados, ler, interpretar). Chegam só como
+    // fase e área — nunca o nome de uma ferramenta; as frases vêm das traduções. Um
+    // `entender` abre um turno novo e apaga os passos do anterior.
+    socket.on('progresso', (passo: PassoProgresso) => {
+      // Um evento atrasado, já com ela a falar, não pode tirá-la do estado de fala.
+      if (mayraAFalarRef.current) return;
       setState('EXECUTING_TOOL');
-      setExecutingTool(payload.toolName);
-    });
-
-    socket.on('tool_executed', (_payload: { toolName: string; result: any }) => {
-      setTimeout(() => {
-        setExecutingTool(null);
-      }, 4000);
+      setPassos((atuais) => {
+        if (passo.fase === 'entender') return [passo];
+        const ultimo = atuais[atuais.length - 1];
+        const repetido = ultimo?.fase === passo.fase && ultimo?.area === passo.area;
+        return repetido ? atuais : [...atuais, passo];
+      });
     });
 
     // 5. Outros eventos de ciclo de vida
@@ -675,6 +687,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     // Mayra ainda a falar. É o mesmo defeito que já tinha partido o barge-in.
     socket.on('turn_complete', () => {
       turnoDoModeloTerminadoRef.current = true;
+      setPassos([]);
 
       if (fallbackModeRef.current) {
         // No recurso quem sabe quando ela se calou é o `onended` do MP3 ou da síntese.
@@ -691,6 +704,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     });
 
     socket.on('interrupted', () => {
+      setPassos([]);
       mayraAFalarRef.current = false;
       blocosDeFalaRef.current = 0;
       if (pcmPlayerRef.current) {
@@ -762,7 +776,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     state,
     transcript,
     interimTranscript,
-    executingTool,
+    passos,
     errorMessage,
     isFallback,
     startVoiceSession,

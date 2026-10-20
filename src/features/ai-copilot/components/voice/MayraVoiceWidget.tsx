@@ -4,6 +4,7 @@ import { Mic, MicOff, X, MessageSquare, Send, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useGeminiVoice, type VoiceState } from '../../hooks/useGeminiVoice';
 import { OrbeFluida } from './OrbeFluida';
+import { MayraPensando } from '../chat/MayraPensando';
 
 /**
  * O modo de voz da Mayra.
@@ -33,8 +34,7 @@ interface MayraVoiceWidgetProps {
 /** Uma frase por estado. Substitui as pastilhas coloridas que havia no cabeçalho. */
 function legendaDe(
   estado: VoiceState,
-  ferramenta: string | null,
-  t: (chave: 'voz.a_ligar' | 'voz.a_ouvir' | 'voz.a_responder' | 'voz.a_consultar' | 'voz.a_pensar' | 'voz.nao_ligou' | 'voz.toque_para_falar') => string,
+  t: (chave: 'voz.a_ligar' | 'voz.a_ouvir' | 'voz.a_responder' | 'voz.a_pensar' | 'voz.nao_ligou' | 'voz.toque_para_falar') => string,
 ): string {
   switch (estado) {
     case 'CONNECTING':
@@ -44,9 +44,9 @@ function legendaDe(
     case 'SPEAKING':
       return t('voz.a_responder');
     case 'EXECUTING_TOOL':
-      // O nome da ferramenta é interno («get_low_stock_alerts») e não diz nada a quem
-      // está a falar; a frase genérica informa melhor do que o identificador.
-      return ferramenta ? t('voz.a_consultar') : t('voz.a_pensar');
+      // Os passos detalhados («A consultar dados de stock»…) aparecem em `MayraPensando`;
+      // esta frase é só o recurso para quando ainda não chegou nenhum.
+      return t('voz.a_pensar');
     case 'ERROR':
       return t('voz.nao_ligou');
     default:
@@ -60,7 +60,7 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
     state,
     transcript,
     interimTranscript,
-    executingTool,
+    passos,
     errorMessage,
     startVoiceSession,
     endVoiceSession,
@@ -126,18 +126,31 @@ export function MayraVoiceWidget({ isOpen, onClose }: MayraVoiceWidgetProps) {
             <div className="min-h-[72px] max-w-sm text-center">
               {errorMessage ? (
                 <p className="text-sm text-red-600">{errorMessage}</p>
-              ) : aoVivo ? (
-                // O que foi dito, sem aspas nem itálico: é a fala do utilizador, não uma
-                // citação de outra pessoa.
-                <p
-                  className={`text-base leading-relaxed ${
-                    interimTranscript ? 'text-slate-400' : 'text-slate-800'
-                  }`}
-                >
-                  {aoVivo}
-                </p>
               ) : (
-                <p className="text-sm text-slate-400">{legendaDe(state, executingTool, t)}</p>
+                <>
+                  {aoVivo && (
+                    // O que foi dito, sem aspas nem itálico: é a fala do utilizador, não uma
+                    // citação de outra pessoa.
+                    <p
+                      className={`text-base leading-relaxed ${
+                        interimTranscript ? 'text-slate-400' : 'text-slate-800'
+                      }`}
+                    >
+                      {aoVivo}
+                    </p>
+                  )}
+                  {state === 'EXECUTING_TOOL' ? (
+                    // O que ela está a fazer, passo a passo, em vez de uma frase parada.
+                    <div className="mt-3 flex justify-center">
+                      <MayraPensando
+                        variante="cartao"
+                        passos={passos.length > 0 ? passos : [{ fase: 'entender' }]}
+                      />
+                    </div>
+                  ) : (
+                    !aoVivo && <p className="text-sm text-slate-400">{legendaDe(state, t)}</p>
+                  )}
+                </>
               )}
             </div>
           </div>

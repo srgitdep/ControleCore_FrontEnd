@@ -86,7 +86,7 @@
   "rota": {
     "a_carregar": "A carregar...",
     "sem_permissao_pagina": "Sem permissão para aceder a esta página.",
-    "sem_permissao_accao": "Não tem permissão para essa ação."
+    "sem_permissao_accao": "Não tem permissão para essa acção."
   },
   "dialogo": {
     "confirmar": "Confirmar",
@@ -132,19 +132,19 @@
   "permissoes": {
     "erro_perfis": "Erro ao carregar os perfis.",
     "erro_permissoes": "Erro ao carregar permissões deste perfil.",
-    "sucesso": "Permissões atualizadas com sucesso!",
-    "erro_guardar": "Erro ao atualizar permissões.",
+    "sucesso": "Permissões actualizadas com sucesso!",
+    "erro_guardar": "Erro ao actualizar permissões.",
     "perfil_acesso": "Perfil de acesso",
     "a_carregar": "A carregar...",
     "perfis_titulo": "Perfis de Acesso",
-    "perfis_ajuda": "Selecione o perfil para configurar as permissões.",
+    "perfis_ajuda": "Seleccione o perfil para configurar as permissões.",
     "matriz_titulo": "Matriz de Permissões",
     "matriz_ajuda": "Assinale o que este perfil pode ver e fazer.",
     "a_guardar": "A guardar...",
     "guardar": "Guardar Alterações",
     "a_carregar_servidor": "A carregar permissões do servidor...",
     "coluna_recurso": "Módulo / Recurso",
-    "escolha_perfil": "Selecione um perfil à esquerda para configurar.",
+    "escolha_perfil": "Seleccione um perfil à esquerda para configurar.",
     "recurso": {
       "dashboard": "Dashboard",
       "empresa": "Empresa / Configurações",

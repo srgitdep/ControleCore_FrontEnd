@@ -172,7 +172,7 @@
     "passo_carregar": "Carregar",
     "passo_revisao": "Revisão",
     "passo_conclusao": "Conclusão",
-    "upload_intro": "Carregue a sua lista de preços tal como já a tem — PDF, uma folha de Excel, um documento Word ou até uma fotografia das páginas. Nós lemos os produtos, os preços e as quantidades, e você revê tudo antes de confirmar.",
+    "upload_intro": "Carregue a sua lista de preços tal como já a tem — PDF, uma folha de Excel, um documento Word ou até uma fotografia das páginas. Nós lemos os produtos, os preços e as quantidades, e fica a poder rever tudo antes de confirmar.",
     "arraste": "Arraste e solte o seu ficheiro aqui",
     "ou_clique": "ou clique para seleccionar",
     "formatos": "PDF, Word (.docx), Excel (.xlsx), ou uma fotografia — até {{mb}} MB",
@@ -246,7 +246,7 @@
     "email_empresa_ajuda": "O de facturação — não o de login.",
     "nuit_nota_antes": "O NUIT (",
     "nuit_nao_indicado": "não indicado",
-    "nuit_nota_depois": ") não se edita aqui — é a chave que impede cadastros duplicados da mesma empresa. Para corrigir um NUIT errado, contacte o suporte.",
+    "nuit_nota_depois": ") não se edita aqui — é a chave que impede registos duplicados da mesma empresa. Para corrigir um NUIT errado, contacte o suporte.",
     "logomarca_actual": "Logomarca actual",
     "o_responsavel": "O responsável",
     "dados_actualizados": "Os seus dados foram actualizados.",
@@ -262,7 +262,7 @@
     "titulo": "Registar a sua empresa como fornecedor",
     "subtitulo": "Publique o seu catálogo uma vez e fique visível a todos os compradores da plataforma. Não paga para se registar.",
     "nome_comercial_ajuda": "O nome por que é conhecido, se for diferente.",
-    "nuit_ajuda": "É por ele que evitamos cadastros duplicados da mesma empresa. Se a sua empresa já foi cadastrada por um cliente, encontramo-la e ligamos a conta a esse registo — com o histórico de compras todo.",
+    "nuit_ajuda": "É por ele que evitamos registos duplicados da mesma empresa. Se a sua empresa já foi registada por um cliente, encontramo-la e ligamos a conta a esse registo — com o histórico de compras todo.",
     "administrar_titulo": "Quem vai administrar a conta",
     "administrar_nota": "Esta conta fica com a administração da vitrine. Pode convidar mais pessoas depois.",
     "cargo_exemplo": "Director comercial",
@@ -395,7 +395,7 @@
     "DESCONTINUADO": "Descontinuado"
   },
   "ajudaEstadoArtigo": {
-    "RASCUNHO": "Só você vê. Nenhum comprador o encontra.",
+    "RASCUNHO": "Só a sua empresa vê. Nenhum comprador o encontra.",
     "PUBLICADO": "Visível e comprável em todas as comparações.",
     "ESGOTADO": "Continua visível — o comprador vê que existe e vai voltar. Não sai das buscas.",
     "DESCONTINUADO": "Sai das comparações. Fica no histórico das compras antigas."

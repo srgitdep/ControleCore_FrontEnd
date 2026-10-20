@@ -12,7 +12,7 @@
     "rh_anomalias_rotulo": "⏱️ Resumo de anomalias (esta semana)",
     "rh_anomalias_pergunta": "RH: Resuma as anomalias de ponto (atrasos/faltas) desta semana.",
     "placeholder": "Pergunte à Mayra...",
-    "voz": "Ativar Modo Voz (Gemini Live)",
+    "voz": "Activar Modo Voz (Gemini Live)",
     "aviso": "A Mayra pode cometer erros. Confirme sempre os valores importantes."
   },
   "mensagem": {
@@ -23,7 +23,7 @@
   "erro": {
     "carregar_sessao": "Erro ao carregar sessão.",
     "comunicacao": "Ocorreu um erro de comunicação com a IA.",
-    "executar_accao": "Erro ao executar a ação solicitada."
+    "executar_accao": "Erro ao executar a acção solicitada."
   },
   "sucesso": "✅ Sucesso: {{resposta}}",
   "boas_vindas_ecra": {
@@ -35,23 +35,23 @@
     "stock": {
       "ruptura": {
         "titulo": "Prever Rutura",
-        "descricao": "Prever risco de ruptura de estoque",
-        "pergunta": "Prever risco de ruptura de estoque"
+        "descricao": "Prever risco de ruptura de stock",
+        "pergunta": "Prever risco de ruptura de stock"
       },
       "capital": {
         "titulo": "Capital Congelado",
-        "descricao": "Analisar estoque parado nas lojas",
-        "pergunta": "Analisar estoque parado (capital congelado)"
+        "descricao": "Analisar stock parado nas lojas",
+        "pergunta": "Analisar stock parado (capital congelado)"
       },
       "movimentos": {
         "titulo": "Movimentos",
         "descricao": "Verificar últimos movimentos",
-        "pergunta": "Mostrar os últimos movimentos de estoque de hoje"
+        "pergunta": "Mostrar os últimos movimentos de stock de hoje"
       },
       "baixo": {
-        "titulo": "Baixo Estoque",
+        "titulo": "Stock Baixo",
         "descricao": "Listar produtos no limite",
-        "pergunta": "Quais produtos estão com o estoque abaixo do mínimo?"
+        "pergunta": "Quais produtos estão com o stock abaixo do mínimo?"
       }
     },
     "caixa": {
@@ -94,13 +94,13 @@
       },
       "capital": {
         "titulo": "Capital Congelado",
-        "descricao": "Analisar estoque sem saídas",
-        "pergunta": "Analisar estoque parado (capital congelado)"
+        "descricao": "Analisar stock sem saídas",
+        "pergunta": "Analisar stock parado (capital congelado)"
       },
       "marketing": {
-        "titulo": "Marketing + Estoque",
+        "titulo": "Marketing + Stock",
         "descricao": "Como escoar itens perto da validade",
-        "pergunta": "Marketing + Estoque: Como escoar itens perto da validade?"
+        "pergunta": "Marketing + Stock: Como escoar itens perto da validade?"
       },
       "financas": {
         "titulo": "Finanças",
@@ -141,17 +141,17 @@
   },
   "hitl": {
     "titulo": {
-      "UPDATE_PRODUCT_PRICE": "Ação Solicitada: Atualizar Preço",
-      "ADJUST_STOCK": "Ação Solicitada: Ajuste de Stock",
-      "TRANSFER_STOCK": "Ação Solicitada: Transferência de Stock",
-      "CREATE_USER": "Ação Solicitada: Novo Funcionário",
-      "TOGGLE_USER_STATUS": "Ação Solicitada: Alterar Acesso",
-      "REGISTER_EXPENSE": "Ação Solicitada: Registar Despesa",
-      "PAY_BILL": "Ação Solicitada: Liquidar Fatura / Despesa",
-      "outra": "Ação Solicitada"
+      "UPDATE_PRODUCT_PRICE": "Acção Solicitada: Actualizar Preço",
+      "ADJUST_STOCK": "Acção Solicitada: Ajuste de Stock",
+      "TRANSFER_STOCK": "Acção Solicitada: Transferência de Stock",
+      "CREATE_USER": "Acção Solicitada: Novo Funcionário",
+      "TOGGLE_USER_STATUS": "Acção Solicitada: Alterar Acesso",
+      "REGISTER_EXPENSE": "Acção Solicitada: Registar Despesa",
+      "PAY_BILL": "Acção Solicitada: Liquidar Factura / Despesa",
+      "outra": "Acção Solicitada"
     },
     "produto": "Produto:",
-    "preco_atual": "Preço Atual:",
+    "preco_atual": "Preço Actual:",
     "novo_preco": "Novo Preço:",
     "armazem": "Armazém:",
     "ajuste": "Ajuste a aplicar:",
@@ -164,9 +164,9 @@
     "email": "Email:",
     "perfil": "Perfil:",
     "funcionario": "Funcionário:",
-    "accao": "Ação:",
-    "ativar_acesso": "Ativar Acesso",
-    "bloquear_acesso": "Bloquear/Desativar Acesso",
+    "accao": "Acção:",
+    "ativar_acesso": "Activar Acesso",
+    "bloquear_acesso": "Bloquear/Desactivar Acesso",
     "descricao": "Descrição:",
     "valor": "Valor:",
     "vencimento": "Data de Vencimento:",
@@ -176,10 +176,10 @@
     "conta_descricao": "Descrição da Conta:",
     "valor_liquidar": "Valor a Liquidar:",
     "vencimento_original": "Vencimento Original:",
-    "aviso_pagar": "Esta ação marcará a conta como PAGA no momento atual.",
+    "aviso_pagar": "Esta acção marcará a conta como PAGA no momento actual.",
     "confirmar": "Confirmar",
     "cancelar": "Cancelar",
-    "cancelei": "Cancelei a ação."
+    "cancelei": "Cancelei a acção."
   },
   "historico": {
     "titulo": "Histórico",
@@ -206,7 +206,25 @@
       "sem_microfone": "Não foi possível aceder ao microfone. Verifique as permissões.",
       "tempo_esgotado": "Não foi possível ligar ao servidor de voz em {{host}}. Verifique a ligação.",
       "falha_ligar": "Falha ao ligar ao servidor de voz: {{detalhe}}",
-      "sessao_expirada": "Sessão expirada. Por favor, faça login novamente."
+      "sessao_expirada": "Sessão expirada. Por favor, inicie sessão novamente."
     }
+  },
+  "progresso": {
+    "entender": "A perceber o seu pedido",
+    "consultar": {
+      "stock": "A consultar dados de stock",
+      "vendas": "A consultar as vendas",
+      "financas": "A consultar as finanças",
+      "clientes": "A consultar dados de clientes",
+      "equipa": "A consultar dados da equipa",
+      "compras": "A consultar as compras",
+      "mercado": "A consultar o mercado B2B",
+      "auditoria": "A consultar registos de auditoria",
+      "empresa": "A consultar dados da empresa",
+      "dados": "A consultar os dados"
+    },
+    "ler": "A ler os dados",
+    "interpretar": "A interpretar os resultados",
+    "responder": "A escrever a resposta"
   }
 }

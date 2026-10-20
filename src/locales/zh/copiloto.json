@@ -208,5 +208,23 @@
       "falha_ligar": "连接语音服务器失败：{{detalhe}}",
       "sessao_expirada": "会话已过期。请重新登录。"
     }
+  },
+  "progresso": {
+    "entender": "正在理解您的请求",
+    "consultar": {
+      "stock": "正在查询库存数据",
+      "vendas": "正在查询销售",
+      "financas": "正在查询财务",
+      "clientes": "正在查询客户数据",
+      "equipa": "正在查询团队数据",
+      "compras": "正在查询采购",
+      "mercado": "正在查询 B2B 市场",
+      "auditoria": "正在查询审计记录",
+      "empresa": "正在查询公司数据",
+      "dados": "正在查询数据"
+    },
+    "ler": "正在读取数据",
+    "interpretar": "正在分析结果",
+    "responder": "正在撰写答复"
   }
 }

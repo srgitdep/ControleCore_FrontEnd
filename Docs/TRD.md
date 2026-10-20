@@ -83,7 +83,7 @@ portal, no login e nas páginas públicas. Teste de paridade (`src/i18n/paridade
 falha se uma chave faltar numa das línguas, se uma `{{variável}}` não coincidir com a do
 português, ou se o mandarim tiver formas de plural que não usa (só `_other`; `_zero` vale).
 
-**Mandarim (`zh`, Fase 60, 20/10/2026).** Chinês simplificado; um `zh-TW` do browser lê-se
+**Mandarim (`zh`, Fase 62, 20/10/2026).** Chinês simplificado; um `zh-TW` do browser lê-se
 em simplificado. O catálogo (`src/locales/zh/`) **não está no bundle inicial**: `src/i18n/zh.ts`
 junta-o num chunk próprio (~241 KB, 87 KB comprimido) que `carregarIdioma('zh')` descarrega
 uma só vez e `mudarIdioma()` espera antes de mudar a língua — por aí passam o selector e
@@ -464,8 +464,26 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   corresponde. Um erro de uma ferramenta vai ao modelo como `{ erro }`, sem cortar
   as outras; uma acção de escrita (HITL) pára o ciclo e pede confirmação ao
   utilizador. Uma resposta sem texto fica registada nos logs com o
-  `finishReason` e mostra `PROMPTS.NO_DATA`. Perguntas amplas demoram 8–12 s.
-  Desde 28/09/2026; antes só a primeira ferramenta era executada.
+  `finishReason` e mostra `PROMPTS.NO_DATA`. Desde 28/09/2026; antes só a primeira
+  ferramenta era executada. **Desde 17/10/2026** as ferramentas pedidas na mesma volta
+  correm em paralelo (`Promise.all`), o título da conversa nova é gerado em paralelo
+  com a resposta (e não antes dela), idioma e histórico lêem-se em paralelo, e
+  `MAYRA_THINKING_LEVEL` (`MINIMAL|LOW|MEDIUM|HIGH`, opcional) limita o raciocínio do
+  modelo — `nivelDePensamentoGemini` em `gemini-model.ts`.
+- **Progresso e resposta em stream (texto):** `POST /copilot/chat/stream` devolve
+  Server-Sent Events — `progresso` `{fase, area?}`, `texto` `{pedaco}`,
+  `texto_reiniciar` (o texto já enviado afinal precedia um pedido de ferramenta) e `fim`
+  `{reply, sessionId}` (o mesmo corpo que `/copilot/chat`, incluindo o cartão HITL).
+  `AiCopilotService.chat` recebe `OpcoesChat` (`onProgresso`, `onTexto`,
+  `onTextoDescartado`); com `onTexto` usa `generateContentStream`. O servidor envia só
+  **códigos** — fase e área (`domain/progresso.ts`: `areaDaFerramenta`, 60 ferramentas →
+  `stock`, `vendas`, `financas`, `clientes`, `equipa`, `compras`, `mercado`, `auditoria`,
+  `empresa`) — nunca o nome da ferramenta, os argumentos ou os dados; as frases estão em
+  `locales/*/copiloto.json` (`progresso.*`). O cliente vai **directo ao Fly**
+  (`VITE_SOCKET_URL`) porque os *rewrites* da Vercel guardam a resposta toda: pede um
+  token a `/copilot/voice-token` e envia-o em `Authorization: Bearer`, que o
+  `JwtStrategy` aceita depois do cookie. Se o stream falhar antes de chegar um evento, o
+  frontend recorre a `/copilot/chat`.
 - **Voz em tempo real:** `GEMINI_LIVE_MODEL` (Live API, `bidiGenerateContent`),
   entregue ao frontend via WebSocket (`socket.io`). O browser envia o microfone em
   PCM 16 kHz de forma contínua (evento `audio_input`) e recebe a voz em PCM 24 kHz
@@ -476,6 +494,15 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   Se o Chrome não deixar arrancar o `AudioContext` (som do site bloqueado), o áudio é
   descartado sem erro — o player deixa um aviso na consola. Cada turno de voz reenvia
   as instruções da Mayra: ~24 mil tokens por turno, ~21 mil deles de texto.
+  **A fala é só o áudio.** Com `responseModalities: ['AUDIO']` as partes de texto que o
+  Gemini envia são o seu raciocínio interno (citam personas e ferramentas): o cliente
+  `GeminiLiveClientService` ignora-as, o gateway não emite `text_chunk` no modo nativo e o
+  frontend só aceita `text_chunk` no modo de recurso (ElevenLabs / Web Speech). O prompt
+  de voz não leva as tags `[PERSONA: X]` (`prepareVoiceContext` troca-as por «Conhecimento
+  de domínio — X») e a persona de voz proíbe nomear personas, áreas internas e
+  ferramentas. O gateway emite `progresso` `{fase, area}` (o mesmo vocabulário do chat)
+  em vez de `tool_executing`/`tool_executed`; o ecrã de voz mostra-os com
+  `MayraPensando` em formato de cartão.
 - **Persistência de sessão:** `CopilotSession` / `CopilotMessage` no Postgres.
   `CopilotMessage.toolCall` (JSON) guarda a **lista** das ferramentas chamadas numa
   resposta (`name`, `args`, `response`), usada para reconstruir o histórico enviado

@@ -204,7 +204,7 @@
     "decidir_titulo": "Decidir {{numero}}",
     "aprovar": "Aprovar",
     "recusar": "Recusar",
-    "auto_aprovar_aviso": "Foi você que submeteu esta requisição. A aprovação passa — há lojas com uma pessoa só — mas fica marcada como excepção de segregação de funções.",
+    "auto_aprovar_aviso": "Foi o próprio que submeteu esta requisição. A aprovação passa — há lojas com uma pessoa só — mas fica marcada como excepção de segregação de funções.",
     "confirmar": "Confirmar"
   },
   "sourcing": {
