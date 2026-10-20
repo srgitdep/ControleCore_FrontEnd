@@ -48,7 +48,7 @@
 - [x] **M2 — Superfícies públicas.** Namespaces de login, site, Compra Fácil e portal do fornecedor em `zh`.
 - [x] **M3 — ERP e POS.** Restantes namespaces em `zh`.
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
-- [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; falta o que é do utilizador.)* **Por fazer:** (1) revisão do chinês por pessoa fluente — o texto foi traduzido por Claude e **não está revisto**; (2) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (3) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
+- [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
 ---
 
@@ -2134,7 +2134,7 @@ esse merge trouxe.
   >
   > **Assunções do plano (A1–A4)** mantidas: só chinês simplificado; âmbito completo; moeda `MT 1,234.50`; tradução de Claude publicada para rever depois.
   >
-  > **Verificação.** Backend: `tsc` do build limpo e a suite de `src/shared` a passar (748 testes), mais os novos de e-mails em mandarim e do prompt da Mayra; os 10 erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` **já existem em `main`**. Frontend: `tsc -b` limpo, `vite build` ok, **476 testes**. **Não verificado:** o chinês por uma pessoa fluente, a voz da Mayra em mandarim com um microfone, e os ecrãs no browser.
+  > **Verificação.** Backend: `tsc` do build limpo e a suite de `src/shared` a passar (748 testes), mais os novos de e-mails em mandarim e do prompt da Mayra; os 10 erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` **já existem em `main`**. Frontend: `tsc -b` limpo, `vite build` ok, **476 testes**. **Revisão do chinês** indicada como feita pelo utilizador em 2026-10-20 (sem alterações ao texto). **Não verificado:** a voz da Mayra em mandarim com um microfone, e os ecrãs no browser.
   >
   > **Notas de deploy.** Sem migrações (`idioma` é texto na base de dados) e sem variáveis novas. Backend primeiro; o frontend acrescenta um chunk `zh-*.js` ao `dist`. Os e-mails de recuperação de senha e de relatório de inventário continuam só em português (já eram), e o rodapé de todos os e-mails está em português.
 
@@ -2417,7 +2417,7 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 - [ ] **Mandarim (`zh`, chinês simplificado).** Pedido do utilizador em 2026-10-20. Plano em **§4.14**
       (aprovado em 2026-10-20, com as recomendações da análise como assunções).
   - [x] **M1 — Infra.** · [x] **M2 — Superfícies públicas.** · [x] **M3 — ERP e POS.**
-  - [x] **M4 — Mayra e servidor.** · [ ] **M5 — Fecho** (falta a revisão do chinês por pessoa fluente, o teste real da voz e a verificação no browser).
+  - [x] **M4 — Mayra e servidor.** · [ ] **M5 — Fecho** (revisão do chinês feita em 2026-10-20; falta o teste real da voz e a verificação no browser).
 
 ### Login com Google (Compra Fácil)
 
@@ -5576,7 +5576,7 @@ Cópia gravada na criação e imutável depois de editar o cliente; origem (onli
 
 ### 4.14 Mandarim (`zh`) no Multilíngua
 
-- **Data:** 2026-10-20 · **Estado:** **aprovado em 2026-10-20 ("podes iniciar")**, com as recomendações da análise como assunções (A1–A4). **Implementado em 2026-10-20 (Fase 60, M1 a M4)**; falta o M5 — revisão do chinês, teste real da voz e verificação no browser, que são do utilizador.
+- **Data:** 2026-10-20 · **Estado:** **aprovado em 2026-10-20 ("podes iniciar")**, com as recomendações da análise como assunções (A1–A4). **Implementado em 2026-10-20 (Fase 60, M1 a M4)**; falta o M5 — teste real da voz e verificação no browser, que são do utilizador. A revisão do chinês foi indicada como feita em 2026-10-20.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
 
 #### 1. Pedido e interpretação
