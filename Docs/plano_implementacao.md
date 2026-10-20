@@ -44,11 +44,11 @@
 
 **Fase 60 — Mandarim (`zh`) no Multilíngua** (plano completo em **§4.14**; branch `feat/multilingua-mandarim` nos dois repositórios, backend primeiro).
 
-- [ ] **M1 — Infra.** `IDIOMAS`/`IDIOMAS_SUPORTADOS` com `zh`; ternários `idioma === 'en'` do backend e do frontend trocados por `Record<Idioma, …>`; `formatMoeda`/`formatData`/locale; plural (só `other`) no teste de paridade; teste de paridade de `{{variáveis}}`; `zh` carregado sob pedido; selector «中文»; `lang="zh-CN"`; pilha de tipos de letra CJK.
-- [ ] **M2 — Superfícies públicas.** Namespaces de login, site, Compra Fácil e portal do fornecedor em `zh`.
-- [ ] **M3 — ERP e POS.** Restantes namespaces em `zh`.
-- [ ] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
-- [ ] **M5 — Fecho.** Testes, TRD, plano; teste manual da voz e revisão do chinês por pessoa fluente.
+- [x] **M1 — Infra.** `IDIOMAS`/`IDIOMAS_SUPORTADOS` com `zh`; ternários `idioma === 'en'` do backend e do frontend trocados por `Record<Idioma, …>`; `formatMoeda`/`formatData`/locale; plural (só `other`) no teste de paridade; teste de paridade de `{{variáveis}}`; `zh` carregado sob pedido; selector «中文»; `lang="zh-CN"`; pilha de tipos de letra CJK.
+- [x] **M2 — Superfícies públicas.** Namespaces de login, site, Compra Fácil e portal do fornecedor em `zh`.
+- [x] **M3 — ERP e POS.** Restantes namespaces em `zh`.
+- [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
+- [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; falta o que é do utilizador.)* **Por fazer:** (1) revisão do chinês por pessoa fluente — o texto foi traduzido por Claude e **não está revisto**; (2) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (3) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
 ---
 
@@ -2120,6 +2120,24 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Só frontend. Sem migrações nem variáveis. O `ffmpeg` (Gyan.FFmpeg) foi instalado na máquina de desenvolvimento só para a conversão e não entra no repositório. O ficheiro entra no *bundle* do Vite (asset com *hash*).
 
+### Fase 60 — Mandarim (`zh`) no Multilíngua (20 Out 2026)
+
+- **2026-10-20 · [BE] · Antonio Mambo** — `feat/multilingua-mandarim`
+  - **Pedido do utilizador:** acrescentar o mandarim às línguas do sistema (plano §4.14).
+  - docs(plano): grava o plano 4.14 do mandarim e a fase 60
+  - feat(i18n): mandarim (zh) no servidor — catálogos, e-mails, Mayra e análises. `IDIOMAS_SUPORTADOS` com `zh` e fallback `'zh-*'`; catálogos `erros` (667 mensagens), `validacao` e `notificacoes` em `src/i18n/zh`; os seis modelos de e-mail com versão por língua ganham a versão em mandarim; prompt da Mayra (texto e voz), personas e as duas análises assíncronas passam de ternários `idioma === 'en'` a `Record<Idioma, …>` (um ternário deixava uma língua nova cair em português **sem erro**); `codigos-de-erro.spec.ts` compara agora também os `{marcadores}`.
+- **2026-10-20 · [FE] · Antonio Mambo** — `feat/multilingua-mandarim`
+  - docs(plano): grava o plano 4.14 do mandarim e a fase 60
+  - feat(i18n): mandarim (zh) na interface — catálogo, voz, moeda e carregamento sob pedido. 37 namespaces em `src/locales/zh`, num chunk próprio (`src/i18n/zh.ts`, 241 KB / 87 KB comprimido) que só se descarrega quando alguém usa `zh`; `mudarIdioma`/`carregarIdioma` fazem a língua só mudar depois de o catálogo chegar, e o `main.tsx` espera por ele quando o browser já está em chinês; `formatMoeda` com tabela por língua (`MT 1,234.50`); locale `zh-CN`, `<html lang="zh-CN">`, tipos de letra do sistema para chinês; selector «中文»; voz da Mayra (`detectarIdioma`, `expandirParaFala`, reconhecimento e síntese em `pt-PT`/`en-US`/`zh-CN`); teste de paridade com o plural do mandarim (só `other`) e as `{{variáveis}}`.
+
+  > **Desvios ao plano.** (1) O botão «ouvir» da Mayra (`MessageBubble`) e o reconhecimento do primeiro turno deixaram de estar fixos em `pt-PT` e seguem a língua — o que muda também o inglês, para melhor. (2) O português é o recurso final do catálogo `zh`, como no inglês. (3) Chave nova `idioma.erro_ao_carregar` em `comum` (pt/en/zh) para a falha de descarregamento.
+  >
+  > **Assunções do plano (A1–A4)** mantidas: só chinês simplificado; âmbito completo; moeda `MT 1,234.50`; tradução de Claude publicada para rever depois.
+  >
+  > **Verificação.** Backend: `tsc` do build limpo e a suite de `src/shared` a passar (748 testes), mais os novos de e-mails em mandarim e do prompt da Mayra; os 10 erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` **já existem em `main`**. Frontend: `tsc -b` limpo, `vite build` ok, **476 testes**. **Não verificado:** o chinês por uma pessoa fluente, a voz da Mayra em mandarim com um microfone, e os ecrãs no browser.
+  >
+  > **Notas de deploy.** Sem migrações (`idioma` é texto na base de dados) e sem variáveis novas. Backend primeiro; o frontend acrescenta um chunk `zh-*.js` ao `dist`. Os e-mails de recuperação de senha e de relatório de inventário continuam só em português (já eram), e o rodapé de todos os e-mails está em português.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2398,8 +2416,8 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 
 - [ ] **Mandarim (`zh`, chinês simplificado).** Pedido do utilizador em 2026-10-20. Plano em **§4.14**
       (aprovado em 2026-10-20, com as recomendações da análise como assunções).
-  - [ ] **M1 — Infra.** · [ ] **M2 — Superfícies públicas.** · [ ] **M3 — ERP e POS.**
-  - [ ] **M4 — Mayra e servidor.** · [ ] **M5 — Fecho** (inclui a revisão por pessoa fluente).
+  - [x] **M1 — Infra.** · [x] **M2 — Superfícies públicas.** · [x] **M3 — ERP e POS.**
+  - [x] **M4 — Mayra e servidor.** · [ ] **M5 — Fecho** (falta a revisão do chinês por pessoa fluente, o teste real da voz e a verificação no browser).
 
 ### Login com Google (Compra Fácil)
 
@@ -5558,7 +5576,7 @@ Cópia gravada na criação e imutável depois de editar o cliente; origem (onli
 
 ### 4.14 Mandarim (`zh`) no Multilíngua
 
-- **Data:** 2026-10-20 · **Estado:** **aprovado em 2026-10-20 ("podes iniciar")**, com as recomendações da análise como assunções (A1–A4). Em implementação, Fase 60.
+- **Data:** 2026-10-20 · **Estado:** **aprovado em 2026-10-20 ("podes iniciar")**, com as recomendações da análise como assunções (A1–A4). **Implementado em 2026-10-20 (Fase 60, M1 a M4)**; falta o M5 — revisão do chinês, teste real da voz e verificação no browser, que são do utilizador.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
 
 #### 1. Pedido e interpretação
