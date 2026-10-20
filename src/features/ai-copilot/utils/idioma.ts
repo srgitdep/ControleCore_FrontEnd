@@ -1,3 +1,5 @@
+import type { Idioma } from '@/i18n';
+
 /**
  * Deteccção do idioma de uma frase, para a síntese de voz.
  *
@@ -39,14 +41,34 @@ const MARCADORES_EN = [
   'product', 'products', 'customer', 'customers', 'much', 'many', 'please', 'thanks',
 ];
 
+/** O idioma tal como o reconhecimento e a síntese de voz do browser o pedem. */
+export type IdiomaDeVoz = 'pt-PT' | 'en-US' | 'zh-CN';
+
 /**
- * `'pt-PT'` ou `'en-US'`, para passar ao reconhecimento ou à síntese de voz.
+ * O idioma de voz que corresponde à língua da interface. É o ponto de partida do primeiro
+ * turno de uma conversa, antes de a Mayra ter respondido e de haver texto de onde o deduzir.
+ */
+export function idiomaDeVozDaInterface(idioma: Idioma): IdiomaDeVoz {
+  const porLingua: Record<Idioma, IdiomaDeVoz> = { pt: 'pt-PT', en: 'en-US', zh: 'zh-CN' };
+  return porLingua[idioma];
+}
+
+/** Caracteres Han (chinês). Nenhuma frase portuguesa ou inglesa os contém. */
+const HAN = /[一-鿿]/;
+
+/**
+ * `'pt-PT'`, `'en-US'` ou `'zh-CN'`, para passar ao reconhecimento ou à síntese de voz.
  *
  * Só compara palavras inteiras: um `includes('do')` casaria com «produto» e com
  * «dose», e as palavras funcionais são curtas o suficiente para aparecerem dentro de
  * muitas outras.
+ *
+ * O mandarim detecta-se pelos caracteres e não por palavras: basta um para a frase ser
+ * chinesa, mesmo curta (`好`), e vem antes da regra do comprimento mínimo.
  */
-export function detectarIdioma(texto: string): 'pt-PT' | 'en-US' {
+export function detectarIdioma(texto: string): IdiomaDeVoz {
+  if (HAN.test(texto ?? '')) return 'zh-CN';
+
   const limpo = (texto ?? '').toLowerCase().trim();
   if (limpo.length < 3) return 'pt-PT';
 
@@ -75,13 +97,57 @@ export function detectarIdioma(texto: string): 'pt-PT' | 'en-US' {
 }
 
 /**
+ * As siglas que a síntese de voz lê mal, escritas por extenso na língua da frase.
+ *
+ * `Record<IdiomaDeVoz, …>` para que uma língua nova obrigue a decidir aqui. No mandarim
+ * não se expande o `%` nem os tratamentos: a síntese chinesa lê «50%» como «百分之五十»
+ * sozinha, e acrescentar uma palavra portuguesa a meio de uma frase chinesa era pior.
+ */
+const EXPANSOES_PARA_FALA: Record<IdiomaDeVoz, Array<[RegExp, string]>> = {
+  'pt-PT': [
+    [/\bMZN\b/g, 'meticais'],
+    [/\bUSD\b/g, 'dólares'],
+    [/\bEUR\b/g, 'euros'],
+    [/\bkg\b/g, 'quilos'],
+    [/%/g, ' por cento'],
+    [/\bSr\.\b/g, 'Senhor'],
+    [/\bSra\.\b/g, 'Senhora'],
+    [/\bEng\.\b/g, 'Engenheiro'],
+  ],
+  'en-US': [
+    [/\bMZN\b/g, 'meticals'],
+    [/\bUSD\b/g, 'US dollars'],
+    [/\bEUR\b/g, 'euros'],
+    [/\bkg\b/g, 'kilos'],
+    [/%/g, ' percent'],
+    [/\bSr\.\b/g, 'Mr.'],
+    [/\bSra\.\b/g, 'Mrs.'],
+    [/\bEng\.\b/g, 'Eng.'],
+  ],
+  'zh-CN': [
+    [/\bMZN\b/g, '梅蒂卡尔'],
+    [/\bUSD\b/g, '美元'],
+    [/\bEUR\b/g, '欧元'],
+    [/\bkg\b/g, '公斤'],
+  ],
+};
+
+/** Escreve por extenso as siglas de `texto`, na língua dada (a detectada sobre o texto em bruto). */
+export function expandirParaFala(texto: string, idioma: IdiomaDeVoz): string {
+  return EXPANSOES_PARA_FALA[idioma].reduce(
+    (resultado, [padrao, extenso]) => resultado.replace(padrao, extenso),
+    texto,
+  );
+}
+
+/**
  * A voz do sistema mais adequada ao idioma.
  *
  * Devolve `undefined` quando não há nenhuma instalada para esse idioma — nesse caso
  * quem chama deixa o browser escolher, o que é melhor do que forçar uma voz errada.
  */
 export function escolherVoz(
-  idioma: 'pt-PT' | 'en-US',
+  idioma: IdiomaDeVoz,
   vozes: SpeechSynthesisVoice[],
 ): SpeechSynthesisVoice | undefined {
   const prefixo = idioma.slice(0, 2);

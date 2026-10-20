@@ -1,0 +1,199 @@
+{
+  "plano": {
+    "loja": {
+      "nome": "门店版",
+      "frase": "我知道今天卖了什么，用的是哪份库存，收银账目是否准确。",
+      "ambito": "一家门店，一个仓库。销售点及其周边的必需功能。"
+    },
+    "rede": {
+      "nome": "连锁版",
+      "frase": "我了解每家门店的情况，无需向任何人索取报表。",
+      "ambito": "多家门店和仓库。调拨、采购，以及客户赊账。"
+    },
+    "enterprise": {
+      "nome": "企业版",
+      "frase": "我知道真实成本是多少，以及每家门店是否盈利。",
+      "ambito": "整个连锁网络。财务、人力资源以及供应商市场。"
+    }
+  },
+  "limite": {
+    "lojas": "包含的门店数",
+    "utilizadores": "包含的用户数",
+    "armazens": "仓库",
+    "mayra": "向 Mayra 提问次数",
+    "historico": "可查询的历史记录"
+  },
+  "limite_valor": {
+    "sem_limite": "不限",
+    "por_mes": "{{n}} / 月",
+    "anos_other": "{{count}} 年"
+  },
+  "familia": {
+    "loja": "门店",
+    "cadeia": "供应链",
+    "gestao": "管理",
+    "governo": "治理"
+  },
+  "modulo": {
+    "caixa": "收银前台",
+    "catalogo": "商品目录与库存",
+    "compras": "采购与供应商",
+    "crm": "客户与信用",
+    "financeiro": "财务",
+    "pessoas": "人员——人力资源",
+    "auditoria": "审计"
+  },
+  "capacidade": {
+    "caixa_venda": "扫码或搜索销售",
+    "caixa_pagamentos": "同一笔销售可用多种付款方式",
+    "caixa_recibo": "收据按序编号",
+    "caixa_sessao": "收银班次的开启和结束都经过核对",
+    "caixa_historico_lojas": "跨门店的班次历史",
+    "catalogo_produtos": "按类别管理商品",
+    "catalogo_stock": "按仓库管理库存，采用加权平均成本",
+    "catalogo_movimentos": "变动历史记录",
+    "catalogo_alerta_minimo": "低于最低库存时预警",
+    "catalogo_transferencias": "仓库之间的调拨，全程留痕",
+    "catalogo_multi_armazem": "不限数量的多仓库",
+    "compras_fornecedores": "供应商及其供应的商品",
+    "compras_encomendas": "向供应商下订单",
+    "compras_recepcao": "收货逐行核对",
+    "compras_necessidades": "补货需求与补货面板",
+    "compras_mercado": "供应商市场与 B2B 寻源",
+    "compras_portal": "供应商门户，拥有自己的商品目录",
+    "crm_ficha": "客户档案与购买历史",
+    "crm_limite_credito": "信用额度与欠款余额",
+    "crm_venda_prazo": "赊销，带往来账户",
+    "financeiro_indicadores": "已签约内容的指标",
+    "financeiro_margem": "按门店、按商品的利润",
+    "financeiro_consolidado": "连锁网络的合并财务面板",
+    "pessoas_cadastro": "用户与角色管理",
+    "pessoas_permissoes": "按角色设置权限，并在服务器端校验",
+    "pessoas_rh": "连锁网络的人力资源管理",
+    "pessoas_permissoes_granulares": "细化到界面和操作的权限",
+    "auditoria_registo": "新增、修改和删除的记录",
+    "auditoria_autor": "操作人、时间与原值",
+    "auditoria_historico": "扩展的历史记录（见上方限额）",
+    "mayra_perguntar": "提问并基于真实数据获得回答",
+    "mayra_explicar": "解释一个数字——来自哪里、如何计算",
+    "mayra_perfil": "看到的与提问者的角色所能看到的一致",
+    "mayra_escrita": "写入类操作，保存前须经确认",
+    "mayra_sem_limite": "每月提问不设实际限制"
+  },
+  "cabecalho": {
+    "titulo_antes": "三个档位。价格就在这里，",
+    "titulo_realce": "无需填写表单",
+    "titulo_depois": "。",
+    "sub_antes": "档位之间变化的是",
+    "sub_negrito": "范围",
+    "sub_depois": "，而不是背后换了一套系统。所有档位运行的都是同一个 ControlCore。"
+  },
+  "ciclo": {
+    "aria": "计费周期",
+    "mensal": "按月",
+    "anual": "按年",
+    "dois_meses_chip": "免费 2 个月"
+  },
+  "cartao": {
+    "mais_escolhido": "最受欢迎",
+    "por_mes": "/月",
+    "por_ano": "/年",
+    "dois_meses_gratis": "免费两个月",
+    "iva": "另按法定税率加收增值税。",
+    "pedir_demo": "预约演示",
+    "nota_sem_cartao": "试用无需绑定银行卡。半小时的交流，就能判断系统是否适合您。"
+  },
+  "calculadora": {
+    "titulo": "会有多少人使用？",
+    "texto": "超过包含用户数后，每位用户的单价随数量下降：不超过 {{a1}} 为 {{p1}}，不超过 {{a2}} 为 {{p2}}，更多则为 {{p3}}。",
+    "aria_utilizadores": "用户数量",
+    "por_ano": "每年，不含增值税",
+    "por_mes": "每月，不含增值税",
+    "todos_incluidos": "所有用户均已包含",
+    "extra": "超出包含数 {{n}} 个，每个每月 {{preco}}"
+  },
+  "capacidades": {
+    "titulo": "每个档位解锁的内容",
+    "subtexto": "完整对照表，逐模块列出包含与不包含的内容。"
+  },
+  "tabela": {
+    "capacidade": "功能",
+    "decide": "决定",
+    "incluido": "包含",
+    "nao_incluido": "不包含"
+  },
+  "mayra": {
+    "titulo": "Mayra",
+    "familia": "助手——全模块通用",
+    "nota_antes": "提问适用于",
+    "nota_negrito": "所有",
+    "nota_depois": "套餐。区别在于写入：修改数据的操作需要先确认再保存。"
+  },
+  "sempre": {
+    "titulo": "始终包含，从不收费",
+    "subtexto": "对导出数据收费，只会让客户犹豫要不要加入。",
+    "administracao": {
+      "titulo": "完整的管理功能",
+      "porque": "用户、角色、权限和公司设置。"
+    },
+    "auditoria": {
+      "titulo": "审计",
+      "porque": "记录原值和新值，且不可编辑。"
+    },
+    "mayra": {
+      "titulo": "向 Mayra 提问",
+      "porque": "查询功能包含在所有套餐中。"
+    },
+    "exportar": {
+      "titulo": "导出您的数据",
+      "porque": "随时可导出，且为开放格式。从不对退出收费。"
+    }
+  },
+  "complementos": {
+    "titulo": "附加项",
+    "subtexto": "附加项不是被扣留的功能。它是另一个工作地点，或是有真实可变成本的用量。",
+    "por_mes": "/月"
+  },
+  "complemento": {
+    "loja_adicional": {
+      "nome": "额外门店",
+      "descricao": "超出套餐包含门店数之后，按每家门店计。",
+      "porque": "另一个柜台、另一台收银机、另一支团队。"
+    },
+    "pacote_mayra": {
+      "nome": "5 000 次 Mayra 提问包",
+      "descricao": "在套餐的月度额度之上增加 5 000 次调用。",
+      "porque": "有真实边际成本的用量。"
+    }
+  },
+  "perguntas": {
+    "titulo": "常见问题"
+  },
+  "pergunta": {
+    "mudar_plano": {
+      "p": "我可以在月中更换套餐吗？",
+      "r": "可以。只按剩余天数收取差额。降级时，差额作为下一周期的抵扣额。"
+    },
+    "passar_limite": {
+      "p": "超过门店或用户数上限会怎样？",
+      "r": "我们会在达到上限之前提醒您，并告知哪个档位可以解决。达到上限后，无法再创建新的门店或用户——已有的继续正常工作。"
+    },
+    "deixar_pagar": {
+      "p": "如果我停止付款会怎样？",
+      "r": "先提醒，然后只读，再然后暂停。任何时候都不会删除数据，完整导出始终可用。"
+    },
+    "iva": {
+      "p": "价格含增值税吗？",
+      "r": "不含。另按莫桑比克现行法定税率加收增值税。"
+    },
+    "servidores": {
+      "p": "我需要安装服务器吗？",
+      "r": "不需要。这是云服务。对有此要求的客户提供本地部署选项——此时按方案报价。"
+    }
+  },
+  "fecho": {
+    "titulo": "想用您门店的数据看看效果吗？",
+    "texto": "半小时，无需承诺。我们用您自己的一个商品，演示整条链路如何闭环。",
+    "assunto_email": "ControlCore 演示"
+  }
+}

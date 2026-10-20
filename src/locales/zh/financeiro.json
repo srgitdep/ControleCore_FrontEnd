@@ -1,0 +1,101 @@
+{
+  "abas": {
+    "dre": "DRE——损益表",
+    "fluxo": "现金流",
+    "receber": "应收账款",
+    "pagar": "应付账款"
+  },
+  "meses": {
+    "janeiro": "一月",
+    "fevereiro": "二月",
+    "marco": "三月",
+    "abril": "四月",
+    "maio": "五月",
+    "junho": "六月",
+    "julho": "七月",
+    "agosto": "八月",
+    "setembro": "九月",
+    "outubro": "十月",
+    "novembro": "十一月",
+    "dezembro": "十二月"
+  },
+  "dre": {
+    "titulo": "损益表——{{periodo}}",
+    "faturacao_bruta": "营业总收入",
+    "cmv": "销货成本",
+    "margem_bruta": "毛利",
+    "da_faturacao": "占营业收入的 {{pct}}%",
+    "despesas_pagas": "本期已付费用",
+    "lucro": "预估营业利润",
+    "indicadores": "本期指标",
+    "vendas_realizadas": "已完成销售",
+    "ticket_medio": "客单价",
+    "recebiveis_pendentes": "待收应收款",
+    "despesas_pendentes": "待付费用",
+    "top_produtos": "收入前 5 名的商品"
+  },
+  "fluxo": {
+    "etiqueta": "现金流",
+    "saldo_atual": "当前结余（实际现金）",
+    "receber_30": "未来 30 天应收款",
+    "pagar_30": "未来 30 天应付款",
+    "projecao": "现金流预测——未来 30 天",
+    "legenda": "柱状图：每日流入（蓝色）与流出（红色）。折线：累计预测结余。",
+    "serie_receber": "应收",
+    "serie_pagar": "应付",
+    "serie_saldo": "预测结余"
+  },
+  "estado": {
+    "PENDING": "待处理",
+    "PAID": "已付",
+    "OVERDUE": "已逾期",
+    "CANCELLED": "已取消"
+  },
+  "registos": {
+    "credito_bloqueado": "信用已冻结",
+    "titulo_receber": "应收账款",
+    "titulo_pagar": "应付账款",
+    "novo": "新建",
+    "nenhum": "没有找到记录",
+    "col_descricao": "描述",
+    "col_cliente": "客户",
+    "col_fornecedor": "供应商",
+    "col_vencimento": "到期日",
+    "col_valor": "金额",
+    "col_estado": "状态",
+    "col_acoes": "操作",
+    "criado_auto": "🤖 自动创建",
+    "fatura": "发票：{{numero}}",
+    "pago_em": "付款：{{data}}",
+    "marcar_pago": "标记为已付",
+    "pago": "已付",
+    "cancelado": "已取消",
+    "paginacao_zero": "第 {{page}} 页，共 {{last}} 页 · {{count}} 条记录",
+    "paginacao_other": "第 {{page}} 页，共 {{last}} 页 · {{count}} 条记录"
+  },
+  "novo": {
+    "titulo_receber": "新建应收账款",
+    "titulo_pagar": "新建应付账款",
+    "descricao": "描述",
+    "exemplo_receber": "例如：场地租金",
+    "exemplo_pagar": "例如：发电机维护",
+    "valor_mt": "金额（MT）",
+    "vencimento": "到期日",
+    "cliente": "客户",
+    "fornecedor": "供应商",
+    "opcional": "（选填）",
+    "trocar": "更换",
+    "procurar": "搜索……",
+    "cancelar": "取消",
+    "criar": "创建",
+    "descreva": "请填写记账说明。",
+    "valor_positivo": "金额必须大于零。",
+    "indique_data": "请填写到期日期。"
+  },
+  "mensagens": {
+    "pagamento_ok": "付款处理成功！",
+    "erro_pagamento": "处理付款时出错。",
+    "registo_criado": "财务记录创建成功！",
+    "erro_criar": "创建记录时出错。"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "acoes": {
+    "cancelar": "取消",
+    "guardar": "保存",
+    "editar": "编辑",
+    "apagar": "删除"
+  },
+  "pagina": {
+    "titulo": "模块",
+    "subtitulo": "公司可以订购的内容目录",
+    "novo": "新建模块",
+    "mostrar_desactivados": "显示已停用的模块",
+    "vazio": "目录中还没有模块。",
+    "col_modulo": "模块",
+    "col_codigo": "代码",
+    "col_preco": "价格 / 月",
+    "col_estado": "状态",
+    "activo": "启用",
+    "desactivado": "已停用",
+    "desactivar": "停用",
+    "activar": "启用",
+    "apagar_titulo": "删除模块",
+    "apagar_mensagem": "删除“{{nome}}”？如果有公司正在使用该模块，服务器会拒绝——请改为停用。"
+  },
+  "modal": {
+    "codigo_obrigatorio": "请填写模块代码。",
+    "nome_obrigatorio": "请填写模块名称。",
+    "preco_invalido": "月价格必须是有效的数字。",
+    "titulo_editar": "编辑模块",
+    "codigo": "代码",
+    "codigo_exemplo": "例如：pos",
+    "ordem": "顺序",
+    "nome": "名称",
+    "nome_exemplo": "例如：销售点",
+    "descricao": "描述",
+    "opcional": "（选填）",
+    "preco": "月价格（MT）"
+  },
+  "mensagens": {
+    "criado": "模块已创建。",
+    "erro_criar": "创建模块时出错。",
+    "actualizado": "模块已更新。",
+    "erro_actualizar": "更新模块时出错。",
+    "activado": "“{{nome}}”已启用。",
+    "desactivado": "“{{nome}}”已停用。",
+    "erro_estado": "更改模块状态时出错。",
+    "apagado": "模块已删除。",
+    "erro_apagar": "删除模块时出错。"
+  }
+}

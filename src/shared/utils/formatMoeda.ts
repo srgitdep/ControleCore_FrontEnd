@@ -1,11 +1,22 @@
-import { idiomaActivo, localeIntl } from '@/i18n';
+import { idiomaActivo, localeIntl, type Idioma } from '@/i18n';
+
+/**
+ * Como se escreve o metical em cada língua: onde fica o símbolo e qual é o separador
+ * decimal. `Record<Idioma, …>` para que uma língua nova obrigue a decidir aqui, em vez de
+ * herdar o formato português por engano.
+ */
+const FORMATO_DA_MOEDA: Record<Idioma, { simboloAntes: boolean; separadorDecimal: string }> = {
+  pt: { simboloAntes: false, separadorDecimal: ',' },
+  en: { simboloAntes: true, separadorDecimal: '.' },
+  zh: { simboloAntes: true, separadorDecimal: '.' },
+};
 
 /**
  * A moeda é sempre o metical (MZN) — muda só a forma de o escrever com a língua activa:
- * `1.234.567,50 MT` em português, `MT 1,234,567.50` em inglês.
+ * `1.234.567,50 MT` em português, `MT 1,234,567.50` em inglês e em mandarim.
  */
 function comSimbolo(numero: string): string {
-  return idiomaActivo() === 'en' ? `MT ${numero}` : `${numero} MT`;
+  return FORMATO_DA_MOEDA[idiomaActivo()].simboloAntes ? `MT ${numero}` : `${numero} MT`;
 }
 
 /**
@@ -26,7 +37,7 @@ export function formatMoeda(value: number): string {
  * Exemplo: 1234567 → "1,23M MT"
  */
 export function formatMoedaCompacta(value: number): string {
-  const separadorDecimal = idiomaActivo() === 'en' ? '.' : ',';
+  const { separadorDecimal } = FORMATO_DA_MOEDA[idiomaActivo()];
   if (value >= 1_000_000) {
     return comSimbolo((value / 1_000_000).toFixed(2).replace('.', separadorDecimal) + 'M');
   }

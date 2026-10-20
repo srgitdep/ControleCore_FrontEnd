@@ -1,7 +1,8 @@
 {
   "idioma": {
     "rotulo": "Language",
-    "erro_ao_gravar": "Could not save your language. It is kept in this browser only."
+    "erro_ao_gravar": "Could not save your language. It is kept in this browser only.",
+    "erro_ao_carregar": "Could not load the language. Please try again."
   },
   "tempo": {
     "agora": "just now",

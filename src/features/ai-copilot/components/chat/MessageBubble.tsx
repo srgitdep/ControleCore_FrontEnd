@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { HitlActionCard } from './HitlActionCard';
+import { detectarIdioma, escolherVoz } from '../../utils/idioma';
 
 interface MessageBubbleProps {
   msg: any;
@@ -43,7 +44,13 @@ export function MessageBubble({ msg, idx }: MessageBubbleProps) {
       window.speechSynthesis.cancel();
       const cleaned = text.replace(/[*#`]/g, '').trim();
       const utterance = new SpeechSynthesisUtterance(cleaned);
-      utterance.lang = 'pt-PT';
+      // A língua da resposta, e não uma constante: ler chinês ou inglês com fonética
+      // portuguesa torna a frase incompreensível. Escolhe-se também a voz — o `lang`
+      // sozinho não muda a voz já seleccionada em alguns browsers.
+      const idioma = detectarIdioma(cleaned);
+      utterance.lang = idioma;
+      const voz = escolherVoz(idioma, window.speechSynthesis.getVoices());
+      if (voz) utterance.voice = voz;
       utterance.pitch = 1.1;
       window.speechSynthesis.speak(utterance);
     }

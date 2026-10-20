@@ -1,0 +1,32 @@
+{
+  "acao": {
+    "CREATE": "创建",
+    "UPDATE": "更新",
+    "DELETE": "删除",
+    "LOGIN": "登录",
+    "LOGOUT": "退出",
+    "SALE_COMPLETED": "销售完成",
+    "SALE_CANCELLED": "销售取消"
+  },
+  "tabela": {
+    "sem_dados_exportar": "没有可导出的数据。",
+    "pdf_titulo": "系统历史",
+    "pdf_gerado": "生成时间：{{data}}",
+    "col_utilizador": "用户",
+    "col_acao": "操作",
+    "col_detalhes": "详情",
+    "col_data_hora": "日期与时间",
+    "col_perfil": "角色",
+    "sistema_desconhecido": "系统 / 未知",
+    "perfil_padrao": "默认",
+    "titulo": "审计记录",
+    "exportar_pdf": "导出 PDF",
+    "utilizador_desconhecido": "未知用户",
+    "desconhecido": "未知",
+    "nenhum": "没有找到记录。"
+  },
+  "pagina": {
+    "global": "公司所有用户的操作。",
+    "pessoal": "您在系统中的操作。"
+  }
+}

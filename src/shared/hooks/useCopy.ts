@@ -82,5 +82,7 @@ import type ptSite from '@/locales/pt/site.json';
 export function useCopy(): typeof ptSite {
   const { i18n } = useTranslation('site');
   const lingua = (i18n.resolvedLanguage ?? 'pt') as string;
-  return i18n.getResourceBundle(lingua, 'site') as typeof ptSite;
+  // `?? pt`: o catálogo de uma língua carregada sob pedido (`zh`) pode ainda não ter
+  // chegado; o português existe sempre, e o componente refaz-se quando o outro chegar.
+  return (i18n.getResourceBundle(lingua, 'site') ?? i18n.getResourceBundle('pt', 'site')) as typeof ptSite;
 }

@@ -1,0 +1,11 @@
+{
+  "placeholder": "搜索商品、供应商、采购申请、采购订单…… Ctrl+K",
+  "sem_resultados": "没有找到与“{{termo}}”相关的结果。",
+  "tipo": {
+    "PRODUTO": "商品",
+    "FORNECEDOR": "供应商",
+    "REQUISICAO": "采购申请",
+    "SOURCING": "RFQ",
+    "ORDEM_COMPRA": "采购订单"
+  }
+}

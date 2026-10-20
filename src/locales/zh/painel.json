@@ -1,0 +1,45 @@
+{
+  "gestao": {
+    "indicadores": "指标",
+    "indicadores_mes": "本月指标",
+    "faturacao": "营业额（本月）",
+    "numero_vendas": "销售笔数（本月）",
+    "stock_baixo": "库存偏低的商品",
+    "abaixo_minimo": "低于设定的最低值",
+    "todos_acima_minimo": "全部高于最低值",
+    "funcionarios_presentes": "今天出勤的员工",
+    "pedidos_pendentes": "待处理的 Compra Fácil 订单",
+    "pedidos_em_espera": "等待备货或自提",
+    "sem_pedidos": "没有待处理的订单",
+    "grafico_titulo": "销售动态",
+    "grafico_subtitulo": "最近 7 天"
+  },
+  "grafico": {
+    "titulo_padrao": "客户活动",
+    "subtitulo_padrao": "最近 3 个月的客户活动",
+    "legenda_contas": "活跃账户",
+    "legenda_novos": "新客户",
+    "legenda_regulares": "回头客"
+  },
+  "plataforma": {
+    "titulo": "系统概览",
+    "subtitulo": "所有有效实例的全局统计。",
+    "indicadores": "系统指标",
+    "empresas": "公司总数",
+    "empresas_desc": "有效账户",
+    "utilizadores": "用户总数",
+    "utilizadores_desc": "已注册成员",
+    "lojas": "已注册门店",
+    "lojas_desc": "销售点",
+    "subscricoes": "有效订阅",
+    "subscricoes_desc": "常规套餐",
+    "actividade": "系统近期动态",
+    "actividade_vazio": "系统的详细记录将显示在这里"
+  },
+  "clientes": {
+    "novo": "新建客户",
+    "modulo": "CRM 模块",
+    "descricao": "客户列表和报表将在这里加载。",
+    "mayra": "您可以使用 Mayra（AI Copilot）查询任何客户的资料或历史！"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "recomendacao": {
+    "COMPRAR": "采购",
+    "TRANSFERIR": "调拨",
+    "AGUARDAR": "等待",
+    "NAO_COMPRAR": "不采购",
+    "STOCK_PARADO": "滞销库存",
+    "EXCESSO": "库存过剩"
+  },
+  "urgencia": {
+    "CRITICA": "紧急",
+    "ALTA": "高",
+    "MEDIA": "中"
+  },
+  "tipo_alerta": {
+    "RISCO_RUPTURA": "缺货风险",
+    "OC_ATRASADA": "采购订单逾期",
+    "RECEPCAO_PENDENTE": "待收货"
+  },
+  "comum": {
+    "dias_zero": "{{count}} 天",
+    "dias_other": "{{count}} 天",
+    "a_mostrar": "显示 {{n}} / {{total}}"
+  },
+  "pagina": {
+    "resumo_zero": "{{count}} 项有效补货需求",
+    "resumo_other": "{{count}} 项有效补货需求",
+    "reavaliar_title": "立即强制重新评估此门店",
+    "reavaliar_sem_loja": "请选择要重新评估的门店",
+    "reavaliar": "重新评估",
+    "alertas": "提醒",
+    "historico": "历史",
+    "todas_lojas": "全部门店",
+    "exportacao_indisponivel": "此版本暂不支持导出。",
+    "exportar": "导出",
+    "pesquisa_placeholder": "搜索商品、类别或代码……",
+    "a_mostrar_produtos": "显示 {{n}} / {{total}} 件商品",
+    "aviso_transferencia_zero": "有 {{count}} 件商品可通过门店间调拨解决，无需新增采购。",
+    "aviso_transferencia_other": "有 {{count}} 件商品可通过门店间调拨解决，无需新增采购。"
+  },
+  "chips": {
+    "todos": "全部（{{total}}）"
+  },
+  "kpis": {
+    "risco_ruptura": "有缺货风险的商品",
+    "identificadas": "已识别的补货需求",
+    "identificadas_descricao": "并非全部都需要采购",
+    "requisicoes_aprovacao": "审批中的采购申请",
+    "ordens_emitidas": "已开出的采购订单",
+    "em_aberto": "未结 {{valor}}"
+  },
+  "cobertura": {
+    "titulo": "补货需求队列的覆盖情况",
+    "ver_detalhes_title": "详细的覆盖分析——敬请期待",
+    "ver_detalhes": "查看详情",
+    "em_risco": "有风险（采购/调拨）",
+    "em_atencao": "需关注",
+    "nao_comprar": "不采购"
+  },
+  "mayra": {
+    "titulo": "MAYRA——供应助手",
+    "em_risco": "有缺货风险",
+    "por_transferencia": "可通过调拨解决",
+    "em_transito": "已有采购/调拨在途",
+    "nova_compra": "需要新的采购",
+    "a_analisar": "正在分析队列……",
+    "indisponivel": "智能分析暂时不可用。运营面板仍可正常使用。"
+  },
+  "tabela": {
+    "produto": "商品",
+    "categoria": "类别",
+    "loja": "门店",
+    "stock_disp": "可用库存",
+    "vendas_dia": "日销量",
+    "cobertura": "可售天数",
+    "necessidade": "需求（建议）",
+    "recomendacao": "建议",
+    "data_prevista": "预计日期",
+    "accao": "操作",
+    "dias": "{{dias}} 天",
+    "unidades": "{{n}} 件",
+    "ver_requisicao": "查看采购申请",
+    "ver": "查看",
+    "criar": "创建",
+    "mais_opcoes": "更多选项",
+    "vazio": "没有有效的补货需求。库存处于所配置的参数范围内。"
+  },
+  "detalhe": {
+    "titulo_por_omissao": "补货需求详情",
+    "fechar": "关闭",
+    "a_carregar": "正在加载详情……",
+    "urgencia": "紧急程度：{{nivel}}",
+    "situacao": "当前情况",
+    "fisico": "实物库存",
+    "disponivel": "可用",
+    "minimo": "最低",
+    "unidades": "{{n}} 件",
+    "procura": "需求",
+    "media_diaria": "日均",
+    "media_diaria_valor": "{{n}} 件/天",
+    "vendido_janela": "统计期内已售",
+    "vendido_janela_valor": "{{janela}} 天内 {{vendido}} 件",
+    "ultima_venda_zero": "上次销售在 {{count}} 天前。",
+    "ultima_venda_other": "上次销售在 {{count}} 天前。",
+    "abastecimento": "供应",
+    "quantidade_sugerida": "建议数量",
+    "valor_estimado": "估算金额",
+    "cobertura_actual": "当前可售天数",
+    "data_ruptura": "预计断货日期",
+    "rede": "网络",
+    "sem_stock_rede": "网络中没有可调拨的库存。",
+    "unidades_disponiveis": "可用 {{n}} 件",
+    "transferir": "调拨",
+    "compras": "采购",
+    "sem_compras": "该商品没有采购申请或订单。",
+    "requisicao": "采购申请 {{numero}}",
+    "rfq": "↳ RFQ（{{n}} 位候选）",
+    "oc": "采购订单 · {{fornecedor}}",
+    "oc_recebido": "已收 {{recebida}}/{{pedida}}",
+    "fornecedor": "供应商",
+    "historico": "历史",
+    "a_criar": "创建中……",
+    "criar_requisicao": "创建采购申请",
+    "nao_comprar": "不采购"
+  },
+  "ignorar": {
+    "titulo": "不采购",
+    "fechar": "关闭",
+    "descricao": "请说明为什么现在不应补充此商品。它会记录在该补货需求的历史中。",
+    "placeholder": "例如：季节性商品，需求将在下个季度恢复。",
+    "minimo": "至少 {{n}} 个字符。",
+    "cancelar": "取消",
+    "a_guardar": "保存中……",
+    "confirmar": "确认"
+  },
+  "alertas": {
+    "ha_dias_zero": "{{count}} 天前",
+    "ha_dias_other": "{{count}} 天前",
+    "resumo_zero": "{{count}} 条有效提醒",
+    "resumo_other": "{{count}} 条有效提醒",
+    "a_carregar": "正在加载提醒……",
+    "vazio": "没有有效的提醒。一切如常。"
+  },
+  "historico": {
+    "quando": "时间",
+    "produto": "商品",
+    "o_que_aconteceu": "发生了什么",
+    "recomendacao": "建议",
+    "quantidade": "数量",
+    "quem": "操作人",
+    "sistema": "系统（自动）",
+    "resumo_zero": "{{count}} 条记录",
+    "resumo_other": "{{count}} 条记录",
+    "vazio": "还没有补货需求的历史记录。"
+  },
+  "hooks": {
+    "requisicao_ja_existia": "采购申请 {{numero}} 已存在。补货需求已转到那里。",
+    "requisicao_criada": "采购申请 {{numero}} 已创建。",
+    "erro_requisicao": "无法创建采购申请。",
+    "transferencia_solicitada": "已申请调拨。请在门店间调拨中跟踪。",
+    "erro_transferencia": "无法申请调拨。",
+    "ignorada": "补货需求已标记为忽略。",
+    "erro_ignorar": "无法忽略该补货需求。",
+    "reavaliadas": "补货需求已重新评估。",
+    "erro_reavaliar": "无法重新评估。"
+  }
+}

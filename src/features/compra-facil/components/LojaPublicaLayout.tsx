@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { idiomaActivo } from '@/i18n';
+import { idiomaActivo, type Idioma } from '@/i18n';
 import '@/features/landing/site.css';
 
 /**
@@ -25,13 +25,16 @@ import '@/features/landing/site.css';
  * mesma (`clientId=''`) — é o botão em si (`GoogleLoginBotao`) que não se
  * mostra nesse caso, não este layout.
  */
+/** A Google distingue o chinês simplificado (`zh-CN`) do tradicional; `zh` sozinho não é um dos seus códigos. */
+const LOCALE_DA_GOOGLE: Record<Idioma, string> = { pt: 'pt', en: 'en', zh: 'zh-CN' };
+
 export function LojaPublicaLayout() {
   return (
     // `locale` é a língua do botão «Continuar com a Google», desenhado pela própria Google. O
     // script lê-a uma só vez, quando carrega: quem já escolheu inglês vê o botão em inglês, e
     // quem muda de língua a meio vê-o mudar na carga seguinte. Remontar o provider a cada
     // mudança resolveria isso, mas apagava o que a pessoa já escreveu nos formulários.
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''} locale={idiomaActivo()}>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''} locale={LOCALE_DA_GOOGLE[idiomaActivo()]}>
       <div className="cc-sitio" style={{ background: '#fff', color: 'var(--tinta)', minHeight: '100vh' }}>
         <Outlet />
       </div>

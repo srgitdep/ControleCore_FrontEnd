@@ -1,0 +1,212 @@
+{
+  "cabecalho": {
+    "online": "在线，随时为您效劳",
+    "restaurar": "还原大小",
+    "ecra_inteiro": "全屏",
+    "historico": "对话历史",
+    "nova_conversa": "新对话"
+  },
+  "entrada": {
+    "rh_escala_rotulo": "👥 明天的排班",
+    "rh_escala_pergunta": "人力资源：明天主店的班次有谁值班？",
+    "rh_anomalias_rotulo": "⏱️ 异常汇总（本周）",
+    "rh_anomalias_pergunta": "人力资源：请汇总本周的考勤异常（迟到/缺勤）。",
+    "placeholder": "向 Mayra 提问……",
+    "voz": "开启语音模式（Gemini Live）",
+    "aviso": "Mayra 可能出错。重要数值请务必核对。"
+  },
+  "mensagem": {
+    "ouvir": "朗读",
+    "copiar": "复制文本"
+  },
+  "boas_vindas": "您好！我是 Mayra，您的 ControlCore 智能助手。今天我可以怎样协助您管理公司？",
+  "erro": {
+    "carregar_sessao": "加载会话时出错。",
+    "comunicacao": "与 AI 通信时出错。",
+    "executar_accao": "执行所请求的操作时出错。"
+  },
+  "sucesso": "✅ 成功：{{resposta}}",
+  "boas_vindas_ecra": {
+    "ola": "您好，{{nome}}",
+    "nome_padrao": "经理",
+    "intro": "我是 Mayra。请选择一条建议，或输入您的问题。"
+  },
+  "sugestao": {
+    "stock": {
+      "ruptura": {
+        "titulo": "预测缺货",
+        "descricao": "预测库存缺货风险",
+        "pergunta": "预测库存缺货风险"
+      },
+      "capital": {
+        "titulo": "冻结资金",
+        "descricao": "分析各门店的滞销库存",
+        "pergunta": "分析滞销库存（冻结资金）"
+      },
+      "movimentos": {
+        "titulo": "库存变动",
+        "descricao": "查看最近的变动",
+        "pergunta": "显示今天最近的库存变动"
+      },
+      "baixo": {
+        "titulo": "库存偏低",
+        "descricao": "列出临界的商品",
+        "pergunta": "哪些商品的库存低于最低值？"
+      }
+    },
+    "caixa": {
+      "turno": {
+        "titulo": "我的班次",
+        "descricao": "我的销售汇总",
+        "pergunta": "汇总我今天的销售"
+      },
+      "preco": {
+        "titulo": "查询价格",
+        "descricao": "查看商品价格",
+        "pergunta": "查询某个商品的价格"
+      },
+      "horarios": {
+        "titulo": "我的时间",
+        "descricao": "查看我的打卡记录",
+        "pergunta": "显示我今天的上下班记录"
+      },
+      "top": {
+        "titulo": "销售排行",
+        "descricao": "卖得最好的商品",
+        "pergunta": "我今天卖得最多的商品有哪些？"
+      }
+    },
+    "gestao": {
+      "margens": {
+        "titulo": "审查利润率",
+        "descricao": "分析利润率低的商品",
+        "pergunta": "分析利润率低或为负的商品"
+      },
+      "fraude": {
+        "titulo": "防欺诈",
+        "descricao": "可疑情况审计",
+        "pergunta": "防欺诈审计（本周的可疑情况）"
+      },
+      "fecho": {
+        "titulo": "收银结班",
+        "descricao": "汇总所有班次的结班情况",
+        "pergunta": "汇总今天的收银结班"
+      },
+      "capital": {
+        "titulo": "冻结资金",
+        "descricao": "分析没有出库的库存",
+        "pergunta": "分析滞销库存（冻结资金）"
+      },
+      "marketing": {
+        "titulo": "营销与库存",
+        "descricao": "如何清理临近保质期的商品",
+        "pergunta": "营销与库存：如何清理临近保质期的商品？"
+      },
+      "financas": {
+        "titulo": "财务",
+        "descricao": "收银短款汇总",
+        "pergunta": "财务：汇总本周的收银短款。"
+      },
+      "rh_vendas": {
+        "titulo": "人力资源与销售",
+        "descricao": "收银员最佳业绩",
+        "pergunta": "人力资源与销售：今天哪位操作员业绩最好？"
+      },
+      "entregas": {
+        "titulo": "配送",
+        "descricao": "实际配送时间",
+        "pergunta": "采购：供应商 X 的实际配送时间是多少？"
+      },
+      "preco": {
+        "titulo": "最优价格",
+        "descricao": "谁的历史价格最好？",
+        "pergunta": "采购：谁给的 5 公斤大米历史价格最好？"
+      },
+      "rascunho": {
+        "titulo": "订单草稿",
+        "descricao": "生成缺货订单",
+        "pergunta": "采购：为紧急缺货的商品创建一份订单草稿。"
+      },
+      "clientes": {
+        "titulo": "最佳客户",
+        "descricao": "本月前 5 位客户",
+        "pergunta": "CRM：本月我们最好的 5 位客户是谁？"
+      },
+      "historico": {
+        "titulo": "客户历史",
+        "descricao": "查询客户的购买记录",
+        "pergunta": "CRM：显示 NUIT 为 123456789 的客户的购买历史"
+      }
+    }
+  },
+  "hitl": {
+    "titulo": {
+      "UPDATE_PRODUCT_PRICE": "已请求操作：更新价格",
+      "ADJUST_STOCK": "已请求操作：调整库存",
+      "TRANSFER_STOCK": "已请求操作：库存调拨",
+      "CREATE_USER": "已请求操作：新建员工",
+      "TOGGLE_USER_STATUS": "已请求操作：更改访问权限",
+      "REGISTER_EXPENSE": "已请求操作：登记费用",
+      "PAY_BILL": "已请求操作：结清账单 / 费用",
+      "outra": "已请求操作"
+    },
+    "produto": "商品：",
+    "preco_atual": "当前价格：",
+    "novo_preco": "新价格：",
+    "armazem": "仓库：",
+    "ajuste": "将应用的调整：",
+    "novo_saldo": "预期新结余：",
+    "motivo": "原因：{{motivo}}",
+    "origem": "源头：",
+    "destino": "目的地：",
+    "qtd_transferir": "调拨数量：",
+    "nome": "姓名：",
+    "email": "邮箱：",
+    "perfil": "角色：",
+    "funcionario": "员工：",
+    "accao": "操作：",
+    "ativar_acesso": "启用访问",
+    "bloquear_acesso": "封锁/停用访问",
+    "descricao": "描述：",
+    "valor": "金额：",
+    "vencimento": "到期日期：",
+    "estado_inicial": "初始状态：",
+    "pago": "已付",
+    "pendente": "待付",
+    "conta_descricao": "账目描述：",
+    "valor_liquidar": "结清金额：",
+    "vencimento_original": "原到期日期：",
+    "aviso_pagar": "此操作会将账目按当前时间标记为已付。",
+    "confirmar": "确认",
+    "cancelar": "取消",
+    "cancelei": "我已取消该操作。"
+  },
+  "historico": {
+    "titulo": "历史",
+    "nova_conversa": "新对话",
+    "vazio": "没有找到历史记录。"
+  },
+  "voz": {
+    "a_ligar": "连接中……",
+    "a_ouvir": "正在聆听",
+    "a_responder": "正在回答",
+    "a_consultar": "正在查询数据……",
+    "a_pensar": "正在思考……",
+    "nao_ligou": "无法连接",
+    "toque_para_falar": "点按麦克风开始说话",
+    "voltar": "返回文字对话",
+    "titulo": "语音",
+    "placeholder": "输入您的问题……",
+    "enviar": "发送",
+    "escrever": "改为打字",
+    "ligar_de_novo": "重新连接",
+    "sair": "退出语音模式",
+    "erro": {
+      "sem_reconhecimento": "您的浏览器不支持本地语音识别。",
+      "sem_microfone": "无法访问麦克风。请检查权限。",
+      "tempo_esgotado": "无法在规定时间内连接到 {{host}} 的语音服务器。请检查网络。",
+      "falha_ligar": "连接语音服务器失败：{{detalhe}}",
+      "sessao_expirada": "会话已过期。请重新登录。"
+    }
+  }
+}
