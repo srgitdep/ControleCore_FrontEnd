@@ -42,6 +42,14 @@
 
 **Fase 5 — Rastreio ao vivo** (plano completo em **§4.6**, aprovado em 2026-10-11). **5A, 5B e 5C estão feitas** (Fases 42 e 43); falta só a **5D — o teste real num telemóvel**, que é do utilizador, e a decisão final sobre o fornecedor de rotas (a 5C está escrita para o OpenRouteService e fica **desligada sem `ORS_API_KEY`**). A **Fase 6 (webhooks)** também está feita (Fase 45). Tudo o que é entrega está num só ramo (`feat/rastreio-fase5`, nos dois repositórios), à espera do merge único; **não há mais código por escrever na entrega** — só a 5D e as decisões abaixo. Quando a 5D estiver feita, este bloco apaga-se.
 
+**Fase 60 — Mandarim (`zh`) no Multilíngua** (plano completo em **§4.14**; branch `feat/multilingua-mandarim` nos dois repositórios, backend primeiro).
+
+- [ ] **M1 — Infra.** `IDIOMAS`/`IDIOMAS_SUPORTADOS` com `zh`; ternários `idioma === 'en'` do backend e do frontend trocados por `Record<Idioma, …>`; `formatMoeda`/`formatData`/locale; plural (só `other`) no teste de paridade; teste de paridade de `{{variáveis}}`; `zh` carregado sob pedido; selector «中文»; `lang="zh-CN"`; pilha de tipos de letra CJK.
+- [ ] **M2 — Superfícies públicas.** Namespaces de login, site, Compra Fácil e portal do fornecedor em `zh`.
+- [ ] **M3 — ERP e POS.** Restantes namespaces em `zh`.
+- [ ] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
+- [ ] **M5 — Fecho.** Testes, TRD, plano; teste manual da voz e revisão do chinês por pessoa fluente.
+
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2387,6 +2395,11 @@ língua da empresa e à do browser; moeda sempre MZN, só a formatação muda.
 - [x] Defeito pré-existente, encontrado no planeamento: `index.html` declara
       `lang="en"` com a interface em português — afecta leitores de ecrã e a
       tradução automática do browser. Corrige-se na Fase 1.
+
+- [ ] **Mandarim (`zh`, chinês simplificado).** Pedido do utilizador em 2026-10-20. Plano em **§4.14**
+      (aprovado em 2026-10-20, com as recomendações da análise como assunções).
+  - [ ] **M1 — Infra.** · [ ] **M2 — Superfícies públicas.** · [ ] **M3 — ERP e POS.**
+  - [ ] **M4 — Mayra e servidor.** · [ ] **M5 — Fecho** (inclui a revisão por pessoa fluente).
 
 ### Login com Google (Compra Fácil)
 
@@ -5542,6 +5555,43 @@ Cópia gravada na criação e imutável depois de editar o cliente; origem (onli
 - **FE:** `features/crm/` (lista, filtros, detalhe), `features/compra-facil-gestao/` (gaveta e tabela), i18n.
 
 **Obrigatório:** K1, K2, K4 e a coluna «Origem». **Pode cortar-se:** a auditoria de visualização e o filtro por estado.
+
+### 4.14 Mandarim (`zh`) no Multilíngua
+
+- **Data:** 2026-10-20 · **Estado:** **aprovado em 2026-10-20 ("podes iniciar")**, com as recomendações da análise como assunções (A1–A4). Em implementação, Fase 60.
+- **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro.
+
+#### 1. Pedido e interpretação
+
+Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos e-mails e da Mayra (texto e voz), com o português como origem e recurso final (como em §4.2). Não se traduz o conteúdo escrito pelos utilizadores (produtos, notas).
+
+#### 2. O que já serve
+
+`idioma` é texto na base de dados (**sem migração**). Uma língua nova é uma entrada em `IDIOMAS` (FE) e `IDIOMAS_SUPORTADOS` (BE), um ficheiro por namespace em `src/locales/zh/` (FE) e `src/i18n/zh/` (BE), e o `DefinirIdiomaDto` valida-a sozinho. O detector do browser escolhe `zh` a quem tem o browser em `zh-*`.
+
+#### 3. Decisões e assunções
+
+- **D1 — Chinês simplificado, código `zh`**, locale `Intl` `zh-CN`, `<html lang="zh-CN">`. `zh-TW` do browser cai em `zh` (simplificado).
+- **D2 — Os ramos `'en'` hardcoded passam a `Record<Idioma, …>`**, para o compilador obrigar a completar cada língua. Com `zh`, um ternário `idioma === 'en' ? … : …` cairia em português **sem erro**.
+- **D3 — Plural:** o mandarim só tem `other`; o teste de paridade normaliza os sufixos de plural por língua.
+- **D4 — Teste novo:** paridade dos `{{placeholders}}` entre `pt` e `zh`.
+- **D5 — `zh` carrega sob pedido** (`import()`); `pt` e `en` continuam no bundle. O `pt` é o recurso final, logo o ecrã nunca mostra chaves cruas. Se o browser já pede `zh`, carrega-se antes do primeiro render.
+- **D6 — Tipo de letra:** pilha do sistema (`PingFang SC`, `Microsoft YaHei`, `Noto Sans CJK SC`); sem web font CJK.
+- **D7 — Mayra:** prompt de texto com instrução de idioma por língua; persona base e de voz passam a «responda no idioma do utilizador»; análises assíncronas por `Record`; `SpeechRecognition`/`speechSynthesis` do browser seguem o idioma da conversa/da interface (`zh-CN`). A voz do Gemini Live continua sem `languageCode` fixo.
+- **D8 — Glossário** fechado antes de traduzir (stock 库存, armazém 仓库, fornecedor 供应商, IVA 增值税, estafeta 配送员…); siglas e marcas locais (NUIT, M-Pesa, e-Mola, BI, MT) ficam como estão.
+
+**Assunções (a corrigir pelo utilizador):** **A1** só simplificado; **A2** âmbito completo, por fases (M2 antes de M3); **A3** moeda `MT 1,234.50` (ponto decimal, como em inglês); **A4** o chinês traduzido por Claude é publicado e **revisto depois por pessoa fluente** (mesma decisão do inglês, 2026-10-01) — a revisão é um item aberto do backlog, não está feita.
+
+#### 4. Riscos
+
+- Tradução sem revisão humana: erros num idioma que a equipa não lê passam despercebidos.
+- Qualidade/latência da voz do Gemini Live em mandarim: só se confirma ao ouvir.
+- Tamanho do bundle: contido por D5.
+
+#### 5. Ficheiros
+
+- **BE:** `src/shared/idiomas.ts`, `configuracao-i18n.ts`, `src/i18n/zh/*`, `utils/email.templates.ts`, `ai-copilot-prompt.service.ts`, `personas/*`, `analisar-*-mayra.use-case.ts`, `decidir-adesao`, `registar-fornecedor-publico`, `onboarding-empresa`, `registo-estafeta` (use-case e DTO).
+- **FE:** `src/i18n/index.ts`, `paridade.test.ts`, `src/locales/zh/*`, `SelectorIdioma.tsx`, `formatMoeda.ts`, `useGeminiVoice.ts`, `MessageBubble.tsx`, `RegistoEstafetaPage.tsx`, `types/onboarding.ts`, `index.html`/CSS (tipos de letra).
 
 ## 5. Convenção para novas entradas
 
