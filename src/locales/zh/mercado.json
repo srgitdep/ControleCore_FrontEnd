@@ -1,0 +1,54 @@
+{
+  "cabecalho": {
+    "titulo": "供应商市场",
+    "sou_fornecedor": "我是供应商",
+    "entrar": "登录"
+  },
+  "lista": {
+    "titulo": "谁供应什么，配送到哪里",
+    "subtitulo": "已在平台上发布商品目录的供应商。价格为各家发布的标价。",
+    "placeholder_busca": "大米、食用油、洗涤剂、饮料……",
+    "todas_provincias": "全部省份",
+    "vazio_filtrado": "没有符合这些条件的供应商。",
+    "vazio_geral": "还没有发布商品目录的供应商。",
+    "vazio_dica_filtrado": "请尝试更宽泛的关键词，或取消省份筛选。",
+    "vazio_dica_geral": "市场因发布者而壮大。如果您向超市供货，请注册——免费。",
+    "registar_empresa": "注册我的公司",
+    "fornecedores_other": "{{count}} 家供应商",
+    "fornecedores_em_other": "{{count}} 家供应商可配送到 {{provincia}}",
+    "artigos_zero": "{{count}} 件商品",
+    "artigos_other": "{{count}} 件商品",
+    "mais_provincias": "+{{count}}",
+    "ver_ficha": "查看详情",
+    "sob_consulta": "面议",
+    "rodape_titulo": "您向超市供货吗？",
+    "rodape_texto": "只需发布一次商品目录，平台上的所有买家都能看到。注册免费。"
+  },
+  "ficha": {
+    "voltar": "市场",
+    "nao_encontrado": "未找到供应商。",
+    "voltar_ao_mercado": "返回市场",
+    "artigos_publicados_zero": "已发布商品",
+    "artigos_publicados_other": "已发布商品",
+    "provincias_servidas_zero": "覆盖省份",
+    "provincias_servidas_other": "覆盖省份",
+    "compradores_activos": "活跃买家",
+    "compradores_nota": "未公开——买家不足五家时，出于匿名考虑不公布该数字。",
+    "documentacao_titulo": "已核验的文件",
+    "documentacao_texto": "已由平台核验，截至目前仍在有效期内。",
+    "o_que_fornece": "供应的商品",
+    "onde_entrega": "配送范围",
+    "cta_titulo": "想向这家供应商采购吗？",
+    "cta_texto": "在 ControlCore 中，您创建一份包含所需商品的采购申请，系统会将这家供应商与其他所有供应商进行比较——单价、交期、可靠性和配送成本——并告诉您哪家更划算，以及原因。",
+    "entrar": "登录 ControlCore"
+  },
+  "documento": {
+    "ALVARA": "营业执照",
+    "CERTIDAO_QUITACAO_FISCAL": "税务清缴证明",
+    "INSCRICAO_INSS": "INSS",
+    "LICENCA_SANITARIA": "卫生许可证",
+    "SEGURO_RESPONSABILIDADE": "责任保险",
+    "CERTIFICADO_QUALIDADE": "质量认证",
+    "OUTRO": "其他文件"
+  }
+}

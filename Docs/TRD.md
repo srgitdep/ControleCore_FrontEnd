@@ -58,7 +58,7 @@ primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 | Login social | @react-oauth/google | ^0.13.5 | "Continuar com Google" no Compra Fácil (Google Identity Services) |
 | Mapas | leaflet + react-leaflet + @types/leaflet | ^1.9.4 / ^5.0.0 | escolha de morada e localização da loja; só em `src/shared/ui/mapa/MapaEntrega.tsx`, carregado com `React.lazy` (chunk à parte, ~159 kB). Tiles do OpenStreetMap. **GPS** (`shared/utils/geolocalizacao.ts`, `obterMelhorPosicao`): ouve `watchPosition` até ~15 s e guarda a posição de menor erro (a primeira costuma vir do Wi-Fi/IP, com centenas de metros de erro); só existe em contexto seguro (HTTPS/`localhost`), fora dele o botão esconde-se. O mapa remede-se com `ResizeObserver` (`invalidateSize`) — dentro de modais os tiles ficavam deslocados. O enquadramento do círculo de precisão usa `limitesDoCirculo` (`shared/utils/geo.ts`), **não** `L.circle().getBounds()` (precisa do círculo num mapa e rebentava). `BarreiraDoMapa` contém uma falha do mapa sem derrubar a página. `NomeDoLocal` mostra o nome do sítio (Nominatim) e avisa se cair fora de Moçambique. `avaliarPrecisao` (`geolocalizacao.ts`): ≤ 100 m boa, ≤ 1 km fraca (usa-se com aviso), **> 1 km inutilizável (não se usa)**. `PesquisaDeLocal` procura por nome, só quando a pessoa pede (1 pedido/s) |
 | Datas | date-fns | ^4.4.0 | |
-| Tradução (i18n) | i18next + react-i18next + i18next-browser-languagedetector | ^26.4.2 / ^17.0.15 / ^8.2.1 | português e inglês; ver «Multilínguas» abaixo |
+| Tradução (i18n) | i18next + react-i18next + i18next-browser-languagedetector | ^26.4.2 / ^17.0.15 / ^8.2.1 | português, inglês e mandarim (`zh`); ver «Multilínguas» abaixo |
 | Utilitários CSS | clsx + tailwind-merge + class-variance-authority | — | |
 | Lint | oxlint | ^1.71.0 | `npm run lint` |
 | Testes | vitest | ^4.1.10 | `npm test` |
@@ -80,7 +80,23 @@ sobrevivia a outro aparelho ou sessão. Todas as instâncias do axios enviam
 seguem a língua (`pt-MZ` / `en-GB`; moeda sempre MZN). Selector: `SelectorIdioma`
 (`src/shared/ui/`) no ERP, na loja (também na página inicial, que tem topo próprio), no
 portal, no login e nas páginas públicas. Teste de paridade (`src/i18n/paridade.test.ts`)
-falha se uma chave faltar numa das línguas.
+falha se uma chave faltar numa das línguas, se uma `{{variável}}` não coincidir com a do
+português, ou se o mandarim tiver formas de plural que não usa (só `_other`; `_zero` vale).
+
+**Mandarim (`zh`, Fase 60, 20/10/2026).** Chinês simplificado; um `zh-TW` do browser lê-se
+em simplificado. O catálogo (`src/locales/zh/`) **não está no bundle inicial**: `src/i18n/zh.ts`
+junta-o num chunk próprio (~241 KB, 87 KB comprimido) que `carregarIdioma('zh')` descarrega
+uma só vez e `mudarIdioma()` espera antes de mudar a língua — por aí passam o selector e
+`aplicarIdiomaGuardado`; `carregarIdiomaActivo()` faz o mesmo para o browser já em chinês,
+antes do primeiro render (`main.tsx`). O português, sempre carregado, é o recurso final.
+Locale `zh-CN` (`1,234.50`; datas `2026/04/03`), moeda `MT 1,234.50` (tabela
+`FORMATO_DA_MOEDA` em `formatMoeda.ts`, que obriga a decidir em cada língua nova),
+`<html lang="zh-CN">`, e tipos de letra do sistema (`PingFang SC`, `Microsoft YaHei`,
+`Noto Sans SC`) no fim de `--font-sans` — não se descarrega nenhum tipo de letra chinês. A
+voz da Mayra no browser (`features/ai-copilot/utils/idioma.ts`): `detectarIdioma` devolve
+`zh-CN` por caracteres Han, `expandirParaFala` escreve as siglas (`MZN`) por extenso em cada
+língua, e o reconhecimento do primeiro turno parte da língua da interface. A Google recebe
+`zh-CN` no botão de entrar (`LojaPublicaLayout`).
 
 Namespaces existentes (30): `comum`, `loja` (Compra Fácil), `auth` (login, recuperação e
 redefinição de senha), `portal` e `mercado` (B2B), `site` (landing/login — substitui
@@ -152,7 +168,7 @@ ao submeter.
 | Folhas de cálculo | exceljs | ^4.4.0 | exportações |
 | Documentação de API | @nestjs/swagger + swagger-ui-express | — | `/api/docs` |
 | Datas | date-fns | ^4.4.0 | |
-| Tradução (i18n) | nestjs-i18n | ^10.8.5 | mensagens do servidor em português e inglês; ver «Multilínguas» abaixo |
+| Tradução (i18n) | nestjs-i18n | ^10.8.5 | mensagens do servidor em português, inglês e mandarim (`zh`); ver «Multilínguas» abaixo |
 | Identificadores | uuid | ^14.0.1 | |
 | Testes | jest + ts-jest + jest-mock-extended + supertest | ^30.x | `*.spec.ts`, `npm test` / `test:e2e` |
 | Lint | eslint + typescript-eslint + prettier | ^9.x | `npm run lint` |
@@ -199,7 +215,7 @@ frase fixa, reaproveitado pelo registo do fornecedor e pelo pedido de adesão.
 língua de um utilizador autenticado pela mesma ordem de `resolverIdioma` — preferência →
 empresa → língua do pedido em curso → português —, e é partilhada por quatro pontos:
 o chat de texto e a voz da Mayra (`ai-copilot-prompt.service.ts`, que a acrescenta ao
-prompt do sistema só quando é inglês, sem alterar o prompt em português), a recomendação
+prompt do sistema quando a língua não é o português — `PREFERENCIA_DE_IDIOMA` é um `Record<Idioma, …>` —, sem alterar o prompt em português), a recomendação
 do painel de necessidades (`AnalisarNecessidadesMayraUseCase` — a língua entra na chave de
 cache em memória, para duas pessoas da mesma loja em línguas diferentes não partilharem a
 mesma análise) e a classificação de excepções de inventário

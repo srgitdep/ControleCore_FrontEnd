@@ -1,7 +1,8 @@
 {
   "idioma": {
     "rotulo": "Língua",
-    "erro_ao_gravar": "Não foi possível gravar a língua. Fica só neste browser."
+    "erro_ao_gravar": "Não foi possível gravar a língua. Fica só neste browser.",
+    "erro_ao_carregar": "Não foi possível carregar a língua. Tente outra vez."
   },
   "tempo": {
     "agora": "agora",

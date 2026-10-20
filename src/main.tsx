@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import './app/index.css';
 // Antes da aplicação: o primeiro render já sai na língua certa, e o `lang` da página
 // fica certo antes de qualquer leitor de ecrã o ler.
-import './i18n';
+import { carregarIdiomaActivo } from './i18n';
 import App from './App';
 
 export const queryClient = new QueryClient({
@@ -18,7 +18,10 @@ export const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById('root')!).render(
+// Quem tem o browser em chinês espera pelo catálogo `zh` (um só chunk) antes do primeiro
+// render, para não ver um relâmpago de português. Em `pt` e `en` resolve na hora, e uma
+// falha de rede não impede a aplicação de arrancar.
+void carregarIdiomaActivo().then(() => createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
 
@@ -61,4 +64,4 @@ createRoot(document.getElementById('root')!).render(
 
     </QueryClientProvider>
   </StrictMode>,
-);
+));

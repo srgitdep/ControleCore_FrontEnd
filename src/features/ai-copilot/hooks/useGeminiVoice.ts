@@ -10,7 +10,14 @@ import {
 import { enderecoDoSocket } from '../../../shared/config/enderecoSocket';
 import { PCMPlayer } from '@/shared/utils';
 import { api } from '@/shared/config';
-import { detectarIdioma, escolherVoz } from '../utils/idioma';
+import { idiomaActivo } from '@/i18n';
+import {
+  detectarIdioma,
+  escolherVoz,
+  expandirParaFala,
+  idiomaDeVozDaInterface,
+  type IdiomaDeVoz,
+} from '../utils/idioma';
 
 export type VoiceState =
   | 'DISCONNECTED'
@@ -88,9 +95,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
    * socket, que são criados uma vez e capturariam um valor obsoleto de `state`. E
    * mudá-lo não deve provocar re-renderização — só afecta a próxima chamada.
    *
-   * Começa em português, que é o idioma por omissão do sistema.
+   * Começa na língua da interface — é a que a pessoa escolheu, e a que mais provavelmente
+   * vai falar no primeiro turno, antes de a Mayra ter respondido. Em português (o
+   * idioma por omissão do sistema) fica como sempre foi.
    */
-  const idiomaDaConversaRef = useRef<'pt-PT' | 'en-US'>('pt-PT');
+  const idiomaDaConversaRef = useRef<IdiomaDeVoz>(idiomaDeVozDaInterface(idiomaActivo()));
   const isRefreshingTokenRef = useRef<boolean>(false);
 
   // Inicializar PCMPlayer (24kHz para Gemini Live Audio)
@@ -121,7 +130,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
    * deixar o símbolo por expandir.
    */
   const cleanTextForSpeech = useCallback((rawText: string): string => {
-    const emIngles = detectarIdioma(rawText) === 'en-US';
+    const idioma = detectarIdioma(rawText);
 
     let cleaned = rawText
       .replace(/\[PERSONA:[^\]]+\]/gi, '')
@@ -130,15 +139,8 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
       .replace(/```[\s\S]*?```/g, '')
       .replace(/`([^`]+)`/g, '$1')
       .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
-      .replace(/\bMZN\b/g, emIngles ? 'meticals' : 'meticais')
-      .replace(/\bUSD\b/g, emIngles ? 'US dollars' : 'dólares')
-      .replace(/\bEUR\b/g, 'euros')
-      .replace(/\bkg\b/g, emIngles ? 'kilos' : 'quilos')
-      .replace(/%/g, emIngles ? ' percent' : ' por cento')
-      .replace(/\bSr\.\b/g, emIngles ? 'Mr.' : 'Senhor')
-      .replace(/\bSra\.\b/g, emIngles ? 'Mrs.' : 'Senhora')
-      .replace(/\bEng\.\b/g, emIngles ? 'Eng.' : 'Engenheiro')
       .trim();
+    cleaned = expandirParaFala(cleaned, idioma);
 
     if (cleaned.length > 350) {
       const lastPeriod = cleaned.lastIndexOf('.', 350);
@@ -341,13 +343,13 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     const recognition = new SpeechRecognitionClass();
 
     // O `SpeechRecognition` só aceita um idioma de cada vez — não há forma de lhe
-    // pedir «português ou inglês». Usa-se o da última resposta da Mayra, que é o da
-    // conversa em curso: se ela respondeu em inglês, é porque se falou inglês, e o
+    // pedir «português, inglês ou mandarim». Usa-se o da última resposta da Mayra, que é o
+    // da conversa em curso: se ela respondeu em inglês, é porque se falou inglês, e o
     // turno seguinte será provavelmente também em inglês.
     //
-    // Começa em português (o valor inicial de `idiomaDaConversaRef`), o que é o certo
-    // para Moçambique. Um utilizador que fale inglês na primeira frase é reconhecido
-    // pior nesse turno, mas a partir da resposta a conversa passa para inglês.
+    // Começa na língua da interface (o valor inicial de `idiomaDaConversaRef`). Quem fala
+    // outra língua na primeira frase é reconhecido pior nesse turno, mas a partir da
+    // resposta a conversa passa para a língua em que a Mayra respondeu.
     recognition.lang = idiomaDaConversaRef.current;
     recognition.continuous = false;
     recognition.interimResults = true;

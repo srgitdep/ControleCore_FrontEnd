@@ -1,0 +1,46 @@
+{
+  "titulo": "促销",
+  "nova": "新建促销",
+  "vazio": "还没有促销。",
+  "formulario": {
+    "titulo": "新建促销",
+    "nome": "名称",
+    "tipo": "适用于",
+    "tipo_produto": "一个商品",
+    "tipo_categoria": "一个类别",
+    "produto": "商品",
+    "categoria": "类别",
+    "escolher": "请选择……",
+    "percentual": "折扣（%）",
+    "data_inicio": "开始",
+    "data_fim": "结束",
+    "criar": "创建促销",
+    "fechar": "关闭",
+    "criada_titulo": "促销已创建。促销期间的库存风险：",
+    "risco_sem_dados": "销售历史不足以估算需求——发布促销前请审慎评估。",
+    "risco_detalhe": "预计需求：{{procura}} 件。可用库存：{{stock}}。可覆盖：{{cobertura}} 天。"
+  },
+  "risco": {
+    "SEM_DADOS": "无数据",
+    "BAIXO": "风险低",
+    "MEDIO": "风险中",
+    "ALTO": "缺货风险高"
+  },
+  "tabela": {
+    "nome": "名称",
+    "alvo": "适用于",
+    "desconto": "折扣",
+    "periodo": "期间",
+    "estado": "状态",
+    "activa": "进行中",
+    "terminada": "已结束",
+    "cancelada": "已取消",
+    "cancelar": "取消"
+  },
+  "mensagens": {
+    "criada": "促销已创建。",
+    "cancelada": "促销已取消。",
+    "erro_criar": "无法创建促销。",
+    "erro_cancelar": "无法取消促销。"
+  }
+}

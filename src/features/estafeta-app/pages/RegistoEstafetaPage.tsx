@@ -103,7 +103,7 @@ export function RegistoEstafetaPage() {
         email: campos.email.trim(),
         senha: campos.senha,
         contactoEmergencia: { nome: campos.emergenciaNome.trim(), telefone: campos.emergenciaTelefone },
-        idioma: idiomaActivo() === 'en' ? 'en' : 'pt',
+        idioma: idiomaActivo(),
       },
       {
         onSuccess: (resposta) => {

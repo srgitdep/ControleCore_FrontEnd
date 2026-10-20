@@ -1,0 +1,69 @@
+{
+  "titulo": "线上需求",
+  "subtitulo": "客户在您的门店下了什么订单、来自哪里、什么时间，以及频率如何。",
+  "erro": "无法加载线上需求。",
+  "vazio": "最近 {{dias}} 天内还没有线上订单。有订单后，这里会显示订购最多的商品、区域和高峰时段。",
+  "filtro": {
+    "loja": "门店",
+    "todas_lojas": "全部门店",
+    "periodo": "时间段",
+    "ultimos": "最近 {{dias}} 天"
+  },
+  "kpi": {
+    "pedidos": "订单",
+    "pedidos_nota": "已完成 {{concluidos}} · 已取消 {{cancelados}}",
+    "valor": "订单金额",
+    "valor_nota": "配送费：{{taxas}}",
+    "ticket": "平均订单金额",
+    "entregas": "配送 / 自提",
+    "entregas_nota": "无距离记录",
+    "distancia_nota": "平均距离 {{km}} 公里"
+  },
+  "produtos": {
+    "titulo": "订购最多的商品",
+    "vazio": "该时间段内没有商品。",
+    "linha": "{{pedidos}} 单 · {{unidades}} 件 · 每周 {{frequencia}} 次"
+  },
+  "zonas": {
+    "titulo": "订单最多的区域（配送）",
+    "vazio": "该时间段内没有配送——区域来自配送地址。",
+    "sem_nome": "未命名区域",
+    "linha": "{{pedidos}} 单 · {{valor}}"
+  },
+  "horas": {
+    "titulo": "按一天中的小时统计订单",
+    "pedidos": "订单",
+    "nota": "马普托时间。"
+  },
+  "dias": {
+    "titulo": "按星期几统计订单"
+  },
+  "dia": {
+    "d0": "周日",
+    "d1": "周一",
+    "d2": "周二",
+    "d3": "周三",
+    "d4": "周四",
+    "d5": "周五",
+    "d6": "周六"
+  },
+  "lojas": {
+    "titulo": "按门店"
+  },
+  "empresas": {
+    "titulo": "按公司"
+  },
+  "navegacao": {
+    "titulo": "浏览行为（下单之前）",
+    "pesquisas": "搜索",
+    "vistos": "被查看的商品",
+    "carrinho": "加入购物车",
+    "checkout": "已发起结算",
+    "termos": "搜索最多的内容",
+    "desligada": "暂无浏览数据：在法律合规评估完成之前，匿名收集处于关闭状态。以上订单始终会被记录。"
+  },
+  "sistema": {
+    "titulo": "线上需求——整个平台",
+    "subtitulo": "跨公司视图，按公司和门店细分。仅限超级管理员。"
+  }
+}

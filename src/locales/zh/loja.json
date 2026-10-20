@@ -1,0 +1,233 @@
+{
+  "artigos_other": "{{count}} 件商品",
+  "navegacao": {
+    "voltar_carrinho": "返回购物车",
+    "voltar_catalogo": "返回商品目录",
+    "voltar_inicio": "返回首页",
+    "trocar_loja": "更换门店"
+  },
+  "topo": {
+    "a_minha_loja": "我的门店",
+    "carrinho": "购物车"
+  },
+  "busca": {
+    "placeholder": "搜索商品…",
+    "a_procurar": "搜索中…"
+  },
+  "inicio": {
+    "titulo": "找到您需要的一切",
+    "subtitulo": "系统内所有门店的商品，尽在一处。",
+    "todas_categorias": "全部分类",
+    "sem_produtos": "系统中还没有已发布的商品。"
+  },
+  "lojas": {
+    "as_minhas": "我的门店",
+    "todas": "全部门店",
+    "a_carregar": "加载中…"
+  },
+  "catalogo": {
+    "erro_carregar": "无法加载商品，请稍后再试。",
+    "erro_carregar_catalogo": "无法加载商品目录，请稍后再试。",
+    "sem_resultados": "没有找到符合搜索的结果。",
+    "sem_resultados_para": "没有找到与“{{termo}}”相关的结果。",
+    "loja_sem_produtos": "该门店还没有已发布的商品。"
+  },
+  "produto": {
+    "nao_encontrado": "在该门店未找到此商品。",
+    "adicionado": "已将 {{nome}} 加入购物车。",
+    "adicionar": "加入购物车",
+    "por_unidade": "每{{unidade}}",
+    "disponiveis_other": "有货 {{count}} 件",
+    "esgotado": "已售罄",
+    "sem_stock": "该门店目前没有库存。",
+    "sem_stock_curto": "该门店无库存",
+    "favoritar": "加入收藏",
+    "desfavoritar": "取消收藏",
+    "desconto": "-{{percentual}}%"
+  },
+  "favoritos": {
+    "titulo": "我的收藏",
+    "vazio": "您还没有收藏任何商品。",
+    "vazio_dica": "点按商品上的爱心，即可保存到这里。",
+    "erro_adicionar": "无法添加到收藏。",
+    "erro_remover": "无法取消收藏。",
+    "produto_desactivado": "已下架"
+  },
+  "carrinho": {
+    "titulo": "我的购物车",
+    "vazio": "购物车是空的。",
+    "vazio_dica": "从商品目录添加商品即可开始。",
+    "ver_catalogo": "查看商品目录",
+    "aparece_ao_adicionar": "添加商品后，购物车就会出现",
+    "preco_por_unidade": "每{{unidade}} {{preco}}",
+    "diminuir": "减少 {{nome}} 的数量",
+    "aumentar": "增加 {{nome}} 的数量",
+    "remover": "移除",
+    "no_levantamento": "自提或配送时",
+    "continuar_checkout": "继续结算",
+    "entrar_para_continuar": "登录后继续",
+    "apenas_disponiveis_other": "仅有 {{count}} 件可买。",
+    "apenas_disponiveis_de_other": "{{nome}}：仅有 {{count}} 件可买。"
+  },
+  "estadoPedido": {
+    "CRIADO": "已收到",
+    "CONFIRMADO": "已确认",
+    "EM_PREPARACAO": "备货中",
+    "PRONTO": "已备好",
+    "CONCLUIDO": "已完成",
+    "CANCELADO": "已取消",
+    "EXPEDIDO": "配送中",
+    "EM_ROTA": "配送中",
+    "FALHADA": "配送未完成"
+  },
+  "passoPedido": {
+    "recebido": "已收到",
+    "confirmado": "已确认",
+    "em_preparacao": "备货中",
+    "pronto": "可自提",
+    "entregue": "已送达",
+    "pronto_entrega": "待配送",
+    "a_caminho": "配送中"
+  },
+  "metodoPagamento": {
+    "NUMERARIO": "自提时付现金",
+    "MPESA": "自提时用 M-Pesa 支付",
+    "EMOLA": "自提时用 e-Mola 支付"
+  },
+  "resumo": {
+    "titulo": "订单摘要",
+    "pagamento": "付款",
+    "total": "合计"
+  },
+  "checkout": {
+    "titulo": "确认订单",
+    "confirmar": "确认订单",
+    "pagamento_no_levantamento": "自提时付款",
+    "nao_cobrado_agora": "现在不扣款。您到店自提时再在店内付款。",
+    "nao_cobrado_agora_curto": "现在不扣款——自提时在店内付款。",
+    "pagamento_na_entrega": "货到付款",
+    "nao_cobrado_agora_entrega": "现在不扣款。收货时付给配送员。",
+    "nao_cobrado_agora_curto_entrega": "现在不扣款——收货时付款。",
+    "taxa_entrega": "配送费",
+    "partilha_titulo": "您在这家门店的首次购物",
+    "partilha_texto": "购买后，{{empresa}} 将收到您的姓名、电话和邮箱，用于备货和配送。只有第一次需要您确认。",
+    "partilha_aceito": "我同意这家门店接收我的信息"
+  },
+  "pedidos": {
+    "os_meus": "我的订单",
+    "nenhum": "您在这家门店还没有下过订单。"
+  },
+  "pedido": {
+    "linha_produto": "{{quantidade}}× 商品",
+    "ajuste": "我们调整了这件商品：{{quantidade}} 件中的 {{aceite}} 件",
+    "ajuste_substituto": "（替代商品）",
+    "cancelar": "取消订单",
+    "cancelado": "订单已取消。",
+    "erro_criar": "无法创建订单。",
+    "erro_cancelar": "无法取消订单。",
+    "entrega_falhada": "您的订单配送失败。门店会联系您。"
+  },
+  "conta": {
+    "entrar": "登录",
+    "criar": "创建账户",
+    "entrar_titulo": "登录您的账户",
+    "entrar_subtitulo": "以继续您的购物。",
+    "criar_subtitulo": "以便购物并跟踪您的订单。",
+    "campo_identificador": "邮箱或电话",
+    "campo_nome": "姓名",
+    "campo_email": "邮箱",
+    "campo_telefone": "电话（选填）",
+    "campo_senha": "密码",
+    "senha_minimo": "至少 8 个字符。",
+    "sem_conta": "还没有账户？",
+    "ja_tem_conta": "已有账户？",
+    "criada": "账户已创建。",
+    "erro_entrar": "无法登录。",
+    "erro_criar": "无法创建账户。",
+    "erro_google": "无法使用 Google 登录。",
+    "ou": "或"
+  },
+  "metodoPagamentoEntrega": {
+    "NUMERARIO": "送货时付现金",
+    "MPESA": "送货时用 M-Pesa 支付",
+    "EMOLA": "送货时用 e-Mola 支付"
+  },
+  "entrega": {
+    "titulo": "您希望如何收货？",
+    "levantar": "到店自提",
+    "entregar": "送货上门",
+    "morada": "配送地址",
+    "sem_moradas": "您还没有保存的地址。",
+    "gerir_moradas": "管理我的地址",
+    "a_calcular": "正在计算配送费…",
+    "erro_cotacao": "无法计算配送费，请重试。",
+    "taxa": "配送费",
+    "prazo": "约 {{minutos}} 分钟",
+    "motivo": {
+      "desactivada": "该门店目前不提供配送。",
+      "loja_sem_coordenadas": "该门店尚未做好配送准备。",
+      "acima_do_raio": "该地址超出配送范围（最远 {{raio}} 公里）。",
+      "fora_de_area": "我们不配送到此地址：距门店 {{distancia}} 公里，在配送区域之外。",
+      "abaixo_do_minimo": "配送到此地址，订单金额至少需要 {{minimo}}。还差 {{falta}}。",
+      "desconhecido": "无法配送到此地址。"
+    }
+  },
+  "moradas": {
+    "titulo": "我的地址",
+    "voltar": "返回",
+    "nova": "新增地址",
+    "editar": "编辑地址",
+    "remover": "删除地址",
+    "padrao": "默认",
+    "nenhuma": "您还没有保存任何地址。",
+    "erro_carregar": "无法加载您的地址。",
+    "guardada": "地址已保存。",
+    "removida": "地址已删除。",
+    "erro_guardar": "无法保存地址。",
+    "erro_remover": "无法删除地址。",
+    "campo_rotulo": "名称（家、公司……）",
+    "rotulo_exemplo": "家",
+    "campo_linha1": "街道和门牌号",
+    "campo_referencia": "参考地点",
+    "referencia_exemplo": "药店对面……",
+    "campo_bairro": "街区",
+    "campo_cidade": "城市",
+    "campo_provincia": "省份",
+    "escolher_provincia": "请选择省份",
+    "pino": "地图位置",
+    "pino_ajuda": "点按地图，标出您收货的准确位置。",
+    "pino_obrigatorio": "请在地图上标出位置。",
+    "usar_localizacao": "使用我的位置",
+    "localizacao_negada": "无法获取您的位置，请在地图上标出。",
+    "campo_contacto_nome": "收货人（如果不是您本人）",
+    "campo_contacto_telefone": "联系电话",
+    "tornar_padrao": "设为默认地址",
+    "obrigatorio": "必填项",
+    "cancelar": "取消",
+    "guardar": "保存地址",
+    "a_afinar": "校准中…",
+    "ver_no_mapa": "在 Google 地图中查看",
+    "gps_precisao": "精度：约 {{metros}} 米",
+    "gps_precisao_baixa": "精度较低（约 {{metros}} 米）——请在地图上确认该点"
+  },
+  "iva_incluido": "含增值税",
+  "rastreio": {
+    "erro": "无法加载配送跟踪。",
+    "repetir": "重试",
+    "a_caminho": "您的订单正在送来",
+    "a_caminho_nome": "{{nome}} 正带着您的订单赶来",
+    "preparar": "您的订单即将从门店发出",
+    "distancia": "距您的地址直线约 {{distancia}}。",
+    "ao_vivo": "实时",
+    "a_cada_2_5s": "每 2.5 秒更新一次",
+    "sem_posicao_recente": "暂无配送员的最新位置。他一发送，就会显示在这里。",
+    "actualizar": "立即刷新",
+    "faltam_minutos_other": "还需约 {{count}} 分钟",
+    "distancia_estrada": "按道路距离约 {{distancia}}。",
+    "chegou": "配送员到了！您的订单就在门口。"
+  },
+  "notificacoes": {
+    "titulo": "我的通知",
+    "voltar": "返回"
+  }
+}

@@ -1,0 +1,306 @@
+{
+  "sair": "退出",
+  "voltar": "返回配送列表",
+  "actualizar": "刷新",
+  "a_cobrar": "待收款",
+  "sem_ligacao": "无网络连接。操作需要联网才能使用——没有任何内容被发送。",
+  "sem_ligacao_accao": "无网络连接：请联网后继续。",
+  "abas": {
+    "por_fazer": "待办",
+    "historico": "历史"
+  },
+  "estado": {
+    "disponivel": "可接单",
+    "indisponivel": "不可接单",
+    "em_entrega": "配送中",
+    "alternar": "在可接单与不可接单之间切换"
+  },
+  "estados": {
+    "AGUARDA_RECOLHA": "等待中",
+    "ATRIBUIDA": "待取货",
+    "RECOLHIDA": "已取货",
+    "EM_ROTA": "配送中",
+    "ENTREGUE": "已送达",
+    "FALHADA": "未送达",
+    "DEVOLVIDA": "已退回",
+    "CANCELADA": "已取消"
+  },
+  "vazio_por_fazer": "没有分配的配送单。门店分配给您后，会显示在这里。",
+  "vazio_historico": "还没有已完结的配送单。",
+  "erro_carregar": "无法加载配送单。",
+  "tentar_de_novo": "重试",
+  "entrega_nao_encontrada": "未找到配送单。它可能已被分配给其他配送员。",
+  "detalhe": {
+    "morada": "目的地",
+    "abrir_mapa": "在地图中打开",
+    "cliente": "客户",
+    "ligar": "拨打 {{telefone}}",
+    "a_cobrar": "到门口收款",
+    "ja_pago": "已付款",
+    "taxa": "配送费",
+    "prazo": "预计时限",
+    "cobrado": "已收款",
+    "motivo": "原因",
+    "falhada_ajuda": "请把货物带回门店。之后由门店办理退货。",
+    "chegou_em": "{{hora}} 到达"
+  },
+  "accoes": {
+    "recolher": "我已在门店取货",
+    "iniciar_rota": "我已出发配送",
+    "entregar": "已送达",
+    "falhar": "我无法送达",
+    "cheguei": "我已到达"
+  },
+  "entregar": {
+    "titulo": "已送达——客户如何付款的？",
+    "metodo": "客户的付款方式",
+    "referencia": "交易参考号",
+    "referencia_ajuda": "M-Pesa 和 e-Mola 必填：即确认短信中的代码。",
+    "valor_cobrado": "您收取的金额",
+    "previsto": "应收：{{valor}}",
+    "diferenca_mais": "您比应收多收了 {{valor}}。将被记录。",
+    "diferenca_menos": "您比应收少收了 {{valor}}。将被记录。",
+    "confirmar": "确认送达"
+  },
+  "metodo": {
+    "NUMERARIO": "现金",
+    "MPESA": "M-Pesa",
+    "EMOLA": "e-Mola"
+  },
+  "falhar": {
+    "titulo": "为什么没有送达？",
+    "aviso": "货物将退回门店。不会向客户收取任何费用。",
+    "motivo": "原因",
+    "nota": "请简单说明",
+    "confirmar": "确认未送达"
+  },
+  "motivo": {
+    "CLIENTE_AUSENTE": "客户不在",
+    "MORADA_ERRADA": "地址有误",
+    "RECUSOU": "客户拒收",
+    "INACESSIVEL": "我无法到达那里",
+    "OUTRO": "其他原因"
+  },
+  "mensagens": {
+    "recolhida": "已取货。一路平安！",
+    "em_rota": "配送中。",
+    "entregue": "送达已记录。",
+    "falhada": "已记录。请把货物带回门店。",
+    "erro_accao": "无法记录，请重试。",
+    "erro_estado": "无法更改状态。",
+    "cheguei": "已通知客户您已到达。",
+    "erro_cheguei": "无法通知已到达。"
+  },
+  "partilha": {
+    "consentimento_titulo": "共享您的位置",
+    "consentimento_texto": "为了让客户和门店看到您在哪里，此应用会使用手机的定位。",
+    "consentimento_so_em_rota": "仅在您有“配送中”的配送单时使用。其余时间不会读取任何位置。",
+    "consentimento_quem_ve": "谁能看到：门店，以及进行中配送单的客户。客户只能看到您的名字。",
+    "consentimento_sem_historico": "我们只保存最新的位置，配送结束时就会删除。不保留行驶轨迹。",
+    "consentimento_aceitar": "我明白了，共享位置",
+    "sem_suporte": "此手机或此连接无法使用定位。请在支持定位的浏览器中通过 HTTPS 打开此应用。",
+    "negada": "定位被阻止。请在浏览器设置中允许此应用使用——否则客户看不到您在哪里。",
+    "a_partilhar": "正在向客户和门店共享您的位置",
+    "sem_canal": "正在尝试连接以共享位置……",
+    "manter_aberta": "请保持此应用打开且屏幕常亮。手机锁屏或有其他应用在前台时，位置将不再发送。"
+  },
+  "instalar": {
+    "titulo": "安装应用",
+    "ios": "在 iPhone 上：点按“分享”（□↑），再点“添加到主屏幕”。只有这样才能全屏打开且不丢失登录状态。",
+    "android": "可全屏打开，速度更快，并保留在主屏幕上。",
+    "botao": "安装",
+    "dispensar": "忽略"
+  },
+  "online": {
+    "ligado": "在线——正在接收配送邀约",
+    "desligado": "离线",
+    "alternar": "在在线与离线之间切换",
+    "ajuda": "上线后可接收离您最近的配送。我们会请求您的位置。",
+    "a_espera": "您已在线。有配送单靠近您时，这里会出现邀约——您有 30 秒时间接受。",
+    "falha": {
+      "sem_suporte": "此手机或此连接无法使用定位。请在支持定位的浏览器中通过 HTTPS 打开此应用。",
+      "negada": "定位被阻止。请在浏览器设置中允许：没有它，就无法选出离门店最近的人。",
+      "indisponivel": "无法获取您的位置。请检查 GPS，到开阔处再试一次。",
+      "generica": "无法更改状态。"
+    }
+  },
+  "oferta": {
+    "titulo": "您附近有新的配送单",
+    "segundos_other": "{{count}} 秒",
+    "loja": "到门店取货",
+    "distancia_etiqueta": "到门店的距离",
+    "recebe": "这单配送您可获得",
+    "aviso_cliente": "客户的姓名、电话和地址要在您接受之后才会显示。",
+    "aceitar": "接受",
+    "recusar": "拒绝",
+    "aceite": "已接受配送单。",
+    "erro_aceitar": "无法接受配送单。",
+    "erro_recusar": "无法拒绝邀约。"
+  },
+  "partilha_online": {
+    "consentimento_titulo": "共享位置以接收配送单",
+    "consentimento_texto": "为了向您提供离您最近的配送单，此应用会在您在线期间使用手机的定位。",
+    "consentimento_so_em_rota": "仅在您在线期间。离线后，位置会被删除，也不再读取。",
+    "consentimento_quem_ve": "谁能看到：只有系统，用来选出离门店最近的人。只有在“配送中”的配送单期间，门店和客户才能看到您的位置。",
+    "consentimento_sem_historico": "我们只保存最新的位置。不保留行驶轨迹。",
+    "consentimento_aceitar": "我明白了，上线",
+    "negada": "定位被阻止。请在浏览器设置中允许此应用使用——否则您收不到邀约。",
+    "a_partilhar": "在线：系统知道您的位置，以便向您提供附近的配送单。门店和客户看不到。",
+    "sem_canal": "正在尝试连接以接收邀约……"
+  },
+  "onboarding": {
+    "titulo": "完成您的注册",
+    "subtitulo": "要作为配送员工作，我们需要确认您的身份、您的车辆和您的驾驶证。全部为必填项。",
+    "progresso": "已完成 {{feitos}} / {{total}} 步",
+    "passos_etiqueta": "注册步骤",
+    "passos": {
+      "BI": {
+        "titulo": "身份证",
+        "ajuda": "请拍摄正面和背面。把证件放在平整的表面上，光线良好、无反光——文字必须能看清。"
+      },
+      "CARTA_CONDUCAO": {
+        "titulo": "驾驶证",
+        "ajuda": "请拍摄驾驶证的正面和背面，光线良好。必须在有效期内。"
+      },
+      "DOCUMENTO_VEICULO": {
+        "titulo": "车辆文件",
+        "ajuda": "请拍摄行驶证或登记证书。如果文件有背面，也请一并拍摄。"
+      },
+      "FOTO_VEICULO": {
+        "titulo": "车辆照片",
+        "ajuda": "请拍摄您将使用的车辆（例如摩托车），要能看清车牌。"
+      },
+      "FOTO_ROSTO": {
+        "titulo": "面部照片",
+        "ajuda": "一张正面的面部照片，光线良好，不戴墨镜或帽子。"
+      }
+    },
+    "lado": {
+      "FRENTE": "正面",
+      "VERSO": "背面",
+      "UNICA": "照片"
+    },
+    "opcional": "如有",
+    "fotografar": "拍照",
+    "repetir": "重拍",
+    "da_galeria": "从相册选择",
+    "a_enviar": "上传中……",
+    "imagem_enviada": "照片已上传：{{lado}}",
+    "estado": {
+      "POR_FAZER": "待办",
+      "IMAGENS_ENVIADAS": "照片已上传",
+      "COMPLETO": "已完成",
+      "falta_confirmar": "待确认信息"
+    },
+    "ler": {
+      "botao": "读取照片中的信息",
+      "a_ler": "读取中……",
+      "sugestao": "这些信息是从照片中读取的。请逐项核对并更正错误——只有您确认后才会保存。",
+      "sem_resultado": "无法读取这张照片。请手动填写，或在光线更好的地方重新拍摄。",
+      "indisponivel": "自动读取暂时不可用。请手动填写信息。"
+    },
+    "campos": {
+      "numero": "证件号码",
+      "nomeNoDocumento": "姓名全称",
+      "dataNascimento": "出生日期",
+      "emitidoEm": "签发日期",
+      "validoAte": "有效期至",
+      "naturalidade": "籍贯",
+      "filiacao": "父母信息",
+      "nuit": "NUIT",
+      "categorias": "准驾车型（例如 A、B）",
+      "matricula": "车牌号",
+      "marca": "品牌",
+      "modelo": "型号",
+      "cor": "颜色",
+      "anoVeiculo": "车辆年份",
+      "proprietario": "车主"
+    },
+    "erros": {
+      "obrigatorio": "必填。",
+      "formato_invalido": "格式无效。请对照证件上的内容核对。",
+      "data_invalida": "日期无效。",
+      "data_no_futuro": "该日期不能是未来的日期。",
+      "validade_antes_da_emissao": "有效期不能早于签发日期。",
+      "expirado": "证件已超出有效期。只接受在有效期内的证件。"
+    },
+    "confirmar": "确认信息",
+    "reconfirmar": "重新确认信息",
+    "contacto": {
+      "titulo": "紧急联系人",
+      "ajuda": "工作中如果发生意外，我们可以联系的人。",
+      "nome": "姓名",
+      "telefone": "手机号",
+      "guardar": "保存联系人"
+    },
+    "concluir": {
+      "botao": "完成注册",
+      "pronto": "全部完成。完成注册后即可接收配送单。"
+    },
+    "concluido": {
+      "titulo": "注册已完成",
+      "texto": "您现在可以上线并接收配送单了。",
+      "ir": "前往配送"
+    },
+    "aviso_antigo": {
+      "titulo": "请完成您的注册",
+      "texto": "我们现在向所有配送员收取文件。您可以继续工作，但请尽快完成注册。",
+      "accao": "立即完成"
+    },
+    "erro_carregar": "无法加载您的注册信息。",
+    "mensagens": {
+      "erro_imagem": "无法上传照片。",
+      "erro_leitura": "无法读取文件。",
+      "erro_contacto": "无法保存联系人。",
+      "erro_confirmar": "无法确认信息。",
+      "confirmado": "信息已确认。",
+      "concluido": "注册已完成。",
+      "erro_concluir": "无法完成注册。"
+    }
+  },
+  "registo": {
+    "titulo": "配送员注册",
+    "a_verificar_convite": "正在验证邀请……",
+    "na_frota_de": "您将注册为 {{empresa}} 的配送员。",
+    "na_plataforma": "注册后，即可为您附近的 ControlCore 门店配送。",
+    "convite_invalido_titulo": "邀请无效",
+    "convite_invalido": "此邀请无效或已被替换。请向门店索取新的邀请。",
+    "campos": {
+      "nome": "姓名全称",
+      "telefone": "手机号",
+      "email": "邮箱",
+      "senha": "密码（至少 8 个字符）",
+      "confirmar_senha": "再次输入密码",
+      "emergencia_nome": "紧急联系人姓名",
+      "emergencia_telefone": "紧急联系人手机号"
+    },
+    "emergencia_titulo": "紧急联系人",
+    "emergencia_ajuda": "工作中如果发生意外，我们可以联系的人。",
+    "consentimento_titulo": "您的信息和照片",
+    "consentimento_texto": "要作为配送员工作，我们会保存您的信息，以及身份证、驾驶证、车辆和面部的照片。它们会被安全保存，没有期限，只有获授权的人员可以查看——每次查看都会留下记录。它们用于确认您的身份、保护配送员和门店，今后也可用于安全核查。",
+    "consentimento_aceito": "我已阅读并同意，我的信息和照片可以为上述目的被保存和使用。",
+    "erros": {
+      "nome": "请填写姓名全称。",
+      "telefone": "请填写有效的莫桑比克手机号（例如 84 123 4567）。",
+      "email": "请填写有效的邮箱。",
+      "senha_curta": "密码至少需要 8 个字符。",
+      "senha_longa": "密码最多 72 个字符。",
+      "emergencia_nome": "请填写紧急联系人姓名。",
+      "senhas_diferentes": "两次输入的密码不一致。",
+      "consentimento": "必须同意才能注册。"
+    },
+    "erro_generico": "无法完成注册，请重试。",
+    "botao": "注册",
+    "a_registar": "注册中……",
+    "ja_tenho_conta": "已有账户？",
+    "entrar": "登录",
+    "sucesso": {
+      "titulo": "注册已创建",
+      "codigo_texto": "这是您的访问代码。每次登录都要用它，加上您的密码。",
+      "codigo_etiqueta": "您的访问代码",
+      "guarde": "请保存好。我们也已通过邮件发送给您。",
+      "email_nao_enviado": "我们无法发送带有代码的邮件。请现在记下来——您就是用它登录的。",
+      "continuar": "继续上传文件"
+    }
+  }
+}

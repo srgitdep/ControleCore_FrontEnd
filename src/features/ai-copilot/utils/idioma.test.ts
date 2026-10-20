@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { detectarIdioma, escolherVoz } from './idioma';
+import {
+  detectarIdioma,
+  escolherVoz,
+  expandirParaFala,
+  idiomaDeVozDaInterface,
+} from './idioma';
 
 describe('detectarIdioma', () => {
   describe('português', () => {
@@ -100,5 +105,55 @@ describe('escolherVoz', () => {
 
   it('devolve undefined quando não há vozes instaladas', () => {
     expect(escolherVoz('pt-PT', [])).toBeUndefined();
+  });
+});
+
+describe('mandarim', () => {
+  it('uma frase com caracteres chineses é mandarim, mesmo curta', () => {
+    expect(detectarIdioma('好')).toBe('zh-CN');
+    expect(detectarIdioma('今天卖了多少？')).toBe('zh-CN');
+  });
+
+  it('o mandarim vence mesmo com palavras latinas à mistura (nomes, códigos)', () => {
+    expect(detectarIdioma('库存 SH-001 低于最低值')).toBe('zh-CN');
+    expect(detectarIdioma('Coca-Cola 2L 还有多少')).toBe('zh-CN');
+  });
+
+  it('o português e o inglês não mudam', () => {
+    expect(detectarIdioma('Quanto vendemos hoje?')).toBe('pt-PT');
+    expect(detectarIdioma('How much did we sell today?')).toBe('en-US');
+  });
+
+  it('escolherVoz encontra a voz chinesa, exacta ou da mesma língua', () => {
+    const voz = (lang: string): SpeechSynthesisVoice =>
+      ({ lang, name: lang, default: false, localService: true, voiceURI: lang }) as SpeechSynthesisVoice;
+    expect(escolherVoz('zh-CN', [voz('zh-TW'), voz('zh-CN')])?.lang).toBe('zh-CN');
+    expect(escolherVoz('zh-CN', [voz('pt-PT'), voz('zh-HK')])?.lang).toBe('zh-HK');
+    expect(escolherVoz('zh-CN', [voz('pt-PT')])).toBeUndefined();
+  });
+});
+
+describe('idiomaDeVozDaInterface', () => {
+  it('cada língua da interface tem a sua língua de voz', () => {
+    expect(idiomaDeVozDaInterface('pt')).toBe('pt-PT');
+    expect(idiomaDeVozDaInterface('en')).toBe('en-US');
+    expect(idiomaDeVozDaInterface('zh')).toBe('zh-CN');
+  });
+});
+
+describe('expandirParaFala', () => {
+  it('em português e em inglês fica como era', () => {
+    expect(expandirParaFala('50 MZN, 5 kg e 10%', 'pt-PT')).toBe('50 meticais, 5 quilos e 10 por cento');
+    expect(expandirParaFala('50 MZN e 10%', 'en-US')).toBe('50 meticals e 10 percent');
+  });
+
+  it('em mandarim a moeda lê-se em chinês e o % fica para a síntese', () => {
+    expect(expandirParaFala('50 MZN 和 10%', 'zh-CN')).toBe('50 梅蒂卡尔 和 10%');
+  });
+
+  it('nenhuma língua deixa a sigla da moeda por ler', () => {
+    for (const idioma of ['pt-PT', 'en-US', 'zh-CN'] as const) {
+      expect(expandirParaFala('MZN', idioma)).not.toBe('MZN');
+    }
   });
 });

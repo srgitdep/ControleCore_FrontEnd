@@ -39,8 +39,12 @@
   --color-success-foreground: #ffffff;
   
   /* A família estava escrita à mão em quatro sítios deste ficheiro; ao trocar de
-   * fonte, um deles ficava atrás. Fica numa variável só. */
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+   * fonte, um deles ficava atrás. Fica numa variável só.
+   *
+   * Os três últimos nomes são tipos de letra do sistema com caracteres chineses (macOS/iOS,
+   * Windows, Android): a fonte da interface não os tem, e sem eles o browser escolhia um
+   * qualquer para o mandarim. Não se descarrega nenhum tipo de letra chinês — pesam vários MB. */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --font-display: var(--font-sans);
   --font-heading: var(--font-sans);
 

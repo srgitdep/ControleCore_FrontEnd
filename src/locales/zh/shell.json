@@ -1,0 +1,189 @@
+{
+  "menu": {
+    "grupo": {
+      "gestao": "管理",
+      "operacao": "运营",
+      "empresa": "公司"
+    },
+    "item": {
+      "dashboard": "仪表盘",
+      "empresas": "公司",
+      "adesoes": "入驻申请",
+      "modulos": "模块",
+      "utilizadores": "用户",
+      "permissoes": "权限",
+      "vendas": "销售点",
+      "crm": "CRM",
+      "financeiro": "财务",
+      "stock": "商品与库存",
+      "armazens": "仓库",
+      "transferencias": "调拨",
+      "ecommerce": "电子商务",
+      "promocao": "促销",
+      "necessidades": "补货需求",
+      "requisicoes": "采购申请",
+      "compras": "采购",
+      "conferencia": "核对",
+      "lojas": "门店与收银台",
+      "rh": "人力资源",
+      "historico": "系统历史"
+    },
+    "fechar": "关闭菜单",
+    "expandir": "展开侧边栏",
+    "colapsar": "收起侧边栏",
+    "assistente_mayra": "Mayra 助手",
+    "perfil": "个人资料",
+    "terminar_sessao": "退出登录",
+    "a_terminar": "正在退出登录……",
+    "sessao_encerrada": "已退出登录。",
+    "erro_terminar": "退出登录时出错。"
+  },
+  "cabecalho": {
+    "titulo": {
+      "dashboard": "仪表盘",
+      "stock": "商品与库存",
+      "armazens": "仓库",
+      "compras": "采购",
+      "requisicoes": "采购申请",
+      "conferencia": "核对",
+      "vendas": "销售点",
+      "lojas": "门店与收银台",
+      "crm": "CRM",
+      "financeiro": "财务",
+      "rh": "人力资源",
+      "ecommerce": "电子商务",
+      "empresas": "公司",
+      "utilizadores": "用户",
+      "permissoes": "权限",
+      "historico": "系统历史"
+    },
+    "abrir_menu": "打开导航菜单",
+    "alertas": "提醒",
+    "sem_alertas": "没有有效的提醒。",
+    "ver_todos": "查看全部",
+    "tipo": {
+      "RISCO_RUPTURA": "缺货风险",
+      "OC_ATRASADA": "采购订单逾期",
+      "RECEPCAO_PENDENTE": "待收货"
+    },
+    "ha_dias_zero": "{{count}} 天前",
+    "ha_dias_other": "{{count}} 天前"
+  },
+  "ecommerce": {
+    "abas": {
+      "etiqueta": "电子商务栏目",
+      "pedidos": "Compra Fácil 订单",
+      "entregas": "配送",
+      "estafetas": "配送员",
+      "acertos": "配送员结算",
+      "zonas": "配送区域",
+      "procura": "线上需求",
+      "procura_sistema": "需求（平台）",
+      "estafetas_plataforma": "平台（配送员）"
+    }
+  },
+  "rota": {
+    "a_carregar": "加载中……",
+    "sem_permissao_pagina": "您无权访问此页面。",
+    "sem_permissao_accao": "您无权执行此操作。"
+  },
+  "dialogo": {
+    "confirmar": "确认",
+    "cancelar": "取消",
+    "a_processar": "处理中……"
+  },
+  "tabela": {
+    "sem_registos": "没有找到记录。",
+    "a_carregar": "正在加载数据……"
+  },
+  "carrossel": {
+    "ir_para": "转到第 {{n}} 张卡片，共 {{total}} 张"
+  },
+  "foto": {
+    "titulo": "从照片填写",
+    "legenda_padrao": "请拍摄正面和背面——条码通常在背面。价格不会从图片中读取。",
+    "maximo": "最多 {{max}} 张照片。",
+    "nao_imagem": "“{{nome}}”不是图片。",
+    "excede": "“{{nome}}”超过 5 MB。",
+    "sem_resultado": "无法从这些照片中读取数据。请在光线更好的地方重试，或把标签拍得更近。",
+    "campos_preenchidos_zero": "已填写 {{count}} 个字段。",
+    "campos_preenchidos_other": "已填写 {{count}} 个字段。",
+    "falha_analise": "分析照片失败。请检查网络连接。",
+    "alt": "照片 {{n}}",
+    "remover": "删除照片 {{n}}",
+    "tirar": "拍照",
+    "outra": "再拍一张",
+    "galeria": "从相册选择",
+    "a_ler_other": "正在读取 {{count}} 张照片……",
+    "ler_dados": "读取数据",
+    "nao_aproveitado": "未采用",
+    "escrever_a_mao": "请手动填写这些字段，或换一张更清晰的照片重试。"
+  },
+  "leitor": {
+    "sem_acesso": "此设备或浏览器无法访问摄像头。",
+    "autorizar": "请在浏览器的权限设置中允许访问摄像头。",
+    "nao_abriu": "无法打开摄像头。",
+    "previa_falhou": "浏览器不允许启动摄像头预览。请手动输入代码。",
+    "nao_iniciou": "无法在此浏览器中启动扫描器。请手动输入代码。"
+  },
+  "permissoes": {
+    "erro_perfis": "加载角色时出错。",
+    "erro_permissoes": "加载该角色的权限时出错。",
+    "sucesso": "权限更新成功！",
+    "erro_guardar": "更新权限时出错。",
+    "perfil_acesso": "访问角色",
+    "a_carregar": "加载中……",
+    "perfis_titulo": "访问角色",
+    "perfis_ajuda": "选择角色以配置权限。",
+    "matriz_titulo": "权限矩阵",
+    "matriz_ajuda": "勾选该角色可以查看和执行的操作。",
+    "a_guardar": "保存中……",
+    "guardar": "保存更改",
+    "a_carregar_servidor": "正在从服务器加载权限……",
+    "coluna_recurso": "模块 / 资源",
+    "escolha_perfil": "请在左侧选择一个角色进行配置。",
+    "recurso": {
+      "dashboard": "仪表盘",
+      "empresa": "公司 / 设置",
+      "users": "用户",
+      "lojas": "门店",
+      "armazens": "仓库",
+      "caixas": "收银台 / POS",
+      "stock": "库存",
+      "catalogo": "商品目录",
+      "compras": "采购",
+      "necessidades": "采购需求",
+      "rh": "人力资源",
+      "vendas": "销售",
+      "clientes": "客户 / CRM",
+      "pedidos_commerce": "Compra Fácil 订单",
+      "promocao": "促销",
+      "entregas": "送货上门",
+      "estafetas": "配送员",
+      "acertos_estafeta": "配送员账目结算",
+      "procura_online": "线上需求",
+      "zonas_entrega": "配送区域与配送费",
+      "webhooks": "配送 Webhook",
+      "documentos_estafeta": "配送员文件"
+    },
+    "accao": {
+      "read": "查看",
+      "write": "新建 / 编辑",
+      "delete": "删除",
+      "manage": "全部管理"
+    }
+  },
+  "mapa": {
+    "a_identificar": "正在识别地点……",
+    "sem_nome": "该点在地图上没有名称。请对照地图确认位置。",
+    "nome_indisponivel": "无法获取该地点的名称。请对照地图确认位置。",
+    "fora_de_mocambique": "该点位于莫桑比克境外（{{local}}）。很可能是 GPS 或点击位置有误——保存前请更正。",
+    "indisponivel": "无法显示地图。您仍可继续填写其余字段。",
+    "pesquisar_titulo": "按名称搜索地点",
+    "pesquisar_placeholder": "例如：中心区，马普托",
+    "pesquisar": "搜索",
+    "sem_resultados": "我们在莫桑比克没有找到这个地点。请尝试其他名称，或在地图上标出。",
+    "erro_pesquisa": "目前无法搜索。请在地图上标出地点。",
+    "gps_aproximado": "设备只给出了大致位置（误差约 {{km}} 公里），因此我没有采用：那会把标记放到错误的地方。没有 GPS 的电脑会给出这样的位置。请使用手机在室外，或按名称搜索地点。"
+  }
+}

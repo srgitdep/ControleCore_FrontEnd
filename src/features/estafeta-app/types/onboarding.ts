@@ -3,6 +3,8 @@
  * (`onboarding-estafeta.use-cases.ts`, `ofertas-entrega.use-cases.ts`, `registo-estafeta.use-cases.ts`).
  */
 
+import type { Idioma } from '@/i18n';
+
 export const TIPOS_DE_DOCUMENTO = [
   'BI',
   'CARTA_CONDUCAO',
@@ -117,7 +119,7 @@ export interface DadosDoRegisto {
   email: string;
   senha: string;
   contactoEmergencia: ContactoDeEmergencia;
-  idioma?: 'pt' | 'en';
+  idioma?: Idioma;
 }
 
 export interface RespostaDoRegisto {

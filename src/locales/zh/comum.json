@@ -1,0 +1,18 @@
+{
+  "idioma": {
+    "rotulo": "语言",
+    "erro_ao_gravar": "无法保存您的语言设置，仅在此浏览器中生效。",
+    "erro_ao_carregar": "无法加载该语言，请重试。"
+  },
+  "tempo": {
+    "agora": "刚刚",
+    "ha_minutos": "{{n}} 分钟前",
+    "ha_horas": "{{n}} 小时前",
+    "ha_dias_other": "{{count}} 天前"
+  },
+  "nuit": {
+    "obrigatorio": "NUIT 为必填项，且为 {{digitos}} 位数字。",
+    "a_mais": "NUIT 应为 {{digitos}} 位数字，而您输入了 {{escritos}} 位——多了 {{excesso}} 位。请对照纳税人卡片核对号码。",
+    "a_menos": "NUIT 应为 {{digitos}} 位数字，而您输入了 {{escritos}} 位——少了 {{faltam}} 位。请对照纳税人卡片核对号码。"
+  }
+}

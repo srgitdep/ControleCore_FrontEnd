@@ -1,0 +1,62 @@
+{
+  "ui": {
+    "titulo": "通知",
+    "abrir": "打开通知",
+    "fechar": "关闭",
+    "vazio": "暂无通知。您的订单和配送的所有动态都会显示在这里。",
+    "marcar_todas": "全部标为已读",
+    "erro": "无法加载通知。",
+    "repetir": "重试",
+    "ver_todas": "查看全部",
+    "por_ler_other": "{{count}} 条未读",
+    "um_estafeta": "配送员",
+    "com_ajustes": "订单有调整——请查看详情。",
+    "motivo": "原因：{{motivo}}。",
+    "ao_vivo": "实时",
+    "mais": "查看更多",
+    "generica": "订单 {{numeroPedido}} 有新动态。"
+  },
+  "CLIENTE": {
+    "pedido": {
+      "recebido": "我们已收到您的订单 {{numeroPedido}}。",
+      "confirmado": "订单 {{numeroPedido}} 已确认。",
+      "em_preparacao": "订单 {{numeroPedido}} 正在备货。",
+      "pronto_entrega": "订单 {{numeroPedido}} 已打包，即将发出。",
+      "pronto_levantar": "订单 {{numeroPedido}} 已备好，可以自提。",
+      "expedido": "订单 {{numeroPedido}} 已从门店发出。",
+      "cancelado": "订单 {{numeroPedido}} 已取消。",
+      "entregue": "订单 {{numeroPedido}} 已送达。谢谢！"
+    },
+    "entrega": {
+      "estafeta_atribuido": "{{estafeta}} 将为您配送订单 {{numeroPedido}}。",
+      "recolhida": "{{estafeta}} 已在门店取走您的订单 {{numeroPedido}}。",
+      "em_rota": "{{estafeta}} 正带着您的订单 {{numeroPedido}} 在路上。",
+      "chegou": "{{estafeta}} 到了！订单 {{numeroPedido}} 已在您的门口。",
+      "falhada": "订单 {{numeroPedido}} 配送失败。"
+    }
+  },
+  "FUNCIONARIO": {
+    "pedido": {
+      "novo": "新订单：{{numeroPedido}}。"
+    },
+    "entrega": {
+      "atribuida": "配送单 {{numeroPedido}} 已分配给 {{estafeta}}。",
+      "recolhida": "{{numeroPedido}}：已在门店取货。",
+      "em_rota": "{{numeroPedido}}：正前往客户处。",
+      "chegou": "{{numeroPedido}}：配送员已到达地址。",
+      "entregue": "{{numeroPedido}}：已送达。",
+      "falhada": "{{numeroPedido}}：配送失败。",
+      "devolvida": "{{numeroPedido}}：已退回门店。",
+      "sem_estafeta": "{{numeroPedido}}：{{minutos}} 分钟过去了仍没有配送员。仍在继续寻找。"
+    }
+  },
+  "ESTAFETA": {
+    "entrega": {
+      "nova": "新配送：{{numeroPedido}}——{{morada}}。",
+      "retirada": "配送单 {{numeroPedido}} 已不再属于您。"
+    },
+    "oferta": {
+      "nova": "发往 {{loja}} 的配送，距您 {{distancia}}。"
+    }
+  }
+}

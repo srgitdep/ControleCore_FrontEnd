@@ -1,11 +1,11 @@
 import { Languages } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { IDIOMAS, idiomaActivo, type Idioma } from '@/i18n';
+import { IDIOMAS, idiomaActivo, mudarIdioma, type Idioma } from '@/i18n';
 import { cn } from '@/shared/utils';
 
 /** O nome de cada língua na própria língua: quem não lê português tem de encontrar a sua. */
-const NOME_DA_LINGUA: Record<Idioma, string> = { pt: 'Português', en: 'English' };
+const NOME_DA_LINGUA: Record<Idioma, string> = { pt: 'Português', en: 'English', zh: '中文' };
 
 interface SelectorIdiomaProps {
   /**
@@ -24,12 +24,19 @@ interface SelectorIdiomaProps {
  * acontece de qualquer forma a quem não tem sessão.
  */
 export function SelectorIdioma({ aoMudar, className }: SelectorIdiomaProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const actual = idiomaActivo();
 
   const mudar = async (novo: Idioma) => {
     if (novo === actual) return;
-    await i18n.changeLanguage(novo);
+    // `mudarIdioma` espera pelo catálogo se a língua é carregada sob pedido (`zh`): sem isso
+    // o ecrã ficava em português até o ficheiro chegar. Se não chegar, a língua não muda.
+    try {
+      await mudarIdioma(novo);
+    } catch {
+      toast.error(t('idioma.erro_ao_carregar'));
+      return;
+    }
     if (!aoMudar) return;
     try {
       await aoMudar(novo);

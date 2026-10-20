@@ -1,0 +1,383 @@
+{
+  "MARCA": {
+    "NOME": "ControlCore",
+    "NOME_DESTAQUE": "Core",
+    "PROMESSA": "从收银台到财务结算，无需任何人把数据从一张表抄到另一张表。",
+    "EMAIL": "itdep@srg.co.mz",
+    "LOCAL": "莫桑比克马普托",
+    "EMPRESA": "SRG"
+  },
+  "SITIO": {
+    "NAV": [
+      {
+        "para": "/#modulos",
+        "texto": "模块"
+      },
+      {
+        "para": "/#operacao",
+        "texto": "业务流程"
+      },
+      {
+        "para": "/precos",
+        "texto": "价格"
+      },
+      {
+        "para": "/#mayra",
+        "texto": "Mayra"
+      },
+      {
+        "para": "/#comecar",
+        "texto": "如何开始"
+      },
+      {
+        "para": "/loja",
+        "texto": "在线购物"
+      }
+    ],
+    "ENTRAR": "登录",
+    "DEMONSTRACAO": "预约演示",
+    "MENU_ABRIR": "打开菜单",
+    "MENU_FECHAR": "关闭菜单",
+    "RODAPE": {
+      "COLUNAS": [
+        {
+          "titulo": "产品",
+          "itens": [
+            {
+              "texto": "模块",
+              "para": "/#modulos"
+            },
+            {
+              "texto": "业务流程",
+              "para": "/#operacao"
+            },
+            {
+              "texto": "价格",
+              "para": "/precos"
+            },
+            {
+              "texto": "Mayra",
+              "para": "/#mayra"
+            },
+            {
+              "texto": "如何开始",
+              "para": "/#comecar"
+            },
+            {
+              "texto": "在线购物",
+              "para": "/loja"
+            }
+          ]
+        },
+        {
+          "titulo": "访问",
+          "itens": [
+            {
+              "texto": "登录",
+              "para": "/login"
+            },
+            {
+              "texto": "找回密码",
+              "para": "/recuperar-senha"
+            }
+          ]
+        }
+      ],
+      "CONTACTO_TITULO": "联系方式",
+      "TELEFONE": "电话待确认",
+      "NUIT": "NUIT 待确认",
+      "DIREITOS": "版权所有。",
+      "MOEDA": "金额以梅蒂卡尔（MZN）计。"
+    }
+  },
+  "HEROI": {
+    "ETIQUETA": "零售业 ERP · 莫桑比克",
+    "TITULO_ANTES": "从收银台到",
+    "TITULO_REALCE": "财务结算",
+    "TITULO_DEPOIS": "，中间无需任何电子表格。",
+    "SUBTITULO": "柜台上的每一笔销售，都会扣减正确仓库的库存、更新平均成本、记入客户账户，并显示在管理层的面板上。",
+    "SUBTITULO_FORTE": "无需任何人抄录。",
+    "BOTAO_CRIAR_CONTA": "创建账户",
+    "BOTAO_PRIMARIO": "进入系统",
+    "BOTAO_SECUNDARIO": "预约演示",
+    "JA_TENHO_CONTA": "已经是客户？",
+    "ENTRAR_FORNECEDOR": "供应商门户",
+    "GARANTIAS": [
+      "多门店、多仓库",
+      "手机上也能用",
+      "协助安装"
+    ],
+    "ALT_CAPTURA": "ControlCore 管理面板，显示销售、利润和库存指标。"
+  },
+  "FAIXA": [
+    {
+      "icone": "Store",
+      "texto": "多家门店，一个面板"
+    },
+    {
+      "icone": "Warehouse",
+      "texto": "按仓库核算平均成本"
+    },
+    {
+      "icone": "ScanLine",
+      "texto": "条码收银"
+    },
+    {
+      "icone": "ShieldCheck",
+      "texto": "所有变动都有记录"
+    }
+  ],
+  "PROBLEMA": {
+    "ETIQUETA": "最先让人头疼的事",
+    "TITULO": "电子表格回答不了的四个问题",
+    "SUBTITULO": "问题不在于工作不够，而在于缺少一个让所有人的工作汇合的地方。只要数据分散在不同的文件里，每个答案都得有人手工核对。",
+    "DORES": [
+      {
+        "icone": "AlertTriangle",
+        "titulo": "收银结班出现差额",
+        "texto": "操作员数过了，金额对不上，没人知道是找零、取款还是作废的销售。最后只剩下互相猜疑。",
+        "resposta": "班次内的每一笔变动都有时间和操作人的记录——结班自己就能说明问题。"
+      },
+      {
+        "icone": "TrendingDown",
+        "titulo": "这家店缺货，那家店积压",
+        "texto": "库存是有的，但在错误的仓库里。要等到客户来问、货架上却没有，才发现。",
+        "resposta": "库存按仓库管理，调拨有记录——多买之前，先看清货在哪里。"
+      },
+      {
+        "icone": "Coins",
+        "titulo": "利润只是猜测",
+        "texto": "本季度进货价变了三次。今天卖出的东西，真实成本到底是多少？没人敢说。",
+        "resposta": "每次收货都会重新计算加权平均成本——利润来自账目，而不是猜测。"
+      },
+      {
+        "icone": "ClipboardList",
+        "titulo": "供应商说已经送了",
+        "texto": "送货单签了字，发票也到了，但实际入库的数量却不一样。争论到最后拿不出任何凭据。",
+        "resposta": "收货逐行对照订单核对，未到的部分一目了然。"
+      }
+    ]
+  },
+  "OPERACAO": {
+    "ETIQUETA": "业务全流程",
+    "TITULO": "七个模块，一条流转线",
+    "SUBTITULO": "这不是七个在每天结束时互相交换文件的程序，而是同一份信息沿着整条链路流动——每一步都知道上一步发生了什么。",
+    "NOS": [
+      {
+        "chave": "compra",
+        "rotulo": "采购",
+        "frase": "订单按约定的价格和期限发出。"
+      },
+      {
+        "chave": "recepcao",
+        "rotulo": "收货",
+        "frase": "逐行核对。缺的部分记为待收，而不是被遗忘。"
+      },
+      {
+        "chave": "armazem",
+        "rotulo": "仓库",
+        "frase": "货物进入正确的仓库，平均成本当场重新计算。"
+      },
+      {
+        "chave": "loja",
+        "rotulo": "门店",
+        "frase": "仓库之间的调拨，两端都留有记录。"
+      },
+      {
+        "chave": "caixa",
+        "rotulo": "收银",
+        "frase": "销售扣减库存，并以实际清点的金额结束班次。"
+      },
+      {
+        "chave": "cliente",
+        "rotulo": "客户",
+        "frase": "购买记录进入买家的历史和信用额度。"
+      },
+      {
+        "chave": "painel",
+        "rotulo": "面板",
+        "frase": "管理层无需向任何人索取报表，就能看到当天的利润。"
+      }
+    ]
+  },
+  "MODULOS": {
+    "ETIQUETA": "模块",
+    "TITULO": "里面有什么——来自系统本身的截图",
+    "LISTA": [
+      {
+        "id": "painel",
+        "icone": "BarChart3",
+        "imagem": "dashboard",
+        "titulo": "面板与指标",
+        "descricao": "当日销售额、毛利、有缺货风险的商品，以及已开启收银台的状态——可按门店或汇总查看。"
+      },
+      {
+        "id": "caixa",
+        "icone": "ShoppingCart",
+        "imagem": "pos",
+        "titulo": "收银前台",
+        "descricao": "扫码或搜索销售，同一笔销售可用多种付款方式，收据按序编号，收银班次的开启和结束都经过核对。"
+      },
+      {
+        "id": "catalogo",
+        "icone": "Package",
+        "imagem": "produtos",
+        "titulo": "商品目录与库存",
+        "descricao": "按类别管理商品，按仓库管理库存并按加权平均成本计价，记录每一次变动，低于最低库存时发出预警。"
+      },
+      {
+        "id": "crm",
+        "icone": "Users",
+        "imagem": "crm",
+        "titulo": "客户与信用",
+        "descricao": "客户档案包含购买历史、设定的信用额度，以及每一笔赊销对应的欠款余额。"
+      },
+      {
+        "id": "caixas",
+        "icone": "Wallet",
+        "imagem": "sessoesCaixa",
+        "titulo": "收银班次",
+        "descricao": "每个收银班次都有开班金额、销售、取款和结班差额——由清点的人签字确认。"
+      },
+      {
+        "id": "auditoria",
+        "icone": "ShieldCheck",
+        "imagem": "auditLog",
+        "titulo": "审计",
+        "descricao": "所有新增、修改和删除都会记录操作人、时间和变更内容，且无法抹除。"
+      }
+    ]
+  },
+  "MAYRA": {
+    "ETIQUETA": "控制助手",
+    "TITULO": "用中文向 Mayra 提问",
+    "SUBTITULO": "“今天市中心门店卖了多少？”“哪些商品低于最低库存？”“用这个价格新建一个商品。”她读取的是贵公司的数据——而且只读取贵公司的数据。",
+    "PONTOS": [
+      {
+        "titulo": "未经确认绝不写入",
+        "texto": "查询是即时的。新建、修改或删除之前，她会先展示将要做什么，等您点头。"
+      },
+      {
+        "titulo": "看到的与您的角色所能看到的一致",
+        "texto": "收银员无法通过 Mayra 获取他在界面上本来无权访问的内容。"
+      },
+      {
+        "titulo": "留有记录",
+        "texto": "Mayra 所做的修改，与其他修改一样记入审计日志，并注明发起请求的人。"
+      }
+    ],
+    "CONVERSA": {
+      "ROTULO": "示例",
+      "PERGUNTA_1": "市中心门店有哪些商品低于最低库存？",
+      "RESPOSTA_1": "共三个商品，都在主仓库：",
+      "PRODUTOS": [
+        {
+          "nome": "长粒米 5 公斤",
+          "actual": "4",
+          "minimo": "20"
+        },
+        {
+          "nome": "食用油 1 升",
+          "actual": "11",
+          "minimo": "30"
+        },
+        {
+          "nome": "白砂糖 1 公斤",
+          "actual": "18",
+          "minimo": "25"
+        }
+      ],
+      "PERGUNTA_2": "向惯用供应商下一张补货订单。",
+      "CONFIRMACAO_ROTULO": "需要您确认",
+      "CONFIRMACAO_FORNECEDOR": "中央分销商",
+      "CONFIRMACAO_LINHAS": "3 行",
+      "CONFIRMACAO_TOTAL": "18,400.00 MZN",
+      "CONFIRMAR": "确认",
+      "CANCELAR": "取消"
+    }
+  },
+  "SEGURANCA": {
+    "ETIQUETA": "安全",
+    "TITULO": "关于安全，哪些是真的",
+    "SUBTITULO": "没有认证标志：ControlCore 没有 ISO 27001 或 SOC 2，在网站上声称有，就是对一次并不存在的审计作出虚假陈述。下面说的是系统实际所做的——而且可以验证。",
+    "GARANTIAS": [
+      {
+        "icone": "Boxes",
+        "titulo": "每家公司的数据相互隔离",
+        "texto": "每一次查询都按发起者所属的公司进行过滤。同一套部署中的两家公司，彼此看不到对方。"
+      },
+      {
+        "icone": "ShieldCheck",
+        "titulo": "任何改动都会留下记录",
+        "texto": "新增、修改和删除都会连同操作人、时间和原值一起保存。记录不可编辑。"
+      },
+      {
+        "icone": "Users",
+        "titulo": "每个角色只看到自己该看的",
+        "texto": "权限按角色设置，并在服务器端校验，而不仅仅是在界面上隐藏。"
+      },
+      {
+        "icone": "Clock",
+        "titulo": "密码不会被保存",
+        "texto": "只保存哈希值。找回密码时会通过邮件发送新的信息，旧密码要等邮件发出后才失效。"
+      }
+    ]
+  },
+  "COMECAR": {
+    "ETIQUETA": "如何开始",
+    "TITULO": "从一家门店开始，而不是整个公司",
+    "SUBTITULO": "一个周末就更换整个连锁的管理系统，正是业务出问题的原因。正确的路径恰好相反：先在一家门店验证，再逐步扩大。",
+    "PASSOS": [
+      {
+        "numero": "01",
+        "titulo": "半小时的交流",
+        "texto": "有几家门店、几个仓库、几台收银机。聊完您就知道系统是否适合——即使答案是否定的。"
+      },
+      {
+        "numero": "02",
+        "titulo": "导入商品目录",
+        "texto": "商品、价格和当前库存，从您已有的文件中导入。无需全部重新手工录入。"
+      },
+      {
+        "numero": "03",
+        "titulo": "先从一家门店开始",
+        "texto": "先从一家门店、一台收银机开始，与您现有的系统并行运行。直到日结对得上，才继续扩大。"
+      },
+      {
+        "numero": "04",
+        "titulo": "整个业务",
+        "texto": "其余门店在流程已验证的基础上加入，团队由参与过首家门店的人员培训。"
+      }
+    ]
+  },
+  "FECHO": {
+    "TITULO": "从今天无法回答的那个问题开始",
+    "SUBTITULO": "带上昨天的收银结班单，或最近一次的库存盘点。半小时就足以看出 ControlCore 能否解决——也能告诉您它解决不了。",
+    "BOTAO_PRIMARIO": "预约演示",
+    "BOTAO_SECUNDARIO": "创建账户",
+    "ASSUNTO_EMAIL": "ControlCore 演示"
+  },
+  "OUTROS": {
+    "NAV_PRINCIPAL": "主导航",
+    "NAV_PRINCIPAL_MOVEL": "主导航（手机端）",
+    "ALT_MODULO": "ControlCore 的{{titulo}}界面。",
+    "PRECOS": {
+      "ETIQUETA": "价格",
+      "TITULO": "三个档位，都能使用完整的平台。",
+      "SUBTITULO_ANTES": "档位之间不同的是",
+      "SUBTITULO_REALCE": "范围",
+      "SUBTITULO_DEPOIS": "，而不是背后换了一套系统。所有套餐运行的都是同一个 ControlCore。",
+      "MAIS_ESCOLHIDO": "最受欢迎",
+      "FRASE_PLANO": "“{{frase}}”",
+      "VALOR_MENSAL": "MT {{valor}}",
+      "POR_MES": "/月",
+      "UTILIZADORES_INCLUIDOS": "含 {{n}} 个用户 · 不含增值税",
+      "VER_PLANOS": "查看各套餐解锁的内容"
+    },
+    "MAYRA_CONVERSA": {
+      "CRIAR_ENCOMENDA_A": "向",
+      "COM": "下单，含",
+      "NO_TOTAL_DE": "，合计"
+    }
+  }
+}
