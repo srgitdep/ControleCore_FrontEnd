@@ -6,7 +6,7 @@
     "nome_empresa_obrigatorio": "公司名称为必填项。",
     "responsavel_obrigatorio": "负责人的姓名和邮箱为必填项。",
     "erro_submeter": "无法提交申请。",
-    "titulo": "申请加入 ControlCore",
+    "titulo": "申请加入 CoreBusiness",
     "subtitulo": "面向门店和连锁店。我们会审核申请，如获批准，您将通过邮件收到访问代码和初始密码。",
     "aviso_titulo": "此申请不会创建账户。",
     "aviso_corpo": "在平台上创建公司意味着一个套餐，以及一位可访问数据的管理员——因此需要经过审核。我们会通过您提供的邮箱与您联系。",
@@ -44,7 +44,7 @@
     "voltar_inicio": "返回首页"
   },
   "tipo": {
-    "titulo": "创建 ControlCore 账户",
+    "titulo": "创建 CoreBusiness 账户",
     "subtitulo": "在平台上有两种身份。请选择描述您业务的那一种——两者的注册流程不同。",
     "comprador": {
       "titulo": "我有一家门店或连锁店",
@@ -65,7 +65,7 @@
       "botao": "注册我的公司"
     },
     "ja_tem_conta": "已有账户？",
-    "entrar": "登录 ControlCore",
+    "entrar": "登录 CoreBusiness",
     "entrar_portal": "登录供应商门户",
     "so_explorar": "只是随便看看？",
     "ver_fornecedores": "查看平台上的供应商",

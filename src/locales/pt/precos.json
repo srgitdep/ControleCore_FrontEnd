@@ -87,7 +87,7 @@
     "titulo_depois": ".",
     "sub_antes": "O que muda entre escalões é o ",
     "sub_negrito": "âmbito",
-    "sub_depois": ", não um sistema diferente por trás. Todos correm no mesmo ControlCore."
+    "sub_depois": ", não um sistema diferente por trás. Todos correm no mesmo CoreBusiness."
   },
   "ciclo": {
     "aria": "Ciclo de facturação",
@@ -195,6 +195,6 @@
   "fecho": {
     "titulo": "Quer ver isto com os dados da sua loja?",
     "texto": "Meia hora, sem compromisso. Mostramos a cadeia a fechar com um produto seu.",
-    "assunto_email": "Demonstração do ControlCore"
+    "assunto_email": "Demonstração do CoreBusiness"
   }
 }

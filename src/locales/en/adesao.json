@@ -6,7 +6,7 @@
     "nome_empresa_obrigatorio": "The company name is required.",
     "responsavel_obrigatorio": "The manager's name and email are required.",
     "erro_submeter": "Could not submit the request.",
-    "titulo": "Request access to ControlCore",
+    "titulo": "Request access to CoreBusiness",
     "subtitulo": "For shops and retail chains. We review the request and, if approved, you receive the access code and the initial password by email.",
     "aviso_titulo": "This request does not create the account.",
     "aviso_corpo": "Creating a company on the platform involves a plan and an administrator with access to the data — which is why it goes through review. We will contact you at the email you provide.",
@@ -44,7 +44,7 @@
     "voltar_inicio": "Back to home"
   },
   "tipo": {
-    "titulo": "Create a ControlCore account",
+    "titulo": "Create a CoreBusiness account",
     "subtitulo": "Two ways to be on the platform. Choose the one that describes your business — registration is different in each case.",
     "comprador": {
       "titulo": "I have a shop or a chain of shops",
@@ -65,7 +65,7 @@
       "botao": "Register my company"
     },
     "ja_tem_conta": "Already have an account?",
-    "entrar": "Sign in to ControlCore",
+    "entrar": "Sign in to CoreBusiness",
     "entrar_portal": "Sign in to the supplier portal",
     "so_explorar": "Just browsing?",
     "ver_fornecedores": "View the platform's suppliers",

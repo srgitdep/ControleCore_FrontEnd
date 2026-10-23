@@ -1,7 +1,7 @@
 {
   "MARCA": {
-    "NOME": "ControlCore",
-    "NOME_DESTAQUE": "Core",
+    "NOME": "CoreBusiness",
+    "NOME_DESTAQUE": "Business",
     "PROMESSA": "From the till to the balance sheet, with nobody copying anything from one sheet to the next.",
     "EMAIL": "itdep@srg.co.mz",
     "LOCAL": "Maputo, Mozambique",
@@ -61,7 +61,7 @@
     "JA_TENHO_CONTA": "Already a customer?",
     "ENTRAR_FORNECEDOR": "Supplier portal",
     "GARANTIAS": ["Multi-store and multi-warehouse", "Works on your phone", "Assisted setup"],
-    "ALT_CAPTURA": "The ControlCore management dashboard, showing sales, margin and stock indicators."
+    "ALT_CAPTURA": "The CoreBusiness management dashboard, showing sales, margin and stock indicators."
   },
   "FAIXA": [
     { "icone": "Store", "texto": "Several stores, one dashboard" },
@@ -201,7 +201,7 @@
   "SEGURANCA": {
     "ETIQUETA": "Security",
     "TITULO": "What is true about security",
-    "SUBTITULO": "No certification badges: ControlCore does not hold ISO 27001 or SOC 2, and saying otherwise on a website would be a false statement about an audit that never took place. What follows is what the system does, and what you can verify.",
+    "SUBTITULO": "No certification badges: CoreBusiness does not hold ISO 27001 or SOC 2, and saying otherwise on a website would be a false statement about an audit that never took place. What follows is what the system does, and what you can verify.",
     "GARANTIAS": [
       {
         "icone": "Boxes",
@@ -254,21 +254,21 @@
   },
   "FECHO": {
     "TITULO": "Start with the question that goes unanswered today",
-    "SUBTITULO": "Bring yesterday's till close-out, or your last stock count. Half an hour is enough to see whether ControlCore has the answer, and to tell you if it does not.",
+    "SUBTITULO": "Bring yesterday's till close-out, or your last stock count. Half an hour is enough to see whether CoreBusiness has the answer, and to tell you if it does not.",
     "BOTAO_PRIMARIO": "Request a demo",
     "BOTAO_SECUNDARIO": "Create account",
-    "ASSUNTO_EMAIL": "ControlCore demo"
+    "ASSUNTO_EMAIL": "CoreBusiness demo"
   },
   "OUTROS": {
     "NAV_PRINCIPAL": "Main",
     "NAV_PRINCIPAL_MOVEL": "Main, mobile",
-    "ALT_MODULO": "ControlCore {{titulo}} screen.",
+    "ALT_MODULO": "CoreBusiness {{titulo}} screen.",
     "PRECOS": {
       "ETIQUETA": "Pricing",
       "TITULO": "Three tiers. All of them give access to the whole platform.",
       "SUBTITULO_ANTES": "What changes between tiers is the ",
       "SUBTITULO_REALCE": "scope",
-      "SUBTITULO_DEPOIS": ", not a different system behind the scenes. Every plan runs on the same ControlCore.",
+      "SUBTITULO_DEPOIS": ", not a different system behind the scenes. Every plan runs on the same CoreBusiness.",
       "MAIS_ESCOLHIDO": "Most popular",
       "FRASE_PLANO": "“{{frase}}”",
       "VALOR_MENSAL": "MT {{valor}}",

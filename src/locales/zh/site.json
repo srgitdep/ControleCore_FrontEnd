@@ -1,7 +1,7 @@
 {
   "MARCA": {
-    "NOME": "ControlCore",
-    "NOME_DESTAQUE": "Core",
+    "NOME": "CoreBusiness",
+    "NOME_DESTAQUE": "Business",
     "PROMESSA": "从收银台到财务结算，无需任何人把数据从一张表抄到另一张表。",
     "EMAIL": "itdep@srg.co.mz",
     "LOCAL": "莫桑比克马普托",
@@ -107,7 +107,7 @@
       "手机上也能用",
       "协助安装"
     ],
-    "ALT_CAPTURA": "ControlCore 管理面板，显示销售、利润和库存指标。"
+    "ALT_CAPTURA": "CoreBusiness 管理面板，显示销售、利润和库存指标。"
   },
   "FAIXA": [
     {
@@ -299,7 +299,7 @@
   "SEGURANCA": {
     "ETIQUETA": "安全",
     "TITULO": "关于安全，哪些是真的",
-    "SUBTITULO": "没有认证标志：ControlCore 没有 ISO 27001 或 SOC 2，在网站上声称有，就是对一次并不存在的审计作出虚假陈述。下面说的是系统实际所做的——而且可以验证。",
+    "SUBTITULO": "没有认证标志：CoreBusiness 没有 ISO 27001 或 SOC 2，在网站上声称有，就是对一次并不存在的审计作出虚假陈述。下面说的是系统实际所做的——而且可以验证。",
     "GARANTIAS": [
       {
         "icone": "Boxes",
@@ -352,21 +352,21 @@
   },
   "FECHO": {
     "TITULO": "从今天无法回答的那个问题开始",
-    "SUBTITULO": "带上昨天的收银结班单，或最近一次的库存盘点。半小时就足以看出 ControlCore 能否解决——也能告诉您它解决不了。",
+    "SUBTITULO": "带上昨天的收银结班单，或最近一次的库存盘点。半小时就足以看出 CoreBusiness 能否解决——也能告诉您它解决不了。",
     "BOTAO_PRIMARIO": "预约演示",
     "BOTAO_SECUNDARIO": "创建账户",
-    "ASSUNTO_EMAIL": "ControlCore 演示"
+    "ASSUNTO_EMAIL": "CoreBusiness 演示"
   },
   "OUTROS": {
     "NAV_PRINCIPAL": "主导航",
     "NAV_PRINCIPAL_MOVEL": "主导航（手机端）",
-    "ALT_MODULO": "ControlCore 的{{titulo}}界面。",
+    "ALT_MODULO": "CoreBusiness 的{{titulo}}界面。",
     "PRECOS": {
       "ETIQUETA": "价格",
       "TITULO": "三个档位，都能使用完整的平台。",
       "SUBTITULO_ANTES": "档位之间不同的是",
       "SUBTITULO_REALCE": "范围",
-      "SUBTITULO_DEPOIS": "，而不是背后换了一套系统。所有套餐运行的都是同一个 ControlCore。",
+      "SUBTITULO_DEPOIS": "，而不是背后换了一套系统。所有套餐运行的都是同一个 CoreBusiness。",
       "MAIS_ESCOLHIDO": "最受欢迎",
       "FRASE_PLANO": "“{{frase}}”",
       "VALOR_MENSAL": "MT {{valor}}",

@@ -275,7 +275,7 @@ function PaginaRegisto({ children }: { children: React.ReactNode }) {
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
           <Bike size={20} />
         </span>
-        <span className="text-sm font-bold text-slate-900">ControlCore</span>
+        <span className="text-sm font-bold text-slate-900">CoreBusiness</span>
       </div>
       {children}
     </div>

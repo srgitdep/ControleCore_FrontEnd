@@ -6,7 +6,7 @@
     "nome_empresa_obrigatorio": "O nome da empresa é obrigatório.",
     "responsavel_obrigatorio": "O nome e o e-mail do responsável são obrigatórios.",
     "erro_submeter": "Não foi possível submeter o pedido.",
-    "titulo": "Pedir adesão ao ControlCore",
+    "titulo": "Pedir adesão ao CoreBusiness",
     "subtitulo": "Para lojas e cadeias de lojas. Analisamos o pedido e, se for aprovado, recebe por e-mail o código de acesso e a senha inicial.",
     "aviso_titulo": "Este pedido não cria a conta.",
     "aviso_corpo": "Criar uma empresa na plataforma implica um plano e um administrador com acesso aos dados — por isso passa por análise. Entramos em contacto pelo e-mail que indicar.",
@@ -44,7 +44,7 @@
     "voltar_inicio": "Voltar ao início"
   },
   "tipo": {
-    "titulo": "Criar conta no ControlCore",
+    "titulo": "Criar conta no CoreBusiness",
     "subtitulo": "Duas formas de estar na plataforma. Escolha a que descreve o seu negócio — o registo é diferente em cada caso.",
     "comprador": {
       "titulo": "Tenho uma loja ou cadeia de lojas",
@@ -65,7 +65,7 @@
       "botao": "Registar a minha empresa"
     },
     "ja_tem_conta": "Já tem conta?",
-    "entrar": "Entrar no ControlCore",
+    "entrar": "Entrar no CoreBusiness",
     "entrar_portal": "Entrar no portal do fornecedor",
     "so_explorar": "Só a explorar?",
     "ver_fornecedores": "Ver os fornecedores da plataforma",

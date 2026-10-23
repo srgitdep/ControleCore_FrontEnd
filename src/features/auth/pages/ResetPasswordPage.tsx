@@ -66,7 +66,7 @@ export function ResetPasswordPage() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold">CC</span>
+            <span className="text-white font-bold">CB</span>
           </div>
         </div>
 

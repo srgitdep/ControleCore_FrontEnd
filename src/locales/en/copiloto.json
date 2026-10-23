@@ -19,7 +19,7 @@
     "ouvir": "Read aloud",
     "copiar": "Copy text"
   },
-  "boas_vindas": "Hello! I'm Mayra, your intelligent ControlCore assistant. How can I help you manage your business today?",
+  "boas_vindas": "Hello! I'm Mayra, your intelligent CoreBusiness assistant. How can I help you manage your business today?",
   "erro": {
     "carregar_sessao": "Error loading the session.",
     "comunicacao": "A communication error with the AI occurred.",

@@ -1,7 +1,7 @@
 {
   "MARCA": {
-    "NOME": "ControlCore",
-    "NOME_DESTAQUE": "Core",
+    "NOME": "CoreBusiness",
+    "NOME_DESTAQUE": "Business",
     "PROMESSA": "Da caixa ao balanço, sem ninguém copiar nada de uma folha para a outra.",
     "EMAIL": "itdep@srg.co.mz",
     "LOCAL": "Maputo, Moçambique",
@@ -107,7 +107,7 @@
       "Funciona no telemóvel",
       "Instalação assistida"
     ],
-    "ALT_CAPTURA": "Painel de gestão do ControlCore, com os indicadores de vendas, margem e stock."
+    "ALT_CAPTURA": "Painel de gestão do CoreBusiness, com os indicadores de vendas, margem e stock."
   },
   "FAIXA": [
     {
@@ -299,7 +299,7 @@
   "SEGURANCA": {
     "ETIQUETA": "Segurança",
     "TITULO": "O que é verdade sobre a segurança",
-    "SUBTITULO": "Sem selos de certificação: o ControlCore não tem ISO 27001 nem SOC 2, e dizer o contrário num sítio é uma declaração falsa sobre uma auditoria que não houve. O que se segue é o que o sistema faz — e que se pode verificar.",
+    "SUBTITULO": "Sem selos de certificação: o CoreBusiness não tem ISO 27001 nem SOC 2, e dizer o contrário num sítio é uma declaração falsa sobre uma auditoria que não houve. O que se segue é o que o sistema faz — e que se pode verificar.",
     "GARANTIAS": [
       {
         "icone": "Boxes",
@@ -352,21 +352,21 @@
   },
   "FECHO": {
     "TITULO": "Comece pela pergunta que hoje fica sem resposta",
-    "SUBTITULO": "Traga o fecho de caixa de ontem, ou a última contagem de stock. Meia hora basta para ver se o ControlCore responde — e para dizer se não.",
+    "SUBTITULO": "Traga o fecho de caixa de ontem, ou a última contagem de stock. Meia hora basta para ver se o CoreBusiness responde — e para dizer se não.",
     "BOTAO_PRIMARIO": "Pedir demonstração",
     "BOTAO_SECUNDARIO": "Criar conta",
-    "ASSUNTO_EMAIL": "Demonstração do ControlCore"
+    "ASSUNTO_EMAIL": "Demonstração do CoreBusiness"
   },
   "OUTROS": {
     "NAV_PRINCIPAL": "Principal",
     "NAV_PRINCIPAL_MOVEL": "Principal, em telemóvel",
-    "ALT_MODULO": "Ecrã de {{titulo}} do ControlCore.",
+    "ALT_MODULO": "Ecrã de {{titulo}} do CoreBusiness.",
     "PRECOS": {
       "ETIQUETA": "Preços",
       "TITULO": "Três escalões. Todos dão acesso à plataforma inteira.",
       "SUBTITULO_ANTES": "O que muda entre escalões é o ",
       "SUBTITULO_REALCE": "âmbito",
-      "SUBTITULO_DEPOIS": ", não um sistema diferente por trás. Todos os planos correm no mesmo ControlCore.",
+      "SUBTITULO_DEPOIS": ", não um sistema diferente por trás. Todos os planos correm no mesmo CoreBusiness.",
       "MAIS_ESCOLHIDO": "O mais escolhido",
       "FRASE_PLANO": "«{{frase}}»",
       "VALOR_MENSAL": "{{valor}} MT",

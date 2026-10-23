@@ -1,4 +1,4 @@
-# Plano de Implementação — SRG ControlCore (Front-End + Back-End, unificado)
+# Plano de Implementação — CoreBusiness, antes SRG ControlCore (Front-End + Back-End, unificado)
 
 > Documento único, replicado tal e qual nos dois repositórios
 > (`ControleCore_BackEnd/Docs/plano_implementacao.md` e
@@ -2170,6 +2170,22 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Sem migrações (`idioma` é texto na base de dados) e sem variáveis novas. Backend primeiro; o frontend acrescenta um chunk `zh-*.js` ao `dist`. Os e-mails de recuperação de senha e de relatório de inventário continuam só em português (já eram), e o rodapé de todos os e-mails está em português.
 
+### Fase 63 — Rebrand: o sistema passa a chamar-se CoreBusiness (23 Out 2026)
+
+- **2026-10-23 · [BE] · Antonio Mambo** — `chore/rebrand-corebusiness`
+  - **Pedido do utilizador:** o nome do sistema muda de «ControlCore» para «CoreBusiness»; enquadrar o sistema no nome novo.
+  - chore(marca): o sistema passa a chamar-se CoreBusiness. Todos os modelos de e-mail (pt/en/zh) e o remetente «CoreBusiness Support»; personas e prompts da Mayra (texto, voz, análise de excepções do inventário e de necessidades); título do Swagger «CoreBusiness API»; nome de reserva da plataforma no registo de estafeta, da organização no login e da empresa no recibo; criador do Excel exportado; mensagem do teste de webhook; `README.md`. A importação do catálogo do fornecedor reconhece o cabeçalho «codigo corebusiness» **além** de «codigo controlcore», para não partir os ficheiros que já existem.
+- **2026-10-23 · [FE] · Antonio Mambo** — `chore/rebrand-corebusiness`
+  - chore(marca): o sistema passa a chamar-se CoreBusiness. Todos os textos visíveis em `src/locales/{pt,en,zh}` (site, login, adesão, preços, mercado, portal, POS, estafeta, Mayra); `MARCA.NOME_DESTAQUE` passa a «Business», e o site escreve «Core**Business**»; título da página, Sidebar, Header, mercado, registo do estafeta e manifesto da PWA; monograma «CC» → «CB»; o favicon (que ainda era o logótipo do Vite) passa a ser o cubo da marca; `README.md` e `.env.example`.
+
+  > **Decisões do utilizador.** Grafia **CoreBusiness** (o pedido escrevia «CoreBussiness»; confirmado o inglês correcto). **Sem «SRG»** no nome do produto; «SRG» fica onde designa a empresa dona (© SRG, «Super Administrador (SRG)», `itdep@srg.co.mz`). Âmbito: texto visível no frontend e no backend.
+  >
+  > **Ficam com «controlcore», de propósito** — nenhum é visto pelo utilizador final, e mudá-los parte coisas: `srg-controlcore-api.fly.dev` e o projecto Vercel; cabeçalhos `X-ControlCore-*` dos webhooks (os receptores validam-nos); audiências JWT `controlcore-*` (mudar termina as sessões activas); chaves `controlcore.*` do `localStorage`; `userAgent: 'ControleCore'` da auditoria; nomes dos repositórios e do `package.json`; comentários no código; o remetente de reserva `support@controlcore.com` (só sem `SMTP_USER`).
+  >
+  > **Verificação.** Backend: `nest build` limpo; suites de `auth`, `entrega`, `fornecedor`, `ai-copilot` e `utils` a passar (85 suites, 1233 testes). Frontend: `tsc -b` e `vite build` limpos, **486 testes**. **Não verificado:** os ecrãs no browser e um e-mail real.
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro (e-mails e Mayra mudam com ele), frontend depois.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2524,6 +2540,13 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Fase 4 — Painéis.** Concluída em 2026-10-10 (Fase 39): «Procura online» por empresa (`/procura`) e visão macro para o Super Admin
       (`/procura/sistema`). **Em teste:** a página não foi aberta num browser, e as zonas só se confirmam com um pedido de entrega real.
 - [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
+
+### Marca CoreBusiness
+
+- [x] **Rebrand do texto visível** — concluído em 2026-10-23 (Fase 63): ControlCore → CoreBusiness no frontend, nos e-mails, na Mayra e no Swagger.
+- [ ] **Vídeo do login** — `src/assets/videos/controlcore-lancamento.webm` tem o nome antigo gravado na imagem; precisa de um vídeo novo (ou sair do login).
+- [ ] **Domínio próprio** — `controle-core-front-end.vercel.app` e `srg-controlcore-api.fly.dev` ainda dizem o nome antigo na barra do browser e no Swagger. Exige decisão do utilizador; mudar implica `vercel.json`, `VITE_SOCKET_URL`, a lista de CORS e o domínio no Google OAuth.
+- [ ] **Captura do CRM do site** — `src/assets/HeroPages/CRM.png` mostra «NUITâ€¦» (codificação partida) na caixa de pesquisa; refazer a captura.
 
 ---
 

@@ -44,8 +44,8 @@
     "o_que_fornece": "O que fornece",
     "onde_entrega": "Onde entrega",
     "cta_titulo": "Quer comprar a este fornecedor?",
-    "cta_texto": "No ControlCore, cria uma requisição com o que precisa e o sistema compara este fornecedor com todos os outros — preço por unidade, prazo, fiabilidade e custo de entrega — e diz-lhe qual sai melhor, e porquê.",
-    "entrar": "Entrar no ControlCore"
+    "cta_texto": "No CoreBusiness, cria uma requisição com o que precisa e o sistema compara este fornecedor com todos os outros — preço por unidade, prazo, fiabilidade e custo de entrega — e diz-lhe qual sai melhor, e porquê.",
+    "entrar": "Entrar no CoreBusiness"
   },
   "documento": {
     "ALVARA": "Alvará",

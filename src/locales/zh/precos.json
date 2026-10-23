@@ -86,7 +86,7 @@
     "titulo_depois": "。",
     "sub_antes": "档位之间变化的是",
     "sub_negrito": "范围",
-    "sub_depois": "，而不是背后换了一套系统。所有档位运行的都是同一个 ControlCore。"
+    "sub_depois": "，而不是背后换了一套系统。所有档位运行的都是同一个 CoreBusiness。"
   },
   "ciclo": {
     "aria": "计费周期",
@@ -194,6 +194,6 @@
   "fecho": {
     "titulo": "想用您门店的数据看看效果吗？",
     "texto": "半小时，无需承诺。我们用您自己的一个商品，演示整条链路如何闭环。",
-    "assunto_email": "ControlCore 演示"
+    "assunto_email": "CoreBusiness 演示"
   }
 }

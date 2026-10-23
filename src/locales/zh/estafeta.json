@@ -262,7 +262,7 @@
     "titulo": "配送员注册",
     "a_verificar_convite": "正在验证邀请……",
     "na_frota_de": "您将注册为 {{empresa}} 的配送员。",
-    "na_plataforma": "注册后，即可为您附近的 ControlCore 门店配送。",
+    "na_plataforma": "注册后，即可为您附近的 CoreBusiness 门店配送。",
     "convite_invalido_titulo": "邀请无效",
     "convite_invalido": "此邀请无效或已被替换。请向门店索取新的邀请。",
     "campos": {
