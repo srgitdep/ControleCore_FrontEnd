@@ -1,4 +1,4 @@
-# TRD — Technical Reference Document — SRG ControlCore
+# TRD — Technical Reference Document — CoreBusiness (antes SRG ControlCore)
 
 > Documento único, replicado tal e qual nos dois repositórios
 > (`ControleCore_BackEnd/Docs/TRD.md` e `ControleCore_FrontEnd/Docs/TRD.md`).
@@ -29,6 +29,15 @@ Fácil") e a assistente de IA "Mayra".
 
 Dois repositórios git separados, dois deploys independentes, backend sempre
 primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
+
+**Nome do produto: CoreBusiness** (até 2026-10-23, «SRG ControlCore»). O nome
+mudou só onde o utilizador o vê: interface (pt/en/zh, `MARCA.NOME` em `site.json`),
+e-mails, Mayra e Swagger. Os identificadores técnicos continuam com «controlcore»
+de propósito — a app Fly `srg-controlcore-api`, os cabeçalhos `X-ControlCore-*`
+dos webhooks (§8), as audiências JWT `controlcore-*`, as chaves `controlcore.*`
+do `localStorage` e o `userAgent` da auditoria. Mudá-los partiria, respectivamente,
+o encaminhamento do Vercel e o CORS, a validação nos receptores de webhooks, as
+sessões activas e as preferências guardadas; um rename só com plano de migração.
 
 ---
 
