@@ -44,8 +44,8 @@
     "o_que_fornece": "What they supply",
     "onde_entrega": "Where they deliver",
     "cta_titulo": "Want to buy from this supplier?",
-    "cta_texto": "In ControlCore, you create a requisition with what you need and the system compares this supplier with all the others — unit price, lead time, reliability and delivery cost — and tells you which comes out best, and why.",
-    "entrar": "Sign in to ControlCore"
+    "cta_texto": "In CoreBusiness, you create a requisition with what you need and the system compares this supplier with all the others — unit price, lead time, reliability and delivery cost — and tells you which comes out best, and why.",
+    "entrar": "Sign in to CoreBusiness"
   },
   "documento": {
     "ALVARA": "Business licence",

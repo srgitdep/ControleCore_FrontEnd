@@ -198,10 +198,10 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           )}
         >
           <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">CC</span>
+            <span className="text-white font-bold text-sm">CB</span>
           </div>
           <div>
-            <h2 className="text-slate-900 font-bold text-base leading-none">ControlCore</h2>
+            <h2 className="text-slate-900 font-bold text-base leading-none">CoreBusiness</h2>
           </div>
         </div>
 

@@ -263,7 +263,7 @@
     "titulo": "Courier registration",
     "a_verificar_convite": "Checking the invitation…",
     "na_frota_de": "You are about to register as a courier for {{empresa}}.",
-    "na_plataforma": "Register to make deliveries for ControlCore stores near you.",
+    "na_plataforma": "Register to make deliveries for CoreBusiness stores near you.",
     "convite_invalido_titulo": "Invalid invitation",
     "convite_invalido": "This invitation is not valid or has been replaced. Ask the store for a new one.",
     "campos": {

@@ -1,4 +1,4 @@
-# ControlCore — Frontend
+# CoreBusiness — Frontend
 
 > SaaS de Gestão de Supermercados · MVP · Vite + React 19 + TypeScript
 
@@ -6,7 +6,7 @@
 
 ## 📋 Sobre o Projecto
 
-Interface web responsiva que alimenta o sistema **ControlCore** — solução SaaS multi-tenant para gestão de supermercados, minimarkets e pontos de venda.
+Interface web responsiva que alimenta o sistema **CoreBusiness** (antes ControlCore) — solução SaaS multi-tenant para gestão de supermercados, minimarkets e pontos de venda.
 
 **Contextos de uso suportados:**
 
@@ -89,7 +89,7 @@ src/
 
 ### Pré-requisitos
 - Node.js v20+
-- Backend ControlCore API a correr em `http://localhost:3100`
+- Backend CoreBusiness API a correr em `http://localhost:3100`
 
 ### 1. Instalar dependências
 ```bash

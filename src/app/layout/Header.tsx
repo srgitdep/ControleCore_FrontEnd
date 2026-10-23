@@ -72,7 +72,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   // Resolve o título: verifica o pathname exacto ou usa o segmento raiz
   const chaveTitulo =
     chaveDoTitulo(location.pathname) ?? chaveDoTitulo(`/${location.pathname.split('/')[1]}`);
-  const pageTitle = chaveTitulo ? t(`cabecalho.titulo.${chaveTitulo}`) : 'ControlCore';
+  const pageTitle = chaveTitulo ? t(`cabecalho.titulo.${chaveTitulo}`) : 'CoreBusiness';
 
   return (
     <header

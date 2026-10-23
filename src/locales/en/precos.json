@@ -87,7 +87,7 @@
     "titulo_depois": ".",
     "sub_antes": "What changes between tiers is the ",
     "sub_negrito": "scope",
-    "sub_depois": ", not a different system underneath. They all run on the same ControlCore."
+    "sub_depois": ", not a different system underneath. They all run on the same CoreBusiness."
   },
   "ciclo": {
     "aria": "Billing cycle",
@@ -195,6 +195,6 @@
   "fecho": {
     "titulo": "Want to see this with your own store's data?",
     "texto": "Half an hour, no commitment. We show the whole chain closing with one of your products.",
-    "assunto_email": "ControlCore demo request"
+    "assunto_email": "CoreBusiness demo request"
   }
 }

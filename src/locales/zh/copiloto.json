@@ -19,7 +19,7 @@
     "ouvir": "朗读",
     "copiar": "复制文本"
   },
-  "boas_vindas": "您好！我是 Mayra，您的 ControlCore 智能助手。今天我可以怎样协助您管理公司？",
+  "boas_vindas": "您好！我是 Mayra，您的 CoreBusiness 智能助手。今天我可以怎样协助您管理公司？",
   "erro": {
     "carregar_sessao": "加载会话时出错。",
     "comunicacao": "与 AI 通信时出错。",
