@@ -27,3 +27,28 @@ export interface SuperAdminKpis {
 export interface SuperAdminDashboardResponse {
   kpis: SuperAdminKpis;
 }
+
+/** `GET /super-admins` — os operadores da plataforma. */
+export interface SuperAdminResumo {
+  id: string;
+  code: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CriarSuperAdminPayload {
+  name: string;
+  email: string;
+}
+
+/**
+ * `POST /super-admins`. `senhaInicial` só vem nesta resposta — o servidor guarda o hash —,
+ * e `emailEnviado: false` quer dizer que quem criou tem de entregar as credenciais à mão.
+ */
+export interface SuperAdminCriado extends SuperAdminResumo {
+  role: 'SUPER_ADMIN';
+  senhaInicial: string;
+  emailEnviado: boolean;
+}
