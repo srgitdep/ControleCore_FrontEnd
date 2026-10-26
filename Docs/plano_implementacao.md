@@ -50,14 +50,6 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
-**Fase 67 — Super Admin S2a: gestão manual das assinaturas** (plano completo em **§4.15**; branch `feat/superadmin-s2a-assinaturas` nos dois repositórios, backend primeiro). A S2b (expiração automática) fica para depois do relatório e da decisão sobre P2, P5 e P7. **Decisões assumidas:** P6 — registar um pagamento estende a assinatura um ciclo, a contar do fim actual ou de hoje, o que for mais tarde; P8 — sem facturação nesta fase.
-
-- [x] **Regras puras** (`src/modules/assinatura/domain/regras-assinatura.ts`): somar um ciclo a uma data; o fim do acesso (`TRIAL` → `trialAte ?? dataFim`; `ATIVA` → `dataFim` + tolerância); o que aconteceria a uma assinatura se as datas contassem.
-- [x] **Backend** (módulo `assinatura`, rotas da plataforma com `RolesGuard`): `GET /plataforma/empresas/:id/assinatura`; `PATCH …/assinatura` (módulos com preço acordado, ciclo, valor, desconto, datas, renovação, estado `ATIVA`/`SUSPENSA`/`CANCELADA`; motivo obrigatório; linha bloqueada com `FOR UPDATE`); `POST …/assinatura/pagamentos` (pagamento recebido por fora; estende um ciclo); `GET /plataforma/assinaturas/relatorio-expiracao`. Auditoria com o motivo por `audit.plataforma.event`.
-- [x] **Frontend:** «Gerir assinatura» nos detalhes da empresa (resumo, editar, estado, pagamentos, registar pagamento) e «Relatório de expiração» na página Empresas; traduções pt/en/zh.
-- [x] **Testes e verificação.** Backend 270 suites, 3922 testes; frontend build e 486 testes. Specs: `regras-assinatura.spec.ts`, `gerir-assinatura.use-case.spec.ts`, `relatorio-expiracao.use-case.spec.ts`; as quatro rotas em `autoridade-da-plataforma.spec.ts`.
-- **Achados fora do âmbito (não corrigidos, vão para o backlog):** (1) o evento `audit.adesao.event` não tem listener — as decisões de adesão nunca chegam à auditoria com o contexto (só a mutação crua); (2) `getModulosAtivos` (`GET /empresas/modulos/meus`) procura o estado `'ACTIVE'`, que não existe — só encontra assinaturas em `TRIAL`; sem consumidor no frontend hoje.
-
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2233,6 +2225,21 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; suíte completa a passar (267 suites, 3885 testes antes do interruptor; `auth` e `shared` de novo depois, 855). Frontend: `tsc -b`, `vite build` e oxlint limpos, 486 testes. **Não verificado:** o QR lido por uma aplicação real e as acções do cartão no browser.
   >
   > **Notas de deploy.** Sem migrações (as colunas do MFA já existiam). Duas variáveis novas no backend, `MFA_CHAVE_CIFRA` e `MFA_ACTIVO=true`, deixadas em *staged* nos `fly secrets` antes do merge, com autorização do utilizador; entram no deploy. Dependências novas: `otplib` 12.0.1, `qrcode` 1.5.4, `@types/qrcode`. Backend primeiro. No primeiro login depois do deploy, cada Super Admin configura o MFA.
+### Fase 67 — Super Admin S2a: gestão manual das assinaturas (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `feat/superadmin-s2a-assinaturas`
+  - **Pedido do utilizador:** implementar a S2 do plano §4.15 («podes implementar»), dividida em S2a (gestão manual) e S2b (expiração automática, depois do relatório).
+  - feat(assinatura): módulo `assinatura`, rotas da plataforma com `RolesGuard`. `GET /plataforma/empresas/:id/assinatura` (a actual: a mais recente não cancelada; com módulos, pagamentos, `fimDoAcesso` e `situacao`). `PATCH …/assinatura` (módulos com preço acordado — substitui a lista —, ciclo, valor, desconto, `dataFim`, `trialAte`, renovação, estado `ATIVA`/`SUSPENSA`/`CANCELADA`; motivo obrigatório; sem valor explícito, o valor é a soma dos preços). `POST …/assinatura/pagamentos` (pagamento recebido por fora: `PAGO`, estende um ciclo a contar do fim actual ou de hoje, repõe `ATIVA` um trial, atraso ou expiração; uma suspensão fica). `GET /plataforma/assinaturas/relatorio-expiracao` (quem ficaria sem acesso se as datas contassem, por empresa, pela assinatura que acaba mais tarde). Linha bloqueada com `SELECT … FOR UPDATE`. Regras de datas puras em `domain/regras-assinatura.ts`. Auditoria com o motivo por `audit.plataforma.event` (listener novo), na auditoria da empresa.
+- **2026-10-26 · [FE] · Antonio Mambo** — `feat/superadmin-s2a-assinaturas`
+  - feat(empresas): «Gerir assinatura» nos detalhes da empresa (`GerirAssinaturaModal`: resumo, alterar com motivo, pagamentos) e «Relatório de expiração» na página Empresas (`RelatorioExpiracaoModal`, com atalho para gerir cada empresa); traduções pt/en/zh.
+
+  > **Decisões assumidas** (recomendações aceites com o «podes implementar»): P6 — um pagamento estende a assinatura um ciclo; P8 — sem facturação. P2, P5 e P7 ficam para a S2b.
+  >
+  > **Achados fora do âmbito** (backlog): `audit.adesao.event` sem listener; `getModulosAtivos` procura o estado inexistente `ACTIVE`. Antes da fase, 6 ficheiros do backend apagados (só bytes nulos) pela queda da sessão anterior foram repostos dos commits, e a referência `main` do frontend, corrompida da mesma forma, reposta pelo reflog — sem perda; a produção não foi afectada.
+  >
+  > **Verificação.** Backend: `nest build` limpo; 270 suites, 3922 testes. Frontend: `tsc -b`, `vite build` e oxlint limpos, 486 testes. **Não verificado:** os dois modais num browser e uma alteração real de módulos a reflectir-se no acesso da empresa.
+  >
+  > **Notas de deploy.** Sem migrações (os campos já existiam) e sem variáveis novas. Backend primeiro.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2601,10 +2608,13 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [ ] **Poderes do Super Admin** — plano completo em **§4.15** (aprovado em 2026-10-26). Por fases:
   - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
   - [x] **S1 — Contas de Super Admin seguras** — concluída em 2026-10-26 (Fase 66): MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
-  - [ ] **S2 — Assinaturas e cobrança**: ver e alterar a assinatura de uma empresa, prolongar trial, registar pagamentos, e a expiração que hoje não existe.
+  - [x] **S2a — Gestão manual das assinaturas** — concluída em 2026-10-26 (Fase 67): ver e alterar a assinatura, registar pagamentos, relatório de expiração.
+  - [ ] **S2b — Expiração automática**: tarefa diária (`TRIAL` → `EXPIRADA`; `ATIVA` → `EM_ATRASO` → `SUSPENSA`) e avisos por e-mail. Só depois de ver o relatório e decidir P2, P5 e P7 (§4.15).
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
+- [ ] **Auditar as decisões de adesão** (encontrado na Fase 67) — `DecidirAdesaoUseCase` emite `audit.adesao.event`, que nenhum listener escuta: aprovar ou recusar um pedido fica só como mutação crua, sem o contexto. Acrescentar o evento ao `AuditLogListener` (ou passar a `audit.plataforma.event`).
+- [ ] **`GET /empresas/modulos/meus` procura `ACTIVE`** (encontrado na Fase 67) — o estado é `ATIVA`; só devolve módulos de assinaturas em `TRIAL`. Sem consumidor no frontend hoje.
 - [ ] **Registar o `ThrottlerGuard`** (encontrado na Fase 66) — o `ThrottlerModule` está configurado (20/min por IP) mas o guarda não está em `APP_GUARD`: nenhum `@Throttle` do projecto (adesão pública, mercado, login) limita pedidos. Registar como `APP_GUARD` e rever os limites das rotas públicas antes, para não cortar o tráfego normal (POS, SSE da Mayra).
 ---
 
@@ -5729,7 +5739,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 e S1 concluídas em 2026-10-26 (Fases 65 e 66).** Próxima: S2.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1 e S2a concluídas em 2026-10-26 (Fases 65 a 67).** Próxima: S2b (depende de P2, P5, P7) ou S3.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 
