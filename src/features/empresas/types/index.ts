@@ -62,7 +62,8 @@ export interface EmpresaDetails extends Empresa {
   assinaturas: Array<{
     id: string;
     estado: string;
-    valorTotal: number;
+    // `Decimal` no Prisma, que o JSON serializa como texto ("1500.00"); quem mostra converte.
+    valorTotal: string;
     ciclo: string;
     dataInicio: string;
     dataFim: string;
@@ -77,8 +78,8 @@ export interface EmpresaDetails extends Empresa {
   lojas: Array<{
     id: string;
     nome: string;
-    endereco: string;
-    cidade: string;
+    endereco: string | null;
+    cidade: string | null;
     isActive: boolean;
   }>;
 }

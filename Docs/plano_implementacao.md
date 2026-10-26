@@ -2199,6 +2199,19 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; 27 testes de `users` e `shared/super-admin` a passar (os erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` já existiam em `main`). Frontend: `tsc -b` e `vite build` limpos, oxlint limpo, **486 testes**. **Não verificado:** o diálogo num browser e o e-mail de boas-vindas real.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro (a rota nova), frontend depois.
+### Fase 65 — Super Admin S0: fechar os furos de autorização (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `fix/superadmin-s0-furos-autorizacao`
+  - **Pedido do utilizador:** analisar o poder do Super Admin e planear melhorias (plano §4.15, aprovado em 2026-10-26); a S0 primeiro, por ser uma falha de segurança activa.
+  - fix(autorizacao): as rotas da plataforma passam a `RolesGuard` + `@Roles(SUPER_ADMIN)` — `GET /empresas`, `GET /empresas/:id` (novo: detalhes com utilizadores sem campos secretos, assinaturas e lojas), `PATCH /empresas/:id/status`, `DELETE /empresas/:id`, `POST /empresas/onboarding` (deixa de ser `@Public()`), a escrita de `/modulos`, `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema`. `PATCH /empresas/:id` e `/:id/branding`: o ADMIN só na sua empresa e nunca o `isActive` (`src/shared/acesso-empresa.ts`). `POST /users` e `PATCH /users/:id`: quem não é Super Admin não atribui `SUPER_ADMIN` nem roles técnicos, nem muda o `empresaId` (`src/shared/roles-reservados.ts`). Códigos de erro `empresa.outra_empresa`, `empresa.estado_so_plataforma` e `users.utilizador.role_reservado` em pt/en/zh.
+- **2026-10-26 · [FE] · Antonio Mambo** — `fix/superadmin-s0-furos-autorizacao`
+  - fix(empresas): o tipo `EmpresaDetails` corresponde ao `GET /empresas/:id` (`valorTotal` é texto, morada pode ser nula).
+
+  > **Desvios ao plano.** Os roles técnicos (`SYSTEM_COMMERCE`) também ficaram reservados — o mesmo furo. `GET /empresas/modulos/catalogo` ficou como estava: só as Adesões o usam e os preços são públicos. O Prettier reformatou código antigo de `consulta-procura.controller.ts`.
+  >
+  > **Verificação.** Backend: `nest build` limpo; suíte completa a passar; specs novos `autoridade-da-plataforma.spec.ts` (metadados das rotas da plataforma), `acesso-empresa.spec.ts`, `roles-reservados.spec.ts`, `update-empresa.use-case.spec.ts`. Frontend: `tsc -b` e `vite build` limpos, testes a passar. **Não verificado:** os 403 com um ADMIN real e o modal de detalhes no browser. **Do utilizador:** trocar a senha do SA001/SA002 se ainda for a do seed.
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro. Quem dependesse do `POST /empresas/onboarding` sem sessão deixa de conseguir — a entrada pública é `POST /adesoes`.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2564,8 +2577,13 @@ implementação vem **antes** de retomar o ensaio da entrega.
 ### Plataforma (Super Admin)
 
 - [x] **Adicionar Super Admin pelo painel** — concluído em 2026-10-26 (Fase 64): `POST /super-admins` e o diálogo no painel da plataforma.
-- [ ] **ADMIN de empresa consegue criar um SUPER_ADMIN** — `POST /users` aceita `role: SUPER_ADMIN` no corpo e o `PermissoesGuard` dá bypass ao ADMIN. Recusar `SUPER_ADMIN` (e `ADMIN`, conforme decisão) em `CreateUserUseCase`/`UpdateUserUseCase` quando quem cria não é Super Admin. **Grave.**
-- [ ] **`GET /relatorios/dashboard/sistema` aberto ao ADMIN** — `@Permissao('SUPER_ADMIN_ONLY')` não trava o ADMIN (bypass); trocar por `RolesGuard` + `@Roles(SUPER_ADMIN)`. O mesmo padrão em `/relatorios/procura-online/sistema` a confirmar.
+- [ ] **Poderes do Super Admin** — plano completo em **§4.15** (aprovado em 2026-10-26). Por fases:
+  - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
+  - [ ] **S1 — Contas de Super Admin seguras**: MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
+  - [ ] **S2 — Assinaturas e cobrança**: ver e alterar a assinatura de uma empresa, prolongar trial, registar pagamentos, e a expiração que hoje não existe.
+  - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
+  - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
+  - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
 ---
 
 ## 4. Planos de funcionalidades
@@ -5686,6 +5704,119 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 - **BE:** `src/shared/idiomas.ts`, `configuracao-i18n.ts`, `src/i18n/zh/*`, `utils/email.templates.ts`, `ai-copilot-prompt.service.ts`, `personas/*`, `analisar-*-mayra.use-case.ts`, `decidir-adesao`, `registar-fornecedor-publico`, `onboarding-empresa`, `registo-estafeta` (use-case e DTO).
 - **FE:** `src/i18n/index.ts`, `paridade.test.ts`, `src/locales/zh/*`, `SelectorIdioma.tsx`, `formatMoeda.ts`, `useGeminiVoice.ts`, `MessageBubble.tsx`, `RegistoEstafetaPage.tsx`, `types/onboarding.ts`, `index.html`/CSS (tipos de letra).
+
+### 4.15 Poderes do Super Admin (operador da plataforma)
+
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 concluída em 2026-10-26 (Fase 65).** Próxima: S1.
+- **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
+- Os «§N» dentro desta subsecção são da numeração do próprio plano.
+
+#### 1. Objectivo
+
+O Super Admin é quem opera a plataforma CoreBusiness: aprova clientes, decide o que cada um contrata, presta suporte e responde quando algo corre mal. Hoje tem poucos poderes próprios, e vários dos que tem **não lhe são exclusivos**: o ADMIN de qualquer empresa também os tem. Este plano fecha primeiro esses furos e depois dá ao Super Admin o que lhe falta para operar o negócio.
+
+#### 2. O que o Super Admin pode fazer hoje (levantado do código em 2026-10-26)
+
+| Área | O que existe | Exclusivo do Super Admin? |
+|---|---|---|
+| Adesões | Fila, ficha, aprovar/recusar (`/adesoes`) | **Sim** — `RolesGuard` |
+| Super Admins | Listar e criar (`/super-admins`, Fase 64) | **Sim** — `RolesGuard` |
+| Estafetas da plataforma | Lista, documentos, conferir, suspender (`/plataforma/estafetas`) | **Sim** — `RolesGuard` |
+| Empresas | Listar todas, editar, branding, suspender, **apagar em cascata** (`/empresas`) | **Não** — só `@Permissao`, que o ADMIN contorna; os use-cases não comparam o `id` com o `empresaId` de quem pede |
+| Catálogo de módulos | Criar, editar, activar, apagar (`/modulos`) | **Não** — idem |
+| Criar empresa sem adesão | `POST /empresas/onboarding` (empresa + ADMIN + trial) | **Não** — é `@Public()` e sem limite de pedidos: qualquer pessoa salta a fila de adesões |
+| Painéis do sistema | `/relatorios/dashboard/sistema`, `/relatorios/procura-online/sistema` | **Não** — `@Permissao('SUPER_ADMIN_ONLY')` deixa passar o ADMIN |
+| Utilizadores | Ver todos, editar, repor senha e PIN, apagar, em qualquer empresa | Sim nos use-cases; mas `POST /users` aceita `role: SUPER_ADMIN` de um ADMIN |
+| Perfis de sistema | Alterar permissões dos perfis comuns | Sim (`AssignPermissionsUseCase`) |
+| Auditoria | Ver os registos de todas as empresas | Sim |
+| Operação (vendas, stock, caixa…) | Os menus aparecem-lhe todos | Sem `empresaId`: conforme o use-case, vê os dados de **todas** as empresas misturados ou recebe erro |
+| Assinaturas e pagamentos | **Nada.** Os modelos `Assinatura`, `AssinaturaModulo` e `Pagamento` existem, sem nenhuma rota de gestão | — |
+| Expiração | **Nada.** O `ModuloAccessGuard` só olha a `estado` (`ATIVA`/`TRIAL`), nunca `dataFim` nem `trialAte`, e nenhum processo muda o estado: **um trial nunca acaba** | — |
+| MFA | Colunas `mfaActivo` e `mfaSegredoEncriptado` em `users`, **sem código que as use** | — |
+
+Também encontrado e **a confirmar no browser**: o frontend chama `GET /empresas/:id` (detalhes da empresa) e o backend não tem essa rota — o modal de detalhes deve estar a falhar com 404.
+
+#### 3. Decisões
+
+- **D1 — A autoridade da plataforma usa sempre `RolesGuard` + `@Roles(SUPER_ADMIN)`**, como as adesões. `@Permissao` fica declarada ao lado (para um futuro role de operador), mas nunca é a única guarda: o bypass do `PermissoesGuard` é certo para um tenant e errado para a plataforma.
+- **D2 — As rotas novas da plataforma vivem sob `/plataforma/...`** (já existe `/plataforma/estafetas`). As rotas de `empresas` que o ADMIN usa para a **sua** empresa ficam onde estão e passam a comparar `id` com `user.empresaId`.
+- **D3 — Fase S0 antes de qualquer poder novo.** Dar mais poderes ao Super Admin enquanto o ADMIN de um cliente os partilha é alargar o furo.
+- **D4 — Modo suporte em vez de dar `empresaId` ao Super Admin.** Uma sessão de suporte de curta duração (1 h), emitida para uma empresa escolhida, com `suporteDe: <superAdminId>`; só leitura por omissão, escrita exige motivo; cada pedido fica na auditoria com o Super Admin verdadeiro. Fora desse modo, os menus operacionais deixam de aparecer ao Super Admin.
+- **D5 — A expiração liga-se só depois de um levantamento.** Activar a verificação de `dataFim`/`trialAte` cortaria hoje o acesso a quem está em trial desde sempre. Primeiro um relatório (quantas empresas ficariam bloqueadas), depois a decisão de prolongar, e só então o cron.
+
+#### 4. Plano por fases
+
+##### S0 — Fechar os furos de autorização (urgente)
+
+- `EmpresaController`: `GET /empresas`, `PATCH /:id/status`, `DELETE /:id` → `RolesGuard` + `@Roles(SUPER_ADMIN)`. `PATCH /:id` e `PATCH /:id/branding`: Super Admin em qualquer empresa; ADMIN só quando `id === user.empresaId` (403 caso contrário).
+- `GET /empresas/:id` (detalhes) — criar a rota que o frontend já chama, só Super Admin.
+- `POST /empresas/onboarding`: deixa de ser `@Public()`; passa a Super Admin (é o «Nova empresa» de `/empresas`). A entrada pública é a adesão.
+- `ModuloController`: escrita (`POST`, `PATCH`, `DELETE`) só Super Admin. A leitura fica como está.
+- `CreateUserUseCase`/`UpdateUserUseCase`: quem não é Super Admin não atribui `SUPER_ADMIN` (403). `ADMIN` entre colegas da mesma empresa: ver P1.
+- `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema` → `RolesGuard`.
+- **Testes:** um spec por guarda nova, com um ADMIN de outra empresa a receber 403 (o caso que hoje passa).
+- **Operacional (do utilizador):** confirmar se `admin@srg.com` (SA001) e `admin2@srg.com` (SA002) ainda têm a senha do seed (`Admin123!`, que está no repositório) e trocá-la. A verificação em produção não foi feita nesta sessão: a leitura foi recusada pelas permissões.
+
+##### S1 — Contas de Super Admin seguras
+
+- MFA por TOTP, **obrigatório para o Super Admin**: activação com QR, segredo cifrado em `mfaSegredoEncriptado` (as colunas já existem), código pedido no login a seguir à senha. Biblioteca TOTP nova → TRD §6. Precisa de uma chave de cifra nova em `fly secrets` (entra no `.env.example` com o que acontece se faltar).
+- `PATCH /super-admins/:id/estado` (desactivar/reactivar, com motivo) e `POST /super-admins/:id/repor-senha`. O `ReenviarSenhaUseCase` actual recusa quem não tem empresa, e um Super Admin não tem.
+- Regra: não se desactiva o último Super Admin activo, nem a própria conta. Update condicional numa `$transaction`, para que dois pedidos em simultâneo não desactivem os dois últimos.
+- Frontend: no `SuperAdminsCard`, as acções por linha; um ecrã de MFA no perfil e no login.
+
+##### S2 — Assinaturas e cobrança
+
+- `GET /plataforma/empresas/:id/assinatura` (plano, módulos, estado, datas, pagamentos).
+- `PATCH /plataforma/empresas/:id/assinatura`: acrescentar ou retirar módulos (`AssinaturaModulo`, com `precoAcordado`), mudar ciclo e valor, prolongar trial (`trialAte`), mudar estado (`SUSPENSA`, `CANCELADA`, `ATIVA`). Sempre com motivo; sempre auditado.
+- `POST /plataforma/empresas/:id/pagamentos`: registar um pagamento recebido por fora (transferência, M-Pesa). Valores em `Decimal`, como o schema.
+- Relatório «antes de ligar» (D5): empresas por estado, e quantas ficariam sem acesso com a verificação de datas.
+- Depois da decisão: `ExpirarAssinaturasTask` (`@Cron` diário) — `TRIAL` com `trialAte` passado → `EXPIRADA`; `ATIVA` com `dataFim` + `diasToleranciaPagamento` passado → `EM_ATRASO` e depois `SUSPENSA`. Transições condicionais (`WHERE estado = ...`). E-mail ao ADMIN da empresa antes de expirar.
+- Frontend: separador «Assinatura» nos detalhes da empresa em `/empresas`.
+
+##### S3 — Modo suporte
+
+- `POST /plataforma/suporte/entrar` `{ empresaId, motivo, escrita?: boolean }` → cookie de sessão de suporte, 1 h, com `empresaId` e `suporteDe`. `POST /plataforma/suporte/sair`.
+- Um guarda global recusa escrita (`POST`/`PATCH`/`DELETE`) em sessão de suporte sem `escrita: true`. Na auditoria, o `userId` é o do Super Admin verdadeiro, com `suporteDe` ao lado.
+- A empresa vê, na sua auditoria, que houve uma sessão de suporte (quem, quando, motivo).
+- Frontend: botão «Entrar em modo suporte» nos detalhes da empresa; faixa fixa no topo durante a sessão («Em suporte a <empresa> — sair»); fora do modo, a Sidebar do Super Admin mostra só o grupo da plataforma.
+- Acções de suporte comuns: desbloquear um utilizador bloqueado por tentativas (`bloqueadoAte`, `tentativasLoginFalhadas`) e repor a senha do ADMIN de uma empresa (já possível hoje; passa a estar no ecrã da empresa).
+
+##### S4 — Painel da plataforma
+
+- O cartão «Actividade recente do sistema», que hoje é um espaço vazio, passa a mostrar os eventos da plataforma a partir do `AuditLog`: adesões, empresas criadas, suspensas e apagadas, Super Admins criados, sessões de suporte.
+- KPIs novos: trials a expirar em 7 dias, empresas em atraso, receita recorrente mensal (soma de `valorTotal` das assinaturas activas, por ciclo).
+- Auditoria: filtro por empresa para o Super Admin.
+
+##### S5 — Avisos da plataforma (opcional)
+
+- `POST /plataforma/avisos` `{ texto, empresaId?: string }` → uma `Notificacao` por funcionário (todas as empresas ou uma), pelo caminho que já existe (Fase 47). Para manutenções e mudanças de preço.
+
+#### 5. Fora de âmbito
+
+- Cobrança automática por gateway (o pagamento online do checkout está em §4.10; a cobrança das assinaturas fica para depois de S2).
+- Roles de operador mais finos (`SUPORTE`, `FINANCEIRO`): a `@Permissao` declarada em cada rota prepara-os, mas não entram agora.
+- Apagar os dados de uma empresa a pedido: o `DELETE /empresas/:id` em cascata existe; a política de retenção é outra decisão.
+
+#### 6. Riscos
+
+- **S0 pode partir um ecrã do ADMIN** que hoje dependa sem saber de uma rota da plataforma. Antes de fechar cada rota, procurar quem a chama no frontend (as funções de `features/empresas/api/empresa.api.ts` só são usadas por `/empresas`, que já é só Super Admin).
+- **S2 corta acessos** se a expiração for ligada sem o levantamento (D5).
+- **S3 é o poder mais sensível**: um bug no guarda de escrita deixa um operador alterar dados de um cliente sem rasto. Testes do guarda com cada método HTTP.
+
+#### 7. Perguntas em aberto
+
+- **P1 — Um ADMIN pode criar outro ADMIN na sua empresa?** Hoje pode. Recomendação: sim (uma empresa pode ter dois donos), mas nunca `SUPER_ADMIN`.
+- **P2 — Quando um trial ou uma assinatura expira, o que vê a empresa?** Recomendação: só leitura durante a tolerância, bloqueio total depois — nunca apagar.
+- **P3 — No modo suporte, escrita permitida?** Recomendação: só leitura por omissão; escrita pedida explicitamente, com motivo, e visível para a empresa.
+- **P4 — Ordem das fases.** Recomendação: S0 já, como correcção (`fix/`); depois S1, S2, S3, S4; S5 só se fizer falta.
+
+#### 8. Verificação por fase
+
+- **S0:** com um ADMIN da empresa A, `GET /empresas`, `DELETE /empresas/<B>`, `POST /modulos` e `POST /users` com `role: SUPER_ADMIN` dão 403; com o Super Admin, 200. Specs dos guardas; build e testes dos dois lados.
+- **S1:** o login do Super Admin pede o código TOTP; tentar desactivar o último Super Admin dá 409.
+- **S2:** alterar os módulos de uma empresa reflecte-se no `ModuloAccessGuard` dela; o relatório D5 corre antes do cron.
+- **S3:** em suporte só leitura, um `POST` dá 403; a auditoria da empresa mostra a sessão.
+- **S4:** o feed mostra a criação de um Super Admin feita no próprio painel.
 
 ## 5. Convenção para novas entradas
 
