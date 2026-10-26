@@ -2186,6 +2186,19 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro (e-mails e Mayra mudam com ele), frontend depois.
 
+### Fase 64 — Super Admins: criar a partir do painel da plataforma (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `feat/superadmin-adicionar-superadmin`
+  - **Pedido do utilizador:** criar uma conta Super Admin e ter, no painel do Super Admin, a opção de adicionar outro.
+  - feat(users): `GET` e `POST /super-admins` (`SuperAdminsController`), com `RolesGuard` + `@Roles(SUPER_ADMIN)` — sem o bypass que o `PermissoesGuard` dá ao ADMIN de tenant — e `@Permissao('GERIR_SUPER_ADMINS')` declarada. `CriarSuperAdminUseCase`: só nome e e-mail no DTO; código `SA###` em série e senha de 12 caracteres `base64url` gerados pelo servidor (`src/shared/super-admin.ts`); conta sem empresa; e-mail de boas-vindas e a senha devolvida **uma vez** na resposta, com `emailEnviado`. Script `npm run super-admin:criar -- --email … --nome … [--aplicar]` para criar a conta sem painel nem SMTP (simula por omissão; recusa e-mail existente).
+- **2026-10-26 · [FE] · Antonio Mambo** — `feat/superadmin-adicionar-superadmin`
+  - feat(dashboard): cartão «Super Administradores» no painel da plataforma (`SuperAdminsCard`: lista, carregamento, erro, vazio) e diálogo «Adicionar Super Admin» (`NovoSuperAdminDialog`) que mostra o código e a senha uma só vez, com cópia e aviso quando o e-mail falhou; traduções pt/en/zh em `painel.json`.
+
+  > **Conta criada.** `tonymambo89@gmail.com` → `SA003`, pelo script, na base de produção. O e-mail pedido primeiro (`antonio.mambo002@gmail.com`) já é o único ADMIN da SHOPRITE (`A8156`); por decisão do utilizador não foi promovido, e usou-se outro e-mail.
+  >
+  > **Verificação.** Backend: `nest build` limpo; 27 testes de `users` e `shared/super-admin` a passar (os erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` já existiam em `main`). Frontend: `tsc -b` e `vite build` limpos, oxlint limpo, **486 testes**. **Não verificado:** o diálogo num browser e o e-mail de boas-vindas real.
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro (a rota nova), frontend depois.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2548,6 +2561,11 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [ ] **Domínio próprio** — `controle-core-front-end.vercel.app` e `srg-controlcore-api.fly.dev` ainda dizem o nome antigo na barra do browser e no Swagger. Exige decisão do utilizador; mudar implica `vercel.json`, `VITE_SOCKET_URL`, a lista de CORS e o domínio no Google OAuth.
 - [ ] **Captura do CRM do site** — `src/assets/HeroPages/CRM.png` mostra «NUITâ€¦» (codificação partida) na caixa de pesquisa; refazer a captura.
 
+### Plataforma (Super Admin)
+
+- [x] **Adicionar Super Admin pelo painel** — concluído em 2026-10-26 (Fase 64): `POST /super-admins` e o diálogo no painel da plataforma.
+- [ ] **ADMIN de empresa consegue criar um SUPER_ADMIN** — `POST /users` aceita `role: SUPER_ADMIN` no corpo e o `PermissoesGuard` dá bypass ao ADMIN. Recusar `SUPER_ADMIN` (e `ADMIN`, conforme decisão) em `CreateUserUseCase`/`UpdateUserUseCase` quando quem cria não é Super Admin. **Grave.**
+- [ ] **`GET /relatorios/dashboard/sistema` aberto ao ADMIN** — `@Permissao('SUPER_ADMIN_ONLY')` não trava o ADMIN (bypass); trocar por `RolesGuard` + `@Roles(SUPER_ADMIN)`. O mesmo padrão em `/relatorios/procura-online/sistema` a confirmar.
 ---
 
 ## 4. Planos de funcionalidades
