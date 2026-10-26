@@ -1,5 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { getAdminDashboard, getSuperAdminDashboard } from '../api/dashboard.api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  criarSuperAdmin,
+  getAdminDashboard,
+  getSuperAdminDashboard,
+  getSuperAdmins,
+} from '../api/dashboard.api';
 
 export function useAdminDashboard() {
   return useQuery({
@@ -14,5 +19,24 @@ export function useSuperAdminDashboard() {
     queryKey: ['dashboard', 'superadmin'],
     queryFn: getSuperAdminDashboard,
     refetchInterval: 120000, // Refresh every 2 minutes
+  });
+}
+
+export function useSuperAdmins() {
+  return useQuery({
+    queryKey: ['super-admins'],
+    queryFn: getSuperAdmins,
+  });
+}
+
+export function useCriarSuperAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: criarSuperAdmin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['super-admins'] });
+      // O KPI de utilizadores do painel conta esta conta nova.
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'superadmin'] });
+    },
   });
 }

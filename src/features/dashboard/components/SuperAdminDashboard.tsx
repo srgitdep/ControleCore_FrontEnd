@@ -3,6 +3,7 @@ import { Building2, Users, Store, ShieldCheck } from 'lucide-react';
 import { Card, CardCarousel, KpiCard } from '@/shared/ui';
 import { useTranslation } from 'react-i18next';
 import { formatInteiro } from '@/shared/utils';
+import { SuperAdminsCard } from './SuperAdminsCard';
 
 export function SuperAdminDashboard() {
   const { t } = useTranslation('painel');
@@ -59,6 +60,8 @@ export function SuperAdminDashboard() {
           description={t('plataforma.subscricoes_desc')}
         />
       </CardCarousel>
+
+      <SuperAdminsCard />
 
       <Card padding="lg">
         <h3 className="text-[15px] font-semibold text-slate-900">
