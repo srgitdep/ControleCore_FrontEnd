@@ -50,16 +50,6 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
-**Fase 66 — Super Admin S1: contas seguras** (plano completo em **§4.15**; branch `feat/superadmin-s1-contas-seguras` nos dois repositórios, backend primeiro).
-
-- [x] **MFA (backend).** `src/shared/mfa.ts`: chave `MFA_CHAVE_CIFRA` (HKDF para cifra e assinatura), segredo TOTP cifrado com AES-256-GCM em `mfaSegredoEncriptado`, `otplib`. O `LoginUseCase` deixa de emitir sessão ao Super Admin (e a quem tenha `mfaActivo`) depois da senha: devolve `mfa: { etapa: CONFIGURAR | PEDIR_CODIGO, desafio }`. O desafio é um JWT de 5 min assinado com a chave do MFA e audiência própria — o `JwtStrategy` nunca o aceita. `POST /auth/mfa/configurar` (QR + segredo) e `POST /auth/mfa/verificar` (emite a sessão; activa o MFA na primeira vez). Sem a chave, o login do Super Admin **falha** (503), não salta o MFA.
-- [x] **Gestão de Super Admins (backend).** `PATCH /super-admins/:id/estado` (com motivo), `POST /super-admins/:id/repor-senha`, `POST /super-admins/:id/repor-mfa`. Nunca sobre a própria conta; nunca desactivar o último activo (`SELECT … FOR UPDATE` na transacção). Script `npm run super-admin:repor-mfa` para quem ficar sem acesso.
-- [x] **Frontend.** Passo do código no login (configurar com QR, ou pedir o código); acções por linha no `SuperAdminsCard` (desactivar/reactivar, repor senha, repor MFA) e o estado do MFA; traduções pt/en/zh.
-- [x] **Testes e `.env.example`** (`MFA_CHAVE_CIFRA`, com o que acontece se faltar). Specs novos: `mfa.spec.ts`, `mfa.use-case.spec.ts`, `login.use-case.spec.ts`, `gerir-super-admin.use-case.spec.ts`, `user-status-toggle.use-case.spec.ts`.
-- **Desvios encontrados durante a fase:** (1) `PATCH /users/:id/status` procurava o alvo sem filtro de empresa — o ADMIN de qualquer empresa desactivava utilizadores de outra, e um Super Admin; corrigido aqui (mesmo risco que a S1 fecha). (2) O `ThrottlerGuard` não está registado em lado nenhum: os `@Throttle` do projecto não limitam nada. O MFA não depende dele (limite de tentativas na base de dados); a correcção geral fica no backlog. (3) `POST /auth/mfa/configurar` reaproveita o segredo pendente, para um QR já lido continuar válido depois de recarregar a página. (4) O interceptor do axios trata `/auth/mfa/*` como o login (um 401 é um código errado, não uma sessão caída).
-- [x] **Interruptor `MFA_ACTIVO`** (pedido do utilizador durante a fase): `false`/`0` desliga o segundo passo para toda a gente e dispensa a `MFA_CHAVE_CIFRA`; em falta ou com outro valor, fica ligado. Variável de ambiente (escolha do utilizador entre painel, variável e por conta): mudar é um `fly secrets set`, que reinicia a API.
-- [ ] **Verificação manual e deploy.** **Antes do merge:** `fly secrets set MFA_CHAVE_CIFRA=$(openssl rand -base64 32)` — sem ela, nenhum Super Admin entra. Depois: entrar com o `SA003`, ler o QR, confirmar o código; desactivar e reactivar outro Super Admin.
-
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2222,6 +2212,19 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; suíte completa a passar; specs novos `autoridade-da-plataforma.spec.ts` (metadados das rotas da plataforma), `acesso-empresa.spec.ts`, `roles-reservados.spec.ts`, `update-empresa.use-case.spec.ts`. Frontend: `tsc -b` e `vite build` limpos, testes a passar. **Não verificado:** os 403 com um ADMIN real e o modal de detalhes no browser. **Do utilizador:** trocar a senha do SA001/SA002 se ainda for a do seed.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro. Quem dependesse do `POST /empresas/onboarding` sem sessão deixa de conseguir — a entrada pública é `POST /adesoes`.
+### Fase 66 — Super Admin S1: contas seguras e MFA (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `feat/superadmin-s1-contas-seguras`
+  - feat(auth): MFA por TOTP obrigatório para o Super Admin (`otplib`; segredo cifrado com AES-256-GCM em `mfaSegredoEncriptado`; `MFA_CHAVE_CIFRA` dá por HKDF a chave de cifra e a de assinatura). Depois da senha o login devolve `mfa: { etapa, desafio }` em vez da sessão — desafio de 5 min assinado com a chave do MFA e audiência própria, que o `JwtStrategy` nunca aceita. `POST /auth/mfa/configurar` (QR com `qrcode`; reaproveita o segredo pendente) e `POST /auth/mfa/verificar` (emite a sessão e liga o MFA na primeira vez). Cinco códigos errados bloqueiam 15 min (`tentativasLoginFalhadas`/`bloqueadoAte`, na base de dados). Sem a chave, o Super Admin não entra (503). `PATCH /super-admins/:id/estado`, `POST :id/repor-senha` e `POST :id/repor-mfa`, nunca sobre a própria conta nem deixando a plataforma sem nenhum activo (`SELECT … FOR UPDATE`). `PATCH /users/:id/status` passa a filtrar pela empresa de quem pede e recusa Super Admins. Script `npm run super-admin:repor-mfa`.
+  - feat(auth): interruptor `MFA_ACTIVO` (pedido do utilizador durante a fase) — `false`/`0` desliga o segundo passo para todos e dispensa a chave; em falta ou com outro valor, ligado.
+- **2026-10-26 · [FE] · Antonio Mambo** — `feat/superadmin-s1-contas-seguras`
+  - feat(auth): passo do código no login (`PassoMfa` em `LoginPage.tsx`: QR com a chave em texto, ou só o código); o axios trata `/auth/mfa/*` como o login. Cartão «Super Administradores» com o estado do MFA e as acções por linha (`AccaoSuperAdminDialog`); credenciais em `CredenciaisSuperAdmin` (criação e reposição); traduções pt/en/zh.
+
+  > **Desvios ao plano.** (1) `PATCH /users/:id/status` não filtrava por empresa — o ADMIN de qualquer empresa desactivava utilizadores de outra e Super Admins; corrigido aqui. (2) O `ThrottlerGuard` não está registado: nenhum `@Throttle` do projecto limita pedidos (item novo no backlog); o MFA tem o limite na base de dados e não depende dele. (3) O interruptor `MFA_ACTIVO`, pedido durante a fase, por variável de ambiente (escolha do utilizador).
+  >
+  > **Verificação.** Backend: `nest build` limpo; suíte completa a passar (267 suites, 3885 testes antes do interruptor; `auth` e `shared` de novo depois, 855). Frontend: `tsc -b`, `vite build` e oxlint limpos, 486 testes. **Não verificado:** o QR lido por uma aplicação real e as acções do cartão no browser.
+  >
+  > **Notas de deploy.** Sem migrações (as colunas do MFA já existiam). Duas variáveis novas no backend, `MFA_CHAVE_CIFRA` e `MFA_ACTIVO=true`, deixadas em *staged* nos `fly secrets` antes do merge, com autorização do utilizador; entram no deploy. Dependências novas: `otplib` 12.0.1, `qrcode` 1.5.4, `@types/qrcode`. Backend primeiro. No primeiro login depois do deploy, cada Super Admin configura o MFA.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2589,11 +2592,12 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Adicionar Super Admin pelo painel** — concluído em 2026-10-26 (Fase 64): `POST /super-admins` e o diálogo no painel da plataforma.
 - [ ] **Poderes do Super Admin** — plano completo em **§4.15** (aprovado em 2026-10-26). Por fases:
   - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
-  - [ ] **S1 — Contas de Super Admin seguras**: MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
+  - [x] **S1 — Contas de Super Admin seguras** — concluída em 2026-10-26 (Fase 66): MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
   - [ ] **S2 — Assinaturas e cobrança**: ver e alterar a assinatura de uma empresa, prolongar trial, registar pagamentos, e a expiração que hoje não existe.
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
+- [ ] **Registar o `ThrottlerGuard`** (encontrado na Fase 66) — o `ThrottlerModule` está configurado (20/min por IP) mas o guarda não está em `APP_GUARD`: nenhum `@Throttle` do projecto (adesão pública, mercado, login) limita pedidos. Registar como `APP_GUARD` e rever os limites das rotas públicas antes, para não cortar o tráfego normal (POS, SSE da Mayra).
 ---
 
 ## 4. Planos de funcionalidades
@@ -5717,7 +5721,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 concluída em 2026-10-26 (Fase 65).** Próxima: S1.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 e S1 concluídas em 2026-10-26 (Fases 65 e 66).** Próxima: S2.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 
