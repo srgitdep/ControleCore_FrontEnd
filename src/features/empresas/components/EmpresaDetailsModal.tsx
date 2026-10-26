@@ -7,9 +7,11 @@ import { useEmpresaDetails } from '@/features/empresas';
 interface EmpresaDetailsModalProps {
   empresa: Empresa;
   onClose: () => void;
+  /** Abre a gestão da assinatura (só a página Empresas, do Super Admin, a passa). */
+  onGerirAssinatura?: () => void;
 }
 
-export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalProps) {
+export function EmpresaDetailsModal({ empresa, onClose, onGerirAssinatura }: EmpresaDetailsModalProps) {
   const { t } = useTranslation('empresas');
   const { data: details, isLoading } = useEmpresaDetails(empresa.id);
 
@@ -160,9 +162,20 @@ export function EmpresaDetailsModal({ empresa, onClose }: EmpresaDetailsModalPro
                 
                 {/* Plano e Faturação */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <ShieldCheck size={16} /> {t('detalhes.plano')}
-                  </h4>
+                  <div className="mb-4 flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck size={16} /> {t('detalhes.plano')}
+                    </h4>
+                    {onGerirAssinatura && (
+                      <button
+                        type="button"
+                        onClick={onGerirAssinatura}
+                        className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        {t('assinatura.gerir')}
+                      </button>
+                    )}
+                  </div>
                   
                   {assinaturaAtiva ? (
                     <div className="space-y-4">

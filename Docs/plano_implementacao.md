@@ -50,6 +50,14 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
+**Fase 67 — Super Admin S2a: gestão manual das assinaturas** (plano completo em **§4.15**; branch `feat/superadmin-s2a-assinaturas` nos dois repositórios, backend primeiro). A S2b (expiração automática) fica para depois do relatório e da decisão sobre P2, P5 e P7. **Decisões assumidas:** P6 — registar um pagamento estende a assinatura um ciclo, a contar do fim actual ou de hoje, o que for mais tarde; P8 — sem facturação nesta fase.
+
+- [x] **Regras puras** (`src/modules/assinatura/domain/regras-assinatura.ts`): somar um ciclo a uma data; o fim do acesso (`TRIAL` → `trialAte ?? dataFim`; `ATIVA` → `dataFim` + tolerância); o que aconteceria a uma assinatura se as datas contassem.
+- [x] **Backend** (módulo `assinatura`, rotas da plataforma com `RolesGuard`): `GET /plataforma/empresas/:id/assinatura`; `PATCH …/assinatura` (módulos com preço acordado, ciclo, valor, desconto, datas, renovação, estado `ATIVA`/`SUSPENSA`/`CANCELADA`; motivo obrigatório; linha bloqueada com `FOR UPDATE`); `POST …/assinatura/pagamentos` (pagamento recebido por fora; estende um ciclo); `GET /plataforma/assinaturas/relatorio-expiracao`. Auditoria com o motivo por `audit.plataforma.event`.
+- [x] **Frontend:** «Gerir assinatura» nos detalhes da empresa (resumo, editar, estado, pagamentos, registar pagamento) e «Relatório de expiração» na página Empresas; traduções pt/en/zh.
+- [x] **Testes e verificação.** Backend 270 suites, 3922 testes; frontend build e 486 testes. Specs: `regras-assinatura.spec.ts`, `gerir-assinatura.use-case.spec.ts`, `relatorio-expiracao.use-case.spec.ts`; as quatro rotas em `autoridade-da-plataforma.spec.ts`.
+- **Achados fora do âmbito (não corrigidos, vão para o backlog):** (1) o evento `audit.adesao.event` não tem listener — as decisões de adesão nunca chegam à auditoria com o contexto (só a mutação crua); (2) `getModulosAtivos` (`GET /empresas/modulos/meus`) procura o estado `'ACTIVE'`, que não existe — só encontra assinaturas em `TRIAL`; sem consumidor no frontend hoje.
+
 ---
 
 ## 1. Arquitectura em duas linhas

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BarraDaPagina } from '@/shared/ui';
 import { formatDataHora } from '@/shared/utils';
 
-import { Edit2, Trash2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Palette } from 'lucide-react';
+import { Edit2, Trash2, Search, Calendar, CalendarClock, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Palette } from 'lucide-react';
 import { useEmpresas, useDeleteEmpresa } from '@/features/empresas';
 import type { Empresa } from '@/features/empresas';
 import toast from 'react-hot-toast';
@@ -11,6 +11,8 @@ import { EmpresaDialog } from '../components/EmpresaDialog';
 import { ConfirmDialog } from '@/shared/ui';
 import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
 import { BrandingModal } from '../components/BrandingModal';
+import { GerirAssinaturaModal } from '../components/GerirAssinaturaModal';
+import { RelatorioExpiracaoModal } from '../components/RelatorioExpiracaoModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -21,6 +23,8 @@ export function EmpresasPage() {
   const [empresaToEdit, setEmpresaToEdit] = useState<Empresa | null>(null);
   const [empresaToView, setEmpresaToView] = useState<Empresa | null>(null);
   const [empresaToBrand, setEmpresaToBrand] = useState<Empresa | null>(null);
+  const [assinaturaDe, setAssinaturaDe] = useState<string | null>(null);
+  const [relatorioAberto, setRelatorioAberto] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -141,7 +145,14 @@ export function EmpresasPage() {
             >
               {t('pagina.adicionar')}
             </button>
-            <button 
+            <button
+              onClick={() => setRelatorioAberto(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-sm hover:bg-slate-100 transition-colors"
+            >
+              <CalendarClock size={16} />
+              <span>{t('relatorio.abrir')}</span>
+            </button>
+            <button
               onClick={exportToPDF}
               className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-sm hover:bg-slate-100 transition-colors"
             >
@@ -358,7 +369,20 @@ export function EmpresasPage() {
         <EmpresaDetailsModal
           empresa={empresaToView}
           onClose={() => setIsDetailsOpen(false)}
+          onGerirAssinatura={() => setAssinaturaDe(empresaToView.id)}
         />
+      )}
+
+      {relatorioAberto && (
+        <RelatorioExpiracaoModal
+          onClose={() => setRelatorioAberto(false)}
+          onGerir={(empresaId) => setAssinaturaDe(empresaId)}
+        />
+      )}
+
+      {/* Depois dos outros: abre-se por cima dos detalhes e do relatório, e ao fechar volta-se a eles. */}
+      {assinaturaDe && (
+        <GerirAssinaturaModal empresaId={assinaturaDe} onClose={() => setAssinaturaDe(null)} />
       )}
 
       {empresaToBrand && (

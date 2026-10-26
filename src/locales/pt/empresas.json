@@ -153,5 +153,92 @@
     "titulo_registar": "Registar Nova Empresa",
     "sub_editar": "Actualize os dados de identificação da empresa",
     "sub_registar": "Preencha os dados da empresa e do gestor responsável"
+  },
+  "assinatura": {
+    "gerir": "Gerir assinatura",
+    "titulo": "Assinatura",
+    "erro_carregar": "Não foi possível carregar a assinatura.",
+    "tentar_novamente": "Tentar novamente",
+    "sem_assinatura": "Esta empresa não tem assinatura.",
+    "ciclo": "Ciclo",
+    "valor": "Valor por ciclo",
+    "desconto": "Desconto (%)",
+    "inicio": "Início",
+    "fim": "Fim do período pago",
+    "trial_ate": "Trial até",
+    "suspensa_em": "Suspensa a {{data}}: {{motivo}}",
+    "situacao": {
+      "TRIAL_EXPIRADO": "O trial acabou a {{data}}. Hoje ainda tem acesso, porque a expiração automática não está ligada.",
+      "PAGAMENTO_EM_FALTA": "O período pago acabou a {{data}} (já com a tolerância). Hoje ainda tem acesso, porque a expiração automática não está ligada."
+    },
+    "alterar": "Alterar assinatura",
+    "modulos": "Módulos e preço mensal acordado",
+    "preco_de": "Preço de {{nome}}",
+    "aviso_modulos": "Retirar um módulo corta o acesso da empresa a ele no pedido seguinte.",
+    "mudar_estado": "Estado",
+    "manter_estado": "Manter o estado actual",
+    "renovacao_automatica": "Renovação automática",
+    "aviso_suspender": "Suspender corta o acesso da empresa a todos os módulos desta assinatura no pedido seguinte.",
+    "motivo": "Motivo",
+    "motivo_dica": "Obrigatório. Fica na auditoria da empresa.",
+    "guardar": "Guardar alterações",
+    "alterada": "Assinatura actualizada.",
+    "erro_alterar": "Não foi possível alterar a assinatura.",
+    "pagamentos": "Pagamentos",
+    "registar_pagamento": "Registar pagamento",
+    "cancelada_sem_pagamentos": "Reactive a assinatura para registar pagamentos.",
+    "valor_pago": "Valor pago",
+    "metodo": "Método",
+    "data_pagamento": "Data do pagamento",
+    "referencia": "Referência",
+    "observacoes": "Observações",
+    "estender": "Estender a assinatura um ciclo ({{ciclo}})",
+    "suspensa_mantem": "A assinatura continua suspensa: reactive-a no formulário acima.",
+    "registar": "Registar",
+    "pagamento_registado": "Pagamento registado.",
+    "erro_pagamento": "Não foi possível registar o pagamento.",
+    "sem_pagamentos": "Ainda não há pagamentos registados.",
+    "estado": {
+      "TRIAL": "Trial",
+      "ATIVA": "Activa",
+      "EXPIRADA": "Expirada",
+      "CANCELADA": "Cancelada",
+      "SUSPENSA": "Suspensa",
+      "EM_ATRASO": "Em atraso",
+      "EM_RENOVACAO": "Em renovação"
+    },
+    "ciclos": {
+      "MENSAL": "Mensal",
+      "TRIMESTRAL": "Trimestral",
+      "SEMESTRAL": "Semestral",
+      "ANUAL": "Anual"
+    },
+    "metodos": {
+      "TRANSFERENCIA": "Transferência",
+      "MPESA": "M-Pesa",
+      "EMOLA": "e-Mola",
+      "NUMERARIO": "Numerário",
+      "CHEQUE": "Cheque",
+      "OUTRO": "Outro"
+    }
+  },
+  "relatorio": {
+    "abrir": "Relatório de expiração",
+    "titulo": "Relatório de expiração",
+    "subtitulo": "Quem ficaria sem acesso se as datas das assinaturas passassem a contar.",
+    "erro": "Não foi possível gerar o relatório.",
+    "com_acesso": "Empresas com acesso",
+    "em_dia": "Em dia",
+    "trial_expirado": "Trial acabado",
+    "pagamento_em_falta": "Pagamento em falta",
+    "ninguem": "Nenhuma empresa ficaria sem acesso.",
+    "aviso": "{{total}} empresa(s) perderiam o acesso no dia em que a expiração automática for ligada. Resolva-as antes: prolongar, registar o pagamento ou suspender.",
+    "situacao": {
+      "TRIAL_EXPIRADO": "Trial acabou a {{data}} — há {{dias}} dias",
+      "PAGAMENTO_EM_FALTA": "Período pago acabou a {{data}} — há {{dias}} dias"
+    },
+    "gerir": "Gerir",
+    "sem_assinatura": "Empresas activas sem nenhuma assinatura em vigor",
+    "gerado_em": "Gerado em {{data}}"
   }
 }

@@ -153,5 +153,92 @@
     "titulo_registar": "Register New Company",
     "sub_editar": "Update the company's identification details",
     "sub_registar": "Fill in the company and responsible manager details"
+  },
+  "assinatura": {
+    "gerir": "Manage subscription",
+    "titulo": "Subscription",
+    "erro_carregar": "Could not load the subscription.",
+    "tentar_novamente": "Try again",
+    "sem_assinatura": "This company has no subscription.",
+    "ciclo": "Billing cycle",
+    "valor": "Amount per cycle",
+    "desconto": "Discount (%)",
+    "inicio": "Start",
+    "fim": "End of paid period",
+    "trial_ate": "Trial until",
+    "suspensa_em": "Suspended on {{data}}: {{motivo}}",
+    "situacao": {
+      "TRIAL_EXPIRADO": "The trial ended on {{data}}. It still has access today, because automatic expiry is not switched on.",
+      "PAGAMENTO_EM_FALTA": "The paid period ended on {{data}} (grace period included). It still has access today, because automatic expiry is not switched on."
+    },
+    "alterar": "Change subscription",
+    "modulos": "Modules and agreed monthly price",
+    "preco_de": "Price of {{nome}}",
+    "aviso_modulos": "Removing a module cuts the company’s access to it on its next request.",
+    "mudar_estado": "Status",
+    "manter_estado": "Keep the current status",
+    "renovacao_automatica": "Automatic renewal",
+    "aviso_suspender": "Suspending cuts the company’s access to every module of this subscription on its next request.",
+    "motivo": "Reason",
+    "motivo_dica": "Required. Recorded in the company’s audit log.",
+    "guardar": "Save changes",
+    "alterada": "Subscription updated.",
+    "erro_alterar": "Could not change the subscription.",
+    "pagamentos": "Payments",
+    "registar_pagamento": "Record payment",
+    "cancelada_sem_pagamentos": "Reactivate the subscription to record payments.",
+    "valor_pago": "Amount paid",
+    "metodo": "Method",
+    "data_pagamento": "Payment date",
+    "referencia": "Reference",
+    "observacoes": "Notes",
+    "estender": "Extend the subscription by one cycle ({{ciclo}})",
+    "suspensa_mantem": "The subscription stays suspended: reactivate it in the form above.",
+    "registar": "Record",
+    "pagamento_registado": "Payment recorded.",
+    "erro_pagamento": "Could not record the payment.",
+    "sem_pagamentos": "No payments recorded yet.",
+    "estado": {
+      "TRIAL": "Trial",
+      "ATIVA": "Active",
+      "EXPIRADA": "Expired",
+      "CANCELADA": "Cancelled",
+      "SUSPENSA": "Suspended",
+      "EM_ATRASO": "Overdue",
+      "EM_RENOVACAO": "Renewing"
+    },
+    "ciclos": {
+      "MENSAL": "Monthly",
+      "TRIMESTRAL": "Quarterly",
+      "SEMESTRAL": "Half-yearly",
+      "ANUAL": "Yearly"
+    },
+    "metodos": {
+      "TRANSFERENCIA": "Bank transfer",
+      "MPESA": "M-Pesa",
+      "EMOLA": "e-Mola",
+      "NUMERARIO": "Cash",
+      "CHEQUE": "Cheque",
+      "OUTRO": "Other"
+    }
+  },
+  "relatorio": {
+    "abrir": "Expiry report",
+    "titulo": "Expiry report",
+    "subtitulo": "Who would lose access if subscription dates started to count.",
+    "erro": "Could not generate the report.",
+    "com_acesso": "Companies with access",
+    "em_dia": "Up to date",
+    "trial_expirado": "Trial ended",
+    "pagamento_em_falta": "Payment missing",
+    "ninguem": "No company would lose access.",
+    "aviso": "{{total}} company(ies) would lose access on the day automatic expiry is switched on. Resolve them first: extend, record the payment or suspend.",
+    "situacao": {
+      "TRIAL_EXPIRADO": "Trial ended on {{data}} — {{dias}} days ago",
+      "PAGAMENTO_EM_FALTA": "Paid period ended on {{data}} — {{dias}} days ago"
+    },
+    "gerir": "Manage",
+    "sem_assinatura": "Active companies with no subscription in force",
+    "gerado_em": "Generated on {{data}}"
   }
 }
