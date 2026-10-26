@@ -35,6 +35,8 @@ export interface SuperAdminResumo {
   name: string;
   email: string;
   isActive: boolean;
+  /** `false` até ao primeiro login com código: o QR ainda não foi lido. */
+  mfaActivo: boolean;
   createdAt: string;
 }
 
@@ -47,8 +49,16 @@ export interface CriarSuperAdminPayload {
  * `POST /super-admins`. `senhaInicial` só vem nesta resposta — o servidor guarda o hash —,
  * e `emailEnviado: false` quer dizer que quem criou tem de entregar as credenciais à mão.
  */
-export interface SuperAdminCriado extends SuperAdminResumo {
+export interface SuperAdminCriado extends Omit<SuperAdminResumo, 'mfaActivo'> {
   role: 'SUPER_ADMIN';
+  senhaInicial: string;
+  emailEnviado: boolean;
+}
+
+/** `POST /super-admins/:id/repor-senha` — a senha nova, uma única vez. */
+export interface SenhaSuperAdminReposta {
+  id: string;
+  code: string;
   senhaInicial: string;
   emailEnviado: boolean;
 }

@@ -57,8 +57,28 @@ export interface EntrarPayload {
   password: string;
 }
 
+/**
+ * A senha foi aceite mas falta o código (o Super Admin, sempre; outros, se o ligaram).
+ * `CONFIGURAR`: ainda não há aplicação ligada — mostra-se o QR. `PEDIR_CODIGO`: já há.
+ * O `desafio` vale 5 minutos e não é uma sessão: não sai cookie nenhum até ao código.
+ */
+export interface DesafioMfa {
+  etapa: 'CONFIGURAR' | 'PEDIR_CODIGO';
+  desafio: string;
+}
+
+// POST /auth/mfa/configurar
+export interface ConfiguracaoMfa {
+  otpauthUrl: string;
+  /** PNG em `data:` — pronto para um `<img>`. */
+  qrCode: string;
+  /** O mesmo segredo em texto, para quem não consegue ler o QR. */
+  segredo: string;
+}
+
 export type RespostaEntrar =
   | { tipo: 'COMPRADOR'; user: AuthUser }
+  | { tipo: 'COMPRADOR'; mfa: DesafioMfa }
   // O código `E####` de um estafeta (plano da entrega §4.5): a aplicação dele vive em `/estafeta`.
   | { tipo: 'ESTAFETA'; utilizador: { estafetaId: string; nome: string; codigo: string; idioma: string | null } }
   | {

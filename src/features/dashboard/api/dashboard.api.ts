@@ -5,6 +5,7 @@ import type {
   SuperAdminCriado,
   SuperAdminDashboardResponse,
   SuperAdminResumo,
+  SenhaSuperAdminReposta,
 } from '@/features/dashboard';
 
 export const getAdminDashboard = async (): Promise<AdminDashboardResponse> => {
@@ -24,5 +25,23 @@ export const getSuperAdmins = async (): Promise<SuperAdminResumo[]> => {
 
 export const criarSuperAdmin = async (payload: CriarSuperAdminPayload): Promise<SuperAdminCriado> => {
   const { data } = await api.post<SuperAdminCriado>('/super-admins', payload);
+  return data;
+};
+
+export const alterarEstadoSuperAdmin = async (id: string, activo: boolean, motivo: string) => {
+  const { data } = await api.patch<{ id: string; isActive: boolean }>(`/super-admins/${id}/estado`, {
+    activo,
+    motivo,
+  });
+  return data;
+};
+
+export const reporSenhaSuperAdmin = async (id: string): Promise<SenhaSuperAdminReposta> => {
+  const { data } = await api.post<SenhaSuperAdminReposta>(`/super-admins/${id}/repor-senha`);
+  return data;
+};
+
+export const reporMfaSuperAdmin = async (id: string) => {
+  const { data } = await api.post<{ id: string; mfaActivo: false }>(`/super-admins/${id}/repor-mfa`);
   return data;
 };

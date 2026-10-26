@@ -4,6 +4,9 @@ import {
   getAdminDashboard,
   getSuperAdminDashboard,
   getSuperAdmins,
+  alterarEstadoSuperAdmin,
+  reporMfaSuperAdmin,
+  reporSenhaSuperAdmin,
 } from '../api/dashboard.api';
 
 export function useAdminDashboard() {
@@ -39,4 +42,22 @@ export function useCriarSuperAdmin() {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'superadmin'] });
     },
   });
+}
+
+/**
+ * As três acções sobre a conta de outro Super Admin. Todas refrescam a lista: o estado e o
+ * MFA de cada linha vêm dela.
+ */
+export function useGerirSuperAdmin() {
+  const queryClient = useQueryClient();
+  const refrescar = () => queryClient.invalidateQueries({ queryKey: ['super-admins'] });
+  return {
+    alterarEstado: useMutation({
+      mutationFn: (v: { id: string; activo: boolean; motivo: string }) =>
+        alterarEstadoSuperAdmin(v.id, v.activo, v.motivo),
+      onSuccess: refrescar,
+    }),
+    reporSenha: useMutation({ mutationFn: reporSenhaSuperAdmin, onSuccess: refrescar }),
+    reporMfa: useMutation({ mutationFn: reporMfaSuperAdmin, onSuccess: refrescar }),
+  };
 }
