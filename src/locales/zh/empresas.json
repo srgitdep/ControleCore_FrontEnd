@@ -152,5 +152,92 @@
     "titulo_registar": "登记新公司",
     "sub_editar": "更新公司的身份信息",
     "sub_registar": "填写公司和负责经理的资料"
+  },
+  "assinatura": {
+    "gerir": "管理订阅",
+    "titulo": "订阅",
+    "erro_carregar": "无法加载订阅。",
+    "tentar_novamente": "重试",
+    "sem_assinatura": "该公司没有订阅。",
+    "ciclo": "计费周期",
+    "valor": "每周期金额",
+    "desconto": "折扣（%）",
+    "inicio": "开始",
+    "fim": "已付期结束",
+    "trial_ate": "试用至",
+    "suspensa_em": "于 {{data}} 暂停：{{motivo}}",
+    "situacao": {
+      "TRIAL_EXPIRADO": "试用已于 {{data}} 结束。由于自动过期尚未开启，今天仍可访问。",
+      "PAGAMENTO_EM_FALTA": "已付期已于 {{data}} 结束（含宽限期）。由于自动过期尚未开启，今天仍可访问。"
+    },
+    "alterar": "修改订阅",
+    "modulos": "模块及约定月价",
+    "preco_de": "{{nome}} 的价格",
+    "aviso_modulos": "移除模块后，该公司在下一次请求时将失去对该模块的访问。",
+    "mudar_estado": "状态",
+    "manter_estado": "保持当前状态",
+    "renovacao_automatica": "自动续订",
+    "aviso_suspender": "暂停后，该公司在下一次请求时将失去此订阅中所有模块的访问。",
+    "motivo": "原因",
+    "motivo_dica": "必填。将记录在该公司的审计日志中。",
+    "guardar": "保存修改",
+    "alterada": "订阅已更新。",
+    "erro_alterar": "无法修改订阅。",
+    "pagamentos": "付款",
+    "registar_pagamento": "登记付款",
+    "cancelada_sem_pagamentos": "请先重新启用订阅，再登记付款。",
+    "valor_pago": "已付金额",
+    "metodo": "方式",
+    "data_pagamento": "付款日期",
+    "referencia": "参考号",
+    "observacoes": "备注",
+    "estender": "将订阅延长一个周期（{{ciclo}}）",
+    "suspensa_mantem": "订阅仍处于暂停状态：请在上方表单中重新启用。",
+    "registar": "登记",
+    "pagamento_registado": "付款已登记。",
+    "erro_pagamento": "无法登记付款。",
+    "sem_pagamentos": "尚无付款记录。",
+    "estado": {
+      "TRIAL": "试用",
+      "ATIVA": "有效",
+      "EXPIRADA": "已过期",
+      "CANCELADA": "已取消",
+      "SUSPENSA": "已暂停",
+      "EM_ATRASO": "逾期",
+      "EM_RENOVACAO": "续订中"
+    },
+    "ciclos": {
+      "MENSAL": "月付",
+      "TRIMESTRAL": "季付",
+      "SEMESTRAL": "半年付",
+      "ANUAL": "年付"
+    },
+    "metodos": {
+      "TRANSFERENCIA": "银行转账",
+      "MPESA": "M-Pesa",
+      "EMOLA": "e-Mola",
+      "NUMERARIO": "现金",
+      "CHEQUE": "支票",
+      "OUTRO": "其他"
+    }
+  },
+  "relatorio": {
+    "abrir": "过期报告",
+    "titulo": "过期报告",
+    "subtitulo": "如果订阅日期开始生效，哪些公司会失去访问。",
+    "erro": "无法生成报告。",
+    "com_acesso": "有访问权限的公司",
+    "em_dia": "正常",
+    "trial_expirado": "试用已结束",
+    "pagamento_em_falta": "欠费",
+    "ninguem": "没有公司会失去访问。",
+    "aviso": "开启自动过期的当天，将有 {{total}} 家公司失去访问。请先处理：延长、登记付款或暂停。",
+    "situacao": {
+      "TRIAL_EXPIRADO": "试用于 {{data}} 结束——{{dias}} 天前",
+      "PAGAMENTO_EM_FALTA": "已付期于 {{data}} 结束——{{dias}} 天前"
+    },
+    "gerir": "管理",
+    "sem_assinatura": "没有有效订阅的启用公司",
+    "gerado_em": "生成于 {{data}}"
   }
 }
