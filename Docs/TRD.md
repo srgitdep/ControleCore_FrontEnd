@@ -614,7 +614,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   Se um destes segredos faltar, a autenticação correspondente **falha** — não há
   fallback para outro segredo.
 - Guards por rota: `JwtAuthGuard`, `PermissoesGuard` (`@Permissao(...)`),
-  `ModuloAccessGuard` (`@ModuloNecessario(...)`), `RolesGuard`. Rota pública exige
+  `ModuloAccessGuard` (`@ModuloNecessario(...)`), `RolesGuard` (obrigatório nas rotas da plataforma, ver §8.3). Rota pública exige
   `@Public()` explícito.
 - **Permissões por perfil.** Tabela `permissoes` (`action` + `resource`, ex.
   `read`/`pedidos_commerce`) ligada a `perfis` por `perfil_permissoes`. O
@@ -680,8 +680,11 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **Retenção.** `LimparNotificacoesTask` às 5 h: lidas > 30 dias, não lidas > 90.
 - **Limites.** Só com a aplicação aberta (PWA fechada não recebe): *push* do navegador fica para uma fase própria. A `Notificacao` está fora da auditoria automática (ruído).
 
-### 8.3 Super Admins da plataforma (Fase 64, 26/10/2026)
+### 8.3 Super Admins e autoridade da plataforma (Fases 64 e 65, 26/10/2026)
 
+- **Autoridade da plataforma (Fase 65).** Toda a rota cuja autoridade é da plataforma usa `RolesGuard` + `@Roles(SUPER_ADMIN)` — o `PermissoesGuard` dá bypass ao ADMIN e nunca é guarda suficiente para estas. Hoje: `/adesoes` (decisão), `/super-admins`, `/plataforma/estafetas`, `GET /empresas`, `GET /empresas/:id`, `PATCH /empresas/:id/status`, `DELETE /empresas/:id`, `POST /empresas/onboarding`, a escrita de `/modulos`, `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema`. `src/middlewares/autoridade-da-plataforma.spec.ts` falha se uma delas perder o `@Roles` ou o `RolesGuard`.
+- **Rotas de empresa partilhadas.** `PATCH /empresas/:id` e `/:id/branding`: Super Admin em qualquer empresa, ADMIN só na sua (`garantirAcessoAEmpresa`, `src/shared/acesso-empresa.ts`); `isActive` só pelo Super Admin.
+- **Roles reservados.** `SUPER_ADMIN` e os roles técnicos só são atribuídos por um Super Admin, e só ele muda o `empresaId` de um utilizador (`garantirAlteracaoDeUtilizadorPermitida`, `src/shared/roles-reservados.ts`, em `CreateUserUseCase` e `UpdateUserUseCase`).
 - **Rotas.** `GET /super-admins` (lista: `id`, `code`, `name`, `email`, `isActive`, `createdAt`) e `POST /super-admins` (`{ name, email }`). `SuperAdminsController` no módulo `users`, com `RolesGuard` + `@Roles(SUPER_ADMIN)`: o `PermissoesGuard` sozinho deixaria passar o ADMIN de qualquer empresa (bypass). `@Permissao('GERIR_SUPER_ADMINS')` fica declarada para um futuro role de operador.
 - **Criação.** `CriarSuperAdminUseCase`: e-mail normalizado (minúsculas) e único; código `SA###` a continuar a série a partir de **todos** os códigos começados por `SA` (o `code` é único na tabela inteira); senha de 12 caracteres `base64url` (72 bits); `role: SUPER_ADMIN`, sem `empresaId`. Funções puras em `src/shared/super-admin.ts` (`proximoCodigoSuperAdmin`, `gerarSenhaSuperAdmin`). Duas criações simultâneas com o mesmo código: a segunda bate no `@unique` e dá 409.
 - **Entrega das credenciais.** E-mail de boas-vindas (`sendWelcomeEmail`, empresa «CoreBusiness»). A resposta traz `senhaInicial` **uma vez** e `emailEnviado`; uma falha de SMTP regista-se e não desfaz a conta. O frontend (`features/dashboard`: `SuperAdminsCard`, `NovoSuperAdminDialog`) mostra-as num diálogo que só fecha por acção de quem criou.

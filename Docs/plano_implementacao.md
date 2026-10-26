@@ -2199,6 +2199,19 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; 27 testes de `users` e `shared/super-admin` a passar (os erros de `tsc` em `avisos-da-aplicacao.service.spec.ts` já existiam em `main`). Frontend: `tsc -b` e `vite build` limpos, oxlint limpo, **486 testes**. **Não verificado:** o diálogo num browser e o e-mail de boas-vindas real.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro (a rota nova), frontend depois.
+### Fase 65 — Super Admin S0: fechar os furos de autorização (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `fix/superadmin-s0-furos-autorizacao`
+  - **Pedido do utilizador:** analisar o poder do Super Admin e planear melhorias (plano §4.15, aprovado em 2026-10-26); a S0 primeiro, por ser uma falha de segurança activa.
+  - fix(autorizacao): as rotas da plataforma passam a `RolesGuard` + `@Roles(SUPER_ADMIN)` — `GET /empresas`, `GET /empresas/:id` (novo: detalhes com utilizadores sem campos secretos, assinaturas e lojas), `PATCH /empresas/:id/status`, `DELETE /empresas/:id`, `POST /empresas/onboarding` (deixa de ser `@Public()`), a escrita de `/modulos`, `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema`. `PATCH /empresas/:id` e `/:id/branding`: o ADMIN só na sua empresa e nunca o `isActive` (`src/shared/acesso-empresa.ts`). `POST /users` e `PATCH /users/:id`: quem não é Super Admin não atribui `SUPER_ADMIN` nem roles técnicos, nem muda o `empresaId` (`src/shared/roles-reservados.ts`). Códigos de erro `empresa.outra_empresa`, `empresa.estado_so_plataforma` e `users.utilizador.role_reservado` em pt/en/zh.
+- **2026-10-26 · [FE] · Antonio Mambo** — `fix/superadmin-s0-furos-autorizacao`
+  - fix(empresas): o tipo `EmpresaDetails` corresponde ao `GET /empresas/:id` (`valorTotal` é texto, morada pode ser nula).
+
+  > **Desvios ao plano.** Os roles técnicos (`SYSTEM_COMMERCE`) também ficaram reservados — o mesmo furo. `GET /empresas/modulos/catalogo` ficou como estava: só as Adesões o usam e os preços são públicos. O Prettier reformatou código antigo de `consulta-procura.controller.ts`.
+  >
+  > **Verificação.** Backend: `nest build` limpo; suíte completa a passar; specs novos `autoridade-da-plataforma.spec.ts` (metadados das rotas da plataforma), `acesso-empresa.spec.ts`, `roles-reservados.spec.ts`, `update-empresa.use-case.spec.ts`. Frontend: `tsc -b` e `vite build` limpos, testes a passar. **Não verificado:** os 403 com um ADMIN real e o modal de detalhes no browser. **Do utilizador:** trocar a senha do SA001/SA002 se ainda for a do seed.
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro. Quem dependesse do `POST /empresas/onboarding` sem sessão deixa de conseguir — a entrada pública é `POST /adesoes`.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2564,8 +2577,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 ### Plataforma (Super Admin)
 
 - [x] **Adicionar Super Admin pelo painel** — concluído em 2026-10-26 (Fase 64): `POST /super-admins` e o diálogo no painel da plataforma.
-- [ ] **Poderes do Super Admin** — plano completo em **§4.15** (por aprovar). Por fases:
-  - [ ] **S0 — Fechar os furos de autorização** (urgente): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
+- [ ] **Poderes do Super Admin** — plano completo em **§4.15** (aprovado em 2026-10-26). Por fases:
+  - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
   - [ ] **S1 — Contas de Super Admin seguras**: MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
   - [ ] **S2 — Assinaturas e cobrança**: ver e alterar a assinatura de uma empresa, prolongar trial, registar pagamentos, e a expiração que hoje não existe.
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
@@ -5694,7 +5707,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **por aprovar.** Nenhum código escrito.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 concluída em 2026-10-26 (Fase 65).** Próxima: S1.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 
