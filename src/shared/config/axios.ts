@@ -98,9 +98,12 @@ api.interceptors.response.use(
     // `ResolverEntradaUseCase` no backend) — um 401 aí é senha errada, exactamente como em
     // `/auth/login`, e não uma sessão que caiu. Sem esta linha, uma senha errada disparava
     // `/auth/refresh` (que falha, porque nunca houve sessão) e um redirect para `/login` a
-    // meio da própria tentativa de entrar.
+    // meio da própria tentativa de entrar. O mesmo para `/auth/mfa/*`: um 401 aí é um código
+    // errado ou um desafio expirado, e o redirect deitava fora o passo do código.
     const isLoginRequest =
-      originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/entrar');
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/entrar') ||
+      originalRequest.url?.includes('/auth/mfa/');
     const isRefreshRequest = originalRequest.url?.includes('/auth/refresh');
 
     // Só tenta refresh se for 401, não for login/refresh e ainda não reentrou

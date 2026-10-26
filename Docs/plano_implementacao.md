@@ -2212,6 +2212,19 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; suíte completa a passar; specs novos `autoridade-da-plataforma.spec.ts` (metadados das rotas da plataforma), `acesso-empresa.spec.ts`, `roles-reservados.spec.ts`, `update-empresa.use-case.spec.ts`. Frontend: `tsc -b` e `vite build` limpos, testes a passar. **Não verificado:** os 403 com um ADMIN real e o modal de detalhes no browser. **Do utilizador:** trocar a senha do SA001/SA002 se ainda for a do seed.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Backend primeiro. Quem dependesse do `POST /empresas/onboarding` sem sessão deixa de conseguir — a entrada pública é `POST /adesoes`.
+### Fase 66 — Super Admin S1: contas seguras e MFA (26 Out 2026)
+
+- **2026-10-26 · [BE] · Antonio Mambo** — `feat/superadmin-s1-contas-seguras`
+  - feat(auth): MFA por TOTP obrigatório para o Super Admin (`otplib`; segredo cifrado com AES-256-GCM em `mfaSegredoEncriptado`; `MFA_CHAVE_CIFRA` dá por HKDF a chave de cifra e a de assinatura). Depois da senha o login devolve `mfa: { etapa, desafio }` em vez da sessão — desafio de 5 min assinado com a chave do MFA e audiência própria, que o `JwtStrategy` nunca aceita. `POST /auth/mfa/configurar` (QR com `qrcode`; reaproveita o segredo pendente) e `POST /auth/mfa/verificar` (emite a sessão e liga o MFA na primeira vez). Cinco códigos errados bloqueiam 15 min (`tentativasLoginFalhadas`/`bloqueadoAte`, na base de dados). Sem a chave, o Super Admin não entra (503). `PATCH /super-admins/:id/estado`, `POST :id/repor-senha` e `POST :id/repor-mfa`, nunca sobre a própria conta nem deixando a plataforma sem nenhum activo (`SELECT … FOR UPDATE`). `PATCH /users/:id/status` passa a filtrar pela empresa de quem pede e recusa Super Admins. Script `npm run super-admin:repor-mfa`.
+  - feat(auth): interruptor `MFA_ACTIVO` (pedido do utilizador durante a fase) — `false`/`0` desliga o segundo passo para todos e dispensa a chave; em falta ou com outro valor, ligado.
+- **2026-10-26 · [FE] · Antonio Mambo** — `feat/superadmin-s1-contas-seguras`
+  - feat(auth): passo do código no login (`PassoMfa` em `LoginPage.tsx`: QR com a chave em texto, ou só o código); o axios trata `/auth/mfa/*` como o login. Cartão «Super Administradores» com o estado do MFA e as acções por linha (`AccaoSuperAdminDialog`); credenciais em `CredenciaisSuperAdmin` (criação e reposição); traduções pt/en/zh.
+
+  > **Desvios ao plano.** (1) `PATCH /users/:id/status` não filtrava por empresa — o ADMIN de qualquer empresa desactivava utilizadores de outra e Super Admins; corrigido aqui. (2) O `ThrottlerGuard` não está registado: nenhum `@Throttle` do projecto limita pedidos (item novo no backlog); o MFA tem o limite na base de dados e não depende dele. (3) O interruptor `MFA_ACTIVO`, pedido durante a fase, por variável de ambiente (escolha do utilizador).
+  >
+  > **Verificação.** Backend: `nest build` limpo; suíte completa a passar (267 suites, 3885 testes antes do interruptor; `auth` e `shared` de novo depois, 855). Frontend: `tsc -b`, `vite build` e oxlint limpos, 486 testes. **Não verificado:** o QR lido por uma aplicação real e as acções do cartão no browser.
+  >
+  > **Notas de deploy.** Sem migrações (as colunas do MFA já existiam). Duas variáveis novas no backend, `MFA_CHAVE_CIFRA` e `MFA_ACTIVO=true`, deixadas em *staged* nos `fly secrets` antes do merge, com autorização do utilizador; entram no deploy. Dependências novas: `otplib` 12.0.1, `qrcode` 1.5.4, `@types/qrcode`. Backend primeiro. No primeiro login depois do deploy, cada Super Admin configura o MFA.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2579,11 +2592,12 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Adicionar Super Admin pelo painel** — concluído em 2026-10-26 (Fase 64): `POST /super-admins` e o diálogo no painel da plataforma.
 - [ ] **Poderes do Super Admin** — plano completo em **§4.15** (aprovado em 2026-10-26). Por fases:
   - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
-  - [ ] **S1 — Contas de Super Admin seguras**: MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
+  - [x] **S1 — Contas de Super Admin seguras** — concluída em 2026-10-26 (Fase 66): MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
   - [ ] **S2 — Assinaturas e cobrança**: ver e alterar a assinatura de uma empresa, prolongar trial, registar pagamentos, e a expiração que hoje não existe.
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
+- [ ] **Registar o `ThrottlerGuard`** (encontrado na Fase 66) — o `ThrottlerModule` está configurado (20/min por IP) mas o guarda não está em `APP_GUARD`: nenhum `@Throttle` do projecto (adesão pública, mercado, login) limita pedidos. Registar como `APP_GUARD` e rever os limites das rotas públicas antes, para não cortar o tráfego normal (POS, SSE da Mayra).
 ---
 
 ## 4. Planos de funcionalidades
@@ -5707,7 +5721,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 concluída em 2026-10-26 (Fase 65).** Próxima: S1.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0 e S1 concluídas em 2026-10-26 (Fases 65 e 66).** Próxima: S2.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 

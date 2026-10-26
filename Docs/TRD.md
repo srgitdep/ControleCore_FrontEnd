@@ -163,7 +163,8 @@ ao submeter.
 | Validação | class-validator + class-transformer | ^0.15.1 / ^0.5.1 | `ValidationPipe` global: `whitelist`, `forbidNonWhitelisted`, `transform` |
 | Auth | passport + passport-jwt + bcrypt | — | JWT em cookies HttpOnly (`accessToken`/`refreshToken`), nunca `localStorage` |
 | Multi-tenancy | nestjs-cls | ^6.2.1 | `AsyncLocalStorage` para `empresaId` por pedido |
-| Segurança HTTP | helmet + @nestjs/throttler | — | cabeçalhos de segurança + rate limiting |
+| Segurança HTTP | helmet + @nestjs/throttler | — | cabeçalhos de segurança. **O rate limiting não está activo:** o `ThrottlerModule` está configurado mas o `ThrottlerGuard` não é `APP_GUARD`, e os `@Throttle` não têm efeito (ver backlog) |
+| MFA | otplib + qrcode | ^12.0.1 / ^1.5.4 | TOTP do segundo passo e o QR para a aplicação de autenticação — ver §8.3 |
 | Agendamento | @nestjs/schedule | ^6.1.3 | crons (ex. limpeza de reservas expiradas) |
 | Tempo real | socket.io + @nestjs/websockets + @nestjs/platform-socket.io + ws | ^4.8.3 / ^11.x / ^8.21.1 | eventos e voz da Mayra |
 | Cache/filas | ioredis | ^5.11.1 | Redis |
@@ -680,7 +681,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **Retenção.** `LimparNotificacoesTask` às 5 h: lidas > 30 dias, não lidas > 90.
 - **Limites.** Só com a aplicação aberta (PWA fechada não recebe): *push* do navegador fica para uma fase própria. A `Notificacao` está fora da auditoria automática (ruído).
 
-### 8.3 Super Admins e autoridade da plataforma (Fases 64 e 65, 26/10/2026)
+### 8.3 Super Admins e autoridade da plataforma (Fases 64 a 66, 26/10/2026)
 
 - **Autoridade da plataforma (Fase 65).** Toda a rota cuja autoridade é da plataforma usa `RolesGuard` + `@Roles(SUPER_ADMIN)` — o `PermissoesGuard` dá bypass ao ADMIN e nunca é guarda suficiente para estas. Hoje: `/adesoes` (decisão), `/super-admins`, `/plataforma/estafetas`, `GET /empresas`, `GET /empresas/:id`, `PATCH /empresas/:id/status`, `DELETE /empresas/:id`, `POST /empresas/onboarding`, a escrita de `/modulos`, `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema`. `src/middlewares/autoridade-da-plataforma.spec.ts` falha se uma delas perder o `@Roles` ou o `RolesGuard`.
 - **Rotas de empresa partilhadas.** `PATCH /empresas/:id` e `/:id/branding`: Super Admin em qualquer empresa, ADMIN só na sua (`garantirAcessoAEmpresa`, `src/shared/acesso-empresa.ts`); `isActive` só pelo Super Admin.
@@ -688,6 +689,8 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **Rotas.** `GET /super-admins` (lista: `id`, `code`, `name`, `email`, `isActive`, `createdAt`) e `POST /super-admins` (`{ name, email }`). `SuperAdminsController` no módulo `users`, com `RolesGuard` + `@Roles(SUPER_ADMIN)`: o `PermissoesGuard` sozinho deixaria passar o ADMIN de qualquer empresa (bypass). `@Permissao('GERIR_SUPER_ADMINS')` fica declarada para um futuro role de operador.
 - **Criação.** `CriarSuperAdminUseCase`: e-mail normalizado (minúsculas) e único; código `SA###` a continuar a série a partir de **todos** os códigos começados por `SA` (o `code` é único na tabela inteira); senha de 12 caracteres `base64url` (72 bits); `role: SUPER_ADMIN`, sem `empresaId`. Funções puras em `src/shared/super-admin.ts` (`proximoCodigoSuperAdmin`, `gerarSenhaSuperAdmin`). Duas criações simultâneas com o mesmo código: a segunda bate no `@unique` e dá 409.
 - **Entrega das credenciais.** E-mail de boas-vindas (`sendWelcomeEmail`, empresa «CoreBusiness»). A resposta traz `senhaInicial` **uma vez** e `emailEnviado`; uma falha de SMTP regista-se e não desfaz a conta. O frontend (`features/dashboard`: `SuperAdminsCard`, `NovoSuperAdminDialog`) mostra-as num diálogo que só fecha por acção de quem criou.
+- **MFA (Fase 66).** Obrigatório para o Super Admin; para os outros, só com `mfaActivo`. Interruptor geral `MFA_ACTIVO` (`false`/`0` desliga para todos; em falta, ligado). `MFA_CHAVE_CIFRA` (32 bytes base64) dá por HKDF a chave AES-256-GCM do segredo TOTP (`users.mfaSegredoEncriptado`, formato `v1:iv:tag:texto`) e a chave que assina o desafio. Fluxo: senha certa → `{ mfa: { etapa: CONFIGURAR | PEDIR_CODIGO, desafio } }` sem cookies (`/auth/login` e `/auth/entrar`) → `POST /auth/mfa/configurar` (QR + segredo; reaproveita um pendente) → `POST /auth/mfa/verificar` (emite a sessão; liga o MFA na primeira vez; o LOGIN só se audita aqui). O desafio (5 min, audiência `corebusiness-desafio-mfa`) não é aceite pelo `JwtStrategy` porque não conhece a chave. Janela TOTP ±30 s. 5 códigos errados → `bloqueadoAte` = +15 min (429). Ligado e sem chave → 503 `auth.mfa.indisponivel`. Trocar a chave invalida todos os segredos: repor com `npm run super-admin:repor-mfa -- --codigo SA### --aplicar`.
+- **Gestão das contas (Fase 66).** `PATCH /super-admins/:id/estado` (`{ activo, motivo }`, no `UserStatusLog`), `POST /super-admins/:id/repor-senha` (senha nova por e-mail e uma vez na resposta) e `POST /super-admins/:id/repor-mfa`. Nunca sobre a própria conta (403); nunca deixa a plataforma sem Super Admin activo (409), com `SELECT … FOR UPDATE` sobre as linhas dos activos. `PATCH /users/:id/status` filtra pela empresa de quem pede e recusa Super Admins.
 - **Sem painel.** `npm run super-admin:criar -- --email <e-mail> --nome "<nome>" [--aplicar]` (`scripts/criar-super-admin.ts`) cria contra o `DATABASE_URL` e imprime as credenciais no terminal; simula sem `--aplicar` e recusa um e-mail que já exista (promover uma conta de empresa decide-se à mão).
 ---
 

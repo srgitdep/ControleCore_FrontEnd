@@ -4,6 +4,8 @@ import type {
   LoginResponse,
   EntrarPayload,
   RespostaEntrar,
+  ConfiguracaoMfa,
+  AuthUser,
   ForgotPasswordPayload,
   ResetPasswordPayload,
 } from '../types';
@@ -17,6 +19,16 @@ export const loginApi = (payload: LoginPayload) =>
 // fornecedor, e o backend devolve `tipo` para se saber para onde reencaminhar.
 export const entrarApi = (payload: EntrarPayload) =>
   api.post<RespostaEntrar>('/auth/entrar', payload).then((r) => r.data);
+
+// POST /auth/mfa/configurar — o QR da verificação em dois passos, com o desafio do login
+export const configurarMfaApi = (desafio: string) =>
+  api.post<ConfiguracaoMfa>('/auth/mfa/configurar', { desafio }).then((r) => r.data);
+
+// POST /auth/mfa/verificar — o código de 6 dígitos; com ele certo, sai a sessão (cookies)
+export const verificarMfaApi = (desafio: string, codigo: string) =>
+  api
+    .post<{ tipo: 'COMPRADOR'; user: AuthUser }>('/auth/mfa/verificar', { desafio, codigo })
+    .then((r) => r.data);
 
 // PATCH /auth/eu/idioma — grava a língua de quem está autenticado (acompanha-o noutro browser)
 export const definirIdiomaApi = (idioma: string) =>

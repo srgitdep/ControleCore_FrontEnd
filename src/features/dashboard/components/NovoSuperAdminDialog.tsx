@@ -3,13 +3,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { TFunction } from 'i18next';
-import { AlertTriangle, Check, Copy, ShieldPlus, X } from 'lucide-react';
+import { ShieldPlus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui';
 import { mensagemDeErro } from '@/shared/utils';
 import { useCriarSuperAdmin } from '../hooks/useDashboard';
 import type { SuperAdminCriado } from '../types';
+import { CredenciaisSuperAdmin } from './CredenciaisSuperAdmin';
 
 function criarSchema(t: TFunction<'painel'>) {
   return z.object({
@@ -36,7 +37,6 @@ export function NovoSuperAdminDialog({ onClose }: NovoSuperAdminDialogProps) {
   const schema = useMemo(() => criarSchema(t), [t]);
   const criar = useCriarSuperAdmin();
   const [criado, setCriado] = useState<SuperAdminCriado | null>(null);
-  const [copiado, setCopiado] = useState(false);
 
   const {
     register,
@@ -49,19 +49,6 @@ export function NovoSuperAdminDialog({ onClose }: NovoSuperAdminDialogProps) {
       onSuccess: setCriado,
       onError: (erro) => toast.error(mensagemDeErro(erro, t('super_admins.erro_criar'))),
     });
-
-  const copiar = async () => {
-    if (!criado) return;
-    try {
-      await navigator.clipboard.writeText(
-        `${t('super_admins.codigo')}: ${criado.code}\n${t('super_admins.senha')}: ${criado.senhaInicial}`,
-      );
-      setCopiado(true);
-    } catch {
-      // Sem contexto seguro (HTTP na rede local) não há clipboard: os valores ficam à vista.
-      toast.error(t('super_admins.copiar_indisponivel'));
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
@@ -82,35 +69,13 @@ export function NovoSuperAdminDialog({ onClose }: NovoSuperAdminDialogProps) {
         </div>
 
         {criado ? (
-          <div className="space-y-4 p-6">
-            <p className="text-sm text-slate-600">
-              {t('super_admins.criado_texto', { nome: criado.name, email: criado.email })}
-            </p>
-            <dl className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">{t('super_admins.codigo')}</dt>
-                <dd className="font-semibold text-slate-900">{criado.code}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">{t('super_admins.senha')}</dt>
-                <dd className="break-all font-semibold text-slate-900">{criado.senhaInicial}</dd>
-              </div>
-            </dl>
-            {!criado.emailEnviado && (
-              <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-                {t('super_admins.email_falhou')}
-              </p>
-            )}
-            <p className="text-xs text-slate-500">{t('super_admins.senha_unica')}</p>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={copiar}>
-                {copiado ? <Check size={16} /> : <Copy size={16} />}
-                {copiado ? t('super_admins.copiado') : t('super_admins.copiar')}
-              </Button>
-              <Button onClick={onClose}>{t('super_admins.concluir')}</Button>
-            </div>
-          </div>
+          <CredenciaisSuperAdmin
+            texto={t('super_admins.criado_texto', { nome: criado.name, email: criado.email })}
+            code={criado.code}
+            senha={criado.senhaInicial}
+            emailEnviado={criado.emailEnviado}
+            onConcluir={onClose}
+          />
         ) : (
           <form onSubmit={handleSubmit(submeter)} className="space-y-4 p-6" noValidate>
             <p className="text-sm text-slate-500">{t('super_admins.novo_texto')}</p>

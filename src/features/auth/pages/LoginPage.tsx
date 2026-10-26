@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { useAuth } from '../index';
-import { entrarApi } from '../api/auth.api';
+import { entrarApi, configurarMfaApi, verificarMfaApi } from '../api/auth.api';
+import type { AuthUser, ConfiguracaoMfa, DesafioMfa } from '../types';
+import { mensagemDeErro } from '@/shared/utils';
 import { usePortal } from '@/features/portal-fornecedor/store/usePortalStore';
 import { useEstafetaStore } from '@/features/estafeta-app/store/useEstafetaStore';
 import { cn } from '@/shared/utils';
@@ -62,7 +64,14 @@ export function LoginPage() {
   const entrarComoEstafeta = useEstafetaStore((s) => s.entrarComSessao);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [desafioMfa, setDesafioMfa] = useState<DesafioMfa | null>(null);
   const { t } = useTranslation('auth');
+
+  const concluirEntrada = (user: AuthUser) => {
+    entrarComSessao(user);
+    toast.success(t('login.sucesso'), { duration: 2000 });
+    navigate('/dashboard', { replace: true });
+  };
   const loginSchema = useMemo(() => criarLoginSchema(t), [t]);
   const emEcraLargo = useBreakpoint('sm');
 
@@ -94,9 +103,13 @@ export function LoginPage() {
         return;
       }
 
-      entrarComSessao(resposta.user);
-      toast.success(t('login.sucesso'), { duration: 2000 });
-      navigate('/dashboard', { replace: true });
+      // A senha está certa mas falta o código: não há sessão ainda, só o desafio.
+      if ('mfa' in resposta) {
+        setDesafioMfa(resposta.mfa);
+        return;
+      }
+
+      concluirEntrada(resposta.user);
     } catch (err: unknown) {
       let message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       if (Array.isArray(message)) message = message[0];
@@ -155,6 +168,13 @@ export function LoginPage() {
               {t('login.subtitulo')}
             </p>
 
+            {desafioMfa ? (
+              <PassoMfa
+                desafio={desafioMfa}
+                onSessao={concluirEntrada}
+                onRecomecar={() => setDesafioMfa(null)}
+              />
+            ) : (
             <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: 'grid', gap: 18, marginTop: 30 }}>
               <div style={{ display: 'grid', gap: 7 }}>
                 <label htmlFor="code" style={etiquetaCampo}>
@@ -245,6 +265,7 @@ export function LoginPage() {
                 )}
               </button>
             </form>
+            )}
 
             <Link
               to="/"
@@ -467,6 +488,165 @@ function PainelDaMarca() {
       <p style={{ position: 'relative', margin: 0, fontSize: 12, color: '#617ea6' }}>
         © {new Date().getFullYear()} {COPY.MARCA.EMPRESA}. {t('login.direitos')}
       </p>
+    </div>
+  );
+}
+
+/**
+ * O segundo passo, entre a senha aceite e a sessão.
+ *
+ * Na primeira vez (`CONFIGURAR`) pede o QR ao servidor e mostra-o com o segredo em texto ao
+ * lado — num computador sem câmara não há como ler o QR, e o segredo escreve-se à mão na
+ * aplicação. Depois disso, e em todas as entradas seguintes, é só o código de 6 dígitos.
+ *
+ * Um desafio expirado (5 min) ou recusado não se recupera aqui: volta-se à senha.
+ */
+function PassoMfa({
+  desafio,
+  onSessao,
+  onRecomecar,
+}: {
+  desafio: DesafioMfa;
+  onSessao: (user: AuthUser) => void;
+  onRecomecar: () => void;
+}) {
+  const { t } = useTranslation('auth');
+  const [configuracao, setConfiguracao] = useState<ConfiguracaoMfa | null>(null);
+  const [erroConfiguracao, setErroConfiguracao] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState('');
+  const [aVerificar, setAVerificar] = useState(false);
+  const aConfigurar = desafio.etapa === 'CONFIGURAR';
+
+  useEffect(() => {
+    if (!aConfigurar) return;
+    let cancelado = false;
+    configurarMfaApi(desafio.desafio)
+      .then((c) => !cancelado && setConfiguracao(c))
+      .catch((e: unknown) => !cancelado && setErroConfiguracao(mensagemDeErro(e, t('login.mfa.erro_qr'))));
+    return () => {
+      cancelado = true;
+    };
+  }, [aConfigurar, desafio.desafio, t]);
+
+  const verificar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAVerificar(true);
+    try {
+      const { user } = await verificarMfaApi(desafio.desafio, codigo);
+      onSessao(user);
+    } catch (err) {
+      toast.error(mensagemDeErro(err, t('login.mfa.erro_codigo')));
+      setCodigo('');
+    } finally {
+      setAVerificar(false);
+    }
+  };
+
+  const codigoCompleto = /^\d{6}$/.test(codigo);
+
+  return (
+    <div style={{ display: 'grid', gap: 18, marginTop: 30 }}>
+      <div>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--tinta)' }}>
+          {aConfigurar ? t('login.mfa.titulo_configurar') : t('login.mfa.titulo_codigo')}
+        </h2>
+        <p style={{ margin: '6px 0 0', fontSize: 13.5, lineHeight: 1.55, color: 'var(--tinta-suave)' }}>
+          {aConfigurar ? t('login.mfa.texto_configurar') : t('login.mfa.texto_codigo')}
+        </p>
+      </div>
+
+      {aConfigurar && (
+        <div style={{ display: 'grid', justifyItems: 'center', gap: 10 }}>
+          {configuracao ? (
+            <>
+              <img
+                src={configuracao.qrCode}
+                alt={t('login.mfa.qr_alt')}
+                width={200}
+                height={200}
+                style={{ borderRadius: 8, border: '1px solid #e2e8f0' }}
+              />
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--tinta-tenue)', textAlign: 'center' }}>
+                {t('login.mfa.segredo_manual')}
+              </p>
+              <code
+                style={{
+                  fontSize: 13,
+                  letterSpacing: '0.08em',
+                  wordBreak: 'break-all',
+                  textAlign: 'center',
+                  color: 'var(--tinta)',
+                }}
+              >
+                {configuracao.segredo.replace(/(.{4})/g, '$1 ').trim()}
+              </code>
+            </>
+          ) : erroConfiguracao ? (
+            <p style={erroCampo}>{erroConfiguracao}</p>
+          ) : (
+            <div
+              aria-label={t('login.mfa.a_gerar')}
+              style={{ width: 200, height: 200, borderRadius: 8, background: '#f1f5f9' }}
+              className="animate-pulse"
+            />
+          )}
+        </div>
+      )}
+
+      <form onSubmit={verificar} noValidate style={{ display: 'grid', gap: 14 }}>
+        <div style={{ display: 'grid', gap: 7 }}>
+          <label htmlFor="codigo-mfa" style={etiquetaCampo}>
+            {t('login.mfa.campo_codigo')}
+          </label>
+          <input
+            id="codigo-mfa"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={6}
+            placeholder="000000"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            className="cc-campo"
+            style={{ letterSpacing: '0.3em', fontVariantNumeric: 'tabular-nums' }}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={!codigoCompleto || aVerificar || (aConfigurar && !configuracao)}
+          className="cc-botao cc-botao--cheio"
+          style={{ width: '100%', opacity: !codigoCompleto || aVerificar ? 0.65 : 1 }}
+        >
+          {aVerificar ? (
+            <>
+              <Loader2 size={16} className="cc-gira" />
+              {t('login.mfa.a_verificar')}
+            </>
+          ) : (
+            t('login.mfa.verificar')
+          )}
+        </button>
+      </form>
+
+      <button
+        type="button"
+        onClick={onRecomecar}
+        style={{
+          justifySelf: 'start',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          background: 'none',
+          border: 0,
+          padding: 0,
+          cursor: 'pointer',
+          fontSize: 13,
+          color: 'var(--tinta-tenue)',
+        }}
+      >
+        <ArrowLeft size={14} />
+        {t('login.mfa.recomecar')}
+      </button>
     </div>
   );
 }
