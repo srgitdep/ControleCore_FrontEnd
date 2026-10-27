@@ -50,17 +50,6 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
-**Fase 68 — Super Admin S2b: expiração automática das assinaturas** (plano completo em **§4.15**; branch `feat/superadmin-s2b-expiracao` nos dois repositórios, backend primeiro). **Decisões do utilizador (2026-10-26):** P2 — tolerância com aviso, depois **bloqueio total**; P5 — o POS também bloqueia, com o aviso durante toda a tolerância; P7 — prazo de graça fixo de **30 dias** para as vencidas, no dia em que se liga; avisos — um e-mail ao ADMIN **7 dias antes** do fim.
-
-- [x] **Interruptor `EXPIRACAO_ASSINATURAS_ACTIVA`**, desligado por omissão (só `true`/`1` liga) — ao contrário do MFA, porque isto corta acesso a clientes. Desligado, nada muda: nem a tarefa transita estados, nem o pedido faz a consulta extra.
-- [x] **Regras** (`regras-assinatura.ts`): `TRIAL` com o fim + tolerância passado → `EXPIRADA`; `ATIVA` com a `dataFim` passada → `EM_ATRASO` (ainda com acesso); `EM_ATRASO` com a `dataFim` + tolerância passada → `SUSPENSA`. Estados com acesso: `TRIAL`, `ATIVA`, `EM_ATRASO`, `EM_RENOVACAO` (`src/shared/acesso-assinatura.ts`), usados também pelo `ModuloAccessGuard` e pelo Compra Fácil.
-- [x] **Bloqueio total.** Só o `commerce` usa `@ModuloNecessario` — vendas, POS, stock e o resto não passam pelo `ModuloAccessGuard`. O bloqueio vai no `JwtAuthGuard`: com o interruptor ligado, o `JwtStrategy` lê os estados das assinaturas da empresa e, sem nenhuma com acesso e alguma `EXPIRADA`/`SUSPENSA`/`CANCELADA`, o pedido recebe 403 `auth.guard.assinatura_bloqueada` — salvo rotas com `@PermitidoComAssinaturaBloqueada()` (quem sou, sair, idioma, a minha assinatura). Uma empresa sem assinatura nenhuma não é bloqueada (fica no relatório).
-- [x] **Tarefa diária** `ExpirarAssinaturasTask` (02:30, hora de Maputo): transições por `updateMany` condicional ao estado actual (várias máquinas do Fly correm o mesmo cron), auditadas; aviso 7 dias antes, uma vez por fim (coluna nova `avisoExpiracaoPara`, migração aditiva), por e-mail ao ADMIN.
-- [x] **`GET /assinatura/minha`** (a empresa do utilizador): estado, fim, dias e se está bloqueada — para o aviso no ecrã.
-- [x] **Script `npm run assinaturas:periodo-graca -- --dias 30 [--aplicar]`**: dá o prazo às vencidas e avisa os ADMIN por e-mail. Simula sem `--aplicar`.
-- [x] **Frontend:** faixa de aviso no topo (ERP e POS) durante a tolerância e 7 dias antes; ecrã «assinatura suspensa» em vez da aplicação quando bloqueada; traduções pt/en/zh.
-- [ ] **Testes e verificação.** **Ordem de ligar em produção:** deploy (desligado) → relatório → script de prazo de graça → `fly secrets set EXPIRACAO_ASSINATURAS_ACTIVA=true`.
-
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2251,6 +2240,20 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; 270 suites, 3922 testes. Frontend: `tsc -b`, `vite build` e oxlint limpos, 486 testes. **Não verificado:** os dois modais num browser e uma alteração real de módulos a reflectir-se no acesso da empresa.
   >
   > **Notas de deploy.** Sem migrações (os campos já existiam) e sem variáveis novas. Backend primeiro.
+### Fase 68 — Super Admin S2b: expiração automática das assinaturas (27 Out 2026)
+
+- **2026-10-27 · [BE] · Antonio Mambo** — `feat/superadmin-s2b-expiracao`
+  - **Pedido do utilizador:** a S2b do plano §4.15, com as decisões de 26/10/2026 — P2: tolerância com aviso, depois **bloqueio total**; P5: o POS também, com o aviso durante a tolerância; P7: **30 dias** de graça para as vencidas no dia em que se liga; um e-mail aos ADMIN **7 dias antes** do fim. Durante a fase, o utilizador pediu também: corte das ligações em tempo real, e-mails de suspensão e de reactivação, e o estado do interruptor no relatório.
+  - feat(assinatura): interruptor `EXPIRACAO_ASSINATURAS_ACTIVA`, **desligado por omissão** (só `true`/`1`). `ExpirarAssinaturasTask` (02:30, Maputo): `TRIAL` com o fim + tolerância passados → `EXPIRADA`; `ATIVA` → `EM_ATRASO` → `SUSPENSA`; `updateMany` condicional ao estado (várias máquinas do Fly), auditado; aviso dos 7 dias uma vez por fim (coluna nova `avisoExpiracaoPara`, migração `20261026120000`). Bloqueio total no `JwtAuthGuard` (403 `auth.guard.assinatura_bloqueada`; só o `commerce` usava `@ModuloNecessario`), salvo rotas `@PermitidoComAssinaturaBloqueada()` (`/auth/eu`, idioma, logout, `/assinatura/minha`). Estados com acesso partilhados (`src/shared/acesso-assinatura.ts`, `EM_ATRASO` incluído) no `ModuloAccessGuard` e no Compra Fácil. `GET /assinatura/minha`. Script `npm run assinaturas:periodo-graca`. Templates de e-mail novos (pt/en/zh): fim próximo, prazo de graça, suspensão, reactivação.
+  - feat(assinatura): os três gateways de WebSocket (eventos, entregas, voz da Mayra) recusam a ligação de uma empresa bloqueada e cortam as abertas no evento `assinatura.bloqueio_mudou`; `NotificarBloqueioService` emite-o e manda o e-mail de suspensão ou reactivação **só nas transições** (tarefa, alteração no painel, pagamento); o relatório de expiração devolve `expiracaoActiva`.
+- **2026-10-27 · [FE] · Antonio Mambo** — `feat/superadmin-s2b-expiracao`
+  - feat(assinatura): feature `assinatura` — faixa no topo do ERP e do POS (`AvisoAssinatura`) antes do fim e durante a tolerância; ecrã «Acesso suspenso» (`AssinaturaBloqueada`) em vez da aplicação; o axios lança `corebusiness:assinatura-bloqueada` num 403 com esse código; o relatório mostra se o interruptor está ligado; namespace `assinatura` em pt/en/zh.
+
+  > **Desvios ao plano.** (1) O trial também tem os 7 dias de tolerância antes de expirar, coerente com P2 — o relatório da S2a passou a contar assim. (2) Uma empresa **sem assinatura nenhuma** não é bloqueada (contas internas, empresas antigas): fica no relatório para se tratar à mão. (3) `CANCELADA` também bloqueia, como `EXPIRADA` e `SUSPENSA`. (4) O spec do MFA ganhou 20 s de limite: falhou uma vez por tempo com a máquina carregada (gerar o QR disputa CPU).
+  >
+  > **Verificação.** Backend: `nest build` limpo; suíte completa a passar. Frontend: `tsc -b`, `vite build` e oxlint limpos; testes a passar. O frontend não tem infra-estrutura de testes de componentes — a decisão do que mostrar é do backend (`avisoParaAEmpresa`, `MinhaAssinaturaUseCase`), testada lá. **Não verificado:** a faixa e o ecrã de bloqueio num browser, o corte de um WebSocket real, e o script e a tarefa contra dados reais.
+  >
+  > **Notas de deploy.** Migração aditiva `20261026120000_assinatura_aviso_expiracao` (corre no arranque do contentor). Variável nova `EXPIRACAO_ASSINATURAS_ACTIVA` (sem ela, desligada — nada muda). Backend primeiro. **Ordem para ligar:** relatório no painel → `npm run assinaturas:periodo-graca -- --dias 30 --aplicar` → `fly secrets set EXPIRACAO_ASSINATURAS_ACTIVA=true`.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2620,7 +2623,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
   - [x] **S0 — Fechar os furos de autorização** — concluída em 2026-10-26 (Fase 65): `empresas`, `modulos`, `POST /users` com `role`, painéis `/sistema` e onboarding público — hoje o ADMIN de qualquer empresa passa por eles.
   - [x] **S1 — Contas de Super Admin seguras** — concluída em 2026-10-26 (Fase 66): MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
   - [x] **S2a — Gestão manual das assinaturas** — concluída em 2026-10-26 (Fase 67): ver e alterar a assinatura, registar pagamentos, relatório de expiração.
-  - [ ] **S2b — Expiração automática**: tarefa diária (`TRIAL` → `EXPIRADA`; `ATIVA` → `EM_ATRASO` → `SUSPENSA`) e avisos por e-mail. Só depois de ver o relatório e decidir P2, P5 e P7 (§4.15).
+  - [x] **S2b — Expiração automática** — concluída em 2026-10-27 (Fase 68), desligada por omissão (`EXPIRACAO_ASSINATURAS_ACTIVA`). **Por fazer, do utilizador:** relatório → prazo de graça de 30 dias → ligar o interruptor.
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
@@ -5750,7 +5753,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1 e S2a concluídas em 2026-10-26 (Fases 65 a 67).** Próxima: S2b (depende de P2, P5, P7) ou S3.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1, S2a e S2b concluídas (Fases 65 a 68, 26–27/10/2026).** P2, P5 e P7 decididos pelo utilizador em 26/10/2026 (bloqueio total; POS incluído com aviso; 30 dias de graça). Próxima: S3.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 
