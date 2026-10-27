@@ -1,4 +1,4 @@
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, Power, PowerOff, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { localeIntl } from '@/i18n';
 import { Button } from '@/shared/ui';
@@ -56,6 +56,30 @@ export function RelatorioExpiracaoModal({ onClose, onGerir }: RelatorioExpiracao
             </div>
           ) : (
             <>
+              {/* Antes dos números: «ficariam sem acesso» lê-se de maneira diferente conforme
+                  a expiração já esteja a cortar ou só cortaria quando for ligada. */}
+              <p
+                className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${
+                  data.expiracaoActiva
+                    ? 'border-rose-200 bg-rose-50 text-rose-800'
+                    : 'border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                {data.expiracaoActiva ? (
+                  <Power size={16} className="mt-0.5 shrink-0" />
+                ) : (
+                  <PowerOff size={16} className="mt-0.5 shrink-0" />
+                )}
+                <span>
+                  <strong>
+                    {data.expiracaoActiva ? t('relatorio.interruptor_ligado') : t('relatorio.interruptor_desligado')}
+                  </strong>{' '}
+                  {data.expiracaoActiva
+                    ? t('relatorio.interruptor_ligado_texto')
+                    : t('relatorio.interruptor_desligado_texto')}
+                </span>
+              </p>
+
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Numero rotulo={t('relatorio.com_acesso')} valor={data.totais.empresasComAcesso} />
                 <Numero rotulo={t('relatorio.em_dia')} valor={data.totais.emDia} />

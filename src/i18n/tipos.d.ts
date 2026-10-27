@@ -26,6 +26,7 @@ import type utilizadores from '../locales/pt/utilizadores.json';
 import type modulos from '../locales/pt/modulos.json';
 import type necessidades from '../locales/pt/necessidades.json';
 import type painel from '../locales/pt/painel.json';
+import type assinatura from '../locales/pt/assinatura.json';
 import type historico from '../locales/pt/historico.json';
 import type pesquisa from '../locales/pt/pesquisa.json';
 import type lojaGestao from '../locales/pt/lojaGestao.json';
@@ -71,6 +72,7 @@ declare module 'i18next' {
       modulos: typeof modulos;
       necessidades: typeof necessidades;
       painel: typeof painel;
+      assinatura: typeof assinatura;
       historico: typeof historico;
       pesquisa: typeof pesquisa;
       lojaGestao: typeof lojaGestao;

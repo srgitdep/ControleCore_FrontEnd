@@ -1,0 +1,15 @@
+{
+  "aviso": {
+    "fim_proximo_one": "The subscription ends tomorrow ({{data}}). Contact us to renew and keep access.",
+    "fim_proximo_other": "The subscription ends in {{count}} days ({{data}}). Contact us to renew and keep access.",
+    "tolerancia_one": "The subscription ended on {{data}}. Access — the till included — is suspended in 1 day. Contact us.",
+    "tolerancia_other": "The subscription ended on {{data}}. Access — the till included — is suspended in {{count}} days. Contact us."
+  },
+  "bloqueada": {
+    "titulo": "Access suspended",
+    "texto": "Your company’s access to CoreBusiness is suspended for non-payment.",
+    "dados": "Your data is safe: nothing was deleted. Access returns as soon as the payment is recorded.",
+    "contacto": "To reactivate, contact us: {{email}}",
+    "sair": "Sign out"
+  }
+}

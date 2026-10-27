@@ -238,6 +238,10 @@
     },
     "gerir": "管理",
     "sem_assinatura": "没有有效订阅的启用公司",
-    "gerado_em": "生成于 {{data}}"
+    "gerado_em": "生成于 {{data}}",
+    "interruptor_ligado": "自动过期已开启。",
+    "interruptor_ligado_texto": "日期已经生效：每日任务会暂停超过宽限期的公司，被暂停的公司将失去访问（包括收银台）。",
+    "interruptor_desligado": "自动过期已关闭。",
+    "interruptor_desligado_texto": "今天不会切断任何访问。此列表是开启当天（EXPIRACAO_ASSINATURAS_ACTIVA=true）将发生的情况——请先给已过期的公司宽限期。"
   }
 }

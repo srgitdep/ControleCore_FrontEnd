@@ -239,6 +239,10 @@
     },
     "gerir": "Gerir",
     "sem_assinatura": "Empresas activas sem nenhuma assinatura em vigor",
-    "gerado_em": "Gerado em {{data}}"
+    "gerado_em": "Gerado em {{data}}",
+    "interruptor_ligado": "Expiração automática ligada.",
+    "interruptor_ligado_texto": "As datas já contam: a tarefa diária suspende quem passar a tolerância, e uma empresa suspensa fica sem acesso (POS incluído).",
+    "interruptor_desligado": "Expiração automática desligada.",
+    "interruptor_desligado_texto": "Nada é cortado hoje. Esta lista é o que aconteceria no dia em que for ligada (EXPIRACAO_ASSINATURAS_ACTIVA=true) — dê antes o prazo de graça às vencidas."
   }
 }

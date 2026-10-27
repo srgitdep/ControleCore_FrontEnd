@@ -1,0 +1,13 @@
+{
+  "aviso": {
+    "fim_proximo_other": "订阅将于 {{count}} 天后（{{data}}）结束。请联系我们续订，以免失去访问。",
+    "tolerancia_other": "订阅已于 {{data}} 结束。还有 {{count}} 天访问将被暂停（包括收银台）。请联系我们。"
+  },
+  "bloqueada": {
+    "titulo": "访问已暂停",
+    "texto": "贵公司因未付款，CoreBusiness 访问已被暂停。",
+    "dados": "您的数据已保存，没有任何内容被删除。付款登记后即可恢复访问。",
+    "contacto": "如需恢复，请联系我们：{{email}}",
+    "sair": "退出"
+  }
+}

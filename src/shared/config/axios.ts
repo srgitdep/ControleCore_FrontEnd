@@ -90,10 +90,25 @@ const processQueue = (error: unknown) => {
 // ── Response Interceptor: refresh automático em caso de 401 ────────────────
 // Com cookies HttpOnly, o browser gere os tokens de forma transparente.
 // O interceptor apenas precisa de disparar o refresh quando o accessToken expirar.
+/**
+ * Lançado quando um pedido responde 403 «assinatura bloqueada» (plano §4.15, S2b). A
+ * plataforma pode suspender a meio do dia: sem isto, a aplicação continuava aberta em
+ * ecrãs que só respondem erros até à próxima consulta de 5 minutos. `features/assinatura`
+ * escuta-o e volta a perguntar o estado — o axios não importa features, a feature é que
+ * escuta o axios.
+ */
+export const EVENTO_ASSINATURA_BLOQUEADA = 'corebusiness:assinatura-bloqueada';
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.codigo === 'auth.guard.assinatura_bloqueada'
+    ) {
+      window.dispatchEvent(new Event(EVENTO_ASSINATURA_BLOQUEADA));
+    }
     // `/auth/entrar` é o ecrã de entrada único (comprador ou fornecedor, ver
     // `ResolverEntradaUseCase` no backend) — um 401 aí é senha errada, exactamente como em
     // `/auth/login`, e não uma sessão que caiu. Sem esta linha, uma senha errada disparava

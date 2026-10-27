@@ -239,6 +239,10 @@
     },
     "gerir": "Manage",
     "sem_assinatura": "Active companies with no subscription in force",
-    "gerado_em": "Generated on {{data}}"
+    "gerado_em": "Generated on {{data}}",
+    "interruptor_ligado": "Automatic expiry is on.",
+    "interruptor_ligado_texto": "Dates already count: the daily task suspends whoever passes the grace period, and a suspended company loses access (till included).",
+    "interruptor_desligado": "Automatic expiry is off.",
+    "interruptor_desligado_texto": "Nothing is cut today. This list is what would happen on the day it is switched on (EXPIRACAO_ASSINATURAS_ACTIVA=true) — give the overdue ones their grace period first."
   }
 }

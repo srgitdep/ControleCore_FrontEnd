@@ -1,0 +1,15 @@
+{
+  "aviso": {
+    "fim_proximo_one": "A assinatura acaba amanhã ({{data}}). Fale connosco para renovar e não perder o acesso.",
+    "fim_proximo_other": "A assinatura acaba daqui a {{count}} dias ({{data}}). Fale connosco para renovar e não perder o acesso.",
+    "tolerancia_one": "A assinatura acabou a {{data}}. Falta 1 dia para o acesso ser suspenso — POS incluído. Fale connosco.",
+    "tolerancia_other": "A assinatura acabou a {{data}}. Faltam {{count}} dias para o acesso ser suspenso — POS incluído. Fale connosco."
+  },
+  "bloqueada": {
+    "titulo": "Acesso suspenso",
+    "texto": "O acesso da sua empresa ao CoreBusiness está suspenso por falta de pagamento.",
+    "dados": "Os seus dados estão guardados: nada foi apagado. O acesso volta assim que o pagamento for registado.",
+    "contacto": "Para reactivar, contacte-nos: {{email}}",
+    "sair": "Sair"
+  }
+}

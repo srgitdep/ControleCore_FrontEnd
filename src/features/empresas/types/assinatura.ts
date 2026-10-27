@@ -86,6 +86,8 @@ export interface RegistarPagamentoPayload {
 
 export interface RelatorioExpiracao {
   geradoEm: string;
+  /** O interruptor `EXPIRACAO_ASSINATURAS_ACTIVA`: se o que o relatório descreve já acontece. */
+  expiracaoActiva: boolean;
   porEstado: Partial<Record<EstadoAssinatura, number>>;
   totais: {
     empresasComAcesso: number;
