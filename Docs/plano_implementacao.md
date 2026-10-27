@@ -2254,6 +2254,19 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; suíte completa a passar. Frontend: `tsc -b`, `vite build` e oxlint limpos; testes a passar. O frontend não tem infra-estrutura de testes de componentes — a decisão do que mostrar é do backend (`avisoParaAEmpresa`, `MinhaAssinaturaUseCase`), testada lá. **Não verificado:** a faixa e o ecrã de bloqueio num browser, o corte de um WebSocket real, e o script e a tarefa contra dados reais.
   >
   > **Notas de deploy.** Migração aditiva `20261026120000_assinatura_aviso_expiracao` (corre no arranque do contentor). Variável nova `EXPIRACAO_ASSINATURAS_ACTIVA` (sem ela, desligada — nada muda). Backend primeiro. **Ordem para ligar:** relatório no painel → `npm run assinaturas:periodo-graca -- --dias 30 --aplicar` → `fly secrets set EXPIRACAO_ASSINATURAS_ACTIVA=true`.
+### Fase 69 — Limite de pedidos e auditoria das adesões (27 Out 2026)
+
+- **2026-10-27 · [BE] · Antonio Mambo** — `fix/limite-de-pedidos-e-auditoria`
+  - **Pedido do utilizador:** seguir a ordem recomendada — depois da S2b, os três itens do backlog encontrados nas Fases 66 e 67.
+  - fix(seguranca): `LimiteDePedidosGuard` (o `ThrottlerGuard`) passa a `APP_GUARD` — os `@Throttle` do projecto nunca tinham valido. Conta pelo IP real (`src/shared/ip-do-cliente.ts`: primeiro do `X-Forwarded-For`, que a Vercel escreve; senão `Fly-Client-IP`; senão `req.ip`): por `req.ip`, todos os clientes contavam como o proxy, e o limite da adesão (5/h) bloqueava o país inteiro. Limite global de 20/min (impraticável) para **300/min**; limites próprios no login e no entrar (20/min), MFA (10/min), recuperar senha (5 por 15 min) e redefinir senha (10 por 15 min); `/health` sem limite. **Bloqueio por conta:** 10 senhas erradas seguidas → 15 min (`tentativasLoginFalhadas`/`bloqueadoAte`), 429 `auth.conta_bloqueada`; o contador soma senha e código do MFA e só volta a zero quando a sessão sai. A auditoria passa a gravar o IP real. O `AuditLogListener` escuta `audit.adesao.event`. `GET /empresas/modulos/meus` procurava o estado inexistente `ACTIVE`.
+
+  > **Desvio ao plano.** O bloqueio por conta não estava no item do backlog: o `X-Forwarded-For` de quem fala directamente com o Fly é falsificável, e só o limite por IP não fechava o ataque de senhas que motivou o item.
+  >
+  > **Efeito em produção.** Os `@Throttle` que já existiam passam a valer pela primeira vez (catálogo público 60/min, mercado 30–60/min, registos públicos 5/h, etc.), agora por cliente. A contagem é em memória, por máquina: com mais de uma máquina no Fly, passar a Redis.
+  >
+  > **Verificação.** `nest build` limpo; 278 suites, 3972 testes. Specs novos: `ip-do-cliente.spec.ts`, `limite-de-pedidos.guard.spec.ts`; bloqueio por conta em `login.use-case.spec.ts`. **Não verificado:** o `X-Forwarded-For` real que chega ao Fly pela Vercel (confirmar nos registos que o IP da auditoria é o do cliente).
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. Só backend (o frontend leva só a cópia do plano).
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2627,9 +2640,9 @@ implementação vem **antes** de retomar o ensaio da entrega.
   - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
-- [ ] **Auditar as decisões de adesão** (encontrado na Fase 67) — `DecidirAdesaoUseCase` emite `audit.adesao.event`, que nenhum listener escuta: aprovar ou recusar um pedido fica só como mutação crua, sem o contexto. Acrescentar o evento ao `AuditLogListener` (ou passar a `audit.plataforma.event`).
-- [ ] **`GET /empresas/modulos/meus` procura `ACTIVE`** (encontrado na Fase 67) — o estado é `ATIVA`; só devolve módulos de assinaturas em `TRIAL`. Sem consumidor no frontend hoje.
-- [ ] **Registar o `ThrottlerGuard`** (encontrado na Fase 66) — o `ThrottlerModule` está configurado (20/min por IP) mas o guarda não está em `APP_GUARD`: nenhum `@Throttle` do projecto (adesão pública, mercado, login) limita pedidos. Registar como `APP_GUARD` e rever os limites das rotas públicas antes, para não cortar o tráfego normal (POS, SSE da Mayra).
+- [x] **Auditar as decisões de adesão** — concluído em 2026-10-27 (Fase 69): o `AuditLogListener` escuta `audit.adesao.event`.
+- [x] **`GET /empresas/modulos/meus` procurava `ACTIVE`** — corrigido em 2026-10-27 (Fase 69): usa os estados com acesso partilhados.
+- [x] **Registar o `ThrottlerGuard`** — concluído em 2026-10-27 (Fase 69): `APP_GUARD` pelo IP real, 300/min por omissão, limites próprios nas rotas de entrada, e bloqueio por conta no login. **Por fazer, se houver mais de uma máquina no Fly:** armazenamento da contagem em Redis.
 ---
 
 ## 4. Planos de funcionalidades
