@@ -6,6 +6,8 @@ import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
 import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
+import { useAuth } from '@/features/auth';
+import { AssinaturaBloqueada, AvisoAssinatura, useMinhaAssinatura } from '@/features/assinatura';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
@@ -25,6 +27,16 @@ export function AppLayout() {
   }, [location.pathname, closeMobileMenu]);
 
   const isPOS = location.pathname === '/vendas';
+
+  // A assinatura da empresa (plano §4.15, S2b). O Super Admin não tem empresa: nem pergunta.
+  const { user } = useAuth();
+  const { data: assinatura } = useMinhaAssinatura(!!user && user.role !== 'SUPER_ADMIN');
+
+  // Bloqueada: o ecrã de bloqueio em vez da aplicação — todo o resto responderia 403, e
+  // menus que só dão erro dizem menos do que uma frase clara.
+  if (assinatura?.aplicavel && assinatura.aviso === 'BLOQUEADA') {
+    return <AssinaturaBloqueada />;
+  }
 
   return (
     <div
@@ -77,6 +89,7 @@ export function AppLayout() {
             `max-w-[1400px]` noutras — pelo que o conteúdo mudava de largura ao navegar
             entre secções. Nada que dê erro, mas que se lê como desalinhamento. */}
         <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
+          <AvisoAssinatura assinatura={assinatura} />
           {isPOS ? (
             <Outlet />
           ) : (

@@ -50,6 +50,17 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
+**Fase 68 — Super Admin S2b: expiração automática das assinaturas** (plano completo em **§4.15**; branch `feat/superadmin-s2b-expiracao` nos dois repositórios, backend primeiro). **Decisões do utilizador (2026-10-26):** P2 — tolerância com aviso, depois **bloqueio total**; P5 — o POS também bloqueia, com o aviso durante toda a tolerância; P7 — prazo de graça fixo de **30 dias** para as vencidas, no dia em que se liga; avisos — um e-mail ao ADMIN **7 dias antes** do fim.
+
+- [x] **Interruptor `EXPIRACAO_ASSINATURAS_ACTIVA`**, desligado por omissão (só `true`/`1` liga) — ao contrário do MFA, porque isto corta acesso a clientes. Desligado, nada muda: nem a tarefa transita estados, nem o pedido faz a consulta extra.
+- [x] **Regras** (`regras-assinatura.ts`): `TRIAL` com o fim + tolerância passado → `EXPIRADA`; `ATIVA` com a `dataFim` passada → `EM_ATRASO` (ainda com acesso); `EM_ATRASO` com a `dataFim` + tolerância passada → `SUSPENSA`. Estados com acesso: `TRIAL`, `ATIVA`, `EM_ATRASO`, `EM_RENOVACAO` (`src/shared/acesso-assinatura.ts`), usados também pelo `ModuloAccessGuard` e pelo Compra Fácil.
+- [x] **Bloqueio total.** Só o `commerce` usa `@ModuloNecessario` — vendas, POS, stock e o resto não passam pelo `ModuloAccessGuard`. O bloqueio vai no `JwtAuthGuard`: com o interruptor ligado, o `JwtStrategy` lê os estados das assinaturas da empresa e, sem nenhuma com acesso e alguma `EXPIRADA`/`SUSPENSA`/`CANCELADA`, o pedido recebe 403 `auth.guard.assinatura_bloqueada` — salvo rotas com `@PermitidoComAssinaturaBloqueada()` (quem sou, sair, idioma, a minha assinatura). Uma empresa sem assinatura nenhuma não é bloqueada (fica no relatório).
+- [x] **Tarefa diária** `ExpirarAssinaturasTask` (02:30, hora de Maputo): transições por `updateMany` condicional ao estado actual (várias máquinas do Fly correm o mesmo cron), auditadas; aviso 7 dias antes, uma vez por fim (coluna nova `avisoExpiracaoPara`, migração aditiva), por e-mail ao ADMIN.
+- [x] **`GET /assinatura/minha`** (a empresa do utilizador): estado, fim, dias e se está bloqueada — para o aviso no ecrã.
+- [x] **Script `npm run assinaturas:periodo-graca -- --dias 30 [--aplicar]`**: dá o prazo às vencidas e avisa os ADMIN por e-mail. Simula sem `--aplicar`.
+- [x] **Frontend:** faixa de aviso no topo (ERP e POS) durante a tolerância e 7 dias antes; ecrã «assinatura suspensa» em vez da aplicação quando bloqueada; traduções pt/en/zh.
+- [ ] **Testes e verificação.** **Ordem de ligar em produção:** deploy (desligado) → relatório → script de prazo de graça → `fly secrets set EXPIRACAO_ASSINATURAS_ACTIVA=true`.
+
 ---
 
 ## 1. Arquitectura em duas linhas
