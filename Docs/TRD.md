@@ -163,7 +163,7 @@ ao submeter.
 | Validação | class-validator + class-transformer | ^0.15.1 / ^0.5.1 | `ValidationPipe` global: `whitelist`, `forbidNonWhitelisted`, `transform` |
 | Auth | passport + passport-jwt + bcrypt | — | JWT em cookies HttpOnly (`accessToken`/`refreshToken`), nunca `localStorage` |
 | Multi-tenancy | nestjs-cls | ^6.2.1 | `AsyncLocalStorage` para `empresaId` por pedido |
-| Segurança HTTP | helmet + @nestjs/throttler | — | cabeçalhos de segurança. **O rate limiting não está activo:** o `ThrottlerModule` está configurado mas o `ThrottlerGuard` não é `APP_GUARD`, e os `@Throttle` não têm efeito (ver backlog) |
+| Segurança HTTP | helmet + @nestjs/throttler | — | cabeçalhos de segurança + limite de pedidos (`LimiteDePedidosGuard`, `APP_GUARD` desde a Fase 69, ver §8) |
 | MFA | otplib + qrcode | ^12.0.1 / ^1.5.4 | TOTP do segundo passo e o QR para a aplicação de autenticação — ver §8.3 |
 | Agendamento | @nestjs/schedule | ^6.1.3 | crons (ex. limpeza de reservas expiradas) |
 | Tempo real | socket.io + @nestjs/websockets + @nestjs/platform-socket.io + ws | ^4.8.3 / ^11.x / ^8.21.1 | eventos e voz da Mayra |
@@ -647,6 +647,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   uma migração muda permissões de perfis em uso — sem isso, quem já tinha sessão só
   veria a mudança um dia depois. Editar um perfil no ERP invalida a cache dos seus
   utilizadores.
+- **Limite de pedidos (Fase 69).** `LimiteDePedidosGuard` (o `ThrottlerGuard`) como `APP_GUARD`, contado pelo IP real do cliente (`src/shared/ip-do-cliente.ts`): o primeiro endereço do `X-Forwarded-For` — o REST chega pela Vercel, que o escreve —, senão `Fly-Client-IP`, senão `req.ip`. Por omissão 300 pedidos/min por cliente; `@Throttle` próprio no `/auth/login` e `/auth/entrar` (20/min), `/auth/mfa/*` (10/min), `/auth/forgot-password` (5/15 min), `/auth/reset-password` (10/15 min) e nas rotas públicas (adesão e registos 5/h, catálogo 60/min…); `@SkipThrottle` no `/health`. Contagem em memória, por máquina. O `X-Forwarded-For` é falsificável por quem fala directamente com o Fly — por isso o login tem também **bloqueio por conta**: 10 falhas seguidas (senha ou código do MFA, o mesmo contador `tentativasLoginFalhadas`) → `bloqueadoAte` +15 min, 429 `auth.conta_bloqueada`; volta a zero só quando a sessão sai (`emitirSessao`). O IP da auditoria (`cls ipAddress`) é o mesmo `ipDoCliente`.
 - Erros de base de dados traduzidos pelo `PrismaExcecaoFilter` global — base
   inalcançável dá **503 + `Retry-After`**, não 500 (o Neon acorda em alguns
   segundos).
