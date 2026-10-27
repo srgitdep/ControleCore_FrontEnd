@@ -1,5 +1,5 @@
 import { api } from '@/shared/config';
-import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { useAuthStore, papelEfectivo } from '@/features/auth/store/useAuthStore';
 import type { FonteDeNotificacoes, PaginaDeNotificacoes } from './tipos';
 
 /** As notificações de um funcionário do ERP (gestão, caixa, stock…): as dele, pelo token. */
@@ -18,7 +18,8 @@ const gestaoApi = {
  */
 export function useFonteDaGestao(): FonteDeNotificacoes {
   const autenticado = useAuthStore((s) => s.isAuthenticated);
-  const papel = useAuthStore((s) => s.user?.role);
+  // O papel efectivo: em modo suporte, as notificações são as do ADMIN da empresa.
+  const papel = useAuthStore((s) => papelEfectivo(s.user, s.suporte));
 
   return {
     chave: 'notificacoes-gestao',

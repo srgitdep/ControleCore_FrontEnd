@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/shared/ui';
 import { EmpresaDetailsModal } from '../components/EmpresaDetailsModal';
 import { BrandingModal } from '../components/BrandingModal';
 import { GerirAssinaturaModal } from '../components/GerirAssinaturaModal';
+import { EntrarSuporteDialog } from '@/features/suporte';
 import { RelatorioExpiracaoModal } from '../components/RelatorioExpiracaoModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -25,6 +26,7 @@ export function EmpresasPage() {
   const [empresaToBrand, setEmpresaToBrand] = useState<Empresa | null>(null);
   const [assinaturaDe, setAssinaturaDe] = useState<string | null>(null);
   const [relatorioAberto, setRelatorioAberto] = useState(false);
+  const [suporteEm, setSuporteEm] = useState<Empresa | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -370,6 +372,15 @@ export function EmpresasPage() {
           empresa={empresaToView}
           onClose={() => setIsDetailsOpen(false)}
           onGerirAssinatura={() => setAssinaturaDe(empresaToView.id)}
+          onEntrarEmSuporte={() => setSuporteEm(empresaToView)}
+        />
+      )}
+
+      {suporteEm && (
+        <EntrarSuporteDialog
+          empresaId={suporteEm.id}
+          empresaNome={suporteEm.nome}
+          onClose={() => setSuporteEm(null)}
         />
       )}
 

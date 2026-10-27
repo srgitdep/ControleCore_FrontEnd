@@ -125,5 +125,8 @@
     "a_guardar": "保存中……",
     "guardar": "保存用户",
     "email_exemplo": "joao@srg.com"
-  }
+  },
+  "desbloquear": "解锁",
+  "desbloqueado": "已解锁 {{nome}}。",
+  "erro_desbloquear": "无法解锁该用户。"
 }

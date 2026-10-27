@@ -126,5 +126,8 @@
     "a_guardar": "A guardar...",
     "guardar": "Guardar Utilizador",
     "email_exemplo": "joao@srg.com"
-  }
+  },
+  "desbloquear": "Desbloquear",
+  "desbloqueado": "{{nome}} desbloqueado.",
+  "erro_desbloquear": "Não foi possível desbloquear o utilizador."
 }

@@ -42,3 +42,8 @@ export const resendPassword = async (id: string): Promise<{ message: string }> =
 export const updateUserPin = async (id: string, pin: string): Promise<void> => {
   await api.patch(`/users/${id}/pin`, { pin });
 };
+
+/** Levanta o bloqueio por tentativas falhadas antes do fim dos 15 minutos. */
+export const unlockUser = async (id: string): Promise<void> => {
+  await api.patch(`/users/${id}/desbloquear`);
+};

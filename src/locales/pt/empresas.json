@@ -106,7 +106,8 @@
     "lojas": "Lojas e Operações",
     "local_nao_definido": "Local não definido",
     "sem_lojas": "Nenhuma loja registada para esta empresa.",
-    "registada_em": "Registada no sistema a {{data}}"
+    "registada_em": "Registada no sistema a {{data}}",
+    "entrar_suporte": "Entrar em modo suporte"
   },
   "form": {
     "validacao": {

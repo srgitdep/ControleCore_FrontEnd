@@ -1,5 +1,6 @@
 ﻿import { useAuth } from '@/features/auth';
 import { AuditLogTable } from '../components/AuditLogTable';
+import { SessoesDeSuporte } from '@/features/suporte';
 import { History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +30,9 @@ export function HistoryPage() {
       </div>
 
       <AuditLogTable userId={targetUserId} />
+
+      {/* As visitas da plataforma: só para quem pode ver a auditoria da empresa. */}
+      {user?.role === 'ADMIN' && <SessoesDeSuporte />}
     </div>
   );
 }

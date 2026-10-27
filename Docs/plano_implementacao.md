@@ -2267,6 +2267,20 @@ esse merge trouxe.
   > **Verificação.** `nest build` limpo; 278 suites, 3972 testes. Specs novos: `ip-do-cliente.spec.ts`, `limite-de-pedidos.guard.spec.ts`; bloqueio por conta em `login.use-case.spec.ts`. **Não verificado:** o `X-Forwarded-For` real que chega ao Fly pela Vercel (confirmar nos registos que o IP da auditoria é o do cliente).
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. Só backend (o frontend leva só a cópia do plano).
+### Fase 70 — Super Admin S3: modo suporte (27 Out 2026)
+
+- **2026-10-27 · [BE] · Antonio Mambo** — `feat/superadmin-s3-modo-suporte`
+  - **Pedido do utilizador:** a S3 do plano §4.15, a seguir à Fase 69, pela ordem recomendada. P3 decidido: só leitura por omissão, escrita pedida com motivo e visível para a empresa.
+  - feat(suporte): tabela `sessoes_suporte` (migração `20261027100000_sessoes_suporte`) e módulo `suporte`. `POST /plataforma/suporte/entrar` (Super Admin; motivo obrigatório; 1 h; fecha a sessão anterior, uma activa de cada vez), `POST /suporte/sair`, `GET /suporte/actual`, `GET /suporte/sessoes` (quem entrou, quando, porquê e se podia escrever; `VER_AUDITORIA`). A sessão vai num cookie HttpOnly `sessaoSuporte` com **só o id**; o `JwtStrategy` aceita-o apenas para um `SUPER_ADMIN` dono de uma sessão aberta, não expirada e de uma empresa activa, e apresenta-o como **`ADMIN` da empresa alvo** (`suporte: { sessaoId, escrita }`). O `JwtAuthGuard` recusa `POST`/`PUT`/`PATCH`/`DELETE` em suporte sem escrita (403 `suporte.so_leitura`), salvo `@PermitidoEmSuporte()` (logout, idioma, registo de auditoria). A auditoria grava `sessaoId` (coluna que já existia sem uso) e o `userId` do Super Admin verdadeiro; entrar e sair ficam na auditoria **da empresa**.
+  - feat(users): `PATCH /users/:id/desbloquear` (`EDITAR_USER`; ADMIN na sua empresa, Super Admin em qualquer) repõe um utilizador bloqueado por tentativas; a lista de utilizadores devolve `bloqueadoAte`.
+- **2026-10-27 · [FE] · Antonio Mambo** — `feat/superadmin-s3-modo-suporte`
+  - feat(suporte): feature `suporte` — «Entrar em modo suporte» nos detalhes da empresa (motivo e escrita); faixa fixa no topo (`BarraDeSuporte`) com a empresa, o modo, a hora de fim e «Sair»; sincronização com `GET /suporte/actual` de 60 em 60 s (a sessão expira no servidor sem o browser saber); lista «Sessões de suporte» no Histórico do ADMIN. `papelEfectivo`: em suporte o `useAuth()` devolve `ADMIN`. Fora do modo, a Sidebar do Super Admin mostra só as rotas da plataforma. Botão «Desbloquear» no ecrã de utilizadores. Namespace `suporte` em pt/en/zh.
+
+  > **Desvios ao plano.** (1) Em vez de um guarda global novo, a recusa de escrita vive no `JwtAuthGuard`, onde já se decidia o bloqueio por assinatura. (2) A sessão é apresentada como `ADMIN` da empresa e não como `SUPER_ADMIN` com `empresaId`: cerca de 56 ramos «se SUPER_ADMIN, não filtrar por empresa» veriam todas as empresas misturadas. (3) Uma empresa bloqueada por assinatura continua acessível em suporte (é para isso que serve). (4) `/e-commerce` e `/historico` ficam visíveis ao Super Admin fora do modo. (5) «Repor a senha do ADMIN» não ganhou botão no ecrã da empresa: já existe o fluxo de recuperação; o desbloqueio sim.
+  >
+  > **Verificação.** Backend: 281 suites, 3990 testes. Frontend: `vite build` limpo; 28 ficheiros, 498 testes; oxlint só com os avisos antigos. Specs novos: `jwt.strategy.spec.ts`, `modo-suporte.use-case.spec.ts`, `desbloquear-utilizador.use-case.spec.ts`, o ramo de suporte do `jwt-auth.guard.spec.ts`, `papelEfectivo.test.ts`; `autoridade-da-plataforma.spec.ts` inclui a rota de entrada. **Não verificado:** a faixa, a entrada e a saída num browser, e o cookie `sessaoSuporte` através da Vercel (se a faixa não aparecer depois de entrar, é aí que se procura primeiro). `imagem-documento.spec` falha de vez em quando com a máquina carregada e passa isolado (anterior a esta fase).
+  >
+  > **Notas de deploy.** Migração aditiva `20261027100000_sessoes_suporte` (uma tabela; corre no arranque do contentor). Sem variáveis novas. **Backend primeiro**, depois frontend.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2637,7 +2651,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
   - [x] **S1 — Contas de Super Admin seguras** — concluída em 2026-10-26 (Fase 66): MFA obrigatório, desactivar/reactivar e repor senha de um Super Admin, nunca ficar sem nenhum activo.
   - [x] **S2a — Gestão manual das assinaturas** — concluída em 2026-10-26 (Fase 67): ver e alterar a assinatura, registar pagamentos, relatório de expiração.
   - [x] **S2b — Expiração automática** — concluída em 2026-10-27 (Fase 68), desligada por omissão (`EXPIRACAO_ASSINATURAS_ACTIVA`). **Por fazer, do utilizador:** relatório → prazo de graça de 30 dias → ligar o interruptor.
-  - [ ] **S3 — Modo suporte**: entrar numa empresa com tempo limitado, só leitura por omissão, tudo auditado; esconder do Super Admin os menus operacionais fora desse modo.
+  - [x] **S3 — Modo suporte** — concluída em 2026-10-27 (Fase 70): entrar numa empresa 1 h, só leitura por omissão, escrita pedida com motivo, tudo auditado e visível para a empresa; fora do modo, o Super Admin só vê os menus da plataforma.
   - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
 - [x] **Auditar as decisões de adesão** — concluído em 2026-10-27 (Fase 69): o `AuditLogListener` escuta `audit.adesao.event`.
@@ -5766,7 +5780,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1, S2a e S2b concluídas (Fases 65 a 68, 26–27/10/2026).** P2, P5 e P7 decididos pelo utilizador em 26/10/2026 (bloqueio total; POS incluído com aviso; 30 dias de graça). Próxima: S3.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1, S2a, S2b e S3 concluídas (Fases 65 a 68 e 70, 26–27/10/2026).** P2, P5 e P7 decididos pelo utilizador em 26/10/2026 (bloqueio total; POS incluído com aviso; 30 dias de graça). Próxima: S4.
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 

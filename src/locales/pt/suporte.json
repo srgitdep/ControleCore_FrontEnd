@@ -1,0 +1,34 @@
+{
+  "barra": {
+    "titulo": "Modo suporte: {{empresa}}.",
+    "so_leitura": "Só leitura.",
+    "com_escrita": "Com escrita.",
+    "termina_one": "Termina às {{hora}} (falta 1 minuto).",
+    "termina_other": "Termina às {{hora}} (faltam {{count}} minutos).",
+    "sair": "Sair do modo suporte",
+    "erro_sair": "Não foi possível sair do modo suporte."
+  },
+  "entrar": {
+    "titulo": "Entrar em modo suporte",
+    "fechar": "Fechar",
+    "texto": "Vai ver {{empresa}} como o Administrador dela a vê, durante 1 hora. Só leitura, a menos que peça escrita.",
+    "motivo": "Motivo",
+    "motivo_dica": "Ex.: o Administrador pediu ajuda com o fecho de caixa.",
+    "motivo_visivel": "Obrigatório. A empresa vê o motivo na lista das sessões de suporte.",
+    "escrita": "Permitir alterar dados",
+    "aviso_escrita": "O que alterar fica feito como Administrador da empresa, com o seu nome na auditoria. A empresa vê que esta sessão podia escrever.",
+    "cancelar": "Cancelar",
+    "confirmar": "Entrar",
+    "erro": "Não foi possível entrar em modo suporte."
+  },
+  "sessoes": {
+    "titulo": "Sessões de suporte",
+    "subtitulo": "Quando alguém da plataforma entrou na sua empresa para ajudar: quem, porquê e se podia alterar dados.",
+    "vazio": "A plataforma ainda não entrou na sua empresa.",
+    "erro": "Não foi possível carregar as sessões.",
+    "tentar_novamente": "Tentar novamente",
+    "com_escrita": "Com escrita",
+    "so_leitura": "Só leitura",
+    "expirou_ou_aberta": "ainda aberta ou expirada"
+  }
+}

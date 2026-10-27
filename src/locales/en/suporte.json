@@ -1,0 +1,34 @@
+{
+  "barra": {
+    "titulo": "Support mode: {{empresa}}.",
+    "so_leitura": "Read-only.",
+    "com_escrita": "With write access.",
+    "termina_one": "Ends at {{hora}} (1 minute left).",
+    "termina_other": "Ends at {{hora}} ({{count}} minutes left).",
+    "sair": "Leave support mode",
+    "erro_sair": "Could not leave support mode."
+  },
+  "entrar": {
+    "titulo": "Enter support mode",
+    "fechar": "Close",
+    "texto": "You will see {{empresa}} as its Administrator sees it, for 1 hour. Read-only unless you ask for write access.",
+    "motivo": "Reason",
+    "motivo_dica": "E.g. the Administrator asked for help closing the till.",
+    "motivo_visivel": "Required. The company sees the reason in its list of support sessions.",
+    "escrita": "Allow changing data",
+    "aviso_escrita": "Whatever you change is done as the company’s Administrator, with your name in the audit log. The company sees that this session could write.",
+    "cancelar": "Cancel",
+    "confirmar": "Enter",
+    "erro": "Could not enter support mode."
+  },
+  "sessoes": {
+    "titulo": "Support sessions",
+    "subtitulo": "When someone from the platform entered your company to help: who, why and whether they could change data.",
+    "vazio": "The platform has not entered your company yet.",
+    "erro": "Could not load the sessions.",
+    "tentar_novamente": "Try again",
+    "com_escrita": "With write access",
+    "so_leitura": "Read-only",
+    "expirou_ou_aberta": "still open or expired"
+  }
+}

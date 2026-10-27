@@ -105,7 +105,8 @@
     "lojas": "门店与运营",
     "local_nao_definido": "未设置位置",
     "sem_lojas": "该公司尚未登记任何门店。",
-    "registada_em": "于 {{data}} 登记入系统"
+    "registada_em": "于 {{data}} 登记入系统",
+    "entrar_suporte": "进入支持模式"
   },
   "form": {
     "validacao": {
