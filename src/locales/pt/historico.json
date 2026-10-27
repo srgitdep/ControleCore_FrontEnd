@@ -27,6 +27,8 @@
   },
   "pagina": {
     "global": "Acções de todos os utilizadores da empresa.",
-    "pessoal": "As suas acções no sistema."
+    "pessoal": "As suas acções no sistema.",
+    "empresa": "Empresa",
+    "todas_as_empresas": "Todas as empresas"
   }
 }

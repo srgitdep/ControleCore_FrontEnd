@@ -34,7 +34,31 @@
     "subscricoes": "Subscrições activas",
     "subscricoes_desc": "Planos regulares",
     "actividade": "Actividade recente do sistema",
-    "actividade_vazio": "Os registos detalhados do sistema irão aparecer aqui"
+    "actividade_vazio": "Os registos detalhados do sistema irão aparecer aqui",
+    "estado_comercial": "Estado comercial",
+    "receita": "Receita mensal recorrente",
+    "receita_desc": "Assinaturas que pagam, por mês",
+    "trials": "Trials a expirar",
+    "trials_desc": "Terminam nos próximos 7 dias",
+    "em_atraso": "Empresas em atraso",
+    "em_atraso_desc": "Dentro do prazo de tolerância",
+    "suspensas": "Empresas sem acesso",
+    "suspensas_desc": "Expiradas, suspensas ou canceladas",
+    "erro": "Não foi possível carregar o painel da plataforma.",
+    "tentar_novamente": "Tentar novamente",
+    "actor_desconhecido": "Sistema",
+    "evento": {
+      "ADESAO_DECIDIDA": "Pedido de adesão decidido",
+      "ASSINATURA_ALTERADA": "Assinatura alterada",
+      "PAGAMENTO_REGISTADO": "Pagamento registado",
+      "ASSINATURA_EXPIRADA": "Assinatura expirada automaticamente",
+      "SUPORTE_ENTROU": "Entrada em modo suporte",
+      "SUPORTE_SAIU": "Saída do modo suporte",
+      "EMPRESA_CRIADA": "Empresa criada",
+      "EMPRESA_APAGADA": "Empresa apagada",
+      "EMPRESA_ESTADO": "Estado da empresa alterado",
+      "SUPER_ADMIN_CRIADO": "Super Admin criado"
+    }
   },
   "super_admins": {
     "titulo": "Super Administradores",

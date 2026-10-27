@@ -50,6 +50,15 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
+**Fase 71 — Super Admin S4: painel da plataforma** (plano completo em **§4.15**; branch `feat/superadmin-s4-painel-plataforma` nos dois repositórios, backend primeiro).
+
+- [x] **Receita e estados (função pura).** `src/shared/receita-recorrente.ts`: receita mensal recorrente = soma do `valorTotal` das assinaturas que pagam (`ATIVA`, `EM_ATRASO`, `EM_RENOVACAO`; o `TRIAL` não paga), dividido pelos meses do ciclo (1, 3, 6, 12). Assunção: `valorTotal` é o valor de **um ciclo**. Com spec.
+- [x] **KPIs novos em `GET /relatorios/dashboard/sistema`:** `trialsAExpirar` (TRIAL cujo fim, `trialAte ?? dataFim`, cai nos próximos 7 dias), `empresasEmAtraso` (alguma assinatura `EM_ATRASO`), `empresasSuspensas` (`assinaturaBloqueia`), `receitaMensalRecorrente`. Uma empresa conta uma vez.
+- [x] **Actividade recente:** as últimas 15 linhas da `audit_logs` que são eventos da plataforma (`PedidoAdesao`, `Assinatura`, `Pagamento`, `SessaoSuporte`, e `Empresa`/`User` de criar, apagar e mudar de estado), com o nome da empresa e de quem actuou. Sem tabela nova.
+- [x] **Auditoria filtrada por empresa:** `GET /auditoria/logs?empresaId=` — só o Super Admin (fora do suporte) escolhe a empresa; para os outros o parâmetro é ignorado e vale a empresa do token.
+- [x] **Frontend:** KPIs novos e cartão «Actividade recente» no painel da plataforma (os 4 estados: a carregar, erro, vazio, dados); filtro por empresa no Histórico do Super Admin; pt/en/zh.
+- [x] **Testes e verificação.** Backend 285 suites, 4011 testes; `nest build` limpo. Frontend: `tsc -b`, `vite build` e 498 testes. Specs novos: `receita-recorrente.spec.ts`, `actividade-da-plataforma.spec.ts`, `prisma-dashboard-sistema.spec.ts`, `auditoria.controller.spec.ts`. **Não verificado:** o painel e o filtro num browser, nem contra dados reais.
+
 ---
 
 ## 1. Arquitectura em duas linhas

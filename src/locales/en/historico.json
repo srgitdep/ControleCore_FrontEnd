@@ -27,6 +27,8 @@
   },
   "pagina": {
     "global": "Actions of all the company's users.",
-    "pessoal": "Your actions in the system."
+    "pessoal": "Your actions in the system.",
+    "empresa": "Company",
+    "todas_as_empresas": "All companies"
   }
 }

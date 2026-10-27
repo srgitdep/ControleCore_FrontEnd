@@ -34,7 +34,31 @@
     "subscricoes": "有效订阅",
     "subscricoes_desc": "常规套餐",
     "actividade": "系统近期动态",
-    "actividade_vazio": "系统的详细记录将显示在这里"
+    "actividade_vazio": "系统的详细记录将显示在这里",
+    "estado_comercial": "商业状况",
+    "receita": "月度经常性收入",
+    "receita_desc": "付费订阅，按月计",
+    "trials": "即将到期的试用",
+    "trials_desc": "未来 7 天内结束",
+    "em_atraso": "逾期公司",
+    "em_atraso_desc": "处于宽限期内",
+    "suspensas": "无权访问的公司",
+    "suspensas_desc": "已过期、已暂停或已取消",
+    "erro": "无法加载平台概览。",
+    "tentar_novamente": "重试",
+    "actor_desconhecido": "系统",
+    "evento": {
+      "ADESAO_DECIDIDA": "入驻申请已处理",
+      "ASSINATURA_ALTERADA": "订阅已更改",
+      "PAGAMENTO_REGISTADO": "已登记付款",
+      "ASSINATURA_EXPIRADA": "订阅已自动到期",
+      "SUPORTE_ENTROU": "进入支持模式",
+      "SUPORTE_SAIU": "退出支持模式",
+      "EMPRESA_CRIADA": "公司已创建",
+      "EMPRESA_APAGADA": "公司已删除",
+      "EMPRESA_ESTADO": "公司状态已更改",
+      "SUPER_ADMIN_CRIADO": "已创建超级管理员"
+    }
   },
   "super_admins": {
     "titulo": "超级管理员",

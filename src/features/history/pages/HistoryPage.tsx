@@ -1,12 +1,18 @@
 ﻿import { useAuth } from '@/features/auth';
 import { AuditLogTable } from '../components/AuditLogTable';
 import { SessoesDeSuporte } from '@/features/suporte';
+import { useEmpresas } from '@/features/empresas';
 import { History } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export function HistoryPage() {
   const { t } = useTranslation('historico');
   const { user } = useAuth();
+  const ehSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const [empresaId, setEmpresaId] = useState('');
+  // A lista só é pedida ao Super Admin: `GET /empresas` é da plataforma e daria 403 aos outros.
+  const { data: empresas } = useEmpresas({ activo: ehSuperAdmin });
 
   // Se for nÍvel gerencial ou superior, vamos não enviar userId por padrão para carregar o histórico global
   // Caso contrário, enviamos o próprio id (embora o backend já faça este enforce de segurança)
@@ -29,7 +35,25 @@ export function HistoryPage() {
         </p>
       </div>
 
-      <AuditLogTable userId={targetUserId} />
+      {ehSuperAdmin && (
+        <label className="flex flex-col gap-1 text-sm text-slate-600 sm:max-w-xs">
+          {t('pagina.empresa')}
+          <select
+            value={empresaId}
+            onChange={(e) => setEmpresaId(e.target.value)}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+          >
+            <option value="">{t('pagina.todas_as_empresas')}</option>
+            {empresas?.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      <AuditLogTable userId={targetUserId} empresaId={empresaId || undefined} />
 
       {/* As visitas da plataforma: só para quem pode ver a auditoria da empresa. */}
       {user?.role === 'ADMIN' && <SessoesDeSuporte />}

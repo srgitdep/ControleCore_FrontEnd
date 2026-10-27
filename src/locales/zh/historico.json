@@ -27,6 +27,8 @@
   },
   "pagina": {
     "global": "公司所有用户的操作。",
-    "pessoal": "您在系统中的操作。"
+    "pessoal": "您在系统中的操作。",
+    "empresa": "公司",
+    "todas_as_empresas": "所有公司"
   }
 }

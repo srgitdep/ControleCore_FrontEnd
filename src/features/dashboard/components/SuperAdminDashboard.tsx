@@ -1,13 +1,14 @@
 import { useSuperAdminDashboard } from '@/features/dashboard';
-import { Building2, Users, Store, ShieldCheck } from 'lucide-react';
+import { Building2, Users, Store, ShieldCheck, Hourglass, AlertTriangle, Ban, TrendingUp } from 'lucide-react';
 import { Card, CardCarousel, KpiCard } from '@/shared/ui';
 import { useTranslation } from 'react-i18next';
-import { formatInteiro } from '@/shared/utils';
+import { formatInteiro, formatMoeda } from '@/shared/utils';
 import { SuperAdminsCard } from './SuperAdminsCard';
+import { ActividadeRecente } from './ActividadeRecente';
 
 export function SuperAdminDashboard() {
   const { t } = useTranslation('painel');
-  const { data, isLoading } = useSuperAdminDashboard();
+  const { data, isLoading, isError, refetch } = useSuperAdminDashboard();
 
   if (isLoading) {
     return (
@@ -19,7 +20,20 @@ export function SuperAdminDashboard() {
     );
   }
 
-  if (!data) return null;
+  if (isError || !data) {
+    return (
+      <Card padding="lg" accent="danger">
+        <p className="text-sm text-slate-700">{t('plataforma.erro')}</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="mt-3 text-sm font-medium text-blue-600 hover:underline"
+        >
+          {t('plataforma.tentar_novamente')}
+        </button>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -61,18 +75,40 @@ export function SuperAdminDashboard() {
         />
       </CardCarousel>
 
+      <CardCarousel label={t('plataforma.estado_comercial')} colunas={4}>
+        <KpiCard
+          title={t('plataforma.receita')}
+          value={formatMoeda(data.kpis.receitaMensalRecorrente)}
+          icon={TrendingUp}
+          accent="success"
+          description={t('plataforma.receita_desc')}
+        />
+        <KpiCard
+          title={t('plataforma.trials')}
+          value={formatInteiro(data.kpis.trialsAExpirar)}
+          icon={Hourglass}
+          accent={data.kpis.trialsAExpirar > 0 ? 'warning' : 'neutral'}
+          description={t('plataforma.trials_desc')}
+        />
+        <KpiCard
+          title={t('plataforma.em_atraso')}
+          value={formatInteiro(data.kpis.empresasEmAtraso)}
+          icon={AlertTriangle}
+          accent={data.kpis.empresasEmAtraso > 0 ? 'warning' : 'neutral'}
+          description={t('plataforma.em_atraso_desc')}
+        />
+        <KpiCard
+          title={t('plataforma.suspensas')}
+          value={formatInteiro(data.kpis.empresasSuspensas)}
+          icon={Ban}
+          accent={data.kpis.empresasSuspensas > 0 ? 'danger' : 'neutral'}
+          description={t('plataforma.suspensas_desc')}
+        />
+      </CardCarousel>
+
       <SuperAdminsCard />
 
-      <Card padding="lg">
-        <h3 className="text-[15px] font-semibold text-slate-900">
-          {t('plataforma.actividade')}
-        </h3>
-        <div className="mt-4 flex h-40 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50">
-          <p className="px-4 text-center text-sm text-slate-400">
-            {t('plataforma.actividade_vazio')}
-          </p>
-        </div>
-      </Card>
+      <ActividadeRecente actividade={data.actividade} />
     </div>
   );
 }
