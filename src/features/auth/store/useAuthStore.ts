@@ -4,6 +4,9 @@ import type { AuthUser, LoginPayload, Role } from '../types';
 import { logoutApi, loginApi, definirIdiomaApi } from '../api/auth.api';
 import { queryClient } from '@/main';
 import { useCopilotStore } from '../../ai-copilot/store/copilotStore';
+import { papelEfectivo } from '../utils/papelEfectivo';
+
+export { papelEfectivo };
 
 interface AuthState {
   user: AuthUser | null;
@@ -21,6 +24,23 @@ interface AuthState {
   setPermissions: (permissions: string[]) => void;
   hasRole: (roles: Role[]) => boolean;
   initialize: () => void;
+
+  /**
+   * A sessão de suporte em que o Super Admin está (plano §4.15, S3), ou `null`. Não se guarda
+   * no `sessionStorage`: a fonte é `GET /suporte/actual`, porque a sessão expira ou é fechada
+   * no servidor sem o browser saber.
+   */
+  suporte: SessaoSuporteActiva | null;
+  definirSuporte: (sessao: SessaoSuporteActiva | null) => void;
+}
+
+/** A empresa em que se está e o modo — o que a faixa do topo mostra. */
+export interface SessaoSuporteActiva {
+  sessaoId: string;
+  empresa: { id: string; nome: string };
+  escrita: boolean;
+  iniciadaEm: string;
+  expiraEm: string;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -61,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       sessionStorage.removeItem('authUser');
       queryClient.clear();
       useCopilotStore.getState().clearMessages();
-      set({ user: null, permissions: [], isAuthenticated: false });
+      set({ user: null, permissions: [], isAuthenticated: false, suporte: null });
     }
   },
 
@@ -70,9 +90,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hasRole: (roles: Role[]) => {
-    const { user } = get();
-    return !!user && roles.includes(user.role);
+    const { user, suporte } = get();
+    const papel = papelEfectivo(user, suporte);
+    return !!papel && roles.includes(papel);
   },
+
+  suporte: null,
+  definirSuporte: (sessao) => set({ suporte: sessao }),
 
   initialize: () => {
     try {

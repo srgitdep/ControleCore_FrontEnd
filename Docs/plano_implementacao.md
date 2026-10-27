@@ -50,6 +50,16 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
+**Fase 70 — Super Admin S3: modo suporte** (plano completo em **§4.15**, P3 decidido: só leitura por omissão, escrita pedida com motivo e visível para a empresa; branch `feat/superadmin-s3-modo-suporte` nos dois repositórios, backend primeiro).
+
+- [x] **Dados:** tabela `sessoes_suporte` (Super Admin, empresa, motivo, escrita, início, expira, terminada). Migração aditiva.
+- [x] **Autenticação em suporte.** Cookie `sessaoSuporte` (HttpOnly) com o id da sessão; o `JwtStrategy` só o aceita para um `SUPER_ADMIN` dono de uma sessão activa e não expirada, e apresenta-o como **`ADMIN` da empresa alvo** — os ~56 ramos «se SUPER_ADMIN, não filtrar por empresa» veriam todas as empresas misturadas. O token de acesso e o refresh continuam os do Super Admin; sair é apagar o cookie. Uma empresa bloqueada por assinatura continua acessível em suporte.
+- [x] **Só leitura:** no `JwtAuthGuard`, em suporte sem escrita, `POST`/`PUT`/`PATCH`/`DELETE` → 403 `suporte.so_leitura`, salvo `@PermitidoEmSuporte()` (sair).
+- [x] **Auditoria:** cada mutação em suporte grava `sessaoId` (a coluna existia sem uso) e o `userId` do Super Admin verdadeiro; entrar e sair ficam na auditoria **da empresa**.
+- [x] **Rotas:** `POST /plataforma/suporte/entrar` (Super Admin; 1 h; uma sessão activa de cada vez), `POST /suporte/sair`, `GET /suporte/actual`, `GET /suporte/sessoes` (a empresa vê quem entrou, quando, porquê e se podia escrever). `PATCH /users/:id/desbloquear` (bloqueio por tentativas; ADMIN na sua empresa, Super Admin em qualquer).
+- [x] **Frontend:** «Entrar em modo suporte» nos detalhes da empresa (motivo, escrita); faixa fixa no topo durante a sessão, com a empresa, o modo, a hora de fim e «Sair»; em suporte a aplicação comporta-se como ADMIN da empresa; **fora do modo, a Sidebar do Super Admin mostra só o grupo da plataforma**; a lista das sessões de suporte para o ADMIN da empresa; «Desbloquear» no ecrã de utilizadores.
+- [x] **Testes e verificação.** Backend 281 suites, 3990 testes; frontend build e 498 testes. Specs novos: `jwt.strategy.spec.ts`, `modo-suporte.use-case.spec.ts`, `desbloquear-utilizador.use-case.spec.ts`, o ramo de suporte do `jwt-auth.guard.spec.ts`, `papelEfectivo.test.ts`. **Não verificado:** a faixa, a entrada e a saída num browser, e o cookie `sessaoSuporte` através da Vercel.
+
 ---
 
 ## 1. Arquitectura em duas linhas

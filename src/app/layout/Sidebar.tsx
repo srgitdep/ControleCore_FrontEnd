@@ -55,6 +55,22 @@ interface NavItem {
   badge?: string;
 }
 
+/**
+ * O que é da plataforma e não de uma empresa: o que um Super Admin fora do modo suporte vê.
+ * `/e-commerce` fica porque o separador dos estafetas da plataforma vive lá; `/historico`
+ * porque a auditoria global é dele.
+ */
+const ROTAS_DA_PLATAFORMA = new Set([
+  '/dashboard',
+  '/empresas',
+  '/adesoes',
+  '/modulos',
+  '/utilizadores',
+  '/permissoes',
+  '/historico',
+  '/e-commerce',
+]);
+
 interface NavGroup {
   chave: 'gestao' | 'operacao' | 'empresa';
   items: NavItem[];
@@ -139,6 +155,16 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const { t } = useTranslation('shell');
   const { user, hasRole, logout } = useAuth();
+
+  /**
+   * Fora do modo suporte, o Super Admin vê só o que é da plataforma (plano §4.15, S3). Não tem
+   * empresa: vendas, stock ou caixa ou lhe mostravam as de todos os clientes misturadas, ou
+   * davam erro. Para operar numa empresa entra em modo suporte — e aí `user.role` já é ADMIN
+   * (ver `useAuth`), pelo que o filtro não se aplica e vê os menus dela.
+   */
+  const visivel = (item: NavItem) =>
+    (!item.roles || hasRole(item.roles)) &&
+    (user?.role !== 'SUPER_ADMIN' || ROTAS_DA_PLATAFORMA.has(item.path));
 
   /**
    * Os pedidos de adesão à espera, no selo da entrada de menu.
@@ -231,11 +257,9 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
           // Um só item aceso: o mais específico (ver `caminhoActivo`).
           const itemAberto = caminhoActivo(
             location.pathname,
-            navGroups.flatMap((g) => g.items.filter((i) => !i.roles || hasRole(i.roles)).map((i) => i.path)),
+            navGroups.flatMap((g) => g.items.filter(visivel).map((i) => i.path)),
           );
-          const visibleItems = group.items.filter(
-            (item) => !item.roles || hasRole(item.roles),
-          );
+          const visibleItems = group.items.filter(visivel);
 
           if (visibleItems.length === 0) return null;
 

@@ -6,8 +6,9 @@ import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
 import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
-import { useAuth } from '@/features/auth';
+import { useAuth, useAuthStore } from '@/features/auth';
 import { AssinaturaBloqueada, AvisoAssinatura, useMinhaAssinatura } from '@/features/assinatura';
+import { BarraDeSuporte, useSincronizarSuporte } from '@/features/suporte';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
@@ -30,11 +31,16 @@ export function AppLayout() {
 
   // A assinatura da empresa (plano §4.15, S2b). O Super Admin não tem empresa: nem pergunta.
   const { user } = useAuth();
+  // Em modo suporte (Super Admin dentro de uma empresa) o servidor trata a sessão como a do ADMIN.
+  useSincronizarSuporte();
+  const emSuporte = useAuthStore((s) => !!s.suporte);
   const { data: assinatura } = useMinhaAssinatura(!!user && user.role !== 'SUPER_ADMIN');
 
   // Bloqueada: o ecrã de bloqueio em vez da aplicação — todo o resto responderia 403, e
-  // menus que só dão erro dizem menos do que uma frase clara.
-  if (assinatura?.aplicavel && assinatura.aviso === 'BLOQUEADA') {
+  // menus que só dão erro dizem menos do que uma frase clara. Menos em modo suporte: o servidor
+  // não bloqueia o Super Admin lá dentro, e entrar numa empresa bloqueada é muitas vezes
+  // exactamente o que é preciso.
+  if (!emSuporte && assinatura?.aplicavel && assinatura.aviso === 'BLOQUEADA') {
     return <AssinaturaBloqueada />;
   }
 
@@ -89,6 +95,7 @@ export function AppLayout() {
             `max-w-[1400px]` noutras — pelo que o conteúdo mudava de largura ao navegar
             entre secções. Nada que dê erro, mas que se lê como desalinhamento. */}
         <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
+          <BarraDeSuporte />
           <AvisoAssinatura assinatura={assinatura} />
           {isPOS ? (
             <Outlet />

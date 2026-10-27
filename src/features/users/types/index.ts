@@ -8,6 +8,8 @@ export interface UserDetail {
   role: Role;
   isActive: boolean;
   empresaId?: string;
+  /** Bloqueado por tentativas falhadas até esta data (só na lista; nulo ou passada = livre). */
+  bloqueadoAte?: string | null;
   createdAt: string;
   updatedAt: string;
   empresa?: {

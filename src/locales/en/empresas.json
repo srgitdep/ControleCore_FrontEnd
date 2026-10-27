@@ -106,7 +106,8 @@
     "lojas": "Stores and Operations",
     "local_nao_definido": "Location not set",
     "sem_lojas": "No store registered for this company.",
-    "registada_em": "Registered in the system on {{data}}"
+    "registada_em": "Registered in the system on {{data}}",
+    "entrar_suporte": "Enter support mode"
   },
   "form": {
     "validacao": {

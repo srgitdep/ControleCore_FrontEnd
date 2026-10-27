@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { BarraDaPagina } from '@/shared/ui';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History, KeyRound } from 'lucide-react';
-import { getUsers, deleteUser, deactivateUser, activateUser } from '@/features/users';
+import { Edit2, Trash2, Ban, CheckCircle2, Search, Calendar, Download, SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, History, KeyRound, LockOpen } from 'lucide-react';
+import { getUsers, deleteUser, deactivateUser, activateUser, unlockUser } from '@/features/users';
+import { mensagemDeErro } from '@/shared/utils';
 import type { UserDetail } from '@/features/users';
 import { ROLE_LABELS } from '@/features/auth';
 import toast from 'react-hot-toast';
@@ -47,6 +48,16 @@ export function UsersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: getUsers,
+  });
+
+  const unlockMutation = useMutation({
+    mutationFn: unlockUser,
+    onSuccess: (_, id) => {
+      const nome = users?.find((u) => u.id === id)?.name ?? '';
+      toast.success(t('desbloqueado', { nome }));
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('erro_desbloquear'))),
   });
 
   const deleteMutation = useMutation({
@@ -286,6 +297,18 @@ export function UsersPage() {
                   >
                     <KeyRound size={17} />
                   </button>
+                  {/* Só a quem está bloqueado por tentativas falhadas — a data passada já o libertou. */}
+                  {u.bloqueadoAte && new Date(u.bloqueadoAte) > new Date() && (
+                    <button
+                      onClick={() => unlockMutation.mutate(u.id)}
+                      disabled={unlockMutation.isPending}
+                      className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                      aria-label={`${t('desbloquear')}: ${u.name}`}
+                      title={t('desbloquear')}
+                    >
+                      <LockOpen size={17} />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleToggleStatus(u)}
                     disabled={u.id === currentUser?.id}

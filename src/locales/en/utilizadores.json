@@ -126,5 +126,8 @@
     "a_guardar": "Saving...",
     "guardar": "Save User",
     "email_exemplo": "joao@srg.com"
-  }
+  },
+  "desbloquear": "Unlock",
+  "desbloqueado": "{{nome}} unlocked.",
+  "erro_desbloquear": "Could not unlock the user."
 }

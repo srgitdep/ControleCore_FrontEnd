@@ -1,0 +1,33 @@
+{
+  "barra": {
+    "titulo": "支持模式：{{empresa}}。",
+    "so_leitura": "只读。",
+    "com_escrita": "可写入。",
+    "termina_other": "{{hora}} 结束（还剩 {{count}} 分钟）。",
+    "sair": "退出支持模式",
+    "erro_sair": "无法退出支持模式。"
+  },
+  "entrar": {
+    "titulo": "进入支持模式",
+    "fechar": "关闭",
+    "texto": "您将以 {{empresa}} 管理员的视角查看，持续 1 小时。除非申请写入权限，否则为只读。",
+    "motivo": "原因",
+    "motivo_dica": "例如：管理员请求协助结账。",
+    "motivo_visivel": "必填。该公司会在支持会话列表中看到此原因。",
+    "escrita": "允许修改数据",
+    "aviso_escrita": "您所做的修改将以该公司管理员的身份完成，审计日志中会记录您的姓名。该公司会看到此会话可以写入。",
+    "cancelar": "取消",
+    "confirmar": "进入",
+    "erro": "无法进入支持模式。"
+  },
+  "sessoes": {
+    "titulo": "支持会话",
+    "subtitulo": "平台人员何时进入您的公司提供协助：是谁、为什么，以及是否可以修改数据。",
+    "vazio": "平台尚未进入过您的公司。",
+    "erro": "无法加载会话。",
+    "tentar_novamente": "重试",
+    "com_escrita": "可写入",
+    "so_leitura": "只读",
+    "expirou_ou_aberta": "仍打开或已过期"
+  }
+}
