@@ -50,15 +50,6 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
-**Fase 71 — Super Admin S4: painel da plataforma** (plano completo em **§4.15**; branch `feat/superadmin-s4-painel-plataforma` nos dois repositórios, backend primeiro).
-
-- [x] **Receita e estados (função pura).** `src/shared/receita-recorrente.ts`: receita mensal recorrente = soma do `valorTotal` das assinaturas que pagam (`ATIVA`, `EM_ATRASO`, `EM_RENOVACAO`; o `TRIAL` não paga), dividido pelos meses do ciclo (1, 3, 6, 12). Assunção: `valorTotal` é o valor de **um ciclo**. Com spec.
-- [x] **KPIs novos em `GET /relatorios/dashboard/sistema`:** `trialsAExpirar` (TRIAL cujo fim, `trialAte ?? dataFim`, cai nos próximos 7 dias), `empresasEmAtraso` (alguma assinatura `EM_ATRASO`), `empresasSuspensas` (`assinaturaBloqueia`), `receitaMensalRecorrente`. Uma empresa conta uma vez.
-- [x] **Actividade recente:** as últimas 15 linhas da `audit_logs` que são eventos da plataforma (`PedidoAdesao`, `Assinatura`, `Pagamento`, `SessaoSuporte`, e `Empresa`/`User` de criar, apagar e mudar de estado), com o nome da empresa e de quem actuou. Sem tabela nova.
-- [x] **Auditoria filtrada por empresa:** `GET /auditoria/logs?empresaId=` — só o Super Admin (fora do suporte) escolhe a empresa; para os outros o parâmetro é ignorado e vale a empresa do token.
-- [x] **Frontend:** KPIs novos e cartão «Actividade recente» no painel da plataforma (os 4 estados: a carregar, erro, vazio, dados); filtro por empresa no Histórico do Super Admin; pt/en/zh.
-- [x] **Testes e verificação.** Backend 285 suites, 4011 testes; `nest build` limpo. Frontend: `tsc -b`, `vite build` e 498 testes. Specs novos: `receita-recorrente.spec.ts`, `actividade-da-plataforma.spec.ts`, `prisma-dashboard-sistema.spec.ts`, `auditoria.controller.spec.ts`. **Não verificado:** o painel e o filtro num browser, nem contra dados reais.
-
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2290,6 +2281,22 @@ esse merge trouxe.
   > **Verificação.** Backend: 281 suites, 3990 testes. Frontend: `vite build` limpo; 28 ficheiros, 498 testes; oxlint só com os avisos antigos. Specs novos: `jwt.strategy.spec.ts`, `modo-suporte.use-case.spec.ts`, `desbloquear-utilizador.use-case.spec.ts`, o ramo de suporte do `jwt-auth.guard.spec.ts`, `papelEfectivo.test.ts`; `autoridade-da-plataforma.spec.ts` inclui a rota de entrada. **Não verificado:** a faixa, a entrada e a saída num browser, e o cookie `sessaoSuporte` através da Vercel (se a faixa não aparecer depois de entrar, é aí que se procura primeiro). `imagem-documento.spec` falha de vez em quando com a máquina carregada e passa isolado (anterior a esta fase).
   >
   > **Notas de deploy.** Migração aditiva `20261027100000_sessoes_suporte` (uma tabela; corre no arranque do contentor). Sem variáveis novas. **Backend primeiro**, depois frontend.
+### Fase 71 — Super Admin S4: painel da plataforma (31 Out 2026)
+
+- **2026-10-31 · [BE] · Antonio Mambo** — `feat/superadmin-s4-painel-plataforma`
+  - **Pedido do utilizador:** a S4 do plano §4.15, a seguir à S3.
+  - feat(plataforma): `GET /relatorios/dashboard/sistema` devolve, além dos totais, `trialsAExpirar` (TRIAL cujo `trialAte ?? dataFim` cai nos próximos 7 dias), `empresasEmAtraso`, `empresasSuspensas` (`assinaturaBloqueia`; conta empresas, não assinaturas) e `receitaMensalRecorrente` (`src/shared/receita-recorrente.ts`), mais `actividade`: os últimos 15 eventos da plataforma lidos da `audit_logs` (`domain/actividade-da-plataforma.ts`), com o nome da empresa e de quem actuou. Sem tabela nova.
+  - feat(auditoria): `GET /auditoria/logs?empresaId=` — só o `SUPER_ADMIN` escolhe a empresa; para os outros (incluindo o Super Admin em modo suporte, que é `ADMIN`) o parâmetro é ignorado.
+- **2026-10-31 · [FE] · Antonio Mambo** — `feat/superadmin-s4-painel-plataforma`
+  - feat(plataforma): quatro indicadores novos no painel da plataforma, cartão «Actividade recente» e estado de erro com «Tentar novamente»; filtro «Empresa» no Histórico do Super Admin; pt/en/zh.
+
+  > **Desvios ao plano.** (1) Sem tabela de eventos: a actividade lê a auditoria que já existia, e descarta a mutação crua que duplica o evento da plataforma (assinatura e sessão de suporte só contam com `operacao`). (2) `GET /empresas` só é pedido pelo Super Admin no Histórico (`useEmpresas({ activo })`), porque dá 403 aos outros.
+  >
+  > **Assunções.** `valorTotal` é o valor de **um ciclo** (dividido por 1, 3, 6 ou 12). Se for já mensal, um ciclo anual sai subestimado. Só `ATIVA`, `EM_ATRASO` e `EM_RENOVACAO` contam como receita; o trial não.
+  >
+  > **Verificação.** Backend: `nest build` limpo; 285 suites, 4011 testes. Frontend: `tsc -b`, `vite build` e 498 testes. Specs novos: `receita-recorrente.spec.ts`, `actividade-da-plataforma.spec.ts`, `prisma-dashboard-sistema.spec.ts`, `auditoria.controller.spec.ts`. **Não verificado:** o painel e o filtro num browser, nem contra dados reais.
+  >
+  > **Notas de deploy.** Sem migrações e sem variáveis novas. **Backend primeiro**, depois frontend.
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2661,7 +2668,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
   - [x] **S2a — Gestão manual das assinaturas** — concluída em 2026-10-26 (Fase 67): ver e alterar a assinatura, registar pagamentos, relatório de expiração.
   - [x] **S2b — Expiração automática** — concluída em 2026-10-27 (Fase 68), desligada por omissão (`EXPIRACAO_ASSINATURAS_ACTIVA`). **Por fazer, do utilizador:** relatório → prazo de graça de 30 dias → ligar o interruptor.
   - [x] **S3 — Modo suporte** — concluída em 2026-10-27 (Fase 70): entrar numa empresa 1 h, só leitura por omissão, escrita pedida com motivo, tudo auditado e visível para a empresa; fora do modo, o Super Admin só vê os menus da plataforma.
-  - [ ] **S4 — Painel da plataforma a sério**: actividade recente, trials a expirar, empresas em atraso, receita recorrente, auditoria filtrada por empresa.
+  - [x] **S4 — Painel da plataforma a sério** — concluída em 2026-10-31 (Fase 71): actividade recente, trials a expirar, empresas em atraso e sem acesso, receita mensal recorrente, auditoria filtrada por empresa.
   - [ ] **S5 — Avisos da plataforma** (opcional): mensagem para todas as empresas ou para uma.
 - [x] **Auditar as decisões de adesão** — concluído em 2026-10-27 (Fase 69): o `AuditLogListener` escuta `audit.adesao.event`.
 - [x] **`GET /empresas/modulos/meus` procurava `ACTIVE`** — corrigido em 2026-10-27 (Fase 69): usa os estados com acesso partilhados.
@@ -5789,7 +5796,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 ### 4.15 Poderes do Super Admin (operador da plataforma)
 
-- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1, S2a, S2b e S3 concluídas (Fases 65 a 68 e 70, 26–27/10/2026).** P2, P5 e P7 decididos pelo utilizador em 26/10/2026 (bloqueio total; POS incluído com aviso; 30 dias de graça). Próxima: S4.
+- **Data:** 2026-10-26 · **Estado:** **aprovado em 2026-10-26 («aprovo»)**, com as recomendações de P1 a P4 como decisões. **S0, S1, S2a, S2b, S3 e S4 concluídas (Fases 65 a 68, 70 e 71, 26/10–31/10/2026).** P2, P5 e P7 decididos pelo utilizador em 26/10/2026 (bloqueio total; POS incluído com aviso; 30 dias de graça). Próxima: S5 (opcional).
 - **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase.
 - Os «§N» dentro desta subsecção são da numeração do próprio plano.
 
