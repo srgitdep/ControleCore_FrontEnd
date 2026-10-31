@@ -28,4 +28,6 @@ export interface GetAuditLogsParams {
   limit?: number;
   offset?: number;
   userId?: string;
+  /** Só o Super Admin: ver a auditoria de uma empresa. O servidor ignora-o aos outros. */
+  empresaId?: string;
 }

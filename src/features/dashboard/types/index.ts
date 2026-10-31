@@ -22,10 +22,40 @@ export interface SuperAdminKpis {
   totalUtilizadores: number;
   totalLojas: number;
   subscricoesAtivas: number;
+  /** Trials cujo fim cai nos próximos 7 dias. */
+  trialsAExpirar: number;
+  empresasEmAtraso: number;
+  /** Empresas sem acesso: sem assinatura que o dê e com alguma expirada, suspensa ou cancelada. */
+  empresasSuspensas: number;
+  /** Em meticais, por mês: o valor de cada ciclo repartido pelos seus meses. */
+  receitaMensalRecorrente: number;
+}
+
+export type TipoDeActividade =
+  | 'ADESAO_DECIDIDA'
+  | 'ASSINATURA_ALTERADA'
+  | 'PAGAMENTO_REGISTADO'
+  | 'ASSINATURA_EXPIRADA'
+  | 'SUPORTE_ENTROU'
+  | 'SUPORTE_SAIU'
+  | 'EMPRESA_CRIADA'
+  | 'EMPRESA_APAGADA'
+  | 'EMPRESA_ESTADO'
+  | 'SUPER_ADMIN_CRIADO';
+
+export interface ActividadeDaPlataforma {
+  id: string;
+  tipo: TipoDeActividade;
+  quando: string;
+  /** `null` numa empresa apagada ou num evento sem empresa (adesão, Super Admin criado). */
+  empresaNome: string | null;
+  actor: string | null;
+  detalhe: string | null;
 }
 
 export interface SuperAdminDashboardResponse {
   kpis: SuperAdminKpis;
+  actividade: ActividadeDaPlataforma[];
 }
 
 /** `GET /super-admins` — os operadores da plataforma. */

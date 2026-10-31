@@ -15,10 +15,11 @@ import i18n from '@/i18n';
 // chamada, e não a do momento em que o módulo carregou.
 const t = i18n.getFixedT(null, 'empresas');
 
-export function useEmpresas() {
+export function useEmpresas({ activo = true }: { activo?: boolean } = {}) {
   return useQuery({
     queryKey: ['empresas'],
     queryFn: getEmpresas,
+    enabled: activo,
   });
 }
 

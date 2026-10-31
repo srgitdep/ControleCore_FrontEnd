@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 interface AuditLogTableProps {
   userId?: string;
+  empresaId?: string;
 }
 
 const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: string }> = {
@@ -22,11 +23,11 @@ const ACTION_COLORS: Record<AuditAction, { bg: string; text: string; border: str
   SALE_CANCELLED: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
 };
 
-export function AuditLogTable({ userId }: AuditLogTableProps) {
+export function AuditLogTable({ userId, empresaId }: AuditLogTableProps) {
   const { t } = useTranslation('historico');
   const { data: logs, isLoading } = useQuery({
-    queryKey: ['auditLogs', userId],
-    queryFn: () => getAuditLogs({ userId }),
+    queryKey: ['auditLogs', userId, empresaId],
+    queryFn: () => getAuditLogs({ userId, empresaId }),
   });
 
   const actionLabel = (action: AuditAction) => t(`acao.${action}`, { defaultValue: action });

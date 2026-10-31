@@ -34,7 +34,31 @@
     "subscricoes": "Active subscriptions",
     "subscricoes_desc": "Regular plans",
     "actividade": "Recent system activity",
-    "actividade_vazio": "Detailed system records will appear here"
+    "actividade_vazio": "Detailed system records will appear here",
+    "estado_comercial": "Commercial status",
+    "receita": "Monthly recurring revenue",
+    "receita_desc": "Paying subscriptions, per month",
+    "trials": "Trials expiring",
+    "trials_desc": "End within the next 7 days",
+    "em_atraso": "Companies overdue",
+    "em_atraso_desc": "Within the grace period",
+    "suspensas": "Companies without access",
+    "suspensas_desc": "Expired, suspended or cancelled",
+    "erro": "Could not load the platform dashboard.",
+    "tentar_novamente": "Try again",
+    "actor_desconhecido": "System",
+    "evento": {
+      "ADESAO_DECIDIDA": "Sign-up request decided",
+      "ASSINATURA_ALTERADA": "Subscription changed",
+      "PAGAMENTO_REGISTADO": "Payment recorded",
+      "ASSINATURA_EXPIRADA": "Subscription expired automatically",
+      "SUPORTE_ENTROU": "Entered support mode",
+      "SUPORTE_SAIU": "Left support mode",
+      "EMPRESA_CRIADA": "Company created",
+      "EMPRESA_APAGADA": "Company deleted",
+      "EMPRESA_ESTADO": "Company status changed",
+      "SUPER_ADMIN_CRIADO": "Super Admin created"
+    }
   },
   "super_admins": {
     "titulo": "Super Administrators",
