@@ -2297,6 +2297,24 @@ esse merge trouxe.
   > **Verificação.** Backend: `nest build` limpo; 285 suites, 4011 testes. Frontend: `tsc -b`, `vite build` e 498 testes. Specs novos: `receita-recorrente.spec.ts`, `actividade-da-plataforma.spec.ts`, `prisma-dashboard-sistema.spec.ts`, `auditoria.controller.spec.ts`. **Não verificado:** o painel e o filtro num browser, nem contra dados reais.
   >
   > **Notas de deploy.** Sem migrações e sem variáveis novas. **Backend primeiro**, depois frontend.
+### Fase 72 — Primeiro acesso: a senha provisória tem de ser mudada (14 Nov 2026)
+
+- **2026-11-14 · [BE+FE] · Antonio Mambo** — `feat/primeiro-acesso-mudar-senha`
+  - **Pedido do utilizador:** quem é criado recebe as credenciais por e-mail; no primeiro login deve ser forçado a mudar a senha recebida. Para isso, um atributo `firstLogin` (data e hora, vazio por omissão): vazio = ainda não fez o primeiro acesso.
+  - feat(auth): `users.firstLogin` (`DateTime?`); migração `20261114100000_primeiro_acesso_first_login` — `ADD COLUMN` e **`UPDATE users SET firstLogin = createdAt`**, para ninguém que já exista ser forçado a nada.
+  - feat(auth): `JwtStrategy.validate` lê `firstLogin` a cada pedido e põe `mudarSenha: !firstLogin` no utilizador; `JwtAuthGuard` responde **403 `auth.guard.mudar_senha`** a qualquer rota que não esteja marcada com `@PermitidoComSenhaProvisoria()` — só `GET /auth/eu`, `POST /auth/alterar-senha` e `POST /auth/logout`. É a API que impede, e não só o ecrã.
+  - feat(auth): `POST /auth/alterar-senha` (`{ senhaActual, novaSenha }`; 10/min por cliente) — `AlterarSenhaUseCase`: confirma a senha actual, recusa uma nova igual à actual (400 `auth.alterar_senha.igual_a_actual`; senha actual errada 401 `auth.alterar_senha.senha_actual_incorrecta`), grava o hash e **preenche `firstLogin` se estiver vazio** (mudar a senha mais tarde mantém a data do primeiro acesso). Audita sem guardar senhas. `emitirSessao` devolve `user.mudarSenha` (`/auth/login`, `/auth/entrar` e o fim do MFA).
+  - feat(users): o `reenviar-senha` e o `repor-senha` do Super Admin voltam a pôr `firstLogin` a `null`; o «esqueci-me da senha» (`applySelfPasswordRecovery`, que gera e envia uma senha nova) também; a redefinição por token (`updateUserPassword`, senha escolhida pela pessoa) preenche-o se estiver vazio. Contas novas (`CreateUserUseCase`, onboarding da empresa, Super Admin) nascem com `firstLogin` vazio, sem código novo.
+  - feat(frontend): `PrimeiroAcessoPage` (`/primeiro-acesso`, fora do `ProtectedRoute` de propósito — é ele que lá manda quem tem `mudarSenha`); `ProtectedRoute` redirecciona; `alterarSenhaApi`; `useAuthStore.concluirPrimeiroAcesso` / `exigirMudancaDeSenha` (gravam `mudarSenha` no `authUser` do `sessionStorage`); o interceptor do axios dispara `EVENTO_MUDAR_SENHA` num 403 `auth.guard.mudar_senha` (senha reposta a meio da sessão); traduções pt/en/zh (`auth.primeiro_acesso.*`) e os três códigos de erro nos catálogos do backend.
+
+  > **Desvios ao pedido.** (1) **`firstLogin` preenche-se ao mudar a senha, e não no próprio login** (decisão do utilizador, sobre a proposta): preenchido no login, quem entrasse e abandonasse a sessão a meio ficava com a senha provisória válida e já não era forçado no login seguinte. Continua a significar «ainda não completou o primeiro acesso». (2) **Uma reposição por um administrador volta a forçar** (decisão do utilizador): a senha nova também viaja por e-mail. (3) Estafetas, fornecedores e clientes da loja têm contas e logins próprios (outras tabelas) e **não** entram neste fluxo.
+  >
+  > **Assunções.** Senha mínima de 6 caracteres, como no resto do sistema. O Super Admin em modo suporte não é afectado (o payload do modo suporte não leva `mudarSenha`; a sessão é a do Super Admin verdadeiro, que já passou por aqui).
+  >
+  > **Verificação.** Backend: suite completa a passar (286 suites, 4028 testes); specs novos: `alterar-senha.use-case.spec.ts`, e acrescentados `jwt-auth.guard.spec.ts`, `jwt.strategy.spec.ts`, `login.use-case.spec.ts`; o `codigos-de-erro.spec.ts` apanhou os códigos que faltavam nos catálogos. Frontend: `tsc -b` e `vite build` limpos, 29 ficheiros e 502 testes (`useAuthStore.primeiroAcesso.test.ts`). **Não verificado no browser nem com um e-mail real**, e o ecrã e o redireccionamento do `ProtectedRoute` só estão cobertos por tipos (o frontend não tem testes de componentes).
+  >
+  > **Notas de deploy.** **Backend primeiro**, depois frontend. A migração corre no arranque do contentor (`prisma migrate deploy`) e é rápida (uma coluna e um `UPDATE` sem junções). Sem variáveis novas. Num backend antigo com o frontend novo nada parte (o frontend só reage a `mudarSenha`); num backend novo com o frontend antigo, quem tiver a senha provisória recebe 403 em todos os pedidos até o frontend ser publicado — por isso a ordem.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2307,6 +2325,8 @@ esse merge trouxe.
 
 ### Compra Fácil
 
+- [ ] **Primeiro acesso para estafetas, fornecedores e clientes da loja** — a Fase 72 cobre só os utilizadores da tabela `users`. Os estafetas (`E####`, senha gerada em `estafetas.use-cases.ts` e reposta em `repor-senha`), os fornecedores do portal e as contas do Compra Fácil têm login e tabela próprios; a regra («mudar a senha recebida por e-mail») ainda não existe para eles.
+- [ ] **Regra de senha mais forte** — o primeiro acesso e a redefinição aceitam 6 caracteres, sem exigir maiúsculas, números ou comparação com listas de senhas comuns.
 - [ ] **Português europeu no backend** — mensagens de erro, e-mails (`email.templates.ts`) e descrições das ferramentas da Mayra ainda têm ≈130 ocorrências de vocabulário brasileiro («usuário», «estoque», «cadastro»). O frontend fez-se na Fase 61.
 - [ ] **Voz nativa sem ferramenta: sem feedback de «a pensar»** — activar `inputAudioTranscription` no Gemini Live para detectar o fim da fala do utilizador e mostrar o primeiro passo (Fase 60, desvio 2).
 
