@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '@/app/layout/AppLayout';
-import { LoginPage, ForgotPasswordPage, ResetPasswordPage } from '@/features/auth';
+import { LoginPage, ForgotPasswordPage, ResetPasswordPage, PrimeiroAcessoPage } from '@/features/auth';
 import { LandingPage } from '@/pages/LandingPage';
 import { PrecosPage } from '@/pages/PrecosPage';
 import { DashboardPage } from '@/features/dashboard';
@@ -100,6 +100,8 @@ export const router = createBrowserRouter([
   { path: '/criar-conta/comprador',  element: <PedirAdesaoPage /> },
   { path: '/recuperar-senha',  element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha',  element: <ResetPasswordPage /> },
+  // Fora do `ProtectedRoute` de propósito: é ele que manda para aqui quem tem de mudar a senha provisória.
+  { path: '/primeiro-acesso',  element: <PrimeiroAcessoPage /> },
 
   // ── Portal do Fornecedor ──────────────────────────────────────────────────
   //

@@ -28,6 +28,7 @@ export { toast };
 export * from './pages/LoginPage';
 export * from './pages/ForgotPasswordPage';
 export * from './pages/ResetPasswordPage';
+export * from './pages/PrimeiroAcessoPage';
 
 // Export Authorization Hook & Component
 export * from './hooks/usePermissions';
