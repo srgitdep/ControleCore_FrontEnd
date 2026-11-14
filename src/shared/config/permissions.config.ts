@@ -8,6 +8,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'armazens' },
   { id: 'caixas' },
   { id: 'stock' },
+  { id: 'inventario' },
   { id: 'catalogo' },
   { id: 'compras' },
   { id: 'necessidades' },

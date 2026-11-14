@@ -5,6 +5,7 @@ import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/s
 import { Users, Shield, Save } from 'lucide-react';
 import { api } from '@/shared/config';
 import { mensagemDeErro } from '@/shared/utils';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 interface Role {
   id: string;
@@ -15,6 +16,7 @@ interface Role {
 
 export function PermissionsPage() {
   const { t } = useTranslation('shell');
+  const hasRole = useAuthStore((s) => s.hasRole);
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   
@@ -97,7 +99,7 @@ export function PermissionsPage() {
   };
 
   const handleSave = async () => {
-    if (!selectedRoleId) return;
+    if (!selectedRoleId || somenteLeitura) return;
     
     setIsSaving(true);
     const flatPermissions = Array.from(selectedPermissions);
@@ -115,6 +117,10 @@ export function PermissionsPage() {
   };
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);
+  // O servidor recusa (403) a gravação de perfis de sistema a quem não é da SRG; o ecrã
+  // já não oferece o que sabe que vai falhar.
+  const somenteLeitura = !!selectedRole?.isSystem && !hasRole(['SUPER_ADMIN']);
+  const perfilAdminSistema = !!selectedRole?.isSystem && selectedRole.nome === 'Administrador';
 
   return (
     /* O layout era `flex gap-6` com a barra de perfis em `w-80` **fixo, sem `lg:`** —
@@ -204,13 +210,19 @@ export function PermissionsPage() {
               </div>
               <button
                 onClick={handleSave}
-                disabled={isSaving || isLoadingPerms}
-                className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-70"
+                disabled={isSaving || isLoadingPerms || somenteLeitura}
+                className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? t('permissoes.a_guardar') : t('permissoes.guardar')}
               </button>
             </div>
+
+            {(somenteLeitura || perfilAdminSistema) && (
+              <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 sm:px-6">
+                {somenteLeitura ? t('permissoes.aviso_sistema') : t('permissoes.aviso_admin')}
+              </div>
+            )}
 
             {/* Deslocamento nos dois eixos. A matriz não vira cartões: o que a torna
                 útil é comparar colunas de relance, e um cartão por recurso com quatro
@@ -257,7 +269,8 @@ export function PermissionsPage() {
                                     type="checkbox"
                                     checked={isChecked}
                                     onChange={() => handleToggle(action.id, resource.id)}
-                                    className="w-5 h-5 text-emerald-600 bg-white border-2 border-slate-300 rounded focus:ring-emerald-600 focus:ring-2 cursor-pointer appearance-none checked:bg-emerald-600 checked:border-emerald-600 transition-all
+                                    disabled={somenteLeitura}
+                                    className="w-5 h-5 text-emerald-600 bg-white border-2 border-slate-300 rounded focus:ring-emerald-600 focus:ring-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 appearance-none checked:bg-emerald-600 checked:border-emerald-600 transition-all
                                       relative checked:after:content-[''] checked:after:absolute checked:after:left-[6px] checked:after:top-[2px] checked:after:w-[5px] checked:after:h-[10px] checked:after:border-r-2 checked:after:border-b-2 checked:after:border-white checked:after:rotate-45"
                                   />
                                 </div>
