@@ -8,6 +8,7 @@ import type {
   AuthUser,
   ForgotPasswordPayload,
   ResetPasswordPayload,
+  AlterarSenhaPayload,
 } from '../types';
 
 // POST /auth/login — login com código de acesso (mantido para compatibilidade; o ecrã de
@@ -33,6 +34,11 @@ export const verificarMfaApi = (desafio: string, codigo: string) =>
 // PATCH /auth/eu/idioma — grava a língua de quem está autenticado (acompanha-o noutro browser)
 export const definirIdiomaApi = (idioma: string) =>
   api.patch<{ idioma: string }>('/auth/eu/idioma', { idioma }).then((r) => r.data);
+
+// POST /auth/alterar-senha — a pessoa muda a sua senha; no primeiro acesso é a única coisa que
+// a sessão deixa fazer (a senha provisória do e-mail), e é o que a liberta
+export const alterarSenhaApi = (payload: AlterarSenhaPayload) =>
+  api.post<{ message: string }>('/auth/alterar-senha', payload).then((r) => r.data);
 
 // POST /auth/logout — invalida o token actual no Redis
 export const logoutApi = () =>

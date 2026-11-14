@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { AuthUser, LoginPayload, Role } from '../types';
 import { logoutApi, loginApi, definirIdiomaApi } from '../api/auth.api';
 import { queryClient } from '@/main';
+import { EVENTO_MUDAR_SENHA } from '@/shared/config/axios';
 import { useCopilotStore } from '../../ai-copilot/store/copilotStore';
 import { papelEfectivo } from '../utils/papelEfectivo';
 
@@ -21,6 +22,10 @@ interface AuthState {
    */
   entrarComSessao: (user: AuthUser) => void;
   logout: () => Promise<void>;
+  /** A senha provisória foi mudada: a sessão passa a servir para tudo. */
+  concluirPrimeiroAcesso: () => void;
+  /** O servidor disse que a sessão só serve para mudar a senha (conta nova, ou senha reposta). */
+  exigirMudancaDeSenha: () => void;
   setPermissions: (permissions: string[]) => void;
   hasRole: (roles: Role[]) => boolean;
   initialize: () => void;
@@ -41,6 +46,15 @@ export interface SessaoSuporteActiva {
   escrita: boolean;
   iniciadaEm: string;
   expiraEm: string;
+}
+
+/** Muda `mudarSenha` no utilizador em memória e no `sessionStorage`, de onde a sessão se restaura. */
+function gravarMudarSenha(valor: boolean) {
+  const { user } = useAuthStore.getState();
+  if (!user || user.mudarSenha === valor) return;
+  const actualizado = { ...user, mudarSenha: valor };
+  sessionStorage.setItem('authUser', JSON.stringify(actualizado));
+  useAuthStore.setState({ user: actualizado });
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -85,6 +99,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  concluirPrimeiroAcesso: () => get().user && gravarMudarSenha(false),
+
+  exigirMudancaDeSenha: () => get().user && gravarMudarSenha(true),
+
   setPermissions: (permissions: string[]) => {
     set({ permissions });
   },
@@ -116,3 +134,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 // Initialize store immediately (runs once when module is imported)
 useAuthStore.getState().initialize();
 
+// Uma resposta 403 `auth.guard.mudar_senha` (ver `axios.ts`) leva a sessão ao ecrã de mudar a senha,
+// mesmo que o browser tenha restaurado um `authUser` que já não o dizia.
+if (typeof window !== 'undefined') {
+  window.addEventListener(EVENTO_MUDAR_SENHA, () => useAuthStore.getState().exigirMudancaDeSenha());
+}

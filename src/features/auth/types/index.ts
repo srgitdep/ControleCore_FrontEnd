@@ -41,6 +41,17 @@ export interface AuthUser {
   permissions?: string[];
   /** Já resolvida no servidor: a escolha da pessoa ou a língua da empresa. */
   idioma?: string;
+  /**
+   * Ainda não mudou a senha provisória que recebeu por e-mail (`User.firstLogin` vazio no
+   * servidor). Enquanto for verdade, o `ProtectedRoute` leva-a a `/primeiro-acesso` e a API
+   * só responde a «mudar a senha».
+   */
+  mudarSenha?: boolean;
+}
+
+export interface AlterarSenhaPayload {
+  senhaActual: string;
+  novaSenha: string;
 }
 
 // Resposta completa do POST /auth/login

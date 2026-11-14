@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
   const { t } = useTranslation('shell');
-  const { isAuthenticated, isLoading, hasRole } = useAuth();
+  const { isAuthenticated, isLoading, hasRole, user } = useAuth();
   const { hasPermission } = usePermissions();
 
   const isAuthInitialized = !isLoading;
@@ -31,6 +31,11 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
   // Não autenticado â†’ redireciona para login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Senha provisória por mudar: nada do sistema se abre até ela ser mudada (a API também recusa).
+  if (user?.mudarSenha) {
+    return <Navigate to="/primeiro-acesso" replace />;
   }
 
   // Autenticado mas sem a role necessária â†’ toast + redireciona para dashboard

@@ -99,6 +99,13 @@ const processQueue = (error: unknown) => {
  */
 export const EVENTO_ASSINATURA_BLOQUEADA = 'corebusiness:assinatura-bloqueada';
 
+/**
+ * Lançado quando um pedido responde 403 `auth.guard.mudar_senha`: a senha provisória foi
+ * reposta (ou a conta é nova) e a sessão só serve para a mudar. Como acima, o axios não importa
+ * features — o `useAuthStore` é que escuta.
+ */
+export const EVENTO_MUDAR_SENHA = 'corebusiness:mudar-senha';
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -108,6 +115,9 @@ api.interceptors.response.use(
       error.response?.data?.codigo === 'auth.guard.assinatura_bloqueada'
     ) {
       window.dispatchEvent(new Event(EVENTO_ASSINATURA_BLOQUEADA));
+    }
+    if (error.response?.status === 403 && error.response?.data?.codigo === 'auth.guard.mudar_senha') {
+      window.dispatchEvent(new Event(EVENTO_MUDAR_SENHA));
     }
     // `/auth/entrar` é o ecrã de entrada único (comprador ou fornecedor, ver
     // `ResolverEntradaUseCase` no backend) — um 401 aí é senha errada, exactamente como em
