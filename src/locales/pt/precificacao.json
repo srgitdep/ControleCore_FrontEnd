@@ -1,0 +1,71 @@
+{
+  "titulo": "Precificação",
+  "separador": {
+    "politicas": "Políticas",
+    "simulacao": "Simulação"
+  },
+  "formulario": {
+    "titulo": "Nova política",
+    "escopo": "Aplica-se a",
+    "escopo_empresa": "Toda a empresa",
+    "escopo_categoria": "Uma categoria",
+    "escopo_produto": "Um produto",
+    "categoria": "Categoria",
+    "produto": "Produto",
+    "escolher": "Escolher...",
+    "margem_alvo": "Margem alvo (%)",
+    "margem_piso": "Margem mínima (%)",
+    "limite_autoaprovacao": "Limite de autoaprovação (%)",
+    "limite_autoaprovacao_vazio": "Sem limite — nada se autoaprova",
+    "limite_autoaprovacao_ajuda": "A variação máxima face ao preço em vigor que esta política deixa aprovar sozinha. Sem valor, todas as sugestões desta política ficam pendentes de revisão.",
+    "criar": "Criar política",
+    "fechar": "Fechar"
+  },
+  "politicas": {
+    "descricao": "As políticas vigentes agora. A mais específica prevalece: produto sobre categoria, categoria sobre empresa.",
+    "nova": "Nova política",
+    "vazio": "Ainda não há políticas de preço.",
+    "sem_limite": "Sem limite",
+    "tabela": {
+      "alvo": "Aplica-se a",
+      "margem_alvo": "Margem alvo",
+      "margem_piso": "Margem mínima",
+      "limite_autoaprovacao": "Limite de autoaprovação",
+      "vigente_desde": "Vigente desde"
+    }
+  },
+  "simulacao": {
+    "descricao": "Calcula o preço sugerido para um produto, sem alterar o preço em vigor.",
+    "produto": "Produto",
+    "custo_hipotetico": "Custo hipotético",
+    "custo_hipotetico_vazio": "Usar o custo actual do produto",
+    "simular": "Simular",
+    "vazio": "Ainda não há simulações para este produto.",
+    "decisao": {
+      "AUTO_APPROVED": "Aprovado automaticamente",
+      "REVIEW_REQUIRED": "A rever",
+      "BLOCKED": "Bloqueado"
+    },
+    "motivo": {
+      "POLITICA_EM_FALTA": "Sem política elegível",
+      "COLISAO_NO_MESMO_NIVEL": "Duas políticas do mesmo nível em conflito",
+      "DENOMINADOR_INVALIDO": "Margem e taxa somam 100% ou mais — sem preço possível",
+      "ENTRADA_INVALIDA": "Dados da política inválidos",
+      "SEM_LIMITE_DE_AUTOAPROVACAO": "Esta política não tem limite de autoaprovação",
+      "VARIACAO_ACIMA_DO_LIMITE": "A variação face ao preço actual excede o limite da política"
+    },
+    "tabela": {
+      "produto": "Produto",
+      "custo": "Custo usado",
+      "preco_sugerido": "Preço sugerido",
+      "margem_efectiva": "Margem efectiva",
+      "decisao": "Decisão",
+      "quando": "Quando"
+    }
+  },
+  "mensagens": {
+    "politica_criada": "Política criada.",
+    "erro_criar_politica": "Não foi possível criar a política.",
+    "erro_simular": "Não foi possível simular o preço."
+  }
+}

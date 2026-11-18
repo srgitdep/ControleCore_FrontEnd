@@ -25,6 +25,7 @@ import {
   ArrowLeftRight,
   PackageCheck,
   Percent,
+  Tag,
 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -43,7 +44,7 @@ import { caminhoActivo } from './caminhoActivo';
 type ChaveItem =
   | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
-  | 'ecommerce' | 'promocao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
+  | 'ecommerce' | 'promocao' | 'precificacao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
 
 interface NavItem {
@@ -109,6 +110,7 @@ const navGroups: NavGroup[] = [
       { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
       { chave: 'crm', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'promocao', icon: Percent, path: '/promocoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'precificacao', icon: Tag, path: '/precificacao', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { chave: 'financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
       { chave: 'stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },

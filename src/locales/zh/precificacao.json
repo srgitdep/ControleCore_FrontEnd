@@ -1,0 +1,71 @@
+{
+  "titulo": "定价",
+  "separador": {
+    "politicas": "政策",
+    "simulacao": "模拟"
+  },
+  "formulario": {
+    "titulo": "新建政策",
+    "escopo": "适用范围",
+    "escopo_empresa": "整个公司",
+    "escopo_categoria": "某个类别",
+    "escopo_produto": "某个商品",
+    "categoria": "类别",
+    "produto": "商品",
+    "escolher": "请选择...",
+    "margem_alvo": "目标利润率（%）",
+    "margem_piso": "最低利润率（%）",
+    "limite_autoaprovacao": "自动批准幅度（%）",
+    "limite_autoaprovacao_vazio": "无限制——一律不自动批准",
+    "limite_autoaprovacao_ajuda": "相对现行价格允许自动通过的最大变动幅度。未设置时，此政策产生的所有建议都将等待人工审核。",
+    "criar": "创建政策",
+    "fechar": "关闭"
+  },
+  "politicas": {
+    "descricao": "当前生效的政策。最具体的优先：商品优先于类别，类别优先于公司。",
+    "nova": "新建政策",
+    "vazio": "尚无定价政策。",
+    "sem_limite": "无限制",
+    "tabela": {
+      "alvo": "适用范围",
+      "margem_alvo": "目标利润率",
+      "margem_piso": "最低利润率",
+      "limite_autoaprovacao": "自动批准幅度",
+      "vigente_desde": "生效起始"
+    }
+  },
+  "simulacao": {
+    "descricao": "计算某商品的建议价格，不会更改现行价格。",
+    "produto": "商品",
+    "custo_hipotetico": "假设成本",
+    "custo_hipotetico_vazio": "使用商品当前成本",
+    "simular": "模拟",
+    "vazio": "该商品尚无模拟记录。",
+    "decisao": {
+      "AUTO_APPROVED": "已自动批准",
+      "REVIEW_REQUIRED": "待审核",
+      "BLOCKED": "已阻止"
+    },
+    "motivo": {
+      "POLITICA_EM_FALTA": "没有适用的政策",
+      "COLISAO_NO_MESMO_NIVEL": "同级两个政策发生冲突",
+      "DENOMINADOR_INVALIDO": "利润率与费率合计达到或超过100%——无法计算价格",
+      "ENTRADA_INVALIDA": "政策数据无效",
+      "SEM_LIMITE_DE_AUTOAPROVACAO": "该政策未设置自动批准幅度",
+      "VARIACAO_ACIMA_DO_LIMITE": "相对现行价格的变动超出该政策的限制"
+    },
+    "tabela": {
+      "produto": "商品",
+      "custo": "使用的成本",
+      "preco_sugerido": "建议价格",
+      "margem_efectiva": "实际利润率",
+      "decisao": "决定",
+      "quando": "时间"
+    }
+  },
+  "mensagens": {
+    "politica_criada": "政策已创建。",
+    "erro_criar_politica": "无法创建政策。",
+    "erro_simular": "无法模拟价格。"
+  }
+}

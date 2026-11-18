@@ -17,6 +17,7 @@ export const AVAILABLE_RESOURCES = [
   { id: 'clientes' },
   { id: 'pedidos_commerce' },
   { id: 'promocao' },
+  { id: 'precificacao' },
   { id: 'entregas' },
   { id: 'estafetas' },
   { id: 'acertos_estafeta' },
@@ -46,6 +47,10 @@ export const IGNORED_PERMISSIONS = [
   // criar/cancelar passam por `manage`, não há um "write"/"delete" próprios.
   'write:promocao',
   'delete:promocao',
+  // Precificação (migração precificacao_politicas_candidatos, DT-07 D7-1): mesmo padrão
+  // de `promocao` — criar política passa por `manage`, não há "write"/"delete" próprios.
+  'write:precificacao',
+  'delete:precificacao',
   // Entrega ao domicílio (migração entrega_domicilio): só `read`/`manage`, como
   // `pedidos_commerce`. `estafetas`, `acertos_estafeta`, `zonas_entrega` e `webhooks` só
   // têm `manage`; `entregas` tem `read` e `manage`.
