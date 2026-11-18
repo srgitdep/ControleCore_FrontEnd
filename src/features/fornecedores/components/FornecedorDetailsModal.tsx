@@ -317,7 +317,7 @@ function Organizacao({ fornecedor }: { fornecedor: Supplier }) {
   const { t } = useTranslation('fornecedores');
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
-  const podeFundir = hasPermission('manage', 'fornecedor');
+  const podeFundir = hasPermission('manage', 'fornecedores');
   const [aFundir, setAFundir] = useState(false);
 
   const query = useQuery({

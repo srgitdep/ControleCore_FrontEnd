@@ -36,7 +36,7 @@ export function RecursosHumanosPage() {
 
   // Os dados dos colaboradores incluem salário, BI e NUIT. Um gestor de loja que só
   // processa vencimentos não tem de os ver.
-  const podeVerColaboradores = hasRole(['SUPER_ADMIN', 'ADMIN']) || hasPermission('read', 'user');
+  const podeVerColaboradores = hasRole(['SUPER_ADMIN', 'ADMIN']) || hasPermission('read', 'users');
 
   const ABAS: TabDefinition<Aba>[] = [
     ...(podeVerColaboradores

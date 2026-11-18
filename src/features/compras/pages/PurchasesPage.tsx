@@ -87,7 +87,7 @@ export function PurchasesPage() {
   // As rotas de fornecedor exigem `VER_FORNECEDOR`, as de compras `GERIR_COMPRAS`. Um
   // perfil com uma e não a outra veria o separador falhar com 403 — melhor não o
   // mostrar do que mostrar um erro.
-  const podeVerFornecedores = hasPermission('read', 'fornecedor');
+  const podeVerFornecedores = hasPermission('read', 'fornecedores');
 
   // A fila de verificação exige `read:vitrines` — a permissão do módulo B2B. Um perfil com
   // acesso a fornecedores mas sem ela veria o separador falhar com 403; melhor não o
