@@ -2693,6 +2693,13 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **Auditar as decisões de adesão** — concluído em 2026-10-27 (Fase 69): o `AuditLogListener` escuta `audit.adesao.event`.
 - [x] **`GET /empresas/modulos/meus` procurava `ACTIVE`** — corrigido em 2026-10-27 (Fase 69): usa os estados com acesso partilhados.
 - [x] **Registar o `ThrottlerGuard`** — concluído em 2026-10-27 (Fase 69): `APP_GUARD` pelo IP real, 300/min por omissão, limites próprios nas rotas de entrada, e bloqueio por conta no login. **Por fazer, se houver mais de uma máquina no Fly:** armazenamento da contagem em Redis.
+
+### Permissões e perfis
+
+> Origem: incidente de 2026-11-18. Um funcionário de uma empresa nova, com o cargo «Utilizador» e depois «Gerente», não conseguia criar produtos.
+
+- [ ] **Parte 1 — As permissões que os controladores pedem podem ser dadas** — ramo `fix/permissoes-recursos-reais` (backend e frontend), **feito e por fundir**. 47 das 105 permissões pedidas pelos controladores não tinham linha na matriz (38 de empresa; 9 são só da plataforma e ficam assim). Catálogo único em `src/shared/catalogo-permissoes.ts` (guard, matriz via `GET /perfis/recursos`, seed), correspondência exacta em vez de radical, migração `20261118150000_permissoes_recursos_reais` (cria as linhas em falta e copia `catalogo`/`compras` de cada perfil para os recursos novos, sem tirar nada), cache de permissões limpa ao mudar o cargo/perfil e chave `v3`. Spec que falha se um controlador pedir uma permissão que a matriz não dá. **Ensaiada numa branch Neon com os dados de produção:** o Gerente da empresa do incidente passa a criar produtos; ligações 312 → 431, nenhuma removida. **Notas de deploy:** backend primeiro (o frontend novo lê `GET /perfis/recursos`, que o backend antigo não tem); a migração corre no arranque. **A rever pela SRG depois do deploy:** o perfil de sistema Armazenista já tinha `catalogo` e `compras` em produção, que passaram para os recursos novos (95 permissões).
+- [ ] **Parte 2 — Perfis próprios por empresa** — cada empresa cria, edita e apaga os seus perfis com qualquer combinação de permissões, e escolhe o perfil no formulário do funcionário. Hoje não há rota para criar um perfil de empresa, os perfis de sistema são comuns a todas e só de leitura para elas, e o «Perfil» do formulário de utilizador escolhe só o cargo (nunca envia `perfilId`). **Também resolve o cargo «Utilizador»**, que não tem perfil de sistema e é recusado em tudo — o caso do primeiro funcionário do incidente (U1268), que a Parte 1 não muda.
 ---
 
 ## 4. Planos de funcionalidades
