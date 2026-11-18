@@ -108,7 +108,10 @@ export function PermissionsPage() {
   };
 
   const handleSave = async () => {
-    if (!selectedRoleId || somenteLeitura) return;
+    // Sem o catálogo carregado, o filtro abaixo deixava a lista vazia e a gravação apagava
+    // todas as permissões do perfil — com um backend antigo (sem `GET /perfis/recursos`) ou
+    // uma falha de rede.
+    if (!selectedRoleId || somenteLeitura || recursos.length === 0) return;
     
     setIsSaving(true);
     // Só o que a matriz mostra. Um perfil antigo pode trazer linhas que já não existem no
@@ -223,7 +226,7 @@ export function PermissionsPage() {
               </div>
               <button
                 onClick={handleSave}
-                disabled={isSaving || isLoadingPerms || somenteLeitura}
+                disabled={isSaving || isLoadingPerms || somenteLeitura || recursos.length === 0}
                 className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Save className="h-4 w-4" />
