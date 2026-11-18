@@ -1,74 +1,11 @@
-// Só os identificadores: a etiqueta vem do catálogo (`permissoes.recurso.<id>` e
-// `permissoes.accao.<id>`, namespace `shell`), para seguir a língua activa.
-export const AVAILABLE_RESOURCES = [
-  { id: 'dashboard' },
-  { id: 'empresa' },
-  { id: 'users' },
-  { id: 'lojas' },
-  { id: 'armazens' },
-  { id: 'caixas' },
-  { id: 'stock' },
-  { id: 'inventario' },
-  { id: 'catalogo' },
-  { id: 'compras' },
-  { id: 'necessidades' },
-  { id: 'rh' },
-  { id: 'vendas' },
-  { id: 'clientes' },
-  { id: 'pedidos_commerce' },
-  { id: 'promocao' },
-  { id: 'entregas' },
-  { id: 'estafetas' },
-  { id: 'acertos_estafeta' },
-  { id: 'documentos_estafeta' },
-  { id: 'procura_online' },
-  { id: 'zonas_entrega' },
-  { id: 'webhooks' },
-] as const;
-
+// As colunas da matriz de permissões. As linhas (os recursos, e que acções cada um tem)
+// vêm do servidor em `GET /perfis/recursos` — `features/permissoes`. Havia aqui uma lista
+// própria de recursos, que tinha divergido dos nomes que os controladores pedem.
+//
+// A etiqueta vem do catálogo (`permissoes.accao.<id>`, namespace `shell`).
 export const AVAILABLE_ACTIONS = [
   { id: 'read' },
   { id: 'write' },
   { id: 'delete' },
   { id: 'manage' },
 ] as const;
-
-// Pode-se definir exceções se alguma ação não fizer sentido para um recurso
-export const IGNORED_PERMISSIONS = [
-  'write:dashboard',
-  'delete:dashboard',
-  'manage:dashboard',
-  // Só existem `read`/`manage` para este recurso na base de dados (migração
-  // commerce_permissoes_gestao) — não há um "criar" ou "apagar" pedido pela gestão.
-  'write:pedidos_commerce',
-  'delete:pedidos_commerce',
-  // Só existem `read`/`manage` para este recurso (migração promocao_permissoes) —
-  // criar/cancelar passam por `manage`, não há um "write"/"delete" próprios.
-  'write:promocao',
-  'delete:promocao',
-  // Entrega ao domicílio (migração entrega_domicilio): só `read`/`manage`, como
-  // `pedidos_commerce`. `estafetas`, `acertos_estafeta`, `zonas_entrega` e `webhooks` só
-  // têm `manage`; `entregas` tem `read` e `manage`.
-  'write:entregas',
-  'delete:entregas',
-  'write:estafetas',
-  'delete:estafetas',
-  'read:estafetas',
-  // Procura online (migração conta_cliente_unica_fase0): só `read` (VER_PROCURA_ONLINE).
-  'write:procura_online',
-  'delete:procura_online',
-  'manage:procura_online',
-  // Documentos dos estafetas (migração estafetas_da_plataforma): só `read`.
-  'write:documentos_estafeta',
-  'delete:documentos_estafeta',
-  'manage:documentos_estafeta',
-  'write:acertos_estafeta',
-  'delete:acertos_estafeta',
-  'read:acertos_estafeta',
-  'write:zonas_entrega',
-  'delete:zonas_entrega',
-  'read:zonas_entrega',
-  'write:webhooks',
-  'delete:webhooks',
-  'read:webhooks',
-];

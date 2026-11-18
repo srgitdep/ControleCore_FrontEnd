@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { AVAILABLE_RESOURCES, AVAILABLE_ACTIONS, IGNORED_PERMISSIONS } from '@/shared/config/permissions.config';
+import { AVAILABLE_ACTIONS } from '@/shared/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
+import { useRecursosPermissao, type RecursoDePermissao } from '@/features/permissoes';
 import { api } from '@/shared/config';
 import { mensagemDeErro } from '@/shared/utils';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
@@ -24,6 +25,18 @@ export function PermissionsPage() {
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
   const [isLoadingPerms, setIsLoadingPerms] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { data: recursos = [], isLoading: isLoadingRecursos } = useRecursosPermissao();
+
+  // As linhas por área, pela ordem em que o servidor as envia.
+  const grupos = recursos.reduce<{ grupo: string; recursos: RecursoDePermissao[] }[]>(
+    (acc, recurso) => {
+      const ultimo = acc[acc.length - 1];
+      if (ultimo && ultimo.grupo === recurso.grupo) ultimo.recursos.push(recurso);
+      else acc.push({ grupo: recurso.grupo, recursos: [recurso] });
+      return acc;
+    },
+    [],
+  );
 
   // 1. Carregar Roles
   useEffect(() => {
@@ -84,14 +97,10 @@ export function PermissionsPage() {
         // Marcar a permissão
         next.add(permission);
         
-        // Se marcou 'manage', seleciona automaticamente as restantes opções (read, write, delete)
+        // Se marcou 'manage', marca também as outras acções que este recurso tem.
         if (actionId === 'manage') {
-          AVAILABLE_ACTIONS.forEach(a => {
-            const permKey = `${a.id}:${resourceId}`;
-            if (!IGNORED_PERMISSIONS.includes(permKey)) {
-              next.add(permKey);
-            }
-          });
+          const recurso = recursos.find((r) => r.id === resourceId);
+          recurso?.acoes.forEach((a) => next.add(`${a}:${resourceId}`));
         }
       }
       return next;
@@ -102,7 +111,11 @@ export function PermissionsPage() {
     if (!selectedRoleId || somenteLeitura) return;
     
     setIsSaving(true);
-    const flatPermissions = Array.from(selectedPermissions);
+    // Só o que a matriz mostra. Um perfil antigo pode trazer linhas que já não existem no
+    // catálogo (o `catalogo` que deu lugar a produtos, categorias…): reenviá-las mantinha-as
+    // no perfil sem que ninguém as visse nem as pudesse desmarcar.
+    const doCatalogo = new Set(recursos.flatMap((r) => r.acoes.map((a) => `${a}:${r.id}`)));
+    const flatPermissions = Array.from(selectedPermissions).filter((p) => doCatalogo.has(p));
 
     try {
       await api.post(`/perfis/${selectedRoleId}/permissoes`, { permissionIds: flatPermissions });
@@ -230,7 +243,7 @@ export function PermissionsPage() {
                 A primeira coluna fica fixa (`sticky left-0`) — sem ela, ao deslizar
                 para a direita deixa de se saber de que recurso é cada caixa. */}
             <div className="flex-1 overflow-auto custom-scrollbar">
-              {isLoadingPerms ? (
+              {isLoadingPerms || isLoadingRecursos ? (
                 <div className="flex justify-center p-12 text-slate-500">{t('permissoes.a_carregar_servidor')}</div>
               ) : (
                 <table className="w-full min-w-[560px] text-left text-sm text-slate-600">
@@ -246,19 +259,28 @@ export function PermissionsPage() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {AVAILABLE_RESOURCES.map((resource) => (
+                  {grupos.map(({ grupo, recursos: doGrupo }) => (
+                  <tbody key={grupo} className="divide-y divide-slate-100">
+                    <tr className="bg-slate-50/70">
+                      <th
+                        colSpan={AVAILABLE_ACTIONS.length + 1}
+                        className="sticky left-0 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-6"
+                      >
+                        {t(`permissoes.grupo.${grupo}`, grupo)}
+                      </th>
+                    </tr>
+                    {doGrupo.map((resource) => (
                       <tr key={resource.id} className="group transition-colors hover:bg-slate-50/50">
                         {/* `bg-white` explícito: uma célula fixa transparente deixaria
                             ver as colunas a passar por baixo dela. */}
                         <td className="sticky left-0 z-10 min-w-[140px] bg-white px-4 py-4 font-medium text-slate-800 group-hover:bg-slate-50 sm:px-6">
-                          {t(`permissoes.recurso.${resource.id}`)}
+                          {t(`permissoes.recurso.${resource.id}`, resource.id)}
                         </td>
 
 
                         {AVAILABLE_ACTIONS.map((action) => {
                           const permKey = `${action.id}:${resource.id}`;
-                          const isIgnored = IGNORED_PERMISSIONS.includes(permKey);
+                          const isIgnored = !resource.acoes.includes(action.id);
                           const isChecked = selectedPermissions.has(permKey);
 
                           return (
@@ -283,6 +305,7 @@ export function PermissionsPage() {
                       </tr>
                     ))}
                   </tbody>
+                  ))}
                 </table>
               )}
             </div>
