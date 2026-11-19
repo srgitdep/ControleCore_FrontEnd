@@ -2,7 +2,9 @@
   "titulo": "定价",
   "separador": {
     "politicas": "政策",
-    "simulacao": "模拟"
+    "simulacao": "模拟",
+    "excecoes": "例外",
+    "historico": "历史记录"
   },
   "formulario": {
     "titulo": "新建政策",
@@ -63,9 +65,47 @@
       "quando": "时间"
     }
   },
+  "excecoes": {
+    "descricao": "未能自动批准、等待人工决定的价格。",
+    "vazio": "目前没有待决定的价格。",
+    "aprovar": "批准",
+    "recusar": "拒绝",
+    "confirmar_recusa": "确认",
+    "motivo_placeholder": "拒绝原因",
+    "origem": {
+      "SIMULACAO": "模拟",
+      "POLITICA": "政策",
+      "MANUAL": "手动",
+      "MAYRA": "MAYRA"
+    },
+    "tabela": {
+      "produto": "商品",
+      "preco_actual": "当前价格",
+      "preco_proposto": "建议价格",
+      "margem_efectiva": "实际利润率",
+      "origem": "来源",
+      "motivo": "原因"
+    }
+  },
+  "historico": {
+    "escolha_produto": "请选择商品以查看价格历史。",
+    "vazio": "该商品尚无价格历史。",
+    "em_vigor": "生效中",
+    "tabela": {
+      "preco": "价格",
+      "vigencia": "生效期间",
+      "margem_efectiva": "实际利润率",
+      "origem": "来源",
+      "decidido_por": "决定人"
+    }
+  },
   "mensagens": {
     "politica_criada": "政策已创建。",
     "erro_criar_politica": "无法创建政策。",
-    "erro_simular": "无法模拟价格。"
+    "erro_simular": "无法模拟价格。",
+    "candidato_aprovado": "价格已批准并发布。",
+    "candidato_recusado": "价格已拒绝。",
+    "erro_aprovar": "无法批准该价格。",
+    "erro_recusar": "无法拒绝该价格。"
   }
 }

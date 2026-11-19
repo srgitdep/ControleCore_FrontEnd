@@ -2,7 +2,9 @@
   "titulo": "Precificação",
   "separador": {
     "politicas": "Políticas",
-    "simulacao": "Simulação"
+    "simulacao": "Simulação",
+    "excecoes": "Excepções",
+    "historico": "Histórico"
   },
   "formulario": {
     "titulo": "Nova política",
@@ -63,9 +65,47 @@
       "quando": "Quando"
     }
   },
+  "excecoes": {
+    "descricao": "Preços que não se autoaprovaram e esperam uma decisão.",
+    "vazio": "Não há preços pendentes de decisão.",
+    "aprovar": "Aprovar",
+    "recusar": "Recusar",
+    "confirmar_recusa": "Confirmar",
+    "motivo_placeholder": "Motivo da recusa",
+    "origem": {
+      "SIMULACAO": "Simulação",
+      "POLITICA": "Política",
+      "MANUAL": "Manual",
+      "MAYRA": "MAYRA"
+    },
+    "tabela": {
+      "produto": "Produto",
+      "preco_actual": "Preço actual",
+      "preco_proposto": "Preço proposto",
+      "margem_efectiva": "Margem efectiva",
+      "origem": "Origem",
+      "motivo": "Motivo"
+    }
+  },
+  "historico": {
+    "escolha_produto": "Escolha um produto para ver o histórico de preços.",
+    "vazio": "Este produto ainda não tem histórico de preços.",
+    "em_vigor": "em vigor",
+    "tabela": {
+      "preco": "Preço",
+      "vigencia": "Vigência",
+      "margem_efectiva": "Margem efectiva",
+      "origem": "Origem",
+      "decidido_por": "Decidido por"
+    }
+  },
   "mensagens": {
     "politica_criada": "Política criada.",
     "erro_criar_politica": "Não foi possível criar a política.",
-    "erro_simular": "Não foi possível simular o preço."
+    "erro_simular": "Não foi possível simular o preço.",
+    "candidato_aprovado": "Preço aprovado e publicado.",
+    "candidato_recusado": "Preço recusado.",
+    "erro_aprovar": "Não foi possível aprovar o preço.",
+    "erro_recusar": "Não foi possível recusar o preço."
   }
 }
