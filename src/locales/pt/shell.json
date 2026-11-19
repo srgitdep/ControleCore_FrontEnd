@@ -186,6 +186,27 @@
       "webhooks": "Webhooks de entrega",
       "documentos_estafeta": "Documentos dos estafetas"
     },
+    "gerir": {
+      "novo": "Novo perfil",
+      "novo_titulo": "Novo perfil da empresa",
+      "nome": "Nome",
+      "nome_exemplo": "Ex.: Vendedor",
+      "copiar_de": "Começar a partir de",
+      "comecar_vazio": "Sem permissões",
+      "criar": "Criar perfil",
+      "fechar": "Fechar",
+      "de_sistema": "Sistema",
+      "renomear": "Renomear",
+      "guardar_nome": "Guardar o nome",
+      "apagar": "Apagar",
+      "confirmar_apagar": "Apagar o perfil «{{nome}}»? Esta acção não pode ser desfeita.",
+      "criado": "Perfil criado.",
+      "renomeado": "Nome alterado.",
+      "apagado": "Perfil apagado.",
+      "erro_criar": "Não foi possível criar o perfil.",
+      "erro_renomear": "Não foi possível alterar o nome.",
+      "erro_apagar": "Não foi possível apagar o perfil."
+    },
     "grupo": {
       "geral": "Geral",
       "vendas": "Vendas e clientes",
