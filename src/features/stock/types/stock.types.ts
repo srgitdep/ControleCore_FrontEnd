@@ -177,6 +177,15 @@ export interface CreateTransferPayload {
   reason?: string;
 }
 
+/** Corrigir a quantidade de uma posição: indica-se a quantidade certa, não a diferença. */
+export interface RetificarQuantidadePayload {
+  stockId: string;
+  /** O saldo que quem corrige viu — o servidor recusa se entretanto mudou. */
+  quantidadeAnterior: number;
+  quantidadeCorreta: number;
+  motivo: string;
+}
+
 export interface CreateAdjustmentPayload {
   stockId: string;
   quantity: number;

@@ -137,11 +137,18 @@ export function StockDetailsPage() {
                           <span className="font-medium text-gray-700">
                             {formatMovementType(mov.type, mov.quantity)}
                           </span>
+                          {/* Uma retificação (correcção de um lançamento) distingue-se de um ajuste
+                              comum — é o que permite rastrear quem emendou o quê. */}
+                          {mov.reason?.startsWith('Retificação de quantidade') && (
+                            <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
+                              {t('retificar.selo')}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="p-4 text-center">
                         <span className={`font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                          {isPositive ? '+' : '-'}{mov.quantity}
+                          {isPositive ? '+' : '-'}{Math.abs(mov.quantity)}
                         </span>
                       </td>
                       <td className="p-4 text-center">

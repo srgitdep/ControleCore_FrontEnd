@@ -1,5 +1,5 @@
 import { api } from '@/shared/config';
-import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload } from '@/features/stock';
+import type { Stock, StockMovement, CreateMovementPayload, CreateTransferPayload, CreateAdjustmentPayload, RetificarQuantidadePayload } from '@/features/stock';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -80,6 +80,15 @@ export const stockApi = {
 
   createPositiveAdjustment: async (payload: CreateAdjustmentPayload) => {
     const { data } = await api.post<StockMovement>('/stock/ajuste-positivo', payload);
+    return data;
+  },
+
+  /**
+   * Retifica a quantidade de uma posição (lançamento errado). Não escreve o saldo: o servidor
+   * regista a diferença como um ajuste, com autor, motivo e o antes/depois.
+   */
+  retificarQuantidade: async (payload: RetificarQuantidadePayload) => {
+    const { data } = await api.post<StockMovement>('/stock/retificar', payload);
     return data;
   },
 

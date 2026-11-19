@@ -116,6 +116,19 @@
     "a_carregar_ledger": "A carregar ledger...",
     "sem_movimentos": "Sem movimentos registados para este stock."
   },
+  "retificar": {
+    "titulo": "Retificar quantidade",
+    "aviso": "Indique a quantidade certa. Fica registado um ajuste no histórico, com o seu nome e o motivo — o saldo não é simplesmente substituído.",
+    "quantidade_actual": "Quantidade actual",
+    "quantidade_certa": "Quantidade certa *",
+    "diferenca": "Diferença: {{n}}",
+    "motivo": "Motivo da correcção *",
+    "motivo_exemplo": "Ex.: erro de digitação ao lançar a entrada",
+    "ver_historico": "Ver histórico de movimentos",
+    "confirmar": "Retificar",
+    "registada": "Quantidade retificada. O ajuste ficou no histórico.",
+    "selo": "Retificação"
+  },
   "modal_mov": {
     "titulo_in": "Entrada de Mercadoria",
     "titulo_out": "Saída de Mercadoria",

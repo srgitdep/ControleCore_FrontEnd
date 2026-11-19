@@ -82,6 +82,8 @@
     "intro": "O ponto de reposição é por armazém. Abaixo dele o produto entra nos alertas e nas sugestões de compra. Zero significa «sem mínimo definido».",
     "col_armazem": "Armazém",
     "col_saldo": "Saldo",
+    "retificar": "Retificar",
+    "retificar_titulo": "Corrigir a quantidade (fica no histórico)",
     "col_minimo": "Mínimo",
     "inactivo": "inactivo",
     "negativo": "O stock mínimo não pode ser negativo.",

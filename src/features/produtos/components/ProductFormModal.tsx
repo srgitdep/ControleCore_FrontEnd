@@ -13,7 +13,7 @@ import {
   useDefinirImagemPrincipal,
 } from '../hooks/useCatalog';
 import { useArmazens } from '@/features/lojas';
-import { stockApi } from '@/features/stock';
+import { stockApi, RetificarQuantidadeModal, usePodeGerirStock } from '@/features/stock';
 import { suppliersApi } from '@/features/fornecedores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -595,7 +595,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               <ImagensPendentes ficheiros={imagensPendentes} onChange={setImagensPendentes} />
             )}
 
-            {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
+            {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} produtoNome={productToEdit.nome} />}
 
             {/* ── Ao editar: os fornecedores do produto ───────────────────────
                 Um produto pode ter mais do que um fornecedor, cada um com o seu
@@ -723,9 +723,12 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
  * Juntá-los faria um botão gravar duas coisas, com a possibilidade de uma passar e a
  * outra falhar sem o utilizador saber qual.
  */
-function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
+function MinimosPorArmazem({ produtoId, produtoNome }: { produtoId: string; produtoNome?: string }) {
   const { t } = useTranslation('produtos');
   const queryClient = useQueryClient();
+  const podeGerirStock = usePodeGerirStock();
+  // A posição cuja quantidade se está a corrigir (abre o modal de retificação).
+  const [aRetificar, setARetificar] = useState<{ id: string; armazem: string; quantidade: number } | null>(null);
   const [emEdicao, setEmEdicao] = useState<Record<string, string>>({});
   const [aGuardar, setAGuardar] = useState<string | null>(null);
 
@@ -840,6 +843,20 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
                     <span className={emFalta ? 'font-semibold text-amber-600' : 'text-slate-700'}>
                       {p.currentQuantity}
                     </span>
+                    {/* Corrigir um lançamento errado. Não edita o saldo: regista um ajuste no
+                        histórico, com autor e motivo (`RetificarQuantidadeModal`). */}
+                    {podeGerirStock && (
+                      <button
+                        type="button"
+                        title={t('minimos.retificar_titulo')}
+                        onClick={() =>
+                          setARetificar({ id: p.id, armazem: p.armazem.nome, quantidade: p.currentQuantity })
+                        }
+                        className="ml-2 rounded px-1.5 py-0.5 text-[11px] font-medium text-indigo-600 hover:bg-indigo-50"
+                      >
+                        {t('minimos.retificar')}
+                      </button>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1.5">
@@ -872,6 +889,16 @@ function MinimosPorArmazem({ produtoId }: { produtoId: string }) {
           </tbody>
         </table>
       </div>
+
+      {aRetificar && (
+        <RetificarQuantidadeModal
+          stockId={aRetificar.id}
+          armazemNome={aRetificar.armazem}
+          produtoNome={produtoNome}
+          quantidadeAtual={aRetificar.quantidade}
+          onClose={() => setARetificar(null)}
+        />
+      )}
     </div>
   );
 }

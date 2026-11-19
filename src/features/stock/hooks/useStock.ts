@@ -85,9 +85,25 @@ export function useStockMutations() {
     onError: handleError,
   });
 
+  const retificarQuantidade = useMutation({
+    mutationFn: stockApi.retificarQuantidade,
+    onSuccess: () => {
+      handleSuccess(i18n.t('stock:retificar.registada'));
+      // O formulário de edição do produto lê as posições por estas chaves.
+      queryClient.invalidateQueries({ queryKey: ['stock-posicoes'] });
+      queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+    },
+    onError: (error: any) => {
+      handleError(error);
+      // «O saldo mudou entretanto»: volta a mostrar o saldo actual, para corrigir sobre ele.
+      queryClient.invalidateQueries({ queryKey: ['stock-posicoes'] });
+    },
+  });
+
   return {
     createMovement,
     createTransfer,
+    retificarQuantidade,
     createPositiveAdjustment,
     createNegativeAdjustment,
   };
