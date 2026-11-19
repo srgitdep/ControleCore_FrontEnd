@@ -1,0 +1,71 @@
+{
+  "titulo": "Pricing",
+  "separador": {
+    "politicas": "Policies",
+    "simulacao": "Simulation"
+  },
+  "formulario": {
+    "titulo": "New policy",
+    "escopo": "Applies to",
+    "escopo_empresa": "The whole company",
+    "escopo_categoria": "A category",
+    "escopo_produto": "A product",
+    "categoria": "Category",
+    "produto": "Product",
+    "escolher": "Choose...",
+    "margem_alvo": "Target margin (%)",
+    "margem_piso": "Minimum margin (%)",
+    "limite_autoaprovacao": "Auto-approval limit (%)",
+    "limite_autoaprovacao_vazio": "No limit — nothing auto-approves",
+    "limite_autoaprovacao_ajuda": "The maximum variation from the current price that this policy lets through on its own. Without a value, every suggestion from this policy stays pending review.",
+    "criar": "Create policy",
+    "fechar": "Close"
+  },
+  "politicas": {
+    "descricao": "The policies in effect now. The most specific one wins: product over category, category over company.",
+    "nova": "New policy",
+    "vazio": "No pricing policies yet.",
+    "sem_limite": "No limit",
+    "tabela": {
+      "alvo": "Applies to",
+      "margem_alvo": "Target margin",
+      "margem_piso": "Minimum margin",
+      "limite_autoaprovacao": "Auto-approval limit",
+      "vigente_desde": "In effect since"
+    }
+  },
+  "simulacao": {
+    "descricao": "Calculates the suggested price for a product, without changing the price in effect.",
+    "produto": "Product",
+    "custo_hipotetico": "Hypothetical cost",
+    "custo_hipotetico_vazio": "Use the product's current cost",
+    "simular": "Simulate",
+    "vazio": "No simulations yet for this product.",
+    "decisao": {
+      "AUTO_APPROVED": "Auto-approved",
+      "REVIEW_REQUIRED": "Needs review",
+      "BLOCKED": "Blocked"
+    },
+    "motivo": {
+      "POLITICA_EM_FALTA": "No eligible policy",
+      "COLISAO_NO_MESMO_NIVEL": "Two policies at the same level conflict",
+      "DENOMINADOR_INVALIDO": "Margin plus fee add up to 100% or more — no possible price",
+      "ENTRADA_INVALIDA": "Invalid policy data",
+      "SEM_LIMITE_DE_AUTOAPROVACAO": "This policy has no auto-approval limit",
+      "VARIACAO_ACIMA_DO_LIMITE": "The variation from the current price exceeds the policy's limit"
+    },
+    "tabela": {
+      "produto": "Product",
+      "custo": "Cost used",
+      "preco_sugerido": "Suggested price",
+      "margem_efectiva": "Effective margin",
+      "decisao": "Decision",
+      "quando": "When"
+    }
+  },
+  "mensagens": {
+    "politica_criada": "Policy created.",
+    "erro_criar_politica": "Could not create the policy.",
+    "erro_simular": "Could not simulate the price."
+  }
+}

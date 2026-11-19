@@ -21,6 +21,7 @@ import { PurchasesPage } from '@/features/compras';
 import { NecessidadesPage, HistoricoNecessidadesPage, AlertasPage } from '@/features/necessidades';
 import { TransferenciasPage } from '@/features/transferencias';
 import { PromocoesPage } from '@/features/promocoes';
+import { PrecificacaoPage } from '@/features/precificacao';
 import { ECommercePage } from '@/features/ecommerce';
 import {
   EntregaPage,
@@ -264,6 +265,7 @@ export const router = createBrowserRouter([
           { path: '/compras/necessidades/alertas', element: <AlertasPage /> },
           { path: '/transferencias', element: <TransferenciasPage /> },
           { path: '/promocoes', element: <PromocoesPage /> },
+          { path: '/precificacao', element: <PrecificacaoPage /> },
           // E-Commerce: pedidos do Compra Fácil, entregas, estafetas, acertos, zonas e procura
           // online num só ecrã com separadores (`?tab=`). Eram sete rotas planas e sete entradas
           // de menu. A protecção fina é do backend (@ModuloNecessario('commerce') + @Permissao) e

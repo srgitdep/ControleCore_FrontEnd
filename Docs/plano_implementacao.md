@@ -62,6 +62,17 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
+**Fase D7-0 — Precificação (DT-07): correcções que valem sempre** (plano completo em **§4.16**, aprovado em 2026-11-18; branch `fix/preco-piso-promocoes-sobrepostas` nos dois repositórios, backend primeiro). Nada está implementado: este bloco é o ponto de partida.
+
+- [x] **D7-0a — Piso de preço.** *(feita em 2026-11-18, ramo `fix/preco-piso-promocoes-sobrepostas`.)* `src/modules/produto/domain/validar-preco-venda.ts` (função pura, com spec): recusa `precoVenda` abaixo de `precoCusto` quando há custo conhecido (`precoCusto > 0`) e preço definido (`precoVenda > 0`); compara ao cêntimo; preço igual ao custo passa. Ligada em `CreateProdutoUseCase` e em `UpdateProdutoUseCase` — **na edição só dispara quando um dos dois preços muda**, para um produto que já estava abaixo do custo poder ser renomeado. 422 `produto.preco.abaixo_do_custo` (`PrecoAbaixoDoCustoException`), com a mensagem traduzida nos `erros.json` `pt`/`en`/`zh` do backend. `UpdateProductPriceTool` valida **antes** de devolver o cartão HITL, para a MAYRA nunca propor o que o servidor vai recusar. **Frontend sem código novo:** `useUpdateProduct`, `useCreateProduct` e o `copilotStore` já mostram a `message` que o servidor traduz. Backend: 289 suites, 4053 testes; `nest build` limpo. **Não verificado no browser.**
+- [x] **D7-0b — Promoções sobrepostas.** *(feita em 2026-11-18, mesmo ramo.)* `src/modules/promocao/domain/sobreposicao-promocoes.ts` (puro, com spec): «mesmo alvo» = o mesmo produto, ou a mesma categoria (uma promoção de produto e outra da sua categoria **não** colidem — a do produto vale mais, por desenho); períodos `[início, fim)`, pelo que campanhas encadeadas não se sobrepõem. `CriarPromocaoUseCase` recusa com 409 `promocao.sobreposta`, a dizer qual existe e entre que dias (em Maputo); mensagem nos `erros.json` `pt`/`en`/`zh`. `PrecoPromocionalService` deixa de escolher por ordem de leitura: com duas activas no mesmo alvo vale a **criada mais recentemente**, depois o `id`, e o catálogo (lote) e o checkout (um produto) escolhem a mesma. **Listagem do que já existe:** `npm run promocoes:sobrepostas` (só lê, não corrige). **Frontend sem código novo:** `useCriarPromocao` mostra a `message` do servidor via `mensagemDeErro` e o formulário fica aberto. Backend: 291 suites, 4082 testes; `nest build` limpo. **Por fazer, do utilizador, antes do deploy:** correr `npm run promocoes:sobrepostas` contra a base de dados certa e cancelar o que não for para valer — **não foi corrido** (o `DATABASE_URL` local aponta para um Neon na nuvem). **Limite conhecido:** duas criações no mesmo instante podem passar as duas a verificação; o desempate na leitura cobre o efeito, e uma restrição na base de dados fica fora desta fase. **Não verificado no browser.**
+- [x] **D7-0c — Aritmética decimal.** *(feita em 2026-11-18, mesmo ramo.)* `src/shared/dinheiro.ts` sobre `Prisma.Decimal`, sem tocar em nenhuma coluna: `dinheiroDeFloat` (a **única** fronteira com os campos `Float`: 4 casas, lança em `NaN`/`Infinity`), `arredondarParaCima(valor, incremento)` (exacto, pelo resto da divisão; um múltiplo fica como está), `margemSobreVenda(custo, preço, taxa?)` (sobre a venda, depois da taxa; `null` sem preço) e `precoMinimo({custo, margemAlvo, taxaVariavel?, incremento})` = `C / (1 − m − t)` arredondado para cima. `precoMinimo` devolve resultado e não excepção: `{ok:false, motivo:'DENOMINADOR_INVALIDO'}` com `m + t >= 1` (T07-04) e `'ENTRADA_INVALIDA'` com custo, margem ou taxa negativos ou incremento não positivo; `{ok:true, preco, precoSemArredondar, margemEfectiva}` caso contrário. **Convenção: margens e taxas entram como fracção** (`0.20` = 20%); o `margemLucro` da base é percentagem, e quem lê de lá divide por 100. O preço devolvido **cumpre sempre a margem**, mesmo com um custo de mais de 20 algarismos (verificação final, com spec). Casos do pacote em spec: TC01 (133,34), T07-02 (133,33…; o markup de 25% dá só 20% de margem) e T07-04. Backend: 292 suites, 4119 testes; `nest build` limpo. **Ainda sem consumidor:** é biblioteca interna, usada a partir da D7-1; nenhum código existente foi migrado para ela (`update-produto`, `preco-com-desconto` e `calcular-taxa` continuam em `number`, até ao levantamento da D7-0d). Sem frontend nesta tarefa.
+- [x] **D7-0d — Levantamento Float → Decimal.** *(feito em 2026-11-18, só documentação; **§4.16, secção 11**.)* ~70 colunas monetárias em `Float` contra 21 em `Decimal`. Conclusão: a migração das colunas existentes **não está no caminho crítico da D7**; o que se faz antes da D7-2 é a fatia **F0** (auditoria de precisão e os dois `$queryRaw` com tipos `number` escritos à mão). Três armadilhas verificadas: o JSON de um `Decimal` sai como **texto**, `Decimal + 1` **concatena**, e o custo médio ponderado é gravado **sem arredondar** (os custos precisam de 4 casas). Seis fatias (F0 a F5) por ordem de risco, três perguntas (P7 a P9) e a auditoria SQL de precisão, **por correr**. Nenhuma coluna foi migrada.
+
+**D7-0 completa (a a d), ainda no ramo `fix/preco-piso-promocoes-sobrepostas`, por fundir em `main`.** Quando for fundida: este bloco apaga-se e a fase entra na Secção 2 (convenção da Secção 5).
+
+**Verificação da D7-0:** `nest build` e a suite do backend; `tsc -b`, `vite build` e testes do frontend; um `PATCH` de produto e um cartão da MAYRA com preço abaixo do custo dão 422; criar duas promoções sobrepostas dá 409. Quando a D7-0 terminar, este bloco apaga-se e entra a Fase respectiva na Secção 2.
+
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2728,6 +2739,33 @@ implementação vem **antes** de retomar o ensaio da entrega.
 
 - [x] **Parte 1 — As permissões que os controladores pedem podem ser dadas** — concluída em 2026-11-18 (Fase 73), ramo `fix/permissoes-recursos-reais` (backend e frontend). 47 das 105 permissões pedidas pelos controladores não tinham linha na matriz (38 de empresa; 9 são só da plataforma e ficam assim). Catálogo único em `src/shared/catalogo-permissoes.ts` (guard, matriz via `GET /perfis/recursos`, seed), correspondência exacta em vez de radical, migração `20261118150000_permissoes_recursos_reais` (cria as linhas em falta e copia `catalogo`/`compras` de cada perfil para os recursos novos, sem tirar nada), cache de permissões limpa ao mudar o cargo/perfil e chave `v3`. Spec que falha se um controlador pedir uma permissão que a matriz não dá. **Ensaiada numa branch Neon com os dados de produção:** o Gerente da empresa do incidente passa a criar produtos; ligações 312 → 431, nenhuma removida. **Notas de deploy:** backend primeiro (o frontend novo lê `GET /perfis/recursos`, que o backend antigo não tem); a migração corre no arranque. **A rever pela SRG depois do deploy:** o perfil de sistema Armazenista já tinha `catalogo` e `compras` em produção, que passaram para os recursos novos (95 permissões).
 - [ ] **Parte 2 — Perfis próprios por empresa** — *em curso (2026-11-18), plano em «Fase em curso», branch `feat/perfis-por-empresa`.* Cada empresa cria, edita e apaga os seus perfis com qualquer combinação de permissões, e escolhe o perfil no formulário do funcionário. Hoje não há rota para criar um perfil de empresa, os perfis de sistema são comuns a todas e só de leitura para elas, e o «Perfil» do formulário de utilizador escolhe só o cargo (nunca envia `perfilId`). **Também resolve o cargo «Utilizador»**, que não tem perfil de sistema e é recusado em tudo — o caso do primeiro funcionário do incidente (U1268), que a Parte 1 não muda.
+
+### Precificação (DT-07)
+
+> Plano completo em **§4.16** (aprovado em 2026-11-18). Origem: o pacote `Docs/F14.11.26/` (DT-07, baseline v6.5, **não FROZEN**). Backend primeiro em cada fase; cada fase fecha com o consumo no frontend.
+
+- [x] **D7-0 — Correcções que valem sempre** — piso de preço na edição e na MAYRA; promoções sobrepostas sem desempate; aritmética decimal; levantamento Float → Decimal. *(Tarefas a a d feitas em 2026-11-18; fundida em `main` a 2026-11-19, por publicar.)*
+- [x] **D7-1 — Políticas de margem e cálculo do preço sugerido** — módulo `precificacao`, políticas por empresa, categoria e produto, os três estados de decisão, simulação. *(Feita em 2026-11-18; detalhe em §4.16/D7-1. Migração verificada numa branch Neon com o schema de produção. Fundida em `main` a 2026-11-19, por publicar.)*
+- [ ] **D7-2 — Versões de preço, fila de excepções e MAYRA** — preço regular versionado, aprovação com segregação de funções, a ferramenta da MAYRA passa a propor.
+- [ ] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente.
+- [ ] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa.
+
+**Mais tarde — fora do primeiro âmbito.** Cada item abaixo espera por outro módulo ou por uma decisão que o pacote ainda não fechou; **não se implementa sem o contrato desse módulo aceite** (ver §4.16, secção 6).
+
+- [ ] **Custo económico versionado (DT-06)** — snapshot de custo com versão, proveniência e finalidade, no lugar do `Produto.precoCusto` mutável.
+- [ ] **Fiscalidade e câmbio (DT-11)** — moeda e taxa de câmbio datadas, impostos por jurisdição, preço com impostos inclusivos.
+- [ ] **Frete, Incoterms e preço entregue (DT-16)** — cotação internacional, total entregue, retalho B2C internacional.
+- [ ] **Publicação por destino com ACK, reconciliação e reversão (DT-18, AC-09)** — POS e marketplaces; reaproveita o *outbox* dos webhooks.
+- [ ] **Autorização fina e segregação de funções completa (DT-12)** — matriz por risco, limiares por empresa, canal e moeda.
+- [ ] **Preços B2B do lado da venda** — contratos, MOQ e escalões de quem vende (hoje só existe o lado de quem compra).
+- [ ] **Serviços** — catálogo, tarifas por hora e por intervenção, orçamentos versionados, avenças e projectos.
+- [ ] **Marketplace e prestadores** — planos e mensalidades, publicidade patrocinada, comparação transparente de ofertas.
+- [ ] **Rentabilidade prevista versus realizada (DT-09, DT-15)** — por canal, serviço e prestador.
+- [ ] **Optimização por procura e inteligência de concorrência** — opcional, nunca acima dos limites duros.
+- [ ] **Precificação a partir de documentos** — factura ou catálogo a iniciar candidatos de preço em lote.
+- [ ] **Políticas por loja, canal e país** — a D7-1 só cobre empresa, categoria e produto.
+- [ ] **Dinheiro exacto nas colunas existentes (`Float` → `Decimal`)** — fora do caminho da D7; plano em **§4.16, secção 11**. Por fatias, por ordem de risco: **F0** preparação (sem schema, **antes da D7-2**), **F1** desconto de promoções (piloto), **F2** custo e preço do produto, **F3** IVA, **F4** preços de fornecedor, **F5** documentos e totais (projecto próprio).
+
 ---
 
 ## 4. Planos de funcionalidades
@@ -2755,6 +2793,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
 | 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Implementado** (Fase 57, 2026-10-13) — sem a transferência directa | Secção 3 → «Transferências entre armazéns» |
 | 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Implementado** (Fase 58, 2026-10-13) | Secção 3 → «Clientes online e pedidos» |
+| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0 e D7-1 feitas (2026-11-18); migração da D7-1 verificada numa branch Neon; falta a D7-2 | Secção 3 → «Precificação (DT-07)» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -5961,6 +6000,261 @@ Também encontrado e **a confirmar no browser**: o frontend chama `GET /empresas
 - **S2:** alterar os módulos de uma empresa reflecte-se no `ModuloAccessGuard` dela; o relatório D5 corre antes do cron.
 - **S3:** em suporte só leitura, um `POST` dá 403; a auditoria da empresa mostra a sessão.
 - **S4:** o feed mostra a criação de um Super Admin feita no próprio painel.
+
+### 4.16 Precificação (DT-07): políticas, decisão de preço e fila de excepções
+
+- **Data:** 2026-11-18 · **Estado:** **aprovado em 2026-11-18** (a fatia inicial D7-0 a D7-4, e a lista «mais tarde» da secção 6). Nada implementado. As «Decisões» da secção 3 são recomendações adoptadas por omissão, a **confirmar antes da fase indicada** em cada uma.
+- **Repositórios:** `ControleCore_BackEnd` e `ControleCore_FrontEnd`. Backend primeiro em cada fase; nenhuma fase fecha sem o consumo no frontend (endpoint → `*.api.ts` → hook → ecrã navegável).
+- **Fonte:** pacote `Docs/F14.11.26/` (DT-07 Mestre v6.5, matrizes P01–P70, contratos, bloqueios e gates). O pacote está **NÃO FROZEN**: autoriza prototipagem e desenho, não a publicação produtiva de integrações. Por isso este plano só implementa o que **não depende** de contratos de outros módulos por aceitar.
+- Os «§N» dentro desta subsecção são da numeração do próprio plano.
+
+#### 1. Objectivo
+
+Hoje o preço de um produto é **um número que alguém escreve**: a edição do produto e a ferramenta da MAYRA gravam `Produto.precoVenda` sem piso, sem versão e sem regra. O objectivo é passar a um motor que **propõe** preços a partir do custo e das políticas da empresa, decide cada linha (aprovada automaticamente, a rever ou bloqueada), e só publica o que as regras e as pessoas autorizadas deixarem passar — com o preço antigo guardado e o motivo de cada decisão à vista.
+
+Princípios do pacote que se mantêm em todas as fases: o motor é **automático e orientado a políticas**, o simulador é auxiliar; sem custo conhecido não se publica; a MAYRA explica e recomenda mas **não autoriza** nem inventa custos; uma falha de qualquer componente obrigatório **bloqueia** (nunca publica por omissão); lote não é uma transacção única (uma linha má não bloqueia as outras).
+
+#### 2. O que existe hoje (levantado do código em 2026-11-18)
+
+| Tema | Estado hoje | Onde |
+|---|---|---|
+| Preço, custo e margem | Três campos `Float` no `Produto`, sobrescritos sem versão; só o `AuditLog` guarda o valor antigo | `schema.prisma` (`Produto`), `update-produto.use-case.ts` |
+| Margem | Calculada sobre o preço de venda (`(venda − custo) / venda`), em `Float` | `update-produto.use-case.ts` |
+| Alteração pela MAYRA | Cartão HITL; ao confirmar chama o mesmo `UpdateProdutoUseCase`. Sem piso, sem estados de decisão | `update-product-price.tool.ts`, `ai-copilot.service.ts` (`executeHitlAction`) |
+| Validação do preço | Só `@IsNumber()` nos DTOs e «maior que zero» na ferramenta: **um preço abaixo do custo passa** | `create-produto.dto.ts` |
+| Promoções | Calculadas na leitura; `precoVenda` nunca muda (**cumpre** o pacote). Sem `orderBy` e com `Map` por produto: com duas activas, **ganha a última lida**. `criar-promocao` não impede sobreposição. Sem piso de margem | `preco-promocional.service.ts`, `criar-promocao.use-case.ts` |
+| Checkout | O servidor recalcula preço, desconto, IVA e entrega (**cumpre** a revalidação). Sem aceite: se o preço mudar, o cliente paga o novo valor sem aviso | `criar-pedido.use-case.ts` |
+| Custo | `Produto.precoCusto` (escrito pela compra, em dois pontos de `prisma-compra.repository.ts`) e `Stock.custoMedio` por armazém; ambos mutáveis, sem histórico | `schema.prisma` |
+| Custo na venda | `VendaItem.precoCusto` fixa o custo no momento da venda; a margem exclui a taxa de entrega | `processar-venda.use-case.ts` |
+| Escalão B2B (compra) | `escolherEscalao`: maior limiar elegível, nunca o maior preço | `b2b/domain/preco-escalao.ts` |
+| Vigência de preços | `PrecoArtigo` (fornecedor): `vigenteDe`, `vigenteAte`, `substituiu` — o padrão a copiar para o preço de venda | `schema.prisma` |
+| *Outbox* e idempotência de entrada | `WebhookEnvio` e `WebhookEventoRecebido` (único por operador e evento) | `schema.prisma` |
+| Auditoria e avisos | `AuditLog` encadeado por hash, com `contextoMayra`; `Notificacao` (Fase 47) | `schema.prisma` |
+| Permissões por funcionalidade | `promocao.ver`/`promocao.gerir`, ligadas só ao perfil `Gestor` por migração — o modelo para `precificacao.*` | migração `20261003050000_promocao_permissoes` |
+| Frontend | `PromocoesPage`, `ProductsTab`/`ProductFormModal` e o `HitlActionCard` da MAYRA existem. **Nenhuma** das 8 vistas do handoff DT-07 existe. `PrecosPage` é a página comercial dos **planos de assinatura** da plataforma, sem relação | `ControleCore_FrontEnd/src/features/` |
+| Sem equivalente | Políticas de preço, estados de decisão, preço regular versionado, aceite de preço no checkout, reprecificação por custo, FX, Incoterms, publicação por destino, serviços | — |
+
+#### 3. Decisões
+
+- **D1 — Módulo novo `precificacao`** (`src/modules/precificacao/`), a reaproveitar `produto`, `promocao` e `AuditLog` em vez de espalhar regras por onde já há preços. *Recomendação; confirmar antes da D7-1.*
+- **D2 — `Produto.precoVenda` continua a ser o preço que o POS e o catálogo lêem.** O motor escreve-o ao publicar uma versão, na mesma transacção que fecha a versão anterior. Assim nenhum consumidor existente muda (POS, catálogo, checkout, relatórios).
+- **D3 — Os estados de decisão têm os nomes do pacote** em código: `AUTO_APPROVED`, `REVIEW_REQUIRED`, `BLOCKED` (enum Prisma); os rótulos para o utilizador vão nos catálogos `pt`/`en`/`zh`. O pacote escreve `AUTO-APPROVED` num sítio e `AUTO_APPROVED` noutros; usa-se **o sublinhado**.
+- **D4 — Duas políticas igualmente válidas que colidem dão `REVIEW_REQUIRED`**, nunca bloqueio nem escolha arbitrária. O pacote tem `BLOCK_POLICY_CONFLICT` na v3.3 e `REVIEW_REQUIRED` na v3.9, v4.3 e v5.7; prevalece a maioria e a regra mais prudente em ambiente de produção. *Confirmar antes da D7-1.*
+- **D5 — Precedência por atributo, não uma hierarquia única:** margem-alvo, margem-piso, incremento de arredondamento e limites resolvem-se cada um por si, com `produto > categoria > empresa`. Restrições obrigatórias (piso) prevalecem sempre e nenhuma política as relaxa. Nunca se desempata por ordem de leitura, UUID ou data de criação.
+- **D6 — Preço sugerido sem IVA.** O `Produto.precoVenda` é o preço sem IVA (o IVA entra por `taxaIva`, Fase 31). A fórmula é a do pacote para preço líquido: `P = C / (1 − m − t)`, com `1 − m − t > 0` (senão `BLOCKED`), arredondado **para cima** ao incremento da política, recalculando a margem depois de arredondar. `t` é a taxa variável sobre a venda (comissão de pagamento ou de canal), por política; começa em 0.
+- **D7 — Dinheiro em decimal.** Código novo calcula em `Prisma.Decimal` (`dinheiro.ts`). As tabelas novas nascem em `Decimal`. As colunas `Float` existentes **não migram dentro da D7**: o levantamento (secção 11) concluiu que não estão no caminho crítico e que a migração é um item próprio, em fatias. A fronteira converte `Float → Decimal` num único sítio (`dinheiroDeFloat`), e publicar um preço escreve `Number(decimal)` arredondado a 2 casas.
+- **D8 — Segregação de funções:** quem pede uma excepção não a aprova. Aprovar exige `precificacao.aprovar`.
+- **D9 — A MAYRA propõe, não grava.** A ferramenta passa a criar um candidato pelo mesmo caminho das pessoas; o cartão HITL mostra o estado da decisão e o motivo. Continua a ser uma pessoa com permissão a confirmar.
+- **D10 — Limiar de autoaprovação por política**, em percentagem de variação face ao preço em vigor. Sem valor definido a política **não autoaprova** (tudo `REVIEW_REQUIRED`). O valor é decisão do utilizador (decisão D-03 do pacote, que não a define). *Confirmar antes da D7-2.*
+
+#### 4. Plano por fases
+
+Em cada fase: ramo próprio nos dois repositórios, backend primeiro, um commit por sub-tarefa concluída e validada, traduções `pt`/`en`/`zh` dos textos e códigos de erro novos, e o `graphify update .` no fim.
+
+##### D7-0 — Correcções que valem sempre (`fix/preco-piso-promocoes-sobrepostas`)
+
+Detalhe das tarefas no bloco «Fase em curso». Em resumo: **a** piso de preço na edição e na MAYRA; **b** promoções sobrepostas (recusa na criação + ordem determinística na leitura); **c** `dinheiro.ts` (decimal); **d** levantamento Float → Decimal.
+
+- **Frontend:** sem páginas novas. As mensagens vêm já traduzidas do servidor (`erros.json`, `pt`/`en`/`zh`), e os hooks `useUpdateProduct`, `useCreateProduct` e o `copilotStore` mostram-nas, e o `useCriarPromocao` também (`mensagemDeErro`).
+- **Verificação:** specs do piso (custo 0, igual, abaixo, acima), da sobreposição (datas contíguas, mesmo alvo, alvos diferentes) e da ordem determinística; `dinheiro.spec.ts` com **TC01** (C=100, m=0,20, t=0,05, incremento 0,01 → 133,34), **T07-02** (margem 25% sobre 100 → 133,33; markup daria 125) e **T07-04** (m=80%, t=25% → bloqueado).
+
+##### D7-1 — Políticas de margem e cálculo do preço sugerido (`feat/precificacao-politicas`) — feita em 2026-11-18
+
+- **Dados (backend):** `PoliticaPreco` (`empresaId`, `escopo EscopoPoliticaPreco = EMPRESA | CATEGORIA | PRODUTO`, `categoriaId?`, `produtoId?`, `margemAlvo Decimal(6,4)`, `margemPiso Decimal(6,4)`, `taxaVariavel Decimal(6,4)` por omissão 0, `incrementoArredondamento Decimal(10,4)` por omissão 0.01, `limiteAutoaprovacao Decimal(6,4)?`, `vigenteDe`, `vigenteAte?`, `substituiuId?`, `criadoPorId?`). Nunca se sobrescreve: `CriarPoliticaPrecoUseCase` fecha a vigente do mesmo escopo+alvo (`vigenteAte = agora`) e cria a nova encadeada por `substituiuId`, numa `$transaction`; detecta e recusa (409) uma concorrência rara em que duas ficassem vigentes ao mesmo tempo. Migração `20261118120000_precificacao_politicas_candidatos` escrita à mão (sem `migrate dev`: sem base local disponível). **Verificada em 2026-11-18** numa branch Neon só com o schema de produção (`teste-migracao-precificacao-20261118`): `migrate deploy` aplicou-a sem erros, `migrate status` dá o schema em dia, e o `migrate diff` contra o `schema.prisma` não mostra nenhuma diferença em `politicas_preco` nem em `candidatos_preco`. O diff mostra uma diferença **anterior e alheia** a esta fase, em FKs de `inventory_counts`/`localizacoes` e no índice `lotes_localizacaoId_idx`, que fica registada para investigar à parte. Colunas, precisões, 9 FKs, 7 índices, enums e as duas permissões conferem. A ligação ao `Gestor` não aconteceu nessa branch porque ela não tem dados (0 perfis): é a cláusula defensiva a funcionar, e em produção liga. **Nota de procedimento:** uma branch Neon só com schema não copia `_prisma_migrations`; antes do `deploy` foi preciso marcar as 72 migrações anteriores com `migrate resolve --applied`. Ainda não corrida em produção. Também cria `CandidatoPreco` (ver desvio abaixo) e as permissões `precificacao.ver`/`precificacao.gerir`, ligadas ao perfil `Gestor` (mesmo padrão de `promocao.*`); `prisma/seed.ts` actualizado.
+- **Domínio puro, sem I/O, com spec:** `resolver-politica.ts` (precedência por atributo `PRODUTO > CATEGORIA > EMPRESA`; colisão no mesmo nível → `REVIEW_REQUIRED`, nunca `BLOCKED`; sem política elegível → `BLOCKED`, nunca uma margem por omissão); `decidir-preco.ts`, que junta `resolverPolitica` a `precoMinimo` (`dinheiro.ts`, D7-0c) e decide `AUTO_APPROVED`/`REVIEW_REQUIRED`/`BLOCKED` pelo limiar de autoaprovação (D10): sem limiar, nada autoaprova; com limiar, só autoaprova se a variação face ao preço em vigor não o exceder.
+- **API:** `GET/POST /precificacao/politicas`; `POST /precificacao/simular` (resolve as políticas elegíveis do produto — a sua, a da sua categoria, a da empresa — e devolve a decisão; **não grava `Produto.precoVenda`**); `GET /precificacao/candidatos`. Permissões `VER_PRECIFICACAO`/`GERIR_PRECIFICACAO` (confirmado o mapeamento para `read:precificacao`/`manage:precificacao` em `satisfazPermissao`).
+- **Frontend:** `src/features/precificacao/` (api, tipos, hooks, página) e a rota `/precificacao`, item no menu lateral (ícone `Tag`, ao lado de Promoções): separador **Políticas** (listar vigentes, criar) e **Simulação** (escolher produto, custo hipotético opcional, ver decisão/motivos e o histórico de candidatos). Traduções `pt`/`en`/`zh` (`locales/*/precificacao.json`) e os recursos `precificacao`/`item.precificacao` em `shell.json` e `permissions.config.ts`.
+- **Desvio ao plano:** `CandidatoPreco` nasceu **nesta fase**, não na D7-2 — `/simular` precisa de registar o resultado para a explicabilidade e para o separador de simulação mostrarem histórico; `preco`/`margemEfectiva` ficam nulos quando `BLOCKED`. Continua sem ligação a `Produto.precoVenda`: publicar é da D7-2.
+- **Verificação:** domínio — `resolver-politica.spec.ts` e `decidir-preco.spec.ts` com **TC01**, **T07-02**, **T07-04**, colisão, política em falta, variação acima/dentro do limiar (19 testes); casos de uso — `criar-politica-preco` (piso acima do alvo, concorrência, encadeamento por `substituiuId`) e `simular-preco` (produto sem categoria não herda política de categoria por acidente do `undefined` no Prisma; produto novo sem preço actual não bloqueia a autoaprovação) (16 testes). Backend: 296 suites, 4156 testes; `nest build` limpo. Frontend: `tsc -b` e `vite build` limpos; 29 ficheiros, 506 testes (paridade pt/en/zh incluída). Migração verificada numa branch Neon (ver «Dados»). **Não verificado no browser.**
+
+##### D7-2 — Versões de preço, fila de excepções e MAYRA (`feat/precificacao-versoes`)
+
+- **Dados (backend):** `CandidatoPreco` (a proposta: `produtoId`, `precoActual`, `precoSugerido`, `decisao`, `motivos[]`, `politicaId`+`politicaVersao`, `custoUsado`, `margemEfectiva`, `origem` = `POLITICA | MANUAL | MAYRA`, `estado`, `chaveIdempotencia`, `pedidoPorId`, `decididoPorId?`, `decididoEm?`) e `PrecoVersao` (o preço publicado: `produtoId`, `preco`, `vigenteDe`, `vigenteAte?`, `substituiuId?`, `candidatoId`). `chaveIdempotencia` única por empresa, para um candidato repetido não duplicar.
+- **Publicar** = numa `$transaction`: fechar a `PrecoVersao` activa, abrir a nova, escrever `Produto.precoVenda` (D2) e registar no `AuditLog`. Rejeição não gera preço activo.
+- **`UpdateProdutoUseCase`:** uma mudança de `precoVenda` passa a gerar uma `PrecoVersao` (origem `MANUAL`), com o piso da D7-0a. **Abaixo do custo** deixa de ser um erro seco: passa a ser um candidato `REVIEW_REQUIRED` que outra pessoa com `precificacao.aprovar` aprova ou recusa (D8).
+- **MAYRA (D9):** `UpdateProductPriceTool` cria o candidato e o cartão mostra a decisão e o motivo; `executeHitlAction` publica só se a decisão e as permissões o permitirem.
+- **API:** `GET /precificacao/candidatos` com filtros por estado; `POST /precificacao/candidatos/:id/aprovar` e `/recusar` (com motivo); `GET /precificacao/produtos/:id/historico`.
+- **Frontend:** separadores **Excepções** (fila com motivo, margem, impacto, aprovar/recusar) e **Histórico**, em `/precificacao`; histórico de preços no `ProductsTab`; o cartão HITL com o estado da decisão; o aviso (`Notificacao`, Fase 47) a quem aprova.
+- **Verificação:** specs do publicar (atómico, idempotente), do pedido e aprovação pela **mesma pessoa** (403), da chave repetida (**TC10**: uma só aplicação), do isolamento entre empresas (outra empresa → 404/403, como **T07-13**); um preço abaixo do custo pela MAYRA acaba na fila, não publicado.
+
+##### D7-3 — Piso nas promoções e aceite do preço no checkout (`feat/precificacao-checkout`)
+
+- **Promoções:** `CriarPromocaoUseCase` calcula o preço promocional contra o piso da política; abaixo do piso exige `precificacao.aprovar` e motivo, auditado. Continua a **não** alterar o preço regular (já o cumpre).
+- **Checkout:** o pedido aceita um `totalEsperado` opcional. Se o servidor recalcular um total diferente, responde **409 `checkout.preco_alterado`** com o novo total e as linhas. O frontend mostra a diferença e pede aceite; só então reenvia. **Campo opcional** para o backend poder ir primeiro sem partir o frontend antigo.
+- **Frontend:** página de checkout do Compra Fácil (a localizar na implementação) com o diálogo «O preço mudou».
+- **Verificação:** **T07-10** / **TC09** (preço mudou entre carrinho e confirmação → 409, nunca cobrança silenciosa), promoção abaixo do piso sem permissão (403), promoção a terminar com o regular alterado a meio (**TC05**: volta ao regular **vigente**).
+
+##### D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote (`feat/precificacao-custo`)
+
+- **Evento de custo:** quando a compra actualiza `Produto.precoCusto` (os dois pontos de `prisma-compra.repository.ts`), emite-se `custo.alterado` (`@nestjs/event-emitter`, como o `AuditLogListener`). O *handler* cria **candidatos**, nunca publica. Idempotente por `(produto, custo novo, documento de origem)` (**T07-12**).
+- **Alertas de erosão:** margem efectiva abaixo do piso → `Notificacao` para o Gestor. Informa, não publica.
+- **Simulação em lote:** «e se a margem da categoria fosse 30%?» sobre muitos produtos, sem gravar nada.
+- **Frontend:** separador **Candidatos** com o lote e as excepções isoladas (**T07-01**: 995 elegíveis e 5 excepções não bloqueiam as outras); ecrã de simulação em lote.
+- **Verificação:** evento duplicado produz um só candidato; custo tardio não reescreve preço histórico nem venda realizada.
+- **Limite conhecido:** o custo continua a ser o `precoCusto` mutável (sem versão), por isso a idempotência assenta no valor e no documento. O custo versionado é o primeiro item de «mais tarde».
+
+#### 5. Mapa para os requisitos do pacote
+
+| Fase | Requisitos P01–P70 | Testes do pacote |
+|---|---|---|
+| D7-0 | P02, P09 (parcial), P24 (promoções), P15 (preservar regular) | TC01, T07-02, T07-04 |
+| D7-1 | P01, P02, P04, P13 | T07-02, T07-04, TC01, TC06 |
+| D7-2 | P09, P11, P16, P34 | TC10, T07-05 (parcial), T07-13 |
+| D7-3 | P23, P24, P41 (parcial), P15 | T07-08, T07-10, TC05, TC09 |
+| D7-4 | P03, P08, P14, P13 | T07-01, T07-12, C-01, C-02 |
+
+Não cobertos nesta fatia (ficam em «mais tarde»): P05–P07 em parte (UOM, moeda, impostos), P10, P19, P22, P32 (publicação), P12, P28–P34 (B2B de venda), P35, P37–P45 (internacional), P46–P65 (serviços), P66–P70 (marketplace), P17, P18, P27 (optimização).
+
+#### 6. Mais tarde — fora do primeiro âmbito
+
+Cada linha é um item do backlog (Secção 3 → «Precificação (DT-07)»). Esperam por outro módulo ou por uma decisão que o pacote deixa em aberto.
+
+| Item | Porque espera | Depende de | Requisitos | O que já existe para reaproveitar |
+|---|---|---|---|---|
+| Custo económico versionado | Hoje o custo é um campo mutável; o pacote exige snapshot com versão, proveniência e finalidade | Contrato DT-06 (homologação condicionada) | P08, P20 | `Produto.precoCusto`, `Stock.custoMedio`, `VendaItem.precoCusto` |
+| Fiscalidade e câmbio | O sistema só tem `taxaIva` por produto e uma moeda | Contrato DT-11, sem documento oficial | P07, P21, P35, P69 | `taxaIva`, `PrecoArtigo.moeda` |
+| Frete, Incoterms e preço entregue | Só há entrega local por zonas e distância | Contrato DT-16, sem documento oficial | P37–P45 | `entrega/domain/calcular-taxa.ts` |
+| Publicação por destino com ACK | Só existe a loja online própria; sem POS nem marketplaces externos | Contrato DT-18 (checkout e publicação) | P10, P19, P22, P32 | `WebhookEnvio` (*outbox*), `WebhookEventoRecebido` |
+| Autorização fina e SoD completa | A D7-2 cobre só «quem pede não aprova» | Contrato DT-12 | P09, P34 | `Perfil`, `Permissao`, `RolesGuard` |
+| Preços B2B do lado da venda | Hoje só existe o lado de quem compra | Decisão de produto | P12, P28–P33 | `PrecoArtigo`, `escolherEscalao` |
+| Serviços | Não existe módulo de serviços, orçamentos nem avenças | Fronteira com «Operações de Serviços» (bloqueio B04) | P46–P65 | `PedidoCompraVersao` (padrão de versão aprovada) |
+| Marketplace e prestadores | Planos, publicidade e comparação de ofertas | Serviços, plataforma | P66–P70 | `Assinatura`, `compare-marketplace-prices.tool.ts` |
+| Rentabilidade prevista versus realizada | Exige DT-09 (realização) e DT-15 (contabilidade analítica) | Contratos DT-09 e DT-15 | P25, P55, P70 | `Venda.grossMargin`, `totalCogs` |
+| Optimização por procura e concorrência | Prioridade P2; nunca acima dos limites duros | Dados históricos reais | P17, P18, P27 | `risco-stock-promocao.ts`, módulo `procura` |
+| Precificação a partir de documentos | Factura ou catálogo a iniciar candidatos em lote | DT-03 e DT-04 | P03, P36, P57 | `CatalogoImportacao`, `FacturaFornecedor` |
+| Políticas por loja, canal e país | A D7-1 só tem empresa, categoria e produto | D7-1 estável, DT-11 | P06, P20 | `Loja`, `ZonaEntregaLoja` |
+
+#### 7. Dependências documentais do pacote (a devolver ao autor)
+
+O pacote tem inconsistências que **não bloqueiam** a D7-0 a D7-4, mas têm de ser resolvidas antes de qualquer item da secção 6:
+
+- `03_CONTRATOS_INTER_DT.csv` não inclui **DT-16 nem DT-18**, que são autoridade dos gates G07-05 e G07-07; o Mestre (INT-05, INT-07, INT-08) trata-os como críticos.
+- **DT-13** tem dois significados: «eventos, fiabilidade, idempotência» (CSV 03 e handoff 07) e «operação» (Mestre v5.7); a publicação e o ACK são do DT-18. A vista «Publicação por Destino» do handoff cita DT-13.
+- A adenda `06` conclui que `AUTO-APPROVED` tem 0 ocorrências por pesquisar com hífen; o Mestre usa `AUTO_APPROVED` (11 ocorrências). O critério de fecho do G07-06 tem de ser reescrito.
+- Vocabulário divergente para o mesmo estado: conflito de políticas (`BLOCK_POLICY_CONFLICT`, `POLICY_CONFLICT`, `REVIEW_REQUIRED`) e cotação incompleta (`QUOTE_REQUIRED`, `QUOTE_INCOMPLETE`, `REQUOTE`, `REQUOTE_REQUIRED`).
+- `02_RASTREABILIDADE_P01_P70.csv` carrega o mesmo estado e a mesma evidência nas 70 linhas, e os critérios do corpo histórico P01–P45 são modelos repetidos: o aceite individual (B02) não está feito.
+- Os anexos citados na capa do Mestre (`01_CRITERIOS…`, `02_BLOQUEIOS…`, `04_PARECER_FECHO…`) não correspondem aos nomes reais dos ficheiros da pasta.
+- Os pareceres são de 2026-10-23 e a pasta é de 14/11; não há evidência nova de aceites ou de fecho de gates desde então.
+
+#### 8. Riscos
+
+- **D7-0a recusa preços abaixo do custo**, incluindo liquidações que hoje alguém faça editando o produto. Mitigação: a liquidação com prazo é uma promoção (que já existe) e, a partir da D7-2, a excepção aprovada. Avisar o Gestor antes do deploy.
+- **D7-0b: promoções já sobrepostas** continuam a existir nos dados; a ordem determinística só evita a sorte, não decide o que o gestor queria. Listar antes do deploy e pedir-lhe que as corrija.
+- **Float → Decimal** toca em colunas lidas por POS, catálogo, compras, stock e relatórios, e é a parte de maior risco. O levantamento (secção 11) tirou-a do caminho da D7 e dividiu-a em fatias com critérios de fecho próprios; **não corre em simultâneo com as fases D7-1 a D7-4**.
+- **D7-2 muda um comportamento que o Gestor conhece** (preço grava-se na hora). Mitigação: a edição manual dentro das regras continua imediata; só passa por fila o que viola o piso.
+- **D7-3 e a ordem de deploy:** o `totalEsperado` opcional permite o backend ir primeiro; tornar obrigatório só quando o frontend novo estiver publicado.
+- **O pacote não está FROZEN.** Se a baseline mudar (por exemplo, a precedência por atributo da decisão D-01), a D7-1 e a D7-2 são as que mais mudam; D7-0 e D7-3 não dependem dela.
+- O frontend não tem testes de componentes: os ecrãs novos ficam cobertos por tipos e por testes de hooks e de *stores*, e têm de ser vistos no browser.
+
+#### 9. Perguntas em aberto
+
+- **P1 — Preço abaixo do custo na edição manual: recusar ou pedir confirmação?** Recomendação: recusar já (D7-0a) e passar a excepção aprovada na D7-2.
+- **P2 — Produto com `precoCusto = 0`** (custo desconhecido): a D7-0a não recusa (não há referência) e regista-o na auditoria. Confirmar.
+- **P3 — Limiar de autoaprovação (D10):** qual a variação máxima, face ao preço em vigor, que uma empresa deixa passar sozinha? Sem resposta, nada se autoaprova.
+- **P4 — Colisão de políticas:** `REVIEW_REQUIRED` (recomendado) ou bloqueio (D4)?
+- **P5 — Nome e fronteira do módulo:** `precificacao` novo (recomendado) ou evolução de `produto`/`promocao` (D1)?
+- **P6 — Quem recebe os alertas de erosão** (D7-4): só o perfil `Gestor`, ou também quem pediu o preço?
+
+#### 10. Verificação por fase
+
+- **D7-0:** preço abaixo do custo → 422 (edição e MAYRA); duas promoções sobrepostas → 409; `dinheiro.spec.ts` com 133,34.
+- **D7-1:** simular não grava nada; política em falta → `BLOCKED`; colisão → `REVIEW_REQUIRED`; Caixa sem acesso (403).
+- **D7-2:** publicar fecha a versão anterior na mesma transacção; quem pede não aprova; preço da MAYRA abaixo do custo acaba na fila.
+- **D7-3:** preço alterado no checkout → 409 e aceite; promoção abaixo do piso exige permissão.
+- **D7-4:** custo repetido → um só candidato; lote de 1000 com 5 excepções isoladas.
+- **Todas:** `nest build` e suite do backend; `tsc -b`, `vite build` e testes do frontend; ecrã visto no browser; `graphify update .` nos dois repositórios.
+
+#### 11. Levantamento Float → Decimal (D7-0d, feito em 2026-11-18)
+
+Levantado do código e do schema, sem alterar nada e **sem tocar na base de dados** (o `DATABASE_URL` local aponta para um Neon que pode ser produção). As contagens de ficheiros são **por nome de campo, não por modelo**: `precoCusto` e `taxaIva` existem também em `VendaItem`, `PedidoCompraItem` e outros, pelo que os números são um majorante.
+
+**Conclusão.** A migração das colunas existentes **não está no caminho crítico da D7**. O motor calcula em `Decimal` (`dinheiro.ts`), as tabelas novas (D7-1, D7-2) nascem em `Decimal`, e publicar um preço é `Number(decimal)` arredondado a 2 casas para `Produto.precoVenda`. A migração faz-se na mesma — soma exacta na base de dados, fim da deriva do custo médio, `CHECK` de valores — mas como **item próprio, em fatias, fora do caminho da D7**, porque tem as armadilhas de 11.2. O que tem de acontecer antes da D7-2 é a fatia F0 (preparação, sem alterar o schema).
+
+##### 11.1 O que existe
+
+- **~70 colunas monetárias em `Float`** (`SessaoCaixa`, `Venda`, `VendaItem`, `Pedido`, `PedidoItem`, `Produto`, `Stock`, `Lote`, `PrecoArtigo`, `PrecoFornecedor`, `PedidoCompraItem`, `FacturaFornecedor*`, `ZonaEntrega*`, `EntregaPedido`, `AcertoEstafeta`, …) e **21 em `Decimal`** (assinaturas, planos, CRM, `RegistroFinanceiro`, `ProcuraOnlineEvento`). As precisões já em uso são `(12,2)`, `(10,2)`, `(10,4)` e `(18,4)`.
+- A cadeia de preço da D7:
+
+| Campo | Ficheiros de produção (BE) | Specs (BE) | Frontend | Onde pesa mais |
+|---|---|---|---|---|
+| `precoCusto` | 28 | 11 | 6 | `ai-copilot` 8, `produto` 6, `inventory` 4, `compra` 4, `vendas` 3 |
+| `precoVenda` | 26 | 10 | 12 | `ai-copilot` 8, `produto` 6, `commerce` 4, `vendas` 3 |
+| `margemLucro` | 5 | 1 | 2 | `produto` 4 |
+| `taxaIva` | 27 | 11 | 11 | `compra` 12, `commerce` 5, `b2b` 4, `vendas` 3, `produto` 3 |
+| `percentualDesconto` | 8 | 3 | 4 | `promocao` 6 |
+| `PrecoArtigo` / `PrecoFornecedor` (`.preco`) | `b2b` 5, `fornecedor` 2 | — | — | `b2b` |
+
+Também escrevem estas colunas 4 *seeds* (`prisma/seed*.ts`) e 2 scripts (`repor-ambiente-testes.ts`, `smoke-b2b.ts`); o Prisma aceita `number` numa coluna `Decimal`, pelo que as escritas não partem.
+
+##### 11.2 As armadilhas (verificadas)
+
+- **A1 — O JSON de um `Decimal` é texto.** `JSON.stringify({preco: new Prisma.Decimal('60.5')})` dá `{"preco":"60.5"}`. Não há nenhum serializador global de `Decimal`, e muitos controladores devolvem a entidade do Prisma tal como vem (`UpdateProdutoUseCase` devolve o produto). Cada campo migrado passaria de `60.5` a `"60.5"` **sem erro de compilação** no frontend, que os tipa como `number` (`z.coerce.number()` no formulário esconde-o; `.toFixed()` num texto rebenta).
+- **A2 — Os operadores mentem.** `new Prisma.Decimal('60.5') + 1` dá `"60.51"` (concatenação), e `>` compara como texto. O `tsc` apanha-o quando o tipo é `Decimal`, **mas não em `any`** (há `updateData: any` em `update-produto.use-case.ts`) **nem em SQL cru**. E `!==` entre dois `Decimal` compara referências: `update-produto.use-case.ts:113-116` (a auditoria) passaria a registar uma alteração em todas as gravações, e o piso da D7-0a (`dto.precoVenda !== produtoAtual.precoVenda`) passaria a disparar em todas as edições, impedindo renomear um produto já abaixo do custo. O `tsc` assinala as duas comparações (número contra `Decimal`); têm de passar a `.equals(...)`.
+- **A3 — SQL cru com tipos escritos à mão.** `prisma-venda.repository.ts:152-158` e `get-low-stock.tool.ts:39-46` declaram `precoVenda: number`, `precoCusto: number`, `taxaIva: number` no genérico de `$queryRaw`. Com colunas `numeric` o driver devolve `Decimal` e o tipo **mente** em tempo de execução, sem o `tsc` dar por isso. `consultar-procura.use-case.ts` já faz o mesmo com `ProcuraOnlineEvento.valor`, que **já é `Decimal(12,2)`** — **a verificar** se converte o valor (não foi verificado).
+- **A4 — Os custos não cabem em 2 casas.** O custo médio ponderado (`compra/domain/custo-medio.ts`) devolve um `number` **sem arredondar** e é gravado em `Stock.custoMedio` e `Produto.precoCusto` (dois pontos de `prisma-compra.repository.ts`). Converter para `Decimal(12,2)` arredondaria os custos que já existem e o erro entraria no cálculo seguinte da média. Os custos precisam de pelo menos 4 casas, e a política de arredondamento ao gravar a média tem de ser decidida. As vendas passadas não mudam: `VendaItem.precoCusto` é um *snapshot* à parte.
+- **A5 — A auditoria muda de formato.** O `AuditLog` guarda `precoCusto` e `precoVenda` em JSON. Depois da migração (e sem conversão) passam a texto: o histórico fica com dois formatos, e o ecrã de auditoria tem de os aceitar.
+- **A6 — O frontend calcula totais em `number`** (`posStore.ts`, `useCarrinhoStore.ts`). Fica fora do âmbito: o servidor continua a ser a fonte da verdade (o checkout recalcula tudo).
+
+##### 11.3 Estratégia recomendada
+
+1. **O contrato JSON mantém-se `number`**, com a conversão explícita no limite da API. Assim o frontend não muda e **não há ordem de deploy** a respeitar. O mecanismo está em aberto (P7): **(a)** um conversor por resposta nos módulos migrados — explícito e testável; **(b)** um interceptor global que converte `Decimal` em `number` — muda também as 21 colunas que já são `Decimal` (hoje saem como texto, e o frontend já as tipa `number`, o que provavelmente corrige, mas tem de se confirmar ecrã a ecrã). *Recomendação:* **(a)** na fatia piloto; avaliar **(b)** só depois.
+2. **Uma fatia de cada vez.** Cada fatia é: migração (`ALTER COLUMN … TYPE numeric(p,s) USING round(col::numeric, s)`) + schema + código guiado pelo `tsc` + SQL cru revisto **à mão** + specs + contrato JSON inalterado.
+3. **Ensaiar na base de testes de migrações** (`DATABASE_URL_TESTE`, `srg_core_migracoes_teste`) e correr a auditoria de 11.5 **antes e depois**. Em produção, ponto de restauro antes de cada fatia.
+
+##### 11.4 Fatias, por ordem de risco
+
+Precisões **propostas**, a confirmar com a auditoria de 11.5.
+
+| Fatia | O quê | Precisão | Toca (aprox.) | Risco | Quando |
+|---|---|---|---|---|---|
+| **F0 — Preparação** (sem schema) | Auditoria de precisão (11.5); converter à mão os dois `$queryRaw` de A3 para `Number(...)`/`dinheiroDeFloat`; decidir o mecanismo (P7) | — | 3 ficheiros | Baixo | **Antes da D7-2** |
+| **F1 — Desconto** | `Promocao.percentualDesconto`; `calcularPrecoComDesconto` passa a `dinheiro.ts` | `(5,2)` | `promocao` 6, `commerce` 1, `ai-copilot` 1; FE 4 | Baixo | Piloto do mecanismo |
+| **F2 — Custo e preço do produto** | `Produto.precoCusto`, `precoVenda`, `margemLucro`; `Stock.custoMedio`; `Lote.custoUnitario` | custos `(14,4)`; `precoVenda` `(14,2)`; `margemLucro` `(9,4)` | ~35 ficheiros BE, ~12 specs; FE 12 | **Alto** | Depois da D7-2 |
+| **F3 — IVA** | `Produto.taxaIva` e as colunas `taxaIva` de linhas (`VendaItem`, `PedidoCompraItem`, `FacturaFornecedorLinha`) | `(5,2)` | `compra` 12, `commerce` 5, `b2b` 4, `vendas` 3 | Médio | Depois da F2 |
+| **F4 — Preços de fornecedor** | `PrecoArtigo.preco`, `PrecoFornecedor.preco`, `ProdutoFornecedor.custoCompra`, `ConfirmacaoFornecedorLinha.precoConfirmado` | `(14,4)` | `b2b` 5, `fornecedor` 2 | Médio | Independente |
+| **F5 — Documentos e totais** | `Venda*`, `Pedido*`, caixa, compras, facturas, RH, entregas (dezenas de colunas) | `(14,2)` | muito alto (históricos, DRE, caixa, SQL cru) | **Muito alto** | **Fora da D7**: projecto próprio |
+
+##### 11.5 Auditoria de precisão (só leitura, por correr)
+
+Corre-se na base certa antes da F0/F2 e diz quantos valores perderiam informação com cada precisão. **Não foi corrida.**
+
+```sql
+SELECT 'produtos.precoCusto' AS coluna, count(*) AS linhas,
+       count(*) FILTER (WHERE "precoCusto"::numeric <> round("precoCusto"::numeric, 4)) AS acima_de_4_casas,
+       count(*) FILTER (WHERE "precoCusto"::numeric <> round("precoCusto"::numeric, 2)) AS acima_de_2_casas,
+       max("precoCusto") AS maximo
+FROM produtos
+UNION ALL
+SELECT 'produtos.precoVenda', count(*),
+       count(*) FILTER (WHERE "precoVenda"::numeric <> round("precoVenda"::numeric, 4)),
+       count(*) FILTER (WHERE "precoVenda"::numeric <> round("precoVenda"::numeric, 2)),
+       max("precoVenda")
+FROM produtos
+UNION ALL
+SELECT 'stocks.custoMedio', count(*),
+       count(*) FILTER (WHERE "custoMedio"::numeric <> round("custoMedio"::numeric, 4)),
+       count(*) FILTER (WHERE "custoMedio"::numeric <> round("custoMedio"::numeric, 2)),
+       max("custoMedio")
+FROM stocks
+UNION ALL
+SELECT 'promocoes.percentualDesconto', count(*),
+       count(*) FILTER (WHERE "percentualDesconto"::numeric <> round("percentualDesconto"::numeric, 4)),
+       count(*) FILTER (WHERE "percentualDesconto"::numeric <> round("percentualDesconto"::numeric, 2)),
+       max("percentualDesconto")
+FROM promocoes;
+```
+
+Esperado: `acima_de_2_casas` alto em `stocks.custoMedio` (A4); perto de zero em `precoVenda` e `percentualDesconto`. Se `acima_de_4_casas` não for zero nos custos, a precisão `(14,4)` já perde informação e a política de arredondamento do custo médio passa a ser decisão obrigatória.
+
+##### 11.6 Critério de fecho de cada fatia
+
+Migração aplicada na base de testes e auditoria igual antes e depois; zero erros novos no `tsc` (e **nenhum `any` novo** a esconder uma comparação); SQL cru revisto à mão; suites do backend a passar; um spec a provar que o JSON dos endpoints da fatia continua `number`; `AuditLog` legível nos dois formatos; frontend sem alterações.
+
+##### 11.7 Perguntas em aberto deste levantamento
+
+- **P7 — Mecanismo do limite da API:** conversor por resposta (a, recomendado para a fatia piloto) ou interceptor global (b)?
+- **P8 — Precisões de 11.4**, depois de correr a auditoria. E a **política de arredondamento do custo médio** ao gravar (A4): 4 casas?
+- **P9 — Calendário:** a F0 antes da D7-2 (recomendado) e a F1 como piloto; F2 depois da D7-2; F3 e F4 quando houver apetência; F5 só como projecto próprio.
 
 ## 5. Convenção para novas entradas
 

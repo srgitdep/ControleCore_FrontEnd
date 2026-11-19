@@ -34,6 +34,7 @@ import type lojaGestao from '../locales/pt/lojaGestao.json';
 import type copiloto from '../locales/pt/copiloto.json';
 import type shell from '../locales/pt/shell.json';
 import type promocoes from '../locales/pt/promocoes.json';
+import type precificacao from '../locales/pt/precificacao.json';
 import type entrega from '../locales/pt/entrega.json';
 import type procura from '../locales/pt/procura.json';
 import type estafeta from '../locales/pt/estafeta.json';
@@ -81,6 +82,7 @@ declare module 'i18next' {
       copiloto: typeof copiloto;
       shell: typeof shell;
       promocoes: typeof promocoes;
+      precificacao: typeof precificacao;
       entrega: typeof entrega;
       procura: typeof procura;
       estafeta: typeof estafeta;
