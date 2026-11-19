@@ -48,6 +48,9 @@
       "falhada": "{{numeroPedido}}：配送失败。",
       "devolvida": "{{numeroPedido}}：已退回门店。",
       "sem_estafeta": "{{numeroPedido}}：{{minutos}} 分钟过去了仍没有配送员。仍在继续寻找。"
+    },
+    "preco": {
+      "pendente": "价格待批准：{{produto}}，{{preco}} MT。"
     }
   },
   "ESTAFETA": {

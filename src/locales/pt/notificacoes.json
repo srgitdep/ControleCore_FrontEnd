@@ -49,6 +49,9 @@
       "falhada": "{{numeroPedido}}: não foi possível entregar.",
       "devolvida": "{{numeroPedido}}: devolvida à loja.",
       "sem_estafeta": "{{numeroPedido}}: ainda sem estafeta ao fim de {{minutos}} minutos. A procura continua."
+    },
+    "preco": {
+      "pendente": "Preço pendente de aprovação: {{produto}} a {{preco}} MT."
     }
   },
   "ESTAFETA": {

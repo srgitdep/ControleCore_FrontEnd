@@ -77,6 +77,16 @@ describe('textoDaNotificacao — a frase na língua de quem lê', () => {
     expect(textoDaNotificacao(n, criarT(pt))).toBe('PED-9: ainda sem estafeta ao fim de 10 minutos. A procura continua.');
   });
 
+  it('a gestão é avisada de um preço pendente de aprovação (precificação)', () => {
+    const n = N({
+      destinatarioTipo: 'FUNCIONARIO',
+      tipo: 'preco.pendente',
+      parametros: { produto: 'Arroz Agulha 5 kg', preco: '80.00' },
+    });
+
+    expect(textoDaNotificacao(n, criarT(pt))).toBe('Preço pendente de aprovação: Arroz Agulha 5 kg a 80.00 MT.');
+  });
+
   it('🔴 um tipo que o catálogo não conhece NUNCA mostra a chave crua: cai numa frase genérica', () => {
     const texto = textoDaNotificacao(N({ tipo: 'entrega.xpto' }), criarT(pt));
 
@@ -87,7 +97,7 @@ describe('textoDaNotificacao — a frase na língua de quem lê', () => {
   it('cada tipo que o servidor pode emitir tem frase em português E em inglês (paridade com o backend)', () => {
     const tipos: Array<[Notificacao['destinatarioTipo'], string]> = [
       ...['pedido.recebido', 'pedido.confirmado', 'pedido.em_preparacao', 'pedido.expedido', 'pedido.cancelado', 'pedido.entregue', 'entrega.estafeta_atribuido', 'entrega.recolhida', 'entrega.em_rota', 'entrega.chegou', 'entrega.falhada'].map((t) => ['CLIENTE', t] as [Notificacao['destinatarioTipo'], string]),
-      ...['pedido.novo', 'entrega.atribuida', 'entrega.recolhida', 'entrega.em_rota', 'entrega.chegou', 'entrega.entregue', 'entrega.falhada', 'entrega.devolvida'].map((t) => ['FUNCIONARIO', t] as [Notificacao['destinatarioTipo'], string]),
+      ...['pedido.novo', 'entrega.atribuida', 'entrega.recolhida', 'entrega.em_rota', 'entrega.chegou', 'entrega.entregue', 'entrega.falhada', 'entrega.devolvida', 'preco.pendente'].map((t) => ['FUNCIONARIO', t] as [Notificacao['destinatarioTipo'], string]),
       ...['entrega.nova', 'entrega.retirada'].map((t) => ['ESTAFETA', t] as [Notificacao['destinatarioTipo'], string]),
     ];
     for (const [dest, tipo] of tipos) {
@@ -117,6 +127,10 @@ describe('destinoDaNotificacao — para onde leva', () => {
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'pedido.novo' }))).toBe('/commerce/pedidos');
     expect(destinoDaNotificacao(N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'entrega.em_rota' }))).toBe('/entregas');
   });
+
+  it('um preço pendente leva à fila de excepções da precificação', () => {
+    expect(destinoDaNotificacao(N({ destinatarioTipo: 'FUNCIONARIO', tipo: 'preco.pendente' }))).toBe('/precificacao?tab=excecoes');
+  });
 });
 
 describe('eUrgente — o que merece um aviso passageiro', () => {
@@ -128,6 +142,7 @@ describe('eUrgente — o que merece um aviso passageiro', () => {
     ['FUNCIONARIO', 'entrega.sem_estafeta', true],
     ['FUNCIONARIO', 'entrega.falhada', true],
     ['FUNCIONARIO', 'pedido.novo', true],
+    ['FUNCIONARIO', 'preco.pendente', true],
     ['CLIENTE', 'pedido.confirmado', false],
     ['FUNCIONARIO', 'entrega.em_rota', false],
   ] as const)('%s %s → %s', (destinatarioTipo, tipo, esperado) => {
