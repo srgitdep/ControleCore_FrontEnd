@@ -2,7 +2,9 @@
   "titulo": "Pricing",
   "separador": {
     "politicas": "Policies",
-    "simulacao": "Simulation"
+    "simulacao": "Simulation",
+    "excecoes": "Exceptions",
+    "historico": "History"
   },
   "formulario": {
     "titulo": "New policy",
@@ -63,9 +65,47 @@
       "quando": "When"
     }
   },
+  "excecoes": {
+    "descricao": "Prices that could not auto-approve and are waiting for a decision.",
+    "vazio": "No prices pending a decision.",
+    "aprovar": "Approve",
+    "recusar": "Reject",
+    "confirmar_recusa": "Confirm",
+    "motivo_placeholder": "Reason for rejection",
+    "origem": {
+      "SIMULACAO": "Simulation",
+      "POLITICA": "Policy",
+      "MANUAL": "Manual",
+      "MAYRA": "MAYRA"
+    },
+    "tabela": {
+      "produto": "Product",
+      "preco_actual": "Current price",
+      "preco_proposto": "Proposed price",
+      "margem_efectiva": "Effective margin",
+      "origem": "Origin",
+      "motivo": "Reason"
+    }
+  },
+  "historico": {
+    "escolha_produto": "Choose a product to see its price history.",
+    "vazio": "This product has no price history yet.",
+    "em_vigor": "in effect",
+    "tabela": {
+      "preco": "Price",
+      "vigencia": "In effect",
+      "margem_efectiva": "Effective margin",
+      "origem": "Origin",
+      "decidido_por": "Decided by"
+    }
+  },
   "mensagens": {
     "politica_criada": "Policy created.",
     "erro_criar_politica": "Could not create the policy.",
-    "erro_simular": "Could not simulate the price."
+    "erro_simular": "Could not simulate the price.",
+    "candidato_aprovado": "Price approved and published.",
+    "candidato_recusado": "Price rejected.",
+    "erro_aprovar": "Could not approve the price.",
+    "erro_recusar": "Could not reject the price."
   }
 }

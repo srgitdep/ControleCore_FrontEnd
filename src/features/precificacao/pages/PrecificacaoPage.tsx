@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Loader2, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Check, Loader2, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatData, formatMoeda } from '@/shared/utils';
 import { useCategories, useProducts } from '@/features/produtos';
 import {
+  useAprovarCandidato,
   useCandidatosPreco,
   useCriarPoliticaPreco,
+  useFilaDeExcecoes,
+  useHistoricoDeProduto,
   usePoliticasPreco,
+  useRecusarCandidato,
   useSimularPreco,
 } from '../hooks/usePrecificacao';
-import type { DecisaoCandidatoPreco, EscopoPoliticaPreco } from '../types';
+import type { CandidatoPreco, DecisaoCandidatoPreco, EscopoPoliticaPreco } from '../types';
 
 const CORES_DECISAO: Record<DecisaoCandidatoPreco, string> = {
   AUTO_APPROVED: 'bg-emerald-100 text-emerald-700',
@@ -341,32 +346,245 @@ function SeparadorSimulacao() {
   );
 }
 
+function MotivosDoCandidato({ candidato }: { candidato: CandidatoPreco }) {
+  const { t } = useTranslation('precificacao');
+  if (candidato.motivos.length === 0) return null;
+  return (
+    <p className="mt-1 text-xs text-slate-400">
+      {candidato.motivos.map((motivo) => t(`simulacao.motivo.${motivo}`, motivo)).join(', ')}
+    </p>
+  );
+}
+
+/**
+ * A fila de preços que não puderam autoaprovar: abaixo do custo, fora do piso da política,
+ * ou sem política elegível. Quem pediu o preço não aparece como podendo aprová-lo aqui —
+ * o servidor recusa-o (403) se tentar, por isso nem se mostra o botão a essa pessoa.
+ */
+function SeparadorExcecoes() {
+  const { t } = useTranslation('precificacao');
+  const { data: candidatos, isLoading } = useFilaDeExcecoes();
+  const aprovar = useAprovarCandidato();
+  const recusar = useRecusarCandidato();
+  const [aRecusar, setARecusar] = useState<string | null>(null);
+  const [motivo, setMotivo] = useState('');
+
+  const confirmarRecusa = (id: string) => {
+    if (!motivo.trim()) return;
+    recusar.mutate({ id, motivo: motivo.trim() }, { onSuccess: () => setARecusar(null) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-500">{t('excecoes.descricao')}</p>
+
+      <div className="rounded-xl border border-slate-200 bg-white">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={20} className="animate-spin text-slate-400" />
+          </div>
+        ) : candidatos && candidatos.length > 0 ? (
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+              <tr>
+                <th className="px-4 py-3">{t('excecoes.tabela.produto')}</th>
+                <th className="px-4 py-3">{t('excecoes.tabela.preco_actual')}</th>
+                <th className="px-4 py-3">{t('excecoes.tabela.preco_proposto')}</th>
+                <th className="px-4 py-3">{t('excecoes.tabela.margem_efectiva')}</th>
+                <th className="px-4 py-3">{t('excecoes.tabela.origem')}</th>
+                <th className="px-4 py-3">{t('excecoes.tabela.motivo')}</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {candidatos.map((candidato) => (
+                <tr key={candidato.id} className="border-b border-slate-50 last:border-0 align-top">
+                  <td className="px-4 py-3">{candidato.produto?.nome ?? '—'}</td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {candidato.precoActual != null ? formatMoeda(candidato.precoActual) : '—'}
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {candidato.preco != null ? formatMoeda(candidato.preco) : '—'}
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {candidato.margemEfectiva != null
+                      ? formatPercentagem(candidato.margemEfectiva)
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3">{t(`excecoes.origem.${candidato.origem}`)}</td>
+                  <td className="px-4 py-3"><MotivosDoCandidato candidato={candidato} /></td>
+                  <td className="px-4 py-3">
+                    {aRecusar === candidato.id ? (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input
+                          autoFocus
+                          value={motivo}
+                          onChange={(e) => setMotivo(e.target.value)}
+                          placeholder={t('excecoes.motivo_placeholder')}
+                          className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => confirmarRecusa(candidato.id)}
+                            disabled={recusar.isPending || !motivo.trim()}
+                            className="rounded-lg bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                          >
+                            {t('excecoes.confirmar_recusa')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setARecusar(null)}
+                            className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                          >
+                            {t('formulario.fechar')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => aprovar.mutate(candidato.id)}
+                          disabled={aprovar.isPending}
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          <Check size={13} />
+                          {t('excecoes.aprovar')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setARecusar(candidato.id);
+                            setMotivo('');
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                        >
+                          <X size={13} />
+                          {t('excecoes.recusar')}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="px-4 py-10 text-center text-sm text-slate-400">{t('excecoes.vazio')}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** O histórico de um produto: cada preço que esteve em vigor, com quem o aprovou e porquê. */
+function SeparadorHistorico() {
+  const { t } = useTranslation('precificacao');
+  const { data: produtosPagina } = useProducts({ limit: 100 });
+  const [produtoId, setProdutoId] = useState('');
+  const { data: historico, isLoading } = useHistoricoDeProduto(produtoId || undefined);
+
+  const produtos = produtosPagina?.data ?? [];
+
+  return (
+    <div className="space-y-4">
+      <label className="flex flex-col gap-1 text-sm">
+        {t('simulacao.produto')}
+        <select
+          value={produtoId}
+          onChange={(e) => setProdutoId(e.target.value)}
+          className="max-w-md rounded-lg border border-slate-200 px-3 py-2"
+        >
+          <option value="">{t('formulario.escolher')}</option>
+          {produtos.map((produto: { id: string; nome: string }) => (
+            <option key={produto.id} value={produto.id}>{produto.nome}</option>
+          ))}
+        </select>
+      </label>
+
+      <div className="rounded-xl border border-slate-200 bg-white">
+        {!produtoId ? (
+          <p className="px-4 py-10 text-center text-sm text-slate-400">{t('historico.escolha_produto')}</p>
+        ) : isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={20} className="animate-spin text-slate-400" />
+          </div>
+        ) : historico && historico.length > 0 ? (
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+              <tr>
+                <th className="px-4 py-3">{t('historico.tabela.preco')}</th>
+                <th className="px-4 py-3">{t('historico.tabela.vigencia')}</th>
+                <th className="px-4 py-3">{t('historico.tabela.margem_efectiva')}</th>
+                <th className="px-4 py-3">{t('historico.tabela.origem')}</th>
+                <th className="px-4 py-3">{t('historico.tabela.decidido_por')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historico.map((versao) => (
+                <tr key={versao.id} className="border-b border-slate-50 last:border-0">
+                  <td className="px-4 py-3 font-semibold tabular-nums">{formatMoeda(versao.preco)}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    {formatData(versao.vigenteDe)}
+                    {versao.vigenteAte ? ` — ${formatData(versao.vigenteAte)}` : ` (${t('historico.em_vigor')})`}
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {versao.candidato.margemEfectiva != null
+                      ? formatPercentagem(versao.candidato.margemEfectiva)
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3">{t(`excecoes.origem.${versao.candidato.origem}`)}</td>
+                  <td className="px-4 py-3 text-slate-500">{versao.candidato.decididoPor?.name ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="px-4 py-10 text-center text-sm text-slate-400">{t('historico.vazio')}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const SEPARADORES = ['politicas', 'simulacao', 'excecoes', 'historico'] as const;
+type Separador = (typeof SEPARADORES)[number];
+
 export function PrecificacaoPage() {
   const { t } = useTranslation('precificacao');
-  const [separador, setSeparador] = useState<'politicas' | 'simulacao'>('politicas');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // A notificação de um preço pendente leva a ?tab=excecoes; um valor inválido ou ausente
+  // cai nas políticas, o separador de leitura.
+  const doUrl = searchParams.get('tab');
+  const separador: Separador = SEPARADORES.includes(doUrl as Separador)
+    ? (doUrl as Separador)
+    : 'politicas';
+
+  const mudarSeparador = (novo: Separador) => setSearchParams({ tab: novo }, { replace: true });
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <h1 className="text-lg font-bold text-slate-900">{t('titulo')}</h1>
 
-      <div className="flex gap-2 border-b border-slate-200">
-        <button
-          type="button"
-          onClick={() => setSeparador('politicas')}
-          className={`px-3 py-2 text-sm font-semibold ${separador === 'politicas' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500'}`}
-        >
-          {t('separador.politicas')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setSeparador('simulacao')}
-          className={`px-3 py-2 text-sm font-semibold ${separador === 'simulacao' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500'}`}
-        >
-          {t('separador.simulacao')}
-        </button>
+      <div className="flex gap-2 overflow-x-auto border-b border-slate-200">
+        {SEPARADORES.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => mudarSeparador(s)}
+            className={`shrink-0 px-3 py-2 text-sm font-semibold ${separador === s ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500'}`}
+          >
+            {t(`separador.${s}`)}
+          </button>
+        ))}
       </div>
 
-      {separador === 'politicas' ? <SeparadorPoliticas /> : <SeparadorSimulacao />}
+      {separador === 'politicas' && <SeparadorPoliticas />}
+      {separador === 'simulacao' && <SeparadorSimulacao />}
+      {separador === 'excecoes' && <SeparadorExcecoes />}
+      {separador === 'historico' && <SeparadorHistorico />}
     </div>
   );
 }

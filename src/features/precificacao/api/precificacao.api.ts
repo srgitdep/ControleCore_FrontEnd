@@ -2,7 +2,10 @@ import { api } from '@/shared/config';
 import type {
   CandidatoPreco,
   CriarPoliticaPrecoPayload,
+  EstadoCandidatoPreco,
   PoliticaPreco,
+  PrecoVersaoHistorico,
+  RecusarPrecoPayload,
   SimularPrecoPayload,
 } from '../types';
 
@@ -24,10 +27,27 @@ export const precificacaoApi = {
     return data;
   },
 
-  listarCandidatos: async (produtoId?: string) => {
+  listarCandidatos: async (produtoId?: string, estado?: EstadoCandidatoPreco) => {
     const { data } = await api.get<CandidatoPreco[]>(`${BASE}/candidatos`, {
-      params: produtoId ? { produtoId } : undefined,
+      params: { produtoId, estado },
     });
+    return data;
+  },
+
+  aprovarCandidato: async (id: string) => {
+    const { data } = await api.post<unknown>(`${BASE}/candidatos/${id}/aprovar`);
+    return data;
+  },
+
+  recusarCandidato: async (id: string, payload: RecusarPrecoPayload) => {
+    const { data } = await api.post<CandidatoPreco>(`${BASE}/candidatos/${id}/recusar`, payload);
+    return data;
+  },
+
+  historicoDoProduto: async (produtoId: string) => {
+    const { data } = await api.get<PrecoVersaoHistorico[]>(
+      `${BASE}/produtos/${produtoId}/historico`,
+    );
     return data;
   },
 };
