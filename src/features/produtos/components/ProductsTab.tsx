@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Importado do módulo directo, e não do barrel `@/features/produtos`: o barrel passa a
 // exportar este componente, e importar dele aqui fecharia um ciclo.
@@ -73,14 +73,24 @@ export function ProductsTab() {
         header: t('lista.col_produto'),
         cell: (info) => {
           const product = info.row.original;
+          const foto = product.imagens?.[0]?.url || product.imagemUrl;
           return (
-            <div>
-              <div className="font-medium text-slate-900">{product.nome}</div>
-              {product.codigoBarras && (
-                <div className="mt-0.5 font-mono text-xs text-slate-500">
-                  EAN: {product.codigoBarras}
-                </div>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                {foto ? (
+                  <img src={foto} alt="" loading="lazy" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon size={16} className="text-slate-300" />
+                )}
+              </div>
+              <div>
+                <div className="font-medium text-slate-900">{product.nome}</div>
+                {product.codigoBarras && (
+                  <div className="mt-0.5 font-mono text-xs text-slate-500">
+                    EAN: {product.codigoBarras}
+                  </div>
+                )}
+              </div>
             </div>
           );
         },

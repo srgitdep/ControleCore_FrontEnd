@@ -89,6 +89,9 @@
     "erro_guardar": "Erro ao guardar o stock mínimo."
   },
   "imagem": {
+    "pendentes_falharam": "Falharam {{count}} imagem(ns) ao carregar — adicione-as editando o produto.",
+    "ficheiro_invalido": "O ficheiro «{{nome}}» não é JPEG/PNG/WEBP ou excede 5MB.",
+    "pendentes_nota": "A primeira é a principal; são enviadas ao guardar o produto.",
     "titulo": "Imagens do produto",
     "a_carregar": "A carregar...",
     "substituir": "Substituir imagem",

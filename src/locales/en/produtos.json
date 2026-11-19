@@ -89,6 +89,9 @@
     "erro_guardar": "Error saving the minimum stock."
   },
   "imagem": {
+    "pendentes_falharam": "{{count}} image(s) failed to upload — add them by editing the product.",
+    "ficheiro_invalido": "File “{{nome}}” is not JPEG/PNG/WEBP or exceeds 5MB.",
+    "pendentes_nota": "The first is the main one; they are uploaded when the product is saved.",
     "titulo": "Product images",
     "a_carregar": "Uploading...",
     "substituir": "Replace image",
