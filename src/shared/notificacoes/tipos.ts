@@ -16,6 +16,9 @@ export interface ParametrosDaNotificacao {
   distanciaMetros?: number;
   /** Há quantos minutos a entrega espera por um estafeta. */
   minutos?: number;
+  /** O produto e o preço proposto de uma notificação `preco.pendente` (precificação). */
+  produto?: string;
+  preco?: string;
 }
 
 export interface Notificacao {

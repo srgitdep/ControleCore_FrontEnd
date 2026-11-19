@@ -116,6 +116,19 @@
     "a_carregar_ledger": "Loading ledger...",
     "sem_movimentos": "No movements recorded for this stock."
   },
+  "retificar": {
+    "titulo": "Correct quantity",
+    "aviso": "Enter the correct quantity. An adjustment is recorded in the history with your name and the reason — the balance is not simply overwritten.",
+    "quantidade_actual": "Current quantity",
+    "quantidade_certa": "Correct quantity *",
+    "diferenca": "Difference: {{n}}",
+    "motivo": "Reason for the correction *",
+    "motivo_exemplo": "E.g. typing mistake when entering the receipt",
+    "ver_historico": "View movement history",
+    "confirmar": "Correct",
+    "registada": "Quantity corrected. The adjustment is in the history.",
+    "selo": "Correction"
+  },
   "modal_mov": {
     "titulo_in": "Goods In",
     "titulo_out": "Goods Out",

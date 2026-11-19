@@ -16,6 +16,7 @@ export * from './hooks/useInventory';
 export * from './hooks/useSaudeStock';
 export * from './hooks/useReservas';
 export * from './hooks/useDistribuicao';
+export * from './hooks/usePodeGerirStock';
 
 // Export Pages & Components
 export * from './pages/StockListPage';
@@ -29,3 +30,4 @@ export * from './components/RetencaoModal';
 export * from './components/FefoModal';
 export * from './components/LocalizacaoStockModal';
 export * from './components/MovementModals';
+export * from './components/RetificarQuantidadeModal';

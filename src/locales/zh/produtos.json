@@ -82,6 +82,8 @@
     "intro": "补货点按仓库设置。低于它，商品就会进入预警和采购建议。零表示“未设置最低库存”。",
     "col_armazem": "仓库",
     "col_saldo": "结余",
+    "retificar": "更正",
+    "retificar_titulo": "更正数量（记入历史）",
     "col_minimo": "最低",
     "inactivo": "已停用",
     "negativo": "最低库存不能为负数。",

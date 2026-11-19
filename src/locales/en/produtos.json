@@ -82,6 +82,8 @@
     "intro": "The reorder point is per warehouse. Below it the product triggers alerts and purchase suggestions. Zero means \"no minimum set\".",
     "col_armazem": "Warehouse",
     "col_saldo": "Balance",
+    "retificar": "Correct",
+    "retificar_titulo": "Correct the quantity (recorded in the history)",
     "col_minimo": "Minimum",
     "inactivo": "inactive",
     "negativo": "The minimum stock cannot be negative.",

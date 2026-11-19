@@ -111,6 +111,19 @@
     "a_carregar_ledger": "正在加载明细账……",
     "sem_movimentos": "该库存没有登记任何变动。"
   },
+  "retificar": {
+    "titulo": "更正数量",
+    "aviso": "请填写正确的数量。系统会在历史记录中登记一次调整（含您的姓名和原因）——余额不会被直接覆盖。",
+    "quantidade_actual": "当前数量",
+    "quantidade_certa": "正确数量 *",
+    "diferenca": "差额：{{n}}",
+    "motivo": "更正原因 *",
+    "motivo_exemplo": "例如：录入入库时输错数字",
+    "ver_historico": "查看库存变动历史",
+    "confirmar": "更正",
+    "registada": "数量已更正，调整已记入历史。",
+    "selo": "更正"
+  },
   "modal_mov": {
     "titulo_in": "货物入库",
     "titulo_out": "货物出库",
