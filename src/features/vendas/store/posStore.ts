@@ -1,6 +1,8 @@
 ﻿import { create } from 'zustand';
 import i18n from '@/i18n';
 import type { Product } from '@/features/produtos';
+// Directo, e não do barrel: uma store não deve puxar páginas e modais do módulo de produtos.
+import { urlImagemProduto } from '@/features/produtos/utils/imagem';
 import type { Cliente } from '@/features/crm';
 
 // ──â”€ Types ────────────────────────────────────────────────────────────────â”€
@@ -177,7 +179,7 @@ export const usePosStore = create<POSState>((set, get) => ({
           {
             id: product.id,
             nome: product.nome,
-            imagemUrl: product.imagemUrl,
+            imagemUrl: urlImagemProduto(product),
             precoVenda: product.precoVenda,
             taxaIva: product.taxaIva,
             cartQuantity: quantity,

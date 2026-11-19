@@ -3,6 +3,7 @@ export * from './api/catalog.api';
 
 // Export Types
 export * from './types';
+export { urlImagemProduto } from './utils/imagem';
 
 // Export Hooks
 export * from './hooks/useCatalog';
