@@ -111,6 +111,12 @@
     "nome_exemplo": "E.g. João Silva",
     "email": "Email *",
     "perfil": "Access Role *",
+    "cargo": "Job role *",
+    "cargo_ajuda": "What the person does. Sets the default permission profile.",
+    "perfil_permissoes": "Permission profile",
+    "perfil_do_cargo": "The job role's",
+    "perfil_de_sistema": "System",
+    "perfil_permissoes_ajuda": "Leave \"The job role's\" to use the usual permissions. Company profiles are created in Permissions.",
     "perfil_opcao": {
       "USER": "General Employee",
       "CASHIER": "Till Operator",

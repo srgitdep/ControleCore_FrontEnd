@@ -8,6 +8,8 @@ export interface UserDetail {
   role: Role;
   isActive: boolean;
   empresaId?: string;
+  /** Perfil de permissões próprio; nulo usa o do cargo (`perfil-por-cargo.ts` no servidor). */
+  perfilId?: string | null;
   /** Bloqueado por tentativas falhadas até esta data (só na lista; nulo ou passada = livre). */
   bloqueadoAte?: string | null;
   createdAt: string;
@@ -24,6 +26,11 @@ export interface CreateUserPayload {
   password?: string; // opcional se for auto-gerada
   role: Role;
   empresaId?: string; // opcional para SuperAdmin atribuir
+  /**
+   * Perfil de permissões: um de sistema ou da empresa. Omitir (ou `null`, a editar) usa o
+   * perfil do cargo. O servidor recusa um perfil de outra empresa.
+   */
+  perfilId?: string | null;
   isActive?: boolean;
 }
 
