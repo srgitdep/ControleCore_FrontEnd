@@ -13,6 +13,8 @@
     "codigo_barras": "条码（EAN）",
     "codigo_barras_exemplo": "留空则自动生成内部 SKU",
     "categoria": "类别",
+    "categoria_nova": "新建分类",
+    "categoria_vazio": "还没有分类——请用“新建分类”创建第一个。",
     "categoria_escolher": "请选择类别……",
     "imagem_url": "外部图片网址",
     "imagem_url_alternativa": "（可替代下方的文件上传）",

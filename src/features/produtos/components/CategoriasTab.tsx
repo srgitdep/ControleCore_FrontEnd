@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Tag, Plus, Loader2, X, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -113,7 +114,20 @@ export function CategoriasTab() {
   );
 }
 
-function CategoriaModal({ categoria, onClose }: { categoria: Category | null; onClose: () => void }) {
+/**
+ * Criar ou editar uma categoria. Reutilizado pelo separador Categorias e pelo formulário de
+ * produto (atalho «+ Nova categoria»), que passa `onCriada` para ficar com a nova selecionada.
+ */
+export function CategoriaModal({
+  categoria,
+  onClose,
+  onCriada,
+}: {
+  categoria: Category | null;
+  onClose: () => void;
+  /** Chamado com a categoria acabada de criar (não na edição). */
+  onCriada?: (categoria: Category) => void;
+}) {
   const { t } = useTranslation('produtos');
   const [nome, setNome] = useState(categoria?.nome ?? '');
   const [imagemUrl, setImagemUrl] = useState(categoria?.imagemUrl ?? '');
@@ -124,6 +138,9 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
 
   const submeter = (e: React.FormEvent) => {
     e.preventDefault();
+    // Abre-se de dentro do formulário de produto: sem isto o submit subia pela árvore React e
+    // gravava também esse formulário.
+    e.stopPropagation();
     if (!nome.trim()) return toast.error(t('categorias.indicar_nome'));
 
     const dto = { nome: nome.trim(), imagemUrl: imagemUrl.trim() || undefined };
@@ -131,12 +148,17 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
     if (categoria) {
       actualizar.mutate({ id: categoria.id, dto }, { onSuccess: onClose });
     } else {
-      criar.mutate(dto, { onSuccess: onClose });
+      criar.mutate(dto, {
+        onSuccess: (nova) => {
+          onCriada?.(nova);
+          onClose();
+        },
+      });
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4">
       <form onSubmit={submeter} className="w-full max-w-sm rounded-xl bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">
@@ -185,6 +207,7 @@ function CategoriaModal({ categoria, onClose }: { categoria: Category | null; on
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }

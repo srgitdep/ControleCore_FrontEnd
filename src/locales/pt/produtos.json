@@ -13,6 +13,8 @@
     "codigo_barras": "Código de Barras (EAN)",
     "codigo_barras_exemplo": "Deixe vazio para auto-gerar SKU interno",
     "categoria": "Categoria",
+    "categoria_nova": "Nova categoria",
+    "categoria_vazio": "Ainda não há categorias — crie a primeira com «Nova categoria».",
     "categoria_escolher": "Seleccione uma categoria...",
     "imagem_url": "URL externo da imagem",
     "imagem_url_alternativa": "(alternativa a carregar um ficheiro, abaixo)",
