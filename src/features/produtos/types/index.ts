@@ -16,6 +16,8 @@ export interface Product {
   codigoBarras?: string;
   sku?: string;
   imagemUrl?: string;
+  /** Na lista vem só a principal, com URL já assinado; o detalhe traz a galeria completa. */
+  imagens?: { id: string; url: string | null; ordem: number; isPrincipal: boolean }[];
   precoCusto: number;
   precoVenda: number;
   margemLucro: number;

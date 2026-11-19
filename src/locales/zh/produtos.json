@@ -89,6 +89,9 @@
     "erro_guardar": "保存最低库存时出错。"
   },
   "imagem": {
+    "pendentes_falharam": "{{count}} 张图片上传失败——请编辑产品后重新添加。",
+    "ficheiro_invalido": "文件“{{nome}}”不是 JPEG/PNG/WEBP 或超过 5MB。",
+    "pendentes_nota": "第一张为主图；保存产品时上传。",
     "titulo": "商品图片",
     "a_carregar": "加载中……",
     "substituir": "替换图片",

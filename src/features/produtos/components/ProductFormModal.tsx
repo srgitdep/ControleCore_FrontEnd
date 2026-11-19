@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -121,12 +121,18 @@ interface ProductFormModalProps {
 
 export function ProductFormModal({ productToEdit, onClose }: ProductFormModalProps) {
   const { t } = useTranslation('produtos');
+  const queryClient = useQueryClient();
   const { mutateAsync: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { data: categoriesData } = useCategories();
   const categories = categoriesData || [];
 
-  const isPending = isCreating || isUpdating;
+  // Ficheiros escolhidos ainda na criação: só se podem enviar depois de o produto existir
+  // (o endpoint é `/produtos/:id/imagens`), por isso ficam aqui até ao `createProduct`.
+  const [imagensPendentes, setImagensPendentes] = useState<File[]>([]);
+  const [aEnviarImagens, setAEnviarImagens] = useState(false);
+
+  const isPending = isCreating || isUpdating || aEnviarImagens;
 
   const {
     register,
@@ -287,7 +293,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
         // não recusasse, mexer em existências aqui esconderia um movimento.
         await updateProduct({ id: productToEdit.id, data: payload });
       } else {
-        await createProduct({
+        const criado = await createProduct({
           ...payload,
           // Só se houver armazém escolhido — enviar `armazemId: ''` falharia a
           // validação de UUID no servidor.
@@ -299,10 +305,29 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               }
             : {}),
         });
+
+        if (imagensPendentes.length > 0) {
+          setAEnviarImagens(true);
+          // Em série: a primeira a chegar nasce principal, e a ordem da galeria segue a da escolha.
+          let falhas = 0;
+          for (const ficheiro of imagensPendentes) {
+            try {
+              await catalogApi.carregarImagemProduto(criado.id, ficheiro);
+            } catch (erro: any) {
+              falhas += 1;
+              toast.error(erro?.response?.data?.message || t('mensagens.erro_carregar_imagem'));
+            }
+          }
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+          queryClient.invalidateQueries({ queryKey: ['produto-detalhe'] });
+          if (falhas > 0) toast.error(t('imagem.pendentes_falharam', { count: falhas }));
+        }
       }
       onClose();
     } catch (error) {
       console.error(error);
+    } finally {
+      setAEnviarImagens(false);
     }
   };
 
@@ -382,7 +407,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {t('form.imagem_url')} {productToEdit && t('form.imagem_url_alternativa')}
+                  {t('form.imagem_url')} {t('form.imagem_url_alternativa')}
                 </label>
                 <input
                   type="url"
@@ -391,11 +416,6 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   placeholder={t('form.imagem_url_exemplo')}
                 />
                 {errors.imagemUrl && <p className="text-xs text-rose-500 mt-1">{errors.imagemUrl.message}</p>}
-                {!productToEdit && (
-                  <p className="mt-1 text-xs text-slate-400">
-                    {t('form.imagem_criar_primeiro')}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -569,7 +589,11 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                 formulário de catálogo esconderia um movimento de inventário, que
                 tem de ter autor e motivo próprios. Para isso há os ajustes na
                 secção Stock. */}
-            {productToEdit && <ImagemDoProduto produtoId={productToEdit.id} />}
+            {productToEdit ? (
+              <ImagemDoProduto produtoId={productToEdit.id} />
+            ) : (
+              <ImagensPendentes ficheiros={imagensPendentes} onChange={setImagensPendentes} />
+            )}
 
             {productToEdit && <MinimosPorArmazem produtoId={productToEdit.id} />}
 
@@ -1152,6 +1176,95 @@ function FornecedoresDoProduto({ produtoId }: { produtoId: string }) {
           </div>
         </form>
       )}
+    </div>
+  );
+}
+
+
+/**
+ * A galeria na criação: o produto ainda não existe, por isso as fotografias ficam em memória
+ * (com pré-visualização local) e seguem para o storage logo a seguir ao `createProduct`.
+ * Mesmos limites e formatos que `ImagemDoProduto`.
+ */
+function ImagensPendentes({
+  ficheiros,
+  onChange,
+}: {
+  ficheiros: File[];
+  onChange: (ficheiros: File[]) => void;
+}) {
+  const { t } = useTranslation('produtos');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const previews = useMemo(() => ficheiros.map((f) => URL.createObjectURL(f)), [ficheiros]);
+  useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
+
+  const aoEscolher = (evento: React.ChangeEvent<HTMLInputElement>) => {
+    const escolhidos = Array.from(evento.target.files ?? []);
+    evento.target.value = '';
+    const validos = escolhidos.filter((f) => {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 5 * 1024 * 1024) {
+        toast.error(t('imagem.ficheiro_invalido', { nome: f.name }));
+        return false;
+      }
+      return true;
+    });
+    onChange([...ficheiros, ...validos].slice(0, MAXIMO_IMAGENS));
+  };
+
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-700">{t('imagem.titulo')}</h3>
+        </div>
+        <span className="text-xs text-slate-400">{ficheiros.length}/{MAXIMO_IMAGENS}</span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-3">
+        {previews.map((url, i) => (
+          <div key={url} className="group relative h-20 w-20 shrink-0">
+            <div
+              className={`h-full w-full overflow-hidden rounded-lg border bg-slate-50 ${
+                i === 0 ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-200'
+              }`}
+            >
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            </div>
+            <button
+              type="button"
+              title={t('acoes.remover')}
+              onClick={() => onChange(ficheiros.filter((_, idx) => idx !== i))}
+              className="absolute -right-1.5 -top-1.5 rounded-full bg-white p-1 text-slate-400 opacity-0 shadow-sm hover:text-rose-600 group-hover:opacity-100"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        ))}
+
+        {ficheiros.length < MAXIMO_IMAGENS && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-500"
+          >
+            <Upload size={16} />
+            <span className="text-[10px] font-medium">{t('imagem.carregar')}</span>
+          </button>
+        )}
+
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={aoEscolher}
+        />
+      </div>
+
+      <p className="mt-2 text-xs text-slate-400">{t('imagem.formatos')} {t('imagem.pendentes_nota')}</p>
     </div>
   );
 }
