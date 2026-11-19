@@ -186,6 +186,27 @@
       "webhooks": "Delivery webhooks",
       "documentos_estafeta": "Courier documents"
     },
+    "gerir": {
+      "novo": "New role",
+      "novo_titulo": "New company role",
+      "nome": "Name",
+      "nome_exemplo": "e.g. Salesperson",
+      "copiar_de": "Start from",
+      "comecar_vazio": "No permissions",
+      "criar": "Create role",
+      "fechar": "Close",
+      "de_sistema": "System",
+      "renomear": "Rename",
+      "guardar_nome": "Save name",
+      "apagar": "Delete",
+      "confirmar_apagar": "Delete the role \"{{nome}}\"? This cannot be undone.",
+      "criado": "Role created.",
+      "renomeado": "Name changed.",
+      "apagado": "Role deleted.",
+      "erro_criar": "Could not create the role.",
+      "erro_renomear": "Could not change the name.",
+      "erro_apagar": "Could not delete the role."
+    },
     "grupo": {
       "geral": "General",
       "vendas": "Sales and customers",

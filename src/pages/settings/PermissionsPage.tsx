@@ -1,28 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AVAILABLE_ACTIONS } from '@/shared/config/permissions.config';
 import { Users, Shield, Save } from 'lucide-react';
-import { useRecursosPermissao, type RecursoDePermissao } from '@/features/permissoes';
+import {
+  AccoesDoPerfil,
+  NovoPerfilForm,
+  usePerfis,
+  useRecursosPermissao,
+  type RecursoDePermissao,
+} from '@/features/permissoes';
+import { Plus } from 'lucide-react';
 import { api } from '@/shared/config';
 import { mensagemDeErro } from '@/shared/utils';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
-interface Role {
-  id: string;
-  nome: string;
-  descricao?: string;
-  isSystem?: boolean;
-}
-
 export function PermissionsPage() {
   const { t } = useTranslation('shell');
   const hasRole = useAuthStore((s) => s.hasRole);
-  const [roles, setRoles] = useState<Role[]>([]);
+  const { data: roles = [], isLoading: isLoadingRoles, isError: erroPerfis } = usePerfis();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
-  
+  const [aCriar, setACriar] = useState(false);
+  // Um perfil próprio pertence a uma empresa, e o Super Admin não tem nenhuma (fora do modo
+  // suporte, onde é visto como ADMIN da empresa). O servidor recusa na mesma, com 400.
+  const podeCriarPerfis = !hasRole(['SUPER_ADMIN']);
+
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
-  const [isLoadingRoles, setIsLoadingRoles] = useState(true);
   const [isLoadingPerms, setIsLoadingPerms] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { data: recursos = [], isLoading: isLoadingRecursos } = useRecursosPermissao();
@@ -38,24 +41,47 @@ export function PermissionsPage() {
     [],
   );
 
-  // 1. Carregar Roles
+  // Os de sistema primeiro, depois os da empresa por nome.
+  const perfisOrdenados = useMemo(
+    () =>
+      [...roles].sort((a, b) =>
+        a.isSystem === b.isSystem ? a.nome.localeCompare(b.nome) : a.isSystem ? -1 : 1,
+      ),
+    [roles],
+  );
+
+  const formNovoPerfil = aCriar && (
+    <NovoPerfilForm
+      perfis={perfisOrdenados}
+      onFechar={() => setACriar(false)}
+      onCriado={(criado) => {
+        setACriar(false);
+        setSelectedRoleId(criado.id);
+      }}
+    />
+  );
+  const botaoNovoPerfil = podeCriarPerfis && !aCriar && (
+    <button
+      type="button"
+      onClick={() => setACriar(true)}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+    >
+      <Plus size={14} />
+      {t('permissoes.gerir.novo')}
+    </button>
+  );
+
+  // 1. Escolher um perfil quando a lista chega, ou quando o escolhido deixa de existir.
   useEffect(() => {
-    async function loadRoles() {
-      try {
-        setIsLoadingRoles(true);
-        const { data } = await api.get('/perfis');
-        setRoles(data);
-        if (data.length > 0) {
-          setSelectedRoleId(data[0].id);
-        }
-      } catch (error) {
-        toast.error(t('permissoes.erro_perfis'));
-      } finally {
-        setIsLoadingRoles(false);
-      }
+    if (erroPerfis) toast.error(t('permissoes.erro_perfis'));
+  }, [erroPerfis, t]);
+
+  useEffect(() => {
+    if (perfisOrdenados.length === 0) return;
+    if (!selectedRoleId || !perfisOrdenados.some((p) => p.id === selectedRoleId)) {
+      setSelectedRoleId(perfisOrdenados[0].id);
     }
-    loadRoles();
-  }, [t]);
+  }, [perfisOrdenados, selectedRoleId]);
 
   // 2. Carregar Permissões quando um Role for selecionado
   useEffect(() => {
@@ -149,10 +175,14 @@ export function PermissionsPage() {
       {/* ── Escolha do perfil, em ecrã estreito ──────────────────────────────
           Um `<select>` em vez da lista: doze perfis numa lista vertical seriam mais
           um ecrã de deslocamento antes de a matriz aparecer. */}
-      <div className="lg:hidden">
-        <label htmlFor="perfil" className="mb-1.5 block text-sm font-medium text-slate-700">
-          {t('permissoes.perfil_acesso')}
-        </label>
+      <div className="space-y-2 lg:hidden">
+        <div className="flex items-center justify-between">
+          <label htmlFor="perfil" className="block text-sm font-medium text-slate-700">
+            {t('permissoes.perfil_acesso')}
+          </label>
+          {botaoNovoPerfil}
+        </div>
+        {formNovoPerfil}
         <select
           id="perfil"
           value={selectedRoleId ?? ''}
@@ -161,9 +191,9 @@ export function PermissionsPage() {
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-50"
         >
           {isLoadingRoles && <option>{t('permissoes.a_carregar')}</option>}
-          {roles.map((role) => (
+          {perfisOrdenados.map((role) => (
             <option key={role.id} value={role.id}>
-              {role.nome}
+              {role.isSystem ? `${role.nome} (${t('permissoes.gerir.de_sistema')})` : role.nome}
             </option>
           ))}
         </select>
@@ -177,12 +207,14 @@ export function PermissionsPage() {
             {t('permissoes.perfis_titulo')}
           </h2>
           <p className="text-xs text-slate-500 mt-1">{t('permissoes.perfis_ajuda')}</p>
+          {botaoNovoPerfil && <div className="mt-3">{botaoNovoPerfil}</div>}
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+          {formNovoPerfil && <div className="mb-2">{formNovoPerfil}</div>}
           {isLoadingRoles ? (
             <p className="text-center text-sm text-slate-400 py-4">{t('permissoes.a_carregar')}</p>
-          ) : roles.map((role) => (
+          ) : perfisOrdenados.map((role) => (
             <button
               key={role.id}
               onClick={() => setSelectedRoleId(role.id)}
@@ -196,8 +228,13 @@ export function PermissionsPage() {
                 <Shield className="w-4 h-4" />
               </div>
               <div>
-                <p className={`text-sm font-medium ${selectedRoleId === role.id ? 'text-emerald-900' : 'text-slate-700'}`}>
+                <p className={`flex items-center gap-1.5 text-sm font-medium ${selectedRoleId === role.id ? 'text-emerald-900' : 'text-slate-700'}`}>
                   {role.nome}
+                  {role.isSystem && (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      {t('permissoes.gerir.de_sistema')}
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{role.descricao}</p>
               </div>
@@ -223,6 +260,15 @@ export function PermissionsPage() {
                 <p className="mt-1 text-xs text-slate-500">
                   {t('permissoes.matriz_ajuda')}
                 </p>
+                {!selectedRole.isSystem && (
+                  <div className="mt-2">
+                    <AccoesDoPerfil
+                      key={selectedRole.id}
+                      perfil={selectedRole}
+                      onApagado={() => setSelectedRoleId(null)}
+                    />
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleSave}

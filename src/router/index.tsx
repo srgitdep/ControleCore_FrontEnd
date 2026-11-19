@@ -202,7 +202,7 @@ export const router = createBrowserRouter([
           // Dashboard
           { 
             path: '/dashboard', 
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} permissaoAlternativa="read:dashboard" />,
             children: [{ index: true, element: <DashboardPage /> }]
           },
 
@@ -230,12 +230,12 @@ export const router = createBrowserRouter([
           },
           { 
             path: '/utilizadores', 
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN']} permissaoAlternativa="read:users" />,
             children: [{ index: true, element: <UsersPage /> }]
           },
           {
             path: '/permissoes',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} requiredPermission="manage:users" />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} requiredPermission="manage:users" permissaoAlternativa="manage:users" />,
             children: [{ index: true, element: <PermissionsPage /> }]
           },
 
@@ -271,7 +271,7 @@ export const router = createBrowserRouter([
           // rota aceita quem vê pelo menos um.
           {
             path: '/e-commerce',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER']} />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER']} permissaoAlternativa="read:pedidos_commerce" />,
             children: [{ index: true, element: <ECommercePage /> }]
           },
           // As rotas antigas redireccionam: há notificações (`destinoDaNotificacao`), o painel e
@@ -313,7 +313,7 @@ export const router = createBrowserRouter([
           // Módulo Financeiro
           {
             path: '/financeiro',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} permissaoAlternativa="read:financeiro" />,
             children: [{ index: true, element: <FinanceiroDashboardPage /> }]
           },
           // ─── Recursos Humanos ───────────────────────────────────────────
@@ -326,7 +326,7 @@ export const router = createBrowserRouter([
           // acesso a Salários que já tinha.
           {
             path: '/rh',
-            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} />,
+            element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} permissaoAlternativa="read:rh" />,
             children: [{ index: true, element: <RecursosHumanosPage /> }],
           },
           { path: '/rh/escalas',    element: <Navigate to="/rh?tab=escalas" replace /> },

@@ -9,8 +9,9 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { createUser, updateUser, resendPassword } from '@/features/users';
 import { getEmpresas } from '@/features/empresas';
-import type { UserDetail } from '@/features/users';
+import type { CreateUserPayload, UserDetail } from '@/features/users';
 import { useAuth } from '@/features/auth';
+import { usePerfis } from '@/features/permissoes';
 
 function criarSchema(t: TFunction<'utilizadores'>) {
   return z.object({
@@ -18,6 +19,8 @@ function criarSchema(t: TFunction<'utilizadores'>) {
     email: z.string().email(t('dialogo.validacao_email')),
     role: z.enum(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER', 'USER']),
     empresaId: z.string().optional(),
+    /** Vazio = usa o perfil do cargo. */
+    perfilId: z.string().optional(),
     isActive: z.boolean(),
   });
 }
@@ -57,15 +60,18 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
           email: userToEdit.email,
           role: userToEdit.role,
           empresaId: userToEdit.empresaId || '',
+          perfilId: userToEdit.perfilId || '',
           isActive: userToEdit.isActive,
         }
       : {
           role: 'USER',
+          perfilId: '',
           isActive: true,
         },
   });
 
   const selectedRole = watch('role');
+  const { data: perfis = [], isLoading: isLoadingPerfis } = usePerfis();
 
   const mutation = useMutation({
     mutationFn: (data: UserFormData) => {
@@ -73,9 +79,14 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
       const payload = {
         ...data,
         empresaId: data.empresaId === '' ? undefined : data.empresaId,
+        // `null` e não `undefined`: ao editar, é o que retira o perfil próprio e devolve a
+        // pessoa ao perfil do cargo. `undefined` desaparecia do JSON e não mudava nada.
+        perfilId: data.perfilId === '' ? (isEditing ? null : undefined) : data.perfilId,
       };
 
-      return isEditing ? updateUser(userToEdit!.id, payload as any) : createUser(payload as any);
+      return isEditing
+        ? updateUser(userToEdit!.id, payload)
+        : createUser(payload as CreateUserPayload);
     },
     onSuccess: () => {
       toast.success(isEditing ? t('dialogo.actualizado') : t('dialogo.criado'));
@@ -140,7 +151,7 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
 
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.perfil')}</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">{t('dialogo.cargo')}</label>
               <select
                 {...register('role')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
@@ -156,7 +167,31 @@ export function UserDialog({ userToEdit, onClose }: UserDialogProps) {
                   <option value="SUPER_ADMIN">{t('dialogo.perfil_opcao.SUPER_ADMIN')}</option>
                 )}
               </select>
+              <p className="mt-1 text-xs text-slate-500">{t('dialogo.cargo_ajuda')}</p>
             </div>
+
+            {/* O cargo traz um perfil de permissões por omissão; este campo permite dar outro
+                — de sistema ou criado pela empresa em Permissões. */}
+            {selectedRole !== 'SUPER_ADMIN' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t('dialogo.perfil_permissoes')}
+                </label>
+                <select
+                  {...register('perfilId')}
+                  disabled={isLoadingPerfis}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-slate-50"
+                >
+                  <option value="">{t('dialogo.perfil_do_cargo')}</option>
+                  {perfis.map((perfil) => (
+                    <option key={perfil.id} value={perfil.id}>
+                      {perfil.isSystem ? `${perfil.nome} (${t('dialogo.perfil_de_sistema')})` : perfil.nome}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500">{t('dialogo.perfil_permissoes_ajuda')}</p>
+              </div>
+            )}
 
             {/* Apenas o Super Admin pode atribuir empresas manualmente. O Admin cria sempre para a sua própria empresa (forçado no backend). */}
             {currentUser?.role === 'SUPER_ADMIN' && selectedRole !== 'SUPER_ADMIN' && (

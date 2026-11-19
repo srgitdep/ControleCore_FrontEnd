@@ -183,6 +183,27 @@
       "webhooks": "配送 Webhook",
       "documentos_estafeta": "配送员文件"
     },
+    "gerir": {
+      "novo": "新建角色",
+      "novo_titulo": "新建公司角色",
+      "nome": "名称",
+      "nome_exemplo": "例如：销售员",
+      "copiar_de": "基于以下角色创建",
+      "comecar_vazio": "不含任何权限",
+      "criar": "创建角色",
+      "fechar": "关闭",
+      "de_sistema": "系统",
+      "renomear": "重命名",
+      "guardar_nome": "保存名称",
+      "apagar": "删除",
+      "confirmar_apagar": "确定删除角色“{{nome}}”吗？此操作无法撤销。",
+      "criado": "角色已创建。",
+      "renomeado": "名称已更改。",
+      "apagado": "角色已删除。",
+      "erro_criar": "无法创建角色。",
+      "erro_renomear": "无法更改名称。",
+      "erro_apagar": "无法删除角色。"
+    },
     "grupo": {
       "geral": "综合",
       "vendas": "销售与客户",
