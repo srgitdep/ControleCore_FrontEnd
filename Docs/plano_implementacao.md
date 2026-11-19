@@ -2744,9 +2744,9 @@ implementação vem **antes** de retomar o ensaio da entrega.
 
 > Plano completo em **§4.16** (aprovado em 2026-11-18). Origem: o pacote `Docs/F14.11.26/` (DT-07, baseline v6.5, **não FROZEN**). Backend primeiro em cada fase; cada fase fecha com o consumo no frontend.
 
-- [x] **D7-0 — Correcções que valem sempre** — piso de preço na edição e na MAYRA; promoções sobrepostas sem desempate; aritmética decimal; levantamento Float → Decimal. *(Tarefas a a d feitas em 2026-11-18; fundida em `main` a 2026-11-19, por publicar.)*
-- [x] **D7-1 — Políticas de margem e cálculo do preço sugerido** — módulo `precificacao`, políticas por empresa, categoria e produto, os três estados de decisão, simulação. *(Feita em 2026-11-18; detalhe em §4.16/D7-1. Migração verificada numa branch Neon com o schema de produção. Fundida em `main` a 2026-11-19, por publicar.)*
-- [ ] **D7-2 — Versões de preço, fila de excepções e MAYRA** — preço regular versionado, aprovação com segregação de funções, a ferramenta da MAYRA passa a propor.
+- [x] **D7-0 — Correcções que valem sempre** — piso de preço na edição e na MAYRA; promoções sobrepostas sem desempate; aritmética decimal; levantamento Float → Decimal. *(Tarefas a a d feitas em 2026-11-18; fundida em `main` e publicada (Fly) a 2026-11-19.)*
+- [x] **D7-1 — Políticas de margem e cálculo do preço sugerido** — módulo `precificacao`, políticas por empresa, categoria e produto, os três estados de decisão, simulação. *(Feita em 2026-11-18; detalhe em §4.16/D7-1. Migração verificada numa branch Neon com o schema de produção. Fundida em `main` e publicada (Fly) a 2026-11-19.)*
+- [x] **D7-2 — Versões de preço, fila de excepções e MAYRA** — preço regular versionado, aprovação com segregação de funções, a ferramenta da MAYRA passa a propor. *(Backend e frontend feitos e fundidos em `main` a 2026-11-19; publicado no Fly e na Vercel a 2026-11-19, confirmado pelo utilizador.)*
 - [ ] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente.
 - [ ] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa.
 
@@ -2793,7 +2793,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
 | 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Implementado** (Fase 57, 2026-10-13) — sem a transferência directa | Secção 3 → «Transferências entre armazéns» |
 | 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Implementado** (Fase 58, 2026-10-13) | Secção 3 → «Clientes online e pedidos» |
-| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0 e D7-1 feitas (2026-11-18); migração da D7-1 verificada numa branch Neon; falta a D7-2 | Secção 3 → «Precificação (DT-07)» |
+| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0, D7-1 e D7-2 feitas e publicadas (2026-11-19); falta D7-3 e D7-4 | Secção 3 → «Precificação (DT-07)» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -6067,7 +6067,7 @@ Detalhe das tarefas no bloco «Fase em curso». Em resumo: **a** piso de preço 
 - **Desvio ao plano:** `CandidatoPreco` nasceu **nesta fase**, não na D7-2 — `/simular` precisa de registar o resultado para a explicabilidade e para o separador de simulação mostrarem histórico; `preco`/`margemEfectiva` ficam nulos quando `BLOCKED`. Continua sem ligação a `Produto.precoVenda`: publicar é da D7-2.
 - **Verificação:** domínio — `resolver-politica.spec.ts` e `decidir-preco.spec.ts` com **TC01**, **T07-02**, **T07-04**, colisão, política em falta, variação acima/dentro do limiar (19 testes); casos de uso — `criar-politica-preco` (piso acima do alvo, concorrência, encadeamento por `substituiuId`) e `simular-preco` (produto sem categoria não herda política de categoria por acidente do `undefined` no Prisma; produto novo sem preço actual não bloqueia a autoaprovação) (16 testes). Backend: 296 suites, 4156 testes; `nest build` limpo. Frontend: `tsc -b` e `vite build` limpos; 29 ficheiros, 506 testes (paridade pt/en/zh incluída). Migração verificada numa branch Neon (ver «Dados»). **Não verificado no browser.**
 
-##### D7-2 — Versões de preço, fila de excepções e MAYRA (`feat/precificacao-versoes`)
+##### D7-2 — Versões de preço, fila de excepções e MAYRA (`feat/precificacao-versoes`) — feita em 2026-11-19
 
 - **Dados (backend):** `CandidatoPreco` (a proposta: `produtoId`, `precoActual`, `precoSugerido`, `decisao`, `motivos[]`, `politicaId`+`politicaVersao`, `custoUsado`, `margemEfectiva`, `origem` = `POLITICA | MANUAL | MAYRA`, `estado`, `chaveIdempotencia`, `pedidoPorId`, `decididoPorId?`, `decididoEm?`) e `PrecoVersao` (o preço publicado: `produtoId`, `preco`, `vigenteDe`, `vigenteAte?`, `substituiuId?`, `candidatoId`). `chaveIdempotencia` única por empresa, para um candidato repetido não duplicar.
 - **Publicar** = numa `$transaction`: fechar a `PrecoVersao` activa, abrir a nova, escrever `Produto.precoVenda` (D2) e registar no `AuditLog`. Rejeição não gera preço activo.
@@ -6076,6 +6076,7 @@ Detalhe das tarefas no bloco «Fase em curso». Em resumo: **a** piso de preço 
 - **API:** `GET /precificacao/candidatos` com filtros por estado; `POST /precificacao/candidatos/:id/aprovar` e `/recusar` (com motivo); `GET /precificacao/produtos/:id/historico`.
 - **Frontend:** separadores **Excepções** (fila com motivo, margem, impacto, aprovar/recusar) e **Histórico**, em `/precificacao`; histórico de preços no `ProductsTab`; o cartão HITL com o estado da decisão; o aviso (`Notificacao`, Fase 47) a quem aprova.
 - **Verificação:** specs do publicar (atómico, idempotente), do pedido e aprovação pela **mesma pessoa** (403), da chave repetida (**TC10**: uma só aplicação), do isolamento entre empresas (outra empresa → 404/403, como **T07-13**); um preço abaixo do custo pela MAYRA acaba na fila, não publicado.
+- **Feita:** backend (versionamento, fila, aprovação/recusa, publicação atómica, MAYRA) e frontend (separadores Excepções e Histórico em `/precificacao`, aberto por `?tab=`, notificação `preco.pendente` a quem aprova). Backend: 308 suites, 4268 testes; `nest build` limpo. Frontend: `tsc -b`, `vitest` (518 testes) e `vite build` limpos. Fundida em `main` e **publicada** (Fly + Vercel) a 2026-11-19, confirmado pelo utilizador. **Não verificada no browser** (só testes automatizados).
 
 ##### D7-3 — Piso nas promoções e aceite do preço no checkout (`feat/precificacao-checkout`)
 
