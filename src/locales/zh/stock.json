@@ -2,6 +2,15 @@
   "operacao": {
     "erro_generico": "无法完成操作。"
   },
+  "pedidosCliente": {
+    "titulo": "顾客想要但店里没有的产品",
+    "subtitulo": "顾客在柜台请求的产品，按请求次数分组。",
+    "col_produto": "请求的产品",
+    "col_total": "请求次数",
+    "col_ultimo": "最近请求",
+    "vazio": "尚无顾客请求记录。",
+    "a_carregar": "正在加载请求..."
+  },
   "distribuicao": {
     "actualizada_faltam_other": "位置已更新。还有 {{count}} 件待定位。",
     "actualizada_localizado": "位置已更新。全部结余均已定位。",
@@ -34,6 +43,7 @@
     "tab_validade": "保质期",
     "tab_movimentos": "变动",
     "tab_inventario": "盘点 / 清查",
+    "tab_pedidos_cliente": "顾客请求",
     "etiqueta_tabs": "商品与库存",
     "produto": "商品",
     "produto_desconhecido": "未知商品",

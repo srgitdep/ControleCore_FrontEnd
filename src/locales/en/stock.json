@@ -2,6 +2,15 @@
   "operacao": {
     "erro_generico": "Could not complete the operation."
   },
+  "pedidosCliente": {
+    "titulo": "What customers ask for that the shop doesn't have",
+    "subtitulo": "Products customers requested at the counter, grouped by how many times they were requested.",
+    "col_produto": "Requested product",
+    "col_total": "Nº of requests",
+    "col_ultimo": "Last requested",
+    "vazio": "No customer requests registered yet.",
+    "a_carregar": "Loading requests..."
+  },
   "distribuicao": {
     "actualizada_faltam_one": "Location updated. {{count}} unit still to be located.",
     "actualizada_faltam_other": "Location updated. {{count}} units still to be located.",
@@ -39,6 +48,7 @@
     "tab_validade": "Expiry dates",
     "tab_movimentos": "Movements",
     "tab_inventario": "Balance / Stock count",
+    "tab_pedidos_cliente": "Customer Requests",
     "etiqueta_tabs": "Products and stock",
     "produto": "Product",
     "produto_desconhecido": "Unknown product",

@@ -2,6 +2,15 @@
   "operacao": {
     "erro_generico": "Não foi possível concluir a operação."
   },
+  "pedidosCliente": {
+    "titulo": "O que os clientes pedem e a loja não tem",
+    "subtitulo": "Produtos que os clientes pediram no balcão, agrupados por quantas vezes foram pedidos.",
+    "col_produto": "Produto pedido",
+    "col_total": "Nº de pedidos",
+    "col_ultimo": "Último pedido",
+    "vazio": "Ainda não há pedidos de clientes registados.",
+    "a_carregar": "A carregar pedidos..."
+  },
   "distribuicao": {
     "actualizada_faltam_one": "Posição actualizada. Falta localizar {{count}} unidade.",
     "actualizada_faltam_other": "Posição actualizada. Faltam localizar {{count}} unidades.",
@@ -39,6 +48,7 @@
     "tab_validade": "Validades",
     "tab_movimentos": "Movimentos",
     "tab_inventario": "Balanço / Inventário",
+    "tab_pedidos_cliente": "Pedidos de Clientes",
     "etiqueta_tabs": "Produtos e stock",
     "produto": "Produto",
     "produto_desconhecido": "Produto Desconhecido",

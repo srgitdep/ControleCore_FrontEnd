@@ -251,6 +251,18 @@
     "reforco_ph": "例如：补充硬币用于找零……",
     "reforco_confirmar": "确认补充"
   },
+  "pedidoCliente": {
+    "abrir": "我们没有的产品？",
+    "titulo": "缺货产品请求",
+    "fechar": "关闭",
+    "nome_produto": "顾客要的是什么产品？",
+    "nome_produto_exemplo": "例如：Omo 洗衣粉 1kg",
+    "ajuda": "记录后，商店就能知道顾客在找什么但没找到。",
+    "a_registar": "正在保存…",
+    "registar": "登记请求",
+    "registado": "请求已登记，谢谢！",
+    "erro_registar": "登记请求时出错。"
+  },
   "produto": {
     "so_em_armazem": "仅在仓库",
     "so_em_armazem_titulo": "仓库中有 {{n}} 件。请调拨到销售区后再销售。",

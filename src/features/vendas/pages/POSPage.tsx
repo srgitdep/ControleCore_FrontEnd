@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp, UserPlus, UserCheck } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp, UserPlus, UserCheck, MessageCircleQuestion } from 'lucide-react';
 import { useProducts, useCategories, catalogApi, urlImagemProduto } from '@/features/produtos';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
@@ -14,6 +14,7 @@ import { CaixasHistoricoPage } from './CaixasHistoricoPage';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { LeitorCameraModal } from '../components/LeitorCameraModal';
 import { IdentificarClienteModal } from '../components/IdentificarClienteModal';
+import { PedirProdutoModal } from '../components/PedirProdutoModal';
 import { useSaldoPontos, useResgatarPontos } from '@/features/crm';
 import { useTranslation } from 'react-i18next';
 import { cn, formatDataHora, formatInteiro, formatMoeda } from '@/shared/utils';
@@ -194,6 +195,7 @@ export function POSPage() {
   const ecraGrande = useBreakpoint('lg');
 
   const [showClienteModal, setShowClienteModal] = useState(false);
+  const [showPedirProdutoModal, setShowPedirProdutoModal] = useState(false);
 
   // ──â”€ Barcode Listener ──────────────────────────────────────────────────â”€
   const barcodeBuffer = useRef('');
@@ -797,6 +799,19 @@ export function POSPage() {
               {t('identificar.titulo')}
             </button>
           )}
+
+          {/* Independente do carrinho e da venda: o cliente pode nunca comprar nada e o
+              pedido continua a valer como sinal do que falta no catálogo. Por isso fica
+              sempre acessível aqui, e não condicionado a haver sessão ou itens no carrinho. */}
+          {hasSession && (
+            <button
+              onClick={() => setShowPedirProdutoModal(true)}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs font-semibold text-gray-400 transition-colors hover:text-blue-600"
+            >
+              <MessageCircleQuestion className="h-3.5 w-3.5" />
+              {t('pedidoCliente.abrir')}
+            </button>
+          )}
         </div>
 
         {/* Cart Items */}
@@ -1035,6 +1050,14 @@ export function POSPage() {
             setShowClienteModal(false);
             toast.success(t('pdv.cliente_associado', { nome: cliente.nome }));
           }}
+        />
+      )}
+
+      {showPedirProdutoModal && currentSessaoId && (
+        <PedirProdutoModal
+          sessaoId={currentSessaoId}
+          clienteId={clienteIdentificado?.id}
+          onClose={() => setShowPedirProdutoModal(false)}
         />
       )}
           </div>

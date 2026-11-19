@@ -253,6 +253,18 @@
     "reforco_ph": "Ex: Reforço de moedas para troco...",
     "reforco_confirmar": "Confirmar Reforço"
   },
+  "pedidoCliente": {
+    "abrir": "Produto que não temos?",
+    "titulo": "Pedido de produto em falta",
+    "fechar": "Fechar",
+    "nome_produto": "Que produto o cliente pediu?",
+    "nome_produto_exemplo": "Ex.: Detergente em pó Omo 1kg",
+    "ajuda": "Fica registado para a loja saber o que os clientes procuram e não encontram.",
+    "a_registar": "A registar…",
+    "registar": "Registar pedido",
+    "registado": "Pedido registado. Obrigado!",
+    "erro_registar": "Erro ao registar o pedido."
+  },
   "produto": {
     "so_em_armazem": "Só em armazém",
     "so_em_armazem_titulo": "{{n}} unidades em armazém. Transfira para a sala de vendas para poder vender.",
