@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLeitorDeCodigo } from '@/shared/hooks';
-import { catalogApi, type Product } from '@/features/produtos';
+import { catalogApi, urlImagemProduto, type Product } from '@/features/produtos';
 import { useTranslation } from 'react-i18next';
 import { cn, formatMoeda as moeda } from '@/shared/utils';
 
@@ -292,9 +292,9 @@ export function LeitorCameraModal({
           // ── O produto lido, à espera de quantidade ──────────────────────────
           <div>
             <div className="flex items-start gap-3">
-              {lido.imagemUrl ? (
+              {urlImagemProduto(lido) ? (
                 <img
-                  src={lido.imagemUrl}
+                  src={urlImagemProduto(lido)}
                   alt=""
                   className="h-14 w-14 shrink-0 rounded-lg bg-slate-100 object-cover"
                 />

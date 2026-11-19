@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, ShoppingCart, Plus, Minus, Trash2, RefreshCcw, CheckCircle, X, Lock, Store, History, ScanLine, ArrowLeft, ChevronUp, UserPlus, UserCheck } from 'lucide-react';
-import { useProducts, useCategories, catalogApi } from '@/features/produtos';
+import { useProducts, useCategories, catalogApi, urlImagemProduto } from '@/features/produtos';
 import { usePosStore, getStockDisponivel, getStockNoutrosArmazens, mensagemDeRecusa } from '@/features/vendas';
 import type { CartResult } from '@/features/vendas';
 import { useSocket, useBreakpoint, useUIStore } from '@/shared/hooks';
@@ -1300,9 +1300,9 @@ function ProductCard({ product, onAdd }: { product: Product, onAdd: () => void }
           </span>
         )}
 
-        {product.imagemUrl ? (
+        {urlImagemProduto(product) ? (
           <img 
-            src={product.imagemUrl} 
+            src={urlImagemProduto(product)} 
             alt={product.nome} 
             className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" 
           />

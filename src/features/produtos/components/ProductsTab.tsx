@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 // exportar este componente, e importar dele aqui fecharia um ciclo.
 import { useProducts, useDeleteProduct } from '../hooks/useCatalog';
 import type { Product } from '../types';
+import { urlImagemProduto } from '../utils/imagem';
 import { useAuth, usePermissions } from '@/features/auth';
 import { Button, ResponsiveTable, ConfirmDialog } from '@/shared/ui';
 import { useDebounce, useBreakpoint } from '@/shared/hooks';
@@ -73,7 +74,7 @@ export function ProductsTab() {
         header: t('lista.col_produto'),
         cell: (info) => {
           const product = info.row.original;
-          const foto = product.imagens?.[0]?.url || product.imagemUrl;
+          const foto = urlImagemProduto(product);
           return (
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
