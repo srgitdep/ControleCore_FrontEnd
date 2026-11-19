@@ -6,6 +6,8 @@ import { precificacaoApi } from '../api/precificacao.api';
 import type {
   CriarPoliticaPrecoPayload,
   EstadoCandidatoPreco,
+  OrigemCandidatoPreco,
+  SimularPoliticaPayload,
   SimularPrecoPayload,
 } from '../types';
 
@@ -48,16 +50,28 @@ export function useSimularPreco() {
   });
 }
 
-export function useCandidatosPreco(produtoId?: string, estado?: EstadoCandidatoPreco) {
+export function useCandidatosPreco(
+  produtoId?: string,
+  estado?: EstadoCandidatoPreco,
+  origem?: OrigemCandidatoPreco,
+) {
   return useQuery({
-    queryKey: [CHAVE_CANDIDATOS, produtoId ?? null, estado ?? null],
-    queryFn: () => precificacaoApi.listarCandidatos(produtoId, estado),
+    queryKey: [CHAVE_CANDIDATOS, produtoId ?? null, estado ?? null, origem ?? null],
+    queryFn: () => precificacaoApi.listarCandidatos(produtoId, estado, origem),
   });
 }
 
-/** A fila de excepções: só o que espera uma decisão. */
+/** A fila de excepções: só o que espera uma decisão, pedida por alguém (manual ou MAYRA). */
 export function useFilaDeExcecoes() {
   return useCandidatosPreco(undefined, 'PENDENTE');
+}
+
+/**
+ * A fila da reprecificação por custo (D7-4): candidatos `origem=POLITICA`, nascidos de um
+ * custo novo na recepção de mercadoria — nunca de um pedido de alguém.
+ */
+export function useFilaDeReprecificacao() {
+  return useCandidatosPreco(undefined, 'PENDENTE', 'POLITICA');
 }
 
 export function useAprovarCandidato() {
@@ -95,5 +109,15 @@ export function useHistoricoDeProduto(produtoId?: string) {
     queryKey: [CHAVE_HISTORICO, produtoId ?? null],
     queryFn: () => precificacaoApi.historicoDoProduto(produtoId!),
     enabled: !!produtoId,
+  });
+}
+
+/** «E se a margem fosse X?» sobre muitos produtos — nunca grava nada (D7-4). */
+export function useSimularPolitica() {
+  const { t } = useTranslation('precificacao');
+
+  return useMutation({
+    mutationFn: (payload: SimularPoliticaPayload) => precificacaoApi.simularPolitica(payload),
+    onError: (erro) => toast.error(mensagemDeErro(erro, t('mensagens.erro_simular'))),
   });
 }

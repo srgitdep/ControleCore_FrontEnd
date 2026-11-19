@@ -4,6 +4,8 @@
     "politicas": "Políticas",
     "simulacao": "Simulação",
     "excecoes": "Excepções",
+    "reprecificacao": "Reprecificação",
+    "simulacaoEmLote": "Simulação em lote",
     "historico": "Histórico"
   },
   "formulario": {
@@ -98,6 +100,19 @@
       "origem": "Origem",
       "decidido_por": "Decidido por"
     }
+  },
+  "reprecificacao": {
+    "descricao": "Preços recalculados depois de um custo novo (recepção de mercadoria). Ninguém pediu este preço em concreto — o motor propõe, e espera por uma decisão.",
+    "vazio": "Não há reprecificações por custo pendentes."
+  },
+  "simulacaoEmLote": {
+    "descricao": "«E se a margem desta categoria fosse esta?» — sobre muitos produtos de uma vez, sem gravar nada.",
+    "categoria": "Categoria",
+    "toda_a_empresa": "Toda a empresa",
+    "simular": "Simular",
+    "vazio": "Nenhum produto para simular.",
+    "resultado_contagem_one": "{{count}} produto simulado",
+    "resultado_contagem_other": "{{count}} produtos simulados"
   },
   "mensagens": {
     "politica_criada": "Política criada.",

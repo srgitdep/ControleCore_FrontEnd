@@ -78,3 +78,22 @@ export interface PrecoVersaoHistorico {
 export interface RecusarPrecoPayload {
   motivo: string;
 }
+
+/** «E se a margem desta categoria fosse 30%?» — sem gravar nada (D7-4). */
+export interface SimularPoliticaPayload {
+  categoriaId?: string;
+  margemAlvo: number;
+  margemPiso: number;
+  taxaVariavel?: number;
+  incrementoArredondamento?: number;
+}
+
+export interface LinhaDeSimulacaoPolitica {
+  produtoId: string;
+  nome: string;
+  precoActual: number | null;
+  decisao: DecisaoCandidatoPreco;
+  precoSugerido: number | null;
+  margemEfectiva: number | null;
+  motivos: string[];
+}

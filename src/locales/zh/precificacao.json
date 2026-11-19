@@ -4,6 +4,8 @@
     "politicas": "政策",
     "simulacao": "模拟",
     "excecoes": "例外",
+    "reprecificacao": "成本重定价",
+    "simulacaoEmLote": "批量模拟",
     "historico": "历史记录"
   },
   "formulario": {
@@ -98,6 +100,18 @@
       "origem": "来源",
       "decidido_por": "决定人"
     }
+  },
+  "reprecificacao": {
+    "descricao": "因成本变动（收货）而重新计算的价格。没有人要求这个具体价格——由系统提出建议，并等待决定。",
+    "vazio": "目前没有待处理的成本重定价。"
+  },
+  "simulacaoEmLote": {
+    "descricao": "“如果这个类别的利润率是这个数值会怎样？”——一次对多个商品进行模拟，不保存任何内容。",
+    "categoria": "类别",
+    "toda_a_empresa": "整个公司",
+    "simular": "模拟",
+    "vazio": "没有可模拟的商品。",
+    "resultado_contagem_other": "已模拟 {{count}} 个商品"
   },
   "mensagens": {
     "politica_criada": "政策已创建。",

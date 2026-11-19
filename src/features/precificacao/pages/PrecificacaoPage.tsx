@@ -9,12 +9,19 @@ import {
   useCandidatosPreco,
   useCriarPoliticaPreco,
   useFilaDeExcecoes,
+  useFilaDeReprecificacao,
   useHistoricoDeProduto,
   usePoliticasPreco,
   useRecusarCandidato,
+  useSimularPolitica,
   useSimularPreco,
 } from '../hooks/usePrecificacao';
-import type { CandidatoPreco, DecisaoCandidatoPreco, EscopoPoliticaPreco } from '../types';
+import type {
+  CandidatoPreco,
+  DecisaoCandidatoPreco,
+  EscopoPoliticaPreco,
+  LinhaDeSimulacaoPolitica,
+} from '../types';
 
 const CORES_DECISAO: Record<DecisaoCandidatoPreco, string> = {
   AUTO_APPROVED: 'bg-emerald-100 text-emerald-700',
@@ -357,13 +364,22 @@ function MotivosDoCandidato({ candidato }: { candidato: CandidatoPreco }) {
 }
 
 /**
- * A fila de preços que não puderam autoaprovar: abaixo do custo, fora do piso da política,
- * ou sem política elegível. Quem pediu o preço não aparece como podendo aprová-lo aqui —
- * o servidor recusa-o (403) se tentar, por isso nem se mostra o botão a essa pessoa.
+ * A tabela da fila de decisão, partilhada pelas Excepções (D7-2, pedidas por alguém) e
+ * pela Reprecificação por custo (D7-4, nascida de um custo novo, sem pedido de ninguém).
+ * Quem pediu o preço não aparece como podendo aprová-lo aqui — o servidor recusa-o (403) se
+ * tentar, por isso nem se mostra o botão a essa pessoa; num candidato sem `pedidoPor`
+ * (reprecificação), qualquer pessoa com a permissão pode decidir.
  */
-function SeparadorExcecoes() {
+function TabelaDeDecisao({
+  candidatos,
+  isLoading,
+  vazio,
+}: {
+  candidatos: CandidatoPreco[] | undefined;
+  isLoading: boolean;
+  vazio: string;
+}) {
   const { t } = useTranslation('precificacao');
-  const { data: candidatos, isLoading } = useFilaDeExcecoes();
   const aprovar = useAprovarCandidato();
   const recusar = useRecusarCandidato();
   const [aRecusar, setARecusar] = useState<string | null>(null);
@@ -376,8 +392,6 @@ function SeparadorExcecoes() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500">{t('excecoes.descricao')}</p>
-
       <div className="rounded-xl border border-slate-200 bg-white">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -471,9 +485,178 @@ function SeparadorExcecoes() {
             </tbody>
           </table>
         ) : (
-          <p className="px-4 py-10 text-center text-sm text-slate-400">{t('excecoes.vazio')}</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-400">{vazio}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * A fila de preços que não puderam autoaprovar: abaixo do custo, fora do piso da política,
+ * ou sem política elegível. Pedida por alguém (edição manual ou MAYRA) — D7-2.
+ */
+function SeparadorExcecoes() {
+  const { t } = useTranslation('precificacao');
+  const { data: candidatos, isLoading } = useFilaDeExcecoes();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-500">{t('excecoes.descricao')}</p>
+      <TabelaDeDecisao candidatos={candidatos} isLoading={isLoading} vazio={t('excecoes.vazio')} />
+    </div>
+  );
+}
+
+/**
+ * A fila da reprecificação por custo (D7-4): candidatos nascidos de um custo novo na
+ * recepção de mercadoria, sem ninguém ter pedido aquele preço em concreto.
+ */
+function SeparadorReprecificacao() {
+  const { t } = useTranslation('precificacao');
+  const { data: candidatos, isLoading } = useFilaDeReprecificacao();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-slate-500">{t('reprecificacao.descricao')}</p>
+      <TabelaDeDecisao candidatos={candidatos} isLoading={isLoading} vazio={t('reprecificacao.vazio')} />
+    </div>
+  );
+}
+
+/** «E se a margem fosse X?» sobre muitos produtos de uma vez, sem gravar nada (D7-4). */
+function SeparadorSimulacaoEmLote() {
+  const { t } = useTranslation('precificacao');
+  const { data: categorias } = useCategories();
+  const simular = useSimularPolitica();
+  const [categoriaId, setCategoriaId] = useState('');
+  const [margemAlvo, setMargemAlvo] = useState(30);
+  const [margemPiso, setMargemPiso] = useState(20);
+  const [resultado, setResultado] = useState<LinhaDeSimulacaoPolitica[] | null>(null);
+
+  const aoSimular = (e: React.FormEvent) => {
+    e.preventDefault();
+    simular.mutate(
+      {
+        categoriaId: categoriaId || undefined,
+        margemAlvo: margemAlvo / 100,
+        margemPiso: margemPiso / 100,
+      },
+      { onSuccess: setResultado },
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={aoSimular} className="rounded-xl border border-slate-200 bg-white p-5">
+        <p className="text-sm text-slate-500">{t('simulacaoEmLote.descricao')}</p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <label className="flex flex-col gap-1 text-sm">
+            {t('simulacaoEmLote.categoria')}
+            <select
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value)}
+              className="rounded-lg border border-slate-200 px-3 py-2"
+            >
+              <option value="">{t('simulacaoEmLote.toda_a_empresa')}</option>
+              {(categorias ?? []).map((categoria: { id: string; nome: string }) => (
+                <option key={categoria.id} value={categoria.id}>{categoria.nome}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            {t('formulario.margem_alvo')}
+            <input
+              required
+              type="number"
+              min={0}
+              max={95}
+              step="0.1"
+              value={margemAlvo}
+              onChange={(e) => setMargemAlvo(Number(e.target.value))}
+              className="rounded-lg border border-slate-200 px-3 py-2"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            {t('formulario.margem_piso')}
+            <input
+              required
+              type="number"
+              min={0}
+              max={95}
+              step="0.1"
+              value={margemPiso}
+              onChange={(e) => setMargemPiso(Number(e.target.value))}
+              className="rounded-lg border border-slate-200 px-3 py-2"
+            />
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={simular.isPending}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {simular.isPending && <Loader2 size={14} className="animate-spin" />}
+          {t('simulacaoEmLote.simular')}
+        </button>
+      </form>
+
+      {resultado && (
+        <div className="rounded-xl border border-slate-200 bg-white">
+          {resultado.length === 0 ? (
+            <p className="px-4 py-10 text-center text-sm text-slate-400">{t('simulacaoEmLote.vazio')}</p>
+          ) : (
+            <>
+              <p className="px-4 pt-4 text-xs text-slate-400">
+                {t('simulacaoEmLote.resultado_contagem', { count: resultado.length })}
+              </p>
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+                  <tr>
+                    <th className="px-4 py-3">{t('simulacao.tabela.produto')}</th>
+                    <th className="px-4 py-3">{t('excecoes.tabela.preco_actual')}</th>
+                    <th className="px-4 py-3">{t('simulacao.tabela.preco_sugerido')}</th>
+                    <th className="px-4 py-3">{t('simulacao.tabela.margem_efectiva')}</th>
+                    <th className="px-4 py-3">{t('simulacao.tabela.decisao')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultado.map((linha) => (
+                    <tr key={linha.produtoId} className="border-b border-slate-50 last:border-0 align-top">
+                      <td className="px-4 py-3">{linha.nome}</td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {linha.precoActual != null ? formatMoeda(linha.precoActual) : '—'}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {linha.precoSugerido != null ? formatMoeda(linha.precoSugerido) : '—'}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {linha.margemEfectiva != null ? formatPercentagem(linha.margemEfectiva) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${CORES_DECISAO[linha.decisao]}`}
+                        >
+                          {t(`simulacao.decisao.${linha.decisao}`)}
+                        </span>
+                        {linha.motivos.length > 0 && (
+                          <p className="mt-1 text-xs text-slate-400">
+                            {linha.motivos.map((motivo) => t(`simulacao.motivo.${motivo}`, motivo)).join(', ')}
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -548,7 +731,14 @@ function SeparadorHistorico() {
   );
 }
 
-const SEPARADORES = ['politicas', 'simulacao', 'excecoes', 'historico'] as const;
+const SEPARADORES = [
+  'politicas',
+  'simulacao',
+  'excecoes',
+  'reprecificacao',
+  'simulacaoEmLote',
+  'historico',
+] as const;
 type Separador = (typeof SEPARADORES)[number];
 
 export function PrecificacaoPage() {
@@ -584,6 +774,8 @@ export function PrecificacaoPage() {
       {separador === 'politicas' && <SeparadorPoliticas />}
       {separador === 'simulacao' && <SeparadorSimulacao />}
       {separador === 'excecoes' && <SeparadorExcecoes />}
+      {separador === 'reprecificacao' && <SeparadorReprecificacao />}
+      {separador === 'simulacaoEmLote' && <SeparadorSimulacaoEmLote />}
       {separador === 'historico' && <SeparadorHistorico />}
     </div>
   );
