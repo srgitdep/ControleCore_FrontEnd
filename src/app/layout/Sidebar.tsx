@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/utils';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/features/auth';
+import { useAuth, usePermissions } from '@/features/auth';
 import { adesoes } from '@/features/adesao';
 import { useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot';
@@ -52,6 +52,15 @@ interface NavItem {
   icon: React.ElementType;
   path: string;
   roles?: Role[];
+  /**
+   * `acção:recurso` que também dá acesso a esta entrada, para lá do cargo.
+   *
+   * Sem isto, um perfil próprio da empresa (Permissões, Parte 2) dava permissões que o
+   * servidor aceitava mas que o menu não mostrava: um «Utilizador» com um perfil que inclui
+   * o Financeiro tinha a permissão e nenhuma forma de lá chegar. As entradas da plataforma
+   * não levam permissão — essas são só por cargo.
+   */
+  permissao?: string;
   badge?: string;
 }
 
@@ -93,46 +102,46 @@ const navGroups: NavGroup[] = [
   {
     chave: 'gestao',
     items: [
-      { chave: 'dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:dashboard' },
       { chave: 'empresas', icon: Building2, path: '/empresas', roles: ['SUPER_ADMIN'] },
       // Ao lado de Empresas porque é a origem delas: um pedido aprovado é uma empresa nova.
       { chave: 'adesoes', icon: Inbox, path: '/adesoes', roles: ['SUPER_ADMIN'] },
       // O catálogo global do que uma empresa pode contratar — plataforma, não operação.
       { chave: 'modulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
-      { chave: 'utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'] },
-      { chave: 'permissoes', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'], permissao: 'read:users' },
+      { chave: 'permissoes', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'manage:users' },
     ]
   },
   {
     chave: 'operacao',
     items: [
-      { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'] },
-      { chave: 'crm', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { chave: 'promocao', icon: Percent, path: '/promocoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { chave: 'financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'], permissao: 'read:vendas' },
+      { chave: 'crm', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:clientes' },
+      { chave: 'promocao', icon: Percent, path: '/promocoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:promocao' },
+      { chave: 'financeiro', icon: BarChart2, path: '/financeiro', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:financeiro' },
       // Produtos e Stock numa entrada: o catálogo é o primeiro separador.
-      { chave: 'stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'] },
-      { chave: 'armazens', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'stock', icon: Package, path: '/stock', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER', 'USER'], permissao: 'read:stock' },
+      { chave: 'armazens', icon: Box, path: '/armazens', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'], permissao: 'read:armazens' },
       // O workflow real por trás das oportunidades que o painel de Necessidades
       // mostra (DT01 §12/§15.1): aprovar, expedir, receber.
-      { chave: 'transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'transferencias', icon: ArrowLeftRight, path: '/transferencias', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'], permissao: 'read:stock' },
       // A loja online (Compra Fácil) num só item: pedidos, entregas, estafetas, acertos, zonas e
       // procura são separadores. Visível a quem vê pelo menos um (o POS vê a fila de pedidos,
       // porque o levantamento fecha exactamente como uma venda de balcão).
-      { chave: 'ecommerce', icon: PackageCheck, path: '/e-commerce', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'] },
+      { chave: 'ecommerce', icon: PackageCheck, path: '/e-commerce', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'STOCK_KEEPER'], permissao: 'read:pedidos_commerce' },
       // Necessidades **antes** de Requisições: é o painel que detecta o que precisa de
       // decisão e encaminha para lá — a requisição nasce de uma necessidade, não o
       // contrário (DT01 1).
-      { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'necessidades', icon: AlertTriangle, path: '/compras/necessidades', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'], permissao: 'read:necessidades' },
       // Requisições **antes** de Compras, e é a ordem do processo: primeiro decide-se a
       // quem comprar, depois emite-se a ordem. A ordem inversa no menu sugeriria que a
       // requisição é um detalhe da ordem, quando é o contrário.
-      { chave: 'requisicoes', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'requisicoes', icon: ClipboardList, path: '/requisicoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'], permissao: 'read:requisicoes' },
       // Compras leva Fornecedores como separador.
-      { chave: 'compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'] },
+      { chave: 'compras', icon: ShoppingCart, path: '/compras', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STOCK_KEEPER'], permissao: 'read:compras' },
       // Sem STOCK_KEEPER: quem recebe mercadoria não deve libertar o pagamento dela.
-      { chave: 'conferencia', icon: Scale, path: '/conferencia', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { chave: 'lojas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { chave: 'conferencia', icon: Scale, path: '/conferencia', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:facturas_fornecedor' },
+      { chave: 'lojas', icon: Store, path: '/lojas', roles: ['SUPER_ADMIN', 'ADMIN'], permissao: 'read:lojas' },
     ]
   },
   {
@@ -140,7 +149,7 @@ const navGroups: NavGroup[] = [
     items: [
       // `MANAGER` entrou porque tinha acesso a Salários (que era entrada própria) e não
       // a RH. Dentro da secção, o separador de colaboradores é condicionado.
-      { chave: 'rh', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { chave: 'rh', icon: UserSquare, path: '/rh', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:rh' },
       { chave: 'historico', icon: History, path: '/historico' },
     ]
   }
@@ -155,6 +164,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
   const { t } = useTranslation('shell');
   const { user, hasRole, logout } = useAuth();
+  const { hasPermission } = usePermissions();
 
   /**
    * Fora do modo suporte, o Super Admin vê só o que é da plataforma (plano §4.15, S3). Não tem
@@ -162,9 +172,16 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
    * davam erro. Para operar numa empresa entra em modo suporte — e aí `user.role` já é ADMIN
    * (ver `useAuth`), pelo que o filtro não se aplica e vê os menus dela.
    */
-  const visivel = (item: NavItem) =>
-    (!item.roles || hasRole(item.roles)) &&
-    (user?.role !== 'SUPER_ADMIN' || ROTAS_DA_PLATAFORMA.has(item.path));
+  const visivel = (item: NavItem) => {
+    const porCargo = !item.roles || hasRole(item.roles);
+    const porPermissao = item.permissao
+      ? hasPermission(...(item.permissao.split(':') as [string, string]))
+      : false;
+    return (
+      (porCargo || porPermissao) &&
+      (user?.role !== 'SUPER_ADMIN' || ROTAS_DA_PLATAFORMA.has(item.path))
+    );
+  };
 
   /**
    * Os pedidos de adesão à espera, no selo da entrada de menu.

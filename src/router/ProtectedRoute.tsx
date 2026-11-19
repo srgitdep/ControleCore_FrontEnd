@@ -3,13 +3,36 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth, usePermissions } from '@/features/auth';
 import type { Role } from '@/features/auth';
+import { decidirAcesso } from './acessoDaRota';
 
 interface ProtectedRouteProps {
   roles?: Role[]; // Se definido, só estas roles podem aceder
   requiredPermission?: string; // Se definido, só utilizadores com a permissão (action:resource) podem aceder
+  /**
+   * Permissão que **dá acesso por si só**, mesmo sem um dos `roles` — o contrário de
+   * `requiredPermission`, que é exigida *além* do cargo.
+   *
+   * Existe para os perfis próprios das empresas (Permissões, Parte 2): o servidor passou a
+   * aceitar um «Utilizador» com um perfil que inclui, por exemplo, o Financeiro, e sem isto
+   * a página continuava a recusá-lo pelo cargo. As rotas da plataforma não a usam.
+   */
+  permissaoAlternativa?: string;
 }
 
-export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProps) {
+/** `read:stock` → `hasPermission('read', 'stock')`. */
+function satisfaz(
+  permissao: string,
+  hasPermission: (accao: string, recurso: string) => boolean,
+): boolean {
+  const [accao, recurso] = permissao.split(':');
+  return !!accao && !!recurso && hasPermission(accao, recurso);
+}
+
+export function ProtectedRoute({
+  roles,
+  requiredPermission,
+  permissaoAlternativa,
+}: ProtectedRouteProps) {
   const { t } = useTranslation('shell');
   const { isAuthenticated, isLoading, hasRole, user } = useAuth();
   const { hasPermission } = usePermissions();
@@ -38,25 +61,21 @@ export function ProtectedRoute({ roles, requiredPermission }: ProtectedRouteProp
     return <Navigate to="/primeiro-acesso" replace />;
   }
 
-  // Autenticado mas sem a role necessária â†’ toast + redireciona para dashboard
-  if (roles && !hasRole(roles)) {
-    toast.error(t('rota.sem_permissao_pagina'), {
-      id: 'sem-permissao-role',
-      duration: 4000,
-    });
-    return <Navigate to="/" replace />;
-  }
+  // A regra vive em `acessoDaRota.ts` — os testes correm em `node`, sem DOM, e seria a
+  // decisão de quem vê cada página a ficar sem teste.
+  const acesso = decidirAcesso(
+    { roles, requiredPermission, permissaoAlternativa },
+    (exigidos) => hasRole(exigidos as Role[]),
+    (permissao) => satisfaz(permissao, hasPermission),
+  );
 
-  // Validação de Permissão estrita (RBAC - action:resource)
-  if (requiredPermission) {
-    const [action, resource] = requiredPermission.split(':');
-    if (action && resource && !hasPermission(action, resource)) {
-      toast.error(t('rota.sem_permissao_accao'), {
-        id: 'sem-permissao-action',
-        duration: 4000,
-      });
-      return <Navigate to="/" replace />;
-    }
+  if (acesso !== 'permitido') {
+    const motivo =
+      acesso === 'sem_cargo'
+        ? { texto: t('rota.sem_permissao_pagina'), id: 'sem-permissao-role' }
+        : { texto: t('rota.sem_permissao_accao'), id: 'sem-permissao-action' };
+    toast.error(motivo.texto, { id: motivo.id, duration: 4000 });
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
