@@ -111,7 +111,15 @@
     "taxa_entrega": "配送费",
     "partilha_titulo": "您在这家门店的首次购物",
     "partilha_texto": "购买后，{{empresa}} 将收到您的姓名、电话和邮箱，用于备货和配送。只有第一次需要您确认。",
-    "partilha_aceito": "我同意这家门店接收我的信息"
+    "partilha_aceito": "我同意这家门店接收我的信息",
+    "preco_mudou": {
+      "titulo": "价格已变动",
+      "texto": "自您整理购物车以来，一个或多个商品的价格已更新。请在确认前查看新的总额。",
+      "total_anterior": "您看到的总额",
+      "total_novo": "当前总额",
+      "rever": "查看购物车",
+      "aceitar": "接受并确认"
+    }
   },
   "pedidos": {
     "os_meus": "我的订单",

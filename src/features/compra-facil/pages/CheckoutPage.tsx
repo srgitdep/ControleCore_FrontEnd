@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Banknote, Check, Loader2, ShieldCheck, Smartphone } from 'lucide-react';
+import { AlertTriangle, Banknote, Check, Loader2, ShieldCheck, Smartphone } from 'lucide-react';
 import { cn, formatMoeda } from '@/shared/utils';
 import { useCarrinhoStore } from '../store/useCarrinhoStore';
 import { useContaClienteStore } from '../store/useContaClienteStore';
@@ -13,7 +13,8 @@ import { registarProcura } from '../telemetria';
 import { SeleccaoEntrega } from '../components/SeleccaoEntrega';
 import { LojaTopo } from '../components/LojaTopo';
 import { VoltarLink } from '../components/VoltarLink';
-import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
+import { comoPrecoAlterado } from '../api/pedidos.api';
+import type { MetodoPagamentoCommerce, PrecoAlteradoParametros, TipoEntregaPedido } from '../api/pedidos.api';
 
 const METODOS: MetodoPagamentoCommerce[] = ['NUMERARIO', 'MPESA', 'EMOLA'];
 
@@ -46,6 +47,9 @@ export function CheckoutPage() {
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamentoCommerce>('NUMERARIO');
   const [tipoEscolhido, setTipoEscolhido] = useState<TipoEntregaPedido>('LEVANTAMENTO');
   const [enderecoEscolhido, setEnderecoEscolhido] = useState<string | null>(null);
+  // O preço mudou entre o carrinho e a confirmação (plano §4.16, D7-3): guarda o total novo
+  // para o diálogo, e só se envia de novo com esse total como o `totalEsperado` aceite.
+  const [precoAlterado, setPrecoAlterado] = useState<PrecoAlteradoParametros | null>(null);
 
   // «Entregar» só existe se a loja o oferece; uma loja sem entrega mostra o checkout de sempre.
   const lojas = useLojasCommerce();
@@ -100,7 +104,9 @@ export function CheckoutPage() {
     return <Navigate to={`/loja/${lojaId}/carrinho`} replace />;
   }
 
-  const confirmar = () => {
+  const totalDoCarrinho = subtotal + taxa;
+
+  const confirmar = (totalAceite?: number) => {
     criarPedido.mutate(
       {
         lojaId,
@@ -108,11 +114,16 @@ export function CheckoutPage() {
         metodoPagamento,
         ...(aEntregar && enderecoId ? { tipoEntrega: 'ENTREGA' as const, enderecoId } : {}),
         ...(precisaAceitar ? { aceitaPartilhaDados: true } : {}),
+        totalEsperado: totalAceite ?? totalDoCarrinho,
       },
       {
         onSuccess: (pedido) => {
           limpar();
           navegar(`/loja/${lojaId}/pedidos/${pedido.id}`, { replace: true });
+        },
+        onError: (erro) => {
+          const alterado = comoPrecoAlterado(erro);
+          if (alterado) setPrecoAlterado(alterado);
         },
       },
     );
@@ -265,7 +276,7 @@ export function CheckoutPage() {
 
               <button
                 type="button"
-                onClick={confirmar}
+                onClick={() => confirmar()}
                 disabled={criarPedido.isPending || !podeConfirmar}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-transform hover:scale-[1.02] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
               >
@@ -280,6 +291,55 @@ export function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {precoAlterado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <AlertTriangle size={18} />
+              </span>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">{t('checkout.preco_mudou.titulo')}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t('checkout.preco_mudou.texto')}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-1.5 rounded-xl bg-slate-50 p-3 text-sm">
+              <div className="flex justify-between text-slate-500">
+                <span>{t('checkout.preco_mudou.total_anterior')}</span>
+                <span className="line-through">{formatMoeda(precoAlterado.totalEsperado ?? totalDoCarrinho)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-slate-900">
+                <span>{t('checkout.preco_mudou.total_novo')}</span>
+                <span>{formatMoeda(precoAlterado.totalAtual)}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setPrecoAlterado(null)}
+                className="flex-1 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                {t('checkout.preco_mudou.rever')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const totalNovo = precoAlterado.totalAtual;
+                  setPrecoAlterado(null);
+                  confirmar(totalNovo);
+                }}
+                disabled={criarPedido.isPending}
+                className="flex-1 rounded-full bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {t('checkout.preco_mudou.aceitar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
