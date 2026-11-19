@@ -1203,7 +1203,7 @@ function ImagensPendentes({
     const escolhidos = Array.from(evento.target.files ?? []);
     evento.target.value = '';
     const validos = escolhidos.filter((f) => {
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 5 * 1024 * 1024) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 15 * 1024 * 1024) {
         toast.error(t('imagem.ficheiro_invalido', { nome: f.name }));
         return false;
       }

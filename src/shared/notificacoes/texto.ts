@@ -36,6 +36,8 @@ export function textoDaNotificacao(n: Notificacao, t: Traduzir): string {
     loja: p.loja ?? '',
     distancia: p.distanciaMetros !== undefined ? formatarDistancia(p.distanciaMetros) : '',
     minutos: p.minutos ?? '',
+    produto: p.produto ?? '',
+    preco: p.preco ?? '',
     defaultValue: '',
   });
 
@@ -56,7 +58,9 @@ export function destinoDaNotificacao(n: Notificacao): string | null {
       // Uma oferta ainda não é do estafeta: a entrega só se abre depois de aceitar (404 antes), por isso leva ao início.
       return n.entregaId && n.tipo !== 'oferta.nova' ? `/estafeta/entregas/${n.entregaId}` : '/estafeta';
     case 'FUNCIONARIO':
-      return n.tipo === 'pedido.novo' ? '/commerce/pedidos' : '/entregas';
+      if (n.tipo === 'pedido.novo') return '/commerce/pedidos';
+      if (n.tipo === 'preco.pendente') return '/precificacao?tab=excecoes';
+      return '/entregas';
   }
 }
 
@@ -65,6 +69,10 @@ export function eUrgente(n: Pick<Notificacao, 'destinatarioTipo' | 'tipo'>): boo
   return (
     (n.destinatarioTipo === 'CLIENTE' && n.tipo === 'entrega.chegou') ||
     (n.destinatarioTipo === 'ESTAFETA' && (n.tipo === 'entrega.nova' || n.tipo === 'entrega.retirada' || n.tipo === 'oferta.nova')) ||
-    (n.destinatarioTipo === 'FUNCIONARIO' && (n.tipo === 'entrega.falhada' || n.tipo === 'pedido.novo' || n.tipo === 'entrega.sem_estafeta'))
+    (n.destinatarioTipo === 'FUNCIONARIO' &&
+      (n.tipo === 'entrega.falhada' ||
+        n.tipo === 'pedido.novo' ||
+        n.tipo === 'entrega.sem_estafeta' ||
+        n.tipo === 'preco.pendente'))
   );
 }

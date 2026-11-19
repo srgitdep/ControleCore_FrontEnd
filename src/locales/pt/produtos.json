@@ -90,7 +90,7 @@
   },
   "imagem": {
     "pendentes_falharam": "Falharam {{count}} imagem(ns) ao carregar — adicione-as editando o produto.",
-    "ficheiro_invalido": "O ficheiro «{{nome}}» não é JPEG/PNG/WEBP ou excede 5MB.",
+    "ficheiro_invalido": "O ficheiro «{{nome}}» não é JPEG/PNG/WEBP ou excede 15MB.",
     "pendentes_nota": "A primeira é a principal; são enviadas ao guardar o produto.",
     "titulo": "Imagens do produto",
     "a_carregar": "A carregar...",
@@ -98,7 +98,7 @@
     "carregar": "Carregar",
     "e_principal": "Esta é a imagem principal",
     "tornar_principal": "Tornar principal",
-    "formatos": "JPEG, PNG ou WEBP até 5MB — convertida para WebP. Até 6 imagens."
+    "formatos": "JPEG, PNG ou WEBP até 15MB — convertida para WebP. Até 6 imagens."
   },
   "fornecedores": {
     "titulo": "Fornecedores",
