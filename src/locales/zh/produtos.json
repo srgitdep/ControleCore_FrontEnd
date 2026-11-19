@@ -90,7 +90,7 @@
   },
   "imagem": {
     "pendentes_falharam": "{{count}} 张图片上传失败——请编辑产品后重新添加。",
-    "ficheiro_invalido": "文件“{{nome}}”不是 JPEG/PNG/WEBP 或超过 5MB。",
+    "ficheiro_invalido": "文件“{{nome}}”不是 JPEG/PNG/WEBP 或超过 15MB。",
     "pendentes_nota": "第一张为主图；保存产品时上传。",
     "titulo": "商品图片",
     "a_carregar": "加载中……",
@@ -98,7 +98,7 @@
     "carregar": "上传",
     "e_principal": "这是主图",
     "tornar_principal": "设为主图",
-    "formatos": "JPEG、PNG 或 WEBP，最大 5MB——会转换为 WebP。最多 6 张图片。"
+    "formatos": "JPEG、PNG 或 WEBP，最大 15MB——会转换为 WebP。最多 6 张图片。"
   },
   "fornecedores": {
     "titulo": "供应商",

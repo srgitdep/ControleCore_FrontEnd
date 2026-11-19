@@ -90,7 +90,7 @@
   },
   "imagem": {
     "pendentes_falharam": "{{count}} image(s) failed to upload — add them by editing the product.",
-    "ficheiro_invalido": "File “{{nome}}” is not JPEG/PNG/WEBP or exceeds 5MB.",
+    "ficheiro_invalido": "File “{{nome}}” is not JPEG/PNG/WEBP or exceeds 15MB.",
     "pendentes_nota": "The first is the main one; they are uploaded when the product is saved.",
     "titulo": "Product images",
     "a_carregar": "Uploading...",
@@ -98,7 +98,7 @@
     "carregar": "Upload",
     "e_principal": "This is the main image",
     "tornar_principal": "Set as main",
-    "formatos": "JPEG, PNG or WEBP up to 5MB — converted to WebP. Up to 6 images."
+    "formatos": "JPEG, PNG or WEBP up to 15MB — converted to WebP. Up to 6 images."
   },
   "fornecedores": {
     "titulo": "Suppliers",
