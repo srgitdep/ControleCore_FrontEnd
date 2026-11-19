@@ -22,6 +22,8 @@ import type { TFunction } from 'i18next';
 import { Button, CapturaPorFoto } from '@/shared/ui';
 import { formatMoeda } from '@/shared/utils';
 import { catalogApi } from '../api/catalog.api';
+import { CategoriaModal } from './CategoriasTab';
+import { usePermissions } from '@/features/auth';
 import type { DadosExtraidosDeFoto } from '../api/catalog.api';
 
 // Função, e não constante: as mensagens de validação seguem a língua activa, que só se
@@ -126,6 +128,12 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
   const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { data: categoriesData } = useCategories();
   const categories = categoriesData || [];
+  const { hasPermission } = usePermissions();
+  const podeCriarCategoria = hasPermission('write', 'categorias');
+  const [aCriarCategoria, setACriarCategoria] = useState(false);
+  // A categoria acabada de criar, à espera de aparecer na lista para ser selecionada: num
+  // <select> só se escolhe uma opção que já existe, e a lista recarrega depois do pedido.
+  const [categoriaNovaId, setCategoriaNovaId] = useState<string | null>(null);
 
   // Ficheiros escolhidos ainda na criação: só se podem enviar depois de o produto existir
   // (o endpoint é `/produtos/:id/imagens`), por isso ficam aqui até ao `createProduct`.
@@ -223,6 +231,14 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
       setValue('isWeighable', false);
     }
   }, [unidadeMedida, setValue]);
+
+  // Seleciona a categoria recém-criada assim que ela chega à lista.
+  useEffect(() => {
+    if (categoriaNovaId && categoriesData?.some((c: any) => c.id === categoriaNovaId)) {
+      setValue('categoriaId', categoriaNovaId, { shouldDirty: true });
+      setCategoriaNovaId(null);
+    }
+  }, [categoriaNovaId, categoriesData, setValue]);
 
   /**
    * Aplica ao formulário o que a IA leu nas fotografias.
@@ -393,7 +409,20 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">{t('form.categoria')}</label>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className="block text-sm font-medium text-slate-700">{t('form.categoria')}</label>
+                  {/* A categoria é da empresa. Criar aqui evita sair do formulário e perder o que
+                      já se preencheu — o separador Categorias continua a ser onde se gerem todas. */}
+                  {podeCriarCategoria && (
+                    <button
+                      type="button"
+                      onClick={() => setACriarCategoria(true)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
+                    >
+                      <Plus className="h-3 w-3" /> {t('form.categoria_nova')}
+                    </button>
+                  )}
+                </div>
                 <select
                   {...register('categoriaId')}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -403,6 +432,16 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                     <option key={cat.id} value={cat.id}>{cat.nome}</option>
                   ))}
                 </select>
+                {categories.length === 0 && (
+                  <p className="mt-1 text-xs text-slate-400">{t('form.categoria_vazio')}</p>
+                )}
+                {aCriarCategoria && (
+                  <CategoriaModal
+                    categoria={null}
+                    onClose={() => setACriarCategoria(false)}
+                    onCriada={(nova) => setCategoriaNovaId(nova.id)}
+                  />
+                )}
               </div>
 
               <div className="md:col-span-2">

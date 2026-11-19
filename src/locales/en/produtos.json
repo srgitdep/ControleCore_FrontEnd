@@ -13,6 +13,8 @@
     "codigo_barras": "Barcode (EAN)",
     "codigo_barras_exemplo": "Leave empty to auto-generate an internal SKU",
     "categoria": "Category",
+    "categoria_nova": "New category",
+    "categoria_vazio": "There are no categories yet — create the first with “New category”.",
     "categoria_escolher": "Select a category...",
     "imagem_url": "External image URL",
     "imagem_url_alternativa": "(alternative to uploading a file, below)",
