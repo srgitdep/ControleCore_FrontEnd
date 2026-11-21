@@ -44,6 +44,8 @@ export interface PosicaoDeArmazem {
   minimo: number;
   custoMedio: number;
   precoVenda: number;
+  /** `true` quando `precoVenda` é um preço próprio da loja, não o preço global do produto. */
+  precoPersonalizado: boolean;
   /** `quantidade × custoMedio` — o capital que este produto tem parado aqui. */
   valorImobilizado: number;
   abaixoDoMinimo: boolean;
@@ -71,6 +73,21 @@ export const getStockDoArmazem = async (armazemId: string, incluirSemSaldo = fal
   const { data } = await api.get<StockDeArmazem>(`/armazens/${armazemId}/stock`, {
     params: incluirSemSaldo ? { incluirSemSaldo: 'true' } : undefined,
   });
+  return data;
+};
+
+/**
+ * Define o preço de venda do produto na loja deste armazém — substitui o preço
+ * global do produto só nela, incluindo os outros armazéns da mesma loja.
+ */
+export const definirPrecoVendaLoja = async (armazemId: string, produtoId: string, preco: number) => {
+  const { data } = await api.patch(`/armazens/${armazemId}/stock/${produtoId}/preco-venda`, { preco });
+  return data;
+};
+
+/** Remove o preço próprio da loja: o produto volta a vender-se ao preço global. */
+export const removerPrecoVendaLoja = async (armazemId: string, produtoId: string) => {
+  const { data } = await api.delete(`/armazens/${armazemId}/stock/${produtoId}/preco-venda`);
   return data;
 };
 

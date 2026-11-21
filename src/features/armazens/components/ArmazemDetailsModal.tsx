@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Box, Search, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
-import { getStockDoArmazem, type Armazem } from '@/features/lojas';
+import { X, Box, Search, AlertTriangle, Loader2, ExternalLink, Pencil, RotateCcw } from 'lucide-react';
+import { getStockDoArmazem, usePrecoVendaLoja, type Armazem } from '@/features/lojas';
 import { cn, formatMoeda } from '@/shared/utils';
 import { localeIntl } from '@/i18n';
 import { TableScroll } from '@/shared/ui';
@@ -44,6 +44,8 @@ export function ArmazemDetailsModal({
   const [incluirSemSaldo, setIncluirSemSaldo] = useState(false);
   const [soAbaixoDoMinimo, setSoAbaixoDoMinimo] = useState(false);
   const [separador, setSeparador] = useState<'stock' | 'localizacoes'>('stock');
+  const [emEdicao, setEmEdicao] = useState<{ produtoId: string; valor: string } | null>(null);
+  const precoVendaLoja = usePrecoVendaLoja(armazem.id);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['armazem-stock', armazem.id, incluirSemSaldo],
@@ -251,6 +253,7 @@ export function ArmazemDetailsModal({
                   <th className="hidden px-3 py-2.5 text-right font-medium md:table-cell">
                     {t('detalhe.col_custo_medio')}
                   </th>
+                  <th className="px-3 py-2.5 text-right font-medium">{t('detalhe.col_preco_venda')}</th>
                   <th className="px-6 py-2.5 text-right font-medium">{t('detalhe.col_valor')}</th>
                 </tr>
               </thead>
@@ -297,6 +300,68 @@ export function ArmazemDetailsModal({
                     </td>
                     <td className="hidden px-3 py-3 text-right text-slate-500 md:table-cell">
                       {p.custoMedio > 0 ? formatMoeda(p.custoMedio) : '—'}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      {emEdicao?.produtoId === p.produtoId ? (
+                        <form
+                          className="flex items-center justify-end gap-1"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const preco = Number(emEdicao.valor);
+                            if (!Number.isFinite(preco) || preco < 0) return;
+                            precoVendaLoja.definir.mutate(
+                              { produtoId: p.produtoId, preco },
+                              { onSuccess: () => setEmEdicao(null) },
+                            );
+                          }}
+                        >
+                          <input
+                            autoFocus
+                            type="number"
+                            min={0}
+                            step="any"
+                            value={emEdicao.valor}
+                            onChange={(e) => setEmEdicao({ produtoId: p.produtoId, valor: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setEmEdicao(null);
+                            }}
+                            onBlur={() => setEmEdicao(null)}
+                            className="w-20 rounded-md border border-blue-300 px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </form>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEmEdicao({ produtoId: p.produtoId, valor: String(p.precoVenda) })}
+                          className="group inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-slate-100"
+                          title={t('detalhe.editar_preco_venda')}
+                        >
+                          {p.precoPersonalizado && (
+                            <span
+                              className="rounded bg-blue-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-700"
+                              title={t('detalhe.preco_personalizado_ajuda')}
+                            >
+                              {t('detalhe.preco_personalizado')}
+                            </span>
+                          )}
+                          <span className="text-slate-700">{formatMoeda(p.precoVenda)}</span>
+                          <Pencil className="h-3 w-3 text-slate-300 opacity-0 group-hover:opacity-100" />
+                          {p.precoPersonalizado && (
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                precoVendaLoja.remover.mutate(p.produtoId);
+                              }}
+                              title={t('detalhe.remover_preco_personalizado')}
+                              className="text-slate-300 hover:text-rose-600"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </span>
+                          )}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-3 text-right font-medium text-slate-700">
                       {formatMoeda(p.valorImobilizado)}

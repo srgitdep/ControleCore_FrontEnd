@@ -1,5 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { getLojas, type Armazem } from '../api/lojas.api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import i18n from '@/i18n';
+import { mensagemDeErro } from '@/shared/utils';
+import { definirPrecoVendaLoja, getLojas, removerPrecoVendaLoja, type Armazem } from '../api/lojas.api';
 
 export interface ArmazemComLoja extends Armazem {
   lojaNome: string;
@@ -55,4 +58,35 @@ export function useArmazens(opcoes?: { incluirInactivos?: boolean }) {
     isLoading: query.isLoading,
     error: query.error,
   };
+}
+
+/** Define ou remove o preço de venda do produto na loja de um armazém (ver `ArmazemDetailsModal`). */
+export function usePrecoVendaLoja(armazemId: string) {
+  const queryClient = useQueryClient();
+
+  const invalidar = () => {
+    // 'armazem-stock' é a chave que ArmazemDetailsModal usa para ler as posições.
+    queryClient.invalidateQueries({ queryKey: ['armazem-stock', armazemId] });
+  };
+
+  const definir = useMutation({
+    mutationFn: ({ produtoId, preco }: { produtoId: string; preco: number }) =>
+      definirPrecoVendaLoja(armazemId, produtoId, preco),
+    onSuccess: () => {
+      toast.success(i18n.t('armazens:detalhe.preco_venda_actualizado'));
+      invalidar();
+    },
+    onError: (erro: unknown) => toast.error(mensagemDeErro(erro, i18n.t('armazens:detalhe.erro_preco_venda'))),
+  });
+
+  const remover = useMutation({
+    mutationFn: (produtoId: string) => removerPrecoVendaLoja(armazemId, produtoId),
+    onSuccess: () => {
+      toast.success(i18n.t('armazens:detalhe.preco_venda_removido'));
+      invalidar();
+    },
+    onError: (erro: unknown) => toast.error(mensagemDeErro(erro, i18n.t('armazens:detalhe.erro_preco_venda'))),
+  });
+
+  return { definir, remover };
 }
