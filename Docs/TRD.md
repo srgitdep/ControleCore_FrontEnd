@@ -392,8 +392,8 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
     promoção) e o total com IVA (`Pedido.totalFinal`; `Pedido.subtotal` é a base sem IVA). `totaisDoPedido`
     (`commerce/domain/totais-pedido.ts`) calcula-o com a mesma aritmética da venda — a venda do Compra Fácil
     usa o **preço acordado** (`ProcessarVendaUseCase`, `opcoes.precosAcordados`, só canal `ECOMMERCE`) e
-    tolera meio cêntimo de ruído no valor pago. A conferência refaz o total com o IVA do produto que sai.
-    O catálogo e os favoritos devolvem `precoComIva` / `precoOriginalComIva`; o carrinho soma-os.
+    tolera meio cêntimo de ruído no valor pago. A conferência refaz o total com o IVA do produto que sai — **nenhum, se a empresa não cobra IVA** (Fase 75; ver «Fiscalidade da empresa», §8).
+    O catálogo e os favoritos devolvem `precoComIva` / `precoOriginalComIva` (sem IVA na empresa, o próprio preço); o carrinho soma-os.
   - **Entrega ao domicílio — Fase 2B (operar).** Estafetas: `GET/POST/PATCH /entregas/estafetas` e
     `POST /entregas/estafetas/:id/repor-senha` (`GERIR_ESTAFETAS`). O servidor gera o código `E####`
     (`gerarCodigo('E')`, único, com tratamento de colisões) e a senha inicial (`gerarSenhaInicial`);
@@ -633,20 +633,29 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
   (ler e gerir), `estafetas` e `acertos_estafeta`; `Funcionário / Caixa` só `entregas` em
   leitura; `zonas_entrega` e `webhooks` só ADMIN. Desde a Fase 21, `promocao.ver/gerir`
   só para `Gestor`.
-- **O perfil de cada utilizador:** o `perfilId` dele; sem perfil próprio, o perfil de
-  sistema do **cargo** (`src/shared/perfil-por-cargo.ts`: `CASHIER` → «Funcionário /
-  Caixa», `MANAGER` → «Gestor», `STOCK_KEEPER` → «Armazenista»; `USER` não tem). O
-  ecrã de utilizadores só grava o cargo — não há ainda forma de atribuir um perfil
-  próprio. As permissões carregam-se em `src/middlewares/permissoes-do-utilizador.ts`,
-  usado pelo guard (autorizar) e pelo login (`user.permissions`, que o frontend usa
-  para esconder o que o utilizador não pode fazer).
-- **Perfis de sistema são comuns às empresas:** só o SUPER_ADMIN os altera
-  (`AssignPermissionsUseCase`); o ADMIN de uma empresa recebe 403.
+- **O perfil de cada utilizador:** o `perfilId` dele; sem perfil próprio, o perfil do **cargo**
+  (`src/shared/perfil-por-cargo.ts`: `CASHIER` → «Funcionário / Caixa», `MANAGER` → «Gestor»,
+  `STOCK_KEEPER` → «Armazenista»; `USER` não tem, e já não se escolhe no formulário). Pelo cargo vale
+  **primeiro a cópia da empresa** do perfil com esse nome e só depois o modelo de sistema
+  (`carregarPermissoesDoUtilizador` recebe o `empresaId`). O formulário de utilizadores tem um só campo,
+  «Perfil de acesso» (o cargo), e não envia `perfilId` — a API continua a aceitá-lo (de sistema ou da
+  empresa), mas **os perfis criados pela empresa em Permissões não têm hoje ecrã para os atribuir**. As
+  permissões carregam-se em `src/middlewares/permissoes-do-utilizador.ts`, usado pelo guard (autorizar)
+  e pelo login (`user.permissions`, que o frontend usa para esconder o que o utilizador não pode fazer).
+  O guard **não** dá acesso fixo a nenhum cargo: o POS do Caixa vem do perfil dele.
+- **Perfis de sistema são modelos; cada empresa tem as suas permissões (Fase 74).** Gravar a matriz de um
+  perfil de sistema não o altera: `perfilEditavelPelaEmpresa` (`src/shared/perfil-da-empresa.ts`) copia-o
+  para um perfil da empresa (`isSystem: false`, mesmo nome, com as permissões actuais do modelo) e grava
+  nessa cópia. Quem nunca edita continua no modelo da SRG, sem migração. O SUPER_ADMIN grava no próprio
+  modelo; o ADMIN mantém o bypass (a matriz do «Administrador» é informativa). Renomear e apagar um
+  perfil de sistema continua vedado (403 `perfil.sistema_so_srg`). `GET /perfis` mostra os da empresa e os
+  modelos que ela ainda não personalizou.
 - **Cache de permissões:** Redis, 24 h por utilizador, chave
   `permissions:v<N>:<userId>` (`src/utils/redis.service.ts`). A versão sobe quando
   uma migração muda permissões de perfis em uso — sem isso, quem já tinha sessão só
   veria a mudança um dia depois. Editar um perfil no ERP invalida a cache dos seus
-  utilizadores.
+  utilizadores — e, no caso da cópia de um perfil de sistema pertencente a uma empresa, também a de
+  quem o usa pelo cargo (`perfilId` nulo, nessa empresa).
 - **Limite de pedidos (Fase 69).** `LimiteDePedidosGuard` (o `ThrottlerGuard`) como `APP_GUARD`, contado pelo IP real do cliente (`src/shared/ip-do-cliente.ts`): o primeiro endereço do `X-Forwarded-For` — o REST chega pela Vercel, que o escreve —, senão `Fly-Client-IP`, senão `req.ip`. Por omissão 300 pedidos/min por cliente; `@Throttle` próprio no `/auth/login` e `/auth/entrar` (20/min), `/auth/mfa/*` (10/min), `/auth/forgot-password` (5/15 min), `/auth/reset-password` (10/15 min) e nas rotas públicas (adesão e registos 5/h, catálogo 60/min…); `@SkipThrottle` no `/health`. Contagem em memória, por máquina. O `X-Forwarded-For` é falsificável por quem fala directamente com o Fly — por isso o login tem também **bloqueio por conta**: 10 falhas seguidas (senha ou código do MFA, o mesmo contador `tentativasLoginFalhadas`) → `bloqueadoAte` +15 min, 429 `auth.conta_bloqueada`; volta a zero só quando a sessão sai (`emitirSessao`). O IP da auditoria (`cls ipAddress`) é o mesmo `ipDoCliente`.
 - Erros de base de dados traduzidos pelo `PrismaExcecaoFilter` global — base
   inalcançável dá **503 + `Retry-After`**, não 500 (o Neon acorda em alguns
@@ -686,6 +695,14 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 
 - **Autoridade da plataforma (Fase 65).** Toda a rota cuja autoridade é da plataforma usa `RolesGuard` + `@Roles(SUPER_ADMIN)` — o `PermissoesGuard` dá bypass ao ADMIN e nunca é guarda suficiente para estas. Hoje: `/adesoes` (decisão), `/super-admins`, `/plataforma/estafetas`, `GET /empresas`, `GET /empresas/:id`, `PATCH /empresas/:id/status`, `DELETE /empresas/:id`, `POST /empresas/onboarding`, a escrita de `/modulos`, `/relatorios/dashboard/sistema` e `/relatorios/procura-online/sistema`. `src/middlewares/autoridade-da-plataforma.spec.ts` falha se uma delas perder o `@Roles` ou o `RolesGuard`.
 - **Rotas de empresa partilhadas.** `PATCH /empresas/:id` e `/:id/branding`: Super Admin em qualquer empresa, ADMIN só na sua (`garantirAcessoAEmpresa`, `src/shared/acesso-empresa.ts`); `isActive` só pelo Super Admin.
+- **Fiscalidade da empresa (Fase 75).** `Empresa.cobraIva` (Configurações da Empresa → «Cobrar IVA», `PATCH
+  /empresas/:id`). Desligado, a taxa de cada produto **continua guardada** mas deixa de se aplicar: a venda
+  (`ProcessarVendaUseCase`, via `sessao.caixa.loja` → empresa), o pedido do Compra Fácil, a conferência, o
+  catálogo público e os favoritos cobram e mostram só o preço. `commerce/domain/iva-da-empresa.ts`
+  (`comIvaDaEmpresa`) zera a taxa à saída; no mercado e nos favoritos é decidido **por empresa**, porque a
+  lista mistura várias. `GET /empresas/fiscalidade` → `{ cobraIva }` está aberto a qualquer utilizador
+  autenticado (sem `@Permissao`): o POS calcula os totais no ecrã e precisa do valor, e `GET /empresas/minha`
+  exige `VER_EMPRESA`, que o Operador de Caixa não tem. Facturas de fornecedor e B2B não dependem dele.
 - **Roles reservados.** `SUPER_ADMIN` e os roles técnicos só são atribuídos por um Super Admin, e só ele muda o `empresaId` de um utilizador (`garantirAlteracaoDeUtilizadorPermitida`, `src/shared/roles-reservados.ts`, em `CreateUserUseCase` e `UpdateUserUseCase`).
 - **Rotas.** `GET /super-admins` (lista: `id`, `code`, `name`, `email`, `isActive`, `createdAt`) e `POST /super-admins` (`{ name, email }`). `SuperAdminsController` no módulo `users`, com `RolesGuard` + `@Roles(SUPER_ADMIN)`: o `PermissoesGuard` sozinho deixaria passar o ADMIN de qualquer empresa (bypass). `@Permissao('GERIR_SUPER_ADMINS')` fica declarada para um futuro role de operador.
 - **Criação.** `CriarSuperAdminUseCase`: e-mail normalizado (minúsculas) e único; código `SA###` a continuar a série a partir de **todos** os códigos começados por `SA` (o `code` é único na tabela inteira); senha de 12 caracteres `base64url` (72 bits); `role: SUPER_ADMIN`, sem `empresaId`. Funções puras em `src/shared/super-admin.ts` (`proximoCodigoSuperAdmin`, `gerarSenhaSuperAdmin`). Duas criações simultâneas com o mesmo código: a segunda bate no `@unique` e dá 409.
