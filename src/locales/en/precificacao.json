@@ -4,6 +4,8 @@
     "politicas": "Policies",
     "simulacao": "Simulation",
     "excecoes": "Exceptions",
+    "reprecificacao": "Repricing",
+    "simulacaoEmLote": "Batch simulation",
     "historico": "History"
   },
   "formulario": {
@@ -98,6 +100,19 @@
       "origem": "Origin",
       "decidido_por": "Decided by"
     }
+  },
+  "reprecificacao": {
+    "descricao": "Prices recalculated after a cost change (goods receipt). Nobody asked for this specific price — the engine proposes it, and it waits for a decision.",
+    "vazio": "No cost-driven repricing pending."
+  },
+  "simulacaoEmLote": {
+    "descricao": "\"What if this category's margin were this?\" — over many products at once, without saving anything.",
+    "categoria": "Category",
+    "toda_a_empresa": "The whole company",
+    "simular": "Simulate",
+    "vazio": "No products to simulate.",
+    "resultado_contagem_one": "{{count}} product simulated",
+    "resultado_contagem_other": "{{count}} products simulated"
   },
   "mensagens": {
     "politica_criada": "Policy created.",

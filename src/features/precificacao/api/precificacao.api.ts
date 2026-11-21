@@ -3,9 +3,12 @@ import type {
   CandidatoPreco,
   CriarPoliticaPrecoPayload,
   EstadoCandidatoPreco,
+  LinhaDeSimulacaoPolitica,
+  OrigemCandidatoPreco,
   PoliticaPreco,
   PrecoVersaoHistorico,
   RecusarPrecoPayload,
+  SimularPoliticaPayload,
   SimularPrecoPayload,
 } from '../types';
 
@@ -27,9 +30,13 @@ export const precificacaoApi = {
     return data;
   },
 
-  listarCandidatos: async (produtoId?: string, estado?: EstadoCandidatoPreco) => {
+  listarCandidatos: async (
+    produtoId?: string,
+    estado?: EstadoCandidatoPreco,
+    origem?: OrigemCandidatoPreco,
+  ) => {
     const { data } = await api.get<CandidatoPreco[]>(`${BASE}/candidatos`, {
-      params: { produtoId, estado },
+      params: { produtoId, estado, origem },
     });
     return data;
   },
@@ -47,6 +54,14 @@ export const precificacaoApi = {
   historicoDoProduto: async (produtoId: string) => {
     const { data } = await api.get<PrecoVersaoHistorico[]>(
       `${BASE}/produtos/${produtoId}/historico`,
+    );
+    return data;
+  },
+
+  simularPolitica: async (payload: SimularPoliticaPayload) => {
+    const { data } = await api.post<LinhaDeSimulacaoPolitica[]>(
+      `${BASE}/simular-politica`,
+      payload,
     );
     return data;
   },
