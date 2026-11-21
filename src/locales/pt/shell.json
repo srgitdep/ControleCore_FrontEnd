@@ -12,6 +12,7 @@
       "modulos": "Módulos",
       "utilizadores": "Utilizadores",
       "permissoes": "Permissões",
+      "configuracoesEmpresa": "Configurações da Empresa",
       "vendas": "Ponto de Venda",
       "crm": "CRM",
       "financeiro": "Financeiro",
@@ -56,6 +57,7 @@
       "empresas": "Empresas",
       "utilizadores": "Utilizadores",
       "permissoes": "Permissões",
+      "configuracoesEmpresa": "Configurações da Empresa",
       "historico": "Histórico no Sistema"
     },
     "abrir_menu": "Abrir menu de navegação",

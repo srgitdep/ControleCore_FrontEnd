@@ -8,6 +8,9 @@
   cidade?: string;
   pais: string;
   moeda: string;
+  /** Se a empresa cobra IVA aos seus clientes. Desligado, a venda e o Compra Fácil
+   * ignoram a taxa de IVA de cada produto e cobram só o preço. */
+  cobraIva: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

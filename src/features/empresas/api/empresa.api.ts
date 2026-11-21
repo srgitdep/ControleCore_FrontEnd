@@ -17,6 +17,13 @@ export const getEmpresaDetails = async (id: string): Promise<EmpresaDetails> => 
   return data;
 };
 
+/** A própria empresa de quem está autenticado — para o ecrã de Configurações, sem
+ * precisar da rota de plataforma (`GET /empresas/:id`, só Super Admin). */
+export const getMinhaEmpresa = async (): Promise<Empresa> => {
+  const { data } = await api.get<Empresa>('/empresas/minha');
+  return data;
+};
+
 // Criar empresa via onboarding completo (empresa + gestor + trial)
 export const createEmpresa = async (payload: OnboardingPayload): Promise<{ message: string; empresaId: string }> => {
   const { data } = await api.post('/empresas/onboarding', payload);

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getEmpresas,
   getEmpresaDetails,
+  getMinhaEmpresa,
   createEmpresa,
   updateEmpresa,
   deleteEmpresa,
@@ -31,6 +32,14 @@ export function useEmpresaDetails(id: string) {
   });
 }
 
+/** A própria empresa — ecrã de Configurações (ADMIN/MANAGER da empresa). */
+export function useMinhaEmpresa() {
+  return useQuery({
+    queryKey: ['empresa', 'minha'],
+    queryFn: getMinhaEmpresa,
+  });
+}
+
 export function useCreateEmpresa() {
   const queryClient = useQueryClient();
 
@@ -55,6 +64,7 @@ export function useUpdateEmpresa() {
       toast.success(t('mensagens.actualizada'));
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       queryClient.invalidateQueries({ queryKey: ['empresa', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['empresa', 'minha'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || t('mensagens.erro_actualizar'));

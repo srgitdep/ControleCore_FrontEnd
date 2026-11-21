@@ -1,0 +1,9 @@
+{
+  "titulo": "Company Settings",
+  "fiscalidade": {
+    "titulo": "Tax",
+    "descricao": "How your company charges taxes to customers.",
+    "cobra_iva": "Charge VAT",
+    "cobra_iva_ajuda": "Switched off, the Point of Sale and Compra Fácil stop applying each product's VAT rate — they charge only the price."
+  }
+}
