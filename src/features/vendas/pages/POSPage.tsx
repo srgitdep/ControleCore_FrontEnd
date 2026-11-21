@@ -189,6 +189,16 @@ export function POSPage() {
   /** `lg` é onde o carrinho volta a ser coluna fixa e este estado deixa de contar. */
   const ecraGrande = useBreakpoint('lg');
 
+  // O checkout mobile (o carrinho ocupa o ecrã inteiro abaixo de `lg`) é minimalista de propósito:
+  // sem o cabeçalho global (hambúrguer + sino) nem o cabeçalho de abas do POS por cima — incluindo
+  // o botão «Abrir Sessão», que só faz sentido no ecrã anterior (catálogo), nunca a meio do pagamento.
+  const definirCabecalhoOculto = useUIStore((s) => s.definirCabecalhoOculto);
+  useEffect(() => {
+    const oculto = activeTab === 'CATALOG' && carrinhoAberto && !ecraGrande;
+    definirCabecalhoOculto(oculto);
+    return () => definirCabecalhoOculto(false);
+  }, [activeTab, carrinhoAberto, ecraGrande, definirCabecalhoOculto]);
+
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [showPedirProdutoModal, setShowPedirProdutoModal] = useState(false);
 
@@ -476,7 +486,12 @@ export function POSPage() {
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       {/* No telemóvel o cabeçalho é comprimido: com o tamanho de computador sobravam
           menos de 200 px dos 667 para os produtos, e não cabia uma linha inteira. O
-          subtítulo desaparece — a barra de navegação já diz «Ponto de Venda». */}
+          subtítulo desaparece — a barra de navegação já diz «Ponto de Venda».
+
+          Escondido por completo no checkout mobile (carrinho a ocupar o ecrã, abaixo de
+          `lg`): é o ecrã anterior a este que mostra as abas e o botão «Abrir Sessão», não
+          o checkout — um ecrã minimalista não arrasta consigo controlos de outro ecrã. */}
+      {!(activeTab === 'CATALOG' && carrinhoAberto && !ecraGrande) && (
       <div className={cn('bg-white border-b border-slate-200 px-4 pt-3 pb-0 shrink-0 sm:px-6 sm:pt-5', activeTab === 'CATALOG' && 'lg:mr-[420px]')}>
         {/* O «Vendas» saiu com o subtítulo, e pela mesma razão: a barra de navegação
             já diz «Ponto de Venda». Neste ecrã o espaço vale ainda mais — cada linha
@@ -534,6 +549,7 @@ export function POSPage() {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-slate-200" />
         </div>
       </div>
+      )}
 
       {/* ── Tab Content ──────────────────────────────────────────────────────â”€ */}
       <div className="flex-1 overflow-hidden relative">

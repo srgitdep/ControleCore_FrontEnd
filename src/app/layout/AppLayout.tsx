@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useUIStore } from '@/shared/hooks';
+import { cn } from '@/shared/utils';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CopilotWidget } from '@/features/ai-copilot';
@@ -12,6 +13,7 @@ import { BarraDeSuporte, useSincronizarSuporte } from '@/features/suporte';
 
 export function AppLayout() {
   const { isSidebarCollapsed, isMobileMenuOpen, closeMobileMenu } = useUIStore();
+  const cabecalhoOculto = useUIStore((s) => s.cabecalhoOculto);
   const location = useLocation();
 
   // A Mayra é uma coluna encostada à direita, não uma janela a flutuar por cima. O
@@ -86,15 +88,24 @@ export function AppLayout() {
           margemDaMayra,
         ].join(' ')}
       >
-        <Header isCollapsed={isSidebarCollapsed} />
+        {!cabecalhoOculto && <Header isCollapsed={isSidebarCollapsed} />}
 
         {/* O POS ocupa ecrã completo sem padding extra — todas as outras páginas têm o padding padrão.
 
             A largura máxima das restantes decide-se aqui, e não em cada página. Estava
             repetida em dez ficheiros e em dois valores diferentes — `max-w-7xl` numas,
             `max-w-[1400px]` noutras — pelo que o conteúdo mudava de largura ao navegar
-            entre secções. Nada que dê erro, mas que se lê como desalinhamento. */}
-        <main className={isPOS ? 'flex-1 pt-16 overflow-hidden flex flex-col' : 'flex-1 pt-16 overflow-y-auto'}>
+            entre secções. Nada que dê erro, mas que se lê como desalinhamento.
+
+            Sem `pt-16` quando o cabeçalho está oculto — senão ficava uma faixa vazia no
+            topo do ecrã, do tamanho do cabeçalho que já não está lá. */}
+        <main
+          className={cn(
+            'flex-1 overflow-y-auto',
+            isPOS && 'overflow-hidden flex flex-col',
+            !cabecalhoOculto && 'pt-16',
+          )}
+        >
           <BarraDeSuporte />
           <AvisoAssinatura assinatura={assinatura} />
           {isPOS ? (
