@@ -2747,8 +2747,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **D7-0 — Correcções que valem sempre** — piso de preço na edição e na MAYRA; promoções sobrepostas sem desempate; aritmética decimal; levantamento Float → Decimal. *(Tarefas a a d feitas em 2026-11-18; fundida em `main` e publicada (Fly) a 2026-11-19.)*
 - [x] **D7-1 — Políticas de margem e cálculo do preço sugerido** — módulo `precificacao`, políticas por empresa, categoria e produto, os três estados de decisão, simulação. *(Feita em 2026-11-18; detalhe em §4.16/D7-1. Migração verificada numa branch Neon com o schema de produção. Fundida em `main` e publicada (Fly) a 2026-11-19.)*
 - [x] **D7-2 — Versões de preço, fila de excepções e MAYRA** — preço regular versionado, aprovação com segregação de funções, a ferramenta da MAYRA passa a propor. *(Backend e frontend feitos e fundidos em `main` a 2026-11-19; publicado no Fly e na Vercel a 2026-11-19, confirmado pelo utilizador.)*
-- [ ] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente.
-- [ ] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa.
+- [x] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente. *(Backend e frontend feitos em 2026-11-19, branch `feat/precificacao-checkout` nos dois repositórios; backend por fundir e publicar.)*
+- [x] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa. *(Backend em `feat/precificacao-checkout`, frontend em `feat/precificacao-reprecificacao-custo`; feito em 2026-11-19, por fundir e publicar.)*
 
 **Mais tarde — fora do primeiro âmbito.** Cada item abaixo espera por outro módulo ou por uma decisão que o pacote ainda não fechou; **não se implementa sem o contrato desse módulo aceite** (ver §4.16, secção 6).
 
@@ -2793,7 +2793,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
 | 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Implementado** (Fase 57, 2026-10-13) — sem a transferência directa | Secção 3 → «Transferências entre armazéns» |
 | 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Implementado** (Fase 58, 2026-10-13) | Secção 3 → «Clientes online e pedidos» |
-| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0, D7-1 e D7-2 feitas e publicadas (2026-11-19); falta D7-3 e D7-4 | Secção 3 → «Precificação (DT-07)» |
+| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0 a D7-4 feitas (2026-11-19); D7-0 a D7-2 publicadas; D7-3 e D7-4 por fundir e publicar | Secção 3 → «Precificação (DT-07)» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
@@ -6078,20 +6078,21 @@ Detalhe das tarefas no bloco «Fase em curso». Em resumo: **a** piso de preço 
 - **Verificação:** specs do publicar (atómico, idempotente), do pedido e aprovação pela **mesma pessoa** (403), da chave repetida (**TC10**: uma só aplicação), do isolamento entre empresas (outra empresa → 404/403, como **T07-13**); um preço abaixo do custo pela MAYRA acaba na fila, não publicado.
 - **Feita:** backend (versionamento, fila, aprovação/recusa, publicação atómica, MAYRA) e frontend (separadores Excepções e Histórico em `/precificacao`, aberto por `?tab=`, notificação `preco.pendente` a quem aprova). Backend: 308 suites, 4268 testes; `nest build` limpo. Frontend: `tsc -b`, `vitest` (518 testes) e `vite build` limpos. Fundida em `main` e **publicada** (Fly + Vercel) a 2026-11-19, confirmado pelo utilizador. **Não verificada no browser** (só testes automatizados).
 
-##### D7-3 — Piso nas promoções e aceite do preço no checkout (`feat/precificacao-checkout`)
+##### D7-3 — Piso nas promoções e aceite do preço no checkout (`feat/precificacao-checkout`) — feita em 2026-11-19
 
-- **Promoções:** `CriarPromocaoUseCase` calcula o preço promocional contra o piso da política; abaixo do piso exige `precificacao.aprovar` e motivo, auditado. Continua a **não** alterar o preço regular (já o cumpre).
-- **Checkout:** o pedido aceita um `totalEsperado` opcional. Se o servidor recalcular um total diferente, responde **409 `checkout.preco_alterado`** com o novo total e as linhas. O frontend mostra a diferença e pede aceite; só então reenvia. **Campo opcional** para o backend poder ir primeiro sem partir o frontend antigo.
-- **Frontend:** página de checkout do Compra Fácil (a localizar na implementação) com o diálogo «O preço mudou».
-- **Verificação:** **T07-10** / **TC09** (preço mudou entre carrinho e confirmação → 409, nunca cobrança silenciosa), promoção abaixo do piso sem permissão (403), promoção a terminar com o regular alterado a meio (**TC05**: volta ao regular **vigente**).
+- **Promoções:** `CriarPromocaoUseCase` calcula o preço promocional (preço de venda, não o custo) contra o piso da política elegível do produto, ou de **cada** produto da categoria numa promoção de categoria; abaixo do piso exige `motivo` no DTO e a permissão `precificacao.aprovar` (403 sem um dos dois — primeiro o motivo, depois a permissão), auditado em `AuditLog`. Sem custo conhecido (`precoCusto = 0`), não há piso para calcular e não se bloqueia. `avaliarPisoPromocao` (domínio puro) isola a regra. Continua a **não** alterar o preço regular.
+- **Checkout:** `CriarPedidoDto.totalEsperado` opcional. Se o total recalculado (`totais-pedido.ts`) divergir (arredondado a 2 casas, `preco-alterado.ts`), responde **409 `checkout.preco_alterado`** com `totalAtual` e as linhas actuais, **antes** de reservar stock ou criar o pedido. Sem o campo, comportamento inalterado.
+- **Frontend:** `CheckoutPage.tsx` (Compra Fácil) envia `totalEsperado` e mostra o diálogo «O preço mudou» (total antigo riscado, total novo, Rever/Aceitar) no 409; aceitar reenvia com o total novo como `totalEsperado`.
+- **Verificação:** backend — `criar-promocao.use-case.spec.ts` (piso com/sem motivo/permissão, categoria com produtos distintos) e `criar-pedido-entrega.use-case.spec.ts` (totalEsperado ausente/igual/diferente, linhas no 409); `piso-promocao.spec.ts` e `preco-alterado.spec.ts` isolados. Backend: 310 suites, 4320 testes; `nest build` limpo. Frontend: `tsc -b`, `vitest` e `vite build` limpos.
 
-##### D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote (`feat/precificacao-custo`)
+##### D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote (`feat/precificacao-checkout`, backend; `feat/precificacao-reprecificacao-custo`, frontend) — feita em 2026-11-19
 
-- **Evento de custo:** quando a compra actualiza `Produto.precoCusto` (os dois pontos de `prisma-compra.repository.ts`), emite-se `custo.alterado` (`@nestjs/event-emitter`, como o `AuditLogListener`). O *handler* cria **candidatos**, nunca publica. Idempotente por `(produto, custo novo, documento de origem)` (**T07-12**).
-- **Alertas de erosão:** margem efectiva abaixo do piso → `Notificacao` para o Gestor. Informa, não publica.
-- **Simulação em lote:** «e se a margem da categoria fosse 30%?» sobre muitos produtos, sem gravar nada.
-- **Frontend:** separador **Candidatos** com o lote e as excepções isoladas (**T07-01**: 995 elegíveis e 5 excepções não bloqueiam as outras); ecrã de simulação em lote.
-- **Verificação:** evento duplicado produz um só candidato; custo tardio não reescreve preço histórico nem venda realizada.
+- **Evento de custo:** `precificacao.custo_alterado` (`eventos-precificacao.ts`) emitido nos dois pontos de `prisma-compra.repository.ts` que escrevem `Produto.precoCusto` (recepção de mercadoria), fora da transacção que gravou o custo — como o `onEvent('stock.movement.in', …)` já existente. `CustoAlteradoListener` chama `ReprecificarPorCustoUseCase`, que cria um **candidato** (`origem POLITICA`) e **nunca publica** — `decidirReprecificacaoPorCusto` força `PENDENTE` mesmo quando o motor diria `AUTO_APPROVED`; só `BLOCKED` fica `RECUSADO`. Idempotente por `(produto, custo novo, documento de origem)`: a chave `custo:<produtoId>:<custoNovo>:<documentoOrigem>` usa o índice único existente de `chaveIdempotencia`; uma corrida entre dois disparos do mesmo evento resolve-se por `P2002`, nunca por um erro ao utilizador (**T07-12**).
+- **Alertas de erosão:** `avaliarErosaoDeMargem` — se a margem do preço **em vigor** ficar abaixo do piso da política depois do custo novo, avisa quem tem `GERIR_PRECIFICACAO` (tipo `preco.erosao`). Informa, não publica nem decide.
+- **Simulação em lote:** `POST /precificacao/simular-politica` — «e se a margem desta categoria (ou da empresa) fosse X?» sobre até 1000 produtos, sem gravar nada (nem candidato, nem política). O limiar de autoaprovação é sempre omitido: o resultado é sempre informativo.
+- **Frontend:** separador **Reprecificação** (`GET /precificacao/candidatos?estado=PENDENTE&origem=POLITICA`, reaproveita a tabela de decisão das Excepções) e separador **Simulação em lote** (categoria opcional, margem alvo/piso, tabela de resultado).
+- **Corrigido de caminho:** a notificação `preco.pendente` da D7-2 nunca tinha sido ligada no backend — só o texto/destino existiam no frontend. `ProporPrecoUseCase` avisa agora quem tem `PRECIFICACAO_APROVAR` quando um preço fica pendente.
+- **Verificação:** `reprecificar-por-custo.use-case.spec.ts` (idempotência, nunca publica, erosão), `erosao-de-margem.spec.ts`, `decidir-reprecificacao-por-custo.spec.ts`, `simular-politica.use-case.spec.ts` (sem gravar nada), `propor-preco.use-case.spec.ts` (aviso a quem aprova). Backend: 314 suites, 4320 testes; `nest build` limpo. Frontend: `tsc -b`, `vitest` (518 testes, paridade pt/en/zh incluída) e `vite build` limpos.
 - **Limite conhecido:** o custo continua a ser o `precoCusto` mutável (sem versão), por isso a idempotência assenta no valor e no documento. O custo versionado é o primeiro item de «mais tarde».
 
 #### 5. Mapa para os requisitos do pacote
