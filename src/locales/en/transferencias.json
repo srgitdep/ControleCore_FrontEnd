@@ -111,6 +111,8 @@
       "reservado": "Reserved",
       "disponivel": "Available",
       "cedivel": "Transferable",
+      "custo_medio": "Avg. cost",
+      "preco_venda": "Sale price",
       "destino": "At destination",
       "quantidade": "Quantity"
     },

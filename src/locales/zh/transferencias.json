@@ -109,6 +109,8 @@
       "reservado": "已预留",
       "disponivel": "可用",
       "cedivel": "可调出",
+      "custo_medio": "平均成本",
+      "preco_venda": "销售价格",
       "destino": "目标仓库库存",
       "quantidade": "数量"
     },

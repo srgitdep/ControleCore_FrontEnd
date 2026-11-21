@@ -94,6 +94,9 @@ export interface ProdutoDisponivel {
   cedivel: number;
   noDestino: number;
   emTransitoNoDestino: number;
+  /** Os mesmos dois campos que a tabela do armazém de destino já mostra. */
+  custoMedio: number;
+  precoVenda: number;
 }
 
 export interface DisponivelNoArmazem {

@@ -111,6 +111,8 @@
       "reservado": "Reservado",
       "disponivel": "Disponível",
       "cedivel": "Cedível",
+      "custo_medio": "Custo médio",
+      "preco_venda": "Preço venda",
       "destino": "No destino",
       "quantidade": "Quantidade"
     },
