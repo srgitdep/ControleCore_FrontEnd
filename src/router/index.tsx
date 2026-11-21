@@ -69,17 +69,15 @@ import { FornecedorVitrinePage } from '@/features/fornecedores';
 import { ArmazensPage } from '@/features/armazens';
 import { RecursosHumanosPage } from '@/features/hr';
 import { useAuth } from '@/features/auth';
+import { destinoDoCargo } from './destinoDoCargo';
 
 function RootRedirectOrLanding() {
   const { user } = useAuth();
   if (!user) return <LandingPage />;
   
-  switch(user.role) {
-    case 'CASHIER': return <Navigate to="/vendas" replace />;
-    case 'STOCK_KEEPER': return <Navigate to="/produtos" replace />;
-    case 'USER': return <Navigate to="/produtos" replace />;
-    default: return <Navigate to="/dashboard" replace />;
-  }
+  // A regra vive em `destinoDoCargo.ts` — tem testes, e é o destino que o login e o
+  // primeiro acesso também usam ao mandar para `/`.
+  return <Navigate to={destinoDoCargo(user.role)} replace />;
 }
 
 export const router = createBrowserRouter([

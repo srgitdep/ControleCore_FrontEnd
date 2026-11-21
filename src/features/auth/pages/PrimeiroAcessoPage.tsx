@@ -64,14 +64,17 @@ export function PrimeiroAcessoPage() {
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!user?.mudarSenha) return <Navigate to="/dashboard" replace />;
+  // `/` e não `/dashboard`: a raiz encaminha cada cargo para o ecrã que lhe serve. O
+  // painel só aceita SUPER_ADMIN, ADMIN e MANAGER, e um Caixa que acabasse de mudar a
+  // senha via o aviso «Sem permissão para aceder a esta página» antes de chegar ao POS.
+  if (!user?.mudarSenha) return <Navigate to="/" replace />;
 
   const onSubmit = async (data: FormData) => {
     try {
       await alterarSenhaApi({ senhaActual: data.senhaActual, novaSenha: data.novaSenha });
       concluirPrimeiroAcesso();
       toast.success(t('primeiro_acesso.sucesso'));
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err: unknown) {
       toast.error(mensagemDeErro(err, t('primeiro_acesso.erro')));
     }
