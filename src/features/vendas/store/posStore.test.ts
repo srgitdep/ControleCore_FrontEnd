@@ -94,6 +94,9 @@ describe('getStockDisponivel', () => {
 describe('carrinho do POS', () => {
   beforeEach(() => {
     usePosStore.getState().clearCart();
+    // O carrinho esvazia-se, mas a fiscalidade é da empresa e não da venda: sem repor,
+    // um teste que desliga o IVA deixava os seguintes a somar zero.
+    usePosStore.getState().setCobraIva(true);
   });
 
   describe('limites de stock', () => {
@@ -212,6 +215,25 @@ describe('carrinho do POS', () => {
 
       expect(usePosStore.getState().getTotalIva()).toBe(0);
       expect(usePosStore.getState().getTotal()).toBe(300);
+    });
+
+    it('não soma IVA quando a empresa não o cobra', () => {
+      // «Cobrar IVA» desligado em Configurações da Empresa: o servidor zera o imposto ao
+      // processar a venda, e o ecrã mostrava na mesma um total com IVA — maior do que o
+      // que ia ser cobrado.
+      usePosStore.getState().addItem(produto(), 2);
+      usePosStore.getState().setCobraIva(false);
+
+      expect(usePosStore.getState().getTotalIva()).toBe(0);
+      // Só o preço: 100 × 2, sem os 16% que o produto tem configurados.
+      expect(usePosStore.getState().getTotal()).toBe(200);
+    });
+
+    it('a taxa do produto continua guardada — desligar o IVA não a apaga', () => {
+      usePosStore.getState().addItem(produto(), 1);
+      usePosStore.getState().setCobraIva(false);
+
+      expect(usePosStore.getState().cartItems[0].taxaIva).toBe(16);
     });
 
     it('subtrai o desconto global do total', () => {

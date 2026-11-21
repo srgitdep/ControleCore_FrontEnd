@@ -133,6 +133,17 @@ interface POSState {
   selectedCategoryId: string | null;
   setSelectedCategory: (categoryId: string | null) => void;
 
+  // ── Fiscalidade da empresa ─────────────────────────────────────────────
+  // Se a empresa cobra IVA aos seus clientes (`Empresa.cobraIva`). Desligado, a taxa de
+  // cada produto continua guardada mas deixa de se aplicar — é o que o servidor faz ao
+  // processar a venda (`processar-venda.use-case.ts`), e o ecrã tem de mostrar o mesmo
+  // total que vai ser cobrado.
+  //
+  // Começa a `true`, como o valor por omissão da coluna: enquanto a empresa não carrega,
+  // mostra-se o caso comum, e não um total sem imposto que depois sobe.
+  cobraIva: boolean;
+  setCobraIva: (cobra: boolean) => void;
+
   // ── Computed ──────────────────────────────────────────────────────────â”€
   // Nota: usamos funções (não getters) para compatibilidade com Zustand devtools
   getSubtotal: () => number;
@@ -258,6 +269,9 @@ export const usePosStore = create<POSState>((set, get) => ({
   valorPontosAResgatar: 0,
   setValorPontosAResgatar: (valor) => set({ valorPontosAResgatar: Math.max(0, valor) }),
 
+  cobraIva: true,
+  setCobraIva: (cobra) => set({ cobraIva: cobra }),
+
   // ── Filtros do Catálogo ──────────────────────────────────────────────────
 
   searchTerm: '',
@@ -282,14 +296,19 @@ export const usePosStore = create<POSState>((set, get) => ({
   // basta uma resposta sem ele — um produto antigo, um payload parcial — para o IVA dar
   // `NaN`, e o `NaN` contamina o total inteiro: o operador via «NaN MT» em vez do valor
   // a cobrar. Um IVA ausente vale zero; um total ilegível não vale nada.
-  getTotalIva: () =>
-    get().cartItems.reduce(
+  getTotalIva: () => {
+    // A empresa pode não cobrar IVA: o servidor zera-o ao processar a venda, e um ecrã
+    // que continuasse a somá-lo mostrava ao operador um total que não era o cobrado.
+    if (!get().cobraIva) return 0;
+
+    return get().cartItems.reduce(
       (acc, item) =>
         acc +
         (item.precoVenda * item.cartQuantity - item.desconto) *
           ((item.taxaIva ?? 0) / 100),
       0,
-    ),
+    );
+  },
 
   getTotal: () => {
     const subtotal = get().getSubtotal();

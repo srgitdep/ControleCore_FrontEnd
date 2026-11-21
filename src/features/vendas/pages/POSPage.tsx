@@ -7,6 +7,7 @@ import { useSocket, useBreakpoint, useUIStore } from '@/shared/hooks';
 import { useCopilotStore } from '@/features/ai-copilot/store/copilotStore';
 import { classeMargemDaMayra } from '@/features/ai-copilot/utils/margem-layout';
 import { useProcessarVenda } from '@/features/vendas';
+import { useMinhaEmpresa } from '@/features/empresas';
 import { useMinhaSessao, useCaixasDisponiveis, useAbrirSessao, useFecharSessao, useRegistrarSangria, useRegistrarReforco } from '@/features/vendas';
 import toast from 'react-hot-toast';
 import type { Product } from '@/features/produtos';
@@ -51,7 +52,16 @@ export function POSPage() {
     descontoGlobal, getTotal,
     clienteIdentificado, associarCliente,
     pontosAResgatar, setPontosAResgatar, valorPontosAResgatar, setValorPontosAResgatar,
+    setCobraIva,
   } = usePosStore();
+
+  // A fiscalidade da empresa (Configurações da Empresa → «Cobrar IVA»). Sem isto, o
+  // servidor deixava de cobrar IVA mas o ecrã continuava a somá-lo: o operador via um
+  // total que não era o que ia ser cobrado.
+  const { data: empresa } = useMinhaEmpresa();
+  useEffect(() => {
+    if (empresa) setCobraIva(empresa.cobraIva);
+  }, [empresa, setCobraIva]);
 
   // Fidelização: só pede o saldo quando há cliente na venda.
   const { data: saldoPontos } = useSaldoPontos(clienteIdentificado?.id);
