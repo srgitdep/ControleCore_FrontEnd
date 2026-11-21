@@ -54,6 +54,13 @@ export function useStockMutations() {
     // catálogo mostrava saldos desactualizados até um recarregamento da página. Fica
     // visível agora que o catálogo é um separador ao lado dos saldos.
     queryClient.invalidateQueries({ queryKey: ['products'] });
+    // O detalhe de armazém e os ecrãs de distribuição/localização lêem o saldo por
+    // armazém a partir destas chaves, separadas de 'stocks'/'stock' — sem isto, uma
+    // transferência deixava o modal de detalhe do armazém de destino a mostrar o saldo
+    // antigo até um recarregamento manual da página.
+    queryClient.invalidateQueries({ queryKey: ['armazem-stock'] });
+    queryClient.invalidateQueries({ queryKey: ['distribuicao-stock'] });
+    queryClient.invalidateQueries({ queryKey: ['onde-esta'] });
   };
 
   const handleError = (error: any) => {
