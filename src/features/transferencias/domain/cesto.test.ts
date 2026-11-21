@@ -27,6 +27,8 @@ const produto = (extra: Partial<ProdutoDisponivel> = {}): ProdutoDisponivel => (
   cedivel: 9,
   noDestino: 0,
   emTransitoNoDestino: 0,
+  custoMedio: 0,
+  precoVenda: 0,
   ...extra,
 });
 
