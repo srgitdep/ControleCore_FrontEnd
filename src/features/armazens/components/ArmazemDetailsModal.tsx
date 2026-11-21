@@ -86,9 +86,24 @@ export function ArmazemDetailsModal({
               />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">{armazem.nome}</h2>
+              <h2 className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-800">
+                {armazem.nome}
+                {/* Badge do tipo sempre visível, não só no subtítulo: lojas com mais do que um
+                    armazém de nome parecido ("Zimpeto 1", por exemplo) distinguem-se por aqui,
+                    não só pelo texto pequeno abaixo do nome — fácil de ignorar. */}
+                <span
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide',
+                    armazem.tipo?.toUpperCase() === 'VENDA'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-emerald-100 text-emerald-700',
+                  )}
+                >
+                  {rotuloTipoArmazem(t, armazem.tipo)}
+                </span>
+              </h2>
               <p className="text-sm text-slate-500">
-                {lojaNome} · {rotuloTipoArmazem(t, armazem.tipo)}
+                {lojaNome}
                 {!armazem.isActive && (
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
                     {t('detalhe.inactivo')}
