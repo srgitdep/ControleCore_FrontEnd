@@ -14,5 +14,10 @@
     "obrigatorio": "NUIT 为必填项，且为 {{digitos}} 位数字。",
     "a_mais": "NUIT 应为 {{digitos}} 位数字，而您输入了 {{escritos}} 位——多了 {{excesso}} 位。请对照纳税人卡片核对号码。",
     "a_menos": "NUIT 应为 {{digitos}} 位数字，而您输入了 {{escritos}} 位——少了 {{faltam}} 位。请对照纳税人卡片核对号码。"
+  },
+  "exportar": {
+    "pdf": "导出 PDF",
+    "a_gerar": "正在生成……",
+    "sem_dados": "没有可导出的数据。"
   }
 }

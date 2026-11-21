@@ -1,18 +1,23 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Image as ImageIcon, Download, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 // Importado do módulo directo, e não do barrel `@/features/produtos`: o barrel passa a
 // exportar este componente, e importar dele aqui fecharia um ciclo.
 import { useProducts, useDeleteProduct } from '../hooks/useCatalog';
+import { catalogApi } from '../api/catalog.api';
 import type { Product } from '../types';
 import { urlImagemProduto } from '../utils/imagem';
 import { useAuth, usePermissions } from '@/features/auth';
 import { Button, ResponsiveTable, ConfirmDialog } from '@/shared/ui';
 import { useDebounce, useBreakpoint } from '@/shared/hooks';
-import { formatMoeda } from '@/shared/utils';
+import { cn, exportarTabelaPDF, formatMoeda } from '@/shared/utils';
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { getCoreRowModel, useReactTable, createColumnHelper } from '@tanstack/react-table';
 import { ProductFormModal } from './ProductFormModal';
+
+/** Acima do maior catálogo visto em produção, para um só pedido trazer tudo. */
+const LIMITE_PARA_EXPORTAR = 5000;
 
 /**
  * O catálogo de produtos, sem cabeçalho de página.
@@ -65,6 +70,46 @@ export function ProductsTab() {
 
   const products = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
+
+  // Exporta o catálogo todo (respeitando a pesquisa activa), não só a página visível —
+  // por isso busca à parte, em vez de reaproveitar `products`.
+  const [aExportar, setAExportar] = useState(false);
+  const exportarPDF = async () => {
+    setAExportar(true);
+    try {
+      const todos = await catalogApi.getProducts({
+        search: debouncedSearch,
+        limit: LIMITE_PARA_EXPORTAR,
+      });
+      const linhas = todos.data ?? [];
+      if (linhas.length === 0) {
+        toast.error(t('lista.vazio'));
+        return;
+      }
+      exportarTabelaPDF({
+        titulo: t('lista.titulo_pdf'),
+        colunas: [
+          t('lista.col_produto'),
+          t('lista.col_categoria'),
+          t('lista.col_custo'),
+          t('lista.col_venda'),
+          t('lista.col_margem'),
+          t('lista.col_unidade'),
+        ],
+        linhas: linhas.map((p) => [
+          p.nome,
+          p.categoria?.nome ?? t('lista.sem_categoria'),
+          formatMoeda(p.precoCusto || 0),
+          formatMoeda(p.precoVenda || 0),
+          `${(p.margemLucro || 0).toFixed(2)}%`,
+          p.unidadeMedida || 'UN',
+        ]),
+        nomeFicheiro: 'produtos',
+      });
+    } finally {
+      setAExportar(false);
+    }
+  };
 
   const columns = useMemo<ColumnDef<Product, any>[]>(() => {
     const columnHelper = createColumnHelper<Product>();
@@ -223,15 +268,27 @@ export function ProductsTab() {
           />
         </div>
 
-        {canManage && (
+        <div className="flex gap-2">
           <Button
-            onClick={() => setModalState({ isOpen: true, productToEdit: undefined })}
-            className="gap-2"
+            variant="outline"
+            onClick={exportarPDF}
+            disabled={aExportar}
+            className={cn('gap-2', aExportar && 'opacity-60')}
           >
-            <Plus className="h-4 w-4" />
-            {t('lista.novo_produto')}
+            {aExportar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {t('exportar.pdf', { ns: 'comum' })}
           </Button>
-        )}
+
+          {canManage && (
+            <Button
+              onClick={() => setModalState({ isOpen: true, productToEdit: undefined })}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t('lista.novo_produto')}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200">

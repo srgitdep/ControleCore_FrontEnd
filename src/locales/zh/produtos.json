@@ -124,6 +124,7 @@
     "erro_remover": "移除供应商时出错。"
   },
   "lista": {
+    "titulo_pdf": "商品目录",
     "col_produto": "商品",
     "col_categoria": "类别",
     "col_custo": "成本价",

@@ -124,6 +124,7 @@
     "erro_remover": "Erro ao remover o fornecedor."
   },
   "lista": {
+    "titulo_pdf": "Catálogo de Produtos",
     "col_produto": "Produto",
     "col_categoria": "Categoria",
     "col_custo": "Preço de Custo",

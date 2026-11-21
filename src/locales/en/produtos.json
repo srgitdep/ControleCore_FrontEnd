@@ -124,6 +124,7 @@
     "erro_remover": "Error removing the supplier."
   },
   "lista": {
+    "titulo_pdf": "Product Catalog",
     "col_produto": "Product",
     "col_categoria": "Category",
     "col_custo": "Cost Price",

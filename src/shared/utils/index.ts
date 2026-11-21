@@ -5,3 +5,4 @@ export * from './mensagemDeErro';
 export * from './nuit';
 export * from './pcm-player';
 export * from './imagem';
+export * from './exportarTabelaPDF';

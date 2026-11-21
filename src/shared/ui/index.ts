@@ -9,3 +9,4 @@ export * from './Tabs';
 export * from './CapturaPorFoto';
 export * from './SelectorIdioma';
 export * from './SinoDeNotificacoes';
+export * from './BotaoExportarPDF';
