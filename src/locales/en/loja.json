@@ -115,7 +115,15 @@
     "taxa_entrega": "Delivery fee",
     "partilha_titulo": "Your first purchase at this store",
     "partilha_texto": "By buying, {{empresa}} will receive your name, phone and e-mail to prepare and deliver your order. We only ask for this confirmation the first time.",
-    "partilha_aceito": "I agree that this store receives my details"
+    "partilha_aceito": "I agree that this store receives my details",
+    "preco_mudou": {
+      "titulo": "The price changed",
+      "texto": "The price of one or more items was updated since you put the cart together. Review the new total before confirming.",
+      "total_anterior": "Total you saw",
+      "total_novo": "Current total",
+      "rever": "Review cart",
+      "aceitar": "Accept and confirm"
+    }
   },
   "pedidos": {
     "os_meus": "My orders",

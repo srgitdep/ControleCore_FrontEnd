@@ -73,6 +73,13 @@ export interface EntregaDoPedido {
   previsao: { minutos: number; distanciaMetros: number; caminho: { latitude: number; longitude: number }[] } | null;
 }
 
+/** O corpo do 409 `checkout.preco_alterado` (plano §4.16, D7-3). */
+export interface PrecoAlteradoParametros {
+  totalEsperado?: number;
+  totalAtual: number;
+  itens: { produtoId: string; quantidade: number; precoUnitario: number; subtotal: number }[];
+}
+
 const BASE = '/commerce/pedidos';
 
 export const pedidos = {
@@ -84,6 +91,11 @@ export const pedidos = {
     enderecoId?: string;
     /** Obrigatório (true) na primeira compra numa empresa: a pessoa aceitou partilhar os seus dados com ela. */
     aceitaPartilhaDados?: boolean;
+    /**
+     * O total que o cliente viu no carrinho. Se o servidor recalcular um total diferente,
+     * devolve 409 `checkout.preco_alterado` em vez de cobrar em silêncio (plano §4.16, D7-3).
+     */
+    totalEsperado?: number;
   }) => {
     const { data } = await contaApi.post<Pedido>(BASE, payload);
     return data;
@@ -110,6 +122,17 @@ export const pedidos = {
     return data;
   },
 };
+
+/**
+ * Se um erro é o 409 `checkout.preco_alterado`, devolve os parâmetros para o diálogo "o
+ * preço mudou"; senão, `null` — para o `onError` genérico tratar o resto como sempre.
+ */
+export function comoPrecoAlterado(erro: unknown): PrecoAlteradoParametros | null {
+  const resposta = (erro as { response?: { data?: { codigo?: string; parametros?: unknown } } })
+    ?.response;
+  if (resposta?.data?.codigo !== 'checkout.preco_alterado') return null;
+  return resposta.data.parametros as PrecoAlteradoParametros;
+}
 
 // As etiquetas de cada estado e método de pagamento estão em `src/locales/<língua>/loja.json`
 // (`estadoPedido.*`, `metodoPagamento.*`) — v1 é só levantamento em loja.

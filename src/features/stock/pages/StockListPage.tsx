@@ -29,6 +29,7 @@ import {
   Layers3,
   MapPin,
   Tag,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -47,10 +48,11 @@ import { FefoModal } from '../components/FefoModal';
 import { LocalizacaoStockModal } from '../components/LocalizacaoStockModal';
 import { ProductsTab } from '@/features/produtos/components/ProductsTab';
 import { CategoriasTab } from '@/features/produtos/components/CategoriasTab';
+import { PedidosClienteTab } from '@/features/pedidos-cliente';
 import type { Stock, StockMovement } from '@/features/stock';
 
 // ──â”€ Tab definition ──────────────────────────────────────────────────────────â”€
-type StockTab = 'produtos' | 'categorias' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario';
+type StockTab = 'produtos' | 'categorias' | 'estoque' | 'reservas' | 'saude' | 'validade' | 'movimentos' | 'inventario' | 'pedidos-cliente';
 
 // «Produtos» é a lista do que se vende (nome, preço, IVA); «Stock» são as quantidades
 // por armazém. Vem primeiro o produto: é por onde se começa, e as quantidades só
@@ -65,6 +67,7 @@ const criarTabs = (t: TFunction<'stock'>): TabDefinition<StockTab>[] => [
   { id: 'validade', label: t('lista.tab_validade'), icon: CalendarClock },
   { id: 'movimentos', label: t('lista.tab_movimentos'), icon: BarChart3 },
   { id: 'inventario', label: t('lista.tab_inventario'), icon: ClipboardList },
+  { id: 'pedidos-cliente', label: t('lista.tab_pedidos_cliente'), icon: MessageCircleQuestion },
 ];
 
 // ──â”€ Column helper tipado ──────────────────────────────────────────────────────
@@ -851,6 +854,7 @@ export function StockListPage() {
           {activeTab === 'validade' && <ValidadeTab />}
           {activeTab === 'movimentos' && <MovementsTab />}
           {activeTab === 'inventario' && <InventoryTab />}
+          {activeTab === 'pedidos-cliente' && <PedidosClienteTab />}
         </div>
       </div>
     </div>

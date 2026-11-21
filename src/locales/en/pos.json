@@ -253,6 +253,18 @@
     "reforco_ph": "E.g.: Extra coins for change...",
     "reforco_confirmar": "Confirm Cash Top-up"
   },
+  "pedidoCliente": {
+    "abrir": "Product we don't have?",
+    "titulo": "Missing product request",
+    "fechar": "Close",
+    "nome_produto": "What product did the customer ask for?",
+    "nome_produto_exemplo": "E.g.: Omo powder detergent 1kg",
+    "ajuda": "Recorded so the shop knows what customers look for and can't find.",
+    "a_registar": "Saving…",
+    "registar": "Register request",
+    "registado": "Request registered. Thank you!",
+    "erro_registar": "Error registering the request."
+  },
   "produto": {
     "so_em_armazem": "Warehouse only",
     "so_em_armazem_titulo": "{{n}} units in the warehouse. Transfer to the shop floor to be able to sell.",

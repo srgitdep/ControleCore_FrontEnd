@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { mensagemDeErro } from '@/shared/utils';
-import { pedidos } from '../api/pedidos.api';
+import { comoPrecoAlterado, pedidos } from '../api/pedidos.api';
 import type { MetodoPagamentoCommerce, TipoEntregaPedido } from '../api/pedidos.api';
 
 const CHAVE = 'loja';
@@ -38,6 +38,7 @@ export function useCriarPedido() {
       tipoEntrega?: TipoEntregaPedido;
       enderecoId?: string;
       aceitaPartilhaDados?: boolean;
+      totalEsperado?: number;
     }) => pedidos.criar(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'pedidos'] });
@@ -45,7 +46,12 @@ export function useCriarPedido() {
       // «é preciso» e o aviso voltava na compra seguinte.
       void queryClient.invalidateQueries({ queryKey: [CHAVE, 'partilha'] });
     },
-    onError: (erro) => toast.error(mensagemDeErro(erro, t('pedido.erro_criar'))),
+    onError: (erro) => {
+      // O preço mudou: o ecrã mostra o diálogo com o total novo, não um toast — um toast
+      // desaparece antes de a pessoa decidir se aceita o novo preço.
+      if (comoPrecoAlterado(erro)) return;
+      toast.error(mensagemDeErro(erro, t('pedido.erro_criar')));
+    },
   });
 }
 
