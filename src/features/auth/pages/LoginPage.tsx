@@ -70,7 +70,16 @@ export function LoginPage() {
   const concluirEntrada = (user: AuthUser) => {
     entrarComSessao(user);
     toast.success(t('login.sucesso'), { duration: 2000 });
-    navigate('/dashboard', { replace: true });
+
+    // `/` e não `/dashboard`: a raiz encaminha cada cargo para o ecrã que lhe serve
+    // (`RootRedirectOrLanding`, em `router/index.tsx`) — o Caixa para o Ponto de Venda, o
+    // Armazenista para os produtos.
+    //
+    // O painel só aceita SUPER_ADMIN, ADMIN e MANAGER. Mandando toda a gente para lá, um
+    // Operador de Caixa aterrava numa rota que lhe era recusada: via o aviso vermelho «Sem
+    // permissão para aceder a esta página» e só depois era reencaminhado para o POS. O
+    // acesso estava certo; o erro era o caminho até lá.
+    navigate('/', { replace: true });
   };
   const loginSchema = useMemo(() => criarLoginSchema(t), [t]);
   const emEcraLargo = useBreakpoint('sm');
