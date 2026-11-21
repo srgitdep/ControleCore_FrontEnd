@@ -145,7 +145,7 @@
     "matriz_ajuda": "Tick what this profile can see and do.",
     "a_guardar": "Saving...",
     "guardar": "Save Changes",
-    "aviso_sistema": "System profile: shared by all companies and editable only by SRG. Read-only.",
+    "aviso_modelo": "This is an SRG template profile. On save, a copy is kept for your company only — the changes apply to your staff alone.",
     "aviso_admin": "The company Administrator always has full access — the boxes show what is assigned but do not restrict this profile.",
     "a_carregar_servidor": "Loading permissions from the server...",
     "coluna_recurso": "Module / Resource",

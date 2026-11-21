@@ -159,9 +159,13 @@ export function PermissionsPage() {
   };
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);
-  // O servidor recusa (403) a gravação de perfis de sistema a quem não é da SRG; o ecrã
-  // já não oferece o que sabe que vai falhar.
-  const somenteLeitura = !!selectedRole?.isSystem && !hasRole(['SUPER_ADMIN']);
+  // Os perfis de sistema deixaram de ser comuns a todas as empresas: são **modelos**, e
+  // gravar um deles cria (no servidor) a cópia desta empresa, onde a alteração fica. Cada
+  // empresa decide o que o seu Caixa, Gestor ou Armazenista faz — por isso o ecrã já não é
+  // só de leitura para quem não é da SRG; só avisa que vai personalizar o modelo.
+  const vaiPersonalizarModelo =
+    !!selectedRole?.isSystem && !hasRole(['SUPER_ADMIN']);
+  const somenteLeitura = false;
   const perfilAdminSistema = !!selectedRole?.isSystem && selectedRole.nome === 'Administrador';
 
   return (
@@ -280,9 +284,11 @@ export function PermissionsPage() {
               </button>
             </div>
 
-            {(somenteLeitura || perfilAdminSistema) && (
+            {(vaiPersonalizarModelo || perfilAdminSistema) && (
               <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 sm:px-6">
-                {somenteLeitura ? t('permissoes.aviso_sistema') : t('permissoes.aviso_admin')}
+                {perfilAdminSistema
+                  ? t('permissoes.aviso_admin')
+                  : t('permissoes.aviso_modelo')}
               </div>
             )}
 
