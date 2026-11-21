@@ -37,6 +37,7 @@ const PAGE_TITLES = {
   '/empresas':      'empresas',
   '/utilizadores':  'utilizadores',
   '/permissoes':    'permissoes',
+  '/configuracoes-empresa': 'configuracoesEmpresa',
   '/historico':     'historico',
 } as const;
 

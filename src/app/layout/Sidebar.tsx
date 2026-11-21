@@ -42,7 +42,7 @@ import { SelectorIdioma } from '@/shared/ui';
 import { caminhoActivo } from './caminhoActivo';
 
 type ChaveItem =
-  | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes'
+  | 'dashboard' | 'empresas' | 'adesoes' | 'modulos' | 'utilizadores' | 'permissoes' | 'configuracoesEmpresa'
   | 'vendas' | 'crm' | 'financeiro' | 'stock' | 'armazens' | 'transferencias'
   | 'ecommerce' | 'promocao' | 'precificacao' | 'necessidades' | 'requisicoes' | 'compras' | 'conferencia'
   | 'lojas' | 'rh' | 'historico';
@@ -111,6 +111,8 @@ const navGroups: NavGroup[] = [
       { chave: 'modulos', icon: Blocks, path: '/modulos', roles: ['SUPER_ADMIN'] },
       { chave: 'utilizadores', icon: Users, path: '/utilizadores', roles: ['SUPER_ADMIN', 'ADMIN'], permissao: 'read:users' },
       { chave: 'permissoes', icon: Settings, path: '/permissoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'manage:users' },
+      // A própria empresa, não a lista de clientes da plataforma (essa é «empresas», acima).
+      { chave: 'configuracoesEmpresa', icon: Settings, path: '/configuracoes-empresa', roles: ['ADMIN', 'MANAGER'], permissao: 'manage:empresa' },
     ]
   },
   {

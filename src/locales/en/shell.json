@@ -12,6 +12,7 @@
       "modulos": "Modules",
       "utilizadores": "Users",
       "permissoes": "Permissions",
+      "configuracoesEmpresa": "Company Settings",
       "vendas": "Point of Sale",
       "crm": "CRM",
       "financeiro": "Finance",
@@ -56,6 +57,7 @@
       "empresas": "Companies",
       "utilizadores": "Users",
       "permissoes": "Permissions",
+      "configuracoesEmpresa": "Company Settings",
       "historico": "System History"
     },
     "abrir_menu": "Open navigation menu",

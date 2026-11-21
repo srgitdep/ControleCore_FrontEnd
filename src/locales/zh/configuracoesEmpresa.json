@@ -1,0 +1,9 @@
+{
+  "titulo": "公司设置",
+  "fiscalidade": {
+    "titulo": "税务",
+    "descricao": "贵公司如何向客户收取税款。",
+    "cobra_iva": "收取增值税",
+    "cobra_iva_ajuda": "关闭后，销售点和 Compra Fácil 将不再应用各商品的增值税率——只收取价格。"
+  }
+}

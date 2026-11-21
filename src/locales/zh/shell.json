@@ -12,6 +12,7 @@
       "modulos": "模块",
       "utilizadores": "用户",
       "permissoes": "权限",
+      "configuracoesEmpresa": "公司设置",
       "vendas": "销售点",
       "crm": "CRM",
       "financeiro": "财务",
@@ -56,6 +57,7 @@
       "empresas": "公司",
       "utilizadores": "用户",
       "permissoes": "权限",
+      "configuracoesEmpresa": "公司设置",
       "historico": "系统历史"
     },
     "abrir_menu": "打开导航菜单",

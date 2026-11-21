@@ -1,0 +1,9 @@
+{
+  "titulo": "Configurações da Empresa",
+  "fiscalidade": {
+    "titulo": "Fiscalidade",
+    "descricao": "Como a sua empresa cobra os impostos aos clientes.",
+    "cobra_iva": "Cobrar IVA",
+    "cobra_iva_ajuda": "Desligado, o Ponto de Venda e o Compra Fácil deixam de aplicar a taxa de IVA de cada produto — cobram só o preço."
+  }
+}

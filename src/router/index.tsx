@@ -11,6 +11,7 @@ import { UsersPage } from '@/features/users';
 import { HistoryPage } from '@/features/history';
 import { ProductListPage } from '@/features/produtos';
 import { PermissionsPage } from '@/pages/settings/PermissionsPage';
+import { ConfiguracoesEmpresaPage } from '@/pages/settings/ConfiguracoesEmpresaPage';
 import { POSPage } from '@/features/vendas';
 import { LojasPage } from '@/features/lojas';
 import { StockListPage } from '@/features/stock';
@@ -238,6 +239,14 @@ export const router = createBrowserRouter([
             path: '/permissoes',
             element: <ProtectedRoute roles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']} requiredPermission="manage:users" permissaoAlternativa="manage:users" />,
             children: [{ index: true, element: <PermissionsPage /> }]
+          },
+          {
+            // As configurações da própria empresa (não a lista de clientes da
+            // plataforma, essa é `/empresas`, Super Admin). EDITAR_EMPRESA no backend
+            // já aceita o ADMIN da própria empresa — aqui só se condiciona o menu/rota.
+            path: '/configuracoes-empresa',
+            element: <ProtectedRoute roles={['ADMIN', 'MANAGER']} permissaoAlternativa="manage:empresa" />,
+            children: [{ index: true, element: <ConfiguracoesEmpresaPage /> }]
           },
 
           // Módulos â€â€ em desenvolvimento
