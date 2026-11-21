@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ArrowRight, Loader2, Package, Search, X } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks';
-import { cn, mensagemDeErro } from '@/shared/utils';
+import { cn, formatMoeda, mensagemDeErro } from '@/shared/utils';
 import { useArmazensEscolhiveis, useDisponivelNoArmazem, useSolicitarEmMassa } from '../hooks/useTransferencias';
 import {
   cestoPronto,
@@ -253,6 +253,8 @@ export function NovaTransferenciaEmMassa({ aoFechar }: { aoFechar: () => void })
                       <th className="px-3 py-2 text-right">{t('nova.col.reservado')}</th>
                       <th className="px-3 py-2 text-right">{t('nova.col.disponivel')}</th>
                       <th className="px-3 py-2 text-right">{t('nova.col.cedivel')}</th>
+                      <th className="px-3 py-2 text-right">{t('nova.col.custo_medio')}</th>
+                      <th className="px-3 py-2 text-right">{t('nova.col.preco_venda')}</th>
                       <th className="px-3 py-2 text-right">{t('nova.col.destino')}</th>
                       <th className="w-32 px-3 py-2 text-right">{t('nova.col.quantidade')}</th>
                     </tr>
@@ -296,13 +298,15 @@ export function NovaTransferenciaEmMassa({ aoFechar }: { aoFechar: () => void })
                                 {p.cedivel}
                                 {p.disponivel > 0 && p.cedivel === 0 && <span className="block text-[10px] text-amber-600">{t('nova.abaixo_do_minimo')}</span>}
                               </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{formatMoeda(p.custoMedio)}</td>
+                              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{formatMoeda(p.precoVenda)}</td>
                               <td className="px-3 py-2 text-right tabular-nums">
                                 {p.noDestino}
                                 {p.emTransitoNoDestino > 0 && <span className="block text-[10px] text-slate-400">{t('nova.em_transito', { n: p.emTransitoNoDestino })}</span>}
                               </td>
                             </>
                           ) : (
-                            <td colSpan={5} className="px-3 py-2 text-right text-xs text-slate-400">
+                            <td colSpan={7} className="px-3 py-2 text-right text-xs text-slate-400">
                               {t('nova.disponivel_de', { n: item?.disponivel ?? 0 })}
                             </td>
                           )}
