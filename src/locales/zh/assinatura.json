@@ -5,7 +5,7 @@
   },
   "bloqueada": {
     "titulo": "访问已暂停",
-    "texto": "贵公司因未付款，CoreBusiness 访问已被暂停。",
+    "texto": "贵公司因未付款，ControlCore 访问已被暂停。",
     "dados": "您的数据已保存，没有任何内容被删除。付款登记后即可恢复访问。",
     "contacto": "如需恢复，请联系我们：{{email}}",
     "sair": "退出"

@@ -74,7 +74,7 @@ export function MercadoPage() {
               <p className="text-sm font-semibold leading-tight text-slate-900">
                 {t('cabecalho.titulo')}
               </p>
-              <p className="text-xs leading-tight text-slate-500">CoreBusiness</p>
+              <p className="text-xs leading-tight text-slate-500">ControlCore</p>
             </div>
           </Link>
 

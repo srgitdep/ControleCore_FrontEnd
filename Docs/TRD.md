@@ -1,4 +1,4 @@
-# TRD — Technical Reference Document — CoreBusiness (antes SRG ControlCore)
+# TRD — Technical Reference Document — ControlCore
 
 > Documento único, replicado tal e qual nos dois repositórios
 > (`ControleCore_BackEnd/Docs/TRD.md` e `ControleCore_FrontEnd/Docs/TRD.md`).
@@ -30,14 +30,17 @@ Fácil") e a assistente de IA "Mayra".
 Dois repositórios git separados, dois deploys independentes, backend sempre
 primeiro (contrato de API muda no backend antes do frontend passar a chamá-lo).
 
-**Nome do produto: CoreBusiness** (até 2026-10-23, «SRG ControlCore»). O nome
-mudou só onde o utilizador o vê: interface (pt/en/zh, `MARCA.NOME` em `site.json`),
-e-mails, Mayra e Swagger. Os identificadores técnicos continuam com «controlcore»
-de propósito — a app Fly `srg-controlcore-api`, os cabeçalhos `X-ControlCore-*`
-dos webhooks (§8), as audiências JWT `controlcore-*`, as chaves `controlcore.*`
-do `localStorage` e o `userAgent` da auditoria. Mudá-los partiria, respectivamente,
-o encaminhamento do Vercel e o CORS, a validação nos receptores de webhooks, as
-sessões activas e as preferências guardadas; um rename só com plano de migração.
+**Nome do produto: ControlCore.** Chamou-se «SRG ControlCore» até 2026-10-23,
+«CoreBusiness» de 2026-10-23 a 2026-11-21, e voltou a ControlCore a pedido do
+utilizador. «SRG» designa a empresa dona (© SRG, «Super Administrador (SRG)»,
+«Mercado SRG»), não o produto. Os identificadores técnicos sempre ficaram com
+«controlcore» (app Fly `srg-controlcore-api`, cabeçalhos `X-ControlCore-*` dos
+webhooks (§8), audiências JWT `controlcore-*`, chaves `controlcore.*` do
+`localStorage`, `userAgent` da auditoria) e agora coincidem com o nome. **Excepção
+que fica com «corebusiness», de propósito:** os rótulos HKDF `corebusiness-mfa-*`
+em `src/shared/mfa.ts` — mudá-los torna ilegíveis todos os segredos MFA gravados.
+A importação de catálogos aceita a coluna «Código CoreBusiness» além de «Código
+ControlCore».
 
 ---
 
@@ -706,7 +709,7 @@ aplicação — por isso lê sempre a preferência gravada na base de dados, nun
 - **Roles reservados.** `SUPER_ADMIN` e os roles técnicos só são atribuídos por um Super Admin, e só ele muda o `empresaId` de um utilizador (`garantirAlteracaoDeUtilizadorPermitida`, `src/shared/roles-reservados.ts`, em `CreateUserUseCase` e `UpdateUserUseCase`).
 - **Rotas.** `GET /super-admins` (lista: `id`, `code`, `name`, `email`, `isActive`, `createdAt`) e `POST /super-admins` (`{ name, email }`). `SuperAdminsController` no módulo `users`, com `RolesGuard` + `@Roles(SUPER_ADMIN)`: o `PermissoesGuard` sozinho deixaria passar o ADMIN de qualquer empresa (bypass). `@Permissao('GERIR_SUPER_ADMINS')` fica declarada para um futuro role de operador.
 - **Criação.** `CriarSuperAdminUseCase`: e-mail normalizado (minúsculas) e único; código `SA###` a continuar a série a partir de **todos** os códigos começados por `SA` (o `code` é único na tabela inteira); senha de 12 caracteres `base64url` (72 bits); `role: SUPER_ADMIN`, sem `empresaId`. Funções puras em `src/shared/super-admin.ts` (`proximoCodigoSuperAdmin`, `gerarSenhaSuperAdmin`). Duas criações simultâneas com o mesmo código: a segunda bate no `@unique` e dá 409.
-- **Entrega das credenciais.** E-mail de boas-vindas (`sendWelcomeEmail`, empresa «CoreBusiness»). A resposta traz `senhaInicial` **uma vez** e `emailEnviado`; uma falha de SMTP regista-se e não desfaz a conta. O frontend (`features/dashboard`: `SuperAdminsCard`, `NovoSuperAdminDialog`) mostra-as num diálogo que só fecha por acção de quem criou.
+- **Entrega das credenciais.** E-mail de boas-vindas (`sendWelcomeEmail`, empresa «ControlCore»). A resposta traz `senhaInicial` **uma vez** e `emailEnviado`; uma falha de SMTP regista-se e não desfaz a conta. O frontend (`features/dashboard`: `SuperAdminsCard`, `NovoSuperAdminDialog`) mostra-as num diálogo que só fecha por acção de quem criou.
 - **MFA (Fase 66).** Obrigatório para o Super Admin; para os outros, só com `mfaActivo`. Interruptor geral `MFA_ACTIVO` (`false`/`0` desliga para todos; em falta, ligado). `MFA_CHAVE_CIFRA` (32 bytes base64) dá por HKDF a chave AES-256-GCM do segredo TOTP (`users.mfaSegredoEncriptado`, formato `v1:iv:tag:texto`) e a chave que assina o desafio. Fluxo: senha certa → `{ mfa: { etapa: CONFIGURAR | PEDIR_CODIGO, desafio } }` sem cookies (`/auth/login` e `/auth/entrar`) → `POST /auth/mfa/configurar` (QR + segredo; reaproveita um pendente) → `POST /auth/mfa/verificar` (emite a sessão; liga o MFA na primeira vez; o LOGIN só se audita aqui). O desafio (5 min, audiência `corebusiness-desafio-mfa`) não é aceite pelo `JwtStrategy` porque não conhece a chave. Janela TOTP ±30 s. 5 códigos errados → `bloqueadoAte` = +15 min (429). Ligado e sem chave → 503 `auth.mfa.indisponivel`. Trocar a chave invalida todos os segredos: repor com `npm run super-admin:repor-mfa -- --codigo SA### --aplicar`.
 - **Gestão das contas (Fase 66).** `PATCH /super-admins/:id/estado` (`{ activo, motivo }`, no `UserStatusLog`), `POST /super-admins/:id/repor-senha` (senha nova por e-mail e uma vez na resposta) e `POST /super-admins/:id/repor-mfa`. Nunca sobre a própria conta (403); nunca deixa a plataforma sem Super Admin activo (409), com `SELECT … FOR UPDATE` sobre as linhas dos activos. `PATCH /users/:id/status` filtra pela empresa de quem pede e recusa Super Admins.
 - **Assinaturas (Fase 67).** Módulo `assinatura`, `@Roles(SUPER_ADMIN)`. A assinatura «actual» de uma empresa é a mais recente não cancelada (ou, não havendo, a mais recente). `GET /plataforma/empresas/:id/assinatura` → `{ empresa, assinatura, fimDoAcesso, situacao }`; `PATCH` (motivo obrigatório; `modulos` substitui a lista; sem `valorTotal`, a soma dos `precoAcordado`; `SUSPENSA` grava `suspensaEm`/`motivoSuspensao`); `POST …/pagamentos` (`Pagamento` `PAGO` com `dataVencimento` = fim anterior; estende `dataFim` um ciclo a partir de `max(fim, hoje)` — `TRIAL` conta de `trialAte ?? dataFim` —, repõe `ATIVA` de `TRIAL`/`EM_ATRASO`/`EXPIRADA`/`EM_RENOVACAO`; cancelada → 409; data futura → 400). `GET /plataforma/assinaturas/relatorio-expiracao`: por empresa, a assinatura `ATIVA`/`TRIAL` que acaba mais tarde; `fimDoAcesso` = `TRIAL` → `trialAte ?? dataFim`, `ATIVA` → `dataFim` + `diasToleranciaPagamento`. O `ModuloAccessGuard` decide pelo estado (`ESTADOS_COM_ACESSO`); as datas mudam o estado pela expiração automática (Fase 68). Alterações e pagamentos com `SELECT … FOR UPDATE` e auditados por `audit.plataforma.event`, com o `empresaId` da empresa.

@@ -1,4 +1,4 @@
-# Plano de Implementação — CoreBusiness, antes SRG ControlCore (Front-End + Back-End, unificado)
+# Plano de Implementação — ControlCore (Front-End + Back-End, unificado)
 
 > Documento único, replicado tal e qual nos dois repositórios
 > (`ControleCore_BackEnd/Docs/plano_implementacao.md` e
@@ -2389,6 +2389,19 @@ esse merge trouxe.
   >
   > **Notas de deploy.** **Backend primeiro**: o POS novo chama `GET /empresas/fiscalidade`, que o backend antigo não tem (404 — o ecrã ficaria a cobrar IVA). Sem migrações nem variáveis novas.
 
+### Fase 76 — O sistema volta a chamar-se ControlCore (21 Nov 2026)
+
+- **2026-11-21 · [BE+FE] · Claude Code** — `claude/dois-projetos-lfvrja`
+  - **Pedido do utilizador:** mudar o nome do sistema para ControlCore, «todo ele»; desfaz o nome da Fase 63.
+  - chore(marca): CoreBusiness → ControlCore em todo o texto visível — `src/locales/{pt,en,zh}`, `index.html`, PWA do estafeta, e-mails e remetente «ControlCore Support», personas da Mayra, Swagger, emissor do QR do MFA, nome por omissão da organização e da plataforma do estafeta, criador das folhas exportadas. Os «SRG Controle» que a Fase 63 deixou nos e-mails de boas-vindas também passam a ControlCore.
+  - chore(marca): identificadores internos `corebusiness:*` (eventos do frontend) e a audiência `corebusiness-desafio-mfa` passam a `controlcore-*`, como os restantes.
+
+  > **Verificação.** Backend: 319 suites, 4364 testes, `nest build` limpo. Frontend: `tsc -b` e `vite build` limpos, 32 ficheiros, 533 testes. **Não verificado no browser.**
+  >
+  > **Fica com «corebusiness», de propósito.** Os rótulos HKDF `corebusiness-mfa-*` de `src/shared/mfa.ts` (mudá-los torna ilegíveis os segredos MFA gravados — comentário no código) e o alias de importação «Código CoreBusiness». «SRG» continua onde designa a empresa dona.
+  >
+  > **Notas de deploy.** Backend primeiro. Sem migrações nem variáveis novas. Um desafio MFA emitido antes do deploy deixa de valer (a audiência mudou): quem estiver nesse passo repete o login. As apps de autenticação já configuradas continuam a mostrar «CoreBusiness» até se voltar a ler o QR; os códigos não mudam.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2746,11 +2759,12 @@ implementação vem **antes** de retomar o ensaio da entrega.
       (`/procura/sistema`). **Em teste:** a página não foi aberta num browser, e as zonas só se confirmam com um pedido de entrega real.
 - [ ] **Fase 5 — Descoberta.** Escolher a loja por distância, preço e histórico (plano próprio).
 
-### Marca CoreBusiness
+### Marca ControlCore
 
 - [x] **Rebrand do texto visível** — concluído em 2026-10-23 (Fase 63): ControlCore → CoreBusiness no frontend, nos e-mails, na Mayra e no Swagger.
-- [ ] **Vídeo do login** — `src/assets/videos/controlcore-lancamento.webm` tem o nome antigo gravado na imagem; precisa de um vídeo novo (ou sair do login).
-- [ ] **Domínio próprio** — `controle-core-front-end.vercel.app` e `srg-controlcore-api.fly.dev` ainda dizem o nome antigo na barra do browser e no Swagger. Exige decisão do utilizador; mudar implica `vercel.json`, `VITE_SOCKET_URL`, a lista de CORS e o domínio no Google OAuth.
+- [x] **Regresso a ControlCore** — 2026-11-21 (Fase 76), ramo `claude/dois-projetos-lfvrja` nos dois repositórios: CoreBusiness → ControlCore em todo o texto visível (pt/en/zh, e-mails, Mayra, Swagger, PWA do estafeta, emissor do MFA) e nos restantes «SRG Controle» dos e-mails de boas-vindas; eventos `controlcore:*` do frontend; audiência JWT `controlcore-desafio-mfa`. Ficam de propósito os rótulos HKDF `corebusiness-mfa-*` (TRD). *Fundido em `main` a 2026-11-21.*
+- [x] **Vídeo do login** — `src/assets/videos/controlcore-lancamento.webm` volta a ter o nome certo com o regresso a ControlCore.
+- [ ] **Domínio próprio** — `controle-core-front-end.vercel.app` e `srg-controlcore-api.fly.dev` já coincidem com o nome ControlCore; um domínio próprio continua opcional. Exige decisão do utilizador; mudar implica `vercel.json`, `VITE_SOCKET_URL`, a lista de CORS e o domínio no Google OAuth.
 - [ ] **Captura do CRM do site** — `src/assets/HeroPages/CRM.png` mostra «NUITâ€¦» (codificação partida) na caixa de pesquisa; refazer a captura.
 
 ### Plataforma (Super Admin)
@@ -5931,7 +5945,7 @@ Acrescentar o mandarim às línguas da interface, das mensagens do servidor, dos
 
 #### 1. Objectivo
 
-O Super Admin é quem opera a plataforma CoreBusiness: aprova clientes, decide o que cada um contrata, presta suporte e responde quando algo corre mal. Hoje tem poucos poderes próprios, e vários dos que tem **não lhe são exclusivos**: o ADMIN de qualquer empresa também os tem. Este plano fecha primeiro esses furos e depois dá ao Super Admin o que lhe falta para operar o negócio.
+O Super Admin é quem opera a plataforma ControlCore: aprova clientes, decide o que cada um contrata, presta suporte e responde quando algo corre mal. Hoje tem poucos poderes próprios, e vários dos que tem **não lhe são exclusivos**: o ADMIN de qualquer empresa também os tem. Este plano fecha primeiro esses furos e depois dá ao Super Admin o que lhe falta para operar o negócio.
 
 #### 2. O que o Super Admin pode fazer hoje (levantado do código em 2026-10-26)
 

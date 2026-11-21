@@ -7,7 +7,7 @@
   },
   "bloqueada": {
     "titulo": "Acesso suspenso",
-    "texto": "O acesso da sua empresa ao CoreBusiness está suspenso por falta de pagamento.",
+    "texto": "O acesso da sua empresa ao ControlCore está suspenso por falta de pagamento.",
     "dados": "Os seus dados estão guardados: nada foi apagado. O acesso volta assim que o pagamento for registado.",
     "contacto": "Para reactivar, contacte-nos: {{email}}",
     "sair": "Sair"
