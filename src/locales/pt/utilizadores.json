@@ -115,7 +115,6 @@
     "cargo_ajuda": "O que a pessoa faz. Define o perfil de permissões por omissão.",
     "perfil_permissoes": "Perfil de permissões",
     "perfil_do_cargo": "O do cargo",
-    "perfil_de_sistema": "Sistema",
     "perfil_permissoes_ajuda": "Deixe «O do cargo» para usar as permissões habituais. Os perfis da empresa criam-se em Permissões.",
     "perfil_opcao": {
       "USER": "Funcionário Geral",
