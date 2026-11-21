@@ -30,10 +30,10 @@ const TOLERANCIA_DE_PAGAMENTO = 0.005;
 
 // O rótulo de cada método vem do catálogo (`metodos.<id>`), não deste array.
 const PAYMENT_METHODS = [
-  { id: 'NUMERARIO', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
-  { id: 'CARTAO', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSQ0ko6JsLO520Wgror8-itm1AxkriH7hIXYlGTtxAUxA&s=10' },
-  { id: 'MPESA', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuVGSOSpXTlLYNFnoBgJbrad3KiF3UhfJwh6NZvmDcMA&s=10' },
-  { id: 'EMOLA', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWArdpolsdD7Hcb0-MsWf4R2PtrceSQTA5HF3wpIkfNw&s=10' }
+  { id: 'NUMERARIO' },
+  { id: 'CARTAO' },
+  { id: 'MPESA' },
+  { id: 'EMOLA' },
 ] as const;
 
 // Hook de Debounce
@@ -97,8 +97,9 @@ export function POSPage() {
   const products = productsData?.data || [];
   const categories = categoriesData || [];
 
-  // Estado de Checkout
-  const [pagamentos, setPagamentos] = useState<{metodo: any, valorEntregue: number}[]>([]);
+  // Estado de Checkout — um único pagamento por venda, no mesmo método (sem secção para
+  // dividir em várias parcelas): o valor acompanha o total até alguém o editar à mão
+  // (para registar troco).
   const [currentPaymentMethod, setCurrentPaymentMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('NUMERARIO');
   const [currentAmountPaid, setCurrentAmountPaid] = useState<number>(0);
   
@@ -175,16 +176,11 @@ export function POSPage() {
     }
   }, [minhaSessao, isSessaoLoading, caixasDisponiveis]);
 
-  // Sincroniza o valor a pagar com o total por defeito
+  // O valor a pagar acompanha o total do carrinho por omissão — só se desvia dele se o
+  // operador o editar à mão, para registar o valor entregue quando há troco.
   useEffect(() => {
-    const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
-    const restante = total - totalEntregue;
-    if (restante > 0) {
-      setCurrentAmountPaid(restante);
-    } else {
-      setCurrentAmountPaid(0);
-    }
-  }, [total, pagamentos]);
+    setCurrentAmountPaid(total);
+  }, [total]);
 
   // Declarado antes do ouvinte de teclado, que o consulta para se calar enquanto o
   // leitor da câmara está aberto.
@@ -433,8 +429,7 @@ export function POSPage() {
       return;
     }
     if (cartItems.length === 0) return;
-    const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
-    if (totalEntregue + TOLERANCIA_DE_PAGAMENTO < total) {
+    if (currentAmountPaid + TOLERANCIA_DE_PAGAMENTO < total) {
       toast.error(t('pdv.valor_inferior'));
       return;
     }
@@ -445,7 +440,7 @@ export function POSPage() {
         quantidade: item.cartQuantity,
         desconto: item.desconto,
       })),
-      pagamentos: pagamentos,
+      pagamentos: [{ metodo: currentPaymentMethod, valorEntregue: currentAmountPaid }],
       // O valor dos pontos entra aqui como desconto: é o que faz o cliente
       // pagar menos por causa deles. O resgate em si — o que desconta o saldo
       // de pontos e fica no histórico — só acontece depois da venda existir,
@@ -476,7 +471,6 @@ export function POSPage() {
 
   const handleNewSale = () => {
     clearCart();
-    setPagamentos([]);
     setCurrentAmountPaid(0);
     setCurrentPaymentMethod('NUMERARIO');
   };
@@ -822,8 +816,9 @@ export function POSPage() {
           )}
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+        {/* Lista do carrinho — minimalista: imagem pequena, nome, quantidade e preço final
+            por linha, sobrepostas (divisores finos em vez de cartões separados). */}
+        <div className="flex-1 overflow-y-auto bg-slate-50/50">
           {cartItems.length === 0 ? (
             <div className="text-center text-gray-400 mt-20">
               <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" />
@@ -831,24 +826,25 @@ export function POSPage() {
               <p className="text-sm mt-1">{t('pdv.carrinho_vazio_dica')}</p>
             </div>
           ) : (
-            cartItems.map((item) => (
-              <div key={item.id} className="flex gap-3 bg-white border border-gray-100 p-3 rounded-2xl shadow-sm relative group">
-                <div className="w-16 h-16 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
-                  {item.imagemUrl ? (
-                    <img src={item.imagemUrl} alt={item.nome} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">{t('pdv.sem_img')}</div>
-                  )}
-                </div>
-                <div className="flex-1 flex flex-col justify-center">
-                  <h4 className="text-sm font-bold text-gray-800 line-clamp-1 pr-6">{item.nome}</h4>
-                  <p className="text-blue-600 font-extrabold text-sm">{formatMoeda(item.precoVenda)}</p>
-                  
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
+            <ul className="divide-y divide-gray-100 bg-white">
+              {cartItems.map((item) => (
+                <li key={item.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-gray-50 border border-gray-100">
+                    {item.imagemUrl ? (
+                      <img src={item.imagemUrl} alt={item.nome} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-300">
+                        <ShoppingCart className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-800">{item.nome}</p>
+                    <div className="mt-0.5 flex items-center gap-1.5">
                       <button
                         onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity - 1))}
-                        className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        className="flex h-5 w-5 items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-gray-200"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -866,7 +862,7 @@ export function POSPage() {
                           }
                         }}
                         onFocus={(e) => e.target.select()}
-                        className="w-10 bg-transparent text-center text-xs font-bold text-gray-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        className="w-8 bg-transparent text-center text-xs font-bold text-gray-700 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       />
                       <button
                         onClick={() => avisarSeRecusado(updateQuantity(item.id, item.cartQuantity + 1))}
@@ -876,124 +872,75 @@ export function POSPage() {
                             ? t('pdv.apenas_stock', { n: item.stockDisponivel })
                             : undefined
                         }
-                        className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-600"
+                        className="flex h-5 w-5 items-center justify-center rounded bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
+                      {item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel && (
+                        <span className="text-[10px] font-semibold text-amber-600">{t('pdv.max_stock')}</span>
+                      )}
                     </div>
-                    {item.stockDisponivel !== undefined && item.cartQuantity >= item.stockDisponivel && (
-                      <span className="text-[10px] font-semibold text-amber-600">
-                        {t('pdv.max_stock')}
-                      </span>
-                    )}
                   </div>
-                </div>
-                <button 
-                  onClick={() => removeItem(item.id)}
-                  className="absolute top-3 right-3 text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))
+
+                  <span className="shrink-0 text-sm font-bold text-gray-900">
+                    {formatMoeda(item.precoVenda * item.cartQuantity - item.desconto)}
+                  </span>
+
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="shrink-0 text-gray-300 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
-        {/* Payment Section
-            `overflow-y-auto` e `shrink-0` ausente: num ecrã de 667 px a secção de
-            pagamento não cabe inteira, e sem scroll próprio o botão «Finalizar Compra»
-            ficava abaixo do bordo do ecrã, inalcançável — a venda não se podia fechar. */}
+        {/* Pagamento — minimalista: um único método (sem ícones grandes), o valor assume
+            o total por omissão e só se edita para registar troco. `overflow-y-auto` e
+            `shrink-0`: num ecrã de 667 px esta secção não cabe inteira, e sem scroll
+            próprio o botão «Finalizar» ficava inalcançável. */}
         <div className="max-h-[65%] shrink-0 overflow-y-auto border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] sm:p-5 lg:max-h-none">
-          
-          <div className="mb-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">{t('pdv.metodo_pagamento')}</p>
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              {PAYMENT_METHODS.map(pm => (
-                <button
-                  key={pm.id}
-                  onClick={() => setCurrentPaymentMethod(pm.id as any)}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl border-2 transition-all ${
-                    currentPaymentMethod === pm.id 
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20' 
-                      : 'border-gray-100 hover:border-gray-300 bg-white'
-                  }`}
-                >
-                  <img src={pm.img} alt={t(`metodos.${pm.id}`)} className="h-7 w-auto object-contain mb-1.5 rounded" />
-                  <span className={`text-[10px] font-bold ${currentPaymentMethod === pm.id ? 'text-blue-700' : 'text-gray-600'}`}>{t(`metodos.${pm.id}`)}</span>
-                </button>
-              ))}
-            </div>
 
-            <div className="flex gap-2">
-              <div className="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-2 flex items-center">
-                <span className="text-sm font-bold text-blue-500 mr-2 uppercase">{t('pdv.valor')}</span>
-                <input 
-                  type="number" 
-                  min="0"
-                  step="0.01"
-                  value={currentAmountPaid || ''}
-                  onChange={(e) => setCurrentAmountPaid(parseFloat(e.target.value) || 0)}
-                  className="w-full bg-transparent text-lg font-black text-blue-700 focus:outline-none appearance-none text-right"
-                  placeholder="0.00"
-                />
-                <span className="text-xs font-bold text-blue-400 ml-1">MT</span>
-              </div>
+          <div className="mb-4 flex gap-1 rounded-xl bg-gray-100 p-1">
+            {PAYMENT_METHODS.map(pm => (
               <button
-                onClick={() => {
-                  if (currentAmountPaid > 0) {
-                    setPagamentos([...pagamentos, { metodo: currentPaymentMethod, valorEntregue: currentAmountPaid }]);
-                    setCurrentAmountPaid(0);
-                  }
-                }}
-                disabled={currentAmountPaid <= 0}
-                className="bg-slate-800 text-white px-4 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-slate-700"
+                key={pm.id}
+                onClick={() => setCurrentPaymentMethod(pm.id as any)}
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors ${
+                  currentPaymentMethod === pm.id
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
-                {t('pdv.adicionar')}
+                {t(`metodos.${pm.id}`)}
               </button>
-            </div>
+            ))}
           </div>
 
-          {/* Lista de Pagamentos Adicionados */}
-          {pagamentos.length > 0 && (
-            <div className="mb-4 space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-              {pagamentos.map((pag, idx) => {
-                const pmInfo = PAYMENT_METHODS.find(p => p.id === pag.metodo);
-                return (
-                  <div key={idx} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-2 rounded-lg text-sm">
-                    <div className="flex items-center gap-2">
-                      <img src={pmInfo?.img} className="w-5 h-5 object-contain rounded" />
-                      <span className="font-semibold text-slate-700">{pmInfo ? t(`metodos.${pmInfo.id}`) : undefined}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{formatMoeda(pag.valorEntregue)}</span>
-                      <button 
-                        onClick={() => setPagamentos(pagamentos.filter((_, i) => i !== idx))}
-                        className="text-rose-400 hover:text-rose-600 p-1"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex gap-3 mb-5">
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-gray-400 uppercase mb-1">{t('pdv.total_pagar')}</span>
+          <div className="mb-5 flex gap-3">
+            <div className="flex-1 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+              <span className="mb-1 block text-[11px] font-bold uppercase text-gray-400">{t('pdv.total_pagar')}</span>
               <span className="text-xl font-black text-gray-900">{formatMoeda(total)}</span>
             </div>
-            <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-emerald-600 uppercase mb-1">{t('pdv.total_recebido')}</span>
-              <span className="text-xl font-black text-emerald-700">
-                {formatMoeda(pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0))}
-              </span>
+            <div className="flex-1 rounded-2xl border border-blue-100 bg-blue-50 p-3">
+              <span className="mb-1 block text-[11px] font-bold uppercase text-blue-500">{t('pdv.valor')}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={currentAmountPaid || ''}
+                onChange={(e) => setCurrentAmountPaid(parseFloat(e.target.value) || 0)}
+                className="w-full bg-transparent text-xl font-black text-blue-700 outline-none"
+                placeholder="0.00"
+              />
             </div>
           </div>
 
-          <button 
-            disabled={cartItems.length === 0 || pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0) + TOLERANCIA_DE_PAGAMENTO < total || processarVendaMutation.isPending}
+          <button
+            disabled={cartItems.length === 0 || currentAmountPaid + TOLERANCIA_DE_PAGAMENTO < total || processarVendaMutation.isPending}
             onClick={handleCheckout}
             className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center gap-2"
           >
