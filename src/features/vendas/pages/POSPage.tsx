@@ -20,6 +20,14 @@ import { useTranslation } from 'react-i18next';
 import { cn, formatDataHora, formatInteiro, formatMoeda } from '@/shared/utils';
 import { formatNumero2 } from '../utils/formatNumero';
 
+// Meio cêntimo de MZN: o backend aceita esta mesma tolerância ao comparar o pago com o
+// total (`processar-venda.use-case.ts`), porque a soma por linha com IVA em vírgula
+// flutuante pode divergir na última casa consoante a ordem das operações. Sem a mesma
+// tolerância aqui, o operador paga exactamente o valor mostrado no ecrã e o botão fica
+// activo (o total do frontend bate consigo mesmo), mas o backend recusa com
+// `venda.pago_insuficiente` porque recalculou um total a um cêntimo de distância.
+const TOLERANCIA_DE_PAGAMENTO = 0.005;
+
 // O rótulo de cada método vem do catálogo (`metodos.<id>`), não deste array.
 const PAYMENT_METHODS = [
   { id: 'NUMERARIO', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsFeCw1djwQQKwWwfUumIzkWdxlA_jwAhf1ZkyObf0mA&s=10' },
@@ -426,7 +434,7 @@ export function POSPage() {
     }
     if (cartItems.length === 0) return;
     const totalEntregue = pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0);
-    if (totalEntregue < total) {
+    if (totalEntregue + TOLERANCIA_DE_PAGAMENTO < total) {
       toast.error(t('pdv.valor_inferior'));
       return;
     }
@@ -985,7 +993,7 @@ export function POSPage() {
           </div>
 
           <button 
-            disabled={cartItems.length === 0 || pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0) < total || processarVendaMutation.isPending}
+            disabled={cartItems.length === 0 || pagamentos.reduce((acc, p) => acc + p.valorEntregue, 0) + TOLERANCIA_DE_PAGAMENTO < total || processarVendaMutation.isPending}
             onClick={handleCheckout}
             className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20 active:scale-[0.98] flex justify-center items-center gap-2"
           >
