@@ -57,6 +57,7 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const { toggleMobileMenu } = useUIStore();
   // O POS põe o carrinho em coluna de altura total à direita (420 px, ver `POSPage`): o cabeçalho acaba onde ele começa.
   const carrinhoLateral = useUIStore((s) => s.carrinhoLateralActivo);
+  const cabecalhoOculto = useUIStore((s) => s.cabecalhoOculto);
 
   // DT01 §15.4: "na página principal mostrar apenas contador e Ver todos". O sino é
   // essa síntese em qualquer página, não só no painel de necessidades.
@@ -74,6 +75,8 @@ export function Header({ isCollapsed = false }: HeaderProps) {
   const chaveTitulo =
     chaveDoTitulo(location.pathname) ?? chaveDoTitulo(`/${location.pathname.split('/')[1]}`);
   const pageTitle = chaveTitulo ? t(`cabecalho.titulo.${chaveTitulo}`) : 'CoreBusiness';
+
+  if (cabecalhoOculto) return null;
 
   return (
     <header
