@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "node scripts/testes.mjs run",
+    "test:watch": "node scripts/testes.mjs",
     "predev": "node scripts/libertar-porto.mjs",
     "porto:libertar": "node scripts/libertar-porto.mjs",
     "porto:ver": "node scripts/libertar-porto.mjs --dry"
