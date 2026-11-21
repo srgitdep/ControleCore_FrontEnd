@@ -97,14 +97,14 @@ const processQueue = (error: unknown) => {
  * escuta-o e volta a perguntar o estado — o axios não importa features, a feature é que
  * escuta o axios.
  */
-export const EVENTO_ASSINATURA_BLOQUEADA = 'corebusiness:assinatura-bloqueada';
+export const EVENTO_ASSINATURA_BLOQUEADA = 'controlcore:assinatura-bloqueada';
 
 /**
  * Lançado quando um pedido responde 403 `auth.guard.mudar_senha`: a senha provisória foi
  * reposta (ou a conta é nova) e a sessão só serve para a mudar. Como acima, o axios não importa
  * features — o `useAuthStore` é que escuta.
  */
-export const EVENTO_MUDAR_SENHA = 'corebusiness:mudar-senha';
+export const EVENTO_MUDAR_SENHA = 'controlcore:mudar-senha';
 
 api.interceptors.response.use(
   (response) => response,

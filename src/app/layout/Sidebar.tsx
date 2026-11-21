@@ -258,7 +258,7 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
             <span className="text-white font-bold text-sm">CB</span>
           </div>
           <div>
-            <h2 className="text-slate-900 font-bold text-base leading-none">CoreBusiness</h2>
+            <h2 className="text-slate-900 font-bold text-base leading-none">ControlCore</h2>
           </div>
         </div>
 

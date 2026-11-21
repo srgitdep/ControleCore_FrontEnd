@@ -7,7 +7,7 @@
   },
   "bloqueada": {
     "titulo": "Access suspended",
-    "texto": "Your company’s access to CoreBusiness is suspended for non-payment.",
+    "texto": "Your company’s access to ControlCore is suspended for non-payment.",
     "dados": "Your data is safe: nothing was deleted. Access returns as soon as the payment is recorded.",
     "contacto": "To reactivate, contact us: {{email}}",
     "sair": "Sign out"
