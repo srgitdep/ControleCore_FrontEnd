@@ -3,6 +3,7 @@ import {
   getEmpresas,
   getEmpresaDetails,
   getMinhaEmpresa,
+  getFiscalidade,
   createEmpresa,
   updateEmpresa,
   deleteEmpresa,
@@ -37,6 +38,21 @@ export function useMinhaEmpresa() {
   return useQuery({
     queryKey: ['empresa', 'minha'],
     queryFn: getMinhaEmpresa,
+  });
+}
+
+/**
+ * A fiscalidade da empresa, legível por qualquer utilizador autenticado — ao contrário de
+ * `useMinhaEmpresa`, que pede `VER_EMPRESA` e dá 403 ao Operador de Caixa.
+ *
+ * Muda raramente (um interruptor nas Configurações), por isso fica fresca 5 minutos em
+ * vez de ser pedida a cada montagem do POS.
+ */
+export function useFiscalidade() {
+  return useQuery({
+    queryKey: ['empresa', 'fiscalidade'],
+    queryFn: getFiscalidade,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
