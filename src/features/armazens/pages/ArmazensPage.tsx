@@ -283,11 +283,18 @@ export function ArmazensPage() {
                           <div>
                             <p className="font-medium text-slate-900 flex items-center gap-2">
                               {a.nome}
-                              {ePontoVenda && (
-                                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
-                                  {t('lista.ponto_venda')}
-                                </span>
-                              )}
+                              {/* O tipo sempre visível aqui, não só no texto pequeno abaixo do
+                                  nome: nomes parecidos na mesma loja (ex. dois "Zimpeto 1")
+                                  distinguem-se por esta badge, que antes só aparecia para o
+                                  Ponto de Venda. */}
+                              <span
+                                className={cn(
+                                  'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                                  ePontoVenda ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700',
+                                )}
+                              >
+                                {a.tipo ? rotuloTipoArmazem(t, a.tipo) : '—'}
+                              </span>
                               {inactivo && (
                                 <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
                                   {t('lista.inactivo')}
@@ -295,7 +302,6 @@ export function ArmazensPage() {
                               )}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {t('lista.tipo_linha', { tipo: a.tipo ? rotuloTipoArmazem(t, a.tipo) : '—' })} ·{' '}
                               <span className="text-blue-600">{t('lista.ver_produtos')}</span>
                             </p>
                           </div>
