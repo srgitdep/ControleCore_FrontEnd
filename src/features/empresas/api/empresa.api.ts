@@ -24,6 +24,19 @@ export const getMinhaEmpresa = async (): Promise<Empresa> => {
   return data;
 };
 
+/**
+ * Só a fiscalidade da empresa — se cobra IVA aos clientes.
+ *
+ * Separado de `getMinhaEmpresa`: essa rota pede `VER_EMPRESA`, que o Operador de Caixa
+ * não tem (dá acesso às Configurações inteiras). O POS calcula os totais no ecrã e
+ * precisa de saber se o imposto se cobra, ou mostra ao operador um total diferente do
+ * que o servidor vai cobrar.
+ */
+export const getFiscalidade = async (): Promise<{ cobraIva: boolean }> => {
+  const { data } = await api.get<{ cobraIva: boolean }>('/empresas/fiscalidade');
+  return data;
+};
+
 // Criar empresa via onboarding completo (empresa + gestor + trial)
 export const createEmpresa = async (payload: OnboardingPayload): Promise<{ message: string; empresaId: string }> => {
   const { data } = await api.post('/empresas/onboarding', payload);
