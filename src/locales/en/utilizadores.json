@@ -13,8 +13,8 @@
   "perfil": {
     "SUPER_ADMIN": "Super Administrator",
     "ADMIN": "Administrator",
-    "MANAGER": "Manager / Supervisor",
-    "CASHIER": "Till Operator",
+    "MANAGER": "Manager",
+    "CASHIER": "Staff / Cashier",
     "STOCK_KEEPER": "Storekeeper",
     "USER": "Employee"
   },
@@ -111,17 +111,13 @@
     "nome_exemplo": "E.g. João Silva",
     "email": "Email *",
     "perfil": "Access Role *",
-    "cargo": "Job role *",
-    "cargo_ajuda": "What the person does. Sets the default permission profile.",
-    "perfil_permissoes": "Permission profile",
-    "perfil_do_cargo": "The job role's",
-    "perfil_permissoes_ajuda": "Leave \"The job role's\" to use the usual permissions. Company profiles are created in Permissions.",
+    "cargo": "Access profile *",
+    "cargo_ajuda": "Which profile the person belongs to. What each profile can do is set in Permissions.",
     "perfil_opcao": {
-      "USER": "General Employee",
-      "CASHIER": "Till Operator",
+      "CASHIER": "Staff / Cashier",
       "STOCK_KEEPER": "Storekeeper",
-      "MANAGER": "Supervisor / Manager",
-      "ADMIN": "Company Administrator",
+      "MANAGER": "Manager",
+      "ADMIN": "Administrator",
       "SUPER_ADMIN": "Super Administrator (SRG)"
     },
     "associar_empresa": "Link to Company",
