@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AVAILABLE_ACTIONS } from '@/shared/config/permissions.config';
@@ -7,6 +8,7 @@ import {
   AccoesDoPerfil,
   NovoPerfilForm,
   usePerfis,
+  CHAVE_PERFIS,
   useRecursosPermissao,
   type RecursoDePermissao,
 } from '@/features/permissoes';
@@ -18,6 +20,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 export function PermissionsPage() {
   const { t } = useTranslation('shell');
   const hasRole = useAuthStore((s) => s.hasRole);
+  const queryClient = useQueryClient();
   const { data: roles = [], isLoading: isLoadingRoles, isError: erroPerfis } = usePerfis();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [aCriar, setACriar] = useState(false);
@@ -147,8 +150,20 @@ export function PermissionsPage() {
     const flatPermissions = Array.from(selectedPermissions).filter((p) => doCatalogo.has(p));
 
     try {
-      await api.post(`/perfis/${selectedRoleId}/permissoes`, { permissionIds: flatPermissions });
+      const { data } = await api.post<{ perfilId?: string }>(
+        `/perfis/${selectedRoleId}/permissoes`,
+        { permissionIds: flatPermissions },
+      );
       toast.success(t('permissoes.sucesso'));
+
+      // Gravar um perfil-modelo da SRG cria a cópia desta empresa, e é nela que a
+      // alteração fica. Sem recarregar a lista e passar a seleccionar a cópia, o ecrã
+      // continuava no modelo: a matriz mostrada deixava de ser a que vale, e a edição
+      // seguinte criava confusão em vez de continuar o trabalho.
+      if (data?.perfilId && data.perfilId !== selectedRoleId) {
+        await queryClient.invalidateQueries({ queryKey: CHAVE_PERFIS });
+        setSelectedRoleId(data.perfilId);
+      }
     } catch (error) {
       // O servidor explica a recusa — ex.: um perfil de sistema só a SRG o pode alterar.
       // A mensagem fixa escondia o motivo e deixava o ADMIN a tentar outra vez.
@@ -159,9 +174,13 @@ export function PermissionsPage() {
   };
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);
-  // O servidor recusa (403) a gravação de perfis de sistema a quem não é da SRG; o ecrã
-  // já não oferece o que sabe que vai falhar.
-  const somenteLeitura = !!selectedRole?.isSystem && !hasRole(['SUPER_ADMIN']);
+  // Os perfis de sistema deixaram de ser comuns a todas as empresas: são **modelos**, e
+  // gravar um deles cria (no servidor) a cópia desta empresa, onde a alteração fica. Cada
+  // empresa decide o que o seu Caixa, Gestor ou Armazenista faz — por isso o ecrã já não é
+  // só de leitura para quem não é da SRG; só avisa que vai personalizar o modelo.
+  const vaiPersonalizarModelo =
+    !!selectedRole?.isSystem && !hasRole(['SUPER_ADMIN']);
+  const somenteLeitura = false;
   const perfilAdminSistema = !!selectedRole?.isSystem && selectedRole.nome === 'Administrador';
 
   return (
@@ -280,9 +299,11 @@ export function PermissionsPage() {
               </button>
             </div>
 
-            {(somenteLeitura || perfilAdminSistema) && (
+            {(vaiPersonalizarModelo || perfilAdminSistema) && (
               <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 sm:px-6">
-                {somenteLeitura ? t('permissoes.aviso_sistema') : t('permissoes.aviso_admin')}
+                {perfilAdminSistema
+                  ? t('permissoes.aviso_admin')
+                  : t('permissoes.aviso_modelo')}
               </div>
             )}
 

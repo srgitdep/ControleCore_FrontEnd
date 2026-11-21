@@ -114,7 +114,6 @@
     "cargo_ajuda": "此人的工作内容，决定默认的权限角色。",
     "perfil_permissoes": "权限角色",
     "perfil_do_cargo": "按职位默认",
-    "perfil_de_sistema": "系统",
     "perfil_permissoes_ajuda": "保留“按职位默认”即可使用常规权限。公司角色在「权限」中创建。",
     "perfil_opcao": {
       "USER": "普通员工",

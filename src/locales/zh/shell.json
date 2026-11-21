@@ -142,7 +142,7 @@
     "matriz_ajuda": "勾选该角色可以查看和执行的操作。",
     "a_guardar": "保存中……",
     "guardar": "保存更改",
-    "aviso_sistema": "系统角色:所有公司共用,只有 SRG 可以修改。当前为只读。",
+    "aviso_modelo": "这是 SRG 的模板角色。保存后会生成贵公司专属的副本,更改仅对贵公司员工生效。",
     "aviso_admin": "公司管理员始终拥有全部权限——复选框仅显示已分配的权限,不会限制该角色。",
     "a_carregar_servidor": "正在从服务器加载权限……",
     "coluna_recurso": "模块 / 资源",

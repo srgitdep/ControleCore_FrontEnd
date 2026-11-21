@@ -60,8 +60,13 @@ interface NavItem {
    * servidor aceitava mas que o menu não mostrava: um «Utilizador» com um perfil que inclui
    * o Financeiro tinha a permissão e nenhuma forma de lá chegar. As entradas da plataforma
    * não levam permissão — essas são só por cargo.
+   *
+   * Pode ser mais do que uma: basta **uma** delas. O Ponto de Venda exigia `read:vendas`,
+   * mas na matriz «Caixas / POS» e «Vendas» são duas linhas distintas — a empresa que só
+   * marcava Caixas ao seu Caixa ficava sem a entrada do POS no menu, apesar de o servidor
+   * o deixar vender.
    */
-  permissao?: string;
+  permissao?: string | string[];
   badge?: string;
 }
 
@@ -118,7 +123,7 @@ const navGroups: NavGroup[] = [
   {
     chave: 'operacao',
     items: [
-      { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'], permissao: 'read:vendas' },
+      { chave: 'vendas', icon: Store, path: '/vendas', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'], permissao: ['read:vendas', 'read:caixas'] },
       { chave: 'crm', icon: UserSquare, path: '/crm', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:clientes' },
       { chave: 'promocao', icon: Percent, path: '/promocoes', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:promocao' },
       { chave: 'precificacao', icon: Tag, path: '/precificacao', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'], permissao: 'read:precificacao' },
@@ -178,9 +183,14 @@ export function Sidebar({ isCollapsed, isMobileDrawer = false }: SidebarProps) {
    */
   const visivel = (item: NavItem) => {
     const porCargo = !item.roles || hasRole(item.roles);
-    const porPermissao = item.permissao
-      ? hasPermission(...(item.permissao.split(':') as [string, string]))
-      : false;
+    const permissoes = item.permissao
+      ? Array.isArray(item.permissao)
+        ? item.permissao
+        : [item.permissao]
+      : [];
+    const porPermissao = permissoes.some((p) =>
+      hasPermission(...(p.split(':') as [string, string])),
+    );
     return (
       (porCargo || porPermissao) &&
       (user?.role !== 'SUPER_ADMIN' || ROTAS_DA_PLATAFORMA.has(item.path))

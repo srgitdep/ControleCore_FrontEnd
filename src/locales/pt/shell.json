@@ -145,7 +145,7 @@
     "matriz_ajuda": "Assinale o que este perfil pode ver e fazer.",
     "a_guardar": "A guardar...",
     "guardar": "Guardar Alterações",
-    "aviso_sistema": "Perfil de sistema: é comum a todas as empresas e só a SRG o pode alterar. Está em modo de leitura.",
+    "aviso_modelo": "Este é um perfil-modelo da SRG. Ao guardar, fica uma cópia só da sua empresa — as alterações valem apenas para os seus funcionários.",
     "aviso_admin": "O Administrador da empresa tem sempre acesso total — as caixas mostram o que está atribuído, mas não limitam este perfil.",
     "a_carregar_servidor": "A carregar permissões do servidor...",
     "coluna_recurso": "Módulo / Recurso",
