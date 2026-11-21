@@ -60,8 +60,21 @@ export function useUpdateEmpresa() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateEmpresa(id, data),
-    onSuccess: (_, variables) => {
+    onSuccess: (empresaActualizada, variables) => {
       toast.success(t('mensagens.actualizada'));
+
+      // A empresa que o servidor devolveu entra já na cache, antes de invalidar.
+      //
+      // Sem isto ficava um intervalo — entre o `invalidate` e a resposta do refetch — em
+      // que `['empresa','minha']` ainda tinha os dados **antigos**. Um ecrã que copie esse
+      // valor para estado local (o interruptor do IVA, em `ConfiguracoesEmpresaPage`) via
+      // o valor velho voltar e o botão saltava para trás, como se a gravação não tivesse
+      // resultado — quando tinha.
+      if (empresaActualizada) {
+        queryClient.setQueryData(['empresa', 'minha'], empresaActualizada);
+        queryClient.setQueryData(['empresa', variables.id], empresaActualizada);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       queryClient.invalidateQueries({ queryKey: ['empresa', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['empresa', 'minha'] });

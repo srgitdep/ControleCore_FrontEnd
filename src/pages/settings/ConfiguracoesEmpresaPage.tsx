@@ -15,15 +15,22 @@ export function ConfiguracoesEmpresaPage() {
 
   const [cobraIva, setCobraIva] = useState(true);
 
+  // O que o servidor diz só volta a mandar no interruptor quando não há gravação a
+  // decorrer. A meio de uma, qualquer releitura da empresa (o `invalidate` do
+  // `useUpdateEmpresa`, uma remontagem, o separador a ganhar foco) trazia o valor antigo
+  // e desfazia o que o utilizador tinha acabado de carregar — o botão saltava para trás
+  // sozinho e parecia avariado.
   useEffect(() => {
-    if (empresa) setCobraIva(empresa.cobraIva);
-  }, [empresa]);
+    if (empresa && !actualizar.isPending) setCobraIva(empresa.cobraIva);
+  }, [empresa, actualizar.isPending]);
 
   const aoMudarCobraIva = (valor: boolean) => {
-    if (!empresa) return;
+    if (!empresa || actualizar.isPending) return;
     setCobraIva(valor);
     actualizar.mutate(
       { id: empresa.id, data: { cobraIva: valor } },
+      // Falhando, o interruptor volta ao que está gravado: deixá-lo na posição nova
+      // mostrava um IVA desligado que o servidor continua a cobrar.
       { onError: () => setCobraIva(empresa.cobraIva) },
     );
   };
