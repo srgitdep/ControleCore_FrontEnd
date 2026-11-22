@@ -2468,13 +2468,24 @@ esse merge trouxe.
 
   > **⚠ Problema aberto — o PDV regista tudo como numerário.** Desde `fix/pdv-remover-metodo-pagamento`, `POSPage.tsx` envia sempre `metodo: 'NUMERARIO'`. O fecho de caixa (`fechar-sessao-caixa.use-case.ts`) conta **só o numerário** no saldo esperado da gaveta: cada venda paga com cartão, M-Pesa ou e-Mola faz subir o esperado sem o dinheiro lá estar, e aparece como **quebra** igual ao seu valor. Os relatórios por método de pagamento ficam errados pela mesma razão. Ver Secção 3.
 
+### Fase 84 — PDV: o método de pagamento volta a ser escolhido (22 Nov 2026)
+
+- **2026-11-22 · [FE] · Claude Code** — `claude/dois-projetos-lfvrja`
+  - **Pedido do utilizador:** corrigir o problema aberto na Fase 83 (o PDV gravava tudo como numerário).
+  - fix(pos): revert de `fix/pdv-remover-metodo-pagamento` — o seletor de método (Numerário, Cartão, M-Pesa, e-Mola) volta como uma linha discreta de botões de texto, o desenho do `feat/pdv-minimalista`; a venda envia o método escolhido. Comentário no código a explicar porque não se pode fixar em `NUMERARIO`; sai o `as any` do seletor.
+
+  > **Verificação.** `tsc -b`, `vite build`, 32 ficheiros e 533 testes do frontend. **Não verificado no browser.** Sem alterações no backend.
+  >
+  > **Fica de fora.** As vendas gravadas como numerário entre 2026-11-21 e este deploy — ver Secção 3 → «Urgente».
+
 ---
 
 ## 3. Backlog — Por Fazer
 
 ### Urgente (do registo retroactivo de 2026-11-22)
 
-- [ ] **PDV: voltar a registar o método de pagamento real.** Hoje tudo é gravado como `NUMERARIO` (Fase 83): o fecho de caixa mostra quebras falsas iguais às vendas pagas com cartão, M-Pesa ou e-Mola, e os relatórios por método estão errados. Corrigir no PDV (um seletor simples, mesmo no ecrã minimalista) e avaliar se as vendas gravadas desde 2026-11-21 precisam de correcção.
+- [x] **PDV: voltar a registar o método de pagamento real.** Corrigido em 2026-11-22 (Fase 84): o seletor voltou.
+- [ ] **Vendas gravadas como numerário entre 2026-11-21 e o deploy da Fase 84** — decisão do utilizador: confirmar se alguma empresa usou o PDV nesse intervalo e, se sim, se as sessões de caixa fechadas com quebras falsas precisam de nota ou correcção (o método real de cada venda não está gravado em lado nenhum; só o operador sabe).
 - [ ] **Correr `npm run promocoes:sobrepostas` em produção** (D7-0b, Fase 77) — do utilizador; era para antes do deploy de 2026-11-19.
 - [ ] **Preço por loja e precificação** — o `PrecoVendaLoja` (Fase 82) não passa por validação nenhuma: `GerirPrecoVendaLojaUseCase` aceita um preço **abaixo do custo** (contorna a D7-0a) e publica sem passar pela política nem pela fila de aprovação da D7-2. Pelo menos o piso devia aplicar-se já; a fila é decisão do utilizador.
 

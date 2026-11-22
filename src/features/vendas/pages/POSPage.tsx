@@ -29,6 +29,20 @@ import { formatNumero2 } from '../utils/formatNumero';
 // `venda.pago_insuficiente` porque recalculou um total a um cêntimo de distância.
 const TOLERANCIA_DE_PAGAMENTO = 0.005;
 
+// O rótulo de cada método vem do catálogo (`metodos.<id>`), não deste array.
+//
+// NÃO tirar a escolha do método, nem fixá-lo em NUMERARIO: o fecho de caixa
+// (`fechar-sessao-caixa.use-case.ts` no backend) conta só o numerário no saldo
+// esperado da gaveta. Uma venda paga com cartão, M-Pesa ou e-Mola gravada como
+// numerário aparece no fecho como quebra igual ao seu valor (aconteceu entre
+// 2026-11-21 e 2026-11-22), e os relatórios por método ficam errados.
+const PAYMENT_METHODS = [
+  { id: 'NUMERARIO' },
+  { id: 'CARTAO' },
+  { id: 'MPESA' },
+  { id: 'EMOLA' },
+] as const;
+
 // Hook de Debounce
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -103,9 +117,10 @@ export function POSPage() {
   const products = productsData?.data || [];
   const categories = categoriesData || [];
 
-  // Estado de Checkout — um único pagamento por venda, sem distinguir o método (não
-  // interessa qual foi usado): o valor acompanha o total até alguém o editar à mão
+  // Estado de Checkout — um único pagamento por venda, no mesmo método (sem secção para
+  // dividir em várias parcelas): o valor acompanha o total até alguém o editar à mão
   // (para registar troco).
+  const [currentPaymentMethod, setCurrentPaymentMethod] = useState<typeof PAYMENT_METHODS[number]['id']>('NUMERARIO');
   const [currentAmountPaid, setCurrentAmountPaid] = useState<number>(0);
   
   // Abas do painel principal (Catálogo vs Histórico)
@@ -455,7 +470,7 @@ export function POSPage() {
         quantidade: item.cartQuantity,
         desconto: item.desconto,
       })),
-      pagamentos: [{ metodo: 'NUMERARIO' as const, valorEntregue: currentAmountPaid }],
+      pagamentos: [{ metodo: currentPaymentMethod, valorEntregue: currentAmountPaid }],
       // O valor dos pontos entra aqui como desconto: é o que faz o cliente
       // pagar menos por causa deles. O resgate em si — o que desconta o saldo
       // de pontos e fica no histórico — só acontece depois da venda existir,
@@ -487,6 +502,7 @@ export function POSPage() {
   const handleNewSale = () => {
     clearCart();
     setCurrentAmountPaid(0);
+    setCurrentPaymentMethod('NUMERARIO');
   };
 
   const handleCloseReceipt = () => {
@@ -918,11 +934,27 @@ export function POSPage() {
           )}
         </div>
 
-        {/* Pagamento — minimalista: sem selecção de método (não importa qual foi usado),
-            o valor assume o total por omissão e só se edita para registar troco.
-            `overflow-y-auto` e `shrink-0`: num ecrã de 667 px esta secção não cabe
-            inteira, e sem scroll próprio o botão «Finalizar» ficava inalcançável. */}
+        {/* Pagamento — minimalista: um único método (sem ícones grandes), o valor assume
+            o total por omissão e só se edita para registar troco. `overflow-y-auto` e
+            `shrink-0`: num ecrã de 667 px esta secção não cabe inteira, e sem scroll
+            próprio o botão «Finalizar» ficava inalcançável. */}
         <div className="max-h-[65%] shrink-0 overflow-y-auto border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] sm:p-5 lg:max-h-none">
+
+          <div className="mb-4 flex gap-1 rounded-xl bg-gray-100 p-1">
+            {PAYMENT_METHODS.map(pm => (
+              <button
+                key={pm.id}
+                onClick={() => setCurrentPaymentMethod(pm.id)}
+                className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors ${
+                  currentPaymentMethod === pm.id
+                    ? 'bg-white text-blue-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t(`metodos.${pm.id}`)}
+              </button>
+            ))}
+          </div>
 
           <div className="mb-5 flex gap-3">
             <div className="flex-1 rounded-2xl border border-gray-200 bg-gray-50 p-3">
