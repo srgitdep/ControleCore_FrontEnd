@@ -50,17 +50,6 @@
 - [x] **M4 — Mayra e servidor.** Prompt de texto e persona de voz por idioma, análises assíncronas, reconhecimento e síntese de voz do browser, `erros`/`validacao`/`notificacoes`, e-mails.
 - [ ] **M5 — Fecho.** *(testes, TRD e plano feitos; revisão do chinês feita.)* **Revisão do chinês: feita pelo utilizador em 2026-10-20** — nenhuma alteração ao texto foi entregue nem commitada. **Por fazer, e é do utilizador:** (1) teste real da voz da Mayra em mandarim (Gemini Live, reconhecimento e síntese do browser); (2) ver os ecrãs em «中文» no browser (estouros de layout). Quando estiverem feitos, este bloco apaga-se.
 
-**Fase D7-0 — Precificação (DT-07): correcções que valem sempre** (plano completo em **§4.16**, aprovado em 2026-11-18; branch `fix/preco-piso-promocoes-sobrepostas` nos dois repositórios, backend primeiro). Nada está implementado: este bloco é o ponto de partida.
-
-- [x] **D7-0a — Piso de preço.** *(feita em 2026-11-18, ramo `fix/preco-piso-promocoes-sobrepostas`.)* `src/modules/produto/domain/validar-preco-venda.ts` (função pura, com spec): recusa `precoVenda` abaixo de `precoCusto` quando há custo conhecido (`precoCusto > 0`) e preço definido (`precoVenda > 0`); compara ao cêntimo; preço igual ao custo passa. Ligada em `CreateProdutoUseCase` e em `UpdateProdutoUseCase` — **na edição só dispara quando um dos dois preços muda**, para um produto que já estava abaixo do custo poder ser renomeado. 422 `produto.preco.abaixo_do_custo` (`PrecoAbaixoDoCustoException`), com a mensagem traduzida nos `erros.json` `pt`/`en`/`zh` do backend. `UpdateProductPriceTool` valida **antes** de devolver o cartão HITL, para a MAYRA nunca propor o que o servidor vai recusar. **Frontend sem código novo:** `useUpdateProduct`, `useCreateProduct` e o `copilotStore` já mostram a `message` que o servidor traduz. Backend: 289 suites, 4053 testes; `nest build` limpo. **Não verificado no browser.**
-- [x] **D7-0b — Promoções sobrepostas.** *(feita em 2026-11-18, mesmo ramo.)* `src/modules/promocao/domain/sobreposicao-promocoes.ts` (puro, com spec): «mesmo alvo» = o mesmo produto, ou a mesma categoria (uma promoção de produto e outra da sua categoria **não** colidem — a do produto vale mais, por desenho); períodos `[início, fim)`, pelo que campanhas encadeadas não se sobrepõem. `CriarPromocaoUseCase` recusa com 409 `promocao.sobreposta`, a dizer qual existe e entre que dias (em Maputo); mensagem nos `erros.json` `pt`/`en`/`zh`. `PrecoPromocionalService` deixa de escolher por ordem de leitura: com duas activas no mesmo alvo vale a **criada mais recentemente**, depois o `id`, e o catálogo (lote) e o checkout (um produto) escolhem a mesma. **Listagem do que já existe:** `npm run promocoes:sobrepostas` (só lê, não corrige). **Frontend sem código novo:** `useCriarPromocao` mostra a `message` do servidor via `mensagemDeErro` e o formulário fica aberto. Backend: 291 suites, 4082 testes; `nest build` limpo. **Por fazer, do utilizador, antes do deploy:** correr `npm run promocoes:sobrepostas` contra a base de dados certa e cancelar o que não for para valer — **não foi corrido** (o `DATABASE_URL` local aponta para um Neon na nuvem). **Limite conhecido:** duas criações no mesmo instante podem passar as duas a verificação; o desempate na leitura cobre o efeito, e uma restrição na base de dados fica fora desta fase. **Não verificado no browser.**
-- [x] **D7-0c — Aritmética decimal.** *(feita em 2026-11-18, mesmo ramo.)* `src/shared/dinheiro.ts` sobre `Prisma.Decimal`, sem tocar em nenhuma coluna: `dinheiroDeFloat` (a **única** fronteira com os campos `Float`: 4 casas, lança em `NaN`/`Infinity`), `arredondarParaCima(valor, incremento)` (exacto, pelo resto da divisão; um múltiplo fica como está), `margemSobreVenda(custo, preço, taxa?)` (sobre a venda, depois da taxa; `null` sem preço) e `precoMinimo({custo, margemAlvo, taxaVariavel?, incremento})` = `C / (1 − m − t)` arredondado para cima. `precoMinimo` devolve resultado e não excepção: `{ok:false, motivo:'DENOMINADOR_INVALIDO'}` com `m + t >= 1` (T07-04) e `'ENTRADA_INVALIDA'` com custo, margem ou taxa negativos ou incremento não positivo; `{ok:true, preco, precoSemArredondar, margemEfectiva}` caso contrário. **Convenção: margens e taxas entram como fracção** (`0.20` = 20%); o `margemLucro` da base é percentagem, e quem lê de lá divide por 100. O preço devolvido **cumpre sempre a margem**, mesmo com um custo de mais de 20 algarismos (verificação final, com spec). Casos do pacote em spec: TC01 (133,34), T07-02 (133,33…; o markup de 25% dá só 20% de margem) e T07-04. Backend: 292 suites, 4119 testes; `nest build` limpo. **Ainda sem consumidor:** é biblioteca interna, usada a partir da D7-1; nenhum código existente foi migrado para ela (`update-produto`, `preco-com-desconto` e `calcular-taxa` continuam em `number`, até ao levantamento da D7-0d). Sem frontend nesta tarefa.
-- [x] **D7-0d — Levantamento Float → Decimal.** *(feito em 2026-11-18, só documentação; **§4.16, secção 11**.)* ~70 colunas monetárias em `Float` contra 21 em `Decimal`. Conclusão: a migração das colunas existentes **não está no caminho crítico da D7**; o que se faz antes da D7-2 é a fatia **F0** (auditoria de precisão e os dois `$queryRaw` com tipos `number` escritos à mão). Três armadilhas verificadas: o JSON de um `Decimal` sai como **texto**, `Decimal + 1` **concatena**, e o custo médio ponderado é gravado **sem arredondar** (os custos precisam de 4 casas). Seis fatias (F0 a F5) por ordem de risco, três perguntas (P7 a P9) e a auditoria SQL de precisão, **por correr**. Nenhuma coluna foi migrada.
-
-**D7-0 completa (a a d), ainda no ramo `fix/preco-piso-promocoes-sobrepostas`, por fundir em `main`.** Quando for fundida: este bloco apaga-se e a fase entra na Secção 2 (convenção da Secção 5).
-
-**Verificação da D7-0:** `nest build` e a suite do backend; `tsc -b`, `vite build` e testes do frontend; um `PATCH` de produto e um cartão da MAYRA com preço abaixo do custo dão 422; criar duas promoções sobrepostas dá 409. Quando a D7-0 terminar, este bloco apaga-se e entra a Fase respectiva na Secção 2.
-
 ---
 
 ## 1. Arquitectura em duas linhas
@@ -2402,9 +2391,92 @@ esse merge trouxe.
   >
   > **Notas de deploy.** Backend primeiro. Sem migrações nem variáveis novas. Um desafio MFA emitido antes do deploy deixa de valer (a audiência mudou): quem estiver nesse passo repete o login. As apps de autenticação já configuradas continuam a mostrar «CoreBusiness» até se voltar a ler o QR; os códigos não mudam.
 
+### Fase 77 — Precificação D7-0 e D7-1: piso de preço, promoções sobrepostas, dinheiro decimal e políticas de margem (19 Nov 2026)
+
+> **Registo retroactivo** (2026-11-22), reconstruído do `git log --merges`: as Fases 77 a 83 foram fundidas entre 19 e 21 Nov, antes da Fase 76, mas não tinham entrada nesta secção. A numeração segue a ordem de registo, não a de entrega.
+
+- **2026-11-19 · [BE] · Antonio Mambo** — `feat/precificacao-politicas` (`a3a5b11`)
+  - fix(produto): recusa preço de venda abaixo do custo ao criar, editar e na MAYRA (D7-0a, 422 `produto.preco.abaixo_do_custo`).
+  - fix(promocao): recusa promoções sobrepostas no mesmo alvo (409 `promocao.sobreposta`) e desempata a leitura pela mais recente (D7-0b); `npm run promocoes:sobrepostas` lista as que já existem.
+  - feat(shared): `dinheiro.ts` — aritmética de preços em decimal exacto (D7-0c); levantamento Float → Decimal só em documentação (D7-0d, §4.16 secção 11).
+  - feat(precificacao): módulo `precificacao` — políticas de margem por empresa, categoria e produto, os três estados de decisão e simulação (D7-1).
+- **2026-11-19 · [FE] · Antonio Mambo** — `feat/precificacao-politicas` (`c13d712`)
+  - feat(precificacao): ecrã de Precificação — políticas e simulação.
+
+  > **Verificação.** Detalhe por tarefa em §4.16. Migração da D7-1 verificada numa branch Neon com o schema de produção. Publicada no Fly a 2026-11-19.
+  >
+  > **Por fazer, do utilizador:** `npm run promocoes:sobrepostas` contra a base de produção e cancelar o que não for para valer. Era para correr **antes** do deploy e **não foi corrido**; até lá, as promoções sobrepostas antigas resolvem-se pelo desempate (a mais recente vence).
+
+### Fase 78 — Precificação D7-2: versões de preço, fila de excepções e MAYRA (19 Nov 2026)
+
+- **2026-11-19 · [BE] · Antonio Mambo** — `feat/precificacao-versoes` (`2b014c8`)
+  - feat(precificacao): versões de preço e fila de aprovação; propor um preço concreto, com publicação directa ou fila.
+  - feat(produto): o preço de venda passa pela precificação. feat(mayra): o cartão de preço avisa quando o preço vai ficar pendente.
+- **2026-11-19 · [FE] · Antonio Mambo** — `feat/precificacao-fila-e-historico` (`6742ae1`)
+  - feat(precificacao): fila de excepções e histórico de preço.
+
+  > Publicada no Fly e na Vercel a 2026-11-19, confirmado pelo utilizador. Detalhe em §4.16/D7-2.
+
+### Fase 79 — Precificação D7-3 e D7-4: piso nas promoções, preço alterado no checkout, reprecificação por custo (19–21 Nov 2026)
+
+- **2026-11-19 · [BE] · Antonio Mambo** — `feat/pedidos-cliente` (`e7613d6`)
+  - feat(precificacao): piso da política nas promoções (D7-3, parte 1). feat(commerce): aceite do preço no checkout — `totalEsperado` opcional em `CriarPedidoDto` (D7-3, parte 2). *Entraram em `main` por este ramo, não por `feat/precificacao-checkout`.*
+- **2026-11-21 · [BE] · Antonio Mambo** — `feat/precificacao-checkout` (`bca911d`)
+  - feat(precificacao): reprecificação por custo, erosão de margem e simulação em lote (D7-4) — propostas, nunca publicação directa.
+- **2026-11-21 · [FE] · Antonio Mambo** — `feat/pedidos-cliente` (`52e2b03`), `feat/precificacao-reprecificacao-custo` (`607da8c`)
+  - feat(compra-facil): aceite do preço no checkout (D7-3). feat(precificacao): reprecificação por custo e simulação em lote (D7-4).
+
+  > Fecha o primeiro âmbito da DT-07 (D7-0 a D7-4). O que ficou para depois está em Secção 3 → «Precificação (DT-07)» → «Mais tarde».
+
+### Fase 80 — Imagens de produto: upload, conversão WebP e imagem em todos os ecrãs (19 Nov 2026)
+
+- **2026-11-19 · [BE] · Antonio Mambo** — `fix/upload-imagem-produto-main`, `fix/stock-imagem-produto`, `fix/imagem-produto-restantes`, `feat/webp-todos-uploads`, `refactor/estafeta-usa-imagem-webp`
+  - fix(produto): a lista devolve a imagem principal com URL assinado. fix(stock, imagens): stock, inventário, transferências, necessidades e armazéns mostram a imagem carregada.
+  - feat(imagens): `shared/imagem-webp.ts` — valida pelo conteúdo, orienta pelo EXIF, remove metadados e converte para WebP; o upload de produto aceita até 15 MB (o limite de 5 MB recusava as imagens que mais ganham com a conversão). O upload do estafeta passa a usar a mesma conversão.
+- **2026-11-19 · [FE] · Antonio Mambo** — `fix/upload-imagem-produto-main`, `fix/pdv-imagem-produto`, `feat/webp-limite-upload`
+  - fix(produtos): upload na criação e miniatura na lista; o PDV mostra a imagem da galeria, não só `imagemUrl`; limite de 15 MB.
+
+### Fase 81 — Stock e produtos: retificar quantidade, pedidos de clientes, categoria no produto (19–21 Nov 2026)
+
+- **2026-11-19 · [BE] · Antonio Mambo** — `feat/retificar-quantidade-stock` (`32a5405`), `test/retificar-rota`, `feat/pedidos-cliente` (`e7613d6`)
+  - feat(stock): `POST /stock/retificar` — recebe a quantidade certa e o motivo, grava a diferença como ajuste com sinal (sobra ou falta), autor e antes/depois no Audit Log; recusa se o saldo mudou desde que o utilizador o viu.
+  - feat(pedidos-cliente): modelo `PedidoCliente` (migração `20261119130000_pedidos_cliente`) — produto que o cliente pede no balcão e a loja não vende; `POST /pedidos-cliente` (loja pela sessão de caixa) e `GET /pedidos-cliente/ranking`.
+- **2026-11-19 / 21 · [FE] · Antonio Mambo** — `feat/retificar-quantidade-stock`, `feat/criar-categoria-no-produto`, `feat/pedidos-cliente`
+  - feat(stock): retificar a quantidade na edição do produto. feat(produtos): «Nova categoria» ao lado do seletor do formulário. feat(pedidos-cliente): registar produto em falta no PDV e aba em Stock.
+
+### Fase 82 — Armazéns e transferências: preço de venda por loja e dados completos (21 Nov 2026)
+
+- **2026-11-21 · [BE] · Antonio Mambo** — `feat/preco-venda-por-loja` (`b5a24e1`), `feat/transferencia-dados-completos-produto` (`510552a`)
+  - feat(armazens): `PrecoVendaLoja` (migração `20261121110000_add_preco_venda_loja`) — preço de venda próprio por loja (não por armazém), com `Produto.precoVenda` como fallback; `PATCH`/`DELETE /armazens/:armazemId/stock/:produtoId/preco-venda`.
+  - feat(transferencias): a tabela de «Nova Transferência» devolve custo médio e preço de venda, como a do armazém de destino.
+- **2026-11-21 · [FE] · Antonio Mambo** — `feat/preco-venda-por-loja`, `feat/transferencia-dados-completos-produto`, `feat/distinguir-armazens-mesmo-nome`, `fix/invalidar-cache-armazem-stock-transferencia`
+  - Editar o preço por loja no detalhe do armazém; tipo de armazém sempre em badge; cache de stock por armazém invalidada depois de transferências.
+
+  > **Furo verificado em 2026-11-22:** o preço por loja não passa por validação nenhuma — aceita preço abaixo do custo e não passa pela política nem pela fila da D7-2. Ver Secção 3 → «Urgente».
+
+### Fase 83 — PDV minimalista, IVA opcional, exportar PDF e correcções (14–21 Nov 2026)
+
+- **2026-11-21 · [BE+FE] · Antonio Mambo** — `feat/iva-opcional-empresa` (`05bc34b` / `f6e0907`)
+  - feat(empresa): `Empresa.cobraIva` (migração `20261121100000_empresa_cobra_iva`, por omissão `true`) e ecrã de Configurações da Empresa com o interruptor. Base da Fase 75.
+- **2026-11-21 · [FE] · Antonio Mambo** — `feat/pdv-minimalista`, `fix/pdv-remover-metodo-pagamento`, `fix/pdv-checkout-mobile-minimalista`, `fix/pos-valor-pago-tolerancia`, `feat/exportar-listas-pdf`
+  - feat(pos): ecrã do PDV minimalista (carrinho em linhas finas, um só pagamento por venda). fix(pos): **remove a selecção de método de pagamento — envia sempre `NUMERARIO`** (ver aviso abaixo). Checkout mobile sem cabeçalho nem «Abrir Sessão». Tolerância de meio cêntimo ao validar o pago, como o backend.
+  - feat(listas): `exportarTabelaPDF` e `<BotaoExportarPDF>` partilhados; a lista de Produtos exporta o catálogo inteiro.
+- **2026-11-21 · [BE] · Antonio Mambo** — `fix/historico-auditoria-visivel-a-todos` (`eab860b`)
+  - fix(auditoria): «o que eu fiz» deixa de exigir `VER_AUDITORIA`; ver o de outros continua a exigir.
+- **2026-11-14 / 19 · [BE+FE] · Antonio Mambo** — `fix/permissoes-matriz-completa`, `fix/eventos-entrega-tipo-nos-testes`, `chore/env-example-bucket`
+  - Permissões de necessidades e inventário criadas em produção e matriz com modo de leitura para perfis de sistema; tipagem dos testes de avisos de entrega; bucket real no `.env.example`.
+
+  > **⚠ Problema aberto — o PDV regista tudo como numerário.** Desde `fix/pdv-remover-metodo-pagamento`, `POSPage.tsx` envia sempre `metodo: 'NUMERARIO'`. O fecho de caixa (`fechar-sessao-caixa.use-case.ts`) conta **só o numerário** no saldo esperado da gaveta: cada venda paga com cartão, M-Pesa ou e-Mola faz subir o esperado sem o dinheiro lá estar, e aparece como **quebra** igual ao seu valor. Os relatórios por método de pagamento ficam errados pela mesma razão. Ver Secção 3.
+
 ---
 
 ## 3. Backlog — Por Fazer
+
+### Urgente (do registo retroactivo de 2026-11-22)
+
+- [ ] **PDV: voltar a registar o método de pagamento real.** Hoje tudo é gravado como `NUMERARIO` (Fase 83): o fecho de caixa mostra quebras falsas iguais às vendas pagas com cartão, M-Pesa ou e-Mola, e os relatórios por método estão errados. Corrigir no PDV (um seletor simples, mesmo no ecrã minimalista) e avaliar se as vendas gravadas desde 2026-11-21 precisam de correcção.
+- [ ] **Correr `npm run promocoes:sobrepostas` em produção** (D7-0b, Fase 77) — do utilizador; era para antes do deploy de 2026-11-19.
+- [ ] **Preço por loja e precificação** — o `PrecoVendaLoja` (Fase 82) não passa por validação nenhuma: `GerirPrecoVendaLojaUseCase` aceita um preço **abaixo do custo** (contorna a D7-0a) e publica sem passar pela política nem pela fila de aprovação da D7-2. Pelo menos o piso devia aplicar-se já; a fila é decisão do utilizador.
 
 > Checklist viva. Ao concluir um item, mudar para `- [x]` e acrescentar a entrada
 > correspondente na Secção 2 (nova fase ou item dentro da fase em curso), no mesmo
@@ -2796,8 +2868,8 @@ implementação vem **antes** de retomar o ensaio da entrega.
 - [x] **D7-0 — Correcções que valem sempre** — piso de preço na edição e na MAYRA; promoções sobrepostas sem desempate; aritmética decimal; levantamento Float → Decimal. *(Tarefas a a d feitas em 2026-11-18; fundida em `main` e publicada (Fly) a 2026-11-19.)*
 - [x] **D7-1 — Políticas de margem e cálculo do preço sugerido** — módulo `precificacao`, políticas por empresa, categoria e produto, os três estados de decisão, simulação. *(Feita em 2026-11-18; detalhe em §4.16/D7-1. Migração verificada numa branch Neon com o schema de produção. Fundida em `main` e publicada (Fly) a 2026-11-19.)*
 - [x] **D7-2 — Versões de preço, fila de excepções e MAYRA** — preço regular versionado, aprovação com segregação de funções, a ferramenta da MAYRA passa a propor. *(Backend e frontend feitos e fundidos em `main` a 2026-11-19; publicado no Fly e na Vercel a 2026-11-19, confirmado pelo utilizador.)*
-- [x] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente. *(Backend e frontend feitos em 2026-11-19, branch `feat/precificacao-checkout` nos dois repositórios; backend por fundir e publicar.)*
-- [x] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa. *(Backend em `feat/precificacao-checkout`, frontend em `feat/precificacao-reprecificacao-custo`; feito em 2026-11-19, por fundir e publicar.)*
+- [x] **D7-3 — Piso nas promoções e aceite do preço no checkout** — `PRECO_ALTERADO` e consentimento do cliente. *(Fundida em `main`: backend a 2026-11-19 por `feat/pedidos-cliente`, frontend a 2026-11-21. Fase 79.)*
+- [x] **D7-4 — Reprecificação por custo, alertas de erosão e simulação em lote** — propostas, nunca publicação directa. *(Fundida em `main` a 2026-11-21. Fase 79.)*
 
 **Mais tarde — fora do primeiro âmbito.** Cada item abaixo espera por outro módulo ou por uma decisão que o pacote ainda não fechou; **não se implementa sem o contrato desse módulo aceite** (ver §4.16, secção 6).
 
@@ -2842,7 +2914,7 @@ implementação vem **antes** de retomar o ensaio da entrega.
 | 4.11 | Compras: todos os fornecedores no pedido e comparação por critérios | **Implementado** (Fase 55, 2026-10-13) — falta validar os pesos e testar no browser | Secção 3 → «Compras: comparação de fornecedores» |
 | 4.12 | Transferências entre armazéns: várias linhas, stock de origem à vista e histórico | **Implementado** (Fase 57, 2026-10-13) — sem a transferência directa | Secção 3 → «Transferências entre armazéns» |
 | 4.13 | Clientes online no CRM e pedidos online com os dados completos do cliente | **Implementado** (Fase 58, 2026-10-13) | Secção 3 → «Clientes online e pedidos» |
-| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Em curso** — D7-0 a D7-4 feitas (2026-11-19); D7-0 a D7-2 publicadas; D7-3 e D7-4 por fundir e publicar | Secção 3 → «Precificação (DT-07)» |
+| 4.16 | Precificação (DT-07): políticas, decisão de preço e fila de excepções | **Primeiro âmbito concluído** — D7-0 a D7-4 fundidas em `main` (19–21 Nov, Fases 77 a 79); o que fica é «Mais tarde» | Secção 3 → «Precificação (DT-07)» |
 
 ### 4.1 Entrega ao domicílio (Compra Fácil)
 
