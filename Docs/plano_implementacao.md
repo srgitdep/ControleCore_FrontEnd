@@ -2478,6 +2478,17 @@ esse merge trouxe.
   >
   > **Fica de fora.** As vendas gravadas como numerário entre 2026-11-21 e este deploy — ver Secção 3 → «Urgente».
 
+### Fase 85 — Mayra: mensagens de erro que dizem o que falhou (23 Nov 2026)
+
+- **2026-11-23 · [BE] · Claude Code** — `claude/dois-projetos-lfvrja`
+  - **Pedido do utilizador:** a Mayra falhava em texto e em voz com «Ocorreu um erro ao tentar aceder a essa informação no sistema», a mesma mensagem para qualquer causa; melhorar as mensagens de erro.
+  - feat(mayra): `ai-copilot/domain/erro-da-mayra.ts` (puro, com spec) classifica a falha em `SEM_QUOTA` (429, `RESOURCE_EXHAUSTED`), `CONFIGURACAO` (chave inválida ou sem permissão — 400 com «API key», 401, 403 —, modelo inexistente 404, `GEMINI_MODEL` em falta), `INDISPONIVEL` (5xx, rede) e `DESCONHECIDO` (o resto, incluindo a base de dados). Cada categoria tem mensagem em `pt`/`en`/`zh`, no idioma do utilizador (o do pedido se a falha vier antes de o saber), sem expor a chave, o modelo nem o texto da Google. `CONFIGURACAO` diz que tentar outra vez não resolve.
+  - O log passa a `[Mayra] Erro grave no Chat (categoria=…, status=…)`, e a falha de ligação ao Gemini Live (`ai-copilot-voice.gateway.ts`) também leva a categoria. `PROMPTS.ERROR_TOOL` sai (sem uso).
+
+  > **Verificação.** Backend: 320 suites, 4373 testes; `nest build` limpo; lint sem erros novos. **Teste de mutação:** com o classificador a devolver sempre `DESCONHECIDO`, 6 testes falham; reposto, passam.
+  >
+  > **Diagnóstico de 2026-11-23 (por confirmar nos logs).** Texto e voz falharam juntos. A voz só chega à mensagem do texto quando a ligação ao Gemini Live **também** falha e passa ao modo de reserva, que chama o mesmo `chat()`: as duas ligações ao Gemini falharam, o que aponta para a `GEMINI_API_KEY` (revogada, sem faturação ou sem quota) ou para o `GEMINI_MODEL` nos secrets do Fly. As 66 declarações de ferramentas foram validadas e estão correctas; o modelo do `.env.example` (`gemini-3.8-flash`) está em GA. Com esta fase em produção, a própria mensagem da Mayra diz qual das categorias é.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2487,6 +2498,8 @@ esse merge trouxe.
 - [x] **PDV: voltar a registar o método de pagamento real.** Corrigido em 2026-11-22 (Fase 84): o seletor voltou.
 - [ ] **Vendas gravadas como numerário entre 2026-11-21 e o deploy da Fase 84** — decisão do utilizador: confirmar se alguma empresa usou o PDV nesse intervalo e, se sim, se as sessões de caixa fechadas com quebras falsas precisam de nota ou correcção (o método real de cada venda não está gravado em lado nenhum; só o operador sabe).
 - [ ] **Correr `npm run promocoes:sobrepostas` em produção** (D7-0b, Fase 77) — do utilizador; era para antes do deploy de 2026-11-19.
+- [ ] **Mayra a falhar em texto e voz (2026-11-23)** — ver o erro real com `fly logs -a srg-controlcore-api --no-tail | grep -A15 "Erro grave no Chat"` (depois da Fase 85, a linha traz a categoria) e corrigir a chave, a quota ou o modelo nos secrets do Fly. Do utilizador.
+- [ ] **Segredo de reserva no token de voz** — `ai-copilot.controller.ts` assina o token do Voice Gateway com `JWT_ACCESS_SECRET || 'fallback_secret'`: sem a variável, qualquer pessoa forja tokens com um segredo escrito no código. Deve falhar no arranque, como o `GEMINI_MODEL`.
 - [ ] **Preço por loja e precificação** — o `PrecoVendaLoja` (Fase 82) não passa por validação nenhuma: `GerirPrecoVendaLojaUseCase` aceita um preço **abaixo do custo** (contorna a D7-0a) e publica sem passar pela política nem pela fila de aprovação da D7-2. Pelo menos o piso devia aplicar-se já; a fila é decisão do utilizador.
 
 > Checklist viva. Ao concluir um item, mudar para `- [x]` e acrescentar a entrada
