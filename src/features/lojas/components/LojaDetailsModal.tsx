@@ -4,6 +4,7 @@ import { criarCaixa, removerCaixa } from '@/features/vendas';
 import { createArmazem, deleteArmazem, updateLoja, TIPOS_ARMAZEM } from '@/features/lojas';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { MapaEntregaLazy } from '@/shared/ui/mapa/MapaEntregaLazy';
 import type { PontoNoMapa } from '@/shared/ui/mapa/MapaEntrega';
 import { NomeDoLocal } from '@/shared/ui/mapa/NomeDoLocal';
@@ -14,6 +15,7 @@ export type AbaLoja = 'INFO' | 'ARMAZENS' | 'CAIXAS' | 'LOCALIZACAO';
 
 export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 'CAIXAS' }: { loja: any; users: any[]; onClose: () => void; onUpdate: () => void; abaInicial?: AbaLoja }) {
   const { t } = useTranslation('lojas');
+  const queryClient = useQueryClient();
   const { t: tMapa } = useTranslation('shell');
   const [activeTab, setActiveTab] = useState<AbaLoja>(abaInicial);
   
@@ -101,6 +103,9 @@ export function LojaDetailsModal({ loja, users, onClose, onUpdate, abaInicial = 
     setIsCreatingArmazem(true);
     try {
       await createArmazem({ lojaId: loja.id, nome: novoArmazem, tipo: novoArmazemTipo });
+      // O armazém nasce com uma posição a zero por produto: o stock em cache já não
+      // reflecte as posições existentes.
+      queryClient.invalidateQueries({ queryKey: ['stocks'] });
       toast.success(t('detalhes.armazem_adicionado'));
       setNovoArmazem('');
       onUpdate();
