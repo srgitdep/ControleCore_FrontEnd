@@ -1,5 +1,5 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { catalogApi, type CreateProductPayload } from '../api/catalog.api';
+import { catalogApi, type CreateProductPayload, type ProductListParams } from '../api/catalog.api';
 import toast from 'react-hot-toast';
 import i18n from '@/i18n';
 
@@ -14,11 +14,12 @@ export function useCategories() {
   });
 }
 
-export function useProducts(params?: { search?: string; categoryId?: string; page?: number; limit?: number }) {
+export function useProducts(params?: ProductListParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['products', params],
     queryFn: () => catalogApi.getProducts(params),
     placeholderData: (prev) => prev,
+    enabled: options?.enabled ?? true,
   });
 }
 
