@@ -5,6 +5,16 @@
     "editar": "Editar",
     "remover": "Remover"
   },
+  "duplicado": {
+    "titulo": "Este produto já parece existir",
+    "explicacao": "Para mercadoria que chegou a outra loja, não crie o produto de novo: dê entrada de stock no produto existente, na loja certa.",
+    "motivo_NOME": "mesmo nome",
+    "motivo_CODIGO_BARRAS": "mesmo código de barras",
+    "motivo_CODIGO_BARRAS_SEMELHANTE": "código de barras quase igual",
+    "ver_stock": "Ver stock",
+    "confirmar": "É um produto diferente — criar mesmo assim",
+    "unidades": "{{n}} un"
+  },
   "form": {
     "titulo_editar": "Editar Produto",
     "titulo_novo": "Novo Produto",

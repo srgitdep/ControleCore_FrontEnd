@@ -82,6 +82,23 @@ export interface CreateProductPayload extends Partial<Product> {
   quantidadeInicial?: number;
   /** Ponto de reposição neste armazém. Zero significa «sem mínimo definido». */
   stockMinimo?: number;
+  /**
+   * Confirma que é outro produto, apesar do aviso de duplicado. Sem ele, o backend
+   * recusa (409 `produto.duplicado`) se existir um activo com o mesmo nome ou código.
+   */
+  confirmarDuplicado?: boolean;
+}
+
+/** Um produto que o produto a criar provavelmente duplica — `GET /produtos/duplicados`. */
+export interface ProdutoDuplicado {
+  id: string;
+  nome: string;
+  codigoBarras: string | null;
+  sku: string | null;
+  precoVenda: number;
+  motivo: 'CODIGO_BARRAS' | 'CODIGO_BARRAS_SEMELHANTE' | 'NOME';
+  /** Todas as posições, mesmo a zero: é numa delas que se dá entrada. */
+  stocks: Array<{ id: string; currentQuantity: number; loja: string; armazem: string }>;
 }
 
 export interface ProductListParams {
@@ -101,6 +118,12 @@ export interface ProductListParams {
 export const catalogApi = {
   getCategories: async () => {
     const { data } = await api.get<Category[]>('/categorias');
+    return data;
+  },
+
+  /** Produtos activos com o mesmo nome, ou código igual até ao último dígito. */
+  getDuplicados: async (params: { nome?: string; codigoBarras?: string }) => {
+    const { data } = await api.get<ProdutoDuplicado[]>('/produtos/duplicados', { params });
     return data;
   },
 

@@ -11,7 +11,10 @@ import {
   useCarregarImagemProduto,
   useRemoverImagemProduto,
   useDefinirImagemPrincipal,
+  useProdutosDuplicados,
 } from '../hooks/useCatalog';
+import { AvisoProdutoDuplicado } from './AvisoProdutoDuplicado';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useArmazens } from '@/features/lojas';
 import { stockApi, RetificarQuantidadeModal, usePodeGerirStock } from '@/features/stock';
 import { suppliersApi } from '@/features/fornecedores';
@@ -199,6 +202,17 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
         },
   });
 
+  // Aviso de duplicado — só ao criar. Ver `AvisoProdutoDuplicado`.
+  const nomeEscrito = useDebounce(useWatch({ control, name: 'nome' }) ?? '', 400);
+  const codigoEscrito = useDebounce(useWatch({ control, name: 'codigoBarras' }) ?? '', 400);
+  const { data: duplicados = [] } = useProdutosDuplicados(
+    { nome: nomeEscrito, codigoBarras: codigoEscrito },
+    { enabled: !productToEdit },
+  );
+  const [confirmarDuplicado, setConfirmarDuplicado] = useState(false);
+  // Sem confirmação, o backend recusaria (409): não se deixa submeter.
+  const bloqueadoPorDuplicado = !productToEdit && duplicados.length > 0 && !confirmarDuplicado;
+
   const precoCusto = useWatch({ control, name: 'precoCusto' });
   const precoVenda = useWatch({ control, name: 'precoVenda' });
   // Os campos de validade só aparecem depois de o controlo ser ligado: mostrá-los sempre
@@ -311,6 +325,7 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
       } else {
         const criado = await createProduct({
           ...payload,
+          ...(confirmarDuplicado && duplicados.length > 0 ? { confirmarDuplicado: true } : {}),
           // Só se houver armazém escolhido — enviar `armazemId: ''` falharia a
           // validação de UUID no servidor.
           ...(armazemId
@@ -407,6 +422,16 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
                   placeholder={t('form.codigo_barras_exemplo')}
                 />
               </div>
+
+              {!productToEdit && duplicados.length > 0 && (
+                <div className="md:col-span-2">
+                  <AvisoProdutoDuplicado
+                    duplicados={duplicados}
+                    confirmado={confirmarDuplicado}
+                    onConfirmar={setConfirmarDuplicado}
+                  />
+                </div>
+              )}
 
               <div>
                 <div className="mb-1 flex items-center justify-between gap-2">
@@ -741,7 +766,12 @@ export function ProductFormModal({ productToEdit, onClose }: ProductFormModalPro
             <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
               {t('acoes.cancelar')}
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button
+              type="submit"
+              disabled={isPending || bloqueadoPorDuplicado}
+              title={bloqueadoPorDuplicado ? t('duplicado.titulo') : undefined}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
               {isPending ? t('form.a_guardar') : t('form.guardar_produto')}
             </Button>
           </div>

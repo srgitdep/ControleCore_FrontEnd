@@ -5,6 +5,16 @@
     "editar": "Edit",
     "remover": "Remove"
   },
+  "duplicado": {
+    "titulo": "This product seems to exist already",
+    "explicacao": "For goods that arrived at another store, do not create the product again: add stock to the existing product, in the right store.",
+    "motivo_NOME": "same name",
+    "motivo_CODIGO_BARRAS": "same barcode",
+    "motivo_CODIGO_BARRAS_SEMELHANTE": "almost identical barcode",
+    "ver_stock": "View stock",
+    "confirmar": "It is a different product — create anyway",
+    "unidades": "{{n}} units"
+  },
   "form": {
     "titulo_editar": "Edit product",
     "titulo_novo": "New product",
