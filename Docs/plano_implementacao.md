@@ -2557,6 +2557,15 @@ esse merge trouxe.
 
   > **Verificação.** 4424 testes backend, 533 frontend; consulta real: um código com o último dígito alterado encontra o JBL Pro Max. **Não verificado no browser.**
 
+### Fase 93 — Número da factura e do pedido únicos por empresa (28 Nov 2026)
+
+- **2026-11-28 · [BE] · Claude Code** — `fix/numeracao-documentos-por-empresa`
+  - **Pedido do utilizador:** a venda do «Airpods Pro 2 Geracao Branco» (1000 MT) dava 500 em `POST /vendas/processar`.
+  - **Causa:** a numeração (`sequencias_documento`) é por empresa — todas começam em `FT-<ano>/0001` —, mas `vendas.numeroFatura` tinha índice único **global**. A SRG nunca tinha vendido: a primeira venda gerou `FT-2026/0001`, já usado pela SHOPRITE, e falhou com P2002. Afectava qualquer produto da SRG e a primeira venda de qualquer empresa nova. `pedidos.numeroPedido` (Compra Fácil, `PED-<ano>/00001`) tinha o mesmo defeito.
+  - fix(vendas): migration `20261128150000_numeracao_documentos_por_empresa` — os índices passam a `(empresaId, numeroFatura)` e `(empresaId, numeroPedido)`. Só índices; os dados existentes já respeitavam a regra nova.
+
+  > **Verificação.** Reproduzido localmente contra a base de produção (venda real, em transacção desfeita): P2002 antes; com a migration aplicada na mesma transacção, a venda passa. `tsc` limpo; 4424 testes. Sem alterações no frontend.
+
 ---
 
 ## 3. Backlog — Por Fazer
@@ -2587,6 +2596,15 @@ esse merge trouxe.
 - [ ] **Processo da equipa** — do utilizador: o produto cria-se **uma vez**; em cada loja dá-se **entrada** (compra/recepção ou ajuste «+» com «Incluir sem saldo»); entre lojas, **transferência**. Limitar a criação de produtos a 1–2 responsáveis.
 - [ ] **Teste no browser** (Fases 87–92) — PDV em cada loja (stock e preço da loja, sem cópias), aviso de duplicado ao criar produto, criar armazém (posições novas na lista de stock).
 - [ ] **Preços por loja criados pela fusão (30)** — confirmar que são intencionais (ex.: InPods 12Simple 400 MT na Shoprite, 200 MT no Zimpeto 2).
+
+### Depois da organização dos produtos — encontrados a 2026-11-28 (Fase 93)
+
+> A tratar depois do bloco «Logo a seguir». Encontrados ao investigar o 500 na venda.
+
+- [ ] **403 em `/necessidades/alertas` no PDV** — o perfil de caixa não tem `VER_NECESSIDADES` e o frontend pede os alertas na mesma (aparece na consola a cada carregamento; não impede a venda). O frontend só deve pedir os alertas a quem tem a permissão (ver `usePermissions`).
+- [ ] **Loja «shoprite» da SRG sem armazém activo** — além da «Loja da Shoprite», a SRG tem uma loja «shoprite» (minúsculas) sem nenhum armazém activo. Um caixa ligado a ela recusa todas as vendas («A loja "shoprite" não tem nenhum armazém activo…»). Decisão do utilizador: parece criada a mais — desactivar, ou dar-lhe um armazém de venda.
+- [ ] **Três empresas chamadas «SHOPRITE»** — a tabela `sequencias_documento` tem três empresas distintas com esse nome, e há um caixa aberto em «SHOPRITE Central». Verificar se é intencional (teste/demonstração) ou duplicação.
+- [ ] **Sem acesso aos logs de produção nesta máquina** — o `fly` CLI está instalado mas sem sessão (`flyctl auth login`). Sem ele, um 500 só se diagnostica reproduzindo contra a base.
 
 ### Urgente (do registo retroactivo de 2026-11-22)
 
