@@ -20,6 +20,11 @@ export interface Product {
   imagens?: { id: string; url: string | null; ordem: number; isPrincipal: boolean }[];
   precoCusto: number;
   precoVenda: number;
+  /**
+   * Só na listagem com `lojaId` (PDV): o preço base do produto. Aí `precoVenda` já é o
+   * preço efectivo da loja — o que a venda vai cobrar.
+   */
+  precoVendaBase?: number;
   margemLucro: number;
   taxaIva: number;
   unidadeMedida: string;
