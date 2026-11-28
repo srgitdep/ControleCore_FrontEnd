@@ -2489,18 +2489,114 @@ esse merge trouxe.
   >
   > **Diagnóstico de 2026-11-23 (por confirmar nos logs).** Texto e voz falharam juntos. A voz só chega à mensagem do texto quando a ligação ao Gemini Live **também** falha e passa ao modo de reserva, que chama o mesmo `chat()`: as duas ligações ao Gemini falharam, o que aponta para a `GEMINI_API_KEY` (revogada, sem faturação ou sem quota) ou para o `GEMINI_MODEL` nos secrets do Fly. As 66 declarações de ferramentas foram validadas e estão correctas; o modelo do `.env.example` (`gemini-3.8-flash`) está em GA. Com esta fase em produção, a própria mensagem da Mayra diz qual das categorias é.
 
+### Fase 86 — Piso no preço por loja e sem segredo de reserva nos tokens (28 Nov 2026)
+
+- **2026-11-28 · [BE] · Claude Code** — `fix/preco-loja-piso-e-segredo-voz`
+  - **Pedido do utilizador:** os dois itens de código da Secção 3 → «Urgente».
+  - fix(armazens): `GerirPrecoVendaLojaUseCase` lê o produto **na empresa da loja** e recusa com 422 `produto.preco.abaixo_do_custo` um preço por loja abaixo do custo (`validarPrecoVenda`, a regra da D7-0a); com custo conhecido, preço zero também é recusado (tirar o preço da loja é o `DELETE`). Fecha também um furo: um `produtoId` de outra empresa ganhava preço por esta rota. O frontend já mostra a mensagem do servidor (`mensagemDeErro`), sem alterações.
+  - fix(auth): `shared/jwt-access-secret.ts` — a estratégia JWT, o token do socket (`auth.controller.ts`) e o token de voz da Mayra (controller e gateway) deixam de recair em `'fallback_secret'`; sem `JWT_ACCESS_SECRET` o servidor não arranca (`main.ts`), como com o `GEMINI_MODEL`.
+
+  > **Verificação.** `nest build` limpo; 322 suites, 4385 testes. A passagem do preço por loja pela fila da D7-2 continua por decidir (Secção 3).
+
+### Fase 87 — PDV: só o stock da loja do caixa aberto (28 Nov 2026)
+
+- **2026-11-28 · [BE+FE] · Claude Code** — `fix/pdv-stock-por-loja`
+  - **Pedido do utilizador:** o «Airpods Pro 2 Geracao Branco» aparecia no PDV com «restam 5», a venda era recusada por falta de stock, e a lista de stock da Shoprite mostrava 4. Cada PDV deve mostrar só o stock da sua loja.
+  - **Causa:** `GET /produtos` devolvia os stocks de **todas** as lojas e o POS não filtrava. Um produto com posição só noutra loja chegava com um único stock, que `getStockDisponivel` tomava como o da loja. Havia também dois produtos diferentes com o mesmo nome (ver Fase 91).
+  - fix(produto): `GET /produtos?lojaId=` restringe `stocks` aos armazéns dessa loja; sem o parâmetro, o comportamento mantém-se (ecrã de Produtos).
+  - fix (FE): `POSPage` passa a loja da sessão de caixa (`minhaSessao.caixa.lojaId`) e não carrega o catálogo enquanto ela não for conhecida.
+
+  > **Verificação.** Backend: 83 testes do módulo produto; consulta real (só leitura) com o filtro da Shoprite. Frontend: 533 testes, `tsc` limpo. **Não verificado no browser.**
+
+### Fase 88 — Mayra: pesquisa por nome com números e produtos homónimos (28 Nov 2026)
+
+- **2026-11-28 · [BE] · Claude Code** — `fix/mayra-busca-nome-numeros`
+  - **Pedido do utilizador:** a Mayra dizia que o produto não tinha stock.
+  - **Causa:** `busca-por-nome.ts` descartava palavras com menos de 3 caracteres, **números incluídos**: «Zimpeto 2» ficava «zimpeto» e encontrava a Loja do Zimpeto 1 (visto no histórico de 21/11), «Airpods Pro 2» não se distinguia do Pro 3. E `get_product_stock` devolvia só nome e armazém, sem distinguir dois produtos homónimos.
+  - fix(mayra): números isolados passam a contar e têm de aparecer inteiros («2» não corresponde a «i12»); `encontrarPorNome` confirma em memória os candidatos em vez de ficar com o primeiro do `findFirst`. `get_product_stock` devolve código de barras, SKU e loja; `get_store_stock` usa `encontrarPorNome` para a loja.
+
+  > **Verificação.** 4389 testes; consulta real: «Zimpeto 2» → Loja Zimpeto 2.
+
+### Fase 89 — Armazém novo abre posições de stock para os produtos existentes (28 Nov 2026)
+
+- **2026-11-28 · [BE+FE] · Claude Code** — `fix/posicoes-stock-armazem-novo`
+  - **Causa de fundo dos duplicados:** criar um produto abria posições nos armazéns existentes, mas criar um armazém não as abria para os produtos já existentes. Um produto criado antes de uma loja não aparecia no stock dela, e o ajuste manual (que exige a posição) não tinha onde dar entrada — a equipa criava o produto de novo, por loja.
+  - fix(armazem): `PrismaArmazemRepository.create` abre, na mesma transacção, uma posição a zero por produto da empresa.
+  - fix(stock): migration `20261128120000_posicoes_stock_em_falta` — abriu as **162** posições em falta (126 SRG, 36 Shoprite); idempotente.
+  - fix(mayra): `get_low_stock` ignora posições sem mínimo (`minQuantity > 0`), como o painel — na SRG contava 531 posições «em stock baixo», das quais só 129 têm mínimo.
+  - fix (FE): criar armazém invalida o cache `['stocks']`.
+
+  > **Verificação.** 4392 testes (3 novos do repositório de armazém); migration validada contra a base numa transacção desfeita (insere 162, segunda execução 0) e confirmada em produção depois do deploy (0 posições em falta).
+  >
+  > **Base de dados.** Confirmado neste dia que a base do `.env` local (`ep-restless-term…neon.tech`) **é a de produção**: a migration aplicada pelo deploy do Fly encheu-a. As ressalvas «se essa base não for a de produção» da Secção 3 → «Urgente» ficam resolvidas.
+
+### Fase 90 — PDV só com produtos activos e preço da loja; venda recusa inactivos (28 Nov 2026)
+
+- **2026-11-28 · [BE+FE] · Claude Code** — `fix/pdv-activos-e-preco-loja`
+  - **Pré-requisito da fusão (Fase 91):** o PDV, a venda e a Mayra não ignoravam produtos inactivos — as cópias desactivadas reapareceriam como linhas a zero. E o PDV mostrava o preço base enquanto a venda cobrava o preço da loja (`findProdutosComStock` faz `COALESCE(pvl.preco, p.precoVenda)`): com preços por loja, o operador via 1000 MT e o sistema cobrava 700.
+  - fix(produto): `GET /produtos?lojaId=` devolve em `precoVenda` o preço efectivo da loja (o base fica em `precoVendaBase`); `?activos=true` filtra inactivos. O POS passa os dois.
+  - fix(vendas): a venda recusa produto desactivado (`venda.produto_inactivo`, pt/en/zh).
+  - fix(stock): `shared/posicao-visivel.ts` — a posição de um produto desactivado esconde-se **só quando está a zero** (stock real nunca se esconde). Aplicado à listagem de stock, ao ecrã de stock da loja (`findPosicoes`) e às tools da Mayra (`get_product_stock`, `get_store_stock`, `get_inventory_list`).
+
+  > **Verificação.** 4406 testes backend, 533 frontend. **Não verificado no browser.**
+
+### Fase 91 — Fusão de produtos duplicados por loja (28 Nov 2026, dados)
+
+- **2026-11-28 · [BE, dados de produção] · Claude Code** — `chore/fusao-produtos-duplicados` (script `scripts/fundir-produtos-duplicados.ts`)
+  - **Pedido do utilizador:** juntar os produtos criados uma vez por loja. Havia **89 registos em 38 grupos** com o mesmo nome; os códigos de barras tinham sido alterados no último dígito para passar a unicidade (ex.: `190199246857` é o código do «Preto» `190199246850` com o último dígito mudado — dígito de controlo inválido).
+  - Executado na empresa SRG (`52be8b0b…`), movimentos em nome de yolanda jamisse (`976360d7…`), com `--excluir="Airpods Pro 5s,Bateria Itel BL-25BI"` e `--sem-categoria="JBL Pro Max,Samsung Pro Max"`. **36 grupos fundidos; 49 cópias desactivadas** (não apagadas, sem código de barras); 49 transferências de saldo (saída na cópia, entrada no principal, CMP ponderado); **30 preços por loja** onde a cópia vendia a outro preço; 7 referências de histórico re-apontadas. **Stock total da empresa: 744 antes e depois.** Ficam 127 produtos activos.
+  - Regra do principal: código GS1 válido > tem código > mais antigo. O script corre em ensaio por omissão (transacção desfeita) e aborta se o stock total mudar.
+  - Cópia de segurança de todas as linhas afectadas: `backup-fusao-produtos-2026-11-28.json`, **só no computador onde foi corrida** (pasta-mãe `ControlCore/`, fora dos repositórios — contém dados de negócio).
+
+### Fase 92 — Aviso de produto duplicado ao criar produto (28 Nov 2026)
+
+- **2026-11-28 · [BE+FE] · Claude Code** — `feat/aviso-produto-duplicado`
+  - feat(produto): `domain/produto-duplicado.ts` — duplicado é um produto activo com o mesmo nome (normalizado: maiúsculas, acentos, pontuação, espaços) ou o mesmo código de barras **até ao último dígito**. «Airpods Pro 2» e «Pro 3» não contam.
+  - A criação devolve 409 `produto.duplicado` (com a lista em `duplicados`) sem `confirmarDuplicado: true`. `GET /produtos/duplicados?nome=&codigoBarras=` devolve os duplicados com o stock por loja.
+  - feat (FE): `AvisoProdutoDuplicado` (reutilizável) no formulário de criação, enquanto se escreve: mostra os produtos existentes, o stock em cada loja e «Ver stock»; só grava com «É um produto diferente — criar mesmo assim». Traduções pt/en/zh.
+
+  > **Verificação.** 4424 testes backend, 533 frontend; consulta real: um código com o último dígito alterado encontra o JBL Pro Max. **Não verificado no browser.**
+
 ---
 
 ## 3. Backlog — Por Fazer
 
+### Logo a seguir — organização dos produtos (de 2026-11-28)
+
+> Continuação directa das Fases 87–92. Números de 2026-11-28, empresa SRG, 127 produtos
+> activos depois da fusão. Para refazer a contagem e a lista por produto (o CSV
+> `ficha-produtos-a-corrigir.csv` só existe no computador onde foi gerado), correr uma
+> consulta só de leitura aos produtos activos com `codigoBarras`, `categoriaId` e as
+> posições de stock.
+
+- [ ] **Fundir os ~8 grupos de duplicados com nomes diferentes** — a fusão da Fase 91 agrupou só nomes iguais. Mesmo padrão (um registo por loja), quase todos com o código igual até ao último dígito. **Alguém tem de confirmar que é o mesmo artigo**; depois, acrescentar ao script uma opção de grupos indicados à mão (por id) e correr em ensaio antes de `--executar`.
+  - Carregador 14 Pro Max: «Carregador 14 pro maz 35W» `194252157022` (Choupal 5) · «Carregador  14 pro Max 35W» `194252157028` (Shoprite 10) · «Carregador 14 Pro Max» `194252157020` (Zimpeto 2 3)
+  - Cabo Iphone USB-C: «Cabo Iphone USB IPHONE» `190198496263` (Choupal 6) · «Cabo USB-C Iphone» `190198496262` (Shoprite 10) · «Cabo Iphone  USB-C» `190198496267` (Zimpeto 1 4, Zimpeto 2 10)
+  - Cabo TPC-Iphone PD-11 (sem código): «Cabo TPC-Iphone PD11» (Choupal 20) · «Cabo TPC-IPHONE PD-11» (Shoprite 8, Zimpeto 1 5) · «Cabo -TPC IPHONE PD-11» (Zimpeto 2 7)
+  - Carregador Samsung 45W: «Carregador Samsung 45W PD» `8806098987848` (Shoprite 3) · «Carregador  Samsung 45W» `8806098987849` (Choupal 3, Zimpeto 2 2)
+  - Samsung 60W: «Carregador  Samsung 60W» `8806097735676` (Shoprite 2) · «Transformador Samsung 60W» `8806097735670` (Choupal 2, Zimpeto 1 1)
+  - Transformador Samsung 45W: «… 45W Preto» `8806090104510` (Choupal 3) · «… 45W PD» `8806090104519` (Shoprite 4) — **podem ser modelos diferentes**
+  - Carregador 67W PD: «Carregador Xiaomi 67W PD» `6934177744815` (Choupal 4) · «Carregador 67W PD» `6934177744811` (Shoprite 1)
+  - Airpods TWS X15 (sem código): «Airpods TWS X15» (Shoprite 4, Zimpeto 2 1) · «Airpods TWS-X15» (Zimpeto 1 1)
+- [ ] **Os 2 grupos excluídos da fusão** — decisão do utilizador: **Airpods Pro 5s** tem dois códigos válidos e diferentes (`6945688824453` Choupal, `6945688824477` Shoprite — ver as caixas); **Bateria Itel BL-25BI** tem custo 70 MT (Zimpeto 2) e 15 MT (Zimpeto 1) — outro modelo ou custo mal registado.
+- [ ] **Corrigir os mínimos de stock** — **127 das 176 posições com saldo têm o mínimo igual ao saldo**: o formulário de criação exige o mínimo e a equipa escreveu lá a quantidade de entrada. Resultado: 129 alertas «abaixo do mínimo» (Shoprite: 50 de 61), que ninguém consegue usar. A equipa tem de definir mínimos reais (1–2 un. para a maioria dos acessórios). Do lado do código: explicar no formulário o que é o mínimo; considerar uma acção em massa para o redefinir por loja.
+- [ ] **Códigos de barras** — **82 produtos sem código** (o leitor do PDV não os encontra) e **15 com código inválido**: os 8 grupos acima, `SUBSKC198`/`SUBSKC199` (Galaxy Buds2 Pro / GalaxyBuds2 Pro — possível duplicado), `698976421561` (Samsung Pro Max), `6520266155069` (Samsung Buds Pro60), `4894947025548` (Carregador Oraimo 20w), `697501128790` (Cabo USB-Normal Gerlax), `6040801011363176786N` (bateria itel). Ler da caixa, loja a loja.
+- [ ] **Categorias** — **30 produtos sem categoria**, entre eles JBL Pro Max e Samsung Pro Max (deixados sem categoria na fusão: a das cópias era «Airpods»). Há também «mouse» em minúsculas ao lado das restantes.
+- [ ] **Regra de duplicado: ignorar espaços e hífenes dentro das palavras** — «PD11» e «PD-11» escapam ao aviso da Fase 92 (`normalizarTexto` separa no hífen). Comparar também a forma compacta (só letras e números).
+- [ ] **Conta de utilizador duplicada** — há duas «yolanda jamisse» MANAGER activas; a `69b26758…` («yolanda  jamisse », com espaços a mais) nunca foi usada (0 produtos, 0 movimentos). Desactivar.
+- [ ] **Processo da equipa** — do utilizador: o produto cria-se **uma vez**; em cada loja dá-se **entrada** (compra/recepção ou ajuste «+» com «Incluir sem saldo»); entre lojas, **transferência**. Limitar a criação de produtos a 1–2 responsáveis.
+- [ ] **Teste no browser** (Fases 87–92) — PDV em cada loja (stock e preço da loja, sem cópias), aviso de duplicado ao criar produto, criar armazém (posições novas na lista de stock).
+- [ ] **Preços por loja criados pela fusão (30)** — confirmar que são intencionais (ex.: InPods 12Simple 400 MT na Shoprite, 200 MT no Zimpeto 2).
+
 ### Urgente (do registo retroactivo de 2026-11-22)
 
 - [x] **PDV: voltar a registar o método de pagamento real.** Corrigido em 2026-11-22 (Fase 84): o seletor voltou.
-- [ ] **Vendas gravadas como numerário entre 2026-11-21 e o deploy da Fase 84** — decisão do utilizador: confirmar se alguma empresa usou o PDV nesse intervalo e, se sim, se as sessões de caixa fechadas com quebras falsas precisam de nota ou correcção (o método real de cada venda não está gravado em lado nenhum; só o operador sabe).
-- [ ] **Correr `npm run promocoes:sobrepostas` em produção** (D7-0b, Fase 77) — do utilizador; era para antes do deploy de 2026-11-19.
+- [ ] **Vendas gravadas como numerário entre 2026-11-21 e o deploy da Fase 84** — verificado em 2026-11-28 (só leitura, base do `.env` local, `ep-restless-term…neon.tech`): na janela 2026-11-21 08:58 UTC → 2026-11-22 08:00 UTC há **uma venda**, da SHOPRITE, em `NUMERARIO`, na sessão `8491b16f…` fechada às 09:27 UTC com declarado 0 e diferença −1661,25. Falta o utilizador confirmar com o operador o método real e se a sessão precisa de nota. Se essa base não for a de produção, repetir lá.
+- [x] **Correr `npm run promocoes:sobrepostas`** — corrido em 2026-11-28 na base do `.env` local: «Nenhuma sobreposição». Se essa base não for a de produção, repetir lá.
 - [ ] **Mayra a falhar em texto e voz (2026-11-23)** — ver o erro real com `fly logs -a srg-controlcore-api --no-tail | grep -A15 "Erro grave no Chat"` (depois da Fase 85, a linha traz a categoria) e corrigir a chave, a quota ou o modelo nos secrets do Fly. Do utilizador.
-- [ ] **Segredo de reserva no token de voz** — `ai-copilot.controller.ts` assina o token do Voice Gateway com `JWT_ACCESS_SECRET || 'fallback_secret'`: sem a variável, qualquer pessoa forja tokens com um segredo escrito no código. Deve falhar no arranque, como o `GEMINI_MODEL`.
-- [ ] **Preço por loja e precificação** — o `PrecoVendaLoja` (Fase 82) não passa por validação nenhuma: `GerirPrecoVendaLojaUseCase` aceita um preço **abaixo do custo** (contorna a D7-0a) e publica sem passar pela política nem pela fila de aprovação da D7-2. Pelo menos o piso devia aplicar-se já; a fila é decisão do utilizador.
+- [x] **Segredo de reserva no token de voz** — corrigido em 2026-11-28 (Fase 86), também na estratégia JWT e no token do socket. `ai-copilot.controller.ts` assina o token do Voice Gateway com `JWT_ACCESS_SECRET || 'fallback_secret'`: sem a variável, qualquer pessoa forja tokens com um segredo escrito no código. Deve falhar no arranque, como o `GEMINI_MODEL`.
+- [x] **Preço por loja: piso do custo** — feito em 2026-11-28 (Fase 86).
+- [ ] **Preço por loja e fila de aprovação** — decisão do utilizador: o preço por loja deve passar pela política de margem e pela fila da D7-2? Texto original: o `PrecoVendaLoja` (Fase 82) não passa por validação nenhuma: `GerirPrecoVendaLojaUseCase` aceita um preço **abaixo do custo** (contorna a D7-0a) e publica sem passar pela política nem pela fila de aprovação da D7-2. Pelo menos o piso devia aplicar-se já; a fila é decisão do utilizador.
 
 > Checklist viva. Ao concluir um item, mudar para `- [x]` e acrescentar a entrada
 > correspondente na Secção 2 (nova fase ou item dentro da fase em curso), no mesmo
