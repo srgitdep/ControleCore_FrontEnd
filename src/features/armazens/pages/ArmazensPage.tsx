@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { BarraDaPagina } from '@/shared/ui';
 import {
   Box, Plus, Search, Edit2, X, Loader2, Store, Ban, CheckCircle2, AlertTriangle,
@@ -24,6 +25,7 @@ interface LojaComArmazens {
 
 export function ArmazensPage() {
   const { t } = useTranslation('armazens');
+  const queryClient = useQueryClient();
   const [lojas, setLojas] = useState<LojaComArmazens[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,6 +89,9 @@ export function ArmazensPage() {
         toast.success(t('pagina.actualizado'));
       } else {
         await createArmazem({ lojaId: form.lojaId, nome: form.nome, tipo: form.tipo });
+        // O armazém nasce com uma posição a zero por produto: o stock em cache já não
+        // reflecte as posições existentes.
+        queryClient.invalidateQueries({ queryKey: ['stocks'] });
         toast.success(t('pagina.criado'));
       }
       setShowModal(false);
