@@ -23,6 +23,25 @@ export function useProducts(params?: ProductListParams, options?: { enabled?: bo
   });
 }
 
+/**
+ * Produtos que o produto a criar provavelmente duplica, enquanto se escreve o nome ou
+ * o código. Os valores devem chegar já com debounce.
+ */
+export function useProdutosDuplicados(
+  params: { nome?: string; codigoBarras?: string },
+  options?: { enabled?: boolean },
+) {
+  const nome = params.nome?.trim() ?? '';
+  const codigoBarras = params.codigoBarras?.trim() ?? '';
+  return useQuery({
+    queryKey: ['produtos-duplicados', nome, codigoBarras],
+    queryFn: () => catalogApi.getDuplicados({ nome: nome || undefined, codigoBarras: codigoBarras || undefined }),
+    // Um nome de 1–2 letras coincide com demasiado e não ajuda ninguém.
+    enabled: (options?.enabled ?? true) && (nome.length >= 3 || codigoBarras.length >= 8),
+    staleTime: 30_000,
+  });
+}
+
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
 

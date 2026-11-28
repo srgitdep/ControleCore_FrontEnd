@@ -5,6 +5,16 @@
     "editar": "编辑",
     "remover": "移除"
   },
+  "duplicado": {
+    "titulo": "该商品似乎已存在",
+    "explicacao": "其他门店到货时，请不要重新创建商品：请在正确的门店为现有商品入库。",
+    "motivo_NOME": "名称相同",
+    "motivo_CODIGO_BARRAS": "条形码相同",
+    "motivo_CODIGO_BARRAS_SEMELHANTE": "条形码几乎相同",
+    "ver_stock": "查看库存",
+    "confirmar": "这是另一种商品——仍然创建",
+    "unidades": "{{n}} 件"
+  },
   "form": {
     "titulo_editar": "编辑商品",
     "titulo_novo": "新建商品",
