@@ -108,11 +108,21 @@ export function POSPage() {
   }, [total, valorPontosAResgatar, saldoPontos, setPontosAResgatar, setValorPontosAResgatar]);
 
   const { data: categoriesData } = useCategories();
-  const { data: productsData, isLoading: isLoadingProducts } = useProducts({ 
-    search: debouncedSearchTerm, 
-    categoryId: selectedCategoryId || undefined,
-    limit: 50
-  });
+  // Cada PDV vende de uma loja e só deve ver o stock dessa loja. Sem `lojaId`, a listagem
+  // trazia as posições de todas as lojas: um produto que só existia noutra aparecia aqui
+  // com «restam 5» e a venda era recusada pelo backend. Até a sessão dizer qual é a loja
+  // não se carrega o catálogo, para não mostrar saldos que não são deste PDV.
+  const { data: minhaSessao, isLoading: isSessaoLoading } = useMinhaSessao();
+  const lojaDoPdv: string | undefined = minhaSessao?.caixa?.lojaId;
+  const { data: productsData, isLoading: isLoadingProducts } = useProducts(
+    {
+      search: debouncedSearchTerm,
+      categoryId: selectedCategoryId || undefined,
+      limit: 50,
+      lojaId: lojaDoPdv,
+    },
+    { enabled: !!lojaDoPdv },
+  );
 
   const products = productsData?.data || [];
   const categories = categoriesData || [];
@@ -168,7 +178,6 @@ export function POSPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showOpenSessionModal]);
 
-  const { data: minhaSessao, isLoading: isSessaoLoading } = useMinhaSessao();
   const { data: caixasDisponiveis } = useCaixasDisponiveis();
 
   const abrirSessaoMutation = useAbrirSessao();

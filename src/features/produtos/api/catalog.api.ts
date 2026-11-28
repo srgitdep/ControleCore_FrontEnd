@@ -84,13 +84,25 @@ export interface CreateProductPayload extends Partial<Product> {
   stockMinimo?: number;
 }
 
+export interface ProductListParams {
+  search?: string;
+  categoryId?: string;
+  page?: number;
+  limit?: number;
+  /**
+   * Restringe `stocks` aos armazéns desta loja. O PDV passa a loja do caixa aberto:
+   * sem isto recebia as posições de todas as lojas e mostrava como seu o saldo de outra.
+   */
+  lojaId?: string;
+}
+
 export const catalogApi = {
   getCategories: async () => {
     const { data } = await api.get<Category[]>('/categorias');
     return data;
   },
 
-  getProducts: async (params?: { search?: string; categoryId?: string; page?: number; limit?: number }) => {
+  getProducts: async (params?: ProductListParams) => {
     // O backend aceita search=, que mapeia para nome, SKU e código de barras.
     //
     // A resposta vem como `{ data, meta: { total, page, limit, totalPages } }`, mas o
