@@ -94,6 +94,8 @@ export interface ProductListParams {
    * sem isto recebia as posições de todas as lojas e mostrava como seu o saldo de outra.
    */
   lojaId?: string;
+  /** Só produtos activos. O PDV usa-o; a gestão de produtos precisa de ver todos. */
+  activos?: boolean;
 }
 
 export const catalogApi = {

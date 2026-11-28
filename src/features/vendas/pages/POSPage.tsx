@@ -120,6 +120,9 @@ export function POSPage() {
       categoryId: selectedCategoryId || undefined,
       limit: 50,
       lojaId: lojaDoPdv,
+      // Produtos desactivados (ex.: cópias fundidas de duplicados) não se vendem — e o
+      // backend recusa-os na venda.
+      activos: true,
     },
     { enabled: !!lojaDoPdv },
   );
